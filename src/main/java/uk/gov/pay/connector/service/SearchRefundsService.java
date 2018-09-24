@@ -2,11 +2,11 @@ package uk.gov.pay.connector.service;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.tuple.Pair;
-import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.dao.SearchParams;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.model.SearchRefundsResponse;
 import uk.gov.pay.connector.model.domain.RefundEntity;
-import uk.gov.pay.connector.resources.ChargesPaginationResponseBuilder;
+import uk.gov.pay.connector.resources.PaginationResponseBuilder;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.ResponseUtil;
 
@@ -44,7 +44,7 @@ public class SearchRefundsService {
         return validateQueryParams(queryParams)
                 .map(ResponseUtil::badRequestResponse)
                 .orElseGet(() -> {
-                    ChargeSearchParams searchParams = new ChargeSearchParams()
+                    SearchParams searchParams = new SearchParams()
                             .withGatewayAccountId(accountId)
                             .withDisplaySize(calculateDisplaySize(displaySize))
                             .withPage(pageNumber != null ? pageNumber : 1);
@@ -57,7 +57,7 @@ public class SearchRefundsService {
                 (displaySize > MAX_DISPLAY_SIZE) ? MAX_DISPLAY_SIZE : displaySize;
     }
 
-    private Response search(ChargeSearchParams searchParams, UriInfo uriInfo) {
+    private Response search(SearchParams searchParams, UriInfo uriInfo) {
         Long totalCount = refundDao.getTotalFor(searchParams);
         Long size = searchParams.getDisplaySize();
         if (totalCount > 0 && size > 0) {
@@ -74,7 +74,7 @@ public class SearchRefundsService {
                         .map(refund -> buildResponse(uriInfo, refund))
                         .collect(Collectors.toList());
 
-        return new ChargesPaginationResponseBuilder(searchParams, uriInfo)
+        return new PaginationResponseBuilder(searchParams, uriInfo)
                 .withResponses(refundResponses)
                 .withTotalCount(totalCount)
                 .buildResponse();

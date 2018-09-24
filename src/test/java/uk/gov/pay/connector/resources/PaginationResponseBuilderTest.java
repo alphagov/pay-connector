@@ -5,7 +5,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.dao.SearchParams;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 
 import javax.ws.rs.core.Response;
@@ -18,7 +18,7 @@ import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ChargesPaginationResponseBuilderTest {
+public class PaginationResponseBuilderTest {
 
     @Mock
     private UriInfo mockUriInfo;
@@ -30,7 +30,7 @@ public class ChargesPaginationResponseBuilderTest {
         // pending work to convert charge responses in _embedded entities.
 
         // given
-        ChargeSearchParams searchParams = new ChargeSearchParams()
+        SearchParams searchParams = new SearchParams()
                 .withGatewayAccountId(1L)
                 .withExternalState(ExternalChargeState.EXTERNAL_STARTED.getStatus())
                 .withDisplaySize(100L)
@@ -43,7 +43,7 @@ public class ChargesPaginationResponseBuilderTest {
         when(mockUriInfo.getPath()).thenReturn("/v1/api/accounts/1/charges");
 
         // when
-        Response response = new ChargesPaginationResponseBuilder(searchParams, mockUriInfo)
+        Response response = new PaginationResponseBuilder(searchParams, mockUriInfo)
                 .withResponses(newArrayList())
                 .withTotalCount(500L)
                 .buildResponse();

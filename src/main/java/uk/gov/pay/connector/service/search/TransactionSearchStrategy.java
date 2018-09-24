@@ -2,7 +2,7 @@ package uk.gov.pay.connector.service.search;
 
 import com.google.inject.Inject;
 import uk.gov.pay.connector.dao.CardTypeDao;
-import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.dao.SearchParams;
 import uk.gov.pay.connector.dao.TransactionDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.ChargeResponse.RefundSummary;
@@ -35,12 +35,12 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
     }
 
     @Override
-    protected long getTotalFor(ChargeSearchParams params) {
+    protected long getTotalFor(SearchParams params) {
         return transactionDao.getTotalFor(params.getGatewayAccountId(), params);
     }
 
     @Override
-    protected List<Transaction> findAllBy(ChargeSearchParams params) {
+    protected List<Transaction> findAllBy(SearchParams params) {
         return transactionDao.findAllBy(params.getGatewayAccountId(), params);
     }
 

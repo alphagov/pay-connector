@@ -3,7 +3,7 @@ package uk.gov.pay.connector.it.dao;
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.dao.SearchParams;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -123,11 +123,11 @@ public class RefundDaoJpaITest extends DaoITestBase {
 
     @Test 
     public void findAllBy_shouldFindAllRefundsByQueryParamsWithAccountId() {
-        ChargeSearchParams chargeSearchParams = new ChargeSearchParams().withGatewayAccountId(sandboxAccount.getAccountId());
+        SearchParams searchParams = new SearchParams().withGatewayAccountId(sandboxAccount.getAccountId());
         addSuccessfulRefundsToAccount();
         addSuccessfulRefundsToAccount();
         
-        List<RefundEntity> refunds = refundDao.findAllBy(chargeSearchParams);
+        List<RefundEntity> refunds = refundDao.findAllBy(searchParams);
         assertThat(refunds.size(), is(2));
     }
 

@@ -7,7 +7,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.dao.SearchParams;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.model.CardHolderName;
 import uk.gov.pay.connector.model.FirstDigitsCardNumber;
@@ -83,7 +83,7 @@ public class ChargeDaoITest extends DaoITestBase {
     public void searchChargesByGatewayAccountIdOnly() {
         // given
         insertTestCharge();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId());
 
         // when
@@ -106,7 +106,7 @@ public class ChargeDaoITest extends DaoITestBase {
     public void searchChargesByFullEmailMatch() {
         // given
         insertTestCharge();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withEmailLike(defaultTestCharge.getEmail());
 
         // when
@@ -122,7 +122,7 @@ public class ChargeDaoITest extends DaoITestBase {
     public void searchChargesByPartialEmailMatch() {
         // given
         insertTestCharge();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withEmailLike("alice");
 
         // when
@@ -145,7 +145,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withCardDetails(defaultTestCardDetails.withChargeId(chargeId))
                 .withChargeId(chargeId)
                 .insert();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withCardHolderNameLike(CardHolderName.of(testCharge.cardDetails.getCardHolderName()));
 
         // when
@@ -173,7 +173,7 @@ public class ChargeDaoITest extends DaoITestBase {
                         .withCardHolderName(cardHolderName))
                 .withChargeId(chargeId)
                 .insert();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withCardHolderNameLike(CardHolderName.of("pay"));
 
         // when
@@ -203,7 +203,7 @@ public class ChargeDaoITest extends DaoITestBase {
                         .withLastDigitsOfCardNumber(lastDigits.toString()))
                 .withChargeId(chargeId)
                 .insert();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withLastDigitsCardNumber(lastDigits);
 
         // when
@@ -233,7 +233,7 @@ public class ChargeDaoITest extends DaoITestBase {
                         .withFirstDigitsOfCardNumber(firstSixDigits.toString()))
                 .withChargeId(chargeId)
                 .insert();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withFirstDigitsCardNumber(firstSixDigits);
 
         // when
@@ -246,12 +246,12 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getCardDetails().getCardHolderName(), is(cardHolderName));
         assertThat(charge.getCardDetails().getFirstDigitsCardNumber(), is(firstSixDigits));
     }
-    
+
     @Test
     public void searchChargesByCardBrandOnly() {
         // given
         insertTestCharge();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withCardBrand(defaultTestCardDetails.getCardBrand());
 
         // when
@@ -272,7 +272,7 @@ public class ChargeDaoITest extends DaoITestBase {
         DatabaseFixtures.TestCharge testCharge1 = insertTestChargeForCardBrand(visa);
         DatabaseFixtures.TestCharge testCharge2 = insertTestChargeForCardBrand(masterCard);
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withCardBrands(asList(visa, masterCard));
 
         // when
@@ -292,7 +292,7 @@ public class ChargeDaoITest extends DaoITestBase {
         insertNewChargeWithId(900L, now().plusHours(3));
         insertNewChargeWithId(600L, now().plusHours(4));
         insertNewChargeWithId(500L, now().plusHours(5));
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId());
 
         // when
@@ -320,7 +320,7 @@ public class ChargeDaoITest extends DaoITestBase {
         insertNewChargeWithId(200L, now().plusHours(8));
 
         // when
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withPage(1L)
                 .withDisplaySize(3L);
@@ -332,7 +332,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charges.get(2).getId(), is(400L));
 
         // when
-        params = new ChargeSearchParams()
+        params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withPage(2L)
                 .withDisplaySize(3L);
@@ -344,7 +344,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charges.get(2).getId(), is(700L));
 
         // when
-        params = new ChargeSearchParams()
+        params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withPage(3L)
                 .withDisplaySize(3L);
@@ -363,7 +363,7 @@ public class ChargeDaoITest extends DaoITestBase {
         insertNewChargeWithId(900L, now().plusHours(3));
         insertNewChargeWithId(600L, now().plusHours(4));
         insertNewChargeWithId(500L, now().plusHours(5));
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withExternalState(EXTERNAL_CREATED.getStatus())
                 .withDisplaySize(2L);
@@ -379,7 +379,7 @@ public class ChargeDaoITest extends DaoITestBase {
     public void searchChargesByFullReferenceOnly() {
         // given
         insertTestCharge();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference());
 
@@ -419,7 +419,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .insert();
 
         String reference = "reference";
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(ServicePaymentReference.of(reference));
 
@@ -460,7 +460,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withEmail("undertaker@mail.com")
                 .insert();
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(ServicePaymentReference.of("under_"))
                 .withEmailLike("under_");
@@ -493,7 +493,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withReference(ServicePaymentReference.of("percentref"))
                 .insert();
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(ServicePaymentReference.of("percent%"));
 
@@ -524,7 +524,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withReference(ServicePaymentReference.of("backslashref"))
                 .insert();
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(ServicePaymentReference.of("backslash\\ref"));
 
@@ -537,7 +537,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeEntity charge = charges.get(0);
         assertThat(charge.getReference(), is(ServicePaymentReference.of("backslash\\ref")));
     }
-    
+
     @Test
     public void searchChargesByReferenceAndEmailShouldBeCaseInsensitive() {
         // fix that the reference and email searches should be case insensitive
@@ -557,7 +557,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withReference(ServicePaymentReference.of("Case-inSENSITIVE-Ref"))
                 .insert();
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(ServicePaymentReference.of("cASe-insEnsiTIve"))
                 .withEmailLike("EMAIL-ID@mail.com");
@@ -581,7 +581,7 @@ public class ChargeDaoITest extends DaoITestBase {
     public void aBasicTestAgainstSqlInjection() {
         // given
         insertTestCharge();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withReferenceLike(ServicePaymentReference.of("reference"));
         // when passed in a simple reference string
         List<ChargeEntity> charges = chargeDao.findAllBy(params);
@@ -590,7 +590,7 @@ public class ChargeDaoITest extends DaoITestBase {
 
         // when passed in a non existent reference with an sql injected string
         ServicePaymentReference sqlInjectionReferenceString = ServicePaymentReference.of("reffff%' or 1=1 or c.reference like '%1");
-        params = new ChargeSearchParams()
+        params = new SearchParams()
                 .withReferenceLike(sqlInjectionReferenceString);
         charges = chargeDao.findAllBy(params);
         // then it fetches no result
@@ -603,7 +603,7 @@ public class ChargeDaoITest extends DaoITestBase {
     public void searchChargeByReferenceAndLegacyStatusOnly() {
         // given
         insertTestCharge();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
                 .withExternalState(EXTERNAL_CREATED.getStatus());
@@ -629,7 +629,7 @@ public class ChargeDaoITest extends DaoITestBase {
 
         // given
         insertTestCharge();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
                 .withExternalState(EXTERNAL_CREATED.getStatus())
@@ -657,7 +657,7 @@ public class ChargeDaoITest extends DaoITestBase {
 
         // given
         insertTestCharge();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
                 .withExternalState(EXTERNAL_CREATED.getStatus())
@@ -701,7 +701,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withChargeStatus(AUTHORISATION_READY)
                 .insert();
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
                 .withExternalState(EXTERNAL_STARTED.getStatus())
@@ -740,7 +740,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withTestAccount(defaultTestAccount)
                 .insert();
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId());
 
         // when
@@ -757,7 +757,7 @@ public class ChargeDaoITest extends DaoITestBase {
     public void searchChargeByReferenceAndStatusAndEmailAndCardBrandAndFromDateAndToDate() {
         // given
         insertTestCharge();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
                 .withExternalState(EXTERNAL_CREATED.getStatus())
@@ -787,7 +787,7 @@ public class ChargeDaoITest extends DaoITestBase {
 
         // given
         insertTestCharge();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
                 .withExternalState(EXTERNAL_CREATED.getStatus())
@@ -813,7 +813,7 @@ public class ChargeDaoITest extends DaoITestBase {
     public void searchChargeByReferenceAndStatusAndFromDate_ShouldReturnZeroIfDateIsNotInRange() {
         insertTestCharge();
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
                 .withExternalState(EXTERNAL_CREATED.getStatus())
@@ -828,7 +828,7 @@ public class ChargeDaoITest extends DaoITestBase {
     @Test
     public void searchChargeByReferenceAndStatusAndToDate_ShouldReturnZeroIfToDateIsNotInRange() {
         insertTestCharge();
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withReferenceLike(defaultTestCharge.getReference())
                 .withExternalState(EXTERNAL_CREATED.getStatus())
@@ -1499,7 +1499,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void findByIdAndLimit(){
+    public void findByIdAndLimit() {
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()

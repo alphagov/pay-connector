@@ -37,7 +37,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
 
-public class ChargeSearchParamsTest {
+public class SearchParamsTest {
 
     @Test
     public void buildQueryParams_chargeSearch_withAllParameters() {
@@ -55,7 +55,7 @@ public class ChargeSearchParamsTest {
                         "&card_brand=visa";
           
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withDisplaySize(5L)
                 .withExternalState(EXTERNAL_CREATED.getStatus())
                 .withCardBrand("visa")
@@ -87,7 +87,7 @@ public class ChargeSearchParamsTest {
                         "&state=created" +
                         "&card_brand=visa";
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withDisplaySize(5L)
                 .withExternalState(EXTERNAL_CREATED.getStatus())
                 .withCardBrand("visa")
@@ -105,7 +105,7 @@ public class ChargeSearchParamsTest {
     @Test
     public void getInternalStates_chargeSearch_shouldPopulateAllInternalChargeStates_FromExternalFailedState() {
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withExternalState(ExternalChargeState.EXTERNAL_FAILED_CANCELLED.getStatus());
 
         assertThat(params.buildQueryParams(), is("state=failed"));
@@ -119,7 +119,7 @@ public class ChargeSearchParamsTest {
     public void getInternalStates_shouldSetInternalStatesDirectlyToSearchParams() {
 
         // So internal methods can call findAll with specific states of a charge
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withInternalStates(asList(CAPTURED, USER_CANCELLED));
 
         assertThat(params.getInternalStates(), hasSize(2));
@@ -144,7 +144,7 @@ public class ChargeSearchParamsTest {
                         "&card_brand=visa" +
                         "&card_brand=master-card";
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withDisplaySize(5L)
                 .withTransactionType(PAYMENT)
                 .withFirstDigitsCardNumber(FirstDigitsCardNumber.of("695943"))
@@ -172,7 +172,7 @@ public class ChargeSearchParamsTest {
                         "&payment_states=success" +
                         "&refund_states=success";
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .addExternalChargeStates(singletonList("success"))
                 .addExternalRefundStates(singletonList("success"))
                 .withGatewayAccountId(111L)
@@ -188,7 +188,7 @@ public class ChargeSearchParamsTest {
 
         String expectedQueryString = "payment_states=success,failed";
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .addExternalChargeStates(singletonList("success"))
                 .addExternalChargeStates(singletonList("failed"))
                 .withGatewayAccountId(111L);
@@ -206,7 +206,7 @@ public class ChargeSearchParamsTest {
 
         String expectedQueryString = "payment_states=timedout,declined,cancelled";
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .addExternalChargeStatesV2(singletonList("declined"))
                 .addExternalChargeStatesV2(singletonList("timedout"))
                 .addExternalChargeStatesV2(singletonList("cancelled"))
@@ -224,7 +224,7 @@ public class ChargeSearchParamsTest {
     @Test
     public void getInternalChargeStatuses_transactionsSearch_shouldPopulateAllInternalChargeStates_FromExternalFailedState() {
 
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .addExternalChargeStates(singletonList(ExternalChargeState.EXTERNAL_FAILED_CANCELLED.getStatus()));
 
         assertThat(params.buildQueryParams(), is("payment_states=failed"));

@@ -9,7 +9,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.dao.SearchParams;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -85,8 +85,8 @@ public class SearchRefundsServiceTest {
         Long displaySize = 20L;
         List<RefundEntity> refundEntities = getRefundEntity(1, gatewayAccount);
 
-        when(refundDao.getTotalFor(any(ChargeSearchParams.class))).thenReturn(Long.valueOf(refundEntities.size()));
-        when(refundDao.findAllBy(any(ChargeSearchParams.class))).thenReturn(refundEntities);
+        when(refundDao.getTotalFor(any(SearchParams.class))).thenReturn(Long.valueOf(refundEntities.size()));
+        when(refundDao.findAllBy(any(SearchParams.class))).thenReturn(refundEntities);
 
         Response response = searchRefundsService.getAllRefunds(uriInfo, ACCOUNT_ID, pageNumber, displaySize);
 
@@ -106,8 +106,8 @@ public class SearchRefundsServiceTest {
         Long pageNumber = 1L;
         List<RefundEntity> refundEntities = getRefundEntity(1, gatewayAccount);
 
-        when(refundDao.getTotalFor(any(ChargeSearchParams.class))).thenReturn(EXCEED_DISPLAY_SIZE);
-        when(refundDao.findAllBy(any(ChargeSearchParams.class))).thenReturn(refundEntities);
+        when(refundDao.getTotalFor(any(SearchParams.class))).thenReturn(EXCEED_DISPLAY_SIZE);
+        when(refundDao.findAllBy(any(SearchParams.class))).thenReturn(refundEntities);
         when(uriInfo.getBaseUriBuilder()).thenReturn(fromUri("http://app.com/"));
         when(uriInfo.getPath()).thenReturn("/v1/refunds/account/" + refundEntities.get(0).getChargeEntity().getGatewayAccount().getId());
         when(uriInfo.getBaseUri()).thenReturn(fromUri("http://app.com/").build());
@@ -139,8 +139,8 @@ public class SearchRefundsServiceTest {
         Long displaySize = 3L;
         List<RefundEntity> refundEntities = getRefundEntity(3, gatewayAccount);
 
-        when(refundDao.getTotalFor(any(ChargeSearchParams.class))).thenReturn(displaySize);
-        when(refundDao.findAllBy(any(ChargeSearchParams.class))).thenReturn(refundEntities);
+        when(refundDao.getTotalFor(any(SearchParams.class))).thenReturn(displaySize);
+        when(refundDao.findAllBy(any(SearchParams.class))).thenReturn(refundEntities);
         when(uriInfo.getBaseUriBuilder()).thenReturn(fromUri("http://app.com/"));
         when(uriInfo.getPath()).thenReturn("/v1/refunds/account/" + refundEntities.get(0).getChargeEntity().getGatewayAccount().getId());
         when(uriInfo.getBaseUri()).thenReturn(fromUri("http://app.com/").build());

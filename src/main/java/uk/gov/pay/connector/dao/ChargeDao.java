@@ -91,7 +91,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     }
 
     public List<ChargeEntity> findBeforeDateWithStatusIn(ZonedDateTime date, List<ChargeStatus> statuses) {
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withToDate(date)
                 .withInternalStates(statuses);
         return findAllBy(params);
@@ -100,7 +100,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     public List<ChargeEntity> findByAccountBetweenDatesWithStatusIn(Long gatewayAccountId,
                                                                     ZonedDateTime from, ZonedDateTime to,
                                                                     List<ChargeStatus> statuses) {
-        ChargeSearchParams params = new ChargeSearchParams()
+        SearchParams params = new SearchParams()
                 .withGatewayAccountId(gatewayAccountId)
                 .withFromDate(from)
                 .withToDate(to)
@@ -108,7 +108,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return findAllBy(params);
     }
 
-    public List<ChargeEntity> findAllBy(ChargeSearchParams params) {
+    public List<ChargeEntity> findAllBy(SearchParams params) {
         CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
         CriteriaQuery<ChargeEntity> cq = cb.createQuery(ChargeEntity.class);
         Root<ChargeEntity> charge = cq.from(ChargeEntity.class);
@@ -127,7 +127,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return query.getResultList();
     }
 
-    public Long getTotalFor(ChargeSearchParams params) {
+    public Long getTotalFor(SearchParams params) {
         CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
         CriteriaQuery<Long> cq = cb.createQuery(Long.class);
         Root<ChargeEntity> charge = cq.from(ChargeEntity.class);
@@ -138,13 +138,13 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return entityManager.get().createQuery(cq).getSingleResult();
     }
 
-    private List<Predicate> buildParamPredicates(ChargeSearchParams params, CriteriaBuilder cb, Root<ChargeEntity> charge) {
+    private List<Predicate> buildParamPredicates(SearchParams params, CriteriaBuilder cb, Root<ChargeEntity> charge) {
         List<Predicate> predicates = new ArrayList<>();
         if (params.getCardHolderName() != null && StringUtils.isNotBlank(params.getCardHolderName().toString()))
             predicates.add(likePredicate(cb, charge.get(CARD_DETAILS).get("cardHolderName"), params.getCardHolderName().toString()));
-        if (params.getLastDigitsCardNumber() != null) 
+        if (params.getLastDigitsCardNumber() != null)
             predicates.add(cb.equal(charge.get(CARD_DETAILS).get("lastDigitsCardNumber"), params.getLastDigitsCardNumber()));
-        if (params.getFirstDigitsCardNumber() != null) 
+        if (params.getFirstDigitsCardNumber() != null)
             predicates.add(cb.equal(charge.get(CARD_DETAILS).get("firstDigitsCardNumber"), params.getFirstDigitsCardNumber()));
         if (params.getGatewayAccountId() != null)
             predicates.add(cb.equal(charge.get(GATEWAY_ACCOUNT).get("id"), params.getGatewayAccountId()));
@@ -173,16 +173,16 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
         return cb.like(cb.lower(expression), '%' + escapedReference.toLowerCase() + '%');
     }
-    
-    private static final String FIND_CAPTURE_CHARGES_WHERE_CLAUSE = 
-            "WHERE (c.status=:captureApprovedStatus OR c.status=:captureApprovedRetryStatus)"+
-            "AND NOT EXISTS (" +
-            "  SELECT ce FROM ChargeEventEntity ce WHERE " +
-            "    ce.chargeEntity = c AND " +
-            "    ce.status = :eventStatus AND " +
-            "    ce.updated >= :cutoffDate " +
-            ") ";
-    
+
+    private static final String FIND_CAPTURE_CHARGES_WHERE_CLAUSE =
+            "WHERE (c.status=:captureApprovedStatus OR c.status=:captureApprovedRetryStatus)" +
+                    "AND NOT EXISTS (" +
+                    "  SELECT ce FROM ChargeEventEntity ce WHERE " +
+                    "    ce.chargeEntity = c AND " +
+                    "    ce.status = :eventStatus AND " +
+                    "    ce.updated >= :cutoffDate " +
+                    ") ";
+
     public int countChargesForImmediateCapture(Duration notAttemptedWithin) {
         String query = "SELECT count(c) FROM ChargeEntity c " + FIND_CAPTURE_CHARGES_WHERE_CLAUSE;
 
@@ -208,9 +208,9 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter("cutoffDate", ZonedDateTime.now().minus(notAttemptedWithin))
                 .getResultList();
     }
-    
+
     public int countChargesAwaitingCaptureRetry(Duration notAttemptedWithin) {
-        String query = "SELECT count(c) FROM ChargeEntity c WHERE c.status=:captureApprovedRetryStatus "+
+        String query = "SELECT count(c) FROM ChargeEntity c WHERE c.status=:captureApprovedRetryStatus " +
                 "AND EXISTS (" +
                 "  SELECT ce FROM ChargeEventEntity ce WHERE " +
                 "    ce.chargeEntity = c AND " +
@@ -241,10 +241,10 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     }
 
     public List<ChargeEntity> findByIdAndLimit(Long id, int limit) {
-            return entityManager.get()
-                    .createQuery("SELECT c FROM ChargeEntity c WHERE c.id > :id ORDER BY c.id", ChargeEntity.class)
-                    .setParameter("id", id)
-                    .setMaxResults(limit)
-                    .getResultList();
-        }
+        return entityManager.get()
+                .createQuery("SELECT c FROM ChargeEntity c WHERE c.id > :id ORDER BY c.id", ChargeEntity.class)
+                .setParameter("id", id)
+                .setMaxResults(limit)
+                .getResultList();
+    }
 }

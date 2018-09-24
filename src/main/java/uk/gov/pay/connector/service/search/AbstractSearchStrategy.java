@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.service.search;
 
 import uk.gov.pay.connector.dao.CardTypeDao;
-import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.dao.SearchParams;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.resources.ChargesPaginationResponseBuilder;
+import uk.gov.pay.connector.resources.PaginationResponseBuilder;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -23,7 +23,7 @@ public abstract class AbstractSearchStrategy<T> implements SearchStrategy {
     }
 
     @Override
-    public Response search(ChargeSearchParams searchParams, UriInfo uriInfo) {
+    public Response search(SearchParams searchParams, UriInfo uriInfo) {
         Long totalCount = getTotalFor(searchParams);
         Long size = searchParams.getDisplaySize();
         if (totalCount > 0 && size > 0) {
@@ -41,15 +41,15 @@ public abstract class AbstractSearchStrategy<T> implements SearchStrategy {
                         .map(transaction -> buildResponse(uriInfo, transaction, cardBrandToLabel)
                         ).collect(Collectors.toList());
 
-        return new ChargesPaginationResponseBuilder(searchParams, uriInfo)
+        return new PaginationResponseBuilder(searchParams, uriInfo)
                 .withResponses(chargesResponse)
                 .withTotalCount(totalCount)
                 .buildResponse();
     }
 
-    abstract protected long getTotalFor(ChargeSearchParams params);
+    abstract protected long getTotalFor(SearchParams params);
 
-    abstract protected List<T> findAllBy(ChargeSearchParams params);
+    abstract protected List<T> findAllBy(SearchParams params);
 
     abstract protected ChargeResponse buildResponse(UriInfo uriInfo, T transaction, Map<String, String> cardBrandToLabel);
 

@@ -106,7 +106,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
                 .getResultList().stream().findFirst();
     }
 
-    public Long getTotalFor(ChargeSearchParams params) {
+    public Long getTotalFor(SearchParams params) {
         CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
         CriteriaQuery<Long> cq = cb.createQuery(Long.class);
         Root<RefundEntity> refund = cq.from(RefundEntity.class);
@@ -117,7 +117,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
         return entityManager.get().createQuery(cq).getSingleResult();
     }
 
-    private List<Predicate> buildParamPredicates(ChargeSearchParams params, CriteriaBuilder cb, Root<RefundEntity> refundEntityRoot) {
+    private List<Predicate> buildParamPredicates(SearchParams params, CriteriaBuilder cb, Root<RefundEntity> refundEntityRoot) {
         List<Predicate> predicates = new ArrayList<>();
 
         if (params.getGatewayAccountId() != null)
@@ -130,7 +130,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
         return predicates;
     }
 
-    public List<RefundEntity> findAllBy(ChargeSearchParams params) {
+    public List<RefundEntity> findAllBy(SearchParams params) {
         CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
         CriteriaQuery<RefundEntity> cq = cb.createQuery(RefundEntity.class);
         Root<RefundEntity> refund = cq.from(RefundEntity.class);

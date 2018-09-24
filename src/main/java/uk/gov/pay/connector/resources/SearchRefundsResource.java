@@ -43,13 +43,10 @@ public class SearchRefundsResource {
                                           @QueryParam(DISPLAY_SIZE) Long displaySize,
                                           @Context UriInfo uriInfo) {
         logger.info("Getting all refunds for account id {}", accountId);
-        if (gatewayAccountDao.findById(accountId).isPresent()) {
-            return searchRefundsService.getAllRefunds(
-                    uriInfo, 
-                    accountId, 
-                    pageNumber, 
-                    displaySize); 
-        }
-        return notFoundResponse(format("Gateway with id %s does not exist", accountId));
+        return gatewayAccountDao.findById(accountId)
+                .map(gatewayAccount -> searchRefundsService.getAllRefunds(uriInfo, accountId, pageNumber, displaySize))
+                .orElseGet(() -> notFoundResponse(format("Gateway account with id %s does not exist", accountId)));
+
+
     }
 }

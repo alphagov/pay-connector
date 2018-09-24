@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.resources;
 
 import black.door.hate.HalRepresentation;
-import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.dao.SearchParams;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -10,9 +10,9 @@ import java.util.List;
 
 import static javax.ws.rs.core.Response.ok;
 
-public class ChargesPaginationResponseBuilder<T> {
+public class PaginationResponseBuilder<T> {
 
-    private ChargeSearchParams searchParams;
+    private SearchParams searchParams;
     private UriInfo uriInfo;
     private List<T> responses;
     private Long totalCount;
@@ -23,19 +23,19 @@ public class ChargesPaginationResponseBuilder<T> {
     private URI prevLink;
     private URI nextLink;
 
-    public ChargesPaginationResponseBuilder(ChargeSearchParams searchParams, UriInfo uriInfo) {
+    public PaginationResponseBuilder(SearchParams searchParams, UriInfo uriInfo) {
         this.searchParams = searchParams;
         this.uriInfo = uriInfo;
         selfPageNum = searchParams.getPage();
         selfLink = uriWithParams(searchParams.buildQueryParams());
     }
 
-    public ChargesPaginationResponseBuilder withResponses(List<T> responses) {
+    public PaginationResponseBuilder withResponses(List<T> responses) {
         this.responses = responses;
         return this;
     }
 
-    public ChargesPaginationResponseBuilder withTotalCount(Long total) {
+    public PaginationResponseBuilder withTotalCount(Long total) {
         this.totalCount = total;
         return this;
     }
@@ -59,7 +59,7 @@ public class ChargesPaginationResponseBuilder<T> {
 
         return ok(halRepresentationBuilder.build().toString()).build();
     }
-    
+
     private void addLinkNotNull(HalRepresentation.HalRepresentationBuilder halRepresentationBuilder, String name, URI uri) {
         if (uri != null) {
             halRepresentationBuilder.addLink(name, uri);
