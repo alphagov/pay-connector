@@ -63,6 +63,13 @@ public class TransactionsApiContractTest {
         }
     }
 
+    private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, ZonedDateTime createdDate, boolean delayedCapture, String cardHolderName, String lastDigitsCardNumber, String firstDigitsCardNumber) {
+        dbHelper.addCharge(chargeId, chargeExternalId, accountId, 100L, chargeStatus, "aReturnUrl",
+                chargeExternalId, ServicePaymentReference.of("aReference"), createdDate, "test@test.com", delayedCapture);
+        dbHelper.updateChargeCardDetails(chargeId, "visa", lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, "08/23",
+                "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
+    }
+    
     private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, ZonedDateTime createdDate, boolean delayedCapture) {
         setUpSingleCharge(accountId, chargeId, chargeExternalId, chargeStatus, createdDate, delayedCapture, "aName", "0001", "123456");
     }
@@ -126,5 +133,17 @@ public class TransactionsApiContractTest {
         String chargeExternalId = params.get("charge_id");
         setUpGatewayAccount(Long.valueOf(gatewayAccountId));
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.AWAITING_CAPTURE_REQUEST, ZonedDateTime.now(), true);
+    }
+
+    @State("a charge with card details exists")
+    public void createChargeWithCardDetails(Map<String, String> params) {
+        String chargeExternalId = params.get("charge_id");
+        String gatewayAccountId = params.get("gateway_account_id");
+        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        String cardHolderName = params.get("cardholder_name");
+        String lastDigitsCardNumber = params.get("last_digits_card_number");
+        String firstDigitsCardNumber = params.get("first_digits_card_number");
+        setUpGatewayAccount(Long.valueOf(gatewayAccountId));
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, ZonedDateTime.parse("2018-09-22T10:13:16.067Z"), true, cardHolderName, lastDigitsCardNumber, firstDigitsCardNumber);
     }
 }
