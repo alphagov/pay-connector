@@ -1533,4 +1533,12 @@
             CREATE INDEX CONCURRENTLY idx_first_digits_card_number_idx ON charges(first_digits_card_number);
         </sql>
     </changeSet>
+
+    <changeSet id="add corporate surcharge column to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="corporate_surcharge" type="BIGINT">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
