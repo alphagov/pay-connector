@@ -11,12 +11,11 @@ import java.util.Optional;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
-import static java.lang.String.format;
 import static uk.gov.pay.connector.model.GatewayError.baseError;
 
 public class GatewayResponse<T extends BaseResponse> {
 
-    static private final Logger logger = LoggerFactory.getLogger(GatewayResponse.class);
+    private static final Logger logger = LoggerFactory.getLogger(GatewayResponse.class);
 
     protected Either<GatewayError, T> response;
 
@@ -43,32 +42,17 @@ public class GatewayResponse<T extends BaseResponse> {
         return Optional.ofNullable(sessionIdentifier);
     }
 
-    static public <T extends BaseResponse> Optional<String> getErrorCode(T baseResponse) {
-        return checkIfEmpty(baseResponse.getErrorCode());
-    }
-
-    static public <T extends BaseResponse> Optional<String> getErrorMessage(T baseResponse) {
-        return checkIfEmpty(baseResponse.getErrorMessage());
-    }
-
-    static public Optional<String> checkIfEmpty(String string) {
-        if (StringUtils.isBlank(string)) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(string);
-    }
-
     public Optional<T> getBaseResponse() {
         return response.either(
-                e -> Optional.<T>empty(),
-                Optional::<T>of
+                e -> Optional.empty(),
+                Optional::of
         );
     }
 
     public Optional<GatewayError> getGatewayError() {
         return response.either(
-                Optional::<GatewayError>of,
-                r -> Optional.<GatewayError>empty()
+                Optional::of,
+                r -> Optional.empty()
         );
     }
 
@@ -77,8 +61,8 @@ public class GatewayResponse<T extends BaseResponse> {
         return response.either(GatewayError::toString, T::toString);
     }
 
-    static public <T extends BaseResponse> GatewayResponse<T> with(GatewayError gatewayError) {
-        logger.error(format("Error received from gateway: %s", gatewayError));
+    public static <T extends BaseResponse> GatewayResponse<T> with(GatewayError gatewayError) {
+        logger.error("Error received from gateway: {}", gatewayError);
         return new GatewayResponse<>(gatewayError);
     }
 
@@ -91,7 +75,7 @@ public class GatewayResponse<T extends BaseResponse> {
         }
 
         public static <T extends BaseResponse> GatewayResponseBuilder<T> responseBuilder() {
-            return new GatewayResponseBuilder<T>();
+            return new GatewayResponseBuilder<>();
         }
 
         public GatewayResponseBuilder<T> withResponse(T response) {
@@ -110,14 +94,11 @@ public class GatewayResponse<T extends BaseResponse> {
         }
 
         public GatewayResponse<T> build() {
-            if(gatewayError != null) {
+            if (gatewayError != null) {
                 return new GatewayResponse<>(gatewayError);
             }
 
-            Optional<String> errorCode = getErrorCode(response);
-            Optional<String> errorMessage = getErrorMessage(response);
-
-            if (errorCode.isPresent() || errorMessage.isPresent()) {
+            if (StringUtils.isNotBlank(response.getErrorCode()) || StringUtils.isNotBlank(response.getErrorMessage())) {
                 return new GatewayResponse<>(baseError(response.toString()));
             }
 

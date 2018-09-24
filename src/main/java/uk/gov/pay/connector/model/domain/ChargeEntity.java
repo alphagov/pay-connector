@@ -72,6 +72,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     @Column(name = "email")
     private String email;
+    
+    @Column(name = "corporate_surcharge")
+    private Long corporateSurcharge;
 
     @Embedded
     private CardDetailsEntity cardDetails;
@@ -118,13 +121,15 @@ public class ChargeEntity extends AbstractVersionedEntity {
     }
 
     public ChargeEntity(Long amount, String returnUrl, String description, ServicePaymentReference reference,
-                        GatewayAccountEntity gatewayAccount, String email, SupportedLanguage language, boolean delayedCapture) {
-        this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture);
+                        GatewayAccountEntity gatewayAccount, String email, SupportedLanguage language,
+                        boolean delayedCapture, Long corporateSurcharge) {
+        this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture, corporateSurcharge);
     }
 
     //for fixture
     ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, ServicePaymentReference reference,
-                 GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate, SupportedLanguage language, boolean delayedCapture) {
+                 GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate, SupportedLanguage language,
+                 boolean delayedCapture, Long corporateSurcharge) {
         this.amount = amount;
         this.status = status.getValue();
         this.returnUrl = returnUrl;
@@ -136,6 +141,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.email = email;
         this.language = language;
         this.delayedCapture = delayedCapture;
+        this.corporateSurcharge = corporateSurcharge;
     }
 
     public Long getId() {
@@ -311,4 +317,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.delayedCapture = delayedCapture;
     }
 
+    public Long getCorporateSurcharge() { return corporateSurcharge; }
+
+    public void setCorporateSurcharge(Long corporateSurcharge) { this.corporateSurcharge = corporateSurcharge; }
 }

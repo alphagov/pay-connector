@@ -33,6 +33,7 @@ public class ChargeEntityFixture {
     private String providerSessionId;
     private SupportedLanguage language = SupportedLanguage.ENGLISH;
     private boolean delayedCapture = false;
+    private Long corporateSurcharge = null;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -40,7 +41,7 @@ public class ChargeEntityFixture {
 
     public ChargeEntity build() {
         ChargeEntity chargeEntity = new ChargeEntity(amount, status, returnUrl, description, reference,
-                gatewayAccountEntity, email, createdDate, language, delayedCapture);
+                gatewayAccountEntity, email, createdDate, language, delayedCapture, corporateSurcharge);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
         chargeEntity.setGatewayTransactionId(transactionId);
@@ -134,6 +135,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withNotifySettings(ImmutableMap<String, String> notifySettings) {
         this.gatewayAccountEntity.setNotifySettings(notifySettings);
+        return this;
+    }
+    
+    public ChargeEntityFixture withCorporateSurcharge(Long corporateSurcharge) {
+        this.corporateSurcharge = corporateSurcharge;
         return this;
     }
 

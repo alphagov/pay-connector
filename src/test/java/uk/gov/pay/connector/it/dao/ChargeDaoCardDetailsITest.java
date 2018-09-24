@@ -121,9 +121,10 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
         gatewayAccountDao.persist(testAccount);
 
         Address billingAddress = aValidAddress().build();
+        //TODO change to fixture
         ChargeEntity chargeEntity = new ChargeEntity(2323L, "returnUrl", "description",
                 ServicePaymentReference.of("ref"), testAccount, "email@email.test", SupportedLanguage.ENGLISH,
-                false);
+                false, null);
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"),LastDigitsCardNumber.of("1258"), "Mr. Pay Mc Payment", "03/09", "VISA", new AddressEntity(billingAddress));
         chargeEntity.setCardDetails(cardDetailsEntity);
         chargeDao.persist(chargeEntity);
