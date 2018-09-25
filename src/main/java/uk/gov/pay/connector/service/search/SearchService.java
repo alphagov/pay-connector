@@ -27,9 +27,9 @@ public class SearchService {
     public SearchStrategy ofType(TYPE type) {
         switch (type) {
             case TRANSACTION:
-                return new TransactionSearchStrategy(transactionDao, cardTypeDao);
+                return new TransactionSearchStrategy(transactionDao);
             default:
-                return new ChargeSearchStrategy(chargeService, chargeDao, cardTypeDao);
+                return new ChargeSearchStrategy(chargeService, chargeDao);
         }
     }
 }

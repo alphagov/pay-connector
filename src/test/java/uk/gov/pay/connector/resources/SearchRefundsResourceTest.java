@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
 public class SearchRefundsResourceTest extends ChargingITestBase {
-    
+
     private static final String PROVIDER_NAME = "sandbox";
 
     private RestAssuredClient api = new RestAssuredClient(app, accountId);
@@ -32,7 +32,7 @@ public class SearchRefundsResourceTest extends ChargingITestBase {
     public SearchRefundsResourceTest() {
         super(PROVIDER_NAME);
     }
-    
+
 
     @Test
     public void shouldReturnAllRefundsForGetRefundsByAccountId() {
@@ -69,7 +69,7 @@ public class SearchRefundsResourceTest extends ChargingITestBase {
 
         app.getDatabaseTestHelper().addCharge(chargeId, "charge2", accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
                 ServicePaymentReference.of("ref"), null, email);
-        
+
         api.withAccountId(accountId)
                 .withQueryParam("page", "1")
                 .withQueryParam("display_size", "2")
@@ -92,6 +92,6 @@ public class SearchRefundsResourceTest extends ChargingITestBase {
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getRefunds()
                 .statusCode(NOT_FOUND.getStatusCode())
-                .body("message", Is.is(format("Gateway with id %s does not exist", INVALID_ACCOUNT_ID))); 
+                .body("message", Is.is(format("Gateway account with id %s does not exist", INVALID_ACCOUNT_ID)));
     }
 }
