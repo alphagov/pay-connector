@@ -19,6 +19,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
@@ -196,12 +197,25 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return count.intValue();
     }
 
-    public List<ChargeEntity> findChargesForCapture(int maxNumberOfCharges, Duration notAttemptedWithin) {
+    public List<ChargeEntity> findChargesForCapture(int maxNumberOfCharges,
+                                                    int readyCaptureQueueSize,
+                                                    Duration notAttemptedWithin) {
+
         String query = "SELECT c FROM ChargeEntity c " + FIND_CAPTURE_CHARGES_WHERE_CLAUSE + "ORDER BY c.createdDate ASC";
+
+        int offset = 0;
+
+        // Random offset to increase probability of each connector node selecting unique set charges to capture
+        if (readyCaptureQueueSize > maxNumberOfCharges) {
+            Random r = new Random();
+            offset = r.nextInt(Math.min(20, readyCaptureQueueSize / maxNumberOfCharges))
+                    * maxNumberOfCharges;
+        }
 
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)
                 .setMaxResults(maxNumberOfCharges)
+                .setFirstResult(offset)
                 .setParameter("captureApprovedStatus", CAPTURE_APPROVED.getValue())
                 .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY.getValue())
                 .setParameter("eventStatus", CAPTURE_APPROVED_RETRY)
