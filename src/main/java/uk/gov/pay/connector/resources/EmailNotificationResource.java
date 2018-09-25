@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.resources;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.jersey.PATCH;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.EmailNotificationsDao;
@@ -10,6 +10,7 @@ import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.model.domain.EmailNotificationType;
+import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -19,12 +20,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -43,6 +43,13 @@ public class EmailNotificationResource {
     public static final String EMAIL_NOTIFICATION_TEMPLATE_BODY = "template_body";
     public static final String EMAIL_NOTIFICATION_ENABLED = "enabled";
 
+    public static final Set<String> VALID_PATHS = ImmutableSet.of(
+            format("/%s/%s", EmailNotificationType.PAYMENT_CONFIRMED.toString().toLowerCase(), EMAIL_NOTIFICATION_TEMPLATE_BODY),
+            format("/%s/%s", EmailNotificationType.PAYMENT_CONFIRMED.toString().toLowerCase(), EMAIL_NOTIFICATION_ENABLED),
+            format("/%s/%s", EmailNotificationType.REFUND_ISSUED.toString().toLowerCase(), EMAIL_NOTIFICATION_TEMPLATE_BODY),
+            format("/%s/%s", EmailNotificationType.REFUND_ISSUED.toString().toLowerCase(), EMAIL_NOTIFICATION_ENABLED),
+            EMAIL_NOTIFICATION_ENABLED // PP-4111 remove this after selfservice is merged, backward compatible
+    );
     private final EmailNotificationsDao emailNotificationsDao;
     private final GatewayAccountDao gatewayDao;
 
@@ -94,21 +101,17 @@ public class EmailNotificationResource {
     }
 
 
-    //PP-4111 backward compatibility, remove once selfservice is merged
     @PATCH
     @Path("/v1/api/accounts/{accountId}/email-notification")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
-    public Response oldEnableEmailNotification(@PathParam("accountId") Long gatewayAccountId, Map<String, String> emailPatchMap) {
+    public Response enableEmailNotification(@PathParam("accountId") Long gatewayAccountId, Map<String, String> emailPatchMap) {
         PatchRequestBuilder.PatchRequest emailPatchRequest;
         try {
             emailPatchRequest = aPatchRequestBuilder(emailPatchMap)
                     .withValidOps(Collections.singletonList("replace"))
-                    .withValidPaths(
-                            buildValidPaths(
-                                    Arrays.asList(EmailNotificationType.PAYMENT_CONFIRMED.toString(), EmailNotificationType.REFUND_ISSUED.toString()),
-                                    Arrays.asList(EMAIL_NOTIFICATION_ENABLED, EMAIL_NOTIFICATION_TEMPLATE_BODY)))
+                    .withValidPaths(VALID_PATHS)
                     .build();
         } catch (IllegalArgumentException e) {
             logger.error(e.getMessage(), e);
@@ -117,49 +120,69 @@ public class EmailNotificationResource {
 
         return gatewayDao.findById(gatewayAccountId)
                 .map(gatewayAccount -> {
-                    Pair<EmailNotificationType, String> patchInfo = getNotificationTypeFromPath(emailPatchRequest);
-                    EmailNotificationType type = patchInfo.getLeft();
+                    NotificationPatchInfo patchInfo = getNotificationTypeFromPath(emailPatchRequest);
+                    EmailNotificationType type = patchInfo.getEmailNotificationType();
                     EmailNotificationEntity notificationEntity = Optional.ofNullable(gatewayAccount.getEmailNotifications().get(type))
                             .orElseGet(() -> {
                                 //PP-4111 we are not going to backfill and add refund notifications for existing gateway accounts, so this is unfortunately needed
-                                EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(gatewayAccount, null, false);
-                                gatewayAccount.addNotification(type, emailNotificationEntity);
-                                return  emailNotificationEntity;
+                                return newDisabledEmailNotificationEntityWithNoTemplate(gatewayAccount, type);
                             });
-                    patch(notificationEntity, patchInfo.getRight(), emailPatchRequest);
+                    patch(notificationEntity, patchInfo);
                     return Response.ok().build();
                 })
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
-    private Pair<EmailNotificationType, String> getNotificationTypeFromPath(PatchRequestBuilder.PatchRequest emailPatchRequest) {
-        String[] paths = emailPatchRequest.getPath().split("/");
+    private NotificationPatchInfo getNotificationTypeFromPath(PatchRequestBuilder.PatchRequest emailPatchRequest) {
+        List<String> pathTokens = emailPatchRequest.getPathTokens();
         // PP-4111 remove after selfservice is merged
-        if (paths.length < 2) {
-            return Pair.of(EmailNotificationType.PAYMENT_CONFIRMED, "enabled");
+        if (pathTokens.size() < 2) {
+            return new NotificationPatchInfo(EmailNotificationType.PAYMENT_CONFIRMED, "enabled", emailPatchRequest.getValue());
         }
-        return Pair.of(EmailNotificationType.fromString(paths[1]), paths[2]);
-
+        return new NotificationPatchInfo(EmailNotificationType.fromString(pathTokens.get(0)), pathTokens.get(1), emailPatchRequest.getValue());
     }
-    private void patch(EmailNotificationEntity emailNotificationEntity, String attribute, PatchRequestBuilder.PatchRequest emailPatchRequest) {
-        switch (attribute) {
+    
+    private void patch(EmailNotificationEntity emailNotificationEntity, NotificationPatchInfo patchInfo) {
+        switch (patchInfo.getPath()) {
             case EMAIL_NOTIFICATION_ENABLED:
-                emailNotificationEntity.setEnabled(Boolean.parseBoolean(emailPatchRequest.getValue()));
+                emailNotificationEntity.setEnabled(Boolean.parseBoolean(patchInfo.getValue()));
                 break;
             case EMAIL_NOTIFICATION_TEMPLATE_BODY_OLD:
             case EMAIL_NOTIFICATION_TEMPLATE_BODY:
-                emailNotificationEntity.setTemplateBody(emailPatchRequest.getValue());
+                emailNotificationEntity.setTemplateBody(patchInfo.getValue());
                 break;
         }
     }
-
-    private List<String> buildValidPaths(List<String> resources, List<String> attributes) {
-        List<String> result = new ArrayList<>();
-        resources.forEach(res -> attributes.forEach(att -> result.add("/" + res.toLowerCase() + "/" + att)));
-        // PP-4111 remove this after selfservice is merged, backward compatible
-        result.add(EMAIL_NOTIFICATION_ENABLED);
-        return result;
+    
+    private EmailNotificationEntity newDisabledEmailNotificationEntityWithNoTemplate(GatewayAccountEntity gatewayAccount, EmailNotificationType type) {
+        EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(gatewayAccount, null, false);
+        gatewayAccount.addNotification(type, emailNotificationEntity);
+        return  emailNotificationEntity;
     }
 
+    private class NotificationPatchInfo {
+
+        private EmailNotificationType emailNotificationType;
+        private String path;
+        private String value;
+
+        public NotificationPatchInfo(EmailNotificationType emailNotificationType, String path, String value) {
+            this.emailNotificationType = emailNotificationType;
+            this.path = path;
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public EmailNotificationType getEmailNotificationType() {
+            return emailNotificationType;
+        }
+
+        public String getPath() {
+            return path;
+        }
+    }
 
 }

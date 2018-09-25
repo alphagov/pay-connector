@@ -493,8 +493,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
-                .statusCode(BAD_REQUEST.getStatusCode())
-                .body("errors", is("[Operation [insert] is not valid for path [op]]"));
+                .statusCode(BAD_REQUEST.getStatusCode());
     }
 
     @Test
@@ -511,7 +510,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void shouldReturn500_whenEmailCollectionModeIsUpdated_withWrongValue() throws Exception{
+    public void shouldReturn400_whenEmailCollectionModeIsUpdated_withWrongValue() throws Exception{
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "email_collection_mode",
@@ -520,7 +519,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
-                .statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
+                .statusCode(BAD_REQUEST.getStatusCode());
     }
 
     @Test

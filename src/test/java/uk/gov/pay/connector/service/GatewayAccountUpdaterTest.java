@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.PatchRequest;
 import uk.gov.pay.connector.model.domain.EmailCollectionMode;
@@ -19,6 +21,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 
 public class GatewayAccountUpdaterTest {
 
@@ -45,8 +49,8 @@ public class GatewayAccountUpdaterTest {
         Optional<GatewayAccount> optionalGatewayAcc = updater.doPatch(gatewayAccountId, request);
 
         assertThat(optionalGatewayAcc.isPresent(), is(true));
-        verify(entity, times(1)).setNotifySettings(settings);
-        verify(gatewayAccountDao, times(1)).merge(entity);
+        verify(entity).setNotifySettings(settings);
+        verify(gatewayAccountDao).merge(entity);
     }
 
     @Test
@@ -61,8 +65,8 @@ public class GatewayAccountUpdaterTest {
         Optional<GatewayAccount> optionalGatewayAcc = updater.doPatch(gatewayAccountId, request);
 
         assertThat(optionalGatewayAcc.isPresent(), is(true));
-        verify(entity, times(1)).setNotifySettings(null);
-        verify(gatewayAccountDao, times(1)).merge(entity);
+        verify(entity).setNotifySettings(null);
+        verify(gatewayAccountDao).merge(entity);
     }
 
     @Test
@@ -78,7 +82,8 @@ public class GatewayAccountUpdaterTest {
         Optional<GatewayAccount> optionalGatewayAcc = updater.doPatch(gatewayAccountId, request);
 
         assertThat(optionalGatewayAcc.isPresent(), is(true));
-        verify(entity, times(1)).setEmailCollectionMode(EmailCollectionMode.OFF);
-        verify(gatewayAccountDao, times(1)).merge(entity);
+        InOrder inOrder = Mockito.inOrder(entity, gatewayAccountDao);
+        inOrder.verify(entity).setEmailCollectionMode(EmailCollectionMode.OFF);
+        inOrder.verify(gatewayAccountDao).merge(entity);
     }
 }

@@ -36,7 +36,7 @@ public class NotificationService {
     private final RefundDao refundDao;
     private final PaymentProviders paymentProviders;
     private final DnsUtils dnsUtils;
-    private UserNotificationService userNotificationService;
+    private final UserNotificationService userNotificationService;
 
     @Inject
     public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils, UserNotificationService userNotificationService) {

@@ -5,6 +5,7 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,6 +23,7 @@ import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.service.notify.NotifyClientFactory;
 import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
+import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.service.notify.NotificationClient;
 import uk.gov.service.notify.NotificationClientException;
 import uk.gov.service.notify.SendEmailResponse;
@@ -31,12 +33,16 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.UUID.randomUUID;
 import static junit.framework.TestCase.fail;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.anyString;
@@ -88,44 +94,41 @@ public class UserNotificationServiceTest {
 
     @Test
     public void shouldSendPaymentConfirmationEmailIfEmailNotifyIsEnabled() throws Exception {
+        UUID notificationId = randomUUID();
         when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
         when(mockNotifyClientFactoryProvider.clientFactory()).thenReturn(mockNotifyClientFactory);
         when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
-        when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(notificationId);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
                 .build();
+        HashMap<String, String> personalisation = new HashMap<>();
+        personalisation.put("serviceReference", "This is a reference");
+        personalisation.put("date", "1 January 2016 - 10:23:12");
+        personalisation.put("description", "This is a description");
+        personalisation.put("serviceName", "MyService");
+        personalisation.put("customParagraph", "^ template body");
+        personalisation.put("amount", "5.00");
+        when(mockNotifyClient.sendEmail(mockNotifyConfiguration.getEmailTemplateId(), 
+                charge.getEmail(), 
+                personalisation, 
+                null)).thenReturn(mockNotificationCreatedResponse);
+        
         userNotificationService = new UserNotificationService(mockNotifyClientFactoryProvider, mockConfig, mockEnvironment);
-        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge);
-        idF.get(1000, TimeUnit.SECONDS);
-
-        HashMap<String, String> map = new HashMap<>();
-
-        map.put("serviceReference", "This is a reference");
-        map.put("date", "1 January 2016 - 10:23:12");
-        map.put("description", "This is a description");
-        map.put("serviceName", "MyService");
-        map.put("customParagraph", "^ template body");
-        map.put("amount", "5.00");
-
-        verify(mockNotifyClient).sendEmail(
-                mockNotifyConfiguration.getEmailTemplateId(),
-                charge.getEmail(),
-                map, null
-        );
+        Optional<String> maybeNotificationId = userNotificationService.sendPaymentConfirmedEmail(charge).get(1000, TimeUnit.SECONDS);
+        assertThat(maybeNotificationId.get(), is(notificationId.toString()));
     }
 
     @Test
     public void shouldSendRefundIssuedEmailIfEmailNotifyIsEnabled() throws Exception {
+        UUID notificationId = randomUUID();
         when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
         when(mockNotifyClientFactoryProvider.clientFactory()).thenReturn(mockNotifyClientFactory);
         when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
-        when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(notificationId);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
@@ -137,22 +140,20 @@ public class UserNotificationServiceTest {
                 .withCreatedDate(ZonedDateTime.of(2017, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
                 .withCharge(charge).build();
 
-        userNotificationService = new UserNotificationService(mockNotifyClientFactoryProvider, mockConfig, mockEnvironment);
-        Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refundEntity);
-        idF.get(1000, TimeUnit.SECONDS);
+        HashMap<String, String> personalisation = new HashMap<>();
+        personalisation.put("serviceReference", "This is a reference");
+        personalisation.put("date", "1 January 2017 - 10:23:12");
+        personalisation.put("description", "This is a description");
+        personalisation.put("amount", "1.00");
 
-        HashMap<String, String> map = new HashMap<>();
-
-        map.put("serviceReference", "This is a reference");
-        map.put("date", "1 January 2017 - 10:23:12");
-        map.put("description", "This is a description");
-        map.put("amount", "1.00");
-
-        verify(mockNotifyClient).sendEmail(
-                mockNotifyConfiguration.getRefundIssuedEmailTemplateId(),
+        when(mockNotifyClient.sendEmail(mockNotifyConfiguration.getRefundIssuedEmailTemplateId(),
                 charge.getEmail(),
-                map, null
-        );
+                personalisation,
+                null)).thenReturn(mockNotificationCreatedResponse);
+
+        userNotificationService = new UserNotificationService(mockNotifyClientFactoryProvider, mockConfig, mockEnvironment);
+        Optional<String> maybeNotificationId = userNotificationService.sendRefundIssuedEmail(refundEntity).get(1000, TimeUnit.SECONDS);
+        assertThat(maybeNotificationId.get(), is(notificationId.toString()));
     }
     
     @Test

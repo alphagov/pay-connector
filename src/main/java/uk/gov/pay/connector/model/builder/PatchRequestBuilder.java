@@ -3,11 +3,14 @@ package uk.gov.pay.connector.model.builder;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+
+import static java.util.Arrays.asList;
 
 public class PatchRequestBuilder {
     private final Map<String, String> patchRequestMap;
     private List<String> validOps;
-    private List<String> validPaths;
+    private Set<String> validPaths;
 
     private enum PatchField {
         OP("op"),
@@ -39,7 +42,7 @@ public class PatchRequestBuilder {
         return this;
     }
 
-    public PatchRequestBuilder withValidPaths(List<String> validPaths) {
+    public PatchRequestBuilder withValidPaths(Set<String> validPaths) {
         this.validPaths = validPaths;
         return this;
     }
@@ -59,9 +62,9 @@ public class PatchRequestBuilder {
         private String path;
         private String value;
         private List<String> validOps;
-        private List<String> validPaths;
+        private Set<String> validPaths;
 
-        private PatchRequest(String op, String path, String value, List<String> validOps, List<String> validPaths) throws IllegalArgumentException{
+        private PatchRequest(String op, String path, String value, List<String> validOps, Set<String> validPaths) throws IllegalArgumentException{
             this.validOps = validOps;
             this.validPaths = validPaths;
             setOp(op);
@@ -93,16 +96,20 @@ public class PatchRequestBuilder {
             return value;
         }
 
-        private  boolean isValidOp(String op) {
+        private boolean isValidOp(String op) {
             return Optional.of(validOps)
                     .map(validOps -> validOps.contains(op))
                     .orElse(true);
         }
 
-        private  boolean isValidPath(String path) {
+        private boolean isValidPath(String path) {
             return Optional.of(validPaths)
                     .map(validOps -> validOps.contains(path))
                     .orElse(true);
+        }
+        
+        public List<String> getPathTokens() {
+            return asList(path.substring(1).split("/"));
         }
     }
 }

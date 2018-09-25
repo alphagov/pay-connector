@@ -8,12 +8,12 @@ import org.junit.Test;
 import uk.gov.pay.connector.exception.ValidationException;
 import uk.gov.pay.connector.validations.RequestValidator;
 
-import static junit.framework.TestCase.fail;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.fail;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_NOTIFY_API_TOKEN;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_NOTIFY_TEMPLATE_ID;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_OPERATION;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_OPERATION_PATH;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_VALUE;
@@ -77,23 +77,39 @@ public class GatewayAccountRequestValidatorTest {
     }
 
     @Test
-    public void shouldNotThrow_whenAllValidationsPassed() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
-                        FIELD_OPERATION_PATH, "notify_settings",
-                        FIELD_VALUE, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "anapitoken",
-                                FIELD_NOTIFY_TEMPLATE_ID, "atemplateid")));
-        
-        validator.validatePatchRequest(jsonNode);
-    }
-
-    @Test
-    public void shouldNotThrow_whenPathIsEmailCollectionMode() {
+    public void shouldThrow_whenEmailCollectionModeIsInvalid() {
         JsonNode jsonNode = new ObjectMapper()
                 .valueToTree(ImmutableMap.of(
                         FIELD_OPERATION, "replace",
                         FIELD_OPERATION_PATH, "email_collection_mode",
                         FIELD_VALUE,"someValue"));
+        try {
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException validationException) {
+            assertThat(validationException.getErrors().size(), is(1));
+            assertThat(validationException.getErrors(), hasItems("Value [someValue] is not valid for [email_collection_mode]"));
+        }
+    }
+
+    @Test
+    public void shouldNotThrow_whenAllValidationsPassed() {
+        JsonNode jsonNode = new ObjectMapper()
+                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
+                        FIELD_OPERATION_PATH, "notify_settings",
+                        FIELD_VALUE, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "anapitoken",
+                                FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID, "atemplateid")));
+        
+        validator.validatePatchRequest(jsonNode);
+    }
+
+    @Test
+    public void shouldNotThrow_whenPathIsValidEmailCollectionMode() {
+        JsonNode jsonNode = new ObjectMapper()
+                .valueToTree(ImmutableMap.of(
+                        FIELD_OPERATION, "replace",
+                        FIELD_OPERATION_PATH, "email_collection_mode",
+                        FIELD_VALUE,"MANDATORY"));
         validator.validatePatchRequest(jsonNode);
     }
 
@@ -103,7 +119,7 @@ public class GatewayAccountRequestValidatorTest {
                 .valueToTree(ImmutableMap.of(FIELD_OPERATION, "delete",
                         FIELD_OPERATION_PATH, "notify_settings",
                         FIELD_VALUE, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "anapitoken",
-                                FIELD_NOTIFY_TEMPLATE_ID, "atemplateid")));
+                                FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID, "atemplateid")));
         try {
             validator.validatePatchRequest(jsonNode);
             fail( "Expected ValidationException" );

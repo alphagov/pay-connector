@@ -33,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.Runtime.getRuntime;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 
 public class UserNotificationService {
@@ -66,9 +65,7 @@ public class UserNotificationService {
     }
 
     private Future<Optional<String>> sendEmail(EmailNotificationType emailNotificationType, ChargeEntity chargeEntity, HashMap<String, String> personalisation) {
-        Boolean isEmailEnabled = Optional.ofNullable(chargeEntity.getGatewayAccount().
-                getEmailNotifications()
-                .get(emailNotificationType))
+        boolean isEmailEnabled = Optional.ofNullable(chargeEntity.getGatewayAccount().getEmailNotifications().get(emailNotificationType))
                 .map(EmailNotificationEntity::isEnabled)
                 .orElse(false);
         if (emailNotifyGloballyEnabled && isEmailEnabled) {
@@ -76,9 +73,9 @@ public class UserNotificationService {
             Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
             return executorService.submit(() -> {
                 try {
-                    Pair<NotificationClient, String> notifyClientSettings = getNotifyClientSettings(emailNotificationType, chargeEntity);
-                    SendEmailResponse response = notifyClientSettings.getLeft()
-                            .sendEmail(notifyClientSettings.getRight(), emailAddress, personalisation, null);
+                    NotifyClientSettings notifyClientSettings = getNotifyClientSettings(emailNotificationType, chargeEntity);
+                    SendEmailResponse response = notifyClientSettings.getClient()
+                            .sendEmail(notifyClientSettings.getTemplateId(), emailAddress, personalisation, null);
                     return Optional.of(response.getNotificationId().toString());
                 } catch (NotificationClientException e) {
                     logger.error("Failed to send confirmation email - charge_external_id=" + chargeEntity.getExternalId(), e);
@@ -93,31 +90,47 @@ public class UserNotificationService {
         return CompletableFuture.completedFuture(Optional.empty());
     }
 
-    private String getCustomTemplate(EmailNotificationType type, Map<String, String > notifySettings){
-        if (notifySettings == null) {
-            return null;
-        }
-        switch (type) {
-            case REFUND_ISSUED:
-                return notifySettings.get("refund_issued_template_id");
-            case PAYMENT_CONFIRMED:
-                return notifySettings.get("template_id");
-            default:
-                return null;
-        }
-    }
 
-    private Pair<NotificationClient, String> getNotifyClientSettings(EmailNotificationType emailNotificationType, ChargeEntity chargeEntity) {
+    private NotifyClientSettings getNotifyClientSettings(EmailNotificationType emailNotificationType, ChargeEntity chargeEntity) {
+        // todo introduce type for notify settings instead of Map
         Map<String, String> notifySettings = chargeEntity.getGatewayAccount().getNotifySettings();
         NotifyClientFactory notifyClientFactory = notifyClientFactoryProvider.clientFactory();
-        String customTemplateId = getCustomTemplate(emailNotificationType, notifySettings);
-        if (isNotBlank(customTemplateId)) {
-            return Pair.of(
-                    notifyClientFactory.getInstance(notifySettings.get("api_token")),
-                    customTemplateId);
+        switch (emailNotificationType) {
+            case REFUND_ISSUED:
+                return NotifyClientSettings.of(notifySettings, notifyClientFactory, "refund_issued_template_id", refundIssuedEmailTemplateId);
+            case PAYMENT_CONFIRMED:
+                return NotifyClientSettings.of(notifySettings, notifyClientFactory, "template_id", confirmationEmailTemplateId);
         }
-        return Pair.of(notifyClientFactory.getInstance(), getTemplateIdFor(emailNotificationType));
+        return null;
     }
+    
+    private static class NotifyClientSettings {
+        private NotificationClient client;
+        private String templateId;
+        
+        private NotifyClientSettings(NotificationClient client, String templateId) {
+            this.client = client;
+            this.templateId = templateId;
+        }
+
+        public NotificationClient getClient() {
+            return client;
+        }
+
+        public String getTemplateId() {
+            return templateId;
+        }
+
+        public static NotifyClientSettings of(Map<String, String> notifySettings, NotifyClientFactory notifyClientFactory, String customTemplateId, String payTemplateId) {
+            if (notifySettings == null || !notifySettings.containsKey(customTemplateId)) {
+                return new NotifyClientSettings(notifyClientFactory.getInstance(), payTemplateId);
+            } else {
+                return new NotifyClientSettings(notifyClientFactory.getInstance(notifySettings.get("api_token")), notifySettings.get(customTemplateId));
+            }
+        }
+
+    }
+    
 
     private void readEmailConfig(ConnectorConfiguration configuration) {
         emailNotifyGloballyEnabled = configuration.getNotifyConfiguration().isEmailNotifyEnabled();
@@ -130,16 +143,6 @@ public class UserNotificationService {
         if (emailNotifyGloballyEnabled && (isBlank(confirmationEmailTemplateId) || isBlank(refundIssuedEmailTemplateId))) {
             throw new RuntimeException("Check notify config, need to set 'emailTemplateId' (payment confirmation email) and 'refundIssuedEmailTemplateId' properties");
         }
-    }
-
-    private String getTemplateIdFor(EmailNotificationType type) {
-        switch (type){
-            case REFUND_ISSUED:
-                return refundIssuedEmailTemplateId;
-            case PAYMENT_CONFIRMED:
-                return confirmationEmailTemplateId;
-        }
-        return null;
     }
 
     private HashMap<String, String> buildConfirmationEmailPersonalisationFrom(ChargeEntity charge) {
