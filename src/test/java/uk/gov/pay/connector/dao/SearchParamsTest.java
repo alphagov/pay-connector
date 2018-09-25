@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.dao;
 
 import org.junit.Test;
+import uk.gov.pay.connector.model.CardHolderName;
 import uk.gov.pay.connector.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.ServicePaymentReference;
@@ -52,6 +53,7 @@ public class SearchParamsTest {
                         "&state=created" +
                         "&first_digits_card_number=123456" +
                         "&last_digits_card_number=1234" +
+                        "&cardholder_name=bla" +
                         "&card_brand=visa";
           
 
@@ -65,6 +67,7 @@ public class SearchParamsTest {
                 .withFirstDigitsCardNumber(FirstDigitsCardNumber.of("123456"))
                 .withReferenceLike(ServicePaymentReference.of("ref"))
                 .withEmailLike("user")
+                .withCardHolderNameLike(CardHolderName.of("bla"))
                 .withFromDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[UTC]"))
                 .withToDate(ZonedDateTime.parse("2012-07-30T12:30:40Z[UTC]"));
 
@@ -141,6 +144,7 @@ public class SearchParamsTest {
                         "&refund_states=submitted" +
                         "&first_digits_card_number=695943" +
                         "&last_digits_card_number=6749" +
+                        "&cardholder_name=abc" +
                         "&card_brand=visa" +
                         "&card_brand=master-card";
 
@@ -149,6 +153,7 @@ public class SearchParamsTest {
                 .withTransactionType(PAYMENT)
                 .withFirstDigitsCardNumber(FirstDigitsCardNumber.of("695943"))
                 .withLastDigitsCardNumber(LastDigitsCardNumber.of("6749"))
+                .withCardHolderNameLike(CardHolderName.of("abc"))
                 .addExternalChargeStates(singletonList("created"))
                 .addExternalRefundStates(singletonList("submitted"))
                 .withCardBrands(asList("visa", "master-card"))
