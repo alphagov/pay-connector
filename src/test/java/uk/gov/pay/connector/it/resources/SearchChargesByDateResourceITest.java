@@ -39,7 +39,7 @@ public class SearchChargesByDateResourceITest {
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "2016-02-03T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(0));
@@ -52,7 +52,7 @@ public class SearchChargesByDateResourceITest {
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "2016-02-02T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(1));
@@ -67,7 +67,7 @@ public class SearchChargesByDateResourceITest {
                 .withQueryParam("from_date", "2016-02-01T00:00:00Z")
                 .withQueryParam("to_date", "2016-02-03T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(1))
@@ -88,7 +88,7 @@ public class SearchChargesByDateResourceITest {
                 .withAccountId(accountId)
                 .withQueryParam("to_date", "2016-02-02T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(0));
@@ -101,7 +101,7 @@ public class SearchChargesByDateResourceITest {
                 .withAccountId(accountId)
                 .withQueryParam("to_date", "2016-02-01T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(0));
@@ -117,7 +117,7 @@ public class SearchChargesByDateResourceITest {
                 .withQueryParam("from_date", "2016-02-01T00:00:00Z")
                 .withQueryParam("to_date", "2016-02-03T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2));
@@ -131,7 +131,7 @@ public class SearchChargesByDateResourceITest {
                 .withQueryParam("from_date", "2016-02-03T00:00:00Z")
                 .withQueryParam("to_date", "2016-02-01T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(0));
@@ -144,7 +144,7 @@ public class SearchChargesByDateResourceITest {
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "2200-02-03T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(0));
@@ -158,7 +158,7 @@ public class SearchChargesByDateResourceITest {
                 .withQueryParam("from_date", "2016-02-01T00:00:00Z")
                 .withQueryParam("to_date", "2016-02-01T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(0));
@@ -173,7 +173,7 @@ public class SearchChargesByDateResourceITest {
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "2016-02-01T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2));
@@ -188,7 +188,7 @@ public class SearchChargesByDateResourceITest {
                 .withAccountId(accountId)
                 .withQueryParam("to_date", "2016-02-03T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(1));
@@ -202,7 +202,7 @@ public class SearchChargesByDateResourceITest {
         chargeApi
                 .withAccountId(accountId)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(3));

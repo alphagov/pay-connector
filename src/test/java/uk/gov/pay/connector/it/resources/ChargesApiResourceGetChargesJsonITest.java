@@ -54,8 +54,6 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     private static final String PROVIDER_NAME = "sandbox";
     private static final String RETURN_URL = "http://service.url/success-page/";
     private static final String EMAIL = randomAlphabetic(242) + "@example.com";
-    private String returnUrl = "http://service.url/success-page/";
-    private String email = randomAlphabetic(242) + "@example.com";
 
     private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
 
@@ -85,16 +83,16 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
         UUID card = UUID.randomUUID();
         app.getDatabaseTestHelper().addCardType(card, "label", "CREDIT", "brand", false);
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null,
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null,
                 ServicePaymentReference.of("My reference"), createdDate, SupportedLanguage.WELSH, true);
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "VISA", "1234", "123456", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
 
         String description = "Test description";
-        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), returnUrl, description,
+        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), RETURN_URL, description,
                 ServicePaymentReference.of("My reference"), createdDate, externalChargeId);
-        app.getDatabaseTestHelper().addChargeTransaction(chargeId, null, Long.valueOf(accountId), AMOUNT, chargeStatus, chargeId, createdDate, email);
+        app.getDatabaseTestHelper().addChargeTransaction(chargeId, null, Long.valueOf(accountId), AMOUNT, chargeStatus, chargeId, createdDate, EMAIL);
         app.getDatabaseTestHelper().addCard(chargeId, "VISA", chargeId);
 
         getChargeApi
@@ -126,16 +124,16 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
         UUID card = UUID.randomUUID();
         app.getDatabaseTestHelper().addCardType(card, "label", "CREDIT", "brand", false);
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null,
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null,
                 ServicePaymentReference.of("My reference"), createdDate);
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "visa", null, null, null, null,
                 null, null, null, null, null, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
 
-        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), returnUrl, "Test description",
+        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), RETURN_URL, "Test description",
                 ServicePaymentReference.of("My reference"), createdDate, externalChargeId);
-        app.getDatabaseTestHelper().addChargeTransaction(chargeId, null, Long.valueOf(accountId), AMOUNT, chargeStatus, chargeId, createdDate, email);
+        app.getDatabaseTestHelper().addChargeTransaction(chargeId, null, Long.valueOf(accountId), AMOUNT, chargeStatus, chargeId, createdDate, EMAIL);
         app.getDatabaseTestHelper().addCard(chargeId, "visa", chargeId);
 
         getChargeApi

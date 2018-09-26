@@ -1,15 +1,16 @@
 package uk.gov.pay.connector.service;
 
 
-import javax.ws.rs.core.MediaType;
 import uk.gov.pay.connector.model.OrderRequestType;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.util.templates.PayloadBuilder;
 
+import javax.ws.rs.core.MediaType;
+
 import static org.apache.commons.lang3.StringUtils.defaultString;
 
-abstract public class OrderRequestBuilder {
-    static public class TemplateData {
+public abstract class OrderRequestBuilder {
+    public static class TemplateData {
         private String transactionId;
         private String merchantCode;
         private String description;
