@@ -12,7 +12,7 @@ public class AuthCardDetails implements AuthorisationDetails {
     private String cardBrand;
     private String userAgentHeader;
     private String acceptHeader;
-    private CardTypeEntity.Type cardType;
+    private CardType cardType;
     private Boolean corporateCard;
 
     public static AuthCardDetails anAuthCardDetails() {
@@ -65,7 +65,7 @@ public class AuthCardDetails implements AuthorisationDetails {
     }
 
     @JsonProperty("card_type")
-    public void setCardType(CardTypeEntity.Type cardType) {
+    public void setCardType(CardType cardType) {
         this.cardType = cardType;
     }
 
@@ -102,10 +102,10 @@ public class AuthCardDetails implements AuthorisationDetails {
     }
 
     public Boolean isCorporateCard() {
-        return corporateCard == null ? Boolean.FALSE : corporateCard;
+        return corporateCard;
     }
 
-    public CardTypeEntity.Type getCardType() {
-        return cardType == null ? CardTypeEntity.Type.DEBIT : cardType;
+    public CardType getCardType() {
+        return cardType;
     }
 }

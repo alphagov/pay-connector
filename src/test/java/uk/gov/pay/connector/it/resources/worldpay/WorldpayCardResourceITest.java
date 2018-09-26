@@ -3,13 +3,17 @@ package uk.gov.pay.connector.it.resources.worldpay;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.model.domain.CardType;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 public class WorldpayCardResourceITest extends ChargingITestBase {
 
@@ -41,7 +45,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         worldpay.mockAuthorisationSuccess();
 
-        String corporateCreditAuthDetails = buildCorporateJsonAuthorisationDetailsFor(Boolean.TRUE, CardTypeEntity.Type.CREDIT);
+        String corporateCreditAuthDetails = buildCorporateJsonAuthorisationDetailsFor(CardType.CREDIT);
 
         givenSetup()
                 .body(corporateCreditAuthDetails)
