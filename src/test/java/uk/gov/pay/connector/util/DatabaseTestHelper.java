@@ -90,6 +90,10 @@ public class DatabaseTestHelper {
         addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount);
     }
 
+    public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount) {
+        addGatewayAccount(accountId, paymentProvider, credentials, "a cool service", TEST, "aDescription", "8b02c7e542e74423aa9e6d0f0628fd58", corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount);
+    }
+
     public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl,
                           String transactionId) {
         addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description",
@@ -288,6 +292,15 @@ public class DatabaseTestHelper {
                         .bind("address_country", country)
                         .execute()
         );
+    }
+
+    public void updateCorporateSurcharge(Long chargeId, Long corporateSurcharge) {
+        jdbi.withHandle(handle ->
+                handle
+                        .createStatement("UPDATE charges SET corporate_surcharge =:corporate_surcharge WHERE id=:id")
+                        .bind("id", chargeId)
+                        .bind("corporate_surcharge", corporateSurcharge)
+                        .execute());
     }
 
     public void updateCharge3dsDetails(Long chargeId, String issuerUrl, String paRequest, String htmlOut) {
@@ -612,6 +625,107 @@ public class DatabaseTestHelper {
                         .first()
         );
         return new Gson().fromJson(jsonString, Map.class);
+    }
+
+    public void addPaymentRequest(long id,
+                                  long amount,
+                                  long gatewaysAccountId,
+                                  String returnUrl,
+                                  String description,
+                                  ServicePaymentReference reference,
+                                  ZonedDateTime createdDate,
+                                  String externalId
+    ) {
+        jdbi.withHandle(h ->
+                h.update(
+                        "INSERT INTO payment_requests(" +
+                                "id," +
+                                "amount," +
+                                "gateway_account_id," +
+                                "return_url," +
+                                "description," +
+                                "reference," +
+                                "created_date," +
+                                "external_id" +
+                                ")" +
+                                "VALUES (" +
+                                "?, ?, ?, ?, ?, ?, ?, ?" +
+                                ")",
+                        id,
+                        amount,
+                        gatewaysAccountId,
+                        returnUrl,
+                        description,
+                        reference.toString(),
+                        Timestamp.from(createdDate.toInstant()),
+                        externalId
+                )
+        );
+    }
+
+    @Deprecated // Use the addChargeTransaction above that sets the gatewayAccountId
+    public void addChargeTransaction(
+            long transactionId,
+            String gatewayTransactionId,
+            Long amount,
+            ChargeStatus chargeStatus,
+            long paymentRequestId
+    ) {
+        addChargeTransaction(transactionId, gatewayTransactionId, null, amount, chargeStatus, paymentRequestId, ZonedDateTime.now(), "some@email.com");
+    }
+
+    public void addChargeTransaction(
+            long transactionId,
+            String gatewayTransactionId,
+            Long gatewayAccountId,
+            Long amount,
+            ChargeStatus chargeStatus,
+            long paymentRequestId,
+            ZonedDateTime dateCreated,
+            String email
+    ) {
+        jdbi.withHandle(h ->
+                h.update(
+                        "INSERT INTO transactions(" +
+                                "id," +
+                                "payment_request_id," +
+                                "gateway_transaction_id," +
+                                "gateway_account_id," +
+                                "amount," +
+                                "status," +
+                                "operation, " +
+                                "created_date," +
+                                "email" +
+                                ")" +
+                                "VALUES (" +
+                                "?, ?, ?, ?, ?, ?, 'CHARGE', ?, ?" +
+                                ")",
+                        transactionId,
+                        paymentRequestId,
+                        gatewayTransactionId,
+                        gatewayAccountId,
+                        amount,
+                        chargeStatus.name(),
+                        Timestamp.from(dateCreated.toInstant()),
+                        email
+                )
+        );
+    }
+
+    public void addCard(Long cardId, String cardBrand, Long transactionId) {
+        jdbi.withHandle(h -> h.update(
+                "INSERT INTO cards(" +
+                        "id," +
+                        "card_brand," +
+                        "transaction_id" +
+                        ")" +
+                        "VALUES (" +
+                        "?, ?, ?" +
+                        ")",
+                cardId,
+                cardBrand,
+                transactionId)
+        );
     }
 
     public void truncateAllData() {

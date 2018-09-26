@@ -12,6 +12,8 @@ public class AuthCardDetails implements AuthorisationDetails {
     private String cardBrand;
     private String userAgentHeader;
     private String acceptHeader;
+    private CardTypeEntity.Type cardType;
+    private Boolean corporateCard;
 
     public static AuthCardDetails anAuthCardDetails() {
         return new AuthCardDetails();
@@ -57,6 +59,16 @@ public class AuthCardDetails implements AuthorisationDetails {
         this.acceptHeader = acceptHeader;
     }
 
+    @JsonProperty("corporate_card")
+    public void setCorporateCard(Boolean corporateCard) {
+        this.corporateCard = corporateCard;
+    }
+
+    @JsonProperty("card_type")
+    public void setCardType(CardTypeEntity.Type cardType) {
+        this.cardType = cardType;
+    }
+
     public String getCardNo() {
         return cardNo;
     }
@@ -87,5 +99,13 @@ public class AuthCardDetails implements AuthorisationDetails {
 
     public String getAcceptHeader() {
         return acceptHeader;
+    }
+
+    public Boolean isCorporateCard() {
+        return corporateCard == null ? Boolean.FALSE : corporateCard;
+    }
+
+    public CardTypeEntity.Type getCardType() {
+        return cardType == null ? CardTypeEntity.Type.DEBIT : cardType;
     }
 }

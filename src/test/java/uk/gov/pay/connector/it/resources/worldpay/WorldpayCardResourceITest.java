@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources.worldpay;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.model.domain.CardTypeEntity;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -19,13 +20,31 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldAuthoriseCharge_ForValidAuthorisationDetails() throws Exception {
+    public void shouldAuthoriseChargeWithoutCorporateCard_ForValidAuthorisationDetails() {
 
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         worldpay.mockAuthorisationSuccess();
 
         givenSetup()
                 .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
+    }
+
+    @Test
+    public void shouldAuthoriseChargeWithCorporateCard_ForValidAuthorisationDetails() {
+
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        worldpay.mockAuthorisationSuccess();
+
+        String corporateCreditAuthDetails = buildCorporateJsonAuthorisationDetailsFor(Boolean.TRUE, CardTypeEntity.Type.CREDIT);
+
+        givenSetup()
+                .body(corporateCreditAuthDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
                 .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))

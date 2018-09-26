@@ -115,11 +115,11 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @MapKeyEnumerated(value = EnumType.STRING)
     @JsonManagedReference
     private Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
-    
+
     @Column(name = "email_collection_mode")
     @Enumerated(EnumType.STRING)
     private EmailCollectionMode emailCollectionMode = EmailCollectionMode.MANDATORY;
-    
+
     @OneToOne(mappedBy = "accountEntity", cascade = CascadeType.PERSIST)
     private NotificationCredentials notificationCredentials;
 
@@ -216,7 +216,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public void addNotification(EmailNotificationType type, EmailNotificationEntity emailNotificationEntity) {
         emailNotifications.put(type, emailNotificationEntity);
     }
-    
+
     public void setDescription(String description) {
         this.description = description;
     }
@@ -240,7 +240,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public void setCardTypes(List<CardTypeEntity> cardTypes) {
         this.cardTypes = cardTypes;
     }
-    
+
     public void setRequires3ds(boolean requires3ds) {
         this.requires3ds = requires3ds;
     }
@@ -300,4 +300,11 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return emailCollectionMode;
     }
 
+    public void setCorporateCreditCardSurchargeAmount(long corporateCreditCardSurchargeAmount) {
+        this.corporateCreditCardSurchargeAmount = corporateCreditCardSurchargeAmount;
+    }
+
+    public void setCorporateDebitCardSurchargeAmount(long corporateDebitCardSurchargeAmount) {
+        this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
+    }
 }
