@@ -89,6 +89,10 @@ public class DatabaseTestHelper {
         addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount);
     }
 
+    public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount) {
+        addGatewayAccount(accountId, paymentProvider, credentials, "a cool service", TEST, "aDescription", "8b02c7e542e74423aa9e6d0f0628fd58", corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount);
+    }
+
     public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl,
                           String transactionId) {
         addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description",
@@ -287,6 +291,15 @@ public class DatabaseTestHelper {
                         .bind("address_country", country)
                         .execute()
         );
+    }
+
+    public void updateCorporateSurcharge(Long chargeId, Long corporateSurcharge) {
+        jdbi.withHandle(handle ->
+                handle
+                        .createStatement("UPDATE charges SET corporate_surcharge =:corporate_surcharge WHERE id=:id")
+                        .bind("id", chargeId)
+                        .bind("corporate_surcharge", corporateSurcharge)
+                        .execute());
     }
 
     public void updateCharge3dsDetails(Long chargeId, String issuerUrl, String paRequest, String htmlOut) {

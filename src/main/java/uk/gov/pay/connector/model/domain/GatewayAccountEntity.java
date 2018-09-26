@@ -232,6 +232,14 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         this.emailNotification = emailNotification;
     }
 
+    public void setCorporateCreditCardSurchargeAmount(long corporateCreditCardSurchargeAmount) {
+        this.corporateCreditCardSurchargeAmount = corporateCreditCardSurchargeAmount;
+    }
+
+    public void setCorporateDebitCardSurchargeAmount(long corporateDebitCardSurchargeAmount) {
+        this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
+    }
+
     public void setRequires3ds(boolean requires3ds) {
         this.requires3ds = requires3ds;
     }

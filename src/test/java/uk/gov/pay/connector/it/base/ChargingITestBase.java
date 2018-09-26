@@ -14,6 +14,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.CardFixture;
+import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -46,6 +47,17 @@ import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class ChargingITestBase {
 
+    private static final String ADDRESS_LINE_1 = "The Money Pool";
+    private static final String ADDRESS_LINE_2 = "Moneybags Avenue";
+    private static final String ADDRESS_CITY = "London";
+    private static final String ADDRESS_COUNTY = "Greater London";
+    private static final String ADDRESS_POSTCODE = "DO11 4RS";
+    private static final String ADDRESS_COUNTRY_GB = "GB";
+    private static final String CARD_HOLDER_NAME = "Scrooge McDuck";
+    private static final String CARD_NUMBER = "4242424242424242";
+    private static final String CVC = "123";
+    private static final String EXPIRY_DATE = "11/99";
+    private static final String CARD_BRAND = "cardBrand";
     protected RestAssuredClient connectorRestApi;
     protected static final long AMOUNT = 6234L;
     protected WorldpayMockClient worldpay;
@@ -53,7 +65,7 @@ public class ChargingITestBase {
     protected EpdqMockClient epdq;
     protected final String accountId;
     private final String paymentProvider;
-    private Map<String, String> credentials;
+    protected Map<String, String> credentials;
     private int port = PortFactory.findFreePort();
 
     @Rule
@@ -95,14 +107,14 @@ public class ChargingITestBase {
     protected static String authorisationDetailsWithMinimalAddress(String cardNumber, String cardBrand) {
         JsonObject addressObject = new JsonObject();
 
-        addressObject.addProperty("line1", "The Money Pool");
-        addressObject.addProperty("city", "London");
-        addressObject.addProperty("postcode", "DO11 4RS");
-        addressObject.addProperty("country", "GB");
+        addressObject.addProperty("line1", ADDRESS_LINE_1);
+        addressObject.addProperty("city", ADDRESS_CITY);
+        addressObject.addProperty("postcode", ADDRESS_POSTCODE);
+        addressObject.addProperty("country", ADDRESS_COUNTRY_GB);
 
         JsonObject authorisationDetails = new JsonObject();
         authorisationDetails.addProperty("card_number", cardNumber);
-        authorisationDetails.addProperty("cvc", "123");
+        authorisationDetails.addProperty("cvc", CVC);
         authorisationDetails.addProperty("expiry_date", "12/21");
         authorisationDetails.addProperty("cardholder_name", "Mr. Payment");
         authorisationDetails.addProperty("card_brand", cardBrand);
@@ -113,7 +125,7 @@ public class ChargingITestBase {
     }
 
     protected static String buildJsonAuthorisationDetailsFor(String cardNumber, String cardBrand) {
-        return buildJsonAuthorisationDetailsFor(cardNumber, "123", "11/99", cardBrand);
+        return buildJsonAuthorisationDetailsFor(cardNumber, CVC, EXPIRY_DATE, cardBrand);
     }
 
     protected static String buildJsonWithPaResponse() {
@@ -124,11 +136,11 @@ public class ChargingITestBase {
     }
 
     protected static String buildJsonAuthorisationDetailsFor(String cardHolderName, String cardNumber, String cardBrand) {
-        return buildJsonAuthorisationDetailsFor(cardHolderName, cardNumber, "123", "11/99", cardBrand, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
+        return buildJsonAuthorisationDetailsFor(cardHolderName, cardNumber, CVC, EXPIRY_DATE, cardBrand, ADDRESS_LINE_1, null, ADDRESS_CITY, null, ADDRESS_POSTCODE, ADDRESS_COUNTRY_GB);
     }
 
     protected static String buildJsonAuthorisationDetailsFor(String cardNumber, String cvc, String expiryDate, String cardBrand) {
-        return buildJsonAuthorisationDetailsFor("Mr. Payment", cardNumber, cvc, expiryDate, cardBrand, "The Money Pool", null, "London", null, "DO11 4RS", "GB");
+        return buildJsonAuthorisationDetailsFor(CARD_HOLDER_NAME, cardNumber, cvc, expiryDate, cardBrand, ADDRESS_LINE_1, null, ADDRESS_CITY, null, ADDRESS_POSTCODE, ADDRESS_COUNTRY_GB);
     }
 
     protected static String buildDetailedJsonAuthorisationDetailsFor(String cardNumber, String cvc, String expiryDate, String cardBrand, String cardHolderName, String addressLine1, String addressLine2, String city, String county, String postcode, String country) {
@@ -164,7 +176,7 @@ public class ChargingITestBase {
         String externalChargeId = createNewChargeWithNoTransactionId(AUTHORISATION_SUCCESS);
         app.getDatabaseTestHelper().updateChargeCardDetails(
                 Long.parseLong(externalChargeId.replace("charge-", "")),
-                CardFixture.aValidCard().withCardNo("123456").build());
+                CardFixture.aValidCard().build());
         return externalChargeId;
     }
 
@@ -183,6 +195,10 @@ public class ChargingITestBase {
         return createNewChargeWith(status, null);
     }
 
+    protected String createNewChargeWithGatewayAccountId(ChargeStatus status, String gatewayAccountId) {
+        return createNewChargeWith(status, null, gatewayAccountId);
+    }
+
     protected String createNewCharge(ChargeStatus status) {
         return createNewChargeWith(status, randomId());
     }
@@ -191,6 +207,13 @@ public class ChargingITestBase {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 6234L, status, "returnUrl", gatewayTransactionId);
+        return externalChargeId;
+    }
+
+    protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId, String gatewayAccountId) {
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge-" + chargeId;
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, gatewayAccountId, 6234L, status, "returnUrl", gatewayTransactionId);
         return externalChargeId;
     }
 
@@ -206,22 +229,29 @@ public class ChargingITestBase {
 
     protected static String buildJsonAuthorisationDetailsWithFullAddress() {
         return buildJsonAuthorisationDetailsFor(
-                "Scrooge McDuck",
-                "4242424242424242",
-                "123",
-                "11/99",
-                "cardBrand",
-                "The Money Pool",
-                "Moneybags Avenue",
-                "London",
-                "Greater London",
-                "DO11 4RS",
-                "GB"
+                CARD_HOLDER_NAME,
+                CARD_NUMBER,
+                CVC,
+                EXPIRY_DATE,
+                CARD_BRAND,
+                ADDRESS_LINE_1,
+                ADDRESS_LINE_2,
+                ADDRESS_CITY,
+                ADDRESS_COUNTY,
+                ADDRESS_POSTCODE,
+                ADDRESS_COUNTRY_GB
         );
     }
 
     protected static String buildJsonAuthorisationDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String cardBrand,
                                                              String line1, String line2, String city, String county, String postCode, String countryCode) {
+        return buildCorporateJsonAuthorisationDetailsFor(cardHolderName, cardNumber, cvc, expiryDate, cardBrand, line1, line2, city, county, postCode, countryCode,
+                null, null);
+    }
+
+    private static String buildCorporateJsonAuthorisationDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String cardBrand,
+                                                                    String line1, String line2, String city, String county, String postCode, String countryCode,
+                                                                    Boolean isCorporateCard, CardTypeEntity.Type cardType) {
         JsonObject addressObject = new JsonObject();
 
         addressObject.addProperty("line1", line1);
@@ -240,7 +270,31 @@ public class ChargingITestBase {
         authorisationDetails.add("address", addressObject);
         authorisationDetails.addProperty("accept_header", "text/html");
         authorisationDetails.addProperty("user_agent_header", "Mozilla/5.0");
+
+        if (isCorporateCard != null) {
+            authorisationDetails.addProperty("corporate_card", isCorporateCard);
+        }
+        if (cardType != null) {
+            authorisationDetails.addProperty("card_type", cardType.toString());
+        }
+
         return toJson(authorisationDetails);
+    }
+
+    protected static String buildCorporateJsonAuthorisationDetailsFor(Boolean isCorporateCard, CardTypeEntity.Type cardType) {
+        return buildCorporateJsonAuthorisationDetailsFor(
+                CARD_HOLDER_NAME,
+                CARD_NUMBER,
+                CVC,
+                EXPIRY_DATE, CARD_BRAND,
+                ADDRESS_LINE_1,
+                null,
+                ADDRESS_CITY,
+                null,
+                ADDRESS_POSTCODE,
+                ADDRESS_COUNTRY_GB,
+                isCorporateCard,
+                cardType);
     }
 
     protected void shouldReturnErrorForAuthorisationDetailsWithMessage(String authorisationDetails, String errorMessage, String status) throws Exception {
@@ -284,7 +338,7 @@ public class ChargingITestBase {
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
         app.getDatabaseTestHelper().updateChargeCardDetails(
                 chargeId,
-                CardFixture.aValidCard().withCardNo("123456").build());
+                CardFixture.aValidCard().build());
         return externalChargeId;
     }
 

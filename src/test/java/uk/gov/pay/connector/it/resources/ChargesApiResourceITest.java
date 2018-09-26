@@ -84,8 +84,10 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     private static final String JSON_PROVIDER_KEY = "payment_provider";
     private static final String JSON_LANGUAGE_KEY = "language";
     private static final String JSON_DELAYED_CAPTURE_KEY = "delayed_capture";
+    private static final String JSON_CORPORATE_SURCHARGE_KEY = "corporate_surcharge";
+    private static final String JSON_TOTAL_AMOUNT_KEY = "total_amount";
     private static final String PROVIDER_NAME = "sandbox";
-    private static final long AMOUNT = 6234L;
+    private static final Long AMOUNT = 6234L;
 
     private String returnUrl = "http://service.url/success-page/";
     private String email = randomAlphabetic(242) + "@example.com";
@@ -166,6 +168,8 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body(JSON_EMAIL_KEY, is(email))
                 .body(JSON_LANGUAGE_KEY, is("cy"))
                 .body(JSON_DELAYED_CAPTURE_KEY, is(false))
+                .body(JSON_CORPORATE_SURCHARGE_KEY, is(nullValue()))
+                .body(JSON_TOTAL_AMOUNT_KEY, is(nullValue()))
                 .body("containsKey('card_details')", is(false))
                 .body("containsKey('gateway_account')", is(false))
                 .body("settlement_summary.capture_submit_time", nullValue())
@@ -309,7 +313,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         getChargeApi
                 .withAccountId("invalidAccountId")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .contentType(JSON)
                 .statusCode(NOT_FOUND.getStatusCode())
                 .body("code", is(404))
@@ -459,6 +463,29 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
+    public void shouldReturnCorporateSurchargeAndTotalAmount_V1() {
+
+        long chargeId = nextInt();
+        String externalChargeId = "charge1";
+
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
+                ServicePaymentReference.of("ref"), null, email);
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
+                "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().updateCorporateSurcharge(chargeId, 50L);
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+
+        getChargeApi
+                .withAccountId(accountId)
+                .getCharges()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results[0]." + JSON_CHARGE_KEY, is(externalChargeId))
+                .body("results[0]." + JSON_CORPORATE_SURCHARGE_KEY, is(50))
+                .body("results[0]." + JSON_TOTAL_AMOUNT_KEY, is(AMOUNT.intValue() + 50));
+    }
+
+    @Test
     public void shouldGetChargeTransactionsForJSONAcceptHeader() {
 
         long chargeId = nextInt();
@@ -486,7 +513,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         getChargeApi
                 .withAccountId(accountId)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results[0].charge_id", is(externalChargeId))
@@ -528,7 +555,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         getChargeApi
                 .withAccountId(accountId)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results[0].charge_id", is(externalChargeId))
@@ -553,7 +580,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(1)))
                 .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2))
@@ -601,7 +628,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withAccountId(accountId)
                 .withQueryParam("email", "@example.com")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(3))
@@ -619,7 +646,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withAccountId(accountId)
                 .withQueryParam("cardholder_name", "McPayment")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(3))
@@ -637,7 +664,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withAccountId(accountId)
                 .withQueryParam("first_digits_card_number", "123456")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(3))
@@ -655,7 +682,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withAccountId(accountId)
                 .withQueryParam("first_digits_card_number", "")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(3))
@@ -673,7 +700,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withAccountId(accountId)
                 .withQueryParam("first_digits_card_number", "12")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(3))
@@ -691,7 +718,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withAccountId(accountId)
                 .withQueryParam("last_digits_card_number", "1234")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(3))
@@ -709,7 +736,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withAccountId(accountId)
                 .withQueryParam("last_digits_card_number", "")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(3))
@@ -727,7 +754,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withAccountId(accountId)
                 .withQueryParam("first_digits_card_number", "12")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(3))
@@ -746,7 +773,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withAccountId(accountId)
                 .withQueryParam("card_brand", searchedCardBrand)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2))
@@ -763,7 +790,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withAccountId(accountId)
                 .withQueryParam("card_brand", "")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2))
@@ -783,7 +810,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         getChargeApi
                 .withQueryParams("card_brand", asList(visa, mastercard))
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2))
@@ -824,7 +851,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withQueryParam("page", "-1")
                 .withQueryParam("display_size", "-2")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .body("message", is(expectedList));
@@ -841,7 +868,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         ValidatableResponse response = getChargeApi
                 .withAccountId(accountId)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(5));
@@ -864,7 +891,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withQueryParam("display_size", "2")
                 .withQueryParam("page", "1")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2));
@@ -878,7 +905,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withQueryParam("display_size", "2")
                 .withQueryParam("page", "2")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2));
@@ -892,7 +919,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withQueryParam("display_size", "2")
                 .withQueryParam("page", "3")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(1));
@@ -1120,7 +1147,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withQueryParam("page", "10")
                 .withQueryParam("display_size", "2")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(NOT_FOUND.getStatusCode())
                 .body("message", is("the requested page not found"));
     }
@@ -1136,7 +1163,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withQueryParam("page", "-1")
                 .withQueryParam("display_size", "-2")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .body("message", is(expectedList));
@@ -1150,7 +1177,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withQueryParam("page", "1")
                 .withQueryParam("display_size", "1")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(1))
@@ -1173,7 +1200,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref-1")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(1))
@@ -1196,7 +1223,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withAccountId(accountId)
                 .withQueryParam("reference", "junk-yard")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(0))
@@ -1221,7 +1248,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withQueryParam("page", "1")
                 .withQueryParam("display_size", "2")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2))
@@ -1247,7 +1274,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withQueryParam("page", "2")
                 .withQueryParam("display_size", "2")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(2))
@@ -1273,7 +1300,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .withQueryParam("page", "3")
                 .withQueryParam("display_size", "2")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getTransactions()
+                .getCharges()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results.size()", is(1))

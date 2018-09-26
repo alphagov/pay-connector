@@ -317,7 +317,18 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.delayedCapture = delayedCapture;
     }
 
-    public Long getCorporateSurcharge() { return corporateSurcharge; }
+    public Long getCorporateSurcharge() {
+        return corporateSurcharge;
+    }
 
-    public void setCorporateSurcharge(Long corporateSurcharge) { this.corporateSurcharge = corporateSurcharge; }
+    public void setCorporateSurcharge(Long corporateSurcharge) {
+        this.corporateSurcharge = corporateSurcharge;
+    }
+
+    public Long getTotalAmount() {
+        if (corporateSurcharge != null) {
+            return getAmount() + getCorporateSurcharge();
+        }
+        return getAmount();
+    }
 }

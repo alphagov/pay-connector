@@ -249,7 +249,7 @@ public class ChargeResponse {
         public ChargeResponse build() {
             return new ChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email,
                     description, reference, providerName, createdDate, links, refundSummary, settlementSummary,
-                    cardDetails, auth3dsData, language, delayedCapture);
+                    cardDetails, auth3dsData, language, delayedCapture, corporateSurcharge, totalAmount);
         }
     }
 
@@ -309,15 +309,22 @@ public class ChargeResponse {
     @JsonProperty
     @JsonSerialize(using = ToStringSerializer.class)
     private SupportedLanguage language;
-    
+
     @JsonProperty("delayed_capture")
     private boolean delayedCapture;
-    
+
+    @JsonProperty("corporate_surcharge")
+    private Long corporateSurcharge;
+
+    @JsonProperty("total_amount")
+    private Long totalAmount;
+
 
     protected ChargeResponse(String chargeId, Long amount, ExternalTransactionState state, String cardBrand, String gatewayTransactionId, String returnUrl,
                              String email, String description, ServicePaymentReference reference, String providerName, String createdDate,
                              List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails,
-                             Auth3dsData auth3dsData, SupportedLanguage language, boolean delayedCapture) {
+                             Auth3dsData auth3dsData, SupportedLanguage language, boolean delayedCapture,
+                             Long corporateSurcharge, Long totalAmount) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
         this.amount = amount;
@@ -336,6 +343,8 @@ public class ChargeResponse {
         this.auth3dsData = auth3dsData;
         this.language = language;
         this.delayedCapture = delayedCapture;
+        this.corporateSurcharge = corporateSurcharge;
+        this.totalAmount = totalAmount;
     }
 
     public List<Map<String, Object>> getDataLinks() {
@@ -401,9 +410,17 @@ public class ChargeResponse {
     public SupportedLanguage getLanguage() {
         return language;
     }
-    
+
     public boolean getDelayedCapture() {
         return delayedCapture;
+    }
+
+    public Long getCorporateSurcharge() {
+        return corporateSurcharge;
+    }
+
+    public Long getTotalAmount() {
+        return totalAmount;
     }
 
     public URI getLink(String rel) {
@@ -436,6 +453,8 @@ public class ChargeResponse {
                 Objects.equals(settlementSummary, that.settlementSummary) &&
                 Objects.equals(auth3dsData, that.auth3dsData) &&
                 Objects.equals(cardDetails, that.cardDetails) &&
+                Objects.equals(corporateSurcharge, that.corporateSurcharge) &&
+                Objects.equals(totalAmount, that.totalAmount) &&
                 language == that.language;
     }
 
@@ -443,7 +462,7 @@ public class ChargeResponse {
     public int hashCode() {
         return Objects.hash(dataLinks, chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email,
                 description, reference, providerName, createdDate, refundSummary, settlementSummary, auth3dsData,
-                cardDetails, language, delayedCapture);
+                cardDetails, language, delayedCapture, corporateSurcharge, totalAmount);
     }
 
     @Override
@@ -465,6 +484,8 @@ public class ChargeResponse {
                 ", auth3dsData=" + auth3dsData +
                 ", language=" + language +
                 ", delayedCapture=" + delayedCapture +
+                ", corporateSurcharge=" + corporateSurcharge +
+                ", totalAmount=" + totalAmount +
                 '}';
     }
 
