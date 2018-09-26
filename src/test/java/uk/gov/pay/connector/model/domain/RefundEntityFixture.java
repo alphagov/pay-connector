@@ -22,6 +22,7 @@ public class RefundEntityFixture {
         refundEntity.setStatus(status);
         refundEntity.setReference(reference);
         refundEntity.setExternalId(externalId);
+        refundEntity.setUserExternalId(userExternalId);
         return refundEntity;
     }
 
@@ -45,6 +46,11 @@ public class RefundEntityFixture {
         return this;
     }
 
+    public RefundEntityFixture withUserExternalId(String userExternalId) {
+        this.userExternalId = userExternalId;
+        return this;
+    }
+    
     public Long getAmount() {
         return amount;
     }

@@ -1,8 +1,7 @@
 package uk.gov.pay.connector.resources;
 
 import black.door.hate.HalRepresentation;
-import uk.gov.pay.connector.dao.ChargeSearchParams;
-import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.dao.SearchParams;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -11,12 +10,11 @@ import java.util.List;
 
 import static javax.ws.rs.core.Response.ok;
 
-public class ChargesPaginationResponseBuilder {
+public class PaginationResponseBuilder<T> {
 
-    private ChargeSearchParams searchParams;
+    private SearchParams searchParams;
     private UriInfo uriInfo;
-    private List<ChargeResponse> chargeResponses;
-
+    private List<T> responses;
     private Long totalCount;
     private Long selfPageNum;
     private URI selfLink;
@@ -25,19 +23,19 @@ public class ChargesPaginationResponseBuilder {
     private URI prevLink;
     private URI nextLink;
 
-    public ChargesPaginationResponseBuilder(ChargeSearchParams searchParams, UriInfo uriInfo) {
+    public PaginationResponseBuilder(SearchParams searchParams, UriInfo uriInfo) {
         this.searchParams = searchParams;
         this.uriInfo = uriInfo;
         selfPageNum = searchParams.getPage();
         selfLink = uriWithParams(searchParams.buildQueryParams());
     }
 
-    public ChargesPaginationResponseBuilder withChargeResponses(List<ChargeResponse> chargeResponses) {
-        this.chargeResponses = chargeResponses;
+    public PaginationResponseBuilder withResponses(List<T> responses) {
+        this.responses = responses;
         return this;
     }
 
-    public ChargesPaginationResponseBuilder withTotalCount(Long total) {
+    public PaginationResponseBuilder withTotalCount(Long total) {
         this.totalCount = total;
         return this;
     }
@@ -48,8 +46,8 @@ public class ChargesPaginationResponseBuilder {
         buildLinks(lastPage);
 
         HalRepresentation.HalRepresentationBuilder halRepresentationBuilder = HalRepresentation.builder()
-                .addProperty("results", chargeResponses)
-                .addProperty("count", chargeResponses.size())
+                .addProperty("results", responses)
+                .addProperty("count", responses.size())
                 .addProperty("total", totalCount)
                 .addProperty("page", selfPageNum)
                 .addLink("self", selfLink)

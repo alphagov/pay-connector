@@ -179,6 +179,14 @@ public class RestAssuredClient {
                 .then();
     }
 
+    public ValidatableResponse getRefunds() {
+        String requestPath = "/v1/refunds/account/{accountId}"
+                .replace("{accountId}", accountId);
+        return addQueryParams(given().port(app.getLocalPort()))
+                .get(requestPath)
+                .then();
+    }
+
     public ValidatableResponse postFrontendChargeCancellation() {
         String requestPath = "/v1/frontend/charges/{chargeId}/cancel"
                 .replace("{accountId}", accountId)

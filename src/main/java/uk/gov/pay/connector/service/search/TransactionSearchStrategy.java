@@ -1,8 +1,7 @@
 package uk.gov.pay.connector.service.search;
 
 import com.google.inject.Inject;
-import uk.gov.pay.connector.dao.CardTypeDao;
-import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.dao.SearchParams;
 import uk.gov.pay.connector.dao.TransactionDao;
 import uk.gov.pay.connector.model.ChargeResponse;
 import uk.gov.pay.connector.model.ChargeResponse.RefundSummary;
@@ -19,33 +18,31 @@ import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
-import java.util.Map;
 
 import static javax.ws.rs.HttpMethod.GET;
 import static uk.gov.pay.connector.model.TransactionResponse.aTransactionResponseBuilder;
 
-public class TransactionSearchStrategy extends AbstractSearchStrategy<Transaction> implements SearchStrategy {
+public class TransactionSearchStrategy extends AbstractSearchStrategy<Transaction, ChargeResponse> implements SearchStrategy {
 
     private TransactionDao transactionDao;
 
     @Inject
-    public TransactionSearchStrategy(TransactionDao transactionDao, CardTypeDao cardTypeDao) {
-        super(cardTypeDao);
+    public TransactionSearchStrategy(TransactionDao transactionDao) {
         this.transactionDao = transactionDao;
     }
 
     @Override
-    protected long getTotalFor(ChargeSearchParams params) {
+    public long getTotalFor(SearchParams params) {
         return transactionDao.getTotalFor(params.getGatewayAccountId(), params);
     }
 
     @Override
-    protected List<Transaction> findAllBy(ChargeSearchParams params) {
+    public List<Transaction> findAllBy(SearchParams params) {
         return transactionDao.findAllBy(params.getGatewayAccountId(), params);
     }
 
     @Override
-    protected ChargeResponse buildResponse(UriInfo uriInfo, Transaction transaction, Map<String, String> cardBrandToLabel) {
+    public ChargeResponse buildResponse(UriInfo uriInfo, Transaction transaction) {
         ExternalTransactionState externalTransactionState;
         RefundSummary refundSummary = null;
         if (TransactionType.REFUND.getValue().equals(transaction.getTransactionType())) {
@@ -89,8 +86,8 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
         return transactionResponseBuilder.build();
     }
 
-    private ChargeResponse.RefundSummary buildRefundSummary(Transaction transaction) {
-        ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
+    private RefundSummary buildRefundSummary(Transaction transaction) {
+        RefundSummary refund = new RefundSummary();
         refund.setStatus(transaction.getStatus());
         refund.setUserExternalId(transaction.getUserExternalId());
         return refund;

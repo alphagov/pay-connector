@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.ChargeSearchParams;
+import uk.gov.pay.connector.dao.SearchParams;
 import uk.gov.pay.connector.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.CardHolderName;
 import uk.gov.pay.connector.model.FirstDigitsCardNumber;
@@ -158,7 +158,7 @@ public class ChargesApiResource {
                 .validateQueryParams(inputDatePairMap, nonNegativePairMap) //TODO - improvement, get the entire searchparam object into the validateQueryParams
                 .map(ResponseUtil::badRequestResponse)
                 .orElseGet(() -> {
-                    ChargeSearchParams searchParams = new ChargeSearchParams()
+                    SearchParams searchParams = new SearchParams()
                             .withGatewayAccountId(accountId)
                             .withEmailLike(email)
                             .withCardHolderNameLike(cardHolderName != null ? CardHolderName.of(cardHolderName) : null)
@@ -213,7 +213,7 @@ public class ChargesApiResource {
                 .validateQueryParams(inputDatePairMap, nonNegativePairMap) //TODO - improvement, get the entire searchparam object into the validateQueryParams
                 .map(ResponseUtil::badRequestResponse)
                 .orElseGet(() -> {
-                    ChargeSearchParams searchParams = new ChargeSearchParams()
+                    SearchParams searchParams = new SearchParams()
                             .withGatewayAccountId(accountId)
                             .withEmailLike(email)
                             .withCardHolderNameLike(cardHolderName != null ? CardHolderName.of(cardHolderName) : null)
@@ -267,7 +267,7 @@ public class ChargesApiResource {
                 .validateQueryParams(inputDatePairMap, nonNegativePairMap) //TODO - improvement, get the entire searchparam object into the validateQueryParams
                 .map(ResponseUtil::badRequestResponse)
                 .orElseGet(() -> {
-                    ChargeSearchParams searchParams = new ChargeSearchParams()
+                    SearchParams searchParams = new SearchParams()
                             .withGatewayAccountId(accountId)
                             .withEmailLike(email)
                             .withCardHolderNameLike(cardHolderName != null ? CardHolderName.of(cardHolderName) : null)
@@ -357,7 +357,7 @@ public class ChargesApiResource {
                 : Optional.of(missing);
     }
 
-    private Response listCharges(ChargeSearchParams searchParams, boolean isFeatureTransactionsEnabled, UriInfo uriInfo) {
+    private Response listCharges(SearchParams searchParams, boolean isFeatureTransactionsEnabled, UriInfo uriInfo) {
         long startTime = System.nanoTime();
         try {
             if (isFeatureTransactionsEnabled) {
@@ -373,7 +373,7 @@ public class ChargesApiResource {
         }
     }
 
-    private Response listTransactions(ChargeSearchParams searchParams, UriInfo uriInfo) {
+    private Response listTransactions(SearchParams searchParams, UriInfo uriInfo) {
         long startTime = System.nanoTime();
         try {
             return transactionSearchStrategy.search(searchParams, uriInfo);

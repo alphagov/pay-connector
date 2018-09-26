@@ -39,6 +39,7 @@ import uk.gov.pay.connector.resources.GatewayAccountResource;
 import uk.gov.pay.connector.resources.HealthCheckResource;
 import uk.gov.pay.connector.resources.NotificationResource;
 import uk.gov.pay.connector.resources.PerformanceReportResource;
+import uk.gov.pay.connector.resources.SearchRefundsResource;
 import uk.gov.pay.connector.resources.SecurityTokensResource;
 import uk.gov.pay.connector.resources.TransactionsSummaryResource;
 import uk.gov.pay.connector.service.CaptureProcessScheduler;
@@ -103,6 +104,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(EmailNotificationResource.class));
         environment.jersey().register(injector.getInstance(SchemeRewriteFilter.class));
         environment.jersey().register(injector.getInstance(PerformanceReportResource.class));
+        environment.jersey().register(injector.getInstance(SearchRefundsResource.class));
 
         setupSchedulers(configuration, environment, injector);
 

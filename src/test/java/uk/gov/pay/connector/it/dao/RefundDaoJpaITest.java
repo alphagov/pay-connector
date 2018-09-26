@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.dao;
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.connector.dao.SearchParams;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
@@ -33,7 +34,6 @@ import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 public class RefundDaoJpaITest extends DaoITestBase {
 
     private RefundDao refundDao;
-
     private DatabaseFixtures.TestAccount sandboxAccount;
     private DatabaseFixtures.TestCharge chargeTestRecord;
     private DatabaseFixtures.TestRefund refundTestRecord;
@@ -42,7 +42,6 @@ public class RefundDaoJpaITest extends DaoITestBase {
     @Before
     public void setUp() throws Exception {
         refundDao = env.getInstance(RefundDao.class);
-
         databaseTestHelper.deleteAllCardTypes();
 
         DatabaseFixtures.TestAccount testAccount = DatabaseFixtures
@@ -120,6 +119,27 @@ public class RefundDaoJpaITest extends DaoITestBase {
     public void findByProviderAndReference_shouldNotFindRefundIfReferenceDoesNotMatch() {
         String noExistingReference = "refund_0";
         assertThat(refundDao.findByProviderAndReference(sandboxAccount.getPaymentProvider(), noExistingReference).isPresent(), is(false));
+    }
+
+    @Test 
+    public void findAllBy_shouldFindAllRefundsByQueryParamsWithAccountId() {
+        SearchParams searchParams = new SearchParams().withGatewayAccountId(sandboxAccount.getAccountId());
+        addSuccessfulRefundsToAccount();
+        addSuccessfulRefundsToAccount();
+        
+        List<RefundEntity> refunds = refundDao.findAllBy(searchParams);
+        assertThat(refunds.size(), is(2));
+    }
+
+    private void addSuccessfulRefundsToAccount() {
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestRefund()
+                .withTestCharge(chargeTestRecord)
+                .withReference("reference")
+                .withRefundStatus(REFUNDED)
+                .withCreatedDate(now().minusMinutes(30))
+                .insert();
     }
 
     @Test

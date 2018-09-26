@@ -46,7 +46,7 @@ public class TransactionDao {
         this.lastDigitsCardNumberConverter = lastDigitsCardNumberConverter;
     }
 
-    public List<Transaction> findAllBy(Long gatewayAccountId, ChargeSearchParams params) {
+    public List<Transaction> findAllBy(Long gatewayAccountId, SearchParams params) {
         SelectSeekStep1 query = DSL
                 .select(field("transaction_type"),
                         field("charge_id"),
@@ -97,7 +97,7 @@ public class TransactionDao {
         return result.getResultList();
     }
 
-    public Long getTotalFor(Long gatewayAccountId, ChargeSearchParams params) {
+    public Long getTotalFor(Long gatewayAccountId, SearchParams params) {
         SelectJoinStep query = DSL
                 .select(count())
                 .from(buildQueryFor(gatewayAccountId, QueryType.COUNT, params));
@@ -114,7 +114,7 @@ public class TransactionDao {
         return (long) result.getSingleResult();
     }
 
-    private SelectOrderByStep buildQueryFor(Long gatewayAccountId, QueryType queryType, ChargeSearchParams params) {
+    private SelectOrderByStep buildQueryFor(Long gatewayAccountId, QueryType queryType, SearchParams params) {
         Condition queryFilters = field("c.gateway_account_id").eq(gatewayAccountId);
 
         if (params.getCardHolderName() != null && isNotBlank(params.getCardHolderName().toString())) {

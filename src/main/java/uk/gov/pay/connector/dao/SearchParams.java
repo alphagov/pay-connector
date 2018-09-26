@@ -23,7 +23,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
-public class ChargeSearchParams {
+public class SearchParams {
 
     private TransactionType transactionType;
     private LastDigitsCardNumber lastDigitsCardNumber;
@@ -47,36 +47,36 @@ public class ChargeSearchParams {
         return gatewayAccountId;
     }
 
-    public ChargeSearchParams withTransactionType(TransactionType transactionType) {
+    public SearchParams withTransactionType(TransactionType transactionType) {
         this.transactionType = transactionType;
         return this;
     }
 
-    public ChargeSearchParams withGatewayAccountId(Long gatewayAccountId) {
+    public SearchParams withGatewayAccountId(Long gatewayAccountId) {
         this.gatewayAccountId = gatewayAccountId;
         return this;
     }
 
-    public ChargeSearchParams withEmailLike(String email) {
+    public SearchParams withEmailLike(String email) {
         this.email = email;
         return this;
     }
 
-    public ChargeSearchParams withLastDigitsCardNumber(LastDigitsCardNumber lastDigitsCardNumber) {
+    public SearchParams withLastDigitsCardNumber(LastDigitsCardNumber lastDigitsCardNumber) {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
         return this;
     }
 
-    public ChargeSearchParams withFirstDigitsCardNumber(FirstDigitsCardNumber withFirstDigitsCardNumber) {
+    public SearchParams withFirstDigitsCardNumber(FirstDigitsCardNumber withFirstDigitsCardNumber) {
         this.firstDigitsCardNumber = withFirstDigitsCardNumber;
         return this;
     }
 
-    public ChargeSearchParams withCardHolderNameLike(CardHolderName cardHolderName) {
+    public SearchParams withCardHolderNameLike(CardHolderName cardHolderName) {
         this.cardHolderName = cardHolderName;
         return this;
     }
-    
+
     public Set<String> getExternalChargeStates() {
         return this.internalChargeStatuses.stream()
                 .map(s -> s.toExternal().getStatus())
@@ -121,7 +121,7 @@ public class ChargeSearchParams {
         return this.internalRefundStatuses;
     }
 
-    public ChargeSearchParams withExternalState(String state) {
+    public SearchParams withExternalState(String state) {
         if (state != null) {
             this.internalStates.addAll(
                     parseChargeState(state).stream()
@@ -132,7 +132,7 @@ public class ChargeSearchParams {
         return this;
     }
 
-    public ChargeSearchParams addExternalChargeStates(List<String> states) {
+    public SearchParams addExternalChargeStates(List<String> states) {
         if (states != null) {
             this.externalChargeStates.addAll(states);
             this.internalChargeStatuses.addAll(states.stream()
@@ -146,7 +146,7 @@ public class ChargeSearchParams {
         return this;
     }
 
-    public ChargeSearchParams addExternalChargeStatesV2(List<String> states) {
+    public SearchParams addExternalChargeStatesV2(List<String> states) {
         if (states != null) {
             this.externalChargeStates.addAll(states);
             this.internalChargeStatuses.addAll(states.stream()
@@ -160,7 +160,7 @@ public class ChargeSearchParams {
         return this;
     }
 
-    public ChargeSearchParams addExternalRefundStates(List<String> states) {
+    public SearchParams addExternalRefundStates(List<String> states) {
         if (states != null) {
             this.externalRefundStates.addAll(states);
             this.internalRefundStatuses.addAll(states.stream()
@@ -171,17 +171,17 @@ public class ChargeSearchParams {
         return this;
     }
 
-    public ChargeSearchParams withInternalStates(List<ChargeStatus> statuses) {
+    public SearchParams withInternalStates(List<ChargeStatus> statuses) {
         this.internalStates.addAll(statuses);
         return this;
     }
 
-    public ChargeSearchParams withCardBrand(String cardBrand) {
+    public SearchParams withCardBrand(String cardBrand) {
         this.cardBrands = Collections.singletonList(cardBrand);
         return this;
     }
 
-    public ChargeSearchParams withCardBrands(List<String> cardBrands) {
+    public SearchParams withCardBrands(List<String> cardBrands) {
         this.cardBrands = cardBrands;
         return this;
     }
@@ -194,7 +194,7 @@ public class ChargeSearchParams {
         return email;
     }
 
-    public ChargeSearchParams withReferenceLike(ServicePaymentReference reference) {
+    public SearchParams withReferenceLike(ServicePaymentReference reference) {
         this.reference = reference;
         return this;
     }
@@ -203,7 +203,7 @@ public class ChargeSearchParams {
         return fromDate;
     }
 
-    public ChargeSearchParams withFromDate(ZonedDateTime fromDate) {
+    public SearchParams withFromDate(ZonedDateTime fromDate) {
         this.fromDate = fromDate;
         return this;
     }
@@ -212,7 +212,7 @@ public class ChargeSearchParams {
         return toDate;
     }
 
-    public ChargeSearchParams withToDate(ZonedDateTime toDate) {
+    public SearchParams withToDate(ZonedDateTime toDate) {
         this.toDate = toDate;
         return this;
     }
@@ -221,7 +221,7 @@ public class ChargeSearchParams {
         return page;
     }
 
-    public ChargeSearchParams withPage(Long page) {
+    public SearchParams withPage(Long page) {
         this.page = page;
         return this;
     }
@@ -230,7 +230,7 @@ public class ChargeSearchParams {
         return displaySize;
     }
 
-    public ChargeSearchParams withDisplaySize(Long displaySize) {
+    public SearchParams withDisplaySize(Long displaySize) {
         if (displaySize <= 0) {
             throw new IllegalArgumentException("displaySize must be a positive integer");
         }
@@ -247,7 +247,7 @@ public class ChargeSearchParams {
         return this.buildQueryParams(false);
     }
 
-    public String buildQueryParamsWithPiiRedaction () {
+    public String buildQueryParamsWithPiiRedaction() {
         return this.buildQueryParams(true);
     }
 
@@ -272,7 +272,7 @@ public class ChargeSearchParams {
         if (page != null)
             builder.append("&page=").append(page);
         if (displaySize != null)
-            builder.append("&display_size=").append(displaySize); 
+            builder.append("&display_size=").append(displaySize);
         getExternalStates().stream()
                 .findFirst()
                 .ifPresent(state -> builder.append("&state=").append(state));
@@ -292,7 +292,7 @@ public class ChargeSearchParams {
         }
         if (firstDigitsCardNumber != null)
             builder.append("&first_digits_card_number=").append(firstDigitsCardNumber);
-        if (lastDigitsCardNumber != null) 
+        if (lastDigitsCardNumber != null)
             builder.append("&last_digits_card_number=").append(lastDigitsCardNumber);
         if (!cardBrands.isEmpty()) {
             cardBrands.forEach(cardBrand -> builder.append("&card_brand=").append(cardBrand));
