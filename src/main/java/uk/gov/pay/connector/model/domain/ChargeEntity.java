@@ -72,7 +72,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     @Column(name = "email")
     private String email;
-    
+
     @Column(name = "corporate_surcharge")
     private Long corporateSurcharge;
 
@@ -112,7 +112,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Column(name = "language", nullable = false)
     @Convert(converter = SupportedLanguageJpaConverter.class)
     private SupportedLanguage language;
-    
+
     @Column(name = "delayed_capture")
     private boolean delayedCapture;
 
@@ -323,12 +323,5 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public void setCorporateSurcharge(Long corporateSurcharge) {
         this.corporateSurcharge = corporateSurcharge;
-    }
-
-    public Long getTotalAmount() {
-        if (corporateSurcharge != null) {
-            return getAmount() + getCorporateSurcharge();
-        }
-        return getAmount();
     }
 }

@@ -34,6 +34,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_TIMEO
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.sanitize;
+import static uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator.setCorporateSurchargeFor;
 
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
 
@@ -68,7 +69,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
             } else {
                 preOperation(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
 
-                handleCorporateSurcharge(authCardDetails, chargeEntity);
+                setCorporateSurchargeFor(authCardDetails, chargeEntity);
 
                 getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(transactionIdValue -> {
                     setGatewayTransactionId(chargeEntity, transactionIdValue);
@@ -78,16 +79,6 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
             return chargeEntity;
 
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
-    }
-
-    private static void handleCorporateSurcharge(AuthCardDetails authCardDetails, ChargeEntity chargeEntity) {
-        if (authCardDetails.isCorporateCard()) {
-            if (authCardDetails.getCardType().equals(CardTypeEntity.Type.CREDIT) && chargeEntity.getGatewayAccount().getCorporateCreditCardSurchargeAmount() > 0) {
-                chargeEntity.setCorporateSurcharge(chargeEntity.getGatewayAccount().getCorporateCreditCardSurchargeAmount());
-            } else if (authCardDetails.getCardType().equals(CardTypeEntity.Type.DEBIT) && chargeEntity.getGatewayAccount().getCorporateDebitCardSurchargeAmount() > 0) {
-                chargeEntity.setCorporateSurcharge(chargeEntity.getGatewayAccount().getCorporateDebitCardSurchargeAmount());
-            }
-        }
     }
 
     private boolean cardBrandRequires3ds(String cardBrand) {
