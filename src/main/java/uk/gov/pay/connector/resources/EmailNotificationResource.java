@@ -120,7 +120,7 @@ public class EmailNotificationResource {
 
         return gatewayDao.findById(gatewayAccountId)
                 .map(gatewayAccount -> {
-                    NotificationPatchInfo patchInfo = getNotificationTypeFromPath(emailPatchRequest);
+                    NotificationPatchInfo patchInfo = getNotificationInfoFromPath(emailPatchRequest);
                     EmailNotificationType type = patchInfo.getEmailNotificationType();
                     EmailNotificationEntity notificationEntity = Optional.ofNullable(gatewayAccount.getEmailNotifications().get(type))
                             .orElseGet(() -> {
@@ -133,7 +133,7 @@ public class EmailNotificationResource {
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
-    private NotificationPatchInfo getNotificationTypeFromPath(PatchRequestBuilder.PatchRequest emailPatchRequest) {
+    private NotificationPatchInfo getNotificationInfoFromPath(PatchRequestBuilder.PatchRequest emailPatchRequest) {
         List<String> pathTokens = emailPatchRequest.getPathTokens();
         // PP-4111 remove after selfservice is merged
         if (pathTokens.size() < 2) {
@@ -162,9 +162,9 @@ public class EmailNotificationResource {
 
     private class NotificationPatchInfo {
 
-        private EmailNotificationType emailNotificationType;
-        private String path;
-        private String value;
+        private final EmailNotificationType emailNotificationType;
+        private final String path;
+        private final String value;
 
         public NotificationPatchInfo(EmailNotificationType emailNotificationType, String path, String value) {
             this.emailNotificationType = emailNotificationType;

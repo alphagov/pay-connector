@@ -4,7 +4,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -33,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.Runtime.getRuntime;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 
 public class UserNotificationService {
@@ -103,11 +103,11 @@ public class UserNotificationService {
         }
         return null;
     }
-    
+
     private static class NotifyClientSettings {
         private NotificationClient client;
         private String templateId;
-        
+
         private NotifyClientSettings(NotificationClient client, String templateId) {
             this.client = client;
             this.templateId = templateId;
@@ -122,15 +122,16 @@ public class UserNotificationService {
         }
 
         public static NotifyClientSettings of(Map<String, String> notifySettings, NotifyClientFactory notifyClientFactory, String customTemplateId, String payTemplateId) {
-            if (notifySettings == null || !notifySettings.containsKey(customTemplateId)) {
-                return new NotifyClientSettings(notifyClientFactory.getInstance(), payTemplateId);
-            } else {
+            if (hasCustomTemplateAndApiKey(notifySettings, customTemplateId)) {
                 return new NotifyClientSettings(notifyClientFactory.getInstance(notifySettings.get("api_token")), notifySettings.get(customTemplateId));
             }
+            return new NotifyClientSettings(notifyClientFactory.getInstance(), payTemplateId);
         }
-
     }
-    
+    private static boolean hasCustomTemplateAndApiKey(Map<String, String> notifySettings, String customTemplateId) {
+        return notifySettings != null  && (notifySettings.containsKey(customTemplateId) && isNotBlank(notifySettings.get("api_token")));
+    }
+
 
     private void readEmailConfig(ConnectorConfiguration configuration) {
         emailNotifyGloballyEnabled = configuration.getNotifyConfiguration().isEmailNotifyEnabled();
