@@ -34,6 +34,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     private static final String REFERENCE = "reference";
     private static final String EMAIL = "email";
     private static final String SQL_ESCAPE_SEQ = "\\\\";
+    public static final int HIGHEST_RANDOM_BATCH_NUMBER = 20;
 
     @Inject
     public ChargeDao(final Provider<EntityManager> entityManager) {
@@ -197,30 +198,30 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return count.intValue();
     }
 
-    public List<ChargeEntity> findChargesForCapture(int maxNumberOfCharges,
-                                                    int readyCaptureQueueSize,
+    public List<ChargeEntity> findChargesForCapture(int batchSize,
+                                                    int numberOfChargesAvailableForCapture,
                                                     Duration notAttemptedWithin) {
 
         String query = "SELECT c FROM ChargeEntity c " + FIND_CAPTURE_CHARGES_WHERE_CLAUSE + "ORDER BY c.createdDate ASC";
 
-        int offset = 0;
-
-        // Random offset to increase probability of each connector node selecting unique set charges to capture
-        if (readyCaptureQueueSize > maxNumberOfCharges) {
-            Random r = new Random();
-            offset = r.nextInt(Math.min(20, readyCaptureQueueSize / maxNumberOfCharges))
-                    * maxNumberOfCharges;
-        }
-
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)
-                .setMaxResults(maxNumberOfCharges)
-                .setFirstResult(offset)
+                .setMaxResults(batchSize)
+                .setFirstResult(randomBatchOffset(batchSize, numberOfChargesAvailableForCapture))
                 .setParameter("captureApprovedStatus", CAPTURE_APPROVED.getValue())
                 .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY.getValue())
                 .setParameter("eventStatus", CAPTURE_APPROVED_RETRY)
                 .setParameter("cutoffDate", ZonedDateTime.now().minus(notAttemptedWithin))
                 .getResultList();
+    }
+
+    /**
+     * Random offset to increase probability of each connector node selecting unique set 
+     */
+    private int randomBatchOffset(int batchSize, int numberOfChargesAvailableForCapture) {
+        final int lastBatchNumber = numberOfChargesAvailableForCapture / batchSize;
+        final int limit = Math.min(HIGHEST_RANDOM_BATCH_NUMBER, lastBatchNumber);
+        return limit > 0 ? new Random().nextInt(limit) * batchSize : 0;
     }
 
     public int countChargesAwaitingCaptureRetry(Duration notAttemptedWithin) {
