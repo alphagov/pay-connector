@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.resources;
+package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.core.Is;
@@ -22,14 +22,14 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.hasSize;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
-public class SearchRefundsResourceTest extends ChargingITestBase {
+public class SearchRefundsResourceITest extends ChargingITestBase {
 
     private static final String PROVIDER_NAME = "sandbox";
 
     private RestAssuredClient api = new RestAssuredClient(app, accountId);
     private static final String INVALID_ACCOUNT_ID = "999999999";
 
-    public SearchRefundsResourceTest() {
+    public SearchRefundsResourceITest() {
         super(PROVIDER_NAME);
     }
 

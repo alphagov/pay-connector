@@ -72,6 +72,9 @@ public class NotificationServiceTest {
     @Mock
     private PaymentProvider mockedPaymentProvider;
 
+    @Mock
+    private UserNotificationService mockedUserNotificationService;
+    
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private ChargeEntity mockedChargeEntity;
 
@@ -86,7 +89,7 @@ public class NotificationServiceTest {
 
         when(mockedPaymentProvider.verifyNotification(any(Notification.class), any(GatewayAccountEntity.class))).thenReturn(true);
 
-        notificationService = new NotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils);
+        notificationService = new NotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils, mockedUserNotificationService);
     }
 
     private Notifications<Pair<String, Boolean>> createNotificationFor(String transactionId, String reference, Pair<String, Boolean> status) {
@@ -151,6 +154,7 @@ public class NotificationServiceTest {
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
+        verifyZeroInteractions(mockedUserNotificationService);
     }
 
     @Test
@@ -164,6 +168,7 @@ public class NotificationServiceTest {
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
+        verifyZeroInteractions(mockedUserNotificationService);
     }
 
     @Test
@@ -178,6 +183,7 @@ public class NotificationServiceTest {
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
+        verifyZeroInteractions(mockedUserNotificationService);
     }
 
     @Test
@@ -193,6 +199,7 @@ public class NotificationServiceTest {
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
+        verifyZeroInteractions(mockedUserNotificationService);
     }
 
     @Test
@@ -209,6 +216,7 @@ public class NotificationServiceTest {
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
+        verifyZeroInteractions(mockedUserNotificationService);
     }
 
     @Test
@@ -225,6 +233,7 @@ public class NotificationServiceTest {
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
+        verifyZeroInteractions(mockedUserNotificationService);
     }
 
     @Test
@@ -248,11 +257,12 @@ public class NotificationServiceTest {
         verify(mockedChargeEntity, atLeastOnce()).getStatus();
         verify(mockedChargeEntity).setStatus(CAPTURED);
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
+        verifyZeroInteractions(mockedUserNotificationService);
     }
 
     @Test
     public void shouldIgnoreRefundNotificationWhenNoReference() {
-        Notifications<Pair<String, Boolean>> notifications = createNotificationFor(TRANSACTION_ID, null, Pair.of("REFUND", true));
+        Notifications<Pair<String, Boolean>> notifications = createNotificationFor(TRANSACTION_ID, null, Pair.of("REFUND_ISSUED", true));
         when(mockedPaymentProvider.parseNotification(any())).thenReturn(Either.right(notifications));
 
         StatusMapper mockedStatusMapper = createMockedStatusMapper(InterpretedStatus.Type.REFUND_STATUS, REFUNDED);
@@ -261,6 +271,7 @@ public class NotificationServiceTest {
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
+        verifyZeroInteractions(mockedUserNotificationService);
     }
 
     @Test
@@ -276,13 +287,14 @@ public class NotificationServiceTest {
         notificationService.handleNotificationFor("", SANDBOX, "payload");
 
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
+        verifyZeroInteractions(mockedUserNotificationService);
     }
 
     @Test
     public void shouldIgnoreNotificationWhenWrongReference() {
         String reference = "reference";
 
-        Notifications<Pair<String, Boolean>> notifications = createNotificationFor(TRANSACTION_ID, reference, Pair.of("REFUND", true));
+        Notifications<Pair<String, Boolean>> notifications = createNotificationFor(TRANSACTION_ID, reference, Pair.of("REFUND_ISSUED", true));
         when(mockedPaymentProvider.parseNotification(any())).thenReturn(Either.right(notifications));
 
         StatusMapper mockedStatusMapper = createMockedStatusMapper(InterpretedStatus.Type.REFUND_STATUS, REFUNDED);
@@ -295,6 +307,7 @@ public class NotificationServiceTest {
 
         verify(mockedRefundDao).findByProviderAndReference(SANDBOX.getName(), reference);
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
+        verifyZeroInteractions(mockedUserNotificationService);
     }
 
     @Test
@@ -315,13 +328,14 @@ public class NotificationServiceTest {
         assertTrue(ChronoUnit.SECONDS.between((ZonedDateTime) generatedTimeCaptor.getValue().get(), ZonedDateTime.now()) < 10);
        
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
+        verifyZeroInteractions(mockedUserNotificationService);
     }
 
     @Test
-    public void shouldAcceptNotificationForRefund() {
+    public void shouldAcceptNotificationForRefundAndSendEmail() {
         String reference = "reference";
 
-        Notifications<Pair<String, Boolean>> notifications = createNotificationFor(TRANSACTION_ID, reference, Pair.of("REFUND", true));
+        Notifications<Pair<String, Boolean>> notifications = createNotificationFor(TRANSACTION_ID, reference, Pair.of("REFUND_ISSUED", true));
         when(mockedPaymentProvider.parseNotification(any())).thenReturn(Either.right(notifications));
 
         StatusMapper mockedStatusMapper = createMockedStatusMapper(InterpretedStatus.Type.REFUND_STATUS, REFUNDED);
@@ -341,6 +355,7 @@ public class NotificationServiceTest {
 
         verify(mockedRefundDao).findByProviderAndReference(SANDBOX.getName(), reference);
         verify(mockedRefundEntity).setStatus(REFUNDED);
+        verify(mockedUserNotificationService).sendRefundIssuedEmail(mockedRefundEntity);
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
     }
 

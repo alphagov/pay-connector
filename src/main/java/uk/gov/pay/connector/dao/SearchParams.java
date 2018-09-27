@@ -294,6 +294,8 @@ public class SearchParams {
             builder.append("&first_digits_card_number=").append(firstDigitsCardNumber);
         if (lastDigitsCardNumber != null)
             builder.append("&last_digits_card_number=").append(lastDigitsCardNumber);
+        if (cardHolderName != null)
+            builder.append("&cardholder_name=").append(cardHolderName);
         if (!cardBrands.isEmpty()) {
             cardBrands.forEach(cardBrand -> builder.append("&card_brand=").append(cardBrand));
         }

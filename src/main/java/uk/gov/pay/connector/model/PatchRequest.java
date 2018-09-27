@@ -16,7 +16,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_OPERATION;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_OPERATION_PATH;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_VALUE;
 
-public class GatewayAccountRequest {
+public class PatchRequest {
 
     private String op;
     private String path;
@@ -41,7 +41,7 @@ public class GatewayAccountRequest {
         if (value != null && value.isArray()) {
             return newArrayList(value.elements())
                     .stream()
-                    .map(node -> node.textValue())
+                    .map(JsonNode::textValue)
                     .collect(toList());
         }
         return null;
@@ -61,14 +61,14 @@ public class GatewayAccountRequest {
     }
 
 
-    private GatewayAccountRequest(String op, String path, JsonNode value) {
+    private PatchRequest(String op, String path, JsonNode value) {
         this.op = op;
         this.path = path;
         this.value = value;
     }
 
-    public static GatewayAccountRequest from(JsonNode payload) {
-        return new GatewayAccountRequest(
+    public static PatchRequest from(JsonNode payload) {
+        return new PatchRequest(
                 payload.get(FIELD_OPERATION).asText(),
                 payload.get(FIELD_OPERATION_PATH).asText(),
                 payload.get(FIELD_VALUE));

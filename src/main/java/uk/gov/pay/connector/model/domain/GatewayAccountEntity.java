@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -17,9 +17,13 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.MapKeyColumn;
+import javax.persistence.MapKeyEnumerated;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -80,7 +84,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Enumerated(EnumType.STRING)
     private Type type;
 
-    //TODO: Revisit this to map to a java.util.Map
     @Column(name = "credentials", columnDefinition = "json")
     @Convert(converter = CredentialsConverter.class)
     private Map<String, String> credentials;
@@ -107,10 +110,16 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Convert(converter = JsonToMapConverter.class)
     private Map<String, String> notifySettings;
 
-    @JsonBackReference
-    @OneToOne(mappedBy = "accountEntity", cascade = CascadeType.PERSIST)
-    private EmailNotificationEntity emailNotification;
-
+    @OneToMany(mappedBy = "accountEntity", cascade = CascadeType.PERSIST)
+    @MapKeyColumn(name = "type")
+    @MapKeyEnumerated(value = EnumType.STRING)
+    @JsonManagedReference
+    private Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
+    
+    @Column(name = "email_collection_mode")
+    @Enumerated(EnumType.STRING)
+    private EmailCollectionMode emailCollectionMode = EmailCollectionMode.MANDATORY;
+    
     @OneToOne(mappedBy = "accountEntity", cascade = CascadeType.PERSIST)
     private NotificationCredentials notificationCredentials;
 
@@ -175,8 +184,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     }
 
     @JsonView(Views.ApiView.class)
-    public EmailNotificationEntity getEmailNotification() {
-        return emailNotification;
+    public Map<EmailNotificationType, EmailNotificationEntity> getEmailNotifications() {
+        return emailNotifications;
     }
 
     @JsonView(Views.ApiView.class)
@@ -204,6 +213,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         this.notificationCredentials = notificationCredentials;
     }
 
+    public void addNotification(EmailNotificationType type, EmailNotificationEntity emailNotificationEntity) {
+        emailNotifications.put(type, emailNotificationEntity);
+    }
+    
     public void setDescription(String description) {
         this.description = description;
     }
@@ -227,11 +240,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public void setCardTypes(List<CardTypeEntity> cardTypes) {
         this.cardTypes = cardTypes;
     }
-
-    public void setEmailNotification(EmailNotificationEntity emailNotification) {
-        this.emailNotification = emailNotification;
-    }
-
+    
     public void setRequires3ds(boolean requires3ds) {
         this.requires3ds = requires3ds;
     }
@@ -244,6 +253,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         this.notifySettings = notifySettings;
     }
 
+    public void setEmailCollectionMode(EmailCollectionMode emailCollectionMode) {
+        this.emailCollectionMode = emailCollectionMode;
+    }
+
     public Map<String, String> getNotifySettings() {
         return notifySettings;
     }
@@ -252,6 +265,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         Map<String, Object> account = newHashMap();
         account.put("gateway_account_id", String.valueOf(getId()));
         account.put("payment_provider", getGatewayName());
+        account.put("email_notifications", getEmailNotifications());
+        account.put("email_collection_mode", getEmailCollectionMode().toString());
         account.put("type", getType());
         if (isNotBlank(getDescription())) {
             account.put("description", getDescription());
@@ -268,10 +283,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return account;
     }
 
-    public boolean hasEmailNotificationsEnabled() {
-        return emailNotification != null && emailNotification.isEnabled();
-    }
-
     public boolean hasAnyAcceptedCardType3dsRequired() {
         return cardTypes.stream()
                 .anyMatch(CardTypeEntity::isRequires3ds);
@@ -283,6 +294,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public boolean isLive() {
         return Type.LIVE.equals(type);
+    }
+
+    public EmailCollectionMode getEmailCollectionMode() {
+        return emailCollectionMode;
     }
 
 }

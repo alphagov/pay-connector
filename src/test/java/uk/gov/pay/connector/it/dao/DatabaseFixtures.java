@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.dao;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.model.FirstDigitsCardNumber;
@@ -7,11 +8,12 @@ import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.CardTypeEntity.Type;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.EmailCollectionMode;
+import uk.gov.pay.connector.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
-import unfiltered.response.link.Last;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -298,6 +300,12 @@ public class DatabaseFixtures {
         private String serviceName = "service_name";
         private String description = "a description";
         private String analyticsId = "an analytics id";
+        private EmailCollectionMode emailCollectionMode = EmailCollectionMode.OPTIONAL;
+        private Map<EmailNotificationType, TestEmailNotification> emailNotifications =
+                ImmutableMap.of(
+                        EmailNotificationType.PAYMENT_CONFIRMED, new TestEmailNotification(),
+                        EmailNotificationType.REFUND_ISSUED, new TestEmailNotification()
+                );
         private GatewayAccountEntity.Type type = TEST;
         private List<TestCardType> cardTypes = new ArrayList<>();
         private long corporateCreditCardSurchargeAmount;
@@ -333,6 +341,14 @@ public class DatabaseFixtures {
 
         public long getCorporateDebitCardSurchargeAmount() {
             return corporateDebitCardSurchargeAmount;
+        }
+
+        public EmailCollectionMode getEmailCollectionMode() {
+            return emailCollectionMode;
+        }
+
+        public Map<EmailNotificationType, TestEmailNotification> getEmailNotifications() {
+            return emailNotifications;
         }
 
         public TestAccount withAccountId(long accountId) {
@@ -375,6 +391,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestAccount withEmailNotifications(Map<EmailNotificationType, TestEmailNotification> notifications) {
+            this.emailNotifications = notifications;
+            return this;
+        }
+        
         public TestAccount insert() {
             databaseTestHelper.addGatewayAccount(
                     String.valueOf(accountId),
@@ -389,6 +410,8 @@ public class DatabaseFixtures {
             for (TestCardType cardType : cardTypes) {
                 databaseTestHelper.addAcceptedCardType(this.getAccountId(), cardType.getId());
             }
+            emailNotifications.forEach((type, notification) -> databaseTestHelper.addEmailNotification(this.getAccountId(), notification.getTemplate(), notification.isEnabled(), type));
+
             return this;
         }
     }
@@ -657,12 +680,26 @@ public class DatabaseFixtures {
 
         TestAccount testAccount;
         String template = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
+        boolean enabled = true;
+
+        public String getTemplate() {
+            return template;
+        }
+
+        public boolean isEnabled() {
+            return enabled;
+        }
 
         public TestEmailNotification withTestAccount(TestAccount testAccount) {
             this.testAccount = testAccount;
             return this;
         }
 
+        public TestEmailNotification withEnabled(boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+        
         public TestEmailNotification insert() {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");

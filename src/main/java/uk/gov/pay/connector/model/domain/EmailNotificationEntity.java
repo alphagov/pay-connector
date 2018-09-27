@@ -1,11 +1,13 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -32,25 +34,32 @@ public class EmailNotificationEntity extends AbstractVersionedEntity {
 
     private boolean enabled;
 
+    @Column(name = "type", insertable = false, updatable = false)
+    @Enumerated(EnumType.STRING)
+    private EmailNotificationType type;
+    
     @OneToOne
-    @JsonIgnore
     @JoinColumn(name = "account_id", nullable = false)
-    @JsonManagedReference
+    @JsonBackReference
     private GatewayAccountEntity accountEntity;
 
     public EmailNotificationEntity () {
     }
 
-    public EmailNotificationEntity(GatewayAccountEntity accountEntity) {
-        this.accountEntity = accountEntity;
-        this.enabled = true;
+    public EmailNotificationEntity(GatewayAccountEntity gatewayAccount, String templateBody, boolean enabled) {
+        this.accountEntity = gatewayAccount;
+        this.templateBody = templateBody;
+        this.enabled = enabled;
     }
 
     public EmailNotificationEntity(GatewayAccountEntity gatewayAccount, String templateBody) {
-        this.accountEntity = gatewayAccount;
-        this.templateBody = templateBody;
-        this.enabled = true;
+        this(gatewayAccount, templateBody, true);
     }
+
+    public EmailNotificationEntity(GatewayAccountEntity gatewayAccount) {
+        this(gatewayAccount, null, true);
+    }
+
 
     public Long getId() {
         return id;

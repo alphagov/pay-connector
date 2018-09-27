@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.Before;
 import org.junit.Test;
@@ -207,7 +208,7 @@ public class ChargeServiceTest {
                         "path", "email",
                         "value", expectedEmail))
                 .withValidOps(singletonList("replace"))
-                .withValidPaths(singletonList("email"))
+                .withValidPaths(ImmutableSet.of("email"))
                 .build();
 
 
@@ -216,7 +217,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldCreateAToken() throws Exception {
+    public void shouldCreateAToken() {
         service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = forClass(TokenEntity.class);

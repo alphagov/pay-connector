@@ -37,7 +37,7 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     private DatabaseFixtures databaseFixtures;
 
     @Before
-    public void setUp() {
+    public void setUp()  {
         gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
     }
@@ -62,11 +62,9 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         gatewayAccountDao.persist(account);
 
         assertThat(account.getId(), is(notNullValue()));
-        assertThat(account.getEmailNotification(), is(notNullValue()));
+        assertThat(account.getEmailNotifications().isEmpty(), is(true));
         assertThat(account.getDescription(), is(nullValue()));
         assertThat(account.getAnalyticsId(), is(nullValue()));
-        assertThat(account.getEmailNotification().getAccountEntity().getId(), is(account.getId()));
-        assertThat(account.getEmailNotification().isEnabled(), is(true));
         assertThat(account.getNotificationCredentials(), is(nullValue()));
         assertThat(account.getCorporateCreditCardSurchargeAmount(), is(0L));
         assertThat(account.getCorporateDebitCardSurchargeAmount(), is(0L));
@@ -445,11 +443,11 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         gatewayAccountEntity.setNotifySettings(notifySettings);
         gatewayAccountDao.merge(gatewayAccountEntity);
 
-        notifySettings = databaseTestHelper.getNotifySettings(accountId);
+        Map<String, String> storedNotifySettings = databaseTestHelper.getNotifySettings(accountId);
 
-        assertThat(notifySettings.size(), is(2));
-        assertThat(notifySettings.get("notify_api_token"), is(notifyAPIToken));
-        assertThat(notifySettings.get("notify_template_id"), is(notifyTemplateId));
+        assertThat(storedNotifySettings.size(), is(2));
+        assertThat(storedNotifySettings.get("notify_api_token"), is(notifyAPIToken));
+        assertThat(storedNotifySettings.get("notify_template_id"), is(notifyTemplateId));
     }
 
     private DatabaseFixtures.TestCardType createMastercardCreditCardTypeRecord() {

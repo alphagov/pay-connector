@@ -5,16 +5,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.util.Errors;
+import uk.gov.pay.connector.exception.ValidationException;
 import uk.gov.pay.connector.validations.RequestValidator;
-
-import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.fail;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_NOTIFY_API_TOKEN;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_NOTIFY_TEMPLATE_ID;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_OPERATION;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_OPERATION_PATH;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_VALUE;
@@ -26,85 +25,116 @@ public class GatewayAccountRequestValidatorTest {
     private ObjectMapper objectMapper;
 
     @Before
-    public void before() throws Exception {
+    public void before() {
         validator = new GatewayAccountRequestValidator(new RequestValidator());
         objectMapper = new ObjectMapper();
     }
 
     @Test
-    public void shouldError_whenFieldsAreMissing() throws Exception {
+    public void shouldThrow_whenFieldsAreMissing() {
         JsonNode jsonNode = new ObjectMapper()
                 .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
                         FIELD_OPERATION_PATH, "notify_settings"));
-        Optional<Errors> optionalErrors = validator.validatePatchRequest(jsonNode);
-
-        assertThat(optionalErrors.isPresent(), is(true));
-        Errors errors = optionalErrors.get();
-
-        assertThat(errors.getErrors().size(), is(1));
-        assertThat(errors.getErrors(), hasItems(
-                "Field [value] is required"));
+        try {
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException validationException) {
+            assertThat(validationException.getErrors().size(), is(1));
+            assertThat(validationException.getErrors(), hasItems(
+                    "Field [value] is required"));
+        }
     }
 
     @Test
-    public void shouldError_whenFieldsNotValidInValue() throws Exception {
+    public void shouldThrow_whenFieldsNotValidInValue() {
         JsonNode jsonNode = new ObjectMapper()
                 .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
                         FIELD_OPERATION_PATH, "notify_settings",
                         FIELD_VALUE, ImmutableMap.of("timbuktu", "anapitoken",
                                 "colombo", "atemplateid")));
-        Optional<Errors> optionalErrors = validator.validatePatchRequest(jsonNode);
-
-        assertThat(optionalErrors.isPresent(), is(true));
-        assertThat(optionalErrors.get().getErrors().size(), is(2));
-        assertThat(optionalErrors.get().getErrors().get(0), is("Field [api_token] is required"));
-        assertThat(optionalErrors.get().getErrors().get(1), is("Field [template_id] is required"));
+        try {
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException validationException) {
+            assertThat(validationException.getErrors().size(), is(2));
+            assertThat(validationException.getErrors(), hasItems(
+                    "Field [api_token] is required",
+                    "Field [template_id] is required"));
+        }
     }
 
     @Test
-    public void shouldReturnError_whenInvalidPathOnOperation() throws Exception {
+    public void shouldThrow_whenInvalidPathOnOperation() {
         JsonNode jsonNode = objectMapper.valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
                 FIELD_OPERATION_PATH, "service_name"));
-        Optional<Errors> optionalErrors =validator.validatePatchRequest(jsonNode);
-        assertThat(optionalErrors.isPresent(), is(true));
-        assertThat(optionalErrors.get().getErrors().size(), is(1));
-        assertThat(optionalErrors.get().getErrors().get(0), is("Operation [op] not supported for path [service_name]"));
+        try {
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException validationException) {
+            assertThat(validationException.getErrors().size(), is(1));
+            assertThat(validationException.getErrors(), hasItems("Operation [op] not supported for path [service_name]"));
+        }
     }
 
     @Test
-    public void shouldReturnEmpty_whenAllValidationsPassed() throws Exception {
+    public void shouldThrow_whenEmailCollectionModeIsInvalid() {
+        JsonNode jsonNode = new ObjectMapper()
+                .valueToTree(ImmutableMap.of(
+                        FIELD_OPERATION, "replace",
+                        FIELD_OPERATION_PATH, "email_collection_mode",
+                        FIELD_VALUE,"someValue"));
+        try {
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException validationException) {
+            assertThat(validationException.getErrors().size(), is(1));
+            assertThat(validationException.getErrors(), hasItems("Value [someValue] is not valid for [email_collection_mode]"));
+        }
+    }
+
+    @Test
+    public void shouldNotThrow_whenAllValidationsPassed() {
         JsonNode jsonNode = new ObjectMapper()
                 .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
-                FIELD_OPERATION_PATH, "notify_settings",
+                        FIELD_OPERATION_PATH, "notify_settings",
                         FIELD_VALUE, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "anapitoken",
-                                FIELD_NOTIFY_TEMPLATE_ID, "atemplateid")));
-        Optional<Errors> optionalErrors = validator.validatePatchRequest(jsonNode);
-
-        assertThat(optionalErrors.isPresent(), is(false));
+                                FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID, "atemplateid")));
+        
+        validator.validatePatchRequest(jsonNode);
     }
 
     @Test
-    public void shouldReturnError_whenInvalidOperation() throws Exception {
+    public void shouldNotThrow_whenPathIsValidEmailCollectionMode() {
+        JsonNode jsonNode = new ObjectMapper()
+                .valueToTree(ImmutableMap.of(
+                        FIELD_OPERATION, "replace",
+                        FIELD_OPERATION_PATH, "email_collection_mode",
+                        FIELD_VALUE,"MANDATORY"));
+        validator.validatePatchRequest(jsonNode);
+    }
+
+    @Test
+    public void shouldThrow_whenInvalidOperation() {
         JsonNode jsonNode = new ObjectMapper()
                 .valueToTree(ImmutableMap.of(FIELD_OPERATION, "delete",
                         FIELD_OPERATION_PATH, "notify_settings",
                         FIELD_VALUE, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "anapitoken",
-                                FIELD_NOTIFY_TEMPLATE_ID, "atemplateid")));
-        Optional<Errors> optionalErrors = validator.validatePatchRequest(jsonNode);
-
-        assertThat(optionalErrors.isPresent(), is(true));
-        assertThat(optionalErrors.get().getErrors().size(), is(1));
-        assertThat(optionalErrors.get().getErrors().get(0), is("Operation [delete] is not valid for path [op]"));
+                                FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID, "atemplateid")));
+        try {
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException validationException) {
+            assertThat(validationException.getErrors().size(), is(1));
+            assertThat(validationException.getErrors(), hasItems("Operation [delete] is not valid for path [op]"));
+        }
     }
 
     @Test
-    public void shouldIgnoreEmptyOrMissingValue_whenRemoveOperation() throws Exception {
+    public void shouldIgnoreEmptyOrMissingValue_whenRemoveOperation() {
         JsonNode jsonNode = new ObjectMapper()
                 .valueToTree(ImmutableMap.of(FIELD_OPERATION, "remove",
                         FIELD_OPERATION_PATH, "notify_settings",
                         FIELD_VALUE, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "")));
-        Optional<Errors> optionalErrors = validator.validatePatchRequest(jsonNode);
-
-        assertThat(optionalErrors.isPresent(), is(false));
+        validator.validatePatchRequest(jsonNode);
     }
 }
