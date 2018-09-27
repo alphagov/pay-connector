@@ -1344,7 +1344,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .withChargeStatus(CAPTURED)
                 .insert();
 
-        List<ChargeEntity> charges = chargeDao.findChargesForCapture(10, Duration.of(60, ChronoUnit.MINUTES));
+        List<ChargeEntity> charges = chargeDao.findChargesForCapture(10, 10, Duration.of(60, ChronoUnit.MINUTES));
 
         assertThat(charges.size(), is(1));
         assertEquals(charges.get(0).getId(), new Long(101));
@@ -1418,7 +1418,7 @@ public class ChargeDaoITest extends DaoITestBase {
                 .insert();
 
 
-        List<ChargeEntity> charges = chargeDao.findChargesForCapture(10, Duration.of(60, ChronoUnit.MINUTES));
+        List<ChargeEntity> charges = chargeDao.findChargesForCapture(10, 10, Duration.of(60, ChronoUnit.MINUTES));
 
         assertThat(charges.size(), is(1));
         assertEquals(charges.get(0).getId(), new Long(chargeId1));

@@ -10,6 +10,7 @@ import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.ConflictRuntimeException;
+import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -50,16 +51,14 @@ public class CardCaptureProcess {
 
         try {
             waitingCaptureQueueSize = chargeDao.countChargesAwaitingCaptureRetry(captureConfig.getRetryFailuresEveryAsJavaDuration());
+            
+            readyCaptureQueueSize = chargeDao.countChargesForImmediateCapture(captureConfig.getRetryFailuresEveryAsJavaDuration());
 
             List<ChargeEntity> chargesToCapture = chargeDao.findChargesForCapture(captureConfig.getBatchSize(),
+                    readyCaptureQueueSize,
                     captureConfig.getRetryFailuresEveryAsJavaDuration());
+            
             chargesToCaptureSize = chargesToCapture.size();
-
-            if (chargesToCaptureSize < captureConfig.getBatchSize()) {
-                readyCaptureQueueSize = chargesToCaptureSize;
-            } else {
-                readyCaptureQueueSize = chargeDao.countChargesForImmediateCapture(captureConfig.getRetryFailuresEveryAsJavaDuration());
-            }
 
             if (chargesToCaptureSize > 0) {
                 logger.info("Capturing: {} of {} charges", chargesToCaptureSize, (waitingCaptureQueueSize + readyCaptureQueueSize));
@@ -82,7 +81,14 @@ public class CardCaptureProcess {
                     } catch (ConflictRuntimeException e) {
                         logger.info("Another process has already attempted to capture [chargeId={}]. Skipping.", charge.getExternalId());
                         skipped++;
+                    } catch (IllegalStateRuntimeException e) {
+                        logger.info("Charge not in correct state to be processed [chargeId={}, state={}]. Skipping.", charge.getExternalId(), charge.getStatus());
+                        skipped++;
+                    } catch (Exception e) {
+                        logger.info("Failed to capture [chargeId={}] due to: {}", charge.getExternalId(), e.getMessage());
+                        failedCapture++;
                     }
+                    
                 } else {
                     captureService.markChargeAsCaptureError(charge.getExternalId());
                     error++;

@@ -1541,4 +1541,11 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <changeSet id="add index to charges events (updated , status)" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_charge_events_updated_and_status ON charge_events(updated,status);
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

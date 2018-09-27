@@ -81,7 +81,7 @@ public class CardCaptureProcessTest {
     public void shouldRetrieveASpecifiedNumberOfChargesApprovedForCapture() {
         cardCaptureProcess.runCapture();
 
-        verify(mockChargeDao).findChargesForCapture(10, Duration.ofMinutes(60));
+        verify(mockChargeDao).findChargesForCapture(10, 0, Duration.ofMinutes(60));
     }
 
     @Test
@@ -132,7 +132,7 @@ public class CardCaptureProcessTest {
         ChargeEntity mockCharge1 = mock(ChargeEntity.class);
         ChargeEntity mockCharge2 = mock(ChargeEntity.class);
 
-        when(mockChargeDao.findChargesForCapture(10, Duration.ofMinutes(60))).thenReturn(asList(mockCharge1, mockCharge2));
+        when(mockChargeDao.findChargesForCapture(10, 0, Duration.ofMinutes(60))).thenReturn(asList(mockCharge1, mockCharge2));
         when(mockCharge1.getExternalId()).thenReturn("my-charge-1");
         when(mockCharge2.getExternalId()).thenReturn("my-charge-2");
 
@@ -147,7 +147,7 @@ public class CardCaptureProcessTest {
         ChargeEntity mockCharge1 = mock(ChargeEntity.class);
         ChargeEntity mockCharge2 = mock(ChargeEntity.class);
 
-        when(mockChargeDao.findChargesForCapture(10, Duration.ofMinutes(60))).thenReturn(asList(mockCharge1, mockCharge2));
+        when(mockChargeDao.findChargesForCapture(10, 0,  Duration.ofMinutes(60))).thenReturn(asList(mockCharge1, mockCharge2));
         when(mockCharge1.getExternalId()).thenReturn("my-charge-1");
         when(mockCharge2.getExternalId()).thenReturn("my-charge-2");
         when(mockCharge1.getId()).thenReturn(1L);
@@ -169,7 +169,7 @@ public class CardCaptureProcessTest {
         String chargeId = "my-charge-1";
         ChargeEntity mockCharge1 = mock(ChargeEntity.class);
 
-        when(mockChargeDao.findChargesForCapture(10, Duration.ofMinutes(60))).thenReturn(singletonList(mockCharge1));
+        when(mockChargeDao.findChargesForCapture(10, 0, Duration.ofMinutes(60))).thenReturn(singletonList(mockCharge1));
         when(mockCharge1.getExternalId()).thenReturn(chargeId);
         when(mockCharge1.getId()).thenReturn(1L);
 

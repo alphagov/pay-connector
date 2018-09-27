@@ -19,6 +19,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
@@ -33,6 +34,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     private static final String REFERENCE = "reference";
     private static final String EMAIL = "email";
     private static final String SQL_ESCAPE_SEQ = "\\\\";
+    public static final int HIGHEST_RANDOM_BATCH_NUMBER = 20;
 
     @Inject
     public ChargeDao(final Provider<EntityManager> entityManager) {
@@ -196,17 +198,30 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return count.intValue();
     }
 
-    public List<ChargeEntity> findChargesForCapture(int maxNumberOfCharges, Duration notAttemptedWithin) {
+    public List<ChargeEntity> findChargesForCapture(int batchSize,
+                                                    int numberOfChargesAvailableForCapture,
+                                                    Duration notAttemptedWithin) {
+
         String query = "SELECT c FROM ChargeEntity c " + FIND_CAPTURE_CHARGES_WHERE_CLAUSE + "ORDER BY c.createdDate ASC";
 
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)
-                .setMaxResults(maxNumberOfCharges)
+                .setMaxResults(batchSize)
+                .setFirstResult(randomBatchOffset(batchSize, numberOfChargesAvailableForCapture))
                 .setParameter("captureApprovedStatus", CAPTURE_APPROVED.getValue())
                 .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY.getValue())
                 .setParameter("eventStatus", CAPTURE_APPROVED_RETRY)
                 .setParameter("cutoffDate", ZonedDateTime.now().minus(notAttemptedWithin))
                 .getResultList();
+    }
+
+    /**
+     * Random offset to increase probability of each connector node selecting unique set 
+     */
+    private int randomBatchOffset(int batchSize, int numberOfChargesAvailableForCapture) {
+        final int lastBatchNumber = numberOfChargesAvailableForCapture / batchSize;
+        final int limit = Math.min(HIGHEST_RANDOM_BATCH_NUMBER, lastBatchNumber);
+        return limit > 0 ? new Random().nextInt(limit) * batchSize : 0;
     }
 
     public int countChargesAwaitingCaptureRetry(Duration notAttemptedWithin) {
