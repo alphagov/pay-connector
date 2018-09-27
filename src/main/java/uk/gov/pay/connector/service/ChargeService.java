@@ -24,6 +24,7 @@ import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.model.domain.TokenEntity;
 import uk.gov.pay.connector.resources.ChargesApiResource;
 import uk.gov.pay.connector.util.DateTimeUtils;
+import uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
@@ -170,7 +171,7 @@ public class ChargeService {
         if (chargeEntity.getCorporateSurcharge() != null) {
             reponseBuilder
                     .withCorporateSurcharge(chargeEntity.getCorporateSurcharge())
-                    .withTotalAmount(chargeEntity.getTotalAmount());
+                    .withTotalAmount(CorporateSurchargeCalculator.getTotalAmountFor(chargeEntity));
         }
 
         ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
