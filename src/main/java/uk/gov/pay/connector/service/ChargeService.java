@@ -168,7 +168,7 @@ public class ChargeService {
                 .withLink("self", GET, selfUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()));
 
-        if (chargeEntity.getCorporateSurcharge() != null) {
+        if (chargeEntity.getCorporateSurcharge() != null && chargeEntity.getCorporateSurcharge() > 0) {
             reponseBuilder
                     .withCorporateSurcharge(chargeEntity.getCorporateSurcharge())
                     .withTotalAmount(CorporateSurchargeCalculator.getTotalAmountFor(chargeEntity));

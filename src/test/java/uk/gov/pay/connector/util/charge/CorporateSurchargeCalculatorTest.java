@@ -7,12 +7,14 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsBuilder;
 import uk.gov.pay.connector.model.domain.CardType;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.model.domain.Transaction;
+import uk.gov.pay.connector.model.domain.TransactionBuilder;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsNull.nullValue;
-import static uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator.setCorporateSurchargeFor;
 import static uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator.getTotalAmountFor;
+import static uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator.setCorporateSurchargeFor;
 
 public class CorporateSurchargeCalculatorTest {
     @Test
@@ -170,4 +172,32 @@ public class CorporateSurchargeCalculatorTest {
         final Long expectedAmount = chargeEntity.getAmount();
         assertThat(actualAmount, is(expectedAmount));
     }
+
+    @Test
+    public void shouldCalculateTotalAmountForCorporateSurchargeGreaterThanZero_forTransaction() {
+        Transaction transaction = TransactionBuilder.aTransaction().withCorporateSurcharge(250L).build();
+
+        final Long actualAmount = CorporateSurchargeCalculator.getTotalAmountFor(transaction);
+        final Long expectedAmount = transaction.getAmount() + transaction.getCorporateSurcharge();
+        assertThat(actualAmount, is(expectedAmount));
+    }
+
+    @Test
+    public void shouldCalculateTotalAmountForNullCorporateSurcharge_forTransaction() {
+        Transaction transaction = TransactionBuilder.aTransaction().build();
+
+        final Long actualAmount = CorporateSurchargeCalculator.getTotalAmountFor(transaction);
+        final Long expectedAmount = transaction.getAmount();
+        assertThat(actualAmount, is(expectedAmount));
+    }
+
+    @Test
+    public void shouldCalculateTotalAmountForZeroCorporateSurcharge_forTransaction() {
+        Transaction transaction = TransactionBuilder.aTransaction().withCorporateSurcharge(0L).build();
+
+        final Long actualAmount = CorporateSurchargeCalculator.getTotalAmountFor(transaction);
+        final Long expectedAmount = transaction.getAmount();
+        assertThat(actualAmount, is(expectedAmount));
+    }
+
 }

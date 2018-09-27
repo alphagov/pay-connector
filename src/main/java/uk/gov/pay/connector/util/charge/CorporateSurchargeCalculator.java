@@ -4,6 +4,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.CardType;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.Transaction;
 
 /**
  * Holder for utility methods used to calculate values around corporate surcharge
@@ -57,6 +58,25 @@ public class CorporateSurchargeCalculator {
             return charge.getCorporateSurcharge() + charge.getAmount();
         } else {
             return charge.getAmount();
+        }
+    }
+
+    /**
+     * Utility method to calculate total amount for a charge that has a corporate
+     * surcharge.
+     * <p>
+     * Output from this method is the sum between {@link Transaction#corporateSurcharge}
+     * and {@link Transaction#amount} when the corporate surcharge is greater than zero
+     * or amount only, when corporate surcharge is zero or {@link null}
+     *
+     * @param transaction The {@link Transaction} for which to get the total amount
+     * @return A {@link Long}
+     */
+    public static Long getTotalAmountFor(Transaction transaction) {
+        if (transaction.getCorporateSurcharge() != null && transaction.getCorporateSurcharge() > 0) {
+            return transaction.getCorporateSurcharge() + transaction.getAmount();
+        } else {
+            return transaction.getAmount();
         }
     }
 }

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.model.ChargeResponse;
+import uk.gov.pay.connector.model.FrontendChargeResponse;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
@@ -16,6 +17,7 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.service.ChargeService;
 import uk.gov.pay.connector.util.DateTimeUtils;
+import uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -65,10 +67,7 @@ public class ChargesFrontendResource {
     @JsonView(GatewayAccountEntity.Views.FrontendView.class)
     public Response getCharge(@PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
 
-        Optional<ChargeEntity> maybeCharge = chargeDao.findByExternalId(chargeId);
-        logger.debug("charge from DB: " + maybeCharge);
-
-        return maybeCharge
+        return chargeDao.findByExternalId(chargeId)
                 .map(charge -> Response.ok(buildChargeResponse(uriInfo, charge)).build())
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
@@ -166,7 +165,7 @@ public class ChargesFrontendResource {
             auth3dsData.setMd(charge.get3dsDetails().getMd());
         }
 
-        return aFrontendChargeResponse()
+        final FrontendChargeResponse.FrontendChargeResponseBuilder responseBuilder = aFrontendChargeResponse()
                 .withStatus(charge.getStatus())
                 .withChargeId(chargeId)
                 .withAmount(charge.getAmount())
@@ -182,7 +181,14 @@ public class ChargesFrontendResource {
                 .withDelayedCapture(charge.isDelayedCapture())
                 .withLink("self", GET, locationUriFor("/v1/frontend/charges/{chargeId}", uriInfo, chargeId))
                 .withLink("cardAuth", POST, locationUriFor("/v1/frontend/charges/{chargeId}/cards", uriInfo, chargeId))
-                .withLink("cardCapture", POST, locationUriFor("/v1/frontend/charges/{chargeId}/capture", uriInfo, chargeId)).build();
+                .withLink("cardCapture", POST, locationUriFor("/v1/frontend/charges/{chargeId}/capture", uriInfo, chargeId));
+        if (charge.getCorporateSurcharge() != null && charge.getCorporateSurcharge() > 0) {
+            responseBuilder
+                    .withCorporateSurcharge(charge.getCorporateSurcharge())
+                    .withTotalAmount(CorporateSurchargeCalculator.getTotalAmountFor(charge));
+        }
+        return responseBuilder
+                .build();
     }
 
     private URI locationUriFor(String path, UriInfo uriInfo, String chargeId) {

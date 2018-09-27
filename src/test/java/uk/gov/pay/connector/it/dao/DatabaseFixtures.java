@@ -404,6 +404,7 @@ public class DatabaseFixtures {
         ServicePaymentReference reference = ServicePaymentReference.of("Test reference");
         SupportedLanguage language = SupportedLanguage.ENGLISH;
         boolean delayedCapture = false;
+        Long corporateSurcharge = null;
 
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
 
@@ -492,6 +493,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestCharge withCorporateSurcharge(Long corporateSurcharge) {
+            this.corporateSurcharge = corporateSurcharge;
+            return this;
+        }
+
         public Long getChargeId() {
             return chargeId;
         }
@@ -542,6 +548,10 @@ public class DatabaseFixtures {
 
         public TestAccount getTestAccount() {
             return testAccount;
+        }
+
+        public Long getCorporateSurcharge() {
+            return corporateSurcharge;
         }
     }
 

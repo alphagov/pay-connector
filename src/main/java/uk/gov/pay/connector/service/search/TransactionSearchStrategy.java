@@ -15,6 +15,7 @@ import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.domain.Transaction;
 import uk.gov.pay.connector.util.DateTimeUtils;
+import uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator;
 
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
@@ -82,6 +83,12 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
                         .build(transaction.getGatewayAccountId(), transaction.getExternalId()));
         if (refundSummary != null) {
             transactionResponseBuilder.withRefunds(refundSummary);
+        }
+
+        if (transaction.getCorporateSurcharge() != null && transaction.getCorporateSurcharge() > 0) {
+            transactionResponseBuilder
+                    .withCorporateSurcharge(transaction.getCorporateSurcharge())
+                    .withTotalAmount(CorporateSurchargeCalculator.getTotalAmountFor(transaction));
         }
         return transactionResponseBuilder.build();
     }

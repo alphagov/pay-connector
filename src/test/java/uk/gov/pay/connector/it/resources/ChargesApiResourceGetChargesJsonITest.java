@@ -110,7 +110,52 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
                 .body("results[0].description", is(description))
                 .body("results[0].created_date", is("2016-01-26T13:45:32Z"))
                 .body("results[0].language", is(SupportedLanguage.WELSH.toString()))
-                .body("results[0].delayed_capture", is(true));
+                .body("results[0].delayed_capture", is(true))
+                .body("results[0].corporate_surcharge", is(nullValue()))
+                .body("results[0].total_amount", is(nullValue()));
+    }
+
+    @Test
+    public void shouldGetChargeTransactionsForJSONAcceptHeader_withCorporateSurcharge() {
+        long chargeId = nextInt();
+        String externalChargeId = "charge3";
+
+        ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
+        ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
+        UUID card = UUID.randomUUID();
+        app.getDatabaseTestHelper().addCardType(card, "label", "CREDIT", "brand", false);
+        app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
+        final long corporateSurcharge = 250L;
+        app.getDatabaseTestHelper().addChargeWithCorporateSurcharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null,
+                ServicePaymentReference.of("My reference"), createdDate, SupportedLanguage.WELSH, true, corporateSurcharge);
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "VISA", "1234", "123456", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+
+        String description = "Test description";
+        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), RETURN_URL, description,
+                ServicePaymentReference.of("My reference"), createdDate, externalChargeId);
+        app.getDatabaseTestHelper().addChargeTransaction(chargeId, null, Long.valueOf(accountId), AMOUNT, chargeStatus, chargeId, createdDate, EMAIL);
+        app.getDatabaseTestHelper().addCard(chargeId, "VISA", chargeId);
+
+        getChargeApi
+                .withAccountId(accountId)
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getTransactionsAPI()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results[0].charge_id", is(externalChargeId))
+                .body("results[0].state.status", is(EXTERNAL_SUBMITTED.getStatus()))
+                .body("results[0].amount", is(6234))
+                .body("results[0].card_details", notNullValue())
+                .body("results[0].gateway_account", nullValue())
+                .body("results[0].reference", is("My reference"))
+                .body("results[0].description", is(description))
+                .body("results[0].created_date", is("2016-01-26T13:45:32Z"))
+                .body("results[0].language", is(SupportedLanguage.WELSH.toString()))
+                .body("results[0].delayed_capture", is(true))
+                .body("results[0].corporate_surcharge", is(250))
+                .body("results[0].total_amount", is(6484));
     }
 
     @Test
@@ -373,7 +418,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
-        
+
         getChargeApi
                 .withAccountId(accountId)
                 .withQueryParam("cardholder_name", "McPayment")
@@ -480,7 +525,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
                 .body("results[0].card_details.cardholder_name", is("Mr. McPayment"))
                 .body("results[0].card_details.first_digits_card_number", is("123456"));
     }
-    
+
     @Test
     public void shouldShowTotalCountResultsAndHalLinksForCharges() {
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now());
