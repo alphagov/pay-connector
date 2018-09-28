@@ -227,7 +227,7 @@ public class ChargesFrontendResourceITest {
         setupLifeCycleEventsFor(app, chargeId2, statuses);
         setupLifeCycleEventsFor(app, chargeId3, statuses);
 
-        ValidatableResponse response = connectorRestApi.withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON).getCharges();
+        ValidatableResponse response = connectorRestApi.withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON).getTransactions();
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -248,7 +248,7 @@ public class ChargesFrontendResourceITest {
         setupLifeCycleEventsFor(app, 102L, statuses);
         setupLifeCycleEventsFor(app, 103L, statuses);
 
-        ValidatableResponse response = connectorRestApi.withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON).getCharges();
+        ValidatableResponse response = connectorRestApi.withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON).getTransactions();
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -266,7 +266,7 @@ public class ChargesFrontendResourceITest {
         ValidatableResponse response = connectorRestApi
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .withAccountId(nonExistentAccountId)
-                .getCharges();
+                .getTransactions();
 
         response.statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
@@ -277,7 +277,7 @@ public class ChargesFrontendResourceITest {
     public void shouldReturn404IfGatewayAccountIsMissingWhenListingTransactions() {
         ValidatableResponse response = connectorRestApi
                 .withAccountId("")
-                .getCharges();
+                .getTransactions();
 
         response.statusCode(NOT_FOUND.getStatusCode());
     }
@@ -287,7 +287,7 @@ public class ChargesFrontendResourceITest {
         String invalidAccRef = "XYZ";
         ValidatableResponse response = connectorRestApi
                 .withAccountId(invalidAccRef)
-                .getCharges();
+                .getTransactions();
 
         response.statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
@@ -299,7 +299,7 @@ public class ChargesFrontendResourceITest {
     public void shouldReturnEmptyResult_IfNoTransactionsExistForAccount() {
         ValidatableResponse response = connectorRestApi
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getCharges();
+                .getTransactions();
 
         response.statusCode(OK.getStatusCode())
                 .contentType(JSON)

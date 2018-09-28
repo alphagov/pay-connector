@@ -156,7 +156,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
         assertThat(createdChargeEntity.isDelayedCapture(), is(false));
-        assertThat(createdChargeEntity.getCorporateSurcharge(), is(nullValue()));
+        assertThat(createdChargeEntity.getCorporateSurcharge().isPresent(), is(false));
 
         verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity, Optional.empty());
     }
@@ -340,10 +340,10 @@ public class ChargeServiceTest {
         }});
 
         assertThat(chargeResponseForAccount.isPresent(), is(true));
-        final ChargeResponse chargeResponse = chargeResponseForAccount.get();
-        assertThat(chargeResponse.getCorporateSurcharge(), is(nullValue()));
-        assertThat(chargeResponse.getTotalAmount(), is(nullValue()));
-        assertThat(chargeResponse, is(chargeResponseWithoutCorporateSurcharge.build()));
+//        final ChargeResponse chargeResponse = chargeResponseForAccount.get();
+//        assertThat(chargeResponse.getCorporateSurcharge(), is(nullValue()));
+//        assertThat(chargeResponse.getTotalAmount(), is(nullValue()));
+        assertThat(chargeResponseForAccount.get(), is(chargeResponseWithoutCorporateSurcharge.build()));
     }
 
     @Test
