@@ -715,7 +715,7 @@ public class DatabaseFixtures {
     public class TestCardType {
         UUID id = UUID.randomUUID();
         String label = "Mastercard";
-        AcceptedType acceptedType = AcceptedType.CREDIT;
+        AcceptedType type = AcceptedType.CREDIT;
         String brand = "mastercard-c";
         boolean requires3DS;
 
@@ -729,8 +729,8 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public TestCardType withType(AcceptedType acceptedType) {
-            this.acceptedType = acceptedType;
+        public TestCardType withType(AcceptedType type) {
+            this.type = type;
             return this;
         }
 
@@ -745,7 +745,7 @@ public class DatabaseFixtures {
         }
 
         public TestCardType insert() {
-            databaseTestHelper.addCardType(id, label, acceptedType.toString(), brand, requires3DS);
+            databaseTestHelper.addCardType(id, label, type.toString(), brand, requires3DS);
             return this;
         }
 
@@ -761,12 +761,12 @@ public class DatabaseFixtures {
             return label;
         }
 
-        public AcceptedType getAcceptedType() {
-            return acceptedType;
+        public AcceptedType getType() {
+            return type;
         }
 
         public void setAcceptedType(AcceptedType acceptedType) {
-            this.acceptedType = acceptedType;
+            this.type = acceptedType;
         }
 
         public String getBrand() {

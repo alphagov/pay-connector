@@ -456,7 +456,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), buildAcceptedCardTypesBody(aVisaDebitCardTypeWithNonExistingId))
                 .then()
                 .statusCode(400)
-                .body("message", is(format("PayersCardType(s) referenced by id(s) '%s' not found", aVisaDebitCardTypeWithNonExistingId.getId())));
+                .body("message", is(format("AcceptedCardType(s) referenced by id(s) '%s' not found", aVisaDebitCardTypeWithNonExistingId.getId())));
     }
 
     @Test
@@ -477,11 +477,11 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         MatcherAssert.assertThat(acceptedCardTypes, containsInAnyOrder(
                 allOf(
                         hasEntry("label", mastercardCreditCardTypeRecord.getLabel()),
-                        hasEntry("type", mastercardCreditCardTypeRecord.getAcceptedType().toString()),
+                        hasEntry("type", mastercardCreditCardTypeRecord.getType().toString()),
                         hasEntry("brand", mastercardCreditCardTypeRecord.getBrand())
                 ), allOf(
                         hasEntry("label", visaDebitCardTypeRecord.getLabel()),
-                        hasEntry("type", visaDebitCardTypeRecord.getAcceptedType().toString()),
+                        hasEntry("type", visaDebitCardTypeRecord.getType().toString()),
                         hasEntry("brand", visaDebitCardTypeRecord.getBrand())
                 )));
     }

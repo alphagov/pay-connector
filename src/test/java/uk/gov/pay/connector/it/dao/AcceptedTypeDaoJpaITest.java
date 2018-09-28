@@ -52,14 +52,14 @@ public class AcceptedTypeDaoJpaITest extends DaoITestBase {
         CardTypeEntity firstCardType = cardTypes.get(0);
         assertNotNull(firstCardType.getId());
         assertThat(firstCardType.getBrand(), is(masterCardCreditCardTypeTestRecord.getBrand()));
-        assertThat(firstCardType.getAcceptedType(), is(masterCardCreditCardTypeTestRecord.getAcceptedType()));
+        assertThat(firstCardType.getType(), is(masterCardCreditCardTypeTestRecord.getType()));
         assertThat(firstCardType.getLabel(), is(masterCardCreditCardTypeTestRecord.getLabel()));
         assertNotNull(firstCardType.getVersion());
 
         CardTypeEntity secondCardType = cardTypes.get(1);
         assertNotNull(secondCardType.getId());
         assertThat(secondCardType.getBrand(), is(masterCardDebitCardTypeTestRecord.getBrand()));
-        assertThat(secondCardType.getAcceptedType(), is(masterCardDebitCardTypeTestRecord.getAcceptedType()));
+        assertThat(secondCardType.getType(), is(masterCardDebitCardTypeTestRecord.getType()));
         assertThat(secondCardType.getLabel(), is(masterCardDebitCardTypeTestRecord.getLabel()));
         assertNotNull(secondCardType.getVersion());
     }
@@ -79,11 +79,11 @@ public class AcceptedTypeDaoJpaITest extends DaoITestBase {
 
         CardTypeEntity firstCardType = cardTypes.get(0);
         assertThat(firstCardType.getBrand(), is("mastercard"));
-        assertThat(firstCardType.getAcceptedType(), is(CREDIT));
+        assertThat(firstCardType.getType(), is(CREDIT));
 
         CardTypeEntity secondCardType = cardTypes.get(1);
         assertThat(secondCardType.getBrand(), is("mastercard"));
-        assertThat(secondCardType.getAcceptedType(), is(DEBIT));
+        assertThat(secondCardType.getType(), is(DEBIT));
 
         CardTypeEntity thirdCardType = cardTypes.get(2);
         assertThat(thirdCardType.getBrand(), is("visa"));
@@ -98,7 +98,7 @@ public class AcceptedTypeDaoJpaITest extends DaoITestBase {
 
         CardTypeEntity fourthCardType = cardTypes.get(3);
         assertThat(fourthCardType.getBrand(), is("maestro"));
-        assertThat(fourthCardType.getAcceptedType(), is(DEBIT));
+        assertThat(fourthCardType.getType(), is(DEBIT));
         assertThat(fourthCardType.isRequires3ds(), is(true));
     }
 }

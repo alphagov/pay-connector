@@ -46,6 +46,6 @@ public class PayersCardTypesResourceITest {
                 .body("card_types[0].brand", is(this.mastercardCreditCardTypeTestRecord.getBrand()))
                 .body("card_types[0].label", is(this.mastercardCreditCardTypeTestRecord.getLabel()))
                 .body("card_types[0].requires3ds", is(this.mastercardCreditCardTypeTestRecord.getRequires3DS()))
-                .body("card_types[0].type", is(this.mastercardCreditCardTypeTestRecord.getAcceptedType().toString()));
+                .body("card_types[0].type", is(this.mastercardCreditCardTypeTestRecord.getType().toString()));
     }
 }

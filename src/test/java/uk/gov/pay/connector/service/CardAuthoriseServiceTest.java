@@ -146,7 +146,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
-        assertThat(charge.getCorporateSurcharge(), is(nullValue()));
+        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
     }
 
     @Test
@@ -170,7 +170,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
-        assertThat(charge.getCorporateSurcharge(), is(nullValue()));
+        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
     }
 
     @Test
@@ -193,7 +193,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
-        assertThat(charge.getCorporateSurcharge(), is(250L));
+        assertThat(charge.getCorporateSurcharge().get(), is(250L));
     }
 
     @Test
@@ -216,7 +216,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
-        assertThat(charge.getCorporateSurcharge(), is(50L));
+        assertThat(charge.getCorporateSurcharge().get(), is(50L));
     }
 
     @Test

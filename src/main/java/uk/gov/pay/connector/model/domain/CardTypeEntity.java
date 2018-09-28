@@ -34,9 +34,9 @@ public class CardTypeEntity extends UuidAbstractEntity {
     @JsonProperty
     private String label;
 
-    @Column(name = "type")
+    @Column
     @Enumerated(EnumType.STRING)
-    private AcceptedType acceptedType;
+    private AcceptedType type;
 
     @Column(name = "requires_3ds")
     @JsonProperty
@@ -64,12 +64,12 @@ public class CardTypeEntity extends UuidAbstractEntity {
         this.label = label;
     }
 
-    public AcceptedType getAcceptedType() {
-        return acceptedType;
+    public AcceptedType getType() {
+        return type;
     }
 
-    public void setAcceptedType(AcceptedType acceptedType) {
-        this.acceptedType = acceptedType;
+    public void setType(AcceptedType acceptedType) {
+        this.type = acceptedType;
     }
 
     public boolean isRequires3ds() {

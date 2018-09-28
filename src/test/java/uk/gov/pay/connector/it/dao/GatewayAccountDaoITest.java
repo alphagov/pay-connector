@@ -76,11 +76,11 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertThat(acceptedCardTypesByAccountId, containsInAnyOrder(
                 allOf(
                         org.hamcrest.Matchers.hasEntry("label", mastercardCreditCardTypeRecord.getLabel()),
-                        org.hamcrest.Matchers.hasEntry("type", mastercardCreditCardTypeRecord.getAcceptedType().toString()),
+                        org.hamcrest.Matchers.hasEntry("type", mastercardCreditCardTypeRecord.getType().toString()),
                         org.hamcrest.Matchers.hasEntry("brand", mastercardCreditCardTypeRecord.getBrand())
                 ), allOf(
                         org.hamcrest.Matchers.hasEntry("label", visaDebitCardTypeRecord.getLabel()),
-                        org.hamcrest.Matchers.hasEntry("type", visaDebitCardTypeRecord.getAcceptedType().toString()),
+                        org.hamcrest.Matchers.hasEntry("type", visaDebitCardTypeRecord.getType().toString()),
                         org.hamcrest.Matchers.hasEntry("brand", visaDebitCardTypeRecord.getBrand())
                 )));
     }
@@ -113,12 +113,12 @@ public class GatewayAccountDaoITest extends DaoITestBase {
                 allOf(
                         hasProperty("id", is(Matchers.notNullValue())),
                         hasProperty("label", is(mastercardCreditCardTypeRecord.getLabel())),
-                        hasProperty("type", is(mastercardCreditCardTypeRecord.getAcceptedType())),
+                        hasProperty("type", is(mastercardCreditCardTypeRecord.getType())),
                         hasProperty("brand", is(mastercardCreditCardTypeRecord.getBrand()))
                 ), allOf(
                         hasProperty("id", is(Matchers.notNullValue())),
                         hasProperty("label", is(visaDebitCardTypeRecord.getLabel())),
-                        hasProperty("type", is(visaDebitCardTypeRecord.getAcceptedType())),
+                        hasProperty("type", is(visaDebitCardTypeRecord.getType())),
                         hasProperty("brand", is(visaDebitCardTypeRecord.getBrand()))
                 )));
     }
@@ -151,11 +151,11 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertThat(acceptedCardTypesByAccountId, contains(
                 allOf(
                         org.hamcrest.Matchers.hasEntry("label", mastercardCreditCardTypeRecord.getLabel()),
-                        org.hamcrest.Matchers.hasEntry("type", mastercardCreditCardTypeRecord.getAcceptedType().toString()),
+                        org.hamcrest.Matchers.hasEntry("type", mastercardCreditCardTypeRecord.getType().toString()),
                         org.hamcrest.Matchers.hasEntry("brand", mastercardCreditCardTypeRecord.getBrand())
                 ), allOf(
                         org.hamcrest.Matchers.hasEntry("label", visaDebitCardTypeRecord.getLabel()),
-                        org.hamcrest.Matchers.hasEntry("type", visaDebitCardTypeRecord.getAcceptedType().toString()),
+                        org.hamcrest.Matchers.hasEntry("type", visaDebitCardTypeRecord.getType().toString()),
                         org.hamcrest.Matchers.hasEntry("brand", visaDebitCardTypeRecord.getBrand())
                 )));
     }
