@@ -6,7 +6,7 @@ package uk.gov.pay.connector.model.domain;
  * used to make a payment. This is also used to calculate corporate
  * surcharges, based on other rules.
  * <p>
- * This should not be confused with {@link CardTypeEntity.AcceptedType}
+ * This should not be confused with {@link CardTypeEntity.SupportedType}
  * which is used to map values from the database to frontend
  * labels. This is used to drive the frontend UI
  */

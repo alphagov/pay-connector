@@ -10,9 +10,9 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
-import static uk.gov.pay.connector.model.domain.CardTypeEntity.AcceptedType.*;
+import static uk.gov.pay.connector.model.domain.CardTypeEntity.SupportedType.*;
 
-public class AcceptedTypeDaoJpaITest extends DaoITestBase {
+public class SupportedTypeDaoJpaITest extends DaoITestBase {
 
     private CardTypeDao cardTypeDao;
 
