@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.util.charge;
 
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
-import uk.gov.pay.connector.model.domain.CardType;
+import uk.gov.pay.connector.model.domain.PayersCardType;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
@@ -25,12 +25,12 @@ public interface CorporateSurchargeCalculator {
     static void setCorporateSurchargeFor(AuthCardDetails authCardDetails, ChargeEntity chargeEntity) {
         final Boolean corporateCard = authCardDetails.isCorporateCard();
         if (corporateCard != null && corporateCard) {
-            final CardType cardType = authCardDetails.getCardType();
-            if (cardType != null) {
+            final PayersCardType payersCardType = authCardDetails.getPayersCardType();
+            if (payersCardType != null) {
                 final GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
-                if (cardType.equals(CardType.CREDIT) && gatewayAccount.getCorporateCreditCardSurchargeAmount() > 0) {
+                if (payersCardType.equals(PayersCardType.CREDIT) && gatewayAccount.getCorporateCreditCardSurchargeAmount() > 0) {
                     chargeEntity.setCorporateSurcharge(gatewayAccount.getCorporateCreditCardSurchargeAmount());
-                } else if (cardType.equals(CardType.DEBIT) && gatewayAccount.getCorporateDebitCardSurchargeAmount() > 0) {
+                } else if (payersCardType.equals(PayersCardType.DEBIT) && gatewayAccount.getCorporateDebitCardSurchargeAmount() > 0) {
                     chargeEntity.setCorporateSurcharge(gatewayAccount.getCorporateDebitCardSurchargeAmount());
                 }
             }

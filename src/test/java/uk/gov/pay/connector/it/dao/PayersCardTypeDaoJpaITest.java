@@ -13,7 +13,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
 import static uk.gov.pay.connector.model.domain.CardTypeEntity.Type.*;
 
-public class CardTypeDaoJpaITest extends DaoITestBase {
+public class PayersCardTypeDaoJpaITest extends DaoITestBase {
 
     private CardTypeDao cardTypeDao;
 

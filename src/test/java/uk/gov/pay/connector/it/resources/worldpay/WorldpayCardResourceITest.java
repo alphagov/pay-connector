@@ -3,7 +3,7 @@ package uk.gov.pay.connector.it.resources.worldpay;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.model.domain.CardType;
+import uk.gov.pay.connector.model.domain.PayersCardType;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -45,7 +45,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         worldpay.mockAuthorisationSuccess();
 
-        String corporateCreditAuthDetails = buildCorporateJsonAuthorisationDetailsFor(CardType.CREDIT);
+        String corporateCreditAuthDetails = buildCorporateJsonAuthorisationDetailsFor(PayersCardType.CREDIT);
 
         givenSetup()
                 .body(corporateCreditAuthDetails)

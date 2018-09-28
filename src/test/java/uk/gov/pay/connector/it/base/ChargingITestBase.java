@@ -14,7 +14,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.CardFixture;
-import uk.gov.pay.connector.model.domain.CardType;
+import uk.gov.pay.connector.model.domain.PayersCardType;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -251,7 +251,7 @@ public class ChargingITestBase {
 
     private static String buildCorporateJsonAuthorisationDetailsFor(String cardHolderName, String cardNumber, String cvc, String expiryDate, String cardBrand,
                                                                     String line1, String line2, String city, String county, String postCode, String countryCode,
-                                                                    Boolean isCorporateCard, CardType cardType) {
+                                                                    Boolean isCorporateCard, PayersCardType payersCardType) {
         JsonObject addressObject = new JsonObject();
 
         addressObject.addProperty("line1", line1);
@@ -274,14 +274,14 @@ public class ChargingITestBase {
         if (isCorporateCard != null) {
             authorisationDetails.addProperty("corporate_card", isCorporateCard);
         }
-        if (cardType != null) {
-            authorisationDetails.addProperty("card_type", cardType.toString());
+        if (payersCardType != null) {
+            authorisationDetails.addProperty("card_type", payersCardType.toString());
         }
 
         return toJson(authorisationDetails);
     }
 
-    protected static String buildCorporateJsonAuthorisationDetailsFor(CardType cardType) {
+    protected static String buildCorporateJsonAuthorisationDetailsFor(PayersCardType payersCardType) {
         return buildCorporateJsonAuthorisationDetailsFor(
                 CARD_HOLDER_NAME,
                 CARD_NUMBER,
@@ -294,7 +294,7 @@ public class ChargingITestBase {
                 ADDRESS_POSTCODE,
                 ADDRESS_COUNTRY_GB,
                 Boolean.TRUE,
-                cardType);
+                payersCardType);
     }
 
     protected void shouldReturnErrorForAuthorisationDetailsWithMessage(String authorisationDetails, String errorMessage, String status) throws Exception {

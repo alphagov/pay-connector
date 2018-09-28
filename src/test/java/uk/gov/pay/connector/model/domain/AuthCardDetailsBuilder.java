@@ -9,7 +9,7 @@ public final class AuthCardDetailsBuilder {
     private String cardBrand = "VISA";
     private String userAgentHeader = "Mozilla/5.0";
     private String acceptHeader = "text/html";
-    private CardType cardType = CardType.DEBIT;
+    private PayersCardType payersCardType = PayersCardType.DEBIT;
     private Boolean corporateCard = Boolean.FALSE;
 
     private AuthCardDetailsBuilder() {
@@ -59,8 +59,8 @@ public final class AuthCardDetailsBuilder {
         return this;
     }
 
-    public AuthCardDetailsBuilder withCardType(CardType cardType) {
-        this.cardType = cardType;
+    public AuthCardDetailsBuilder withCardType(PayersCardType payersCardType) {
+        this.payersCardType = payersCardType;
         return this;
     }
 
@@ -79,7 +79,7 @@ public final class AuthCardDetailsBuilder {
         authCardDetails.setCardBrand(cardBrand);
         authCardDetails.setUserAgentHeader(userAgentHeader);
         authCardDetails.setAcceptHeader(acceptHeader);
-        authCardDetails.setCardType(cardType);
+        authCardDetails.setPayersCardType(payersCardType);
         authCardDetails.setCorporateCard(corporateCard);
         return authCardDetails;
     }

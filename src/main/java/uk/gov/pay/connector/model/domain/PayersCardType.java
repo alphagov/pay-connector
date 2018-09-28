@@ -10,7 +10,7 @@ package uk.gov.pay.connector.model.domain;
  * which is used to map values from the database to frontend
  * labels. This is used to drive the frontend UI
  */
-public enum CardType {
+public enum PayersCardType {
     DEBIT,
     CREDIT,
     DEBIT_OR_CREDIT

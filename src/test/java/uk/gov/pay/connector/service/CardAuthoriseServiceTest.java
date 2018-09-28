@@ -17,7 +17,7 @@ import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.CardDetailsEntity;
-import uk.gov.pay.connector.model.domain.CardType;
+import uk.gov.pay.connector.model.domain.PayersCardType;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
@@ -155,7 +155,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillAuthorise();
         final AuthCardDetails gatewayAuthRequest = aValidAuthorisationDetails();
         gatewayAuthRequest.setCorporateCard(Boolean.TRUE);
-        gatewayAuthRequest.setCardType(CardType.CREDIT);
+        gatewayAuthRequest.setPayersCardType(PayersCardType.CREDIT);
         charge.getGatewayAccount().setCorporateCreditCardSurchargeAmount(0L);
 
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
@@ -179,7 +179,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillAuthorise();
         final AuthCardDetails gatewayAuthRequest = aValidAuthorisationDetails();
         gatewayAuthRequest.setCorporateCard(Boolean.TRUE);
-        gatewayAuthRequest.setCardType(CardType.CREDIT);
+        gatewayAuthRequest.setPayersCardType(PayersCardType.CREDIT);
         charge.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), gatewayAuthRequest);
 
@@ -202,7 +202,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillAuthorise();
         final AuthCardDetails gatewayAuthRequest = aValidAuthorisationDetails();
         gatewayAuthRequest.setCorporateCard(Boolean.TRUE);
-        gatewayAuthRequest.setCardType(CardType.DEBIT);
+        gatewayAuthRequest.setPayersCardType(PayersCardType.DEBIT);
         charge.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), gatewayAuthRequest);
 

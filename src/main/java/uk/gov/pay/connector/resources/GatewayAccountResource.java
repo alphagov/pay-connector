@@ -375,7 +375,7 @@ public class GatewayAccountResource {
                 .collect(Collectors.toList());
 
         if (cardTypeIds.size() != cardTypeEntities.size()) {
-            return badRequestResponse(format("CardType(s) referenced by id(s) '%s' not found", String.join(",", extractNotFoundCardTypeIds(cardTypeIds, cardTypeEntities))));
+            return badRequestResponse(format("PayersCardType(s) referenced by id(s) '%s' not found", String.join(",", extractNotFoundCardTypeIds(cardTypeIds, cardTypeEntities))));
         }
 
         return gatewayDao.findById(gatewayAccountId)
