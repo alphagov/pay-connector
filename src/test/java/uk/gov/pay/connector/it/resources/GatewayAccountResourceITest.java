@@ -474,7 +474,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "notify_settings",
                 "value", ImmutableMap.of("api_token", "anapitoken",
-                        "template_id", "atemplateid")));
+                        "template_id", "atemplateid",
+                        "refund_issued_template_id", "anothertemplate")));
         givenSetup()
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
@@ -528,7 +529,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "notify_settings",
                 "value", ImmutableMap.of("api_token", "anapitoken",
-                        "template_id", "atemplateid")));
+                        "template_id", "atemplateid",
+                        "refund_issued_template_id", "anothertemplate")));
         givenSetup()
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
@@ -542,7 +544,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "notify_settings",
                 "value", ImmutableMap.of("api_token", "anapitoken",
-                        "template_id", "atemplateid")));
+                        "template_id", "atemplateid",
+                        "refund_issued_template_id", "anothertemplate")));
         givenSetup()
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
