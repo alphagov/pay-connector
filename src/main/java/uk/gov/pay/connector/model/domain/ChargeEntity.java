@@ -34,6 +34,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
@@ -317,8 +318,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.delayedCapture = delayedCapture;
     }
 
-    public Long getCorporateSurcharge() {
-        return corporateSurcharge;
+    public Optional<Long> getCorporateSurcharge() {
+        return Optional.ofNullable(corporateSurcharge);
     }
 
     public void setCorporateSurcharge(Long corporateSurcharge) {

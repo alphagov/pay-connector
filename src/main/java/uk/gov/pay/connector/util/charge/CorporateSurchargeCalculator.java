@@ -49,8 +49,8 @@ public class CorporateSurchargeCalculator {
      * @return A {@link Long}
      */
     public static Long getTotalAmountFor(ChargeEntity charge) {
-        if (charge.getCorporateSurcharge() != null && charge.getCorporateSurcharge() > 0) {
-            return charge.getCorporateSurcharge() + charge.getAmount();
+        if (charge.getCorporateSurcharge().isPresent()) {
+            return charge.getCorporateSurcharge().get() + charge.getAmount();
         } else {
             return charge.getAmount();
         }

@@ -151,7 +151,7 @@ public class CorporateSurchargeCalculatorTest {
     public void shouldCalculateTotalAmountForCorporateSurchargeGreaterThanZero() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withCorporateSurcharge(250L).build();
         final Long actualAmount = CorporateSurchargeCalculator.getTotalAmountFor(chargeEntity);
-        final Long expectedAmount = chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge();
+        final Long expectedAmount = chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().get();
         assertThat(actualAmount, is(expectedAmount));
     }
 
