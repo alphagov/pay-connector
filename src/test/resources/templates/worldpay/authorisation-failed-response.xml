@@ -7,7 +7,7 @@
             <payment>
                 <paymentMethod>VISA-SSL</paymentMethod>
                 <paymentMethodDetail>
-                    <card type="creditcard"/>
+                    <card acceptedType="creditcard"/>
                 </paymentMethodDetail>
                 <amount value="500" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
                 <lastEvent>REFUSED</lastEvent>

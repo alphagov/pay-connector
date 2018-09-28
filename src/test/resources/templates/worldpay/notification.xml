@@ -6,7 +6,7 @@
             <payment>
                 <paymentMethod>VISA-SSL</paymentMethod>
                 <paymentMethodDetail>
-                    <card type="creditcard"/>
+                    <card acceptedType="creditcard"/>
                 </paymentMethodDetail>
                 <amount value="5000" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
                 <lastEvent>{{status}}</lastEvent>
@@ -29,7 +29,7 @@
                 <accountTx accountType="IN_PROCESS_CAPTURED" batchId="25">
                     <amount value="5000" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
                 </accountTx>
-                <journalReference type="capture" reference="{{refund-ref}}"/>
+                <journalReference acceptedType="capture" reference="{{refund-ref}}"/>
             </journal>
         </orderStatusEvent>
     </notify>

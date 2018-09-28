@@ -477,11 +477,11 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         MatcherAssert.assertThat(acceptedCardTypes, containsInAnyOrder(
                 allOf(
                         hasEntry("label", mastercardCreditCardTypeRecord.getLabel()),
-                        hasEntry("type", mastercardCreditCardTypeRecord.getType().toString()),
+                        hasEntry("type", mastercardCreditCardTypeRecord.getAcceptedType().toString()),
                         hasEntry("brand", mastercardCreditCardTypeRecord.getBrand())
                 ), allOf(
                         hasEntry("label", visaDebitCardTypeRecord.getLabel()),
-                        hasEntry("type", visaDebitCardTypeRecord.getType().toString()),
+                        hasEntry("type", visaDebitCardTypeRecord.getAcceptedType().toString()),
                         hasEntry("brand", visaDebitCardTypeRecord.getBrand())
                 )));
     }

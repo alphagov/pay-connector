@@ -21,7 +21,7 @@ public class CardTypeEntity extends UuidAbstractEntity {
      * <p>
      * This should be used only for driving the UI
      */
-    public enum Type {
+    public enum AcceptedType {
         CREDIT,
         DEBIT
     }
@@ -34,9 +34,9 @@ public class CardTypeEntity extends UuidAbstractEntity {
     @JsonProperty
     private String label;
 
-    @Column
+    @Column(name = "type")
     @Enumerated(EnumType.STRING)
-    private Type type;
+    private AcceptedType acceptedType;
 
     @Column(name = "requires_3ds")
     @JsonProperty
@@ -64,12 +64,12 @@ public class CardTypeEntity extends UuidAbstractEntity {
         this.label = label;
     }
 
-    public Type getType() {
-        return type;
+    public AcceptedType getAcceptedType() {
+        return acceptedType;
     }
 
-    public void setType(Type type) {
-        this.type = type;
+    public void setAcceptedType(AcceptedType acceptedType) {
+        this.acceptedType = acceptedType;
     }
 
     public boolean isRequires3ds() {

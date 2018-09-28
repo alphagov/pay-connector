@@ -1,4 +1,4 @@
-brand,type,label
+brand,acceptedType,label
 visa,DEBIT,Visa
 visa,CREDIT,Visa
 master-card,DEBIT,Mastercard

@@ -6,7 +6,7 @@ import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.ServicePaymentReference;
-import uk.gov.pay.connector.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.model.domain.CardTypeEntity.AcceptedType;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.EmailCollectionMode;
 import uk.gov.pay.connector.model.domain.EmailNotificationType;
@@ -67,19 +67,19 @@ public class DatabaseFixtures {
     }
 
     public TestCardType aMastercardCreditCardType() {
-        return new TestCardType().withLabel("MasterCard").withType(CardTypeEntity.Type.CREDIT).withBrand("mastercard");
+        return new TestCardType().withLabel("MasterCard").withType(AcceptedType.CREDIT).withBrand("mastercard");
     }
 
     public TestCardType aMastercardDebitCardType() {
-        return new TestCardType().withLabel("MasterCard").withType(CardTypeEntity.Type.DEBIT).withBrand("mastercard");
+        return new TestCardType().withLabel("MasterCard").withType(AcceptedType.DEBIT).withBrand("mastercard");
     }
 
     public TestCardType aVisaCreditCardType() {
-        return new TestCardType().withLabel("Visa").withType(CardTypeEntity.Type.CREDIT).withBrand("visa");
+        return new TestCardType().withLabel("Visa").withType(AcceptedType.CREDIT).withBrand("visa");
     }
 
     public TestCardType aVisaDebitCardType() {
-        return new TestCardType().withLabel("Visa").withType(CardTypeEntity.Type.DEBIT).withBrand("visa");
+        return new TestCardType().withLabel("Visa").withType(AcceptedType.DEBIT).withBrand("visa");
     }
 
     public TestEmailNotification anEmailNotification() {
@@ -91,7 +91,7 @@ public class DatabaseFixtures {
     }
 
     public TestCardType aMaestroDebitCardType() {
-        return new TestCardType().withLabel("Maestro").withType(CardTypeEntity.Type.DEBIT).withBrand("maestro").withRequires3ds(true);
+        return new TestCardType().withLabel("Maestro").withType(AcceptedType.DEBIT).withBrand("maestro").withRequires3ds(true);
     }
 
     public class TestRefundHistory {
@@ -715,7 +715,7 @@ public class DatabaseFixtures {
     public class TestCardType {
         UUID id = UUID.randomUUID();
         String label = "Mastercard";
-        CardTypeEntity.Type type = CardTypeEntity.Type.CREDIT;
+        AcceptedType acceptedType = AcceptedType.CREDIT;
         String brand = "mastercard-c";
         boolean requires3DS;
 
@@ -729,8 +729,8 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public TestCardType withType(CardTypeEntity.Type type) {
-            this.type = type;
+        public TestCardType withType(AcceptedType acceptedType) {
+            this.acceptedType = acceptedType;
             return this;
         }
 
@@ -745,7 +745,7 @@ public class DatabaseFixtures {
         }
 
         public TestCardType insert() {
-            databaseTestHelper.addCardType(id, label, type.toString(), brand, requires3DS);
+            databaseTestHelper.addCardType(id, label, acceptedType.toString(), brand, requires3DS);
             return this;
         }
 
@@ -761,12 +761,12 @@ public class DatabaseFixtures {
             return label;
         }
 
-        public CardTypeEntity.Type getType() {
-            return type;
+        public AcceptedType getAcceptedType() {
+            return acceptedType;
         }
 
-        public void setType(CardTypeEntity.Type type) {
-            this.type = type;
+        public void setAcceptedType(AcceptedType acceptedType) {
+            this.acceptedType = acceptedType;
         }
 
         public String getBrand() {
