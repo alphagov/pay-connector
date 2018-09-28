@@ -9,8 +9,8 @@
             <ns1:paymentRequest>
                 <ns1:additionalData>
                     <ns2:entry>
-                        <ns2:key xsi:acceptedType="xsd:string">executeThreeD</ns2:key>
-                        <ns2:value xsi:acceptedType="xsd:string">true</ns2:value>
+                        <ns2:key xsi:type="xsd:string">executeThreeD</ns2:key>
+                        <ns2:value xsi:type="xsd:string">true</ns2:value>
                     </ns2:entry>
                 </ns1:additionalData>
                 <ns1:browserInfo>

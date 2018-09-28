@@ -35,7 +35,7 @@ Content-Type: application/json
     "payment_provider": "sandbox",
     "description": "This is an account for the GOV.UK Pay team",
     "analytics_id": "PAY-GA-123",
-    "acceptedType": "test"
+    "type": "test"
 }
 ```
 
@@ -44,7 +44,7 @@ Content-Type: application/json
 | Field                    | required | Description                                                      | Supported Values     |
 | ------------------------ |:--------:| ---------------------------------------------------------------- |----------------------|
 | `payment_provider`       | X        | The payment provider for which this account is created.          | sandbox, worldpay, smartpay |
-| `acceptedType`                   |          | Account acceptedType for this provider.                                  | test, live (defaults to test if missing) |
+| `type`                   |          | Account type for this provider.                                  | test, live (defaults to test if missing) |
 | `description`            |          | Some useful non-ambiguiuos description about the gateway account | |
 | `analytics_id`           |          | Google Analytics (GA) unique ID for the GOV.UK Pay platform      | |
 
@@ -57,7 +57,7 @@ Location: https://connector.example.com/v1/api/accounts/1
 
 {
     "gateway_account_id": "1",
-    "acceptedType": "live",
+    "type": "live",
     "description": "This is an account for the GOV.UK Pay team",
     "analytics_id": "PAY-GA-123",
     "links": [{
@@ -73,7 +73,7 @@ Location: https://connector.example.com/v1/api/accounts/1
 | Field                    | always present | Description                                   |
 | ------------------------ |:--------------:| --------------------------------------------- |
 | `gateway_account_id`     | X              | The account Id created by the connector       |
-| `acceptedType`                   | X              | Account acceptedType for this provider (test/live)    |
+| `type`                   | X              | Account type for this provider (test/live)    |
 | `description`            | X              | Some useful non-ambiguiuos description about the gateway account |
 | `analytics_id`           | X              | Google Analytics (GA) unique ID for the GOV.UK Pay platform      |
 | `links`                  | X              | HTTP self link containing resource reference to the account.     |
@@ -99,7 +99,7 @@ Content-Type: application/json
 {
     "payment_provider": "sandbox",
     "gateway_account_id": "1",
-    "acceptedType": "live",
+    "type": "live",
     "description": "Sample Service",
     "analytics_id": "some identifier",
     "service_name": "service name",
@@ -113,7 +113,7 @@ Content-Type: application/json
 | Field                                              | always present   | Description                                                                                       |
 | -------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------- |
 | `gateway_account_id`                               | X                | The account Id                                                                                    |
-| `acceptedType`                                             | X                | Account acceptedType for this provider (test/live)                                                        |
+| `type`                                             | X                | Account type for this provider (test/live)                                                        |
 | `payment_provider`                                 | X                | The payment provider for which this account is created.                                           |
 | `description`                                      | X                | An internal description to identify the gateway account. The default value is `null`.             |
 | `analytics_id`                                     | X                | An identifier used to identify the service in Google Analytics. The default value is `null`.      |
@@ -140,7 +140,7 @@ Content-Type: application/json
 {
   "accounts": [
     {
-      "acceptedType": "test",
+      "type": "test",
       "description": "a description",
       "gateway_account_id": 100,
       "payment_provider": "sandbox",
@@ -155,7 +155,7 @@ Content-Type: application/json
       }
     },
     {
-      "acceptedType": "live",
+      "type": "live",
       "description": "a description",
       "gateway_account_id": 200,
       "payment_provider": "sandbox",
@@ -170,7 +170,7 @@ Content-Type: application/json
       }
     },
     {
-      "acceptedType": "test",
+      "type": "test",
       "description": "a description",
       "gateway_account_id": 400,
       "payment_provider": "worldpay",
@@ -193,7 +193,7 @@ Content-Type: application/json
 | -------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
 | `accounts`                                         | X                  | The collection of accounts.                                                                       |
 | `gateway_account_id`                               | X                  | The account Id.                                                                                   |
-| `acceptedType`                                             | X                  | Account acceptedType for this provider (test/live).                                                       |
+| `type`                                             | X                  | Account type for this provider (test/live).                                                       |
 | `payment_provider`                                 | X                  | The payment provider for which this account is created.                                           |
 | `description`                                      | X                  | An internal description to identify the gateway account. The default value is `null`.             |
 | `analytics_id`                                     | X                  | An identifier used to identify the service in Google Analytics. The default value is `null`.      |
@@ -374,7 +374,7 @@ Location: https://connector.example.com/v1/api/charges/1
             "rel": "next_url_post",
             "method": "POST",
             "href": "https://frontend.example.com/secure",
-            "acceptedType": "application/x-www-form-urlencoded",
+            "type": "application/x-www-form-urlencoded",
             "params": {
                 "chargeTokenId": "c4a2aaf7-c388-432d-a09b-fe0b669cd070"
             }
@@ -1005,7 +1005,7 @@ Content-Type: application/json
         "live": false,
         "gateway_account_id": 1,
         "payment_provider": "sandbox",
-        "acceptedType": "test",
+        "type": "test",
         "service_name": "local Pay test",
         "analytics_id": null,
         "corporate_credit_card_surcharge_amount": 0,
@@ -1015,63 +1015,63 @@ Content-Type: application/json
                 "id": "79404bb9-31fb-4ad6-xxxx-789c3b044059",
                 "brand": "visa",
                 "label": "Visa",
-                "acceptedType": "DEBIT",
+                "type": "DEBIT",
                 "requires3ds": false
             },
             {
                 "id": "77b1c923-8ef7-42cc-xxxx-78f8c8f96980",
                 "brand": "visa",
                 "label": "Visa",
-                "acceptedType": "CREDIT",
+                "type": "CREDIT",
                 "requires3ds": false
             },
             {
                 "id": "69193ce2-6c07-44d7-xxxx-37debfb83907",
                 "brand": "master-card",
                 "label": "Mastercard",
-                "acceptedType": "DEBIT",
+                "type": "DEBIT",
                 "requires3ds": false
             },
             {
                 "id": "f91037af-3b10-4bc6-xxxx-d3ec3d30a8aa",
                 "brand": "master-card",
                 "label": "Mastercard",
-                "acceptedType": "CREDIT",
+                "type": "CREDIT",
                 "requires3ds": false
             },
             {
                 "id": "39f11dde-abd3-475a-xxxx-55a431beb592",
                 "brand": "american-express",
                 "label": "American Express",
-                "acceptedType": "CREDIT",
+                "type": "CREDIT",
                 "requires3ds": false
             },
             {
                 "id": "74c8fa04-0831-49da-xxxx-b6a6f1a82fca",
                 "brand": "diners-club",
                 "label": "Diners Club",
-                "acceptedType": "CREDIT",
+                "type": "CREDIT",
                 "requires3ds": false
             },
             {
                 "id": "de8fb0cd-9fa7-47c8-xxxx-06e1acdefd83",
                 "brand": "discover",
                 "label": "Discover",
-                "acceptedType": "CREDIT",
+                "type": "CREDIT",
                 "requires3ds": false
             },
             {
                 "id": "07eaeb25-d268-4c34-xxxx-81c8e9528d1c",
                 "brand": "jcb",
                 "label": "Jcb",
-                "acceptedType": "CREDIT",
+                "type": "CREDIT",
                 "requires3ds": false
             },
             {
                 "id": "b8ed6f05-674f-4b75-xxxx-07c2a38d1df4",
                 "brand": "unionpay",
                 "label": "Union Pay",
-                "acceptedType": "CREDIT",
+                "type": "CREDIT",
                 "requires3ds": false
             }
         ]

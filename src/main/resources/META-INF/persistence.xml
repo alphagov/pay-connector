@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <persistence version="2.1" xmlns="http://java.sun.com/xml/ns/persistence">
-    <persistence-unit name="ConnectorUnit" transaction-acceptedType="RESOURCE_LOCAL">
+    <persistence-unit name="ConnectorUnit" transaction-type="RESOURCE_LOCAL">
         <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
         <class>uk.gov.pay.commons.model.SupportedLanguageJpaConverter</class>
         <exclude-unlisted-classes>false</exclude-unlisted-classes>

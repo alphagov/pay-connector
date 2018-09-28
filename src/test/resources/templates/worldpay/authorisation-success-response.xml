@@ -7,7 +7,7 @@
             <payment>
                 <paymentMethod>VISA-SSL</paymentMethod>
                 <paymentMethodDetail>
-                    <card number="4444********1111" acceptedType="creditcard">
+                    <card number="4444********1111" type="creditcard">
                         <expiryDate>
                             <date month="11" year="2099"/>
                         </expiryDate>
