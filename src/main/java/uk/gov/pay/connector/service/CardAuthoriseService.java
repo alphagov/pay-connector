@@ -69,10 +69,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
             } else {
                 preOperation(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
 
-                Optional<Long> corporateSurcharge = getCorporateSurchargeFor(authCardDetails, chargeEntity);
-                if (corporateSurcharge.isPresent()) {
-                    chargeEntity.setCorporateSurcharge(corporateSurcharge.get());
-                }
+                getCorporateSurchargeFor(authCardDetails, chargeEntity).ifPresent(chargeEntity::setCorporateSurcharge);
 
                 getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(transactionIdValue -> {
                     setGatewayTransactionId(chargeEntity, transactionIdValue);

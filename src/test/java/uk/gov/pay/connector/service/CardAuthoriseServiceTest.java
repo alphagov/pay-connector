@@ -150,7 +150,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthoriseWithCorporateCard_shouldRespondAuthorisationSuccess() {
+    public void doAuthoriseWithCorporateCard_shouldRespondAuthorisationSuccess_whenNoCorporateSurchargeSet() {
 
         providerWillAuthorise();
         final AuthCardDetails gatewayAuthRequest = aValidAuthorisationDetails();

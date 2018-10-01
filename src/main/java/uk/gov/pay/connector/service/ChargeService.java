@@ -148,7 +148,7 @@ public class ChargeService {
         }
         ExternalChargeState externalChargeState = ChargeStatus.fromString(chargeEntity.getStatus()).toExternal();
 
-        T reponseBuilder = responseBuilder
+        T builderOfResponse = responseBuilder
                 .withChargeId(chargeId)
                 .withAmount(chargeEntity.getAmount())
                 .withReference(chargeEntity.getReference())
@@ -168,11 +168,9 @@ public class ChargeService {
                 .withLink("self", GET, selfUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()));
 
-        if (chargeEntity.getCorporateSurcharge().isPresent()) {
-            reponseBuilder
-                    .withCorporateSurcharge(chargeEntity.getCorporateSurcharge().get())
-                    .withTotalAmount(CorporateSurchargeCalculator.getTotalAmountFor(chargeEntity));
-        }
+        chargeEntity.getCorporateSurcharge().ifPresent(corporateSurcharge ->
+                builderOfResponse.withCorporateSurcharge(corporateSurcharge)
+                        .withTotalAmount(CorporateSurchargeCalculator.getTotalAmountFor(chargeEntity)));
 
         ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
         if (!chargeStatus.toExternal().isFinished() && !chargeStatus.equals(ChargeStatus.AWAITING_CAPTURE_REQUEST)) {
@@ -180,12 +178,12 @@ public class ChargeService {
             Map<String, Object> params = new HashMap<>();
             params.put("chargeTokenId", token.getToken());
 
-            return reponseBuilder
+            return builderOfResponse
                     .withLink("next_url", GET, nextUrl(token.getToken()))
                     .withLink("next_url_post", POST, nextUrl(), APPLICATION_FORM_URLENCODED, params);
         }
 
-        return reponseBuilder;
+        return builderOfResponse;
     }
 
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {

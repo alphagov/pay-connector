@@ -128,7 +128,7 @@ public class CorporateSurchargeCalculatorTest {
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForNull() {
+    public void shouldNotGetCorporateSurcharge_whenCorporateSurchargeIsNull() {
         AuthCardDetails creditOrDebit = AuthCardDetailsBuilder.anAuthCardDetails()
                 .withCardType(PayersCardType.CREDIT)
                 .withCorporateCard(Boolean.TRUE)
