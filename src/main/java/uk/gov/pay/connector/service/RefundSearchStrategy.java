@@ -49,7 +49,7 @@ public class RefundSearchStrategy extends AbstractSearchStrategy<RefundEntity, S
                 .withCreatedDate(DateTimeUtils.toUTCDateTimeString(refundEntity.getCreatedDate()))
                 .withStatus(String.valueOf(refundEntity.getStatus()))
                 .withChargeId(refundEntity.getChargeEntity().getExternalId())
-                .withAmountSubmitted(refundEntity.getChargeEntity().getAmount())
+                .withAmountSubmitted(refundEntity.getAmount())
                 .withLink("self", GET, selfUriFor(uriInfo, accountId))
                 .withLink("payment_url", GET, paymentLinkFor(uriInfo, refundEntity.getChargeEntity().getExternalId()));
     }
