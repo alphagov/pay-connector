@@ -1541,4 +1541,14 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <changeSet id="drop transactions model" author="">
+        <sql>
+            drop table card_3ds;
+            drop table cards;
+            drop table transaction_events;
+            drop table transactions;
+            drop table payment_requests;
+        </sql>
+    </changeSet>
 </databaseChangeLog>
