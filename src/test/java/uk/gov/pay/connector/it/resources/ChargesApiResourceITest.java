@@ -477,11 +477,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
 
         String description = "Test description";
-        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), returnUrl, description,
-                ServicePaymentReference.of("My reference"), createdDate, externalChargeId);
-        app.getDatabaseTestHelper().addChargeTransaction(chargeId, null, Long.valueOf(accountId), AMOUNT, chargeStatus, chargeId,
-                createdDate, email);
-        app.getDatabaseTestHelper().addCard(chargeId, "VISA", chargeId);
 
         getChargeApi
                 .withAccountId(accountId)
@@ -518,12 +513,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 null, null, null, null, null, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
-
-        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), returnUrl, "Test description",
-                ServicePaymentReference.of("My reference"), createdDate, externalChargeId);
-        app.getDatabaseTestHelper().addChargeTransaction(chargeId, null, Long.valueOf(accountId), AMOUNT, chargeStatus, chargeId,
-                createdDate, email);
-        app.getDatabaseTestHelper().addCard(chargeId, "visa", chargeId);
 
         getChargeApi
                 .withAccountId(accountId)
@@ -1313,9 +1302,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
-        app.getDatabaseTestHelper().addPaymentRequest(chargeId, AMOUNT, Long.valueOf(accountId), returnUrl, "some description", reference, fromDate, externalChargeId);
-        app.getDatabaseTestHelper().addChargeTransaction(chargeId, null, Long.valueOf(accountId), AMOUNT, chargeStatus, chargeId, fromDate, email);
-        app.getDatabaseTestHelper().addCard(chargeId, cardBrand, chargeId);
 
         return externalChargeId;
     }
