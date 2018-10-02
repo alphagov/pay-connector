@@ -1,6 +1,10 @@
 package uk.gov.pay.connector.util;
 
-import org.xml.sax.*;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.XMLReader;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -11,12 +15,12 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.sax.SAXSource;
 import java.io.ByteArrayInputStream;
 
-import static com.sun.org.apache.xerces.internal.impl.Constants.JDK_ENTITY_EXPANSION_LIMIT;
 import static javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING;
 
 public class XMLUnmarshaller {
 
-    private static final String JDK_ENTITY_EXPANSION_LIMIT_MIN_VALUE = "1";
+    private static final String JDK_ENTITY_EXPANSION_LIMIT = "http://www.oracle.com/xml/jaxp/properties/entityExpansionLimit";
+    private static final String JDK_ENTITY_EXPANSION_LIMIT_VALUE = "1";
 
     /**
      * Unmarshall XML payloads to Java instance
@@ -51,7 +55,7 @@ public class XMLUnmarshaller {
         disableExternalDTDs(spf);
         disableExternalEntities(spf);
         SAXParser saxParser = spf.newSAXParser();
-        saxParser.setProperty(JDK_ENTITY_EXPANSION_LIMIT, JDK_ENTITY_EXPANSION_LIMIT_MIN_VALUE);
+        saxParser.setProperty(JDK_ENTITY_EXPANSION_LIMIT, JDK_ENTITY_EXPANSION_LIMIT_VALUE);
         return saxParser.getXMLReader();
     }
 
