@@ -4,16 +4,15 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.model.domain.CardTypeEntity.Type;
 
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
-import static uk.gov.pay.connector.model.domain.CardTypeEntity.Type.*;
+import static uk.gov.pay.connector.model.domain.CardTypeEntity.SupportedType.*;
 
-public class CardTypeDaoJpaITest extends DaoITestBase {
+public class SupportedTypeDaoJpaITest extends DaoITestBase {
 
     private CardTypeDao cardTypeDao;
 

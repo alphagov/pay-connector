@@ -58,6 +58,7 @@ import static uk.gov.pay.connector.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
@@ -155,7 +156,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
         assertThat(createdChargeEntity.isDelayedCapture(), is(false));
-        assertThat(createdChargeEntity.getCorporateSurcharge(), is(nullValue()));
+        assertThat(createdChargeEntity.getCorporateSurcharge().isPresent(), is(false));
 
         verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity, Optional.empty());
     }
@@ -264,6 +265,44 @@ public class ChargeServiceTest {
         shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenChargeStatusIs(ENTERING_CARD_DETAILS);
     }
 
+    @Test
+    public void shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenChargeStatusIsAuthorisationReady_andNoCorporateSurcharge() throws Exception {
+        shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenChargeStatusIs(AUTHORISATION_READY);
+    }
+
+    @Test
+    public void shouldFindChargeForChargeId_withCorporateSurcharge() {
+
+        Long chargeId = 101L;
+        Long accountId = 10L;
+
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
+        gatewayAccount.setId(1L);
+
+        ChargeEntity newCharge = aValidChargeEntity()
+                .withId(chargeId)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(AUTHORISATION_READY)
+                .withAmount(1000L)
+                .withCorporateSurcharge(250L)
+                .build();
+
+        Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
+
+        String externalId = newCharge.getExternalId();
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)).thenReturn(chargeEntity);
+
+        Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, accountId, mockedUriInfo);
+
+        ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = ArgumentCaptor.forClass(TokenEntity.class);
+        verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
+
+        assertThat(chargeResponseForAccount.isPresent(), is(true));
+        final ChargeResponse chargeResponse = chargeResponseForAccount.get();
+        assertThat(chargeResponse.getCorporateSurcharge(), is(250L));
+        assertThat(chargeResponse.getTotalAmount(), is(1250L));
+    }
+
     private void shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenChargeStatusIs(ChargeStatus status) throws Exception {
 
         Long chargeId = 101L;
@@ -292,15 +331,16 @@ public class ChargeServiceTest {
         assertThat(tokenEntity.getChargeEntity().getId(), is(newCharge.getId()));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
 
-        ChargeResponseBuilder expectedChargeResponse = chargeResponseBuilderOf(chargeEntity.get());
-        expectedChargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
-        expectedChargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId + "/refunds"));
-        expectedChargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
-        expectedChargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+        ChargeResponseBuilder chargeResponse = chargeResponseBuilderOf(chargeEntity.get());
+        chargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
+        chargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId + "/refunds"));
+        chargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
+        chargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
         }});
 
-        assertThat(chargeResponseForAccount.get(), is(expectedChargeResponse.build()));
+        assertThat(chargeResponseForAccount.isPresent(), is(true));
+        assertThat(chargeResponseForAccount.get(), is(chargeResponse.build()));
     }
 
     @Test

@@ -456,7 +456,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), buildAcceptedCardTypesBody(aVisaDebitCardTypeWithNonExistingId))
                 .then()
                 .statusCode(400)
-                .body("message", is(format("CardType(s) referenced by id(s) '%s' not found", aVisaDebitCardTypeWithNonExistingId.getId())));
+                .body("message", is(format("Accepted Card Type(s) referenced by id(s) '%s' not found", aVisaDebitCardTypeWithNonExistingId.getId())));
     }
 
     @Test

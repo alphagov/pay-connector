@@ -17,6 +17,7 @@ import uk.gov.pay.connector.exception.OperationAlreadyInProgressRuntimeException
 import uk.gov.pay.connector.model.GatewayError;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.CardDetailsEntity;
+import uk.gov.pay.connector.model.domain.PayersCardType;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
@@ -130,12 +131,13 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondAuthorisationSuccess() {
+    public void doAuthoriseWithNonCorporateCard_shouldRespondAuthorisationSuccess() {
 
         providerWillAuthorise();
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
         assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getSessionIdentifier().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
@@ -144,7 +146,77 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
+        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+    }
 
+    @Test
+    public void doAuthoriseWithCorporateCard_shouldRespondAuthorisationSuccess_whenNoCorporateSurchargeSet() {
+
+        providerWillAuthorise();
+        final AuthCardDetails gatewayAuthRequest = aValidAuthorisationDetails();
+        gatewayAuthRequest.setCorporateCard(Boolean.TRUE);
+        gatewayAuthRequest.setPayersCardType(PayersCardType.CREDIT);
+        charge.getGatewayAccount().setCorporateCreditCardSurchargeAmount(0L);
+
+        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
+
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getSessionIdentifier().isPresent(), is(true));
+        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
+
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
+        assertThat(charge.get3dsDetails(), is(nullValue()));
+        assertThat(charge.getCardDetails(), is(notNullValue()));
+        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+    }
+
+    @Test
+    public void doAuthoriseWithCreditCorporateSurcharge_shouldRespondAuthorisationSuccess() {
+
+        providerWillAuthorise();
+        final AuthCardDetails gatewayAuthRequest = aValidAuthorisationDetails();
+        gatewayAuthRequest.setCorporateCard(Boolean.TRUE);
+        gatewayAuthRequest.setPayersCardType(PayersCardType.CREDIT);
+        charge.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
+        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), gatewayAuthRequest);
+
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getSessionIdentifier().isPresent(), is(true));
+        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
+
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
+        assertThat(charge.get3dsDetails(), is(nullValue()));
+        assertThat(charge.getCardDetails(), is(notNullValue()));
+        assertThat(charge.getCorporateSurcharge().get(), is(250L));
+    }
+
+    @Test
+    public void doAuthoriseWithDebitCorporateSurcharge_shouldRespondAuthorisationSuccess() {
+
+        providerWillAuthorise();
+        final AuthCardDetails gatewayAuthRequest = aValidAuthorisationDetails();
+        gatewayAuthRequest.setCorporateCard(Boolean.TRUE);
+        gatewayAuthRequest.setPayersCardType(PayersCardType.DEBIT);
+        charge.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
+        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), gatewayAuthRequest);
+
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getSessionIdentifier().isPresent(), is(true));
+        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
+
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
+        assertThat(charge.get3dsDetails(), is(nullValue()));
+        assertThat(charge.getCardDetails(), is(notNullValue()));
+        assertThat(charge.getCorporateSurcharge().get(), is(50L));
     }
 
     @Test
@@ -160,6 +232,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
 
         assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getSessionIdentifier().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
@@ -537,7 +610,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         setupPaymentProviderMock(gatewayError);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-        //TODO ?
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
     }
 }

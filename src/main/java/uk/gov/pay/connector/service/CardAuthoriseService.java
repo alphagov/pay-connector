@@ -34,6 +34,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_TIMEO
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.sanitize;
+import static uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator.getCorporateSurchargeFor;
 
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
 
@@ -67,6 +68,8 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                 chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             } else {
                 preOperation(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
+
+                getCorporateSurchargeFor(authCardDetails, chargeEntity).ifPresent(chargeEntity::setCorporateSurcharge);
 
                 getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(transactionIdValue -> {
                     setGatewayTransactionId(chargeEntity, transactionIdValue);

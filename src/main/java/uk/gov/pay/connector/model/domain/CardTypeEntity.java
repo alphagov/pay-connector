@@ -3,14 +3,25 @@ package uk.gov.pay.connector.model.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.persistence.*;
-import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "card_types")
 public class CardTypeEntity extends UuidAbstractEntity {
 
-    public enum Type {
+    /**
+     * Internal entity used to drive the frontend UI based on the
+     * strings stored in the table {@code card_types}. This represents
+     * which card types are supported by the service, not what card types
+     * are used for payment by the paying user
+     * <p>
+     * This should be used only for driving the UI
+     */
+    public enum SupportedType {
         CREDIT,
         DEBIT
     }
@@ -25,7 +36,7 @@ public class CardTypeEntity extends UuidAbstractEntity {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private Type type;
+    private SupportedType type;
 
     @Column(name = "requires_3ds")
     @JsonProperty
@@ -53,12 +64,12 @@ public class CardTypeEntity extends UuidAbstractEntity {
         this.label = label;
     }
 
-    public Type getType() {
+    public SupportedType getType() {
         return type;
     }
 
-    public void setType(Type type) {
-        this.type = type;
+    public void setType(SupportedType supportedType) {
+        this.type = supportedType;
     }
 
     public boolean isRequires3ds() {

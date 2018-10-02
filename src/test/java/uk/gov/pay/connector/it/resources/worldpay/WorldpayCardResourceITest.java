@@ -3,12 +3,17 @@ package uk.gov.pay.connector.it.resources.worldpay;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.model.domain.PayersCardType;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 public class WorldpayCardResourceITest extends ChargingITestBase {
 
@@ -19,13 +24,31 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldAuthoriseCharge_ForValidAuthorisationDetails() throws Exception {
+    public void shouldAuthoriseChargeWithoutCorporateCard_ForValidAuthorisationDetails() {
 
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         worldpay.mockAuthorisationSuccess();
 
         givenSetup()
                 .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
+    }
+
+    @Test
+    public void shouldAuthoriseChargeWithCorporateCard_ForValidAuthorisationDetails() {
+
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        worldpay.mockAuthorisationSuccess();
+
+        String corporateCreditAuthDetails = buildCorporateJsonAuthorisationDetailsFor(PayersCardType.CREDIT);
+
+        givenSetup()
+                .body(corporateCreditAuthDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
                 .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))

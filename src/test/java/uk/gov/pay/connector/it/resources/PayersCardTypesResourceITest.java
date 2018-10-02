@@ -9,7 +9,7 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 
 import static org.hamcrest.core.Is.is;
 
-public class CardTypesResourceITest {
+public class PayersCardTypesResourceITest {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();

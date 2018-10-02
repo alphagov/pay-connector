@@ -2,6 +2,8 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import static uk.gov.pay.connector.model.domain.PayersCardType.DEBIT_OR_CREDIT;
+
 public class AuthCardDetails implements AuthorisationDetails {
 
     private String cardNo;
@@ -12,6 +14,8 @@ public class AuthCardDetails implements AuthorisationDetails {
     private String cardBrand;
     private String userAgentHeader;
     private String acceptHeader;
+    private PayersCardType payersCardType;
+    private Boolean corporateCard;
 
     public static AuthCardDetails anAuthCardDetails() {
         return new AuthCardDetails();
@@ -57,6 +61,16 @@ public class AuthCardDetails implements AuthorisationDetails {
         this.acceptHeader = acceptHeader;
     }
 
+    @JsonProperty("corporate_card")
+    public void setCorporateCard(Boolean corporateCard) {
+        this.corporateCard = corporateCard;
+    }
+
+    @JsonProperty("card_type")
+    public void setPayersCardType(PayersCardType payersCardType) {
+        this.payersCardType = payersCardType;
+    }
+
     public String getCardNo() {
         return cardNo;
     }
@@ -87,5 +101,13 @@ public class AuthCardDetails implements AuthorisationDetails {
 
     public String getAcceptHeader() {
         return acceptHeader;
+    }
+
+    public boolean isCorporateCard() {
+        return corporateCard == null ? false : corporateCard;
+    }
+
+    public PayersCardType getPayersCardType() {
+        return payersCardType == null ? DEBIT_OR_CREDIT : payersCardType;
     }
 }
