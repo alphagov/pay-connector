@@ -10,7 +10,6 @@ import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.junit.rules.ExternalResource;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.gov.pay.connector.app.InjectorLookup;
 
 import javax.annotation.Nullable;
@@ -51,17 +50,17 @@ public class GuiceAppRule<C extends Configuration> extends ExternalResource impl
 
     @Override
     public int getLocalPort() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public int getPort(int connectorIndex) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public int getAdminPort() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
