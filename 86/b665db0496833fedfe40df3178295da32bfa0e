@@ -17,3 +17,5 @@ staging-2.FAILED-455.status=failed
 staging-2.tag=alpha_staging-2-455
 
 staging-2.alpha_staging-2-455.date=2018-10-03:09:57:37
+
+staging-2.alpha_staging-2-455.status=success
