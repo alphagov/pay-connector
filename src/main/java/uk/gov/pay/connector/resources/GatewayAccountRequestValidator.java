@@ -27,9 +27,10 @@ public class GatewayAccountRequestValidator {
     private static final Map<String, List<String>> VALID_ATTRIBUTE_UPDATE_OPERATIONS = new HashMap<String, List<String>>() {{
         put(FIELD_OPERATION, asList("replace", "remove"));
     }};
+    public static final String FIELD_ALLOW_WEB_PAYMENTS = "allow_web_payments";
     public static final String FIELD_NOTIFY_SETTINGS = "notify_settings";
     public static final String FIELD_EMAIL_COLLECTION_MODE = "email_collection_mode";
-    private static final List<String> VALID_PATHS = Arrays.asList(FIELD_NOTIFY_SETTINGS, FIELD_EMAIL_COLLECTION_MODE);
+    private static final List<String> VALID_PATHS = Arrays.asList(FIELD_NOTIFY_SETTINGS, FIELD_EMAIL_COLLECTION_MODE, FIELD_ALLOW_WEB_PAYMENTS);
     @Inject
     public GatewayAccountRequestValidator(RequestValidator requestValidator){
         this.requestValidator = requestValidator;
@@ -53,6 +54,23 @@ public class GatewayAccountRequestValidator {
         if (path.equalsIgnoreCase(FIELD_EMAIL_COLLECTION_MODE)) {
             validateEmailCollectionMode(payload);
         }
+        if (path.equalsIgnoreCase(FIELD_ALLOW_WEB_PAYMENTS)) {
+            validateAllowWebPayment(payload);
+        }
+    }
+
+    private void validateAllowWebPayment(JsonNode payload) {
+        String op = payload.get(FIELD_OPERATION).asText();
+        if (!op.equalsIgnoreCase("replace")) {
+            throw new ValidationException(Collections.singletonList(format("Operation [%s] is not valid for path [%s]", op, FIELD_EMAIL_COLLECTION_MODE)));
+        }
+        JsonNode valueNode = payload.get(FIELD_VALUE);
+        if(null == valueNode || valueNode.isNull()) {
+            throw new ValidationException(Collections.singletonList(format("Field [%s] is required", FIELD_VALUE)));
+        }
+        String booleanString = valueNode.asText();
+        if (!booleanString.equalsIgnoreCase("false") && !booleanString.equalsIgnoreCase("true")) 
+            throw new ValidationException(Collections.singletonList(format("Value [%s] is not valid for [%s]", booleanString, FIELD_ALLOW_WEB_PAYMENTS)));
     }
 
     private void validateNotifySettingsRequest(JsonNode payload) {
