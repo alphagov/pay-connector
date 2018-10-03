@@ -100,6 +100,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "requires_3ds")
     private boolean requires3ds;
 
+    @Column(name = "allow_web_payments")
+    private boolean allowWebPayments;
+
     @Column(name = "corporate_credit_card_surcharge_amount")
     private long corporateCreditCardSurchargeAmount;
 
@@ -202,6 +205,14 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return requires3ds;
     }
 
+    public boolean isAllowWebPayments() {
+        return allowWebPayments;
+    }
+
+    public void setAllowWebPayments(boolean allowWebPayments) {
+        this.allowWebPayments = allowWebPayments;
+    }
+
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     @JsonProperty("corporate_credit_card_surcharge_amount")
     public long getCorporateCreditCardSurchargeAmount() {
@@ -285,6 +296,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         account.put("toggle_3ds", String.valueOf(isRequires3ds()));
         account.put("corporate_credit_card_surcharge_amount", getCorporateCreditCardSurchargeAmount());
         account.put("corporate_debit_card_surcharge_amount", getCorporateDebitCardSurchargeAmount());
+        account.put("allow_web_payments", String.valueOf(allowWebPayments));
         return account;
     }
 

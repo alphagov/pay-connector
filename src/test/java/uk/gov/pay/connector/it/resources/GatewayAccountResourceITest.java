@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.http.ContentType;
@@ -569,5 +570,32 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode());
+    }
+    
+    @Test
+    public void allow_web_payments_shouldBeFalseByDefault() {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("allow_web_payments", is("false"));
+    }
+    
+    @Test
+    public void patchGatewayAccountToAllowWebPayments() throws JsonProcessingException {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "allow_web_payments",
+                "value", "true"));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+        
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("allow_web_payments", is("true"));
     }
 }
