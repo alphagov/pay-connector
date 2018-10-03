@@ -5,3 +5,5 @@ release.alpha_release-455.date=2018-10-02:12:28:42
 staging-2.tag=FAILED-455
 
 staging-2.FAILED-455.date=
+
+staging-2.FAILED-455.status=failed
