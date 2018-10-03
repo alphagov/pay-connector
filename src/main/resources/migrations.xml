@@ -902,4 +902,11 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add allow_web_payments to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="allow_web_payments" type="boolean" defaultValue="false">
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
