@@ -78,9 +78,7 @@ public class PaymentProvidersTest {
     @Before
     public void setup() {
         Environment environment = mock(Environment.class);
-        when(config.getSmartpayConfig()).thenReturn(smartpayConfig);
         when(config.getWorldpayConfig()).thenReturn(worldpayConfig);
-        when(config.getEpdqConfig()).thenReturn(epdqConfig);
         when(config.getGatewayConfigFor(PaymentGatewayName.WORLDPAY)).thenReturn(worldpayConfig);
         when(config.getGatewayConfigFor(PaymentGatewayName.SMARTPAY)).thenReturn(smartpayConfig);
         when(config.getGatewayConfigFor(EPDQ)).thenReturn(epdqConfig);

@@ -120,7 +120,6 @@ public class NotificationServiceTest {
                 IgnoredStatus mockedIgnoredStatus = mock(IgnoredStatus.class);
                 when(mockedIgnoredStatus.getType()).thenReturn(type);
                 when(mockedStatusMapper.from(any())).thenReturn(mockedIgnoredStatus);
-                when(mockedStatusMapper.from(any(), any(ChargeStatus.class))).thenReturn(mockedIgnoredStatus);
                 return mockedStatusMapper;
             case UNKNOWN:
             default:
@@ -364,7 +363,6 @@ public class NotificationServiceTest {
         when(mockedPaymentProviders.byName(WORLDPAY)).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.isNotificationEndpointSecured()).thenReturn(true);
         when(mockedPaymentProvider.getNotificationDomain()).thenReturn("something.com");
-        when(mockDnsUtils.reverseDnsLookup(anyString())).thenReturn(Optional.empty());
 
         assertThat(notificationService.handleNotificationFor("", WORLDPAY, "payload"), is(false));
         verifyZeroInteractions(mockedChargeDao);

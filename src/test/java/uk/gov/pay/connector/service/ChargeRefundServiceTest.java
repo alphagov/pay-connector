@@ -174,9 +174,7 @@ public class ChargeRefundServiceTest {
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId))
                 .thenReturn(Optional.of(charge));
-
-        when(mockChargeDao.merge(charge)).thenReturn(charge);
-
+ 
         when(mockProviders.byName(SMARTPAY)).thenReturn(mockProvider);
         String reference = "refund-pspReference";
         setupSmartpayMock(reference, null);
