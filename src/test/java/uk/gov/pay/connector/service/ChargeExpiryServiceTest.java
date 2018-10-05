@@ -130,8 +130,6 @@ public class ChargeExpiryServiceTest {
         GatewayResponseBuilder<WorldpayBaseResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse<WorldpayBaseResponse> gatewayResponse = gatewayResponseBuilder.withResponse(
                 mockWorldpayCancelResponse).build();
-        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
-        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
 
         EXPIRABLE_STATUSES.stream()
                 .filter(status -> !GATEWAY_CANCELLABLE_STATUSES.contains(status))

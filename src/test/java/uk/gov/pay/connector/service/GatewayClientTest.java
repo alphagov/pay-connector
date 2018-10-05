@@ -75,7 +75,6 @@ public class GatewayClientTest {
             mockSessionIdentifier, mockMetricRegistry);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
-        doAnswer(invocationOnMock -> null).when(mockHistogram).update(anyInt());
         doAnswer(invocationOnMock -> null).when(mockCounter).inc();
 
         WebTarget mockWebTarget = mock(WebTarget.class);
@@ -92,7 +91,6 @@ public class GatewayClientTest {
 
         when(mockGatewayOrder.getOrderRequestType()).thenReturn(OrderRequestType.AUTHORISE);
         when(mockGatewayOrder.getPayload()).thenReturn(orderPayload);
-        when(mockGatewayOrder.getProviderSessionId()).thenReturn(Optional.empty());
         when(mockGatewayOrder.getMediaType()).thenReturn(mediaType);
     }
 
@@ -132,7 +130,6 @@ public class GatewayClientTest {
     public void shouldIncludeCookieIfSessionIdentifierAvailableInOrder() {
         String providerSessionid = "provider-session-id";
 
-        when(mockGatewayOrder.getProviderSessionId()).thenReturn(Optional.of(providerSessionid));
         when(mockResponse.getStatus()).thenReturn(200);
 
         gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder);

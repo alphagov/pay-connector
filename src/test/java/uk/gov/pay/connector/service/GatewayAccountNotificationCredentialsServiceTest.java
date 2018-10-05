@@ -109,17 +109,13 @@ public class GatewayAccountNotificationCredentialsServiceTest {
     }
 
     @Test
-    public void shouldValidateThatPasswordisAtLeaset10Characters() throws CredentialsException {
+    public void shouldValidateThatPasswordisAtLeast10Characters() throws CredentialsException {
         expectedException.expect(CredentialsException.class);
         expectedException.expectMessage("Invalid password length");
 
         GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
         NotificationCredentials notificationCredentials = mock(NotificationCredentials.class);
         Map<String, String> credentials = ImmutableMap.of("username", "bob", "password", "bobsecret");
-
-        when(gatewayAccount.getNotificationCredentials()).thenReturn(null);
-        when(entityBuilder.newNotificationCredentials(gatewayAccount)).thenReturn(notificationCredentials);
-        when(hashUtil.hash("bobsecret")).thenReturn("bobshashedsecret");
 
         gatewayAccountNotificationCredentialsService.setCredentialsForAccount(credentials, gatewayAccount);
 

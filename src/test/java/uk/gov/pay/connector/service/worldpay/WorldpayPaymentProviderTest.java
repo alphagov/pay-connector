@@ -208,9 +208,8 @@ public class WorldpayPaymentProviderTest {
 
         verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), argThat(new ArgumentMatcher<GatewayOrder>() {
             @Override
-            public boolean matches(Object argument) {
-                return ((GatewayOrder) argument).getPayload().equals(expectedRefundRequest) &&
-                        ((GatewayOrder) argument).getOrderRequestType().equals(OrderRequestType.REFUND);
+            public boolean matches(GatewayOrder argument) {
+                return argument.getPayload().equals(expectedRefundRequest) && argument.getOrderRequestType().equals(OrderRequestType.REFUND);
             }
         }));
     }
@@ -297,13 +296,10 @@ public class WorldpayPaymentProviderTest {
 
         when(mockChargeEntity.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
         when(mockChargeEntity.getExternalId()).thenReturn("uniqueSessionId");
-        when(mockChargeEntity.getAmount()).thenReturn(500L);
-        when(mockChargeEntity.getDescription()).thenReturn("This is a description");
         when(mockChargeEntity.getGatewayTransactionId()).thenReturn("MyUniqueTransactionId!");
 
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-        when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
                 .thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code 401 from gateway")));
 
@@ -333,14 +329,11 @@ public class WorldpayPaymentProviderTest {
 
         when(mockChargeEntity.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
         when(mockChargeEntity.getExternalId()).thenReturn("uniqueSessionId");
-        when(mockChargeEntity.getAmount()).thenReturn(500L);
-        when(mockChargeEntity.getDescription()).thenReturn("This is a description");
         when(mockChargeEntity.getGatewayTransactionId()).thenReturn("MyUniqueTransactionId!");
         when(mockChargeEntity.getProviderSessionId()).thenReturn(providerSessionId);
 
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-        when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
         when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
                 .thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code 400 from gateway")));
 

@@ -482,7 +482,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.AUTHORISATION_READY);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(any())).thenReturn(charge);
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
         cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
@@ -495,7 +494,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.CREATED);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(any())).thenReturn(charge);
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
         cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());

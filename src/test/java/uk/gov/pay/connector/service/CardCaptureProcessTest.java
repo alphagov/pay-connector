@@ -66,7 +66,6 @@ public class CardCaptureProcessTest {
 
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         Counter mockCounter = mock(Counter.class);
-        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockCaptureConfiguration.getBatchSize()).thenReturn(10);
         when(mockCaptureConfiguration.getRetryFailuresEveryAsJavaDuration()).thenReturn(Duration.ofMinutes(60));

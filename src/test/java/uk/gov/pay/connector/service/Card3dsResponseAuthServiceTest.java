@@ -196,7 +196,6 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
     @Test
     public void authoriseShouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenTimeout() throws Exception {
-        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
 
         try {
@@ -297,7 +296,6 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         setupPaymentProviderMock(transactionId, authoriseStatus, null, argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-        when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
 
         return card3dsResponseAuthService.doAuthorise(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
     }

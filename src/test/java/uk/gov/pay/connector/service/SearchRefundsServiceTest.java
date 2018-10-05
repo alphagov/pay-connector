@@ -86,7 +86,6 @@ public class SearchRefundsServiceTest {
         List<RefundEntity> refundEntities = getRefundEntity(1, gatewayAccount);
 
         when(refundDao.getTotalFor(any(SearchParams.class))).thenReturn(Long.valueOf(refundEntities.size()));
-        when(refundDao.findAllBy(any(SearchParams.class))).thenReturn(refundEntities);
 
         Response response = searchRefundsService.getAllRefunds(uriInfo, ACCOUNT_ID, pageNumber, displaySize);
 
