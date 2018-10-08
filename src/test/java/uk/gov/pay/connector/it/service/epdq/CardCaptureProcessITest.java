@@ -26,7 +26,8 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(PAYMENT_PROVIDER, CAPTURE_APPROVED);
 
         new EpdqMockClient().mockCaptureSuccess();
-        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_SUBMITTED.getValue()));
     }
@@ -36,7 +37,8 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(PAYMENT_PROVIDER, ENTERING_CARD_DETAILS);
 
         new EpdqMockClient().mockCaptureSuccess();
-        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(ENTERING_CARD_DETAILS.getValue()));
     }
@@ -46,7 +48,8 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(PAYMENT_PROVIDER, CAPTURE_APPROVED);
 
         new EpdqMockClient().mockCaptureError();
-        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));
     }
@@ -56,8 +59,9 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(PAYMENT_PROVIDER, CAPTURE_APPROVED);
 
         new EpdqMockClient().mockCaptureError();
-        for (int i=0; i<CAPTURE_MAX_RETRIES+1; i++) {
-            app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
+        for (int i = 0; i < CAPTURE_MAX_RETRIES + 1; i++) {
+            app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
+            app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
         }
 
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_ERROR.getValue()));

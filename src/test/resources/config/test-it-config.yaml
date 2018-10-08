@@ -8,13 +8,13 @@ server:
   registerDefaultExceptionMappers: false
 
 logging:
-    level: WARN
-    appenders:
-      - type: console
-        threshold: ALL
-        timeZone: UTC
-        target: stdout
-        logFormat: "[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] %highlight(%-5level) %cyan(%logger{15}) [requestID=%X{X-Request-Id}] - %msg %n"
+  level: WARN
+  appenders:
+    - type: console
+      threshold: ALL
+      timeZone: UTC
+      target: stdout
+      logFormat: "[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] %highlight(%-5level) %cyan(%logger{15}) [requestID=%X{X-Request-Id}] - %msg %n"
 
 links:
   frontendUrl: http://Frontend/
@@ -64,6 +64,7 @@ captureProcessConfig:
   schedulerRandomIntervalMinimumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MINIMUM_SECONDS:-150}
   schedulerRandomIntervalMaximumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MAXIMUM_SECONDS:-200}
   batchSize: 10
+  schedulerThreads: 1
   retryFailuresEvery: 60 minutes
   maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-48}
 
@@ -82,11 +83,11 @@ jerseyClient:
   userAgent: connector
   gzipEnabledForRequests: false
   proxy:
-      host: localhost
-      port: 1234
-      scheme : http
-      nonProxyHosts:
-        - localhost
+    host: localhost
+    port: 1234
+    scheme: http
+    nonProxyHosts:
+      - localhost
 
 customJerseyClient:
   readTimeout: 90000ms

@@ -86,9 +86,10 @@ executorServiceConfig:
 captureProcessConfig:
   schedulerInitialDelayInSeconds: ${CAPTURE_PROCESS_SCHEDULER_INITIAL_DELAY_SECONDS:-20}
   schedulerRandomIntervalMinimumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MINIMUM_SECONDS:-10}
-  schedulerRandomIntervalMaximumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MAXIMUM_SECONDS:-20}
+  schedulerRandomIntervalMaximumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MAXIMUM_SECONDS:-30}
 
   batchSize: ${CAPTURE_PROCESS_BATCH_SIZE:-10}
+  schedulerThreads: ${SCHEDULER_THREADS:-10}
 
   # The below effectively get multiplied together. In order to handle how
   # certain payment gateways do things, it is extremely desirable to keep these
@@ -120,7 +121,7 @@ jerseyClient:
   proxy:
     host: ${HTTP_PROXY_HOST:-0}
     port: ${HTTP_PROXY_PORT:-0}
-    scheme : ${HTTP_PROXY_SCHEME:-https}
+    scheme: ${HTTP_PROXY_SCHEME:-https}
     nonProxyHosts:
       - localhost
 

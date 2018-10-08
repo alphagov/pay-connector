@@ -7,6 +7,7 @@ public class CaptureProcessConfig extends Configuration {
     private long schedulerInitialDelayInSeconds;
     private long schedulerRandomIntervalMinimumInSeconds;
     private long schedulerRandomIntervalMaximumInSeconds;
+    private int schedulerThreads;
 
     private int batchSize;
     private Duration retryFailuresEvery;
@@ -38,5 +39,9 @@ public class CaptureProcessConfig extends Configuration {
 
     public int getMaximumRetries() {
         return maximumRetries;
+    }
+
+    public int getSchedulerThreads() {
+        return schedulerThreads;
     }
 }

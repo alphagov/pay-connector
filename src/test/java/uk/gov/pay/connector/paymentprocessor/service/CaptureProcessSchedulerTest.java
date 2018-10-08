@@ -11,8 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.paymentprocessor.service.CaptureProcessScheduler;
-import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.util.XrayUtils;
 
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,6 +26,7 @@ import static org.mockito.Mockito.RETURNS_DEFAULTS;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.paymentprocessor.service.CaptureProcessScheduler.CAPTURE_PROCESS_SCHEDULER_NAME;
@@ -59,7 +58,7 @@ public class CaptureProcessSchedulerTest {
     public void setup() {
         scheduledExecutorServiceBuilder = mock(ScheduledExecutorServiceBuilder.class, invocation -> {
             Object mock = invocation.getMock();
-            if(invocation.getMethod().getReturnType().isInstance(mock)) {
+            if (invocation.getMethod().getReturnType().isInstance(mock)) {
                 return mock;
             } else {
                 return RETURNS_DEFAULTS.answer(invocation);
@@ -75,7 +74,7 @@ public class CaptureProcessSchedulerTest {
         new CaptureProcessScheduler(null, environment, cardCaptureProcess, xrayUtils);
 
         verify(lifecycleEnvironment).scheduledExecutorService(CAPTURE_PROCESS_SCHEDULER_NAME);
-        verify(scheduledExecutorServiceBuilder).threads(SCHEDULER_THREADS);
+        verify(scheduledExecutorServiceBuilder).threads(SCHEDULER_THREADS + 1);
         verify(scheduledExecutorServiceBuilder).build();
     }
 
@@ -95,8 +94,9 @@ public class CaptureProcessSchedulerTest {
         long initialDelayInSeconds = 0L;
         long randomIntervalMinimumInSeconds = 10L;
         long randomIntervalMaximumInSeconds = 20L;
+        int schedulerThreads = 1;
 
-        ConnectorConfiguration mockConnectorConfiguration = mockConnectorConfigurationWith(initialDelayInSeconds, randomIntervalMinimumInSeconds, randomIntervalMaximumInSeconds);
+        ConnectorConfiguration mockConnectorConfiguration = mockConnectorConfigurationWith(initialDelayInSeconds, randomIntervalMinimumInSeconds, randomIntervalMaximumInSeconds, schedulerThreads);
 
         CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(mockConnectorConfiguration, environment, cardCaptureProcess, xrayUtils);
         captureProcessScheduler.start();
@@ -112,8 +112,10 @@ public class CaptureProcessSchedulerTest {
         long initialDelayInSeconds = 0L;
         long randomIntervalMinimumInSeconds = 10L;
         long randomIntervalMaximumInSeconds = 10L;
+        int schedulerThreads = 1;
 
-        ConnectorConfiguration mockConnectorConfiguration = mockConnectorConfigurationWith(initialDelayInSeconds, randomIntervalMinimumInSeconds, randomIntervalMaximumInSeconds);
+        ConnectorConfiguration mockConnectorConfiguration = mockConnectorConfigurationWith(initialDelayInSeconds, randomIntervalMinimumInSeconds,
+                randomIntervalMaximumInSeconds, schedulerThreads);
 
         CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(mockConnectorConfiguration, environment, cardCaptureProcess, xrayUtils);
         captureProcessScheduler.start();
@@ -125,6 +127,25 @@ public class CaptureProcessSchedulerTest {
     }
 
     @Test
+    public void shouldStartMultipleThreadsAsPerSchedulerThreadsConfiguration() {
+        long initialDelayInSeconds = 0L;
+        long randomIntervalMinimumInSeconds = 10L;
+        long randomIntervalMaximumInSeconds = 10L;
+
+        int schedulerThreads = 10;
+
+        ConnectorConfiguration mockConnectorConfiguration = mockConnectorConfigurationWith(initialDelayInSeconds, randomIntervalMinimumInSeconds,
+                randomIntervalMaximumInSeconds, schedulerThreads);
+
+        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(mockConnectorConfiguration, environment, cardCaptureProcess, xrayUtils);
+        captureProcessScheduler.start();
+
+        ArgumentCaptor<Long> delay = ArgumentCaptor.forClass(Long.class);
+
+        verify(scheduledExecutorService, times(1)).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds), delay.capture(), any());
+    }
+
+    @Test
     public void shouldShutdownScheduledExecutorServiceWhenStopped() {
         CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(null, environment, cardCaptureProcess, xrayUtils);
         captureProcessScheduler.stop();
@@ -132,13 +153,15 @@ public class CaptureProcessSchedulerTest {
         verify(scheduledExecutorService).shutdown();
     }
 
-    private ConnectorConfiguration mockConnectorConfigurationWith(long initialDelayInSeconds, long randomIntervalMinimumInSeconds, long randomIntervalMaximumInSeconds) {
+    private ConnectorConfiguration mockConnectorConfigurationWith(long initialDelayInSeconds, long randomIntervalMinimumInSeconds,
+                                                                  long randomIntervalMaximumInSeconds, int schedulerThreads) {
         ConnectorConfiguration mockConnectorConfiguration = mock(ConnectorConfiguration.class);
         CaptureProcessConfig mockCaptureProcessConfig = mock(CaptureProcessConfig.class);
 
         when(mockCaptureProcessConfig.getSchedulerInitialDelayInSeconds()).thenReturn(initialDelayInSeconds);
         when(mockCaptureProcessConfig.getSchedulerRandomIntervalMinimumInSeconds()).thenReturn(randomIntervalMinimumInSeconds);
         when(mockCaptureProcessConfig.getSchedulerRandomIntervalMaximumInSeconds()).thenReturn(randomIntervalMaximumInSeconds);
+        when(mockCaptureProcessConfig.getSchedulerThreads()).thenReturn(schedulerThreads);
         when(mockConnectorConfiguration.getCaptureProcessConfig()).thenReturn(mockCaptureProcessConfig);
 
         return mockConnectorConfiguration;

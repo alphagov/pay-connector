@@ -9,6 +9,7 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.applepay.ApplePayDecrypter;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -24,6 +25,8 @@ import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.util.XrayUtils;
 
 import java.util.Properties;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 
@@ -68,7 +71,7 @@ public class ConnectorModule extends AbstractModule {
         properties.put("eclipselink.query-results-cache", jpaConfiguration.getCacheSharedDefault());
         properties.put("eclipselink.cache.shared.default", jpaConfiguration.getCacheSharedDefault());
         properties.put("eclipselink.ddl-generation.output-mode", jpaConfiguration.getDdlGenerationOutputMode());
-        
+
         if (configuration.isXrayEnabled()) {
             properties.put("eclipselink.session.customizer", "uk.gov.pay.connector.util.ConnectorSessionCustomiserWithXrayProfiling");
         } else {
@@ -91,19 +94,26 @@ public class ConnectorModule extends AbstractModule {
     public XrayUtils xrayUtils(ConnectorConfiguration connectorConfiguration) {
         return new XrayUtils(connectorConfiguration.isXrayEnabled());
     }
-    
+
     @Provides
     public SignatureGenerator signatureGenerator() {
         return new EpdqSha512SignatureGenerator();
     }
-    
+
     @Provides
     public StripeGatewayClient stripeGatewayClient(GatewayClientFactory gatewayClientFactory) {
         return gatewayClientFactory.createStripeGatewayClient(STRIPE, environment.metrics());
     }
-    
+
     @Provides
     public StripeGatewayConfig stripeGatewayConfig(ConnectorConfiguration connectorConfiguration) {
         return connectorConfiguration.getStripeConfig();
     }
+
+    @Provides
+    @Singleton
+    public Queue<ChargeEntity> captureQueue(ConnectorConfiguration connectorConfiguration) {
+        return new ArrayBlockingQueue(connectorConfiguration.getCaptureProcessConfig().getBatchSize());
+    }
+
 }
