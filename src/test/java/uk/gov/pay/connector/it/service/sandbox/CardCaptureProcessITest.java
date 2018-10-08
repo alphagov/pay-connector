@@ -24,7 +24,8 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(PAYMENT_PROVIDER, CAPTURE_APPROVED);
 
         new WorldpayMockClient().mockCaptureSuccess();
-        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURED.getValue()));
     }
@@ -34,7 +35,8 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(PAYMENT_PROVIDER, ENTERING_CARD_DETAILS);
 
         new WorldpayMockClient().mockCaptureSuccess();
-        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(ENTERING_CARD_DETAILS.getValue()));
     }

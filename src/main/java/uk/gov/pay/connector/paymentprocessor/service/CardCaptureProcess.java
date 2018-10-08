@@ -15,8 +15,8 @@ import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.inject.Inject;
-import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
@@ -29,45 +29,34 @@ public class CardCaptureProcess {
     private final CardCaptureService captureService;
     private final MetricRegistry metricRegistry;
     private final CaptureProcessConfig captureConfig;
+    private Queue<ChargeEntity> captureQueue;
+    private volatile int totalChargesCaptured;
+    private volatile String runCaptureId;
     private volatile int readyCaptureQueueSize;
     private volatile int waitingCaptureQueueSize;
+    private volatile int chargesToCaptureSize;
 
     @Inject
-    public CardCaptureProcess(Environment environment, ChargeDao chargeDao, CardCaptureService cardCaptureService, ConnectorConfiguration connectorConfiguration) {
+    public CardCaptureProcess(Environment environment, ChargeDao chargeDao, CardCaptureService cardCaptureService,
+                              ConnectorConfiguration connectorConfiguration, Queue<ChargeEntity> captureQueue) {
         this.chargeDao = chargeDao;
         this.captureService = cardCaptureService;
         this.captureConfig = connectorConfiguration.getCaptureProcessConfig();
+        this.captureQueue = captureQueue;
         metricRegistry = environment.metrics();
         metricRegistry.gauge("gateway-operations.capture-process.queue-size.ready_capture_queue_size", () -> () -> readyCaptureQueueSize);
         metricRegistry.gauge("gateway-operations.capture-process.queue-size.waiting_capture_queue_size", () -> () -> waitingCaptureQueueSize);
     }
 
-    public void runCapture() {
-        MDC.put(HEADER_REQUEST_ID, format("runCapture-%s", RandomIdGenerator.newId()));
+    public void runCapture(int threadNumber) {
+        MDC.put(HEADER_REQUEST_ID, format("runCapture-%s, thread %d", runCaptureId, threadNumber));
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
-        int captured = 0, skipped = 0, error = 0, failedCapture = 0, total = 0, chargesToCaptureSize = 0;
-
+        int captured = 0, skipped = 0, error = 0, failedCapture = 0, total = 0;
         try {
-            waitingCaptureQueueSize = chargeDao.countChargesAwaitingCaptureRetry(captureConfig.getRetryFailuresEveryAsJavaDuration());
-
-            List<ChargeEntity> chargesToCapture = chargeDao.findChargesForCapture(captureConfig.getBatchSize(),
-                    captureConfig.getRetryFailuresEveryAsJavaDuration());
-            chargesToCaptureSize = chargesToCapture.size();
-
-            if (chargesToCaptureSize < captureConfig.getBatchSize()) {
-                readyCaptureQueueSize = chargesToCaptureSize;
-            } else {
-                readyCaptureQueueSize = chargeDao.countChargesForImmediateCapture(captureConfig.getRetryFailuresEveryAsJavaDuration());
-            }
-
-            if (chargesToCaptureSize > 0) {
-                logger.info("Capturing: {} of {} charges", chargesToCaptureSize, (waitingCaptureQueueSize + readyCaptureQueueSize));
-            }
-
-            Collections.shuffle(chargesToCapture);
-            for (ChargeEntity charge : chargesToCapture) {
-                total++;
+            ChargeEntity charge;
+            while ((charge = getChargeToCapture()) != null) {
+                total = incrementTotalChargesCaptured();
                 if (shouldRetry(charge)) {
                     try {
                         logger.info("Capturing [{} of {}] [chargeId={}]", total, chargesToCaptureSize, charge.getExternalId());
@@ -75,12 +64,15 @@ public class CardCaptureProcess {
                         if (gatewayResponse.isSuccessful()) {
                             captured++;
                         } else {
-                            logger.info("Failed to capture [chargeId={}] due to: {}", charge.getExternalId(), 
+                            logger.info("Failed to capture [chargeId={}] due to: {}", charge.getExternalId(),
                                     gatewayResponse.getError().get().getMessage());
                             failedCapture++;
                         }
                     } catch (ConflictRuntimeException e) {
                         logger.info("Another process has already attempted to capture [chargeId={}]. Skipping.", charge.getExternalId());
+                        skipped++;
+                    } catch (Exception e) {
+                        logger.info("Exception capturing charge [chargeId={}]. Skipping.", charge.getExternalId());
                         skipped++;
                     }
                 } else {
@@ -99,6 +91,41 @@ public class CardCaptureProcess {
             }
         }
         MDC.remove(HEADER_REQUEST_ID);
+    }
+
+    private synchronized int incrementTotalChargesCaptured() {
+        return ++totalChargesCaptured;
+    }
+
+    public synchronized void loadCaptureQueue() {
+        if (captureQueue.isEmpty()) {
+            runCaptureId = RandomIdGenerator.newId();
+            MDC.put(HEADER_REQUEST_ID, format("runCapture-%s", runCaptureId));
+            
+            waitingCaptureQueueSize = chargeDao.countChargesAwaitingCaptureRetry(captureConfig.getRetryFailuresEveryAsJavaDuration());
+
+            List<ChargeEntity> chargesToCapture = chargeDao.findChargesForCapture(captureConfig.getBatchSize(),
+                    captureConfig.getRetryFailuresEveryAsJavaDuration());
+
+            chargesToCaptureSize = chargesToCapture.size();
+
+            if (chargesToCaptureSize < captureConfig.getBatchSize()) {
+                readyCaptureQueueSize = chargesToCaptureSize;
+            } else {
+                readyCaptureQueueSize = chargeDao.countChargesForImmediateCapture(captureConfig.getRetryFailuresEveryAsJavaDuration());
+            }
+
+            if (chargesToCaptureSize > 0) {
+                logger.info("Capturing: {} of {} charges", chargesToCaptureSize, (waitingCaptureQueueSize + readyCaptureQueueSize));
+            }
+
+            captureQueue.addAll(chargesToCapture);
+            MDC.remove(HEADER_REQUEST_ID);
+        }
+    }
+
+    private synchronized ChargeEntity getChargeToCapture() {
+        return captureQueue.poll();
     }
 
     private boolean shouldRetry(ChargeEntity charge) {

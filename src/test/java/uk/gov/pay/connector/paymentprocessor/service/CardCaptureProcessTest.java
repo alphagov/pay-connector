@@ -17,10 +17,13 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
@@ -42,6 +45,8 @@ public class CardCaptureProcessTest {
     private static final int MAXIMUM_RETRIES = 10;
     private CardCaptureProcess cardCaptureProcess;
 
+    private Queue<ChargeEntity> queue = new ArrayBlockingQueue(10);
+
     @Mock
     private ChargeDao mockChargeDao;
 
@@ -55,8 +60,11 @@ public class CardCaptureProcessTest {
     private ConnectorConfiguration mockConnectorConfiguration;
 
     @Mock
+    private GatewayResponse mockGatewayResponse;
+
+    @Mock
     private MetricRegistry mockMetricRegistry;
-    
+
     @Mock
     private CaptureProcessConfig mockCaptureConfiguration = mock(CaptureProcessConfig.class);
 
@@ -70,17 +78,18 @@ public class CardCaptureProcessTest {
         when(mockCaptureConfiguration.getRetryFailuresEveryAsJavaDuration()).thenReturn(Duration.ofMinutes(60));
         when(mockCaptureConfiguration.getMaximumRetries()).thenReturn(MAXIMUM_RETRIES);
         when(mockConnectorConfiguration.getCaptureProcessConfig()).thenReturn(mockCaptureConfiguration);
-        cardCaptureProcess = new CardCaptureProcess(mockEnvironment, mockChargeDao, mockCardCaptureService, mockConnectorConfiguration);
         when(mockCardCaptureService.doCapture(anyString())).thenReturn(
                 CaptureResponse.fromBaseCaptureResponse(
                         BaseCaptureResponse.fromTransactionId(UUID.randomUUID().toString(), SMARTPAY),
                         PENDING)
         );
+        cardCaptureProcess = new CardCaptureProcess(mockEnvironment, mockChargeDao, mockCardCaptureService, mockConnectorConfiguration, queue);
     }
 
     @Test
     public void shouldRetrieveASpecifiedNumberOfChargesApprovedForCapture() {
-        cardCaptureProcess.runCapture();
+        cardCaptureProcess.loadCaptureQueue();
+        cardCaptureProcess.runCapture(1);
 
         verify(mockChargeDao).findChargesForCapture(10, Duration.ofMinutes(60));
     }
@@ -89,8 +98,9 @@ public class CardCaptureProcessTest {
     public void shouldRecordTheQueueSizeOnEveryRun() {
         when(mockCaptureConfiguration.getBatchSize()).thenReturn(0);
         when(mockChargeDao.countChargesForImmediateCapture(ArgumentMatchers.any(Duration.class))).thenReturn(15);
-        
-        cardCaptureProcess.runCapture();
+
+        cardCaptureProcess.loadCaptureQueue();
+        cardCaptureProcess.runCapture(1);
 
         assertThat(cardCaptureProcess.getReadyCaptureQueueSize(), is(15));
     }
@@ -101,7 +111,8 @@ public class CardCaptureProcessTest {
         when(mockCaptureConfiguration.getBatchSize()).thenReturn(0);
         when(mockChargeDao.countChargesForImmediateCapture(ArgumentMatchers.any(Duration.class))).thenReturn(15);
         when(mockChargeDao.countChargesAwaitingCaptureRetry(ArgumentMatchers.any(Duration.class))).thenReturn(10);
-        cardCaptureProcess.runCapture();
+        cardCaptureProcess.loadCaptureQueue();
+        cardCaptureProcess.runCapture(1);
         ArgumentCaptor<MetricRegistry.MetricSupplier> argumentCaptor = ArgumentCaptor.forClass(MetricRegistry.MetricSupplier.class);
 
         verify(mockMetricRegistry, times(2))
@@ -109,7 +120,7 @@ public class CardCaptureProcessTest {
 
         List<Gauge<Integer>> gauges = argumentCaptor.getAllValues()
                 .stream()
-                .map(a -> (Gauge<Integer>)a.newMetric())
+                .map(a -> (Gauge<Integer>) a.newMetric())
                 .collect(Collectors.toList());
 
         Gauge<Integer> queueSizeGauge = gauges.get(0);
@@ -123,7 +134,8 @@ public class CardCaptureProcessTest {
     public void shouldRecordTheWaitingQueueSizeOnEveryRun() {
         when(mockChargeDao.countChargesAwaitingCaptureRetry(ArgumentMatchers.any(Duration.class))).thenReturn(15);
 
-        cardCaptureProcess.runCapture();
+        cardCaptureProcess.loadCaptureQueue();
+        cardCaptureProcess.runCapture(1);
 
         assertThat(cardCaptureProcess.getWaitingCaptureQueueSize(), is(15));
     }
@@ -137,7 +149,8 @@ public class CardCaptureProcessTest {
         when(mockCharge1.getExternalId()).thenReturn("my-charge-1");
         when(mockCharge2.getExternalId()).thenReturn("my-charge-2");
 
-        cardCaptureProcess.runCapture();
+        cardCaptureProcess.loadCaptureQueue();
+        cardCaptureProcess.runCapture(1);
 
         verify(mockCardCaptureService).doCapture("my-charge-1");
         verify(mockCardCaptureService).doCapture("my-charge-2");
@@ -158,7 +171,8 @@ public class CardCaptureProcessTest {
         when(mockChargeDao.countCaptureRetriesForCharge(1L)).thenReturn(MAXIMUM_RETRIES);
         when(mockChargeDao.countCaptureRetriesForCharge(2L)).thenReturn(2);
 
-        cardCaptureProcess.runCapture();
+        cardCaptureProcess.loadCaptureQueue();
+        cardCaptureProcess.runCapture(1);
 
         verify(mockCardCaptureService, never()).doCapture("my-charge-1");
         verify(mockCardCaptureService).doCapture("my-charge-2");
@@ -177,7 +191,8 @@ public class CardCaptureProcessTest {
 
         when(mockChargeDao.countCaptureRetriesForCharge(1L)).thenReturn(MAXIMUM_RETRIES);
 
-        cardCaptureProcess.runCapture();
+        cardCaptureProcess.loadCaptureQueue();
+        cardCaptureProcess.runCapture(1);
 
         verify(mockCardCaptureService).markChargeAsCaptureError(chargeId);
     }

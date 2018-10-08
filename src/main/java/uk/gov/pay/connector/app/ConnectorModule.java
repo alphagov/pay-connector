@@ -9,6 +9,7 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.applepay.ApplePayDecrypter;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -24,6 +25,8 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.XrayUtils;
 
 import java.util.Properties;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 
@@ -119,5 +122,11 @@ public class ConnectorModule extends AbstractModule {
 
     protected NotifyClientFactory getNotifyClientFactory(ConnectorConfiguration connectorConfiguration) {
         return new NotifyClientFactory(connectorConfiguration);
+    }
+
+    @Provides
+    @Singleton
+    public Queue<ChargeEntity> captureQueue(ConnectorConfiguration connectorConfiguration) {
+        return new ArrayBlockingQueue(connectorConfiguration.getCaptureProcessConfig().getBatchSize());
     }
 }
