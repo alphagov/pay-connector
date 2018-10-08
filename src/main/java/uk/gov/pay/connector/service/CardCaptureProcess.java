@@ -82,6 +82,9 @@ public class CardCaptureProcess {
                     } catch (ConflictRuntimeException e) {
                         logger.info("Another process has already attempted to capture [chargeId={}]. Skipping.", charge.getExternalId());
                         skipped++;
+                    } catch (Exception e) {
+                        logger.info("Exception capturing charge [chargeId={}]. Skipping.", charge.getExternalId());
+                        skipped++;
                     }
                 } else {
                     captureService.markChargeAsCaptureError(charge.getExternalId());
