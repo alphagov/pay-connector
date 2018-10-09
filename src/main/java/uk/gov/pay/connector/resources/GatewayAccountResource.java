@@ -77,7 +77,6 @@ public class GatewayAccountResource {
     private static final String PAYMENT_PROVIDER_KEY = "payment_provider";
     private static final String USERNAME_KEY = "username";
     private static final String PASSWORD_KEY = "password";
-
     private final GatewayAccountDao gatewayDao;
     private final CardTypeDao cardTypeDao;
     private final Map<String, List<String>> providerCredentialFields;
@@ -184,7 +183,7 @@ public class GatewayAccountResource {
     @Path("/v1/frontend/accounts/{accountId}")
     @Produces(APPLICATION_JSON)
     @JsonView(GatewayAccountEntity.Views.ApiView.class)
-    public Response getGatewayAccountWithCredentials(@PathParam("accountId") Long gatewayAccountId) throws IOException {
+    public Response getGatewayAccountWithCredentials(@PathParam("accountId") Long gatewayAccountId) {
 
         return gatewayDao.findById(gatewayAccountId)
                 .map(serviceAccount ->
