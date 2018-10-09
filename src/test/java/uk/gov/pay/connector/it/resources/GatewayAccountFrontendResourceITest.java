@@ -20,13 +20,13 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -131,6 +131,11 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .body("credentials.username", is(gatewayAccountPayload.getUserName()))
                 .body("credentials.password", is(nullValue()))
                 .body("credentials.merchant_id", is(gatewayAccountPayload.getMerchantId()))
+                .body("email_collection_mode", is("MANDATORY"))
+                .body("email_notifications.PAYMENT_CONFIRMED.template_body", is(nullValue()))
+                .body("email_notifications.PAYMENT_CONFIRMED.enabled", is(true))
+                .body("email_notifications.REFUND_ISSUED.template_body", is(nullValue()))
+                .body("email_notifications.REFUND_ISSUED.enabled", is(true))
                 .body("description", is(nullValue()))
                 .body("analytics_id", is(nullValue()))
                 .body("service_name", is(gatewayAccountPayload.getServiceName()))
@@ -196,7 +201,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .body(format("card_types.find { it.brand == '%s' }.id", brand), is(notNullValue()))
                 .body(format("card_types.find { it.brand == '%s' }.label", brand), is(label))
                 .body(format("card_types.find { it.brand == '%s' }.requires3ds", brand), is(false))
-                .body(format("card_types.findAll { it.brand == '%s' }.type", brand), Matchers.hasItems(type));
+                .body(format("card_types.findAll { it.brand == '%s' }.type", brand), hasItems(type));
     }
 
     @Test

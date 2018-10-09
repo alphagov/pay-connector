@@ -12,6 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import uk.gov.pay.commons.testing.pact.providers.PayPactRunner;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
@@ -51,7 +52,15 @@ public class TransactionsApiContractTest {
 
     private void setUpGatewayAccount(long accountId) {
         if (dbHelper.getAccountCredentials(accountId) == null) {
-            dbHelper.addGatewayAccount(Long.toString(accountId), "sandbox", "aDescription", "8b02c7e542e74423aa9e6d0f0628fd58");
+                    DatabaseFixtures
+                            .withDatabaseTestHelper(dbHelper)
+                    .aTestAccount()
+                    .withAccountId(accountId)
+                    .withPaymentProvider("sandbox")
+                    .withDescription("aDescription")
+                    .withAnalyticsId("8b02c7e542e74423aa9e6d0f0628fd58")
+                    .withServiceName("a cool service")
+                    .insert();
         } else {
             dbHelper.deleteAllChargesOnAccount(accountId);
         }

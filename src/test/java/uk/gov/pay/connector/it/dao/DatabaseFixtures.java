@@ -376,6 +376,16 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestAccount withDescription(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public TestAccount withAnalyticsId(String analyticsId) {
+            this.analyticsId = analyticsId;
+            return this;
+        }
+        
         public TestAccount withType(GatewayAccountEntity.Type type) {
             this.type = type;
             return this;
@@ -405,6 +415,7 @@ public class DatabaseFixtures {
                     type,
                     description,
                     analyticsId,
+                    emailCollectionMode,
                     corporateCreditCardSurchargeAmount,
                     corporateDebitCardSurchargeAmount);
             for (TestCardType cardType : cardTypes) {
