@@ -74,11 +74,12 @@ public class UserNotificationService {
             return executorService.submit(() -> {
                 try {
                     NotifyClientSettings notifyClientSettings = getNotifyClientSettings(emailNotificationType, chargeEntity);
+                    logger.info("Sending {} email, charge_external_id={}", emailNotificationType, chargeEntity.getExternalId());
                     SendEmailResponse response = notifyClientSettings.getClient()
                             .sendEmail(notifyClientSettings.getTemplateId(), emailAddress, personalisation, null);
                     return Optional.of(response.getNotificationId().toString());
                 } catch (NotificationClientException e) {
-                    logger.error("Failed to send confirmation email - charge_external_id=" + chargeEntity.getExternalId(), e);
+                    logger.error("Failed to send " + emailNotificationType + " email - charge_external_id=" + chargeEntity.getExternalId(), e);
                     metricRegistry.counter("notify-operations.failures").inc();
                     return Optional.empty();
                 } finally {
