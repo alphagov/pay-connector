@@ -331,16 +331,19 @@ public class ChargeServiceTest {
         assertThat(tokenEntity.getChargeEntity().getId(), is(newCharge.getId()));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
 
-        ChargeResponseBuilder chargeResponse = chargeResponseBuilderOf(chargeEntity.get());
-        chargeResponse.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
-        chargeResponse.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId + "/refunds"));
-        chargeResponse.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
-        chargeResponse.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+        ChargeResponseBuilder chargeResponseWithoutCorporateSurcharge = chargeResponseBuilderOf(chargeEntity.get());
+        chargeResponseWithoutCorporateSurcharge.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
+        chargeResponseWithoutCorporateSurcharge.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId + "/refunds"));
+        chargeResponseWithoutCorporateSurcharge.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
+        chargeResponseWithoutCorporateSurcharge.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
         }});
 
         assertThat(chargeResponseForAccount.isPresent(), is(true));
-        assertThat(chargeResponseForAccount.get(), is(chargeResponse.build()));
+        final ChargeResponse chargeResponse = chargeResponseForAccount.get();
+        assertThat(chargeResponse.getCorporateSurcharge(), is(nullValue()));
+        assertThat(chargeResponse.getTotalAmount(), is(nullValue()));
+        assertThat(chargeResponse, is(chargeResponseWithoutCorporateSurcharge.build()));
     }
 
     @Test

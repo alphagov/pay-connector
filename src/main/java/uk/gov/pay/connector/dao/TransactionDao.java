@@ -9,7 +9,6 @@ import org.jooq.SelectJoinStep;
 import org.jooq.SelectOrderByStep;
 import org.jooq.SelectSeekStep1;
 import org.jooq.impl.DSL;
-import uk.gov.pay.connector.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.TransactionType;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.LastDigitsCardNumberConverter;
@@ -73,7 +72,8 @@ public class TransactionDao {
                         field("address_postcode"),
                         field("amount"),
                         field("language"),
-                        field("delayed_capture"))
+                        field("delayed_capture"),
+                        field("corporate_surcharge"))
                 .from(buildQueryFor(gatewayAccountId, QueryType.SELECT, params))
                 .orderBy(field("date_created").desc());
 
@@ -122,16 +122,16 @@ public class TransactionDao {
                     field("c.cardholder_name").lower().like(buildLikeClauseContaining(params.getCardHolderName().toString().toLowerCase())));
         }
 
-        if (params.getLastDigitsCardNumber() != null) { 
+        if (params.getLastDigitsCardNumber() != null) {
             queryFilters = queryFilters.and(
                     field("c.last_digits_card_number").eq(lastDigitsCardNumberConverter.convertToDatabaseColumn(params.getLastDigitsCardNumber())));
         }
 
-        if (params.getFirstDigitsCardNumber() != null && isNotBlank(params.getFirstDigitsCardNumber().toString())) { 
+        if (params.getFirstDigitsCardNumber() != null && isNotBlank(params.getFirstDigitsCardNumber().toString())) {
             queryFilters = queryFilters.and(
                     field("c.first_digits_card_number").eq(params.getFirstDigitsCardNumber().toString()));
         }
-        
+
         if (isNotBlank(params.getEmail())) {
             queryFilters = queryFilters.and(
                     field("c.email").lower().like(buildLikeClauseContaining(params.getEmail().toLowerCase())));
@@ -208,7 +208,8 @@ public class TransactionDao {
                 field("c.address_postcode"),
                 field("c.amount"),
                 field("c.language"),
-                field("c.delayed_capture"))
+                field("c.delayed_capture"),
+                field("c.corporate_surcharge"))
                 .from(table("charges").as("c").leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
                 .where(queryFiltersForCharges);
 
@@ -238,7 +239,8 @@ public class TransactionDao {
                 field("c.address_postcode"),
                 field("r.amount"),
                 field("c.language"),
-                field("c.delayed_capture"))
+                field("c.delayed_capture"),
+                field("c.corporate_surcharge"))
                 .from(table("charges").as("c").leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
                 .join(table("refunds").as("r"))
                 .on(field("c.id").eq(field("r.charge_id")))

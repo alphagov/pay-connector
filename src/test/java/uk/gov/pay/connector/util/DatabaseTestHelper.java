@@ -136,15 +136,24 @@ public class DatabaseTestHelper {
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
                           String transactionId, ServicePaymentReference reference, String description, ZonedDateTime createdDate, String email,
-                          SupportedLanguage language) {
+                          SupportedLanguage language, Long corporateSurcharge) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, description, reference,
-                createdDate == null ? now() : createdDate, 1, email, language, false);
+                createdDate == null ? now() : createdDate, 1, email, language, false, corporateSurcharge);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
                           String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate, String email, boolean delayedCapture) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference,
                 createdDate == null ? now() : createdDate, 1, email, SupportedLanguage.ENGLISH, delayedCapture);
+    }
+
+    public void addChargeWithCorporateSurcharge(Long chargeId, String externalChargeId, String accountId, long amount,
+                                                ChargeStatus chargeStatus, String returnUrl, String transactionId,
+                                                ServicePaymentReference reference, ZonedDateTime createdDate,
+                                                SupportedLanguage language, boolean delayedCapture, Long corporateSurcharge) {
+        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId,
+                "Test description", reference, createdDate == null ? now() : createdDate, 1, null,
+                language, delayedCapture, corporateSurcharge);
     }
 
     private void addCharge(
@@ -163,6 +172,27 @@ public class DatabaseTestHelper {
             SupportedLanguage language,
             boolean delayedCapture
     ) {
+        addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, description, reference,
+                createdDate, version, email, language, delayedCapture, null);
+    }
+
+    private void addCharge(
+            Long chargeId,
+            String externalChargeId,
+            String gatewayAccountId,
+            long amount,
+            ChargeStatus status,
+            String returnUrl,
+            String transactionId,
+            String description,
+            ServicePaymentReference reference,
+            ZonedDateTime createdDate,
+            long version,
+            String email,
+            SupportedLanguage language,
+            boolean delayedCapture,
+            Long corporateSurcharge
+    ) {
         jdbi.withHandle(h ->
                 h.update(
                         "INSERT INTO" +
@@ -180,9 +210,10 @@ public class DatabaseTestHelper {
                                 "        version,\n" +
                                 "        email,\n" +
                                 "        language,\n" +
-                                "        delayed_capture\n" +
+                                "        delayed_capture,\n" +
+                                "        corporate_surcharge\n" +
                                 "    )\n" +
-                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
+                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
                         chargeId,
                         externalChargeId,
                         amount,
@@ -196,7 +227,8 @@ public class DatabaseTestHelper {
                         version,
                         email,
                         language.toString(),
-                        delayedCapture
+                        delayedCapture,
+                        corporateSurcharge
                 )
         );
     }
@@ -734,5 +766,17 @@ public class DatabaseTestHelper {
 
     public void truncateAllData() {
         jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE gateway_accounts CASCADE").execute());
+    }
+
+    public Long getChargeIdByExternalId(String externalChargeId) {
+
+        String chargeId = jdbi.withHandle(h ->
+                h.createQuery("SELECT id from charges WHERE external_id = :external_id")
+                        .bind("external_id", externalChargeId)
+                        .map(StringColumnMapper.INSTANCE)
+                        .first()
+        );
+
+        return (Long.valueOf(chargeId));
     }
 }
