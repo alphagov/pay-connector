@@ -69,13 +69,14 @@ public class ChargeRefundServiceTest {
     private PaymentProviders mockProviders;
     @Mock
     private PaymentProvider mockProvider;
-
+    @Mock
+    private UserNotificationService mockUserNotificationService;
     @Before
     public void setUp() {
         when(mockProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockProvider);
         when(mockProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
         chargeRefundService = new ChargeRefundService(
-                mockChargeDao, mockRefundDao, mockProviders, TransactionFlow::new
+                mockChargeDao, mockRefundDao, mockProviders, TransactionFlow::new, mockUserNotificationService
         );
     }
 
@@ -288,7 +289,7 @@ public class ChargeRefundServiceTest {
     }
 
     @Test
-    public void shouldRefundSuccessfullyForSandbox() {
+    public void shouldRefundSuccessfullyForSandboxAndSendEmail() {
 
         String externalChargeId = "chargeId";
         Long amount = 100L;
@@ -333,6 +334,8 @@ public class ChargeRefundServiceTest {
         verify(mockRefundDao).persist(argThat(aRefundEntity(amount, charge)));
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
         verify(mockRefundDao, times(2)).findById(refundId);
+        verify(mockUserNotificationService).sendRefundIssuedEmail(spiedRefundEntity);
+
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUNDED);
 
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);

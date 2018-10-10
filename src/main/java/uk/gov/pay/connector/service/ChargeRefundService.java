@@ -57,15 +57,17 @@ public class ChargeRefundService {
     private final RefundDao refundDao;
     private final PaymentProviders providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
-
+    private final UserNotificationService userNotificationService;
     @Inject
     public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders providers,
-                               Provider<TransactionFlow> transactionFlowProvider
+                               Provider<TransactionFlow> transactionFlowProvider,
+                               UserNotificationService userNotificationService
                                ) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.providers = providers;
         this.transactionFlowProvider = transactionFlowProvider;
+        this.userNotificationService = userNotificationService;
     }
 
     public Optional<Response> doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
@@ -86,6 +88,7 @@ public class ChargeRefundService {
                     && refund.hasStatus(RefundStatus.REFUND_SUBMITTED)) {
                 RefundEntity refundEntity = refundDao.findById(refund.getId()).get();
                 refundEntity.setStatus(REFUNDED);
+                userNotificationService.sendRefundIssuedEmail(refundEntity);
                 response = new Response(response.getRefundGatewayResponse(), refundEntity);
             }
             return response;
