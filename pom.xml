@@ -7,11 +7,11 @@
     <properties>
         <dropwizard.version>1.3.5</dropwizard.version>
         <wiremock.version>1.57</wiremock.version>
-        <jpa.version>2.6.4</jpa.version>
+        <eclipselink.version>2.7.3</eclipselink.version>
         <guice.version>4.1.0</guice.version>
         <docker-client.version>8.9.2</docker-client.version>
         <jackson.version>2.9.6</jackson.version>
-        <pay-java-commons.version>1.0.0-a6b07e0c4c5e19e38c19ea7b181592a1c4f07a2f</pay-java-commons.version>
+        <pay-java-commons.version>1.0.0-7d88c91ee08a7129d00cb08716a1801b10bc4df2</pay-java-commons.version>
     </properties>
     <repositories>
         <repository>
@@ -46,6 +46,11 @@
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
             <version>2.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.0.1</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
@@ -115,11 +120,6 @@
             <version>21.0</version>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.persistence</groupId>
-            <artifactId>eclipselink</artifactId>
-            <version>${jpa.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.functionaljava</groupId>
             <artifactId>functionaljava-java8</artifactId>
             <version>4.6</version>
@@ -127,8 +127,38 @@
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.jpa</artifactId>
-            <version>${jpa.version}</version>
+            <version>${eclipselink.version}</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.persistence</groupId>
+            <artifactId>org.eclipse.persistence.moxy</artifactId>
+            <version>${eclipselink.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <!--
+            The dependency below is required because the javax.persistence 2.2.x JAR is signed but
+            the rest of the EclipseLink JAR isn’t, which causes a “signer information does not
+            match signer information of other classes in the same package” error. The
+            javax.persistence 2.1.1 JAR below isn’t signed so it doesn’t have the problem. See
+            https://stackoverflow.com/q/45870753 for more information.
+
+            Note that the below is JPA 2.1.1 whereas EclipseLink 2.7.x supports JPA 2.2. However,
+            https://projects.eclipse.org/projects/ee4j.eclipselink/releases/2.7.3/review says
+            EclipseLink 2.7.3 still supports pre-2.2 versions of JPA (though deprecated). We
+            survived with JPA 2.1.1 when we were using EclipseLink 2.6.4 because that’s all it
+            supported. (We’ve never used JPA 2.2: the upgrade from EclipseLink 2.6.4 to 2.7.3
+            introduced the signing problem and is when we added the extra dependency below as a
+            mitigation).
+
+            If https://bugs.eclipse.org/bugs/show_bug.cgi?id=525457 is anything to go by, a future
+            EclipseLink release should resolve this problem and we should be able to remove the
+            below dependency.
+        -->
+        <dependency>
+            <groupId>org.eclipse.persistence</groupId>
+            <artifactId>javax.persistence</artifactId>
+            <version>2.1.1</version>
         </dependency>
         <dependency>
             <groupId>com.google.inject</groupId>
@@ -255,7 +285,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.0.54-beta</version>
+            <version>2.22.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -420,6 +450,12 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-util</artifactId>
             <version>9.4.11.v20180605</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <version>1.1.2</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>

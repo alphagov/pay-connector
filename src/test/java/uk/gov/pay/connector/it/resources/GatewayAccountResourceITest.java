@@ -122,7 +122,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("type", is(TEST.toString()))
                 .body("description", is("a description"))
                 .body("analytics_id", is("an analytics id"))
-                .body("email_collection_mode", is("MANDATORY"))
+                .body("email_collection_mode", is("OPTIONAL"))
                 .body("email_notifications.PAYMENT_CONFIRMED.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))
                 .body("email_notifications.PAYMENT_CONFIRMED.enabled", is(true))
                 .body("email_notifications.REFUND_ISSUED.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))

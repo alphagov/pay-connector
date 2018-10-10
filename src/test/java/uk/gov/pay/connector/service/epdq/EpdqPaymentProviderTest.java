@@ -205,8 +205,6 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
 
     @Test
     public void shouldNotVerifyNotificationIfEmptyPayload() {
-        when(mockGatewayAccountEntity.getCredentials()).thenReturn(Collections.singletonMap(CREDENTIALS_SHA_OUT_PASSPHRASE, "passphrase"));
-
         when(mockNotification.getPayload()).thenReturn(Optional.empty());
 
         assertThat(provider.verifyNotification(mockNotification, mockGatewayAccountEntity), is(false));

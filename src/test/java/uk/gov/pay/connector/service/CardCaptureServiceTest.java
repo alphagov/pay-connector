@@ -208,8 +208,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.CAPTURE_READY);
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(any()))
-                .thenReturn(charge);
         exception.expect(OperationAlreadyInProgressRuntimeException.class);
         cardCaptureService.doCapture(charge.getExternalId());
         assertThat(charge.getStatus(), is(ChargeStatus.CAPTURE_READY.getValue()));
@@ -223,8 +221,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.ENTERING_CARD_DETAILS);
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
-        when(mockedChargeDao.merge(any()))
-                .thenReturn(charge);
 
         exception.expect(IllegalStateRuntimeException.class);
         cardCaptureService.doCapture(charge.getExternalId());

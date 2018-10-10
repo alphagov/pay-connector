@@ -186,11 +186,16 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return cardTypes;
     }
 
-    @JsonView(Views.ApiView.class)
+    @JsonProperty("email_notifications")
     public Map<EmailNotificationType, EmailNotificationEntity> getEmailNotifications() {
         return emailNotifications;
     }
 
+    @JsonProperty("email_collection_mode")
+    public EmailCollectionMode getEmailCollectionMode() {
+        return emailCollectionMode;
+    }
+    
     @JsonView(Views.ApiView.class)
     public NotificationCredentials getNotificationCredentials() {
         return notificationCredentials;
@@ -306,10 +311,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public boolean isLive() {
         return Type.LIVE.equals(type);
-    }
-
-    public EmailCollectionMode getEmailCollectionMode() {
-        return emailCollectionMode;
     }
 
     public void setCorporateCreditCardSurchargeAmount(long corporateCreditCardSurchargeAmount) {
