@@ -12,7 +12,8 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJEC
 public class SandboxCardNumbers {
 
     public static boolean isValidCard(String cardNumber) {
-        return GOOD_CARDS.contains(cardNumber);
+        return GOOD_CARDS.contains(cardNumber) ||
+                GOOD_CORPORATE_CARDS.contains(cardNumber);
     }
 
     public static boolean isRejectedCard(String cardNumber) {
@@ -39,6 +40,10 @@ public class SandboxCardNumbers {
             "6011000990139424",
             "36148900647913");
 
+    private static final List GOOD_CORPORATE_CARDS = ImmutableList.of(
+            "4000180000000002",
+            "5101180000000007"
+    );
     private static final String DECLINED_CARD_NUMBER = "4000000000000002";
     private static final String CVC_ERROR_CARD_NUMBER = "4000000000000127";
     private static final String EXPIRED_CARD_NUMBER = "4000000000000069";
@@ -51,4 +56,5 @@ public class SandboxCardNumbers {
             DECLINED_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "This transaction was declined."),
             EXPIRED_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "The card is expired."),
             CVC_ERROR_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "The CVC code is incorrect."));
+    
 }
