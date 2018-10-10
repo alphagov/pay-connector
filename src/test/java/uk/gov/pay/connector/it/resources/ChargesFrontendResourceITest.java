@@ -93,6 +93,37 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
+    public void getChargeShouldIncludeCorporateSurchargeAndTotalAmount() {
+
+        String chargeExternalId = postToCreateACharge(expectedAmount);
+        String expectedLocation = "https://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeExternalId;
+        final Long chargeId = app.getDatabaseTestHelper().getChargeIdByExternalId(chargeExternalId);
+        app.getDatabaseTestHelper().updateCorporateSurcharge(chargeId, corporateCreditCardSurchargeAmount);
+
+        getChargeFromResource(chargeExternalId)
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("charge_id", is(chargeExternalId))
+                .body("containsKey('reference')", is(false))
+                .body("description", is(description))
+                .body("amount", isNumber(expectedAmount))
+                .body("status", is(CREATED.getValue()))
+                .body("return_url", is(returnUrl))
+                .body("email", is(email))
+                .body("created_date", is(notNullValue()))
+                .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{1,3}.\\d{0,3}Z"))
+                .body("created_date", isWithin(10, SECONDS))
+                .body("language", is("en"))
+                .body("delayed_capture", is(true))
+                .body("corporate_surcharge", is(213))
+                .body("total_amount", is(6447))
+                .body("links", hasSize(3))
+                .body("links", containsLink("self", GET, expectedLocation))
+                .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))
+                .body("links", containsLink("cardCapture", POST, expectedLocation + "/capture"));
+    }
+
+    @Test
     public void shouldReturnInternalChargeStatusIfStatusIsAuthorised() {
         String externalChargeId = RandomIdGenerator.newId();
         Long chargeId = 123456L;
@@ -415,9 +446,17 @@ public class ChargesFrontendResourceITest {
                 .body("created_date", is(notNullValue()))
                 .body("language", is("en"))
                 .body("delayed_capture", is(true))
+                .body("corporate_surcharge", is(nullValue()))
+                .body("total_amount", is(nullValue()))
                 .contentType(JSON);
 
         return response.extract().path("charge_id");
+    }
+
+    private ValidatableResponse getChargeFromResource(String chargeId) {
+        return connectorRestApi
+                .withChargeId(chargeId)
+                .getFrontendCharge();
     }
 
     private ValidatableResponse validateGetCharge(long expectedAmount, String chargeId, ChargeStatus chargeStatus,
@@ -438,7 +477,9 @@ public class ChargesFrontendResourceITest {
                 .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{1,3}.\\d{0,3}Z"))
                 .body("created_date", isWithin(10, SECONDS))
                 .body("language", is("en"))
-                .body("delayed_capture", is(delayedCapture));
+                .body("delayed_capture", is(delayedCapture))
+                .body("corporate_surcharge", is(nullValue()))
+                .body("total_amount", is(nullValue()));
         validateGatewayAccount(response);
         validateCardDetails(response, chargeStatus);
         return response;

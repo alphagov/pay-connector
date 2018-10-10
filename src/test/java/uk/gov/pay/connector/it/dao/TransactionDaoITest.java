@@ -19,6 +19,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static java.time.ZonedDateTime.now;
 import static java.util.Collections.singletonList;
@@ -100,6 +101,36 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactionCharge.getLanguage(), is(testCharge.getLanguage()));
         assertThat(transactionCharge.isDelayedCapture(), is(testCharge.isDelayedCapture()));
         assertDateMatch(transactionCharge.getCreatedDate().toString());
+        assertThat(transactionCharge.getCorporateSurcharge(), is(Optional.empty()));
+    }
+
+    @Test
+    public void searchChargesWithCorporateSurchargeByGatewayAccount() {
+
+        // given
+        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithIdAndCorporateSurcharge(1L, now(), 250L);
+
+        SearchParams params = new SearchParams();
+
+        // when
+        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+
+        // then
+        assertThat(transactions.size(), is(1));
+
+        Transaction transactionCharge = transactions.get(0);
+        assertThat(transactionCharge.getTransactionType(), is("charge"));
+        assertThat(transactionCharge.getChargeId(), is(testCharge.getChargeId()));
+        assertThat(transactionCharge.getAmount(), is(testCharge.getAmount()));
+        assertThat(transactionCharge.getReference(), is(testCharge.getReference()));
+        assertThat(transactionCharge.getDescription(), is(testCharge.getDescription()));
+        assertThat(transactionCharge.getStatus(), is(testCharge.getChargeStatus().toString()));
+        assertThat(transactionCharge.getUserExternalId(), is(nullValue()));
+        assertThat(transactionCharge.getLanguage(), is(testCharge.getLanguage()));
+        assertThat(transactionCharge.isDelayedCapture(), is(testCharge.isDelayedCapture()));
+        assertDateMatch(transactionCharge.getCreatedDate().toString());
+        assertThat(transactionCharge.getCorporateSurcharge().isPresent(), is(true));
+        assertThat(transactionCharge.getCorporateSurcharge().get(), is(250L));
     }
 
     @Test
@@ -1341,16 +1372,26 @@ public class TransactionDaoITest extends DaoITestBase {
 
     private DatabaseFixtures.TestCharge insertNewChargeWithId(long amount, ZonedDateTime creationDate) {
         return
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withDescription(DEFAULT_TEST_CHARGE_DESCRIPTION)
-                        .withReference(ServicePaymentReference.of(DEFAULT_TEST_CHARGE_REFERENCE))
-                        .withAmount(amount)
-                        .withTestAccount(defaultTestAccount)
-                        .withCreatedDate(creationDate)
-                        .withLanguage(SupportedLanguage.ENGLISH)
-                        .insert();
+                insertNewChargeWithIdAndCorporateSurcharge(amount, creationDate, null);
     }
+
+    private DatabaseFixtures.TestCharge insertNewChargeWithIdAndCorporateSurcharge(
+            long amount,
+            ZonedDateTime creationDate,
+            Long corporateSurcharge) {
+
+        return withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withDescription(DEFAULT_TEST_CHARGE_DESCRIPTION)
+                .withReference(ServicePaymentReference.of(DEFAULT_TEST_CHARGE_REFERENCE))
+                .withAmount(amount)
+                .withTestAccount(defaultTestAccount)
+                .withCreatedDate(creationDate)
+                .withLanguage(SupportedLanguage.ENGLISH)
+                .withCorporateSurcharge(corporateSurcharge)
+                .insert();
+    }
+
 
     private DatabaseFixtures.TestCardDetails updateCardDetailsForCharge(DatabaseFixtures.TestCharge charge) {
         return updateCardDetailsForCharge(charge, "visa");

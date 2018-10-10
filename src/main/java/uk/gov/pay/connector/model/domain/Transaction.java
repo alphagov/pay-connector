@@ -14,6 +14,7 @@ import javax.persistence.Id;
 import javax.persistence.SqlResultSetMapping;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 @SqlResultSetMapping(
         name = "TransactionMapping",
@@ -45,7 +46,8 @@ import java.time.ZonedDateTime;
                         @ColumnResult(name = "address_postcode", type = String.class),
                         @ColumnResult(name = "amount", type = Long.class),
                         @ColumnResult(name = "language", type = String.class),
-                        @ColumnResult(name = "delayed_capture", type = Boolean.class)}))
+                        @ColumnResult(name = "delayed_capture", type = Boolean.class),
+                        @ColumnResult(name = "corporate_surcharge", type = Long.class)}))
 @Entity
 @ReadOnly
 public class Transaction {
@@ -81,6 +83,7 @@ public class Transaction {
     private String addressLine2;
     private String addressPostcode;
     private long amount;
+    private Long corporateSurcharge;
 
     public Transaction() {
     }
@@ -110,7 +113,8 @@ public class Transaction {
                        String addressPostcode,
                        long amount,
                        String language,
-                       boolean delayedCapture) {
+                       boolean delayedCapture,
+                       Long corporateSurcharge) {
         this.chargeId = chargeId;
         this.externalId = externalId;
         this.reference = reference;
@@ -137,6 +141,7 @@ public class Transaction {
         this.amount = amount;
         this.language = SupportedLanguage.fromIso639AlphaTwoCode(language);
         this.delayedCapture = delayedCapture;
+        this.corporateSurcharge = corporateSurcharge;
     }
 
     public Long getChargeId() {
@@ -198,6 +203,7 @@ public class Transaction {
     public LastDigitsCardNumber getLastDigitsCardNumber() {
         return lastDigitsCardNumber;
     }
+
     public FirstDigitsCardNumber getFirstDigitsCardNumber() {
         return firstDigitsCardNumber;
     }
@@ -233,12 +239,16 @@ public class Transaction {
     public SupportedLanguage getLanguage() {
         return language;
     }
-    
+
     public boolean isDelayedCapture() {
         return delayedCapture;
     }
 
     public String getUserExternalId() {
         return userExternalId;
+    }
+
+    public Optional<Long> getCorporateSurcharge() {
+        return Optional.ofNullable(corporateSurcharge);
     }
 }
