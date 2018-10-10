@@ -18,116 +18,30 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 public class EmailNotificationResourceITest extends GatewayAccountResourceTestBase {
 
     @Test
-    public void updateEmailNotification_shouldUpdateSuccessfullyIfEmailNotificationAlreadyExists() {
-        DatabaseFixtures.TestAccount testAccount = databaseFixtures
-                .aTestAccount()
-                .insert();
-
-        String templateBody = "lorem ipsum";
-        givenSetup().accept(JSON)
-                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY_OLD, templateBody))
-                .post(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
-                .then()
-                .statusCode(200);
-
-        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
-        assertThat(emailNotification.get("template_body"), is(templateBody));
-        assertThat(emailNotification.get("enabled"), is(true));
-    }
-
-    @Test
-    public void updateEmailNotification_shouldUpdateSuccessfullyIfEmailNotificationDoesNotExist() {
-        DatabaseFixtures.TestAccount testAccount = databaseFixtures
-                .aTestAccount()
-                .withEmailNotifications(new HashMap<>())
-                .insert();
-
-        String templateBody = "lorem ipsum";
-        givenSetup().accept(JSON)
-                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY_OLD, templateBody))
-                .post(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
-                .then()
-                .statusCode(200);
-
-        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
-        assertThat(emailNotification.get("template_body"), is(templateBody));
-        assertThat(emailNotification.get("enabled"), is(true));
-    }
-
-    @Test
-    public void updateEmailNotification_shouldTurnOnEmailNotificationsSuccessfullyIfEmailNotificationDoesNotExist() {
-        DatabaseFixtures.TestAccount testAccount = databaseFixtures
-                .aTestAccount()
-                .insert();
-
-        givenSetup().accept(JSON)
-                .body(getPatchRequestBody("replace", EmailNotificationResource.EMAIL_NOTIFICATION_ENABLED, true))
-                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
-                .then()
-                .statusCode(200);
-
-        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
-        assertThat(emailNotification.get("enabled"), is(true));
-    }
-
-    @Test
-    public void updateEmailNotification_shouldNotUpdateIfMissingField() {
+    public void patchEmailNotification_shouldNotUpdateIfMissingField() {
         DatabaseFixtures.TestAccount testAccount = databaseFixtures
                 .aTestAccount()
                 .insert();
 
         givenSetup().accept(JSON)
                 .body(new HashMap<>())
-                .post(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
+                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
                 .statusCode(400)
-                .body("message", is("Field(s) missing: [custom-email-text]"));
+                .body("message", is("Bad patch parameters{}"));
     }
 
     @Test
-    public void updateEmailNotification_shouldNotUpdateIfAccountIdDoesNotExist() {
+    public void patchEmailNotification_shouldNotUpdateIfAccountIdDoesNotExist() {
         String nonExistingAccountId = "111111111";
         String templateBody = "lorem ipsum";
 
         givenSetup().accept(JSON)
-                .body(ImmutableMap.of(EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY_OLD, templateBody))
-                .post(ACCOUNTS_API_URL + nonExistingAccountId + "/email-notification")
+                .body(getPatchRequestBody("replace", "/payment_confirmed/" + EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY, templateBody))
+                .patch(ACCOUNTS_API_URL + nonExistingAccountId + "/email-notification")
                 .then()
                 .statusCode(404)
                 .body("message", is("The gateway account id '111111111' does not exist"));
-    }
-
-    @Test
-    public void disableEmailNotification_shouldUpdateSuccessfully() {
-        DatabaseFixtures.TestAccount testAccount = databaseFixtures
-                .aTestAccount()
-                .insert();
-
-        givenSetup().accept(JSON)
-                .body(getPatchRequestBody("replace", EmailNotificationResource.EMAIL_NOTIFICATION_ENABLED, false))
-                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
-                .then()
-                .statusCode(200);
-
-        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
-        assertThat(emailNotification.get("enabled"), is(false));
-    }
-
-    // PP-4111 Old test (using the old patch path)
-    @Test
-    public void patchEnableNotification_shouldUpdateSuccessfully() {
-        DatabaseFixtures.TestAccount testAccount = databaseFixtures
-                .aTestAccount()
-                .insert();
-
-        givenSetup().accept(JSON)
-                .body(getPatchRequestBody("replace", EmailNotificationResource.EMAIL_NOTIFICATION_ENABLED, false))
-                .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
-                .then()
-                .statusCode(200);
-
-        Map<String, Object> emailNotification = app.getDatabaseTestHelper().getEmailForAccountAndType(testAccount.getAccountId(), EmailNotificationType.PAYMENT_CONFIRMED);
-        assertThat(emailNotification.get("enabled"), is(false));
     }
 
     @Test
@@ -243,23 +157,6 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
         assertThat(refundEmail.get("enabled"), is(false));
     }
     
-    @Test
-    public void getEmailNotificationSuccessfully() {
-        DatabaseFixtures.TestAccount testAccount = databaseFixtures
-                .aTestAccount()
-                .insert();
-
-        String templateBody = "lorem ipsum";
-        app.getDatabaseTestHelper().updateEmailNotification(testAccount.getAccountId(), templateBody, true, EmailNotificationType.PAYMENT_CONFIRMED);
-
-        givenSetup()
-                .accept(JSON)
-                .get(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
-                .then()
-                .statusCode(200)
-                .body("template_body", is(templateBody))
-                .body("enabled", is(true));
-    }
 
     private String getPatchRequestBody(String operation, String path, Object value) {
         return toJson(ImmutableMap.of("op",operation, "path", path, "value", value));

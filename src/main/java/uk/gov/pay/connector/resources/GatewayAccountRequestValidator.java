@@ -15,6 +15,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_NOTIFY_API_TOKEN;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID;
+import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_NOTIFY_REFUND_ISSUED_TEMPLATE_ID;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_OPERATION;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_OPERATION_PATH;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_VALUE;
@@ -58,8 +59,7 @@ public class GatewayAccountRequestValidator {
         if (!op.equalsIgnoreCase("remove")) {
             JsonNode valueNode = payload.get(FIELD_VALUE);
             throwIfNullFieldValue(valueNode);
-            //todo PP-4111 add FIELD_NOTIFY_REFUND_ISSUED_TEMPLATE_ID when selfservice is merged
-            List<String> missingMandatoryFields = requestValidator.checkIfExistsOrEmpty(valueNode, FIELD_NOTIFY_API_TOKEN, FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID);
+            List<String> missingMandatoryFields = requestValidator.checkIfExistsOrEmpty(valueNode, FIELD_NOTIFY_API_TOKEN, FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID, FIELD_NOTIFY_REFUND_ISSUED_TEMPLATE_ID);
             if (!missingMandatoryFields.isEmpty()) {
                 throw new ValidationException(missingMandatoryFields);
             }

@@ -108,7 +108,6 @@ public class PatchRequestBuilder {
                     .orElse(true);
         }
         
-        //PP-4111 All paths should start with / according to the json patch standard. Our downstream code right now mostly does not comply, so this is making sure the system does not blow up if a path does not start with /
         public List<String> getPathTokens() {
             return Arrays.stream(path.split("/")).skip(1).collect(Collectors.toList());
         }
