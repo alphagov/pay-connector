@@ -688,6 +688,23 @@ Content-Type: application/json
 ```
 -----------------------------------------------------------------------------------------------------------
 
+## PATCH /v1/api/accounts/{accountId}
+
+A generic endpoint that allows the patching of `allow_web_payments`, `notify_settings` and/or `email_collection_mode`.
+
+### Request example
+
+```
+PATCH /v1/api/accounts/123
+Content-Type: application/json
+{
+    "op":"replace", "path":"allow_web_payments", "value": true
+}
+```
+
+
+-----------------------------------------------------------------------------------------------------------
+
 ## PATCH /v1/api/accounts/{accountId}/email-notification
 
 Enables/disables email notifications for account `accountId`

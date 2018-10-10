@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
+import static uk.gov.pay.connector.resources.GatewayAccountRequestValidator.FIELD_ALLOW_WEB_PAYMENTS;
 import static uk.gov.pay.connector.resources.GatewayAccountRequestValidator.FIELD_EMAIL_COLLECTION_MODE;
 import static uk.gov.pay.connector.resources.GatewayAccountRequestValidator.FIELD_NOTIFY_SETTINGS;
 
@@ -22,6 +23,8 @@ public class GatewayAccountUpdater {
 
     private final Map<String, BiConsumer<PatchRequest, GatewayAccountEntity>> attributeUpdater =
             new HashMap<String, BiConsumer<PatchRequest, GatewayAccountEntity>>() {{
+                put(FIELD_ALLOW_WEB_PAYMENTS,
+                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowWebPayments(Boolean.valueOf(gatewayAccountRequest.valueAsString())));
                 put(FIELD_NOTIFY_SETTINGS, 
                         (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setNotifySettings(gatewayAccountRequest.valueAsObject()));
                 put(FIELD_EMAIL_COLLECTION_MODE,

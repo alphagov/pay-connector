@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import com.jayway.restassured.response.Response;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 
@@ -20,11 +19,12 @@ import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -193,7 +193,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .body("accounts[0].analytics_id", is(nullValue()))
                 .body("accounts[0].service_name", is(gatewayAccountPayload.getServiceName()))
                 .body("accounts[0].corporate_credit_card_surcharge_amount", is(250))
-                .body("accounts[0].corporate_debit_card_surcharge_amount", is(50));
+                .body("accounts[0].corporate_debit_card_surcharge_amount", is(50))
+                .body("accounts[0].allow_web_payments", is(false));
     }
 
     private void validateNon3dsCardType(ValidatableResponse response, String brand, String label, String... type) {

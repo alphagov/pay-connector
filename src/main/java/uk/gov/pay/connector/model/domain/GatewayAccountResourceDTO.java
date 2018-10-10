@@ -37,6 +37,9 @@ public class GatewayAccountResourceDTO {
 
     @JsonProperty("_links")
     private Map<String, Map<String, URI>> links = new HashMap<>();
+    
+    @JsonProperty("allow_web_payments")
+    private boolean allowWebPayments;
 
     public GatewayAccountResourceDTO() {
     }
@@ -48,7 +51,8 @@ public class GatewayAccountResourceDTO {
                                      String serviceName,
                                      String analyticsId,
                                      long corporateCreditCardSurchargeAmount,
-                                     long corporateDebitCardSurchargeAmount) {
+                                     long corporateDebitCardSurchargeAmount, 
+                                     boolean allowWebPayments) {
         this.accountId = accountId;
         this.paymentProvider = paymentProvider;
         this.type = type;
@@ -57,6 +61,7 @@ public class GatewayAccountResourceDTO {
         this.analyticsId = analyticsId;
         this.corporateCreditCardSurchargeAmount = corporateCreditCardSurchargeAmount;
         this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
+        this.allowWebPayments = allowWebPayments;
     }
 
     public long getAccountId() {
@@ -99,4 +104,7 @@ public class GatewayAccountResourceDTO {
         links.put(key, ImmutableMap.of("href", uri));
     }
 
+    public boolean isAllowWebPayments() {
+        return allowWebPayments;
+    }
 }

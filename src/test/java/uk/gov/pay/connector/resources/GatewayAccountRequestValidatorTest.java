@@ -125,7 +125,7 @@ public class GatewayAccountRequestValidatorTest {
             fail( "Expected ValidationException" );
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(1));
-            assertThat(validationException.getErrors(), hasItems("Operation [delete] is not valid for path [op]"));
+            assertThat(validationException.getErrors(), hasItems("Operation [delete] is not valid for path [notify_settings]"));
         }
     }
 
@@ -136,5 +136,20 @@ public class GatewayAccountRequestValidatorTest {
                         FIELD_OPERATION_PATH, "notify_settings",
                         FIELD_VALUE, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "")));
         validator.validatePatchRequest(jsonNode);
+    }
+    
+    @Test
+    public void shouldThrow_whenAllowWebPaymentIsInvalid() {
+        JsonNode jsonNode = new ObjectMapper()
+                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
+                        FIELD_OPERATION_PATH, "allow_web_payments",
+                        FIELD_VALUE, "unfalse"));
+        try {
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException validationException) {
+            assertThat(validationException.getErrors().size(), is(1));
+            assertThat(validationException.getErrors(), hasItems("Value [unfalse] is not valid for [allow_web_payments]"));
+        }
     }
 }
