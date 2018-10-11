@@ -170,7 +170,7 @@ public class UserNotificationService {
         HashMap<String, String> map = new HashMap<>();
 
         map.put("serviceReference", chargeEntity.getReference().toString());
-        map.put("date", DateTimeUtils.toUserFriendlyDate(refundEntity.getCreatedDate()));
+        map.put("date", DateTimeUtils.toUserFriendlyDate(chargeEntity.getCreatedDate()));
         map.put("amount", formatToPounds(refundEntity.getAmount()));
         map.put("description", chargeEntity.getDescription());
         map.put("serviceName", StringUtils.defaultString(chargeEntity.getGatewayAccount().getServiceName()));
