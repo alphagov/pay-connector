@@ -27,12 +27,16 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.apache.commons.lang.math.RandomUtils.nextLong;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
@@ -42,6 +46,7 @@ import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSW
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -58,6 +63,8 @@ public class ChargingITestBase {
     private static final String CVC = "123";
     private static final String EXPIRY_DATE = "11/99";
     private static final String CARD_BRAND = "cardBrand";
+    protected static final String RETURN_URL = "http://service.url/success-page/";
+    protected static final String EMAIL = randomAlphabetic(242) + "@example.com";
     protected RestAssuredClient connectorRestApi;
     protected static final long AMOUNT = 6234L;
     protected WorldpayMockClient worldpay;
@@ -206,14 +213,14 @@ public class ChargingITestBase {
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 6234L, status, "returnUrl", gatewayTransactionId);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 6234L, status, "RETURN_URL", gatewayTransactionId);
         return externalChargeId;
     }
 
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId, String gatewayAccountId) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, gatewayAccountId, 6234L, status, "returnUrl", gatewayTransactionId);
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, gatewayAccountId, 6234L, status, "RETURN_URL", gatewayTransactionId);
         return externalChargeId;
     }
 
@@ -379,5 +386,47 @@ public class ChargingITestBase {
                 .body("status", Matchers.is(targetState.getValue()));
 
         return chargeId;
+    }
+
+    protected String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, ZonedDateTime fromDate) {
+        return addChargeAndCardDetails(status, reference, fromDate, "");
+
+    }
+
+    protected String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, ZonedDateTime fromDate, String cardBrand) {
+        return addChargeAndCardDetails(nextLong(), status, reference, fromDate, cardBrand);
+    }
+
+    protected String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, ZonedDateTime fromDate, String cardBrand) {
+        String externalChargeId = "charge" + chargeId;
+        ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
+        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null, reference, fromDate, EMAIL);
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+
+        return externalChargeId;
+    }
+
+    protected List<String> collect(List<Map<String, Object>> results, String field) {
+        return results.stream().map(result -> result.get(field).toString()).collect(Collectors.toList());
+    }
+
+    protected String expectedChargeLocationFor(String accountId, String chargeId) {
+        return "https://localhost:" + app.getLocalPort() + "/v1/api/accounts/{accountId}/charges/{chargeId}"
+                .replace("{accountId}", accountId)
+                .replace("{chargeId}", chargeId);
+    }
+
+    protected String expectedChargesLocationFor(String accountId, String queryParams) {
+        return "https://localhost:" + app.getLocalPort()
+                + "/v1/api/accounts/{accountId}/charges".replace("{accountId}", accountId)
+                + queryParams;
+    }
+
+    protected List<ZonedDateTime> datesFrom(List<String> createdDateStrings) {
+        List<ZonedDateTime> dateTimes = newArrayList();
+        createdDateStrings.forEach(aDateString -> dateTimes.add(toUTCZonedDateTime(aDateString).get()));
+        return dateTimes;
     }
 }

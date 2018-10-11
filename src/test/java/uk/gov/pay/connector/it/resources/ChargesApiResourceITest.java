@@ -1306,46 +1306,4 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         assertThat(references, containsInAnyOrder("ref-5"));
         assertThat(references, not(contains("ref-1", "ref-2", "ref-3", "ref-4")));
     }
-
-    private List<ZonedDateTime> datesFrom(List<String> createdDateStrings) {
-        List<ZonedDateTime> dateTimes = newArrayList();
-        createdDateStrings.forEach(aDateString -> dateTimes.add(toUTCZonedDateTime(aDateString).get()));
-        return dateTimes;
-    }
-
-    private String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, ZonedDateTime fromDate) {
-        return addChargeAndCardDetails(status, reference, fromDate, "");
-
-    }
-
-    private String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, ZonedDateTime fromDate, String cardBrand) {
-        return addChargeAndCardDetails(nextLong(), status, reference, fromDate, cardBrand);
-    }
-
-    private String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, ZonedDateTime fromDate, String cardBrand) {
-        String externalChargeId = "charge" + chargeId;
-        ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, null, reference, fromDate, email);
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
-
-        return externalChargeId;
-    }
-
-    private List<String> collect(List<Map<String, Object>> results, String field) {
-        return results.stream().map(result -> result.get(field).toString()).collect(Collectors.toList());
-    }
-
-    private String expectedChargeLocationFor(String accountId, String chargeId) {
-        return "https://localhost:" + app.getLocalPort() + "/v1/api/accounts/{accountId}/charges/{chargeId}"
-                .replace("{accountId}", accountId)
-                .replace("{chargeId}", chargeId);
-    }
-
-    private String expectedChargesLocationFor(String accountId, String queryParams) {
-        return "https://localhost:" + app.getLocalPort()
-                + "/v1/api/accounts/{accountId}/charges".replace("{accountId}", accountId)
-                + queryParams;
-    }
 }
