@@ -14,8 +14,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.CardFixture;
-import uk.gov.pay.connector.model.domain.PayersCardType;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.model.domain.PayersCardType;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.EpdqMockClient;
@@ -410,18 +410,6 @@ public class ChargingITestBase {
 
     protected List<String> collect(List<Map<String, Object>> results, String field) {
         return results.stream().map(result -> result.get(field).toString()).collect(Collectors.toList());
-    }
-
-    protected String expectedChargeLocationFor(String accountId, String chargeId) {
-        return "https://localhost:" + app.getLocalPort() + "/v1/api/accounts/{accountId}/charges/{chargeId}"
-                .replace("{accountId}", accountId)
-                .replace("{chargeId}", chargeId);
-    }
-
-    protected String expectedChargesLocationFor(String accountId, String queryParams) {
-        return "https://localhost:" + app.getLocalPort()
-                + "/v1/api/accounts/{accountId}/charges".replace("{accountId}", accountId)
-                + queryParams;
     }
 
     protected List<ZonedDateTime> datesFrom(List<String> createdDateStrings) {
