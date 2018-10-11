@@ -28,7 +28,7 @@ public class SandboxCardNumbers {
         return ERROR_CARDS.get(cardNumber);
     }
 
-    private static final List GOOD_CARDS = ImmutableList.of(
+    private static final List<String> GOOD_CARDS = ImmutableList.of(
             "4444333322221111",
             "4242424242424242",
             "4917610000000000003",
@@ -40,7 +40,7 @@ public class SandboxCardNumbers {
             "6011000990139424",
             "36148900647913");
 
-    private static final List GOOD_CORPORATE_CARDS = ImmutableList.of(
+    private static final List<String> GOOD_CORPORATE_CARDS = ImmutableList.of(
             "4000180000000002",
             "5101180000000007"
     );
