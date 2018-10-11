@@ -129,14 +129,14 @@ public class RestAssuredClient {
                 .then();
     }
 
-    public ValidatableResponse getTransactions() {
+    public ValidatableResponse getChargesV1() {
         return addQueryParams(given().port(app.getLocalPort())
                 .headers(headers))
                 .get("/v1/api/accounts/{accountId}/charges".replace("{accountId}", accountId))
                 .then();
     }
 
-    public ValidatableResponse getTransactionsV2() {
+    public ValidatableResponse getChargesV2() {
         return addQueryParams(given().port(app.getLocalPort())
                 .headers(headers))
                 .get("/v2/api/accounts/{accountId}/charges".replace("{accountId}", accountId))
