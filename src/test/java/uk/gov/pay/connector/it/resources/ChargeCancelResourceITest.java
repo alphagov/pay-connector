@@ -1,9 +1,14 @@
 package uk.gov.pay.connector.it.resources;
 
+import junitparams.Parameters;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -11,7 +16,6 @@ import java.util.Map;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -19,24 +23,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_ERROR;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_READY;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class ChargeCancelResourceITest extends ChargingITestBase {
 
     public ChargeCancelResourceITest() {
@@ -44,16 +38,14 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldRespond204WithNoLockingEvent_IfCancelledBeforeAuth() {
+    @Parameters({"CREATED", "ENTERING_CARD_DETAILS"})
+    public void shouldRespond204WithNoLockingEvent_IfCancelledBeforeAuth(ChargeStatus status) {
+        String chargeId = addCharge(status, "ref", ZonedDateTime.now().minusHours(1), "irrelevant");
+        cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
 
-        asList(CREATED, ENTERING_CARD_DETAILS).forEach(status -> {
-            String chargeId = addCharge(status, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
-            cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
-
-            List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
-            assertThat(events.size(), is(2));
-            assertThat(events, hasItems(status.getValue(), SYSTEM_CANCELLED.getValue()));
-        });
+        List<String> events = databaseTestHelper.getInternalEvents(chargeId);
+        assertThat(events.size(), is(2));
+        assertThat(events, hasItems(status.getValue(), SYSTEM_CANCELLED.getValue()));
     }
 
     @Test
@@ -61,14 +53,14 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
         String externalChargeId = addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 
-        worldpay.mockCancelSuccess();
+        worldpayMockClient.mockCancelSuccess();
 
-        Map<String, Object> cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        Map<String, Object> cardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(cardDetails.isEmpty(), is(false));
 
         cancelChargeAndCheckApiStatus(externalChargeId, SYSTEM_CANCELLED, 204);
 
-        cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        cardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(cardDetails, is(notNullValue()));
         assertThat(cardDetails.get("card_brand"), is(notNullValue()));
         assertThat(cardDetails.get("last_digits_card_number"), is(notNullValue()));
@@ -85,11 +77,11 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
     @Test
     public void shouldRespondWith204WithLockingStatus_IfCancelledAfterAuth() {
         String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
-        worldpay.mockCancelSuccess();
+        worldpayMockClient.mockCancelSuccess();
 
         cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
 
-        List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
+        List<String> events = databaseTestHelper.getInternalEvents(chargeId);
         assertThat(events.size(), is(3));
         assertThat(events, hasItems(AUTHORISATION_SUCCESS.getValue(),
                 SYSTEM_CANCEL_READY.getValue(),
@@ -100,11 +92,11 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
     public void shouldRespondWith204WithLockingStatus_IfCancelFailedAfterAuth() {
 
         String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
-        worldpay.mockCancelError();
+        worldpayMockClient.mockCancelError();
 
         cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCEL_ERROR, 204);
 
-        List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
+        List<String> events = databaseTestHelper.getInternalEvents(chargeId);
         assertThat(events.size(), is(3));
         assertThat(events, hasItems(AUTHORISATION_SUCCESS.getValue(),
                 SYSTEM_CANCEL_READY.getValue(),
@@ -112,34 +104,31 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void respondWith400_whenNotCancellableState() {
-        List<ChargeStatus> nonCancellableStatuses = asList(
-                AUTHORISATION_REJECTED,
-                AUTHORISATION_ERROR,
-                CAPTURE_READY,
-                CAPTURED,
-                CAPTURE_SUBMITTED,
-                CAPTURE_ERROR,
-                EXPIRED,
-                EXPIRE_CANCEL_FAILED,
-                SYSTEM_CANCEL_ERROR,
-                SYSTEM_CANCELLED,
-                USER_CANCEL_READY,
-                USER_CANCELLED,
-                USER_CANCEL_ERROR
-        );
-
-        nonCancellableStatuses.forEach(notCancellableState -> {
-            String chargeId = createNewInPastChargeWithStatus(notCancellableState);
-            String expectedMessage = "Charge not in correct state to be processed, " + chargeId;
-            connectorRestApiClient
-                    .withChargeId(chargeId)
-                    .postChargeCancellation()
-                    .statusCode(BAD_REQUEST.getStatusCode())
-                    .and()
-                    .contentType(JSON)
-                    .body("message", is(expectedMessage));
-        });
+    @Parameters({
+            "AUTHORISATION_REJECTED",
+            "AUTHORISATION_ERROR",
+            "CAPTURE_READY",
+            "CAPTURED",
+            "CAPTURE_SUBMITTED",
+            "CAPTURE_ERROR",
+            "EXPIRED",
+            "EXPIRE_CANCEL_FAILED",
+            "SYSTEM_CANCEL_ERROR",
+            "SYSTEM_CANCELLED",
+            "USER_CANCEL_READY",
+            "USER_CANCELLED",
+            "USER_CANCEL_ERROR"
+    })
+    public void respondWith400_whenNotCancellableState(ChargeStatus notCancellableState) {
+        String chargeId = createNewInPastChargeWithStatus(notCancellableState);
+        String expectedMessage = "Charge not in correct state to be processed, " + chargeId;
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .postChargeCancellation()
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .and()
+                .contentType(JSON)
+                .body("message", is(expectedMessage));
     }
 
     @Test

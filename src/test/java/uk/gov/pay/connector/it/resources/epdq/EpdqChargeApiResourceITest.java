@@ -1,11 +1,17 @@
 package uk.gov.pay.connector.it.resources.epdq;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class EpdqChargeApiResourceITest extends ChargingITestBase {
     public EpdqChargeApiResourceITest() {
         super("epdq");
@@ -16,7 +22,7 @@ public class EpdqChargeApiResourceITest extends ChargingITestBase {
         String externalChargeId = createNewChargeWithNoTransactionId(AUTHORISATION_3DS_REQUIRED);
         String chargeId = externalChargeId.replace("charge-", "");
         String expectedHtml = "someHtml";
-        app.getDatabaseTestHelper().updateCharge3dsDetails(Long.valueOf(chargeId), null, null, expectedHtml);
+        databaseTestHelper.updateCharge3dsDetails(Long.valueOf(chargeId), null, null, expectedHtml);
 
         connectorRestApiClient.withChargeId(externalChargeId).getFrontendCharge()
                 .statusCode(200)

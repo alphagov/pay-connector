@@ -6,10 +6,12 @@ import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
-import uk.gov.pay.connector.util.RestAssuredClient;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import java.util.List;
 import java.util.Map;
@@ -29,12 +31,12 @@ import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isW
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class SandboxRefundITest extends ChargingITestBase {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
-    private DatabaseTestHelper databaseTestHelper;
-    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
 
     public SandboxRefundITest() {
         super("sandbox");
@@ -43,7 +45,6 @@ public class SandboxRefundITest extends ChargingITestBase {
     @Before
     public void setup() {
         super.setup();
-        databaseTestHelper = app.getDatabaseTestHelper();
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
@@ -135,7 +136,7 @@ public class SandboxRefundITest extends ChargingITestBase {
                 aRefundMatching(secondRefundId, is(notNullValue()), chargeId, secondRefundAmount, "REFUNDED"),
                 aRefundMatching(firstRefundId, is(notNullValue()), chargeId, firstRefundAmount, "REFUNDED")));
 
-        getChargeApi.withChargeId(externalChargeId)
+        connectorRestApiClient.withChargeId(externalChargeId)
                 .getCharge()
                 .statusCode(200)
                 .body("refund_summary.status", is("full"))
@@ -271,7 +272,7 @@ public class SandboxRefundITest extends ChargingITestBase {
                 .body("created_date", isWithin(10, SECONDS));
 
         String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
-                app.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
+                testContext.getPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
 
         String refundId = response.extract().path("refund_id");
         response.body("_links.self.href", is(paymentUrl + "/refunds/" + refundId))

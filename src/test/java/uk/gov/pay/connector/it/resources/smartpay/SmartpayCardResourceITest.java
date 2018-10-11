@@ -7,8 +7,12 @@ import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import java.util.List;
 import java.util.Map;
@@ -16,13 +20,15 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class SmartpayCardResourceITest extends ChargingITestBase {
 
     private String validCardDetails = buildCardDetailsWith("737");
@@ -32,11 +38,11 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldAuthoriseCharge_ForValidCardDetails() throws Exception {
+    public void shouldAuthoriseCharge_ForValidCardDetails() {
 
         String chargeId = createNewChargeWithNoTransactionId(ChargeStatus.ENTERING_CARD_DETAILS);
 
-        smartpay.mockAuthorisationSuccess();
+        smartpayMockClient.mockAuthorisationSuccess();
 
         givenSetup()
                 .body(validCardDetails)
@@ -50,7 +56,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
     @Test
     public void shouldNotAuthorise_ASmartpayErrorCard() throws Exception {
         String cardWithWrongCVC = buildCardDetailsWith("999");
-        smartpay.mockAuthorisationFailure();
+        smartpayMockClient.mockAuthorisationFailure();
 
         String expectedErrorMessage = "This transaction was declined.";
         String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
@@ -59,9 +65,9 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldAuthorise_whenRequires3dsAnd3dsAuthenticationSuccessful() {
-        app.getDatabaseTestHelper().enable3dsForGatewayAccount(Long.parseLong(accountId));
+        databaseTestHelper.enable3dsForGatewayAccount(Long.parseLong(accountId));
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        smartpay.mockAuthorisation3dsRequired();
+        smartpayMockClient.mockAuthorisation3dsRequired();
 
         ValidatableResponse response = givenSetup()
                 .body(validCardDetails)
@@ -77,9 +83,9 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldSuccessWhenAuth3dsRequiredAndAuthorisationSuccess() throws JsonProcessingException {
-        app.getDatabaseTestHelper().enable3dsForGatewayAccount(Long.parseLong(accountId));
+        databaseTestHelper.enable3dsForGatewayAccount(Long.parseLong(accountId));
         String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_3DS_REQUIRED);
-        smartpay.mockAuthorisationSuccess();
+        smartpayMockClient.mockAuthorisationSuccess();
 
         givenSetup()
                 .body(new ObjectMapper().writeValueAsString(get3dsPayload()))
@@ -92,9 +98,9 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldFailWhenAuth3dsRequiredAndAuthorisationFailure() throws JsonProcessingException {
-        app.getDatabaseTestHelper().enable3dsForGatewayAccount(Long.parseLong(accountId));
+        databaseTestHelper.enable3dsForGatewayAccount(Long.parseLong(accountId));
         String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_3DS_REQUIRED);
-        smartpay.mockAuthorisationFailure();
+        smartpayMockClient.mockAuthorisationFailure();
 
         givenSetup()
                 .body(new ObjectMapper().writeValueAsString(get3dsPayload()))
@@ -109,7 +115,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
     public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
         String chargeId = authoriseNewCharge();
 
-        smartpay.mockCaptureSuccess();
+        smartpayMockClient.mockCaptureSuccess();
 
         givenSetup()
                 .post(captureChargeUrlFor(chargeId))
@@ -124,7 +130,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
     public void shouldPersistTransactionIds_duringAuthorisationAndCapture() throws Exception {
         String externalChargeId = createNewChargeWithNoTransactionId(ChargeStatus.ENTERING_CARD_DETAILS);
         String pspReference1 = "pspRef1-" + UUID.randomUUID().toString();
-        smartpay.mockAuthorisationWithTransactionId(pspReference1);
+        smartpayMockClient.mockAuthorisationWithTransactionId(pspReference1);
 
         givenSetup()
                 .body(validCardDetails)
@@ -135,7 +141,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
         assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_SUCCESS.getValue());
 
         String pspReference2 = "pspRef2-" + UUID.randomUUID().toString();
-        smartpay.mockCaptureSuccessWithTransactionId(pspReference2);
+        smartpayMockClient.mockCaptureSuccessWithTransactionId(pspReference2);
 
         givenSetup()
                 .post(captureChargeUrlFor(externalChargeId))
@@ -143,7 +149,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
                 .statusCode(204);
         assertApiStateIs(externalChargeId, EXTERNAL_SUCCESS.getStatus());
         long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge-"));
-        List<Map<String, Object>> chargeEvents = app.getDatabaseTestHelper().getChargeEvents(chargeId);
+        List<Map<String, Object>> chargeEvents = databaseTestHelper.getChargeEvents(chargeId);
 
         assertThat(chargeEvents, hasEvent(AUTHORISATION_SUCCESS));
         assertThat(chargeEvents, hasEvent(CAPTURE_APPROVED));
@@ -153,7 +159,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
     public void shouldCancelCharge() {
         String chargeId = createNewCharge(AUTHORISATION_SUCCESS);
 
-        smartpay.mockCancel();
+        smartpayMockClient.mockCancel();
 
         givenSetup()
                 .contentType(ContentType.JSON)

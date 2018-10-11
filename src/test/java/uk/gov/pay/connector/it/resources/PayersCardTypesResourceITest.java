@@ -15,16 +15,17 @@ public class PayersCardTypesResourceITest {
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
     private String accountId = "66757943593456";
-    private RestAssuredClient connectorApi = new RestAssuredClient(app, accountId);
+    private RestAssuredClient connectorRestApiClient;
 
     @Before
     public void setUp() {
         app.getDatabaseTestHelper().deleteAllCardTypes();
+        connectorRestApiClient = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     @Test
     public void shouldGetNoCardTypesWhenNoCardTypesExist() {
-        connectorApi
+        connectorRestApiClient
                 .getCardTypes()
                 .body("card_types.size()", is(0));
     }
@@ -37,7 +38,7 @@ public class PayersCardTypesResourceITest {
                 .withRequires3ds(true)
                 .insert();
 
-        connectorApi
+        connectorRestApiClient
                 .getCardTypes()
                 .body("card_types.size()", is(1))
                 .body("card_types[0].id", is(mastercardCreditCardTypeTestRecord.getId().toString()))

@@ -25,17 +25,18 @@ public class SearchChargesByDateResourceITest {
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
     private String accountId = "72332423443245";
-    private RestAssuredClient chargeApi = new RestAssuredClient(app, accountId);
+    private RestAssuredClient connectorRestApiClient;
 
     @Before
     public void setupGatewayAccount() {
         app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
+        connectorRestApiClient = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     @Test
     public void whenTheChargeCreatedDateIsBeforeTheFromDate_shouldReturnEmpty() {
         addCharge(ZonedDateTime.of(2016, 2, 2, 0, 0, 0, 0, ZoneId.of("UTC")));
-        chargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "2016-02-03T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -48,7 +49,7 @@ public class SearchChargesByDateResourceITest {
     @Test
     public void whenTheChargeCreatedDateIsExactlyEqualToTheFromDate_shouldReturnTheCharge() {
         addCharge(ZonedDateTime.of(2016, 2, 2, 0, 0, 0, 0, ZoneId.of("UTC")));
-        chargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "2016-02-02T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -62,7 +63,7 @@ public class SearchChargesByDateResourceITest {
     public void whenTheChargeCreatedDateIsBetweenTheFromDateAndTheToDate_shouldReturnTheCharge() {
         int millis = 299000000;
         String chargeId = addCharge(ZonedDateTime.of(2016, 2, 2, 0, 0, 0, millis, ZoneId.of("UTC")));
-        chargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "2016-02-01T00:00:00Z")
                 .withQueryParam("to_date", "2016-02-03T00:00:00Z")
@@ -84,7 +85,7 @@ public class SearchChargesByDateResourceITest {
     @Test
     public void whenTheChargeCreatedDateIsExactlyEqualToTheToDate_shouldReturnEmpty() {
         addCharge(ZonedDateTime.of(2016, 2, 2, 0, 0, 0, 0, ZoneId.of("UTC")));
-        chargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("to_date", "2016-02-02T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -97,7 +98,7 @@ public class SearchChargesByDateResourceITest {
     @Test
     public void whenTheChargeCreatedDateIsAfterTheToDate_shouldReturnEmpty() {
         addCharge(ZonedDateTime.of(2016, 2, 2, 0, 0, 0, 0, ZoneId.of("UTC")));
-        chargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("to_date", "2016-02-01T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -112,7 +113,7 @@ public class SearchChargesByDateResourceITest {
         addCharge(ZonedDateTime.of(2016, 2, 1, 0, 0, 0, 0, ZoneId.of("UTC")));
         addCharge(ZonedDateTime.of(2016, 2, 2, 0, 0, 0, 0, ZoneId.of("UTC")));
         addCharge(ZonedDateTime.of(2016, 2, 3, 0, 0, 0, 0, ZoneId.of("UTC")));
-        chargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "2016-02-01T00:00:00Z")
                 .withQueryParam("to_date", "2016-02-03T00:00:00Z")
@@ -126,7 +127,7 @@ public class SearchChargesByDateResourceITest {
     @Test
     public void whenToDateIsLessThanFromDate_shouldReturnEmpty() {
         addCharge(ZonedDateTime.of(2016, 2, 2, 0, 0, 0, 0, ZoneId.of("UTC")));
-        chargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "2016-02-03T00:00:00Z")
                 .withQueryParam("to_date", "2016-02-01T00:00:00Z")
@@ -140,7 +141,7 @@ public class SearchChargesByDateResourceITest {
     @Test
     public void whenFromDateIsInTheFuture_shouldReturnEmpty() {
         addCharge(ZonedDateTime.of(2016, 2, 2, 0, 0, 0, 0, ZoneId.of("UTC")));
-        chargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "2200-02-03T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -153,7 +154,7 @@ public class SearchChargesByDateResourceITest {
     @Test
     public void whenFromDateExactlyEqualToToDate_shouldReturnEmpty() {
         addCharge(ZonedDateTime.of(2016, 2, 1, 0, 0, 0, 0, ZoneId.of("UTC")));
-        chargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "2016-02-01T00:00:00Z")
                 .withQueryParam("to_date", "2016-02-01T00:00:00Z")
@@ -169,7 +170,7 @@ public class SearchChargesByDateResourceITest {
         addCharge(ZonedDateTime.of(2016, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")));
         addCharge(ZonedDateTime.of(2016, 2, 1, 0, 0, 0, 0, ZoneId.of("UTC")));
         addCharge(ZonedDateTime.of(2016, 2, 2, 0, 0, 0, 0, ZoneId.of("UTC")));
-        chargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "2016-02-01T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -184,7 +185,7 @@ public class SearchChargesByDateResourceITest {
         addCharge(ZonedDateTime.of(2016, 2, 1, 0, 0, 0, 0, ZoneId.of("UTC")));
         addCharge(ZonedDateTime.of(2016, 2, 3, 0, 0, 0, 0, ZoneId.of("UTC")));
         addCharge(ZonedDateTime.of(2016, 2, 4, 0, 0, 0, 0, ZoneId.of("UTC")));
-        chargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("to_date", "2016-02-03T00:00:00Z")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -199,7 +200,7 @@ public class SearchChargesByDateResourceITest {
         addCharge(ZonedDateTime.of(2016, 2, 1, 0, 0, 0, 0, ZoneId.of("UTC")));
         addCharge(ZonedDateTime.of(2016, 2, 3, 0, 0, 0, 0, ZoneId.of("UTC")));
         addCharge(ZonedDateTime.of(2016, 2, 4, 0, 0, 0, 0, ZoneId.of("UTC")));
-        chargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getChargesV1()

@@ -2,7 +2,11 @@ package uk.gov.pay.connector.it.resources.worldpay;
 
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.DnsUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -20,6 +24,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBM
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class WorldpayNotificationResourceITest extends ChargingITestBase {
 
     private static final String RESPONSE_EXPECTED_BY_WORLDPAY = "[OK]";
@@ -107,7 +113,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnForbiddenIfRequestComesFromUnexpectedIp() throws Exception {
-        given().port(app.getLocalPort())
+        given().port(testContext.getPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
                 .header("X-Forwarded-For", "8.8.8.8, 123.1.23.32")
                 .contentType(TEXT_XML)
@@ -118,7 +124,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnForbiddenIfXForwardedForHeaderIsMalformed() throws Exception {
-        given().port(app.getLocalPort())
+        given().port(testContext.getPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
                 .header("X-Forwarded-For", "something is wrong, 8.8.8.8")
                 .contentType(TEXT_XML)
@@ -129,7 +135,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnForbiddenIfXForwardedForHeaderIsMissing() throws Exception {
-        given().port(app.getLocalPort())
+        given().port(testContext.getPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
                 .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
@@ -139,7 +145,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldFailWhenUnexpectedContentType() throws Exception {
-        given().port(app.getLocalPort())
+        given().port(testContext.getPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH)
@@ -158,7 +164,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     private ValidatableResponse notifyConnector(String payload) throws Exception {
         String validIp = new DnsUtils().dnsLookup("build.ci.pymnt.uk").get();
         String xForwardedForHeader = format("%s, %s", validIp, "8.8.8.8");
-        return given().port(app.getLocalPort())
+        return given().port(testContext.getPort())
                 .body(payload)
                 .header("X-Forwarded-For", xForwardedForHeader)
                 .contentType(TEXT_XML)
