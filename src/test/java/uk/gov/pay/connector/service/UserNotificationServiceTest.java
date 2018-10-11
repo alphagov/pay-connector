@@ -9,7 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.app.NotifyConfiguration;
@@ -107,11 +107,11 @@ public class UserNotificationServiceTest {
         personalisation.put("serviceName", "MyService");
         personalisation.put("customParagraph", "^ template body");
         personalisation.put("amount", "5.00");
-        when(mockNotifyClient.sendEmail(mockNotifyConfiguration.getEmailTemplateId(), 
-                charge.getEmail(), 
-                personalisation, 
+        when(mockNotifyClient.sendEmail(mockNotifyConfiguration.getEmailTemplateId(),
+                charge.getEmail(),
+                personalisation,
                 null)).thenReturn(mockNotificationCreatedResponse);
-        
+
         userNotificationService = new UserNotificationService(mockNotifyClientFactoryProvider, mockConfig, mockEnvironment);
         Optional<String> maybeNotificationId = userNotificationService.sendPaymentConfirmedEmail(charge).get(1000, TimeUnit.SECONDS);
         assertThat(maybeNotificationId.get(), is(notificationId.toString()));
@@ -137,7 +137,7 @@ public class UserNotificationServiceTest {
         HashMap<String, String> personalisation = new HashMap<>();
         personalisation.put("serviceName", "MyService");
         personalisation.put("serviceReference", "This is a reference");
-        personalisation.put("date", "1 January 2017 - 10:23:12");
+        personalisation.put("date", "1 January 2016 - 10:23:12");
         personalisation.put("description", "This is a description");
         personalisation.put("amount", "1.00");
 
@@ -150,7 +150,7 @@ public class UserNotificationServiceTest {
         Optional<String> maybeNotificationId = userNotificationService.sendRefundIssuedEmail(refundEntity).get(1000, TimeUnit.SECONDS);
         assertThat(maybeNotificationId.get(), is(notificationId.toString()));
     }
-    
+
     @Test
     public void shouldThrow_ifMissingPaymentConfirmedTemplate() {
         try {
@@ -197,7 +197,7 @@ public class UserNotificationServiceTest {
 
         verifyZeroInteractions(mockNotifyClient);
     }
-    
+
     @Test
     public void shouldNotSendPaymentConfirmedEmail_whenConfirmationEmailNotificationsAreDisabledForService() {
         when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
@@ -274,7 +274,7 @@ public class UserNotificationServiceTest {
         verify(mockHistogram).update(anyLong());
         verifyNoMoreInteractions(mockCounter);
     }
-    
+
     @Test
     public void shouldRecordNotifyResponseTimesAndFailureWhenSendPaymentConfirmationEmailFails() throws Exception {
         when(mockNotifyClientFactoryProvider.clientFactory()).thenReturn(mockNotifyClientFactory);
@@ -470,7 +470,7 @@ public class UserNotificationServiceTest {
 
         RefundEntity refund = RefundEntityFixture.aValidRefundEntity().withCharge(charge).build();
 
-        
+
         Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refund);
         idF.get(1000, TimeUnit.SECONDS);
 
