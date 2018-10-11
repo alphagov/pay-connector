@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang.math.RandomUtils;
+import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.ServicePaymentReference;
@@ -32,7 +33,7 @@ public class TransactionsApiResourceITest extends ChargingITestBase {
 
     private static final String PROVIDER_NAME = "sandbox";
 
-    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
+    private RestAssuredClient getChargeApi;
     private String lastDigitsCardNumber;
     private String firstDigitsCardNumber;
     private String cardHolderName;
@@ -42,6 +43,11 @@ public class TransactionsApiResourceITest extends ChargingITestBase {
         super(PROVIDER_NAME);
     }
 
+    @Before
+    public void setup() {
+        getChargeApi = new RestAssuredClient(app.getLocalPort(), accountId);
+    }
+    
     /**
      * Contract (Selfservice POV) (Transactions List & CSV)
      * ----------------------------------------------------

@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableList;
 import com.jayway.restassured.response.Header;
 import com.jayway.restassured.response.ValidatableResponse;
+import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
@@ -55,10 +56,15 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     private static final String RETURN_URL = "http://service.url/success-page/";
     private static final String EMAIL = randomAlphabetic(242) + "@example.com";
 
-    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
+    private RestAssuredClient getChargeApi;
 
     public ChargesApiResourceGetChargesJsonITest() {
         super(PROVIDER_NAME);
+    }
+    
+    @Before
+    public void setup() {
+        getChargeApi = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     @Test

@@ -32,7 +32,7 @@ public class SandboxRefundITest extends ChargingITestBase {
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
     private DatabaseTestHelper databaseTestHelper;
-    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
+    private RestAssuredClient getChargeApi;
 
     public SandboxRefundITest() {
         super("sandbox");
@@ -54,6 +54,8 @@ public class SandboxRefundITest extends ChargingITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
                 .insert();
+
+        getChargeApi = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     @Test

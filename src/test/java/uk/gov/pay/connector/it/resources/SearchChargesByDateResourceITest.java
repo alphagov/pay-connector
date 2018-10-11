@@ -25,11 +25,12 @@ public class SearchChargesByDateResourceITest {
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
     private String accountId = "72332423443245";
-    private RestAssuredClient chargeApi = new RestAssuredClient(app, accountId);
+    private RestAssuredClient chargeApi;
 
     @Before
     public void setupGatewayAccount() {
         app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
+        chargeApi = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     @Test

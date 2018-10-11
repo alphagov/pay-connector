@@ -3,10 +3,15 @@ package uk.gov.pay.connector.it.resources;
 import com.jayway.restassured.response.ValidatableResponse;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.junit.DropwizardTestContext;
+import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
@@ -14,39 +19,43 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class SecurityTokensResourceITest {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
     private DatabaseFixtures.TestToken defaultTestToken;
 
+    @DropwizardTestContext
+    private TestContext testContext;
 
-    private String tokensUrlFor(String id) {
-        return "/v1/frontend/tokens/{chargeTokenId}".replace("{chargeTokenId}", id);
-    }
-
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-
+    private DatabaseTestHelper databaseTestHelper;
+    
     @Before
     public void setupGatewayAccount() {
-
+        databaseTestHelper = testContext.getDatabaseTestHelper();
+        
         defaultTestAccount = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .insert();
 
         this.defaultTestCharge = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .insert();
 
         this.defaultTestToken = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestToken()
                 .withTestToken(defaultTestCharge)
                 .insert();
+    }
+
+    private String tokensUrlFor(String id) {
+        return "/v1/frontend/tokens/{chargeTokenId}".replace("{chargeTokenId}", id);//format("/v1/frontend/tokens/%s", id);
     }
 
     @Test
@@ -84,7 +93,7 @@ public class SecurityTokensResourceITest {
     }
 
     private RequestSpecification givenSetup() {
-        return given().port(app.getLocalPort())
+        return given().port(testContext.getPort())
                 .contentType(JSON);
     }
 }

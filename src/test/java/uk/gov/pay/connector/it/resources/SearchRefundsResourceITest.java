@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.core.Is;
+import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.ServicePaymentReference;
@@ -26,13 +27,17 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
 
     private static final String PROVIDER_NAME = "sandbox";
 
-    private RestAssuredClient api = new RestAssuredClient(app, accountId);
+    private RestAssuredClient api;
     private static final String INVALID_ACCOUNT_ID = "999999999";
 
     public SearchRefundsResourceITest() {
         super(PROVIDER_NAME);
     }
 
+    @Before
+    public void setup() {
+        api = new RestAssuredClient(app.getLocalPort(), accountId);
+    }
 
     @Test
     public void shouldReturnAllRefundsForGetRefundsByAccountId() {

@@ -30,7 +30,7 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
 
     @Before
     public void setupGatewayAccount() {
-        restApiCall = new RestAssuredClient(app, accountId);
+        restApiCall = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     @Test

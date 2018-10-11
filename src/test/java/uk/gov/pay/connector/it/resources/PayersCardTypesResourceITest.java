@@ -15,13 +15,14 @@ public class PayersCardTypesResourceITest {
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
     private String accountId = "66757943593456";
-    private RestAssuredClient connectorApi = new RestAssuredClient(app, accountId);
+    private RestAssuredClient connectorApi;
 
     private DatabaseFixtures.TestCardType mastercardCreditCardTypeTestRecord;
 
     @Before
     public void setUp() throws Exception {
         app.getDatabaseTestHelper().deleteAllCardTypes();
+        connectorApi = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     @Test

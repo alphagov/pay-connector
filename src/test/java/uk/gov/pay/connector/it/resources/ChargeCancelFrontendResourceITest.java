@@ -46,8 +46,8 @@ public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
 
     @Before
     public void setupGatewayAccount() {
-        connectorRestApi = new RestAssuredClient(app, accountId);
-        restFrontendCall = new RestAssuredClient(app, accountId);
+        connectorRestApi = new RestAssuredClient(app.getLocalPort(), accountId);
+        restFrontendCall = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     @Test

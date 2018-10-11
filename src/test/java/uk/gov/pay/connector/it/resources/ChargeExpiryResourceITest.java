@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang.StringUtils;
+import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -17,9 +18,13 @@ import static org.apache.commons.collections4.CollectionUtils.isEqualCollection;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
 
 public class ChargeExpiryResourceITest extends ChargingITestBase {
 
@@ -27,11 +32,15 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
     private static final String JSON_STATE_KEY = "state.status";
     private static final String PROVIDER_NAME = "worldpay";
 
-
-    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
+    private RestAssuredClient getChargeApi;
 
     public ChargeExpiryResourceITest() {
         super(PROVIDER_NAME);
+    }
+    
+    @Before
+    public void setup() {
+        getChargeApi = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     @Test

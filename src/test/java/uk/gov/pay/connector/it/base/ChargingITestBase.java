@@ -80,8 +80,6 @@ public class ChargingITestBase {
     public ChargingITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;
         this.accountId = String.valueOf(RandomUtils.nextInt());
-
-        connectorRestApi = new RestAssuredClient(app, accountId);
     }
 
     @Before
@@ -98,6 +96,7 @@ public class ChargingITestBase {
                 CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
         );
         app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider, credentials);
+        connectorRestApi = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     public Map<String, String> getCredentials() {

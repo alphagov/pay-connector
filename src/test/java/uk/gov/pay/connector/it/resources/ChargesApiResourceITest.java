@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
+import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -92,11 +93,17 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     private String returnUrl = "http://service.url/success-page/";
     private String email = randomAlphabetic(242) + "@example.com";
 
-    private RestAssuredClient createChargeApi = new RestAssuredClient(app, accountId);
-    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
+    private RestAssuredClient createChargeApi;
+    private RestAssuredClient getChargeApi;
 
     public ChargesApiResourceITest() {
         super(PROVIDER_NAME);
+    }
+    
+    @Before
+    public void setup() {
+        createChargeApi = new RestAssuredClient(app.getLocalPort(), accountId);
+        getChargeApi = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     @Test

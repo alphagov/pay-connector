@@ -1,9 +1,15 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.junit.Rule;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.junit.DropwizardTestContext;
+import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import javax.ws.rs.core.Response;
@@ -17,6 +23,8 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RE
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class TransactionsSummaryResourceITest {
 
     private static final String START_OF_RANGE = "2017-11-25T10:00:00Z";
@@ -32,28 +40,36 @@ public class TransactionsSummaryResourceITest {
 
     private static final long GATEWAY_ACCOUNT_ID = 4815162342L;
 
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-
-    private RestAssuredClient connectorApi = new RestAssuredClient(app, Long.toString(GATEWAY_ACCOUNT_ID));
+    @DropwizardTestContext
+    private TestContext testContext;
+    
+    private DatabaseTestHelper databaseTestHelper;
+    private RestAssuredClient connectorApi;
+    
+    @Before
+    public void setup() {
+        databaseTestHelper = testContext.getDatabaseTestHelper();
+        connectorApi = new RestAssuredClient(testContext.getPort(), Long.toString(GATEWAY_ACCOUNT_ID));
+    }
+    
 
     @Test
     public void shouldGetSummaryContainingPaymentsAndRefundsWithinRange() {
         DatabaseFixtures.TestAccount testAccount = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withAccountId(GATEWAY_ACCOUNT_ID)
                 .insert();
 
         DatabaseFixtures.TestAccount wrongTestAccount = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withAccountId(999000999L)
                 .insert();
 
         // £50 charge before range so doesn’t count
         DatabaseFixtures.TestCharge beforeRangeCharge1 = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeStatus(CAPTURE_APPROVED)
                 .withCreatedDate(BEFORE_RANGE_1)
@@ -63,7 +79,7 @@ public class TransactionsSummaryResourceITest {
 
         // £30 refund (for charge before range) before range so doesn’t count
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestRefund()
                 .withTestCharge(beforeRangeCharge1)
                 .withRefundStatus(REFUNDED)
@@ -73,7 +89,7 @@ public class TransactionsSummaryResourceITest {
 
         // £200 charge during range so it counts
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeStatus(CAPTURE_APPROVED_RETRY)
                 .withCreatedDate(DURING_RANGE_1)
@@ -83,7 +99,7 @@ public class TransactionsSummaryResourceITest {
 
         // £70 not-yet-successful charge during range so it doesn’t count
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeStatus(AUTHORISATION_SUBMITTED)
                 .withCreatedDate(DURING_RANGE_1)
@@ -93,7 +109,7 @@ public class TransactionsSummaryResourceITest {
 
         // £10 refund (for charge before range) during range so it counts
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestRefund()
                 .withTestCharge(beforeRangeCharge1)
                 .withRefundStatus(REFUNDED)
@@ -103,7 +119,7 @@ public class TransactionsSummaryResourceITest {
 
         // £40 charge for wrong account during range so it doesn’t count
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeStatus(AUTHORISATION_SUBMITTED)
                 .withCreatedDate(DURING_RANGE_2)
@@ -113,7 +129,7 @@ public class TransactionsSummaryResourceITest {
 
         // £100 charge during range so it counts
         DatabaseFixtures.TestCharge duringRangeCharge2 = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeStatus(CAPTURED)
                 .withCreatedDate(DURING_RANGE_3)
@@ -123,7 +139,7 @@ public class TransactionsSummaryResourceITest {
 
         // £5 refund (for charge during range) during range so it counts
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestRefund()
                 .withTestCharge(duringRangeCharge2)
                 .withRefundStatus(REFUNDED)
@@ -133,7 +149,7 @@ public class TransactionsSummaryResourceITest {
 
         // £20 charge after range so it doesn’t count
         DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeStatus(CAPTURE_SUBMITTED)
                 .withCreatedDate(AFTER_RANGE_1)

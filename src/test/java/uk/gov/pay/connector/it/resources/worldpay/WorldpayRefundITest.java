@@ -41,7 +41,7 @@ public class WorldpayRefundITest extends ChargingITestBase {
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
     private DatabaseTestHelper databaseTestHelper;
-    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
+    private RestAssuredClient getChargeApi;
 
     public WorldpayRefundITest() {
         super("worldpay");
@@ -62,6 +62,8 @@ public class WorldpayRefundITest extends ChargingITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
                 .insert();
+        
+        getChargeApi = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     @Test
