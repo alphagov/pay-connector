@@ -173,6 +173,7 @@ public class UserNotificationService {
         map.put("date", DateTimeUtils.toUserFriendlyDate(refundEntity.getCreatedDate()));
         map.put("amount", formatToPounds(refundEntity.getAmount()));
         map.put("description", chargeEntity.getDescription());
+        map.put("serviceName", StringUtils.defaultString(chargeEntity.getGatewayAccount().getServiceName()));
 
         return map;
     }

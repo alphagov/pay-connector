@@ -135,6 +135,7 @@ public class UserNotificationServiceTest {
                 .withCharge(charge).build();
 
         HashMap<String, String> personalisation = new HashMap<>();
+        personalisation.put("serviceName", "MyService");
         personalisation.put("serviceReference", "This is a reference");
         personalisation.put("date", "1 January 2017 - 10:23:12");
         personalisation.put("description", "This is a description");
@@ -198,7 +199,7 @@ public class UserNotificationServiceTest {
     }
     
     @Test
-    public void shouldNotSendPaymentConfirmedEmail_whenConfirmationEmailNotificationsAreDisabledForService() throws Exception {
+    public void shouldNotSendPaymentConfirmedEmail_whenConfirmationEmailNotificationsAreDisabledForService() {
         when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
