@@ -36,7 +36,7 @@ public class SearchRefundsResource {
     }
 
     @GET
-    @Path("/v1/api/account/{accountId}/refunds")
+    @Path("/v1/api/accounts/{accountId}/refunds")
     @Produces(APPLICATION_JSON)
     public Response getRefundsByAccountId(@PathParam(ACCOUNT_ID) Long accountId,
                                           @QueryParam(PAGE) Long pageNumber,
