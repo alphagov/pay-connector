@@ -10,14 +10,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockserver.integration.ClientAndProxy;
 import org.mockserver.integration.ClientAndServer;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.service.ClientFactory;
-import uk.gov.pay.connector.service.GatewayOperation;
+import uk.gov.pay.connector.gateway.ClientFactory;
+import uk.gov.pay.connector.gateway.GatewayOperation;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
@@ -37,8 +36,8 @@ import static org.mockserver.model.HttpResponse.response;
 import static org.mockserver.socket.PortFactory.findFreePort;
 import static org.mockserver.verify.VerificationTimes.exactly;
 import static org.mockserver.verify.VerificationTimes.once;
-import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
-import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClientFactoryTest {

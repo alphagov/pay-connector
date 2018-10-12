@@ -5,9 +5,9 @@ import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static uk.gov.pay.connector.service.epdq.EpdqPaymentProvider.ROUTE_FOR_MAINTENANCE_ORDER;
-import static uk.gov.pay.connector.service.epdq.EpdqPaymentProvider.ROUTE_FOR_NEW_ORDER;
-import static uk.gov.pay.connector.service.epdq.EpdqPaymentProvider.ROUTE_FOR_QUERY_ORDER;
+import static uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider.ROUTE_FOR_MAINTENANCE_ORDER;
+import static uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider.ROUTE_FOR_NEW_ORDER;
+import static uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider.ROUTE_FOR_QUERY_ORDER;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
 
 public class EpdqMockClient {

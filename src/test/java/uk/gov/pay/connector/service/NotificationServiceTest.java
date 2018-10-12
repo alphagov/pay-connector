@@ -21,6 +21,14 @@ import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.domain.Status;
+import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.StatusMapper;
+import uk.gov.pay.connector.gateway.model.status.IgnoredStatus;
+import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
+import uk.gov.pay.connector.gateway.model.status.MappedChargeStatus;
+import uk.gov.pay.connector.gateway.model.status.MappedRefundStatus;
+import uk.gov.pay.connector.gateway.model.status.UnknownStatus;
 import uk.gov.pay.connector.util.DnsUtils;
 
 import java.time.ZonedDateTime;
@@ -31,7 +39,6 @@ import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
@@ -44,8 +51,8 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
-import static uk.gov.pay.connector.service.PaymentGatewayName.SANDBOX;
-import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NotificationServiceTest {

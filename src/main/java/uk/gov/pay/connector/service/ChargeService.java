@@ -22,6 +22,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.model.domain.TokenEntity;
+import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.resources.ChargesApiResource;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator;

@@ -11,7 +11,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.service.epdq.EpdqSha512SignatureGenerator;
+import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

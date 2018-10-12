@@ -13,7 +13,7 @@ import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.RefundException;
 import uk.gov.pay.connector.model.ErrorType;
-import uk.gov.pay.connector.model.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.model.RefundRequest;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
@@ -21,9 +21,12 @@ import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
-import uk.gov.pay.connector.service.smartpay.SmartpayRefundResponse;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.smartpay.SmartpayRefundResponse;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
-import uk.gov.pay.connector.service.worldpay.WorldpayRefundResponse;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundResponse;
 
 import java.util.Optional;
 
@@ -49,9 +52,9 @@ import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.service.PaymentGatewayName.SANDBOX;
-import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
-import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ChargeRefundServiceTest {

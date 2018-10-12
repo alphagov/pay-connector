@@ -7,6 +7,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.xml.sax.SAXParseException;
+import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
+import uk.gov.pay.connector.gateway.util.XMLUnmarshallerException;
 
 import javax.xml.bind.UnmarshalException;
 

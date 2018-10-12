@@ -12,6 +12,8 @@ import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
+import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
 import javax.inject.Inject;
 import java.util.List;
