@@ -8,7 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
@@ -57,8 +57,7 @@ public class CardCaptureProcessTest {
     private MetricRegistry mockMetricRegistry;
     
     @Mock
-    private
-    CaptureProcessConfig mockCaptureConfiguration = mock(CaptureProcessConfig.class);
+    private CaptureProcessConfig mockCaptureConfiguration = mock(CaptureProcessConfig.class);
 
     @Before
     public void setup() {
@@ -85,7 +84,7 @@ public class CardCaptureProcessTest {
     @Test
     public void shouldRecordTheQueueSizeOnEveryRun() {
         when(mockCaptureConfiguration.getBatchSize()).thenReturn(0);
-        when(mockChargeDao.countChargesForImmediateCapture(Matchers.any(Duration.class))).thenReturn(15);
+        when(mockChargeDao.countChargesForImmediateCapture(ArgumentMatchers.any(Duration.class))).thenReturn(15);
         
         cardCaptureProcess.runCapture();
 
@@ -96,8 +95,8 @@ public class CardCaptureProcessTest {
     @Test
     public void shouldRegisterGaugesForChargesQueue_AndReturnCorrectSizes() {
         when(mockCaptureConfiguration.getBatchSize()).thenReturn(0);
-        when(mockChargeDao.countChargesForImmediateCapture(Matchers.any(Duration.class))).thenReturn(15);
-        when(mockChargeDao.countChargesAwaitingCaptureRetry(Matchers.any(Duration.class))).thenReturn(10);
+        when(mockChargeDao.countChargesForImmediateCapture(ArgumentMatchers.any(Duration.class))).thenReturn(15);
+        when(mockChargeDao.countChargesAwaitingCaptureRetry(ArgumentMatchers.any(Duration.class))).thenReturn(10);
         cardCaptureProcess.runCapture();
         ArgumentCaptor<MetricRegistry.MetricSupplier> argumentCaptor = ArgumentCaptor.forClass(MetricRegistry.MetricSupplier.class);
 
@@ -118,7 +117,7 @@ public class CardCaptureProcessTest {
 
     @Test
     public void shouldRecordTheWaitingQueueSizeOnEveryRun() {
-        when(mockChargeDao.countChargesAwaitingCaptureRetry(Matchers.any(Duration.class))).thenReturn(15);
+        when(mockChargeDao.countChargesAwaitingCaptureRetry(ArgumentMatchers.any(Duration.class))).thenReturn(15);
 
         cardCaptureProcess.runCapture();
 

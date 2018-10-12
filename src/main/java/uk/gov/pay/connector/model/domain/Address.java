@@ -13,48 +13,64 @@ public class Address {
         return new Address();
     }
 
+    public static Address aValidAddress() {
+        return new Address("line1", "line2", "EC2A 1AE", "London", null, "GB");
+    }
+
+    private Address() {
+    }
+
+    public Address(String line1, String line2, String postcode, String city, String county, String country) {
+        this.line1 = line1;
+        this.line2 = line2;
+        this.postcode = postcode;
+        this.city = city;
+        this.county = county;
+        this.country = country;
+    }
+
     public String getLine1() {
         return line1;
+    }
+    
+    public String getLine2() {
+        return line2;
+    }
+    
+    public String getPostcode() {
+        return postcode;
+    }
+    
+    public String getCity() {
+        return city;
+    }
+    
+    public String getCounty() {
+        return county;
+    }
+    
+    public String getCountry() {
+        return country;
     }
 
     public void setLine1(String line1) {
         this.line1 = line1;
     }
 
-    public String getLine2() {
-        return line2;
-    }
-
     public void setLine2(String line2) {
         this.line2 = line2;
-    }
-
-    public String getPostcode() {
-        return postcode;
     }
 
     public void setPostcode(String postcode) {
         this.postcode = postcode;
     }
 
-    public String getCity() {
-        return city;
-    }
-
     public void setCity(String city) {
         this.city = city;
     }
 
-    public String getCounty() {
-        return county;
-    }
-
     public void setCounty(String county) {
         this.county = county;
-    }
-
-    public String getCountry() {
-        return country;
     }
 
     public void setCountry(String country) {

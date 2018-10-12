@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -89,8 +88,6 @@ public class SmartpayPaymentProviderTest {
     @Mock
     private Histogram mockHistogram;
     @Mock
-    private Counter mockCounter;
-    @Mock
     private BiFunction<GatewayOrder, Builder, Builder> mockSessionIdentifier;
     @Mock
     private ClientFactory mockClientFactory;
@@ -100,7 +97,7 @@ public class SmartpayPaymentProviderTest {
     private ExternalRefundAvailabilityCalculator mockExternalRefundAvailabilityCalculator;
 
     @Before
-    public void setup() throws Exception {
+    public void setup() {
         gatewayClientFactory = new GatewayClientFactory(mockClientFactory);
 
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
@@ -317,13 +314,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     private AuthCardDetails getValidTestCard() {
-        Address address = anAddress();
-        address.setLine1("123 My Street");
-        address.setLine2("This road");
-        address.setPostcode("SW8URR");
-        address.setCity("London");
-        address.setCounty("London state");
-        address.setCountry("GB");
+        Address address = new Address("123 My Street", "This road", "SW8URR", "London", "London state", "GB");
 
         return AuthUtils.buildAuthCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }

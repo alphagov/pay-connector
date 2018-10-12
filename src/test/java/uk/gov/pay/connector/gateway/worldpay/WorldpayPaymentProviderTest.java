@@ -261,7 +261,7 @@ public class WorldpayPaymentProviderTest {
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
         when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(true);
-        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+        when(mockGatewayClient.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
                 .thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code 400 from gateway")));
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
@@ -293,7 +293,7 @@ public class WorldpayPaymentProviderTest {
 
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+        when(mockGatewayClient.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
                 .thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code 401 from gateway")));
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
@@ -327,7 +327,7 @@ public class WorldpayPaymentProviderTest {
 
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-        when(mockGatewayClient.postRequestFor(isNull(String.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+        when(mockGatewayClient.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
                 .thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code 400 from gateway")));
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, externalRefundAvailabilityCalculator);
@@ -591,13 +591,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     private AuthCardDetails getValidTestCard() {
-        Address address = anAddress();
-        address.setLine1("123 My Street");
-        address.setLine2("This road");
-        address.setPostcode("SW8URR");
-        address.setCity("London");
-        address.setCounty("London state");
-        address.setCountry("GB");
+        Address address = new Address("123 My Street", "This road", "SW8URR", "London", "London state", "GB");
 
         return AuthUtils.buildAuthCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }

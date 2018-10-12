@@ -21,14 +21,18 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.core.CombinableMatcher.both;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEFAULTS;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.service.CaptureProcessScheduler.*;
+import static uk.gov.pay.connector.service.CaptureProcessScheduler.CAPTURE_PROCESS_SCHEDULER_NAME;
+import static uk.gov.pay.connector.service.CaptureProcessScheduler.INITIAL_DELAY_IN_SECONDS;
+import static uk.gov.pay.connector.service.CaptureProcessScheduler.RANDOM_INTERVAL_MAXIMUM_IN_SECONDS;
+import static uk.gov.pay.connector.service.CaptureProcessScheduler.RANDOM_INTERVAL_MINIMUM_IN_SECONDS;
+import static uk.gov.pay.connector.service.CaptureProcessScheduler.SCHEDULER_THREADS;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CaptureProcessSchedulerTest {

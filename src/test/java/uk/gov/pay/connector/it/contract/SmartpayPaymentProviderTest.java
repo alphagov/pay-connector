@@ -228,13 +228,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     public static AuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
-        Address address = Address.anAddress();
-        address.setLine1("41");
-        address.setLine2("Scala Street");
-        address.setCity("London");
-        address.setCounty("London");
-        address.setPostcode("EC2A 1AE");
-        address.setCountry("GB");
+        Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", "London", "GB");
 
         AuthCardDetails authCardDetails = aValidSmartpayCard();
         authCardDetails.setAddress(address);
@@ -242,13 +236,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     public static AuthorisationGatewayRequest getCard3dsAuthorisationRequest(ChargeEntity chargeEntity) {
-        Address address = Address.anAddress();
-        address.setLine1("6-60");
-        address.setLine2("Simon Carmiggeltstraat");
-        address.setCity("Amsterdam");
-        address.setCounty("NH");
-        address.setPostcode("1011DJ");
-        address.setCountry("NL");
+        Address address = new Address("6-60", "Simon Carmiggeltstraat", "1011DJ", "Amsterdam", "NH", "NL");
 
         AuthCardDetails authCardDetails = aValidSmartpay3dsCard();
         authCardDetails.setAddress(address);

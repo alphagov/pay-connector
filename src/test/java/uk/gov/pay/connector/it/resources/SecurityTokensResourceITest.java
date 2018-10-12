@@ -50,7 +50,7 @@ public class SecurityTokensResourceITest {
     }
 
     @Test
-    public void shouldSuccessfullyGetChargeForToken() throws Exception {
+    public void shouldSuccessfullyGetChargeForToken() {
         ValidatableResponse tokenGetsStatusCode = findTokenGetsStatusCode(defaultTestToken.getSecureRedirectToken(), 200);
         tokenGetsStatusCode
                 .body("externalId", is(defaultTestCharge.getExternalChargeId()))
@@ -59,13 +59,13 @@ public class SecurityTokensResourceITest {
     }
 
     @Test
-    public void shouldReturn404WhenTokenNotFound() throws Exception {
+    public void shouldReturn404WhenTokenNotFound() {
         findTokenGetsStatusCode("non-existant-secure-redirect-token", 404)
                 .body("message", is("Token invalid!"));
     }
 
     @Test
-    public void shouldSuccessfullyDeleteToken() throws Exception {
+    public void shouldSuccessfullyDeleteToken() {
         givenSetup()
                 .delete(tokensUrlFor(defaultTestToken.getSecureRedirectToken()))
                 .then()

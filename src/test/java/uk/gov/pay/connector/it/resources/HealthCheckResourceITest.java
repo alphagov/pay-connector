@@ -7,7 +7,7 @@ import static org.hamcrest.Matchers.is;
 public class HealthCheckResourceITest extends GatewayAccountResourceTestBase {
 
     @Test
-    public void checkHealthcheck_isHealthy() throws Exception {
+    public void checkHealthcheck_isHealthy() {
         givenSetup()
                 .get("healthcheck")
                 .then()
@@ -19,7 +19,7 @@ public class HealthCheckResourceITest extends GatewayAccountResourceTestBase {
     }
 
     @Test
-    public void checkHealthcheck_isUnhealthy() throws Exception {
+    public void checkHealthcheck_isUnhealthy() {
         app.stopPostgres();
         givenSetup()
                 .get("healthcheck")

@@ -27,10 +27,10 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
@@ -270,11 +270,12 @@ public class EpdqRefundITest extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, containsInAnyOrder(
+        assertThat(refundsFoundByChargeId, contains(
                 allOf(
-                        hasEntry("amount", (Object) refundAmount),
-                        hasEntry("status", RefundStatus.REFUND_ERROR.getValue()),
-                        hasEntry("charge_id", (Object) defaultTestCharge.getChargeId())
+                                hasEntry("amount", (Object) refundAmount),
+                                hasEntry("status", RefundStatus.REFUND_ERROR.getValue()),
+                                hasEntry("charge_id", (Object) defaultTestCharge.getChargeId())
+
                 )));
     }
 

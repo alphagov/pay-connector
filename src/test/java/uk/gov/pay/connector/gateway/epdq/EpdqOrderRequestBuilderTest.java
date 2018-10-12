@@ -21,15 +21,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_R
 public class EpdqOrderRequestBuilderTest {
 
     @Test
-    public void shouldGenerateValidAuthoriseOrderRequestForAddressWithAllFields() throws Exception {
-        Address address = Address.anAddress();
-        address.setLine1("41");
-        address.setLine2("Scala Street");
-        address.setCity("London");
-        address.setCounty("London");
-        address.setPostcode("EC2A 1AE");
-        address.setCountry("GB");
-
+    public void shouldGenerateValidAuthoriseOrderRequestForAddressWithAllFields()  {
+        Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", "London", "GB");
         AuthCardDetails authCardDetails = AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
 
         GatewayOrder actualRequest = anEpdqAuthoriseOrderRequestBuilder()

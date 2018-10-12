@@ -34,11 +34,7 @@ public class WorldpayOrderRequestBuilderTest {
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFields() throws Exception {
 
-        Address minAddress = anAddress();
-        minAddress.setLine1("123 My Street");
-        minAddress.setPostcode("SW8URR");
-        minAddress.setCity("London");
-        minAddress.setCountry("GB");
+        Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(minAddress);
 
@@ -60,11 +56,7 @@ public class WorldpayOrderRequestBuilderTest {
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFieldsWhen3dsEnabled() throws Exception {
 
-        Address minAddress = anAddress();
-        minAddress.setLine1("123 My Street");
-        minAddress.setPostcode("SW8URR");
-        minAddress.setCity("London");
-        minAddress.setCountry("GB");
+        Address minAddress = new Address("123 My Street", null,"SW8URR", "London", null,"GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(minAddress);
 
@@ -87,13 +79,7 @@ public class WorldpayOrderRequestBuilderTest {
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithAllFields() throws Exception {
 
-        Address fullAddress = anAddress();
-        fullAddress.setLine1("123 My Street");
-        fullAddress.setLine2("This road");
-        fullAddress.setPostcode("SW8URR");
-        fullAddress.setCity("London");
-        fullAddress.setCounty("London county");
-        fullAddress.setCountry("GB");
+        Address fullAddress = new Address("123 My Street", "This road", "SW8URR", "London", "London county", "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(fullAddress);
 
@@ -115,12 +101,7 @@ public class WorldpayOrderRequestBuilderTest {
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestWhenSpecialCharactersInUserInput() throws Exception {
 
-        Address address = anAddress();
-        address.setLine1("123 & My Street");
-        address.setLine2("This road -->");
-        address.setPostcode("SW8 > URR");
-        address.setCity("London !>");
-        address.setCountry("GB");
+        Address address = new Address("123 & My Street","This road -->", "SW8 > URR", "London !>", null, "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(address);
 

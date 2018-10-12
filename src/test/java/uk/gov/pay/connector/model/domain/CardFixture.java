@@ -2,7 +2,6 @@ package uk.gov.pay.connector.model.domain;
 
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
-import static uk.gov.pay.connector.model.domain.AddressFixture.aValidAddress;
 
 public class CardFixture {
     private String cardNo = "1234567812345678";
@@ -11,7 +10,7 @@ public class CardFixture {
     private String endDate = "02/18";
     private String cardBrand = "card-brand";
 
-    private Address address = aValidAddress().build();
+    private Address address = Address.aValidAddress();
 
     public static CardFixture aValidCard() {
         return new CardFixture();

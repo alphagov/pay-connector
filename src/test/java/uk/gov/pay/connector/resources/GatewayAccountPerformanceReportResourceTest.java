@@ -42,8 +42,8 @@ public class GatewayAccountPerformanceReportResourceTest {
 
     @Before
     public void setUp() {
-        noTransactionsPerformanceReportEntity = new ArrayList<GatewayAccountPerformanceReportEntity>();
-        someTransactionsPerformanceReportEntity = new ArrayList<GatewayAccountPerformanceReportEntity>();
+        noTransactionsPerformanceReportEntity = new ArrayList<>();
+        someTransactionsPerformanceReportEntity = new ArrayList<>();
 
         GatewayAccountPerformanceReportEntity mockedGatewayAccountPerformanceReport = new GatewayAccountPerformanceReportEntity(
             totalVolume,

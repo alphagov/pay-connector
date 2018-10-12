@@ -12,7 +12,7 @@ public class EpdqChargeApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldSuccessfully_authorise3ds() throws Exception {
+    public void shouldSuccessfully_authorise3ds() {
         String externalChargeId = createNewChargeWithNoTransactionId(AUTHORISATION_3DS_REQUIRED);
         String chargeId = externalChargeId.replace("charge-", "");
         String expectedHtml = "someHtml";

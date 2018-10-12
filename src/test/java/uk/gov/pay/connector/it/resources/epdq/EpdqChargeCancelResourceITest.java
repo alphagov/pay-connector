@@ -18,17 +18,5 @@ public class EpdqChargeCancelResourceITest extends ChargingITestBase {
         super("epdq");
     }
 
-    @Test
-    public void shouldCancelACharge() throws Exception {
-        String externalChargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
-
-        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
-
-        epdq.mockCancelSuccess();
-
-        Map<String, Object> cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
-        assertThat(cardDetails.isEmpty(), is(false));
-
-        cancelChargeAndCheckApiStatus(externalChargeId, SYSTEM_CANCELLED, 204);
-    }
+   
 }

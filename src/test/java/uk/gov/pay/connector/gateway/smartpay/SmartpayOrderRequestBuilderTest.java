@@ -42,13 +42,7 @@ public class SmartpayOrderRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithAllFields() throws Exception {
-        Address address = Address.anAddress();
-        address.setLine1("41");
-        address.setLine2("Scala Street");
-        address.setCity("London");
-        address.setCounty("London");
-        address.setPostcode("EC2A 1AE");
-        address.setCountry("GB");
+        Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", "London", "GB");
 
         AuthCardDetails authCardDetails = AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
 
@@ -67,13 +61,7 @@ public class SmartpayOrderRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestWithSpecialCharactersInUserInput() throws Exception {
-        Address address = Address.anAddress();
-        address.setLine1("41");
-        address.setLine2("Scala & Haskell Rocks");
-        address.setCity("London <!-- ");
-        address.setCounty("London -->");
-        address.setPostcode("EC2A 1AE");
-        address.setCountry("GB");
+        Address address = new Address("41", "Scala & Haskell Rocks", "EC2A 1AE", "London <!-- ","London -->", "GB");
 
         AuthCardDetails authCardDetails = AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
 
@@ -92,11 +80,7 @@ public class SmartpayOrderRequestBuilderTest {
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithOptionalFieldsMissing() throws Exception {
 
-        Address address = Address.anAddress();
-        address.setLine1("41 Acacia Avenue");
-        address.setCity("London");
-        address.setPostcode("EC2A 1AE");
-        address.setCountry("GB");
+        Address address = new Address("41 Acacia Avenue", null, "EC2A 1AE", "London", null, "GB");
 
         AuthCardDetails authCardDetails = AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
 

@@ -24,7 +24,6 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
-import static uk.gov.pay.connector.model.domain.AddressFixture.aValidAddress;
 
 
 public class ChargeDaoCardDetailsITest extends DaoITestBase {
@@ -120,7 +119,7 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
         GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), GatewayAccountEntity.Type.TEST);
         gatewayAccountDao.persist(testAccount);
 
-        Address billingAddress = aValidAddress().build();
+        Address billingAddress = Address.anAddress();
         //TODO change to fixture
         ChargeEntity chargeEntity = new ChargeEntity(2323L, "returnUrl", "description",
                 ServicePaymentReference.of("ref"), testAccount, "email@email.test", SupportedLanguage.ENGLISH,
