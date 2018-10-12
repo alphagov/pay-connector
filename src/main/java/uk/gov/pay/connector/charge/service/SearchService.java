@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.TransactionDao;
 import uk.gov.pay.connector.service.search.SearchStrategy;
 
@@ -14,14 +13,12 @@ public class SearchService {
     private ChargeDao chargeDao;
     private TransactionDao transactionDao;
     private ChargeService chargeService;
-    private final CardTypeDao cardTypeDao;
 
     @Inject
-    public SearchService(ChargeDao chargeDao, TransactionDao transactionDao, ChargeService chargeService, CardTypeDao cardTypeDao) {
+    public SearchService(ChargeDao chargeDao, TransactionDao transactionDao, ChargeService chargeService) {
         this.chargeDao = chargeDao;
         this.transactionDao=transactionDao;
         this.chargeService = chargeService;
-        this.cardTypeDao = cardTypeDao;
     }
 
     public SearchStrategy ofType(TYPE type) {
