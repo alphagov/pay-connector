@@ -33,7 +33,7 @@ import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
  * This is effectively a copy of TransactionsApiResourceITest pointing to V2 resource
  * TransactionsApiResourceITest can be removed once the featureFlag logic is removed from V1 resource
  */
-public class TransactionsApiV2ResourceITest extends ChargingITestBase {
+public class ChargesApiV2ResourceITest extends ChargingITestBase {
 
     private static final String PROVIDER_NAME = "sandbox";
 
@@ -43,7 +43,7 @@ public class TransactionsApiV2ResourceITest extends ChargingITestBase {
     private String cardHolderName = "Mr. McPayment";
     private String expiryDate;
 
-    public TransactionsApiV2ResourceITest() {
+    public ChargesApiV2ResourceITest() {
         super(PROVIDER_NAME);
     }
 
