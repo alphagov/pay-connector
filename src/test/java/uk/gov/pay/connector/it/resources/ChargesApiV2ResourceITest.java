@@ -37,7 +37,6 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
 
     private static final String PROVIDER_NAME = "sandbox";
 
-    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
     private String lastDigitsCardNumber = "1234";
     private String firstDigitsCardNumber = "123456";
     private String cardHolderName = "Mr. McPayment";
@@ -88,7 +87,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
 
-        getChargeApi
+        connectorRestApi
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref-3")
                 .withQueryParam("page", "1")
@@ -147,7 +146,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetExpectedChargeWhenOnlySpecifiedPaymentStates() {
+    public void shouldGetExpectedCharge_whenOnlySpecifiedPaymentStates() {
 
         String returnUrl = "http://service.url/success-page/";
         String email = randomAlphabetic(242) + "@example.com";
@@ -166,7 +165,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
 
-        getChargeApi
+        connectorRestApi
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref-3")
                 .withQueryParam("page", "1")
@@ -195,7 +194,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         String cardHolderName = "Mr. PayMcPayment";
         addChargeAndCardDetails(nextLong(), CREATED, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, "1234");
         addChargeAndCardDetails(nextLong(), AUTHORISATION_SUCCESS, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, "1234");
-        getChargeApi
+        connectorRestApi
                 .withAccountId(accountId)
                 .withQueryParam("cardholder_name", "PayMc")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -212,8 +211,8 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         String lastFourDigits = "3943";
         addChargeAndCardDetails(nextLong(), CREATED, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, lastFourDigits);
         addChargeAndCardDetails(nextLong(), AUTHORISATION_SUCCESS, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, lastFourDigits);
-        
-        getChargeApi
+
+        connectorRestApi
                 .withAccountId(accountId)
                 .withQueryParam("last_digits_card_number", "3943")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -227,7 +226,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldNotMatchChargesByPartialLastFourDigits() {
-        getChargeApi
+        connectorRestApi
                 .withAccountId(accountId)
                 .withQueryParam("last_digits_card_number", "12")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -238,7 +237,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
     }
     
     @Test
-    public void shouldGetExpectedChargeWhenOnlySpecifiedRefundStates() {
+    public void shouldGetExpectedCharge_whenOnlySpecifiedRefundStates() {
 
         String returnUrl = "http://service.url/success-page/";
         String email = randomAlphabetic(242) + "@example.com";
@@ -255,7 +254,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
 
-        getChargeApi
+        connectorRestApi
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref-3")
                 .withQueryParam("page", "1")
