@@ -42,10 +42,9 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -142,7 +141,7 @@ public abstract class BaseEpdqPaymentProviderTest {
 
     private Invocation.Builder mockClientInvocationBuilder() {
         Invocation.Builder mockClientInvocationBuilder = mock(Invocation.Builder.class);
-        when(mockClientInvocationBuilder.header(anyString(), anyObject())).thenReturn(mockClientInvocationBuilder);
+        when(mockClientInvocationBuilder.header(anyString(), any(Object.class))).thenReturn(mockClientInvocationBuilder);
 
         WebTarget mockTarget = mock(WebTarget.class);
         when(mockTarget.request()).thenReturn(mockClientInvocationBuilder);
