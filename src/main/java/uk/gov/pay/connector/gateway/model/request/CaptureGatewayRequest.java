@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.model.request;
 
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 
 public class CaptureGatewayRequest implements GatewayRequest {

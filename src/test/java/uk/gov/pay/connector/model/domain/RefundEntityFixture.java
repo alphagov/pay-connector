@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 

@@ -6,11 +6,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountUpdater;
 import uk.gov.pay.connector.model.PatchRequest;
 import uk.gov.pay.connector.model.domain.EmailCollectionMode;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.Map;
 import java.util.Optional;
@@ -18,11 +19,8 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 
 public class GatewayAccountUpdaterTest {
 

@@ -1,11 +1,10 @@
-package uk.gov.pay.connector.model.gateway;
+package uk.gov.pay.connector.gateway.model.response;
 
 import fj.data.Either;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 
 import java.util.Optional;
 

@@ -2,7 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.dao.ChargeDao;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.model.TransactionsSummaryResponse;
 import uk.gov.pay.connector.model.api.ExternalChargeState;

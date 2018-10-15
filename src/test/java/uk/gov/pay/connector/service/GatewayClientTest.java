@@ -14,8 +14,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.OrderRequestType;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
@@ -34,10 +34,13 @@ import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.encode;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GatewayClientTest {

@@ -12,9 +12,9 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_OPERATION;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_OPERATION_PATH;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_VALUE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_OPERATION;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_OPERATION_PATH;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_VALUE;
 
 public class PatchRequest {
 

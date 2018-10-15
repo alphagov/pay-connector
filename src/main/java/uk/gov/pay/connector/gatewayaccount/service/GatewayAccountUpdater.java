@@ -1,11 +1,11 @@
-package uk.gov.pay.connector.service;
+package uk.gov.pay.connector.gatewayaccount.service;
 
 import com.google.inject.persist.Transactional;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.PatchRequest;
 import uk.gov.pay.connector.model.domain.EmailCollectionMode;
-import uk.gov.pay.connector.model.domain.GatewayAccount;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -13,9 +13,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
-import static uk.gov.pay.connector.resources.GatewayAccountRequestValidator.FIELD_ALLOW_WEB_PAYMENTS;
-import static uk.gov.pay.connector.resources.GatewayAccountRequestValidator.FIELD_EMAIL_COLLECTION_MODE;
-import static uk.gov.pay.connector.resources.GatewayAccountRequestValidator.FIELD_NOTIFY_SETTINGS;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_WEB_PAYMENTS;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_EMAIL_COLLECTION_MODE;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_NOTIFY_SETTINGS;
 
 public class GatewayAccountUpdater {
 
