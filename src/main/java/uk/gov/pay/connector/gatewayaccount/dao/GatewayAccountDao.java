@@ -1,9 +1,10 @@
-package uk.gov.pay.connector.dao;
+package uk.gov.pay.connector.gatewayaccount.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO;
+import uk.gov.pay.connector.dao.JpaDao;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -34,7 +35,7 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
     }
 
     public List<GatewayAccountResourceDTO> list(List<Long> accountIds) {
-        String query = "SELECT NEW uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO"
+        String query = "SELECT NEW uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO"
                        + " (gae.id, gae.gatewayName, gae.type, gae.description, gae.serviceName, gae.analyticsId, gae.corporateCreditCardSurchargeAmount, gae.corporateDebitCardSurchargeAmount, gae.allowWebPayments)"
                        + " FROM GatewayAccountEntity gae"
                        + " WHERE gae.id IN :accountIds"
@@ -48,7 +49,7 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
     }
 
     public List<GatewayAccountResourceDTO> listAll() {
-        String query = "SELECT NEW uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO" +
+        String query = "SELECT NEW uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO" +
                 "(gae.id, gae.gatewayName, gae.type, gae.description, gae.serviceName, gae.analyticsId, gae.corporateCreditCardSurchargeAmount, gae.corporateDebitCardSurchargeAmount, gae.allowWebPayments) " +
                 "FROM GatewayAccountEntity gae order by gae.id";
 

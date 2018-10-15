@@ -2,7 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.service.SearchRefundsService;
 
 import javax.inject.Inject;

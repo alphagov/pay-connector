@@ -15,8 +15,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 import java.time.Duration;
 import java.util.List;

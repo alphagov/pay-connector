@@ -1,10 +1,9 @@
-package uk.gov.pay.connector.model.gateway;
+package uk.gov.pay.connector.gateway.model.request;
 
-import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
+import uk.gov.pay.connector.gateway.GatewayOperation;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.Auth3dsDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
-import uk.gov.pay.connector.gateway.GatewayOperation;
 
 import java.util.Optional;
 

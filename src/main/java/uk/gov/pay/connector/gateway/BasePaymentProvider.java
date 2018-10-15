@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.gateway;
 
-import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 
 import java.util.EnumMap;

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model.domain;
+package uk.gov.pay.connector.gatewayaccount.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

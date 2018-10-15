@@ -3,21 +3,21 @@ package uk.gov.pay.connector.gateway.epdq;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.model.gateway.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
+import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 
 import static java.lang.String.format;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.ERROR;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REJECTED;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
+import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPaymentProvider3dsTest extends BaseEpdqPaymentProviderTest {

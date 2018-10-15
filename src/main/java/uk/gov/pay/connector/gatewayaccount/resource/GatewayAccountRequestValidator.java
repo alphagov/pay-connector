@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.resources;
+package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
@@ -13,12 +13,12 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_NOTIFY_API_TOKEN;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_NOTIFY_REFUND_ISSUED_TEMPLATE_ID;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_OPERATION;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_OPERATION_PATH;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.FIELD_VALUE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOTIFY_API_TOKEN;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOTIFY_REFUND_ISSUED_TEMPLATE_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_OPERATION;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_OPERATION_PATH;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_VALUE;
 
 
 public class GatewayAccountRequestValidator {
@@ -37,7 +37,7 @@ public class GatewayAccountRequestValidator {
         this.requestValidator = requestValidator;
     }
 
-    void validatePatchRequest(JsonNode payload){
+    public void validatePatchRequest(JsonNode payload){
         List<String> pathCheck = requestValidator.checkIfExistsOrEmpty(payload, FIELD_OPERATION, FIELD_OPERATION_PATH);
         if(!pathCheck.isEmpty()) 
             throw new ValidationException(pathCheck);

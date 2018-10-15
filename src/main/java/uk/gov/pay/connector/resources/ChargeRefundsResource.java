@@ -6,12 +6,12 @@ import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.exception.RefundException;
 import uk.gov.pay.connector.exception.RefundException.ErrorCode;
 import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.model.RefundRequest;
 import uk.gov.pay.connector.model.RefundResponse;
 import uk.gov.pay.connector.model.RefundsResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.gateway.GatewayResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.service.ChargeRefundService;
 
 import javax.inject.Inject;

@@ -27,9 +27,9 @@ import java.util.Map;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_MERCHANT_ID;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 
 @RunWith(MockitoJUnitRunner.class)
 abstract public class BaseGatewayITest {

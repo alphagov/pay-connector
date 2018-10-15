@@ -36,7 +36,7 @@ import uk.gov.pay.connector.resources.ChargeRefundsResource;
 import uk.gov.pay.connector.resources.ChargesApiResource;
 import uk.gov.pay.connector.resources.ChargesFrontendResource;
 import uk.gov.pay.connector.resources.EmailNotificationResource;
-import uk.gov.pay.connector.resources.GatewayAccountResource;
+import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountResource;
 import uk.gov.pay.connector.resources.HealthCheckResource;
 import uk.gov.pay.connector.resources.NotificationResource;
 import uk.gov.pay.connector.resources.PerformanceReportResource;
