@@ -2,7 +2,7 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static uk.gov.pay.connector.model.domain.PayersCardType.DEBIT_OR_CREDIT;
+import static uk.gov.pay.connector.model.domain.PayersCardType.CREDIT_OR_DEBIT;
 
 public class AuthCardDetails implements AuthorisationDetails {
 
@@ -108,6 +108,6 @@ public class AuthCardDetails implements AuthorisationDetails {
     }
 
     public PayersCardType getPayersCardType() {
-        return payersCardType == null ? DEBIT_OR_CREDIT : payersCardType;
+        return payersCardType == null ? CREDIT_OR_DEBIT : payersCardType;
     }
 }
