@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.model;
 
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import java.util.Optional;
 

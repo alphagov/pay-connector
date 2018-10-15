@@ -2,9 +2,9 @@ package uk.gov.pay.connector.it.resources;
 
 import org.junit.Test;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.model.ServicePaymentReference;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.time.ZoneId;
@@ -20,7 +20,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
 public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
     private static final String PROVIDER_NAME = "sandbox";

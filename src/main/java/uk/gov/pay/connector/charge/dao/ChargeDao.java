@@ -1,10 +1,12 @@
-package uk.gov.pay.connector.dao;
+package uk.gov.pay.connector.charge.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.dao.JpaDao;
+import uk.gov.pay.connector.dao.SearchParams;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -20,8 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 
 @Transactional
 public class ChargeDao extends JpaDao<ChargeEntity> {

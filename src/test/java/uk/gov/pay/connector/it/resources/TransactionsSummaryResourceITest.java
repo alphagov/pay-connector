@@ -10,11 +10,11 @@ import javax.ws.rs.core.Response;
 import java.time.ZonedDateTime;
 
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
 
 public class TransactionsSummaryResourceITest {

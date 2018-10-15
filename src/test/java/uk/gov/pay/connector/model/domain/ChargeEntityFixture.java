@@ -2,8 +2,10 @@ package uk.gov.pay.connector.model.domain;
 
 import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.ZoneId;

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
 import org.junit.Test;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.exception.InvalidStateTransitionException;
 
 import static org.hamcrest.core.Is.is;
@@ -12,9 +13,9 @@ import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_STARTE
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 public class ChargeEntityTest {
 

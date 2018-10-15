@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.dao;
 
 import org.junit.Test;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.CardHolderName;
 import uk.gov.pay.connector.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 
 import java.time.ZonedDateTime;
@@ -17,26 +17,26 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.model.TransactionType.PAYMENT;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_SUBMITTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_ERROR;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCELLED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_ERROR;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_READY;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
 
 public class SearchParamsTest {
 

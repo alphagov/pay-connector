@@ -2,17 +2,16 @@ package uk.gov.pay.connector.util.charge;
 
 
 import org.junit.Test;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsBuilder;
-import uk.gov.pay.connector.model.domain.PayersCardType;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.model.domain.PayersCardType;
 
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.core.IsNull.nullValue;
 import static uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator.getCorporateSurchargeFor;
 import static uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator.getTotalAmountFor;
 

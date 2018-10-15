@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.service;
+package uk.gov.pay.connector.charge.service;
 
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -8,7 +8,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.dao.ChargeEventDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.gateway.GatewayOperation;
@@ -20,8 +21,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayCancelResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 
 import java.util.Optional;
@@ -40,8 +40,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCELLED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 
 @RunWith(MockitoJUnitRunner.class)
 /**

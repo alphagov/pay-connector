@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 

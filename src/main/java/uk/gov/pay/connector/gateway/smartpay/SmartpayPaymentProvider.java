@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.smartpay;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.BasePaymentProvider;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOperation;
@@ -23,7 +24,6 @@ import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.Notifications.Builder;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
 
 import javax.ws.rs.client.Invocation;
 import java.util.EnumMap;

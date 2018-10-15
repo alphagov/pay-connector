@@ -1,14 +1,20 @@
 package uk.gov.pay.connector.model.domain;
 
 import org.junit.Test;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
-import static uk.gov.pay.connector.model.domain.RefundStatus.*;
+import static uk.gov.pay.connector.model.domain.RefundStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 
 public class RefundEntityTest {
 

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model.domain;
+package uk.gov.pay.connector.charge.model;
 
 import uk.gov.pay.connector.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.model.LastDigitsCardNumber;

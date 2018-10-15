@@ -8,7 +8,7 @@ import com.jayway.restassured.response.ValidatableResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import java.util.List;
 import java.util.Map;
@@ -17,11 +17,11 @@ import java.util.UUID;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 public class SmartpayCardResourceITest extends ChargingITestBase {
 

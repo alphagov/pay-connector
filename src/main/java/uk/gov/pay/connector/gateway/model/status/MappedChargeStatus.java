@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.model.status;
 
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 public class MappedChargeStatus implements InterpretedStatus {
 

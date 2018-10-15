@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.model;
 
 import org.apache.http.NameValuePair;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import java.time.ZonedDateTime;
 import java.util.List;

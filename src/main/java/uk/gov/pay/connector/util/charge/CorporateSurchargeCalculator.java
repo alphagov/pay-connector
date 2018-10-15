@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.util.charge;
 
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.PayersCardType;
 import uk.gov.pay.connector.model.domain.Transaction;
 

@@ -2,10 +2,10 @@ package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.dao.RefundDao;
 import uk.gov.pay.connector.model.TransactionEvent;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.RefundHistory;
 

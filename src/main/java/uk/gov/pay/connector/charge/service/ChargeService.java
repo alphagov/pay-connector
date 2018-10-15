@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.service;
+package uk.gov.pay.connector.charge.service;
 
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
@@ -6,24 +6,24 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.dao.CardTypeDao;
-import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.ChargeEventDao;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.dao.TokenDao;
-import uk.gov.pay.connector.model.ChargeResponse;
-import uk.gov.pay.connector.model.ServicePaymentReference;
+import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.model.domain.TokenEntity;
-import uk.gov.pay.connector.gateway.PaymentProviders;
-import uk.gov.pay.connector.resources.ChargesApiResource;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator;
 
@@ -40,9 +40,9 @@ import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
-import static uk.gov.pay.connector.model.ChargeResponse.aChargeResponseBuilder;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.sanitize;
 
 public class ChargeService {

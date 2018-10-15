@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.resources;
+package uk.gov.pay.connector.charge.resource;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ImmutableList;
@@ -8,18 +8,20 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.service.ChargeExpiryService;
+import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.service.SearchService;
+import uk.gov.pay.connector.charge.service.TransactionSearchStrategy;
 import uk.gov.pay.connector.dao.SearchParams;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.CardHolderName;
 import uk.gov.pay.connector.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.model.ServicePaymentReference;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.service.ChargeExpiryService;
-import uk.gov.pay.connector.service.ChargeService;
-import uk.gov.pay.connector.service.search.SearchService;
-import uk.gov.pay.connector.service.search.TransactionSearchStrategy;
+import uk.gov.pay.connector.resources.ApiValidators;
+import uk.gov.pay.connector.resources.CommaDelimitedSetParameter;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
@@ -46,10 +48,10 @@ import static java.util.Arrays.stream;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static uk.gov.pay.connector.charge.service.ChargeExpiryService.EXPIRABLE_STATUSES;
+import static uk.gov.pay.connector.charge.service.SearchService.TYPE.CHARGE;
+import static uk.gov.pay.connector.charge.service.SearchService.TYPE.TRANSACTION;
 import static uk.gov.pay.connector.model.TransactionType.inferTransactionTypeFrom;
-import static uk.gov.pay.connector.service.ChargeExpiryService.EXPIRABLE_STATUSES;
-import static uk.gov.pay.connector.service.search.SearchService.TYPE.CHARGE;
-import static uk.gov.pay.connector.service.search.SearchService.TYPE.TRANSACTION;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidSizeResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
@@ -60,16 +62,16 @@ import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 @Path("/")
 public class ChargesApiResource {
     public static final String EMAIL_KEY = "email";
-    static final String AMOUNT_KEY = "amount";
-    static final String LANGUAGE_KEY = "language";
-    static final String DELAYED_CAPTURE_KEY = "delayed_capture";
+    public static final String AMOUNT_KEY = "amount";
+    public static final String LANGUAGE_KEY = "language";
+    public static final String DELAYED_CAPTURE_KEY = "delayed_capture";
     private static final String DESCRIPTION_KEY = "description";
     private static final String RETURN_URL_KEY = "return_url";
     private static final String REFERENCE_KEY = "reference";
     private static final String CARDHOLDER_NAME_KEY = "cardholder_name";
     public static final String LAST_DIGITS_CARD_NUMBER_KEY = "last_digits_card_number";
     public static final String FIRST_DIGITS_CARD_NUMBER_KEY = "first_digits_card_number";
-    static final Map<String, Integer> MAXIMUM_FIELDS_SIZE = ImmutableMap.of(
+    public static final Map<String, Integer> MAXIMUM_FIELDS_SIZE = ImmutableMap.of(
             DESCRIPTION_KEY, 255,
             REFERENCE_KEY, 255,
             EMAIL_KEY, 254
@@ -88,8 +90,8 @@ public class ChargesApiResource {
     private static final int ONE_HOUR_AND_A_HALF = 5400;
     private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
-    static int MIN_AMOUNT = 1;
-    static int MAX_AMOUNT = 10_000_000;
+    public static int MIN_AMOUNT = 1;
+    public static int MAX_AMOUNT = 10_000_000;
     private final ChargeDao chargeDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final ChargeService chargeService;

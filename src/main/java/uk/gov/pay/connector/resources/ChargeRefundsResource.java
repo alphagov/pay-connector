@@ -2,7 +2,8 @@ package uk.gov.pay.connector.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.dao.ChargeDao;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.exception.RefundException;
 import uk.gov.pay.connector.exception.RefundException.ErrorCode;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -11,7 +12,6 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.model.RefundRequest;
 import uk.gov.pay.connector.model.RefundResponse;
 import uk.gov.pay.connector.model.RefundsResponse;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.service.ChargeRefundService;
 
 import javax.inject.Inject;
@@ -28,9 +28,9 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MAX_AMOUNT;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MIN_AMOUNT;
 import static uk.gov.pay.connector.exception.RefundException.ErrorCode.NOT_SUFFICIENT_AMOUNT_AVAILABLE;
-import static uk.gov.pay.connector.resources.ChargesApiResource.MAX_AMOUNT;
-import static uk.gov.pay.connector.resources.ChargesApiResource.MIN_AMOUNT;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithRefundNotFound;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;

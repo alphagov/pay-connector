@@ -1,9 +1,9 @@
-package uk.gov.pay.connector.service.search;
+package uk.gov.pay.connector.charge.service;
 
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.dao.CardTypeDao;
-import uk.gov.pay.connector.dao.ChargeDao;
 import uk.gov.pay.connector.dao.TransactionDao;
-import uk.gov.pay.connector.service.ChargeService;
+import uk.gov.pay.connector.service.search.SearchStrategy;
 
 import javax.inject.Inject;
 

@@ -1,13 +1,13 @@
 package uk.gov.pay.connector.dao;
 
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.CardHolderName;
 import uk.gov.pay.connector.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.TransactionType;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalRefundStatus;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 
 import java.time.ZonedDateTime;

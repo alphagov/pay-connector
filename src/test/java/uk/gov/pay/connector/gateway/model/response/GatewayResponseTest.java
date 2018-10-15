@@ -6,8 +6,8 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayRespon
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 
 
 public class GatewayResponseTest {

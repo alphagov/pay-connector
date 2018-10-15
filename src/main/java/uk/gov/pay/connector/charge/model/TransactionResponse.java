@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.charge.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.commons.model.SupportedLanguage;
@@ -46,7 +46,7 @@ public class TransactionResponse extends ChargeResponse {
                                   String description, ServicePaymentReference reference, String providerName,
                                   String createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary,
                                   SettlementSummary settlementSummary, PersistedCard cardDetails,
-                                  Auth3dsData auth3dsData, SupportedLanguage language, 
+                                  Auth3dsData auth3dsData, SupportedLanguage language,
                                   boolean delayedCapture, Long corporateSurcharge, Long totalAmount) {
         super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference,
                 providerName, createdDate, dataLinks, refundSummary, settlementSummary, cardDetails, auth3dsData, 

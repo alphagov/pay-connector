@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.gateway.model.request;
 
-import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.GatewayOperation;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 public class CancelGatewayRequest implements GatewayRequest {
 

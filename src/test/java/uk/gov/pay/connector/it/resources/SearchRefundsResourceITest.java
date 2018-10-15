@@ -3,8 +3,8 @@ package uk.gov.pay.connector.it.resources;
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.core.Is;
 import org.junit.Test;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -19,7 +19,7 @@ import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.hasSize;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
 public class SearchRefundsResourceITest extends ChargingITestBase {
 
