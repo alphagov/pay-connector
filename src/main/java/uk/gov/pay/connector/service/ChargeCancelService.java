@@ -11,10 +11,12 @@ import uk.gov.pay.connector.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.gateway.GatewayResponse;
 import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
+import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.service.transaction.TransactionContext;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.service.transaction.TransactionalOperation;
-import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -22,7 +24,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.model.GatewayError.baseError;
+import static uk.gov.pay.connector.gateway.model.GatewayError.baseError;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;

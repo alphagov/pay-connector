@@ -2,6 +2,8 @@ package uk.gov.pay.connector.service;
 
 import org.junit.Test;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
+import uk.gov.pay.connector.gateway.model.status.MappedChargeStatus;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;

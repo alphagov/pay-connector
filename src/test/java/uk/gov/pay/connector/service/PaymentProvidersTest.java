@@ -14,10 +14,15 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.WorldpayConfig;
-import uk.gov.pay.connector.service.epdq.EpdqPaymentProvider;
-import uk.gov.pay.connector.service.sandbox.SandboxPaymentProvider;
-import uk.gov.pay.connector.service.smartpay.SmartpayPaymentProvider;
-import uk.gov.pay.connector.service.worldpay.WorldpayPaymentProvider;
+import uk.gov.pay.connector.gateway.GatewayClientFactory;
+import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
+import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
+import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 
 import javax.ws.rs.client.Invocation.Builder;
 import java.util.Map;
@@ -29,10 +34,10 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.service.GatewayOperation.*;
-import static uk.gov.pay.connector.service.PaymentGatewayName.EPDQ;
-import static uk.gov.pay.connector.service.PaymentGatewayName.SMARTPAY;
-import static uk.gov.pay.connector.service.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gateway.GatewayOperation.*;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PaymentProvidersTest {

@@ -23,7 +23,7 @@ import uk.gov.pay.connector.model.domain.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.model.domain.UuidAbstractEntity;
 import uk.gov.pay.connector.service.GatewayAccountNotificationCredentialsService;
 import uk.gov.pay.connector.service.GatewayAccountServicesFactory;
-import uk.gov.pay.connector.service.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -38,7 +38,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;

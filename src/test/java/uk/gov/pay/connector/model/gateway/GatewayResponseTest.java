@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.model.gateway;
 
 import org.junit.Test;
-import uk.gov.pay.connector.model.GatewayError;
+import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.model.gateway.GatewayResponse.GatewayResponseBuilder;
-import uk.gov.pay.connector.service.BaseResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;

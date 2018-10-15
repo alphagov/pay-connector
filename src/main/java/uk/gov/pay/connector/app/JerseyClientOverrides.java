@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.app;
 
-import uk.gov.pay.connector.service.GatewayOperation;
+import uk.gov.pay.connector.gateway.GatewayOperation;
 
 import java.util.EnumMap;
 import java.util.Map;

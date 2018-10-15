@@ -12,7 +12,7 @@ import uk.gov.pay.connector.model.builder.EntityBuilder;
 import uk.gov.pay.connector.resources.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.service.CardExecutorService;
 import uk.gov.pay.connector.service.GatewayAccountServicesFactory;
-import uk.gov.pay.connector.service.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
 import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.util.XrayUtils;
