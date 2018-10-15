@@ -22,7 +22,10 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_MULTIPLE_NOTIFICATIONS;
@@ -38,7 +41,8 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
     }
 
     @Before
-    public void setUpAuthForEndpoint() {
+    public void setup() {
+        super.setup();
         givenSetup()
                 .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsbigsecret")))
                 .post("/v1/api/accounts/" + accountId + "/notification-credentials")

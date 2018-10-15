@@ -65,7 +65,7 @@ public class ChargingITestBase {
     private static final String CARD_BRAND = "cardBrand";
     protected static final String RETURN_URL = "http://service.url/success-page/";
     protected static final String EMAIL = randomAlphabetic(242) + "@example.com";
-    protected RestAssuredClient connectorRestApi;
+    protected RestAssuredClient connectorRestApiClient;
     protected static final long AMOUNT = 6234L;
     protected WorldpayMockClient worldpay;
     protected SmartpayMockClient smartpay;
@@ -88,7 +88,7 @@ public class ChargingITestBase {
         this.paymentProvider = paymentProvider;
         this.accountId = String.valueOf(RandomUtils.nextInt());
 
-        connectorRestApi = new RestAssuredClient(app, accountId);
+        connectorRestApiClient = new RestAssuredClient(app, accountId);
     }
 
     @Before
@@ -155,20 +155,20 @@ public class ChargingITestBase {
     }
 
     protected ValidatableResponse getCharge(String chargeId) {
-        return connectorRestApi
+        return connectorRestApiClient
                 .withChargeId(chargeId)
                 .getCharge();
     }
 
     protected void assertFrontendChargeStatusIs(String chargeId, String status) {
-        connectorRestApi
+        connectorRestApiClient
                 .withChargeId(chargeId)
                 .getFrontendCharge()
                 .body("status", is(status));
     }
 
     protected void assertRefundStatus(String chargeId, String refundId, String status, Integer amount) {
-        connectorRestApi.withChargeId(chargeId)
+        connectorRestApiClient.withChargeId(chargeId)
                 .withRefundId(refundId)
                 .getRefund()
                 .body("status", is(status))
@@ -368,19 +368,19 @@ public class ChargingITestBase {
 
     protected String cancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int targetHttpStatus) {
 
-        connectorRestApi
+        connectorRestApiClient
                 .withChargeId(chargeId)
                 .postChargeCancellation()
                 .statusCode(targetHttpStatus); //assertion
 
-        connectorRestApi
+        connectorRestApiClient
                 .withChargeId(chargeId)
                 .getCharge()
                 .body("state.status", Matchers.is("cancelled"))
                 .body("state.message", Matchers.is("Payment was cancelled by the service"))
                 .body("state.code", Matchers.is("P0040"));
 
-        connectorRestApi
+        connectorRestApiClient
                 .withChargeId(chargeId)
                 .getFrontendCharge()
                 .body("status", Matchers.is(targetState.getValue()));

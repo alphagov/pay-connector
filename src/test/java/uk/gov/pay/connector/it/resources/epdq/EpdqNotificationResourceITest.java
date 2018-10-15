@@ -67,7 +67,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
 
         String externalChargeId = createNewChargeWithRefund(transactionId, refundExternalId, payIdSub, refundAmount);
 
-        String response = notifyConnector(transactionId, payIdSub,"8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
+        String response = notifyConnector(transactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
                 .statusCode(200)
                 .extract().body()
                 .asString();

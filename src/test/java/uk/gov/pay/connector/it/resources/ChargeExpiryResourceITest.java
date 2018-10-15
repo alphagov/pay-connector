@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.resources;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -17,18 +16,19 @@ import static org.apache.commons.collections4.CollectionUtils.isEqualCollection;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
 
 public class ChargeExpiryResourceITest extends ChargingITestBase {
 
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
     private static final String PROVIDER_NAME = "worldpay";
-
-
-    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
 
     public ChargeExpiryResourceITest() {
         super(PROVIDER_NAME);
@@ -41,7 +41,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
 
         worldpay.mockCancelSuccess();
 
-        getChargeApi
+        connectorRestApiClient
                 .postChargeExpiryTask()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -49,7 +49,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
                 .body("expiry-failed", is(0));
 
         asList(extChargeId1, extChargeId2).forEach(chargeId ->
-                getChargeApi
+                connectorRestApiClient
                         .withAccountId(accountId)
                         .withChargeId(chargeId)
                         .getCharge()
@@ -74,30 +74,30 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
 
         worldpay.mockCancelSuccess();
 
-        getChargeApi
+        connectorRestApiClient
                 .postChargeExpiryTask()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("expiry-success", is(1))
                 .body("expiry-failed", is(0));
 
-                getChargeApi
-                        .withAccountId(accountId)
-                        .withChargeId(shouldExpireChargeId)
-                        .getCharge()
-                        .statusCode(OK.getStatusCode())
-                        .contentType(JSON)
-                        .body(JSON_CHARGE_KEY, is(shouldExpireChargeId))
-                        .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(shouldExpireChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(shouldExpireChargeId))
+                .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
 
-                getChargeApi
-                        .withAccountId(accountId)
-                        .withChargeId(shouldntExpireChargeId)
-                        .getCharge()
-                        .statusCode(OK.getStatusCode())
-                        .contentType(JSON)
-                        .body(JSON_CHARGE_KEY, is(shouldntExpireChargeId))
-                        .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()));
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(shouldntExpireChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(shouldntExpireChargeId))
+                .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()));
 
         List<String> events1 = app.getDatabaseTestHelper().getInternalEvents(shouldExpireChargeId);
         List<String> events2 = app.getDatabaseTestHelper().getInternalEvents(shouldntExpireChargeId);
@@ -107,6 +107,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         assertTrue(isEqualCollection(events2,
                 Collections.singletonList(CREATED.getValue())));
     }
+
     @Test
     public void shouldExpireChargesEvenIfOnGatewayCancellationError() {
         String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId1");
@@ -114,21 +115,21 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
 
         worldpay.mockCancelError();
 
-        getChargeApi
+        connectorRestApiClient
                 .postChargeExpiryTask()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("expiry-success", is(0))
                 .body("expiry-failed", is(1));
 
-            getChargeApi
-                    .withAccountId(accountId)
-                    .withChargeId(extChargeId1)
-                    .getCharge()
-                    .statusCode(OK.getStatusCode())
-                    .contentType(JSON)
-                    .body(JSON_CHARGE_KEY, is(extChargeId1))
-                    .body(JSON_STATE_KEY, is(EXPIRE_CANCEL_FAILED.toExternal().getStatus()));
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(extChargeId1)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(extChargeId1))
+                .body(JSON_STATE_KEY, is(EXPIRE_CANCEL_FAILED.toExternal().getStatus()));
 
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(extChargeId1);
 
@@ -146,14 +147,14 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
 
         worldpay.mockCancelSuccessOnlyFor("gatewayTransactionId1");
 
-        getChargeApi
+        connectorRestApiClient
                 .postChargeExpiryTask()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("expiry-success", is(1))
                 .body("expiry-failed", is(1));
 
-        getChargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withChargeId(extChargeId1)
                 .getCharge()
@@ -162,7 +163,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
                 .body(JSON_CHARGE_KEY, is(extChargeId1))
                 .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
 
-        getChargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withChargeId(extChargeId2)
                 .getCharge()
@@ -191,7 +192,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails.isEmpty(), is(false));
 
-        getChargeApi
+        connectorRestApiClient
                 .postChargeExpiryTask()
                 .statusCode(OK.getStatusCode());
 

@@ -48,7 +48,8 @@ public class WorldpayRefundITest extends ChargingITestBase {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setup() {
+        super.setup();
         databaseTestHelper = app.getDatabaseTestHelper();
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)

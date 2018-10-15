@@ -6,7 +6,6 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.util.RestAssuredClient;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.time.ZonedDateTime;
@@ -87,7 +86,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref-3")
                 .withQueryParam("page", "1")
@@ -165,7 +164,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref-3")
                 .withQueryParam("page", "1")
@@ -189,12 +188,12 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
                 .body("results[1].reference", is(referenceCharge2.toString()));
     }
 
-        @Test
+    @Test
     public void shouldFilterTransactionsByCardHolderName() {
         String cardHolderName = "Mr. PayMcPayment";
         addChargeAndCardDetails(nextLong(), CREATED, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, "1234");
         addChargeAndCardDetails(nextLong(), AUTHORISATION_SUCCESS, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, "1234");
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("cardholder_name", "PayMc")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -212,7 +211,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         addChargeAndCardDetails(nextLong(), CREATED, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, lastFourDigits);
         addChargeAndCardDetails(nextLong(), AUTHORISATION_SUCCESS, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, lastFourDigits);
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("last_digits_card_number", "3943")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -226,7 +225,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldNotMatchChargesByPartialLastFourDigits() {
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("last_digits_card_number", "12")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -235,7 +234,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body("results.size()", is(0));
     }
-    
+
     @Test
     public void shouldGetExpectedCharge_whenOnlySpecifiedRefundStates() {
 
@@ -254,7 +253,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref-3")
                 .withQueryParam("page", "1")
@@ -284,7 +283,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, expiryDate, "line1", null, "postcode", "city", null, "country");
         return externalChargeId;
     }
-    
+
     private String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, String transactionId, ZonedDateTime fromDate,
                                            String cardBrand, String returnUrl, String email,
                                            String cardHolderName, String lastDigitsCardNumber) {

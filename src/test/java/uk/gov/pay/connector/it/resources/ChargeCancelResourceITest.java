@@ -1,11 +1,9 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang.StringUtils;
-import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -14,23 +12,35 @@ import java.util.Map;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static javax.ws.rs.core.Response.Status.*;
+import static javax.ws.rs.core.Response.Status.ACCEPTED;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_READY;
 
 public class ChargeCancelResourceITest extends ChargingITestBase {
 
-    private RestAssuredClient restApiCall;
-
     public ChargeCancelResourceITest() {
         super("worldpay");
-    }
-
-    @Before
-    public void setupGatewayAccount() {
-        restApiCall = new RestAssuredClient(app, accountId);
     }
 
     @Test
@@ -122,7 +132,7 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
         nonCancellableStatuses.forEach(notCancellableState -> {
             String chargeId = createNewInPastChargeWithStatus(notCancellableState);
             String expectedMessage = "Charge not in correct state to be processed, " + chargeId;
-            restApiCall
+            connectorRestApiClient
                     .withChargeId(chargeId)
                     .postChargeCancellation()
                     .statusCode(BAD_REQUEST.getStatusCode())
@@ -136,7 +146,7 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
     public void respondWith202_whenCancelAlreadyInProgress() {
         String chargeId = createNewInPastChargeWithStatus(SYSTEM_CANCEL_READY);
         String expectedMessage = "System Cancellation for charge already in progress, " + chargeId;
-        restApiCall
+        connectorRestApiClient
                 .withChargeId(chargeId)
                 .postChargeCancellation()
                 .statusCode(ACCEPTED.getStatusCode())
@@ -148,7 +158,7 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
     @Test
     public void respondWith404_whenPaymentNotFound() {
         String unknownChargeId = "2344363244";
-        restApiCall
+        connectorRestApiClient
                 .withChargeId(unknownChargeId)
                 .postChargeCancellation()
                 .statusCode(NOT_FOUND.getStatusCode())
@@ -162,7 +172,7 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
         String chargeId = createNewInPastChargeWithStatus(CREATED);
         String expectedMessage = "HTTP 404 Not Found";
 
-        restApiCall
+        connectorRestApiClient
                 .withAccountId("")
                 .withChargeId(chargeId)
                 .postChargeCancellation()
@@ -177,7 +187,7 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
         String chargeId = createNewInPastChargeWithStatus(CREATED);
         String expectedMessage = "HTTP 404 Not Found";
 
-        restApiCall
+        connectorRestApiClient
                 .withAccountId("ABSDCEFG")
                 .withChargeId(chargeId)
                 .postChargeCancellation()
@@ -192,7 +202,7 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
         String chargeId = createNewInPastChargeWithStatus(CREATED);
         String expectedMessage = format("Charge with id [%s] not found.", chargeId);
 
-        restApiCall
+        connectorRestApiClient
                 .withAccountId("12345")
                 .withChargeId(chargeId)
                 .postChargeCancellation()

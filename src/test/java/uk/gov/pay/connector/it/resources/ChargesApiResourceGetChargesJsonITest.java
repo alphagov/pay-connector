@@ -31,7 +31,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
 
     @Test
     public void shouldReturn404OnGetTransactionsWhenAccountIdIsNonNumeric() {
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId("invalidAccountId")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactionsAPI()
@@ -59,7 +59,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
 
         String description = "Test description";
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactionsAPI()
@@ -98,7 +98,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
 
         String description = "Test description";
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactionsAPI()
@@ -136,7 +136,7 @@ public class ChargesApiResourceGetChargesJsonITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
         app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactionsAPI()

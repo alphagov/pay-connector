@@ -6,7 +6,6 @@ import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.util.RestAssuredClient;
 
 import javax.ws.rs.core.HttpHeaders;
 
@@ -26,13 +25,11 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
 
     private static final String PROVIDER_NAME = "sandbox";
 
-    private RestAssuredClient api = new RestAssuredClient(app, accountId);
     private static final String INVALID_ACCOUNT_ID = "999999999";
 
     public SearchRefundsResourceITest() {
         super(PROVIDER_NAME);
     }
-
 
     @Test
     public void shouldReturnAllRefundsForGetRefundsByAccountId() {
@@ -47,7 +44,7 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId, now().minusHours(3));
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
 
-        api.withAccountId(accountId)
+        connectorRestApiClient.withAccountId(accountId)
                 .withQueryParam("page", "1")
                 .withQueryParam("display_size", "2")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -70,7 +67,7 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addCharge(chargeId, "charge2", accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
                 ServicePaymentReference.of("ref"), null, email);
 
-        api.withAccountId(accountId)
+        connectorRestApiClient.withAccountId(accountId)
                 .withQueryParam("page", "1")
                 .withQueryParam("display_size", "2")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -86,7 +83,7 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnNotFoundResponseWhenAccountDoesNotExist() {
-        api.withAccountId(INVALID_ACCOUNT_ID)
+        connectorRestApiClient.withAccountId(INVALID_ACCOUNT_ID)
                 .withQueryParam("page", "1")
                 .withQueryParam("display_size", "2")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
