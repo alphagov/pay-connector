@@ -180,7 +180,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse getRefunds() {
-        String requestPath = "/v1/refunds/account/{accountId}"
+        String requestPath = "/v1/api/accounts/{accountId}/refunds"
                 .replace("{accountId}", accountId);
         return addQueryParams(given().port(app.getLocalPort()))
                 .get(requestPath)
