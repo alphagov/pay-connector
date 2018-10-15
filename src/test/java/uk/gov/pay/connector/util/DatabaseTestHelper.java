@@ -12,7 +12,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.EmailCollectionMode;
 import uk.gov.pay.connector.model.domain.EmailNotificationType;
-import uk.gov.pay.connector.model.domain.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static java.time.ZonedDateTime.now;
-import static uk.gov.pay.connector.model.domain.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 
 public class DatabaseTestHelper {
 

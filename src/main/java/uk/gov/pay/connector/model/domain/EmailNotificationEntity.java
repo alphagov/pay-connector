@@ -3,6 +3,7 @@ package uk.gov.pay.connector.model.domain;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

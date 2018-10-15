@@ -1,7 +1,8 @@
 package uk.gov.pay.connector.service;
 
+import uk.gov.pay.connector.gateway.model.response.BaseResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.gateway.GatewayResponse;
 
 interface TransactionalGatewayOperation<T extends BaseResponse> {
 

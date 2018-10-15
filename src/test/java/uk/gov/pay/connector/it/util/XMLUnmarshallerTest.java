@@ -5,8 +5,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockserver.integration.ClientAndServer;
-import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
-import uk.gov.pay.connector.util.XMLUnmarshaller;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
+import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 
 import java.nio.charset.Charset;
 

@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.model;
 
 import org.junit.Test;
+import uk.gov.pay.connector.gateway.model.status.GatewayStatusOnly;
+import uk.gov.pay.connector.gateway.model.status.StatusMapFromStatus;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;

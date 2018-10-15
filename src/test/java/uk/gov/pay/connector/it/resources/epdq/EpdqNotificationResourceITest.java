@@ -11,7 +11,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.service.epdq.EpdqSha512SignatureGenerator;
+import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -25,7 +25,7 @@ import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
-import static uk.gov.pay.connector.model.domain.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
 
 @RunWith(JUnitParamsRunner.class)
@@ -67,7 +67,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
 
         String externalChargeId = createNewChargeWithRefund(transactionId, refundExternalId, payIdSub, refundAmount);
 
-        String response = notifyConnector(transactionId, payIdSub,"8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
+        String response = notifyConnector(transactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
                 .statusCode(200)
                 .extract().body()
                 .asString();

@@ -1,12 +1,13 @@
 package uk.gov.pay.connector.util;
 
 import org.junit.Test;
-import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
-import uk.gov.pay.connector.service.BaseCancelResponse;
-import uk.gov.pay.connector.service.smartpay.SmartpayAuthorisationResponse;
-import uk.gov.pay.connector.service.smartpay.SmartpayCancelResponse;
-import uk.gov.pay.connector.service.smartpay.SmartpayCaptureResponse;
-import uk.gov.pay.connector.service.smartpay.SmartpayRefundResponse;
+import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
+import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
+import uk.gov.pay.connector.gateway.smartpay.SmartpayAuthorisationResponse;
+import uk.gov.pay.connector.gateway.smartpay.SmartpayCancelResponse;
+import uk.gov.pay.connector.gateway.smartpay.SmartpayCaptureResponse;
+import uk.gov.pay.connector.gateway.smartpay.SmartpayRefundResponse;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;

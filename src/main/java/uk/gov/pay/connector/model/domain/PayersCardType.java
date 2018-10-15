@@ -13,5 +13,5 @@ package uk.gov.pay.connector.model.domain;
 public enum PayersCardType {
     DEBIT,
     CREDIT,
-    DEBIT_OR_CREDIT
+    CREDIT_OR_DEBIT
 }

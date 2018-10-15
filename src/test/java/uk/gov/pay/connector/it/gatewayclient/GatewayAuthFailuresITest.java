@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
-import uk.gov.pay.connector.service.GatewayClient;
+import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.util.PortFactory;
 
 import java.util.List;

@@ -1,13 +1,14 @@
 package uk.gov.pay.connector.util;
 
 import org.junit.Test;
-import uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus;
-import uk.gov.pay.connector.service.BaseCancelResponse;
-import uk.gov.pay.connector.service.worldpay.WorldpayCancelResponse;
-import uk.gov.pay.connector.service.worldpay.WorldpayCaptureResponse;
-import uk.gov.pay.connector.service.worldpay.WorldpayNotification;
-import uk.gov.pay.connector.service.worldpay.WorldpayOrderStatusResponse;
-import uk.gov.pay.connector.service.worldpay.WorldpayRefundResponse;
+import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
+import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayNotification;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundResponse;
 
 import java.time.LocalDate;
 

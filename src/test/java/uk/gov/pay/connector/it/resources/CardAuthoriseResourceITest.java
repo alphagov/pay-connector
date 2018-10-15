@@ -74,7 +74,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void sanitizeCardDetails_shouldStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingMoreThan10Numbers() { 
+    public void sanitizeCardDetails_shouldStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingMoreThan10Numbers() {
         String sanitizedValue = "r-**-**-*  Ju&^****-**";
         String valueWithMoreThan10CharactersAsNumbers = "r-12-34-5  Ju&^6501-76";
         String cardHolderName = valueWithMoreThan10CharactersAsNumbers;

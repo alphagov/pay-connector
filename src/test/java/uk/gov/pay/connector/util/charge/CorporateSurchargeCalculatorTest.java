@@ -94,7 +94,7 @@ public class CorporateSurchargeCalculatorTest {
     @Test
     public void shouldNotGetCorporateSurchargeForCreditOrDebitCardType() {
         AuthCardDetails creditOrDebit = AuthCardDetailsBuilder.anAuthCardDetails()
-                .withCardType(PayersCardType.DEBIT_OR_CREDIT)
+                .withCardType(PayersCardType.CREDIT_OR_DEBIT)
                 .withCorporateCard(Boolean.TRUE)
                 .build();
 
@@ -112,7 +112,7 @@ public class CorporateSurchargeCalculatorTest {
     @Test
     public void shouldNotGetCorporateSurchargeForConsumerCreditOrDebitCardType() {
         AuthCardDetails creditOrDebit = AuthCardDetailsBuilder.anAuthCardDetails()
-                .withCardType(PayersCardType.DEBIT_OR_CREDIT)
+                .withCardType(PayersCardType.CREDIT_OR_DEBIT)
                 .withCorporateCard(Boolean.FALSE)
                 .build();
 

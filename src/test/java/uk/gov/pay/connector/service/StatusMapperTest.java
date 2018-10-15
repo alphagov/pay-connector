@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.service;
 
 import org.junit.Test;
+import uk.gov.pay.connector.gateway.StatusMapper;
+import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;

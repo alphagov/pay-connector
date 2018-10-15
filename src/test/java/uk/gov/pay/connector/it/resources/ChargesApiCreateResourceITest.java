@@ -64,7 +64,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .build()
         );
 
-        ValidatableResponse response = connectorRestApi
+        ValidatableResponse response = connectorRestApiClient
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -103,7 +103,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                     put("chargeTokenId", chargeTokenId);
                 }}));
 
-        ValidatableResponse getChargeResponse = connectorRestApi
+        ValidatableResponse getChargeResponse = connectorRestApiClient
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -157,7 +157,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .build()
         );
 
-        ValidatableResponse response = connectorRestApi
+        ValidatableResponse response = connectorRestApiClient
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .body(JSON_LANGUAGE_KEY, is("en"))
@@ -165,7 +165,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
         String externalChargeId = response.extract().path(JSON_CHARGE_KEY);
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -187,7 +187,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_RETURN_URL_KEY, RETURN_URL).build());
 
 
-        connectorRestApi
+        connectorRestApiClient
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -214,7 +214,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 JSON_GATEWAY_ACC_KEY, accountId,
                 JSON_RETURN_URL_KEY, RETURN_URL));
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId("invalidAccountId")
                 .postCreateCharge(postBody)
                 .contentType(JSON)
@@ -222,7 +222,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .body("code", is(404))
                 .body("message", is("HTTP 404 Not Found"));
     }
-    
+
     @Test
     public void shouldReturn400WhenAmountIsLessThanMinAmount() {
 
@@ -236,7 +236,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_RETURN_URL_KEY, RETURN_URL)
                 .put(JSON_EMAIL_KEY, EMAIL).build());
 
-        connectorRestApi
+        connectorRestApiClient
                 .postCreateCharge(postBody)
                 .statusCode(Status.BAD_REQUEST.getStatusCode());
     }
@@ -254,7 +254,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .build()
         );
 
-        connectorRestApi
+        connectorRestApiClient
                 .postCreateCharge(postBody)
                 .statusCode(Status.BAD_REQUEST.getStatusCode());
 
@@ -270,7 +270,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 JSON_EMAIL_KEY, EMAIL,
                 JSON_RETURN_URL_KEY, RETURN_URL));
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(missingGatewayAccount)
                 .postCreateCharge(postBody)
                 .statusCode(NOT_FOUND.getStatusCode())
@@ -290,7 +290,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL).build());
 
-        connectorRestApi.postCreateCharge(postBody)
+        connectorRestApiClient.postCreateCharge(postBody)
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
@@ -300,14 +300,14 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
     @Test
     public void cannotMakeChargeForMissingFields() {
-        connectorRestApi.postCreateCharge("{}")
+        connectorRestApiClient.postCreateCharge("{}")
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body(JSON_CHARGE_KEY, is(nullValue()))
                 .body(JSON_MESSAGE_KEY, is("Field(s) missing: [amount, description, reference, return_url]"));
     }
-    
+
     private String expectedChargeLocationFor(String accountId, String chargeId) {
         return "https://localhost:" + app.getLocalPort() + "/v1/api/accounts/{accountId}/charges/{chargeId}"
                 .replace("{accountId}", accountId)

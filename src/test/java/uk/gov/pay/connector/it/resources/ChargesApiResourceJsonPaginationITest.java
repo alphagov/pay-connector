@@ -38,7 +38,7 @@ public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
 
     @Test
     public void shouldReturn404OnGetTransactionsWhenAccountIdIsNonNumeric() {
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId("invalidAccountId")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getTransactionsAPI()
@@ -81,7 +81,7 @@ public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
         String id_5 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-5"), now().plusHours(4));
         int expectedTotalRows = 5;
 
-        ValidatableResponse response = connectorRestApi
+        ValidatableResponse response = connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("display_size", "2")
                 .withQueryParam("page", "1")
@@ -97,7 +97,7 @@ public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
         List<String> charge_ids = collect(results, "charge_id");
         assertThat(charge_ids, is(ImmutableList.of(id_5, id_4)));
 
-        response = connectorRestApi
+        response = connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("display_size", "2")
                 .withQueryParam("page", "2")
@@ -112,7 +112,7 @@ public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
         charge_ids = collect(results, "charge_id");
         assertThat(charge_ids, is(ImmutableList.of(id_3, id_2)));
 
-        response = connectorRestApi
+        response = connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("display_size", "2")
                 .withQueryParam("page", "3")
@@ -136,7 +136,7 @@ public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
                 "query param 'display_size' should be a non zero positive integer",
                 "query param 'page' should be a non zero positive integer");
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("to_date", "-1")
                 .withQueryParam("from_date", "-1")
@@ -157,7 +157,7 @@ public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
         String id_4 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-4"), now().plusHours(3));
         String id_5 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-5"), now().plusHours(4));
 
-        ValidatableResponse response = connectorRestApi
+        ValidatableResponse response = connectorRestApiClient
                 .withAccountId(accountId)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getChargesV1()
@@ -176,7 +176,7 @@ public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
                 "query param 'display_size' should be a non zero positive integer",
                 "query param 'page' should be a non zero positive integer");
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref")
                 .withQueryParam("page", "-1")
@@ -195,7 +195,7 @@ public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-4"), now().minusDays(3));
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-5"), now().minusDays(4));
-        ValidatableResponse response = connectorRestApi
+        ValidatableResponse response = connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref-1")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -219,7 +219,7 @@ public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
 
     @Test
     public void shouldGetNoNavigationLinks_whenNoResultFound() {
-        ValidatableResponse response = connectorRestApi
+        ValidatableResponse response = connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("reference", "junk-yard")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -243,7 +243,7 @@ public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
     public void shouldGetResultsAndNoPrevLink_whenOnFirstPage() {
         setUpChargeAndCardDetails();
         // when 5 charges are there, page is 1, display-size is 2
-        ValidatableResponse response = connectorRestApi
+        ValidatableResponse response = connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref")
                 .withQueryParam("page", "1")
@@ -271,7 +271,7 @@ public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
     public void shouldGetResultsAndAllLinks_whenOnMiddlePage() {
         // when 5 charges are there, page is 2, display-size is 2
         setUpChargeAndCardDetails();
-        ValidatableResponse response = connectorRestApi
+        ValidatableResponse response = connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref")
                 .withQueryParam("page", "2")
@@ -299,7 +299,7 @@ public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
     public void shouldGetResultsAndNoNextLinks_whenOnLastPage() {
         // when 5 charges are there, page is 3, display-size is 2
         setUpChargeAndCardDetails();
-        ValidatableResponse response = connectorRestApi
+        ValidatableResponse response = connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref")
                 .withQueryParam("page", "3")
@@ -327,7 +327,7 @@ public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
     public void shouldGetJustSelfLink_whenJustOneResult() {
         // when 5 charges are there, page is 1, display-size is 2
         setUpChargeAndCardDetails();
-        ValidatableResponse response = connectorRestApi
+        ValidatableResponse response = connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref-1")
                 .withQueryParam("page", "1")
@@ -355,7 +355,7 @@ public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
     public void shouldReceive404_whenRequestingInvalidPage() {
         // when 5 charges are there, page is 10, display-size is 2
         setUpChargeAndCardDetails();
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref")
                 .withQueryParam("page", "10")

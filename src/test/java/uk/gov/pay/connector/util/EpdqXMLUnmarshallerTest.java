@@ -1,16 +1,28 @@
 package uk.gov.pay.connector.util;
 
 import org.junit.Test;
-import uk.gov.pay.connector.service.BaseCancelResponse;
-import uk.gov.pay.connector.service.epdq.EpdqAuthorisationResponse;
-import uk.gov.pay.connector.service.epdq.EpdqCancelResponse;
-import uk.gov.pay.connector.service.epdq.EpdqCaptureResponse;
+import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
+import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
+import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCaptureResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
+import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.service.BaseAuthoriseResponse.AuthoriseStatus.*;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
+import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
+import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.ERROR;
+import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REJECTED;
+import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.SUBMITTED;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_FAILED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_OTHER_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_WAITING_EXTERNAL_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORISATION_WAITING_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_WAITING_RESPONSE;
 
 public class EpdqXMLUnmarshallerTest {
 
