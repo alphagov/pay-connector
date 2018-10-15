@@ -51,7 +51,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
-        ValidatableResponse response = connectorRestApi
+        ValidatableResponse response = connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(1)))
                 .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
@@ -100,7 +100,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("email", "@example.com")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -118,7 +118,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("cardholder_name", "McPayment")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -137,7 +137,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-2"), now(), "master-card");
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-3"), now().minusDays(2), searchedCardBrand);
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("card_brand", searchedCardBrand)
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -154,7 +154,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-1"), now(), "visa");
         addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-2"), now(), "master-card");
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("card_brand", "")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -175,7 +175,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now().minusHours(1), mastercard);
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2), "american-express");
 
-        connectorRestApi
+        connectorRestApiClient
                 .withQueryParams("card_brand", asList(visa, mastercard))
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getChargesV1()
@@ -194,7 +194,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
                 "query param 'display_size' should be a non zero positive integer",
                 "query param 'page' should be a non zero positive integer");
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("to_date", "-1")
                 .withQueryParam("from_date", "-1")
@@ -215,7 +215,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         String id_4 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-4"), now().plusHours(3));
         String id_5 = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref-5"), now().plusHours(4));
 
-        ValidatableResponse response = connectorRestApi
+        ValidatableResponse response = connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("display_size", "2")
                 .withQueryParam("page", "1")
@@ -229,7 +229,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         List<String> charge_ids = collect(results, "charge_id");
         assertThat(charge_ids, is(ImmutableList.of(id_5, id_4)));
 
-        response = connectorRestApi
+        response = connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("display_size", "2")
                 .withQueryParam("page", "2")
@@ -243,7 +243,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         charge_ids = collect(results, "charge_id");
         assertThat(charge_ids, is(ImmutableList.of(id_3, id_2)));
 
-        response = connectorRestApi
+        response = connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("display_size", "2")
                 .withQueryParam("page", "3")
@@ -265,7 +265,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("last_digits_card_number", "1234")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -284,7 +284,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("last_digits_card_number", "12")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -303,7 +303,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("first_digits_card_number", "123456")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -322,7 +322,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("first_digits_card_number", "1234")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -341,7 +341,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("first_digits_card_number", "")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -362,7 +362,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null);
         app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -379,7 +379,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("first_digits_card_number", "123456")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -397,7 +397,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("first_digits_card_number", "")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -415,7 +415,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("first_digits_card_number", "12")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -433,7 +433,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("last_digits_card_number", "1234")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -451,7 +451,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("last_digits_card_number", "")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
@@ -469,7 +469,7 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
         addChargeAndCardDetails(AUTHORISATION_READY, ServicePaymentReference.of("ref-2"), now());
         addChargeAndCardDetails(CAPTURED, ServicePaymentReference.of("ref-3"), now().minusDays(2));
 
-        connectorRestApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("first_digits_card_number", "12")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)

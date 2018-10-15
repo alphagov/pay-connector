@@ -6,7 +6,6 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.util.RestAssuredClient;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.time.ZonedDateTime;
@@ -32,7 +31,6 @@ public class TransactionsApiResourceITest extends ChargingITestBase {
 
     private static final String PROVIDER_NAME = "sandbox";
 
-    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
     private String lastDigitsCardNumber;
     private String firstDigitsCardNumber;
     private String cardHolderName;
@@ -83,7 +81,7 @@ public class TransactionsApiResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
 
-        getChargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref-3")
                 .withQueryParam("page", "1")
@@ -164,7 +162,7 @@ public class TransactionsApiResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
 
-        getChargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref-3")
                 .withQueryParam("page", "1")
@@ -207,7 +205,7 @@ public class TransactionsApiResourceITest extends ChargingITestBase {
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
         app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
 
-        getChargeApi
+        connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("reference", "ref-3")
                 .withQueryParam("page", "1")
@@ -226,6 +224,7 @@ public class TransactionsApiResourceITest extends ChargingITestBase {
                 .body("results[0].gateway_transaction_id", is(transactionIdCharge2))
                 .body("results[0].charge_id", is(externalChargeId2));
     }
+
     private String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, String transactionId, ZonedDateTime fromDate,
                                            String cardBrand, String returnUrl, String email) {
         String externalChargeId = "charge" + chargeId;

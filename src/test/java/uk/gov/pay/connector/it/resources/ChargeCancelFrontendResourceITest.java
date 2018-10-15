@@ -1,27 +1,42 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableList;
-import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import static com.jayway.restassured.http.ContentType.JSON;
-import static javax.ws.rs.core.Response.Status.*;
+import static javax.ws.rs.core.Response.Status.ACCEPTED;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCELLED;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_ERROR;
+import static uk.gov.pay.connector.model.domain.ChargeStatus.USER_CANCEL_READY;
 
 public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
-
-    private RestAssuredClient connectorRestApi;
-    private RestAssuredClient restFrontendCall;
-
 
     private static final List<ChargeStatus> NON_USER_CANCELLABLE_STATUSES = ImmutableList.of(
             AUTHORISATION_REJECTED,
@@ -42,12 +57,6 @@ public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
 
     public ChargeCancelFrontendResourceITest() {
         super("worldpay");
-    }
-
-    @Before
-    public void setupGatewayAccount() {
-        connectorRestApi = new RestAssuredClient(app, accountId);
-        restFrontendCall = new RestAssuredClient(app, accountId);
     }
 
     @Test
@@ -78,7 +87,7 @@ public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
     public void respondWith202_whenCancelAlreadyInProgress() {
         String chargeId = addCharge(USER_CANCEL_READY, "ref", ZonedDateTime.now().minusHours(1), "irrelvant");
         String expectedMessage = "User Cancellation for charge already in progress, " + chargeId;
-        connectorRestApi
+        connectorRestApiClient
                 .withChargeId(chargeId)
                 .postFrontendChargeCancellation()
                 .statusCode(ACCEPTED.getStatusCode())
@@ -117,30 +126,30 @@ public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
         String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
         worldpay.mockCancelSuccess();
 
-        connectorRestApi
+        connectorRestApiClient
                 .withChargeId(chargeId)
                 .postFrontendChargeCancellation()
                 .statusCode(409);
 
-        connectorRestApi
+        connectorRestApiClient
                 .withChargeId(chargeId)
                 .getCharge()
                 .body("state.status", is("started"));
     }
 
     private String userCancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int httpStatusCode) {
-        connectorRestApi
+        connectorRestApiClient
                 .withChargeId(chargeId)
                 .postFrontendChargeCancellation()
                 .statusCode(httpStatusCode);
-        connectorRestApi
+        connectorRestApiClient
                 .withChargeId(chargeId)
                 .getCharge()
                 .body("state.status", is("failed"))
                 .body("state.message", is("Payment was cancelled by the user"))
                 .body("state.code", is("P0030"));
 
-        restFrontendCall
+        connectorRestApiClient
                 .withChargeId(chargeId)
                 .getFrontendCharge()
                 .body("status", is(targetState.getValue()));
@@ -150,7 +159,7 @@ public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
     @Test
     public void respondWith404_whenPaymentNotFound() {
         String unknownChargeId = "2344363244";
-        connectorRestApi
+        connectorRestApiClient
                 .withChargeId(unknownChargeId)
                 .withAccountId(accountId)
                 .postFrontendChargeCancellation()
@@ -165,12 +174,12 @@ public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
         String chargeId = addCharge(AUTHORISATION_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
         worldpay.mockCancelSuccess();
 
-        connectorRestApi
+        connectorRestApiClient
                 .withChargeId(chargeId)
                 .postFrontendChargeCancellation()
                 .statusCode(409);
 
-        connectorRestApi
+        connectorRestApiClient
                 .withChargeId(chargeId)
                 .getCharge()
                 .body("state.status", is("started"));
@@ -183,7 +192,7 @@ public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
                     String chargeId = addCharge(status, "ref", ZonedDateTime.now().minusHours(1), "irrelavant");
                     String incorrectStateMessage = "Charge not in correct state to be processed, " + chargeId;
 
-                    connectorRestApi
+                    connectorRestApiClient
                             .withChargeId(chargeId)
                             .postFrontendChargeCancellation()
                             .statusCode(BAD_REQUEST.getStatusCode())
