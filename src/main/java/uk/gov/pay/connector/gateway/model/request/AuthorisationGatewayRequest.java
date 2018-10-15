@@ -4,6 +4,7 @@ import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator;
 
 import java.util.Optional;
 
@@ -25,7 +26,7 @@ public class AuthorisationGatewayRequest implements GatewayRequest {
     }
 
     public String getAmount() {
-        return String.valueOf(charge.getAmount());
+        return String.valueOf(CorporateSurchargeCalculator.getTotalAmountFor(charge));
     }
 
     public String getDescription() {
