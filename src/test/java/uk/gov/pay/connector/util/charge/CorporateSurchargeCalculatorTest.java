@@ -6,7 +6,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsBuilder;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
-import uk.gov.pay.connector.model.domain.PayersCardType;
+import uk.gov.pay.connector.gateway.model.PayersCardType;
 
 import java.util.Optional;
 

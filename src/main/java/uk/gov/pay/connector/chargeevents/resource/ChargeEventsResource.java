@@ -4,10 +4,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.dao.RefundDao;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.chargeevents.model.TransactionEvent;
 import uk.gov.pay.connector.chargeevents.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.model.domain.RefundHistory;
+import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

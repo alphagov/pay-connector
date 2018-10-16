@@ -6,8 +6,8 @@ import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculato
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.RefundEntity;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.Arrays;
 import java.util.List;

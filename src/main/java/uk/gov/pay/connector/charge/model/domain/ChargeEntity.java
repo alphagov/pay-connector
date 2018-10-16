@@ -15,8 +15,8 @@ import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.chargeevents.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.model.domain.RefundEntity;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.domain.UTCDateTimeConverter;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 

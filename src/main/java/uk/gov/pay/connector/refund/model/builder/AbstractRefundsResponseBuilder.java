@@ -1,7 +1,7 @@
-package uk.gov.pay.connector.model.builder;
+package uk.gov.pay.connector.refund.model.builder;
 
 import com.google.common.collect.ImmutableMap;
-import uk.gov.pay.connector.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import java.net.URI;
 import java.util.ArrayList;

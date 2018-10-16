@@ -1,7 +1,8 @@
-package uk.gov.pay.connector.model.domain;
+package uk.gov.pay.connector.refund.model.domain;
 
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.model.api.ExternalRefundStatus;
+import uk.gov.pay.connector.model.domain.Status;
 
 import java.util.List;
 import java.util.stream.Collectors;

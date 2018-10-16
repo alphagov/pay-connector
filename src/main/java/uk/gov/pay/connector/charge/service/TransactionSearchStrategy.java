@@ -12,7 +12,7 @@ import uk.gov.pay.connector.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.charge.model.domain.Transaction;
 import uk.gov.pay.connector.service.search.AbstractSearchStrategy;
 import uk.gov.pay.connector.service.search.SearchStrategy;

@@ -2,6 +2,8 @@ package uk.gov.pay.connector.model.domain;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;

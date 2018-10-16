@@ -1,11 +1,12 @@
-package uk.gov.pay.connector.dao;
+package uk.gov.pay.connector.refund.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.charge.dao.SearchParams;
-import uk.gov.pay.connector.model.domain.RefundEntity;
-import uk.gov.pay.connector.model.domain.RefundHistory;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.dao.JpaDao;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundHistory;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -20,8 +21,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
 
 @Transactional

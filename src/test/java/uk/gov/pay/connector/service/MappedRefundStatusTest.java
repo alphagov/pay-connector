@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import org.junit.Test;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
 import uk.gov.pay.connector.gateway.model.status.MappedRefundStatus;
 

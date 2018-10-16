@@ -1,7 +1,7 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.refund.model;
 
 import black.door.hate.HalRepresentation;
-import uk.gov.pay.connector.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.UriInfo;

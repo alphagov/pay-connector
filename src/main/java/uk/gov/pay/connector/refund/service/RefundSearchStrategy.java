@@ -1,9 +1,9 @@
-package uk.gov.pay.connector.service;
+package uk.gov.pay.connector.refund.service;
 
-import uk.gov.pay.connector.dao.RefundDao;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.charge.dao.SearchParams;
-import uk.gov.pay.connector.model.SearchRefundsResponse;
-import uk.gov.pay.connector.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.SearchRefundsResponse;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.service.search.AbstractSearchStrategy;
 import uk.gov.pay.connector.service.search.BuildResponseStrategy;
 import uk.gov.pay.connector.service.search.SearchStrategy;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
-import static uk.gov.pay.connector.model.SearchRefundsResponse.anAllRefundsResponseBuilder;
+import static uk.gov.pay.connector.refund.model.SearchRefundsResponse.anAllRefundsResponseBuilder;
 
 public class RefundSearchStrategy extends AbstractSearchStrategy<RefundEntity, SearchRefundsResponse> implements SearchStrategy, BuildResponseStrategy<RefundEntity, SearchRefundsResponse> {
 

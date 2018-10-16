@@ -11,7 +11,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 
 public class SandboxStatusMapperTest {
 

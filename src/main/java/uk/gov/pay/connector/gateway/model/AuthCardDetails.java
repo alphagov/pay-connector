@@ -2,9 +2,8 @@ package uk.gov.pay.connector.gateway.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.PayersCardType;
 
-import static uk.gov.pay.connector.model.domain.PayersCardType.CREDIT_OR_DEBIT;
+import static uk.gov.pay.connector.gateway.model.PayersCardType.CREDIT_OR_DEBIT;
 
 public class AuthCardDetails implements AuthorisationDetails {
 

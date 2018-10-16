@@ -25,7 +25,7 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.AuthUtils;
 
 import javax.ws.rs.client.ClientBuilder;

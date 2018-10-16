@@ -11,7 +11,7 @@ import uk.gov.pay.connector.charge.model.CardHolderName;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.charge.model.domain.Transaction;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
@@ -36,8 +36,8 @@ import static uk.gov.pay.connector.model.api.ExternalRefundStatus.EXTERNAL_SUBMI
 import static uk.gov.pay.connector.model.api.ExternalRefundStatus.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.model.domain.RefundStatus.CREATED;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 
 public class TransactionDaoITest extends DaoITestBase {
 

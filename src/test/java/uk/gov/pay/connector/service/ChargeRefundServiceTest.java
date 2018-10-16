@@ -10,7 +10,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.dao.RefundDao;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.RefundException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -23,9 +23,10 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayRespon
 import uk.gov.pay.connector.gateway.smartpay.SmartpayRefundResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.RefundRequest;
-import uk.gov.pay.connector.model.domain.RefundEntity;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.model.RefundRequest;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.service.ChargeRefundService;
 import uk.gov.pay.connector.service.transaction.TransactionFlow;
 
 import java.util.Optional;

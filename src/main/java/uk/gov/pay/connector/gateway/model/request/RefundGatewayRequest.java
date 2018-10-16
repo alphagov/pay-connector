@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.model.request;
 
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 
 public class RefundGatewayRequest implements GatewayRequest {

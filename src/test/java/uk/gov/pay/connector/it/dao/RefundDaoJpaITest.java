@@ -4,12 +4,12 @@ import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.dao.RefundDao;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.RefundEntity;
-import uk.gov.pay.connector.model.domain.RefundHistory;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundHistory;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,10 +25,10 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
-import static uk.gov.pay.connector.model.domain.RefundStatus.CREATED;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_ERROR;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_SUBMITTED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
 
 public class RefundDaoJpaITest extends DaoITestBase {

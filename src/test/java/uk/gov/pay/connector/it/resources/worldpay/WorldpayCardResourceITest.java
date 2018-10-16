@@ -3,7 +3,7 @@ package uk.gov.pay.connector.it.resources.worldpay;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.model.domain.PayersCardType;
+import uk.gov.pay.connector.gateway.model.PayersCardType;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;

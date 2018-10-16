@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.refund.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
