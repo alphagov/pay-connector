@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.resources;
+package uk.gov.pay.connector.refund.resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,10 +9,10 @@ import uk.gov.pay.connector.exception.RefundException.ErrorCode;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.model.RefundRequest;
-import uk.gov.pay.connector.model.RefundResponse;
-import uk.gov.pay.connector.model.RefundsResponse;
-import uk.gov.pay.connector.service.ChargeRefundService;
+import uk.gov.pay.connector.refund.model.RefundRequest;
+import uk.gov.pay.connector.refund.model.RefundResponse;
+import uk.gov.pay.connector.refund.model.RefundsResponse;
+import uk.gov.pay.connector.refund.service.ChargeRefundService;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;

@@ -10,11 +10,12 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.dao.RefundDao;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.RefundEntity;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.service.SearchRefundsService;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;

@@ -1,9 +1,9 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.refund.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import uk.gov.pay.connector.model.builder.AbstractRefundsResponseBuilder;
+import uk.gov.pay.connector.refund.model.builder.AbstractRefundsResponseBuilder;
 
 import java.util.ArrayList;
 import java.util.List;

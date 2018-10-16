@@ -1,8 +1,8 @@
-package uk.gov.pay.connector.service;
+package uk.gov.pay.connector.refund.service;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.tuple.Pair;
-import uk.gov.pay.connector.dao.RefundDao;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 
 import javax.inject.Inject;

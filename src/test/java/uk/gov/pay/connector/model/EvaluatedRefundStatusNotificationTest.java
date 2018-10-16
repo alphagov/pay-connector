@@ -3,7 +3,7 @@ package uk.gov.pay.connector.model;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Test;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.time.ZonedDateTime;
 import java.util.List;

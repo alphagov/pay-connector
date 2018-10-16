@@ -1,4 +1,6 @@
-package uk.gov.pay.connector.model.domain;
+package uk.gov.pay.connector.gateway.model;
+
+import uk.gov.pay.connector.model.domain.CardTypeEntity;
 
 /**
  * The enum type that should be used to map from and to JSON when

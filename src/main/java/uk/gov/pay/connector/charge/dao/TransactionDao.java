@@ -12,7 +12,7 @@ import org.jooq.impl.DSL;
 import uk.gov.pay.connector.charge.model.TransactionType;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumberConverter;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.charge.model.domain.Transaction;
 import uk.gov.pay.connector.model.domain.UTCDateTimeConverter;
 

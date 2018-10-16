@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model.domain;
 
 import org.junit.Test;
 import uk.gov.pay.connector.model.api.ExternalRefundStatus;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;

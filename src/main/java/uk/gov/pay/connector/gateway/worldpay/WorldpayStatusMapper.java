@@ -3,8 +3,8 @@ package uk.gov.pay.connector.gateway.worldpay;
 import uk.gov.pay.connector.gateway.StatusMapper;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_ERROR;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 
 public class WorldpayStatusMapper {
 

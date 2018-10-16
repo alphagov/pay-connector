@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.refund.model;
 
 import black.door.hate.HalRepresentation;
 import black.door.hate.HalResource;

@@ -10,8 +10,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_ERROR;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.charge.service.StatusFlow.EXPIRE_FLOW;
 import static uk.gov.pay.connector.charge.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.charge.service.StatusFlow.USER_CANCELLATION_FLOW;

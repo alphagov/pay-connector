@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.service;
+package uk.gov.pay.connector.refund.service;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.dao.RefundDao;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.RefundException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -16,10 +16,11 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.RefundRequest;
+import uk.gov.pay.connector.refund.model.RefundRequest;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.model.domain.RefundEntity;
-import uk.gov.pay.connector.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.service.UserNotificationService;
 import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.PreTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.TransactionContext;
@@ -32,7 +33,7 @@ import java.util.Optional;
 import static uk.gov.pay.connector.exception.RefundException.ErrorCode.NOT_SUFFICIENT_AMOUNT_AVAILABLE;
 import static uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
-import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 
 public class ChargeRefundService {
 

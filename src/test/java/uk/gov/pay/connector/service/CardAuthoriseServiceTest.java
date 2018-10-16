@@ -27,7 +27,7 @@ import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.PayersCardType;
+import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.util.AuthUtils;
 
 import javax.persistence.OptimisticLockException;
