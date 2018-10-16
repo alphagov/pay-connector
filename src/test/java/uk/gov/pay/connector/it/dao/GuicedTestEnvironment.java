@@ -7,7 +7,7 @@ import com.google.inject.Singleton;
 import com.google.inject.persist.PersistService;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.dao.ChargeEventDao;
+import uk.gov.pay.connector.chargeevents.dao.ChargeEventDao;
 import uk.gov.pay.connector.dao.TokenDao;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 

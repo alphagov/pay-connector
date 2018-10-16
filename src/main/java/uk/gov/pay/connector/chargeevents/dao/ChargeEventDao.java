@@ -1,9 +1,10 @@
-package uk.gov.pay.connector.dao;
+package uk.gov.pay.connector.chargeevents.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.dao.JpaDao;
+import uk.gov.pay.connector.chargeevents.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import javax.inject.Inject;

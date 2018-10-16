@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+
 public final class AuthCardDetailsBuilder {
     private String cardNo = "4242424242424242";
     private String cardHolder = "Mr Test";

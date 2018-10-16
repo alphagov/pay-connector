@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.charge.model;
 
-import uk.gov.pay.connector.model.LastDigitsCardNumber;
-
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 

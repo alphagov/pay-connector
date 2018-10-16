@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.epdq.model.response;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.model.domain.Auth3dsDetails;
+import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.epdq.model.EpdqParamsFor3ds;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 

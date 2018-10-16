@@ -30,7 +30,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.model.domain.Auth3dsDetails;
+import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 
 import javax.ws.rs.client.Invocation;
 import java.nio.charset.Charset;

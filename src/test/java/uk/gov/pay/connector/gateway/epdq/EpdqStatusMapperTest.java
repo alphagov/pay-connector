@@ -17,9 +17,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUND_ERROR;
-import static uk.gov.pay.connector.service.StatusFlow.EXPIRE_FLOW;
-import static uk.gov.pay.connector.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
-import static uk.gov.pay.connector.service.StatusFlow.USER_CANCELLATION_FLOW;
+import static uk.gov.pay.connector.charge.service.StatusFlow.EXPIRE_FLOW;
+import static uk.gov.pay.connector.charge.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
+import static uk.gov.pay.connector.charge.service.StatusFlow.USER_CANCELLATION_FLOW;
 
 public class EpdqStatusMapperTest {
 

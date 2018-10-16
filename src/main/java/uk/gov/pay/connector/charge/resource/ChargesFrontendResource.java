@@ -16,7 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.PersistedCard;
+import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator;
 

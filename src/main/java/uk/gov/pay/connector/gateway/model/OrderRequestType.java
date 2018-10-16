@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.gateway.model;
 
 public enum OrderRequestType {
     AUTHORISE("authorise"),

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model.domain;
+package uk.gov.pay.connector.chargeevents.model.domain;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 

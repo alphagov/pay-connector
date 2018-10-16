@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.epdq;
 
-import uk.gov.pay.connector.model.OrderRequestType;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForMaintenanceOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder;
@@ -8,7 +8,7 @@ import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForQueryOr
 import uk.gov.pay.connector.gateway.templates.FormUrlEncodedStringBuilder;
 import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
 import uk.gov.pay.connector.gateway.templates.PayloadDefinition;
-import uk.gov.pay.connector.service.OrderRequestBuilder;
+import uk.gov.pay.connector.gateway.OrderRequestBuilder;
 
 import javax.ws.rs.core.MediaType;
 

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model.domain;
+package uk.gov.pay.connector.charge.model.domain;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;

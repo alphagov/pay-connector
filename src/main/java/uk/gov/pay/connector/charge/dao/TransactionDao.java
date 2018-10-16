@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.dao;
+package uk.gov.pay.connector.charge.dao;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -9,11 +9,11 @@ import org.jooq.SelectJoinStep;
 import org.jooq.SelectOrderByStep;
 import org.jooq.SelectSeekStep1;
 import org.jooq.impl.DSL;
-import uk.gov.pay.connector.model.TransactionType;
+import uk.gov.pay.connector.charge.model.TransactionType;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumberConverter;
 import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.model.domain.Transaction;
+import uk.gov.pay.connector.charge.model.domain.Transaction;
 import uk.gov.pay.connector.model.domain.UTCDateTimeConverter;
 
 import javax.persistence.EntityManager;

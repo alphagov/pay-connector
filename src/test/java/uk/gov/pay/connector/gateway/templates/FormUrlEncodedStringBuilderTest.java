@@ -8,7 +8,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
-import uk.gov.pay.connector.service.OrderRequestBuilder;
+import uk.gov.pay.connector.gateway.OrderRequestBuilder;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;

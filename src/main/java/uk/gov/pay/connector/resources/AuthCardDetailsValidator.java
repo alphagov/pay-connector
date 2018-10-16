@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.resources;
 
 import uk.gov.pay.connector.model.domain.Address;
-import uk.gov.pay.connector.model.domain.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
 import java.util.regex.Pattern;
 

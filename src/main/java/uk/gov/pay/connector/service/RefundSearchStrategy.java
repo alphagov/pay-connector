@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import uk.gov.pay.connector.dao.RefundDao;
-import uk.gov.pay.connector.dao.SearchParams;
+import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.model.SearchRefundsResponse;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.service.search.AbstractSearchStrategy;

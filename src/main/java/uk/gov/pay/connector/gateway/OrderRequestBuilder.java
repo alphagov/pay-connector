@@ -1,9 +1,8 @@
-package uk.gov.pay.connector.service;
+package uk.gov.pay.connector.gateway;
 
 
-import uk.gov.pay.connector.model.OrderRequestType;
-import uk.gov.pay.connector.model.domain.AuthCardDetails;
-import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
 
 import javax.ws.rs.core.MediaType;

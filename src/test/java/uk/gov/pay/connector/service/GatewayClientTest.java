@@ -15,7 +15,7 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.OrderRequestType;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
