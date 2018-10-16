@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model.domain;
+package uk.gov.pay.connector.gatewayaccount.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;

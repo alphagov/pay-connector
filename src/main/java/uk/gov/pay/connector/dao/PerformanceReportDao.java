@@ -7,7 +7,7 @@ import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.model.domain.report.PerformanceReportEntity;
 import uk.gov.pay.connector.model.domain.report.GatewayAccountPerformanceReportEntity;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
 
 import javax.inject.Inject;

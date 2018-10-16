@@ -12,7 +12,7 @@ import uk.gov.pay.connector.rules.GuiceAppWithPostgresRule;
 import uk.gov.pay.connector.service.CardCaptureProcess;
 
 import static io.dropwizard.testing.ConfigOverride.config;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GatewaySocketErrorITest extends BaseGatewayITest {

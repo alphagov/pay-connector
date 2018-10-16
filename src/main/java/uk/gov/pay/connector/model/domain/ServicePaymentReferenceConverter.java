@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
-import uk.gov.pay.connector.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;

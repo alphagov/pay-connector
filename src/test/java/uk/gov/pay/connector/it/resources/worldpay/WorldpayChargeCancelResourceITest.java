@@ -3,7 +3,7 @@ package uk.gov.pay.connector.it.resources.worldpay;
 import com.jayway.restassured.http.ContentType;
 import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 public class WorldpayChargeCancelResourceITest extends ChargingITestBase {
 

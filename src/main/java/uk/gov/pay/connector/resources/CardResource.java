@@ -3,6 +3,7 @@ package uk.gov.pay.connector.resources;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
@@ -13,7 +14,6 @@ import uk.gov.pay.connector.model.domain.AuthCardDetails;
 import uk.gov.pay.connector.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.service.CardAuthoriseService;
 import uk.gov.pay.connector.service.CardCaptureService;
-import uk.gov.pay.connector.service.ChargeCancelService;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;

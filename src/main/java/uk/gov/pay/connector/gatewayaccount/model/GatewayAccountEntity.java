@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import uk.gov.pay.connector.gatewayaccount.util.CredentialsConverter;
+import uk.gov.pay.connector.gatewayaccount.util.JsonToMapConverter;
 import uk.gov.pay.connector.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.model.domain.CredentialsConverter;
 import uk.gov.pay.connector.model.domain.EmailCollectionMode;
 import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.model.domain.EmailNotificationType;
-import uk.gov.pay.connector.model.domain.JsonToMapConverter;
 import uk.gov.pay.connector.model.domain.NotificationCredentials;
 
 import javax.persistence.CascadeType;

@@ -1,13 +1,13 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.charge.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.PersistedCard;
 
 import java.util.List;
@@ -66,7 +66,7 @@ public class FrontendChargeResponse extends ChargeResponse {
                                    List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary,
                                    SettlementSummary settlementSummary, PersistedCard chargeCardDetails,
                                    Auth3dsData auth3dsData, GatewayAccountEntity gatewayAccount,
-                                   SupportedLanguage language, boolean delayedCapture, 
+                                   SupportedLanguage language, boolean delayedCapture,
                                    Long corporateSurcharge, Long totalAmount) {
         super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference,
                 providerName, createdDate, dataLinks, refundSummary, settlementSummary, chargeCardDetails, auth3dsData,

@@ -6,7 +6,7 @@ import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.model.domain.RefundStatus.REFUNDED;
 
 public class StatusMapperTest {

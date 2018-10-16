@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.sandbox;
 
 import fj.data.Either;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.BasePaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.StatusMapper;
@@ -23,13 +24,12 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
 
 import java.util.Optional;
 
 import static java.util.UUID.randomUUID;
+import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.model.ErrorType.GENERIC_GATEWAY_ERROR;
 
 public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, String> {
 

@@ -4,7 +4,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 
 public class EpdqChargeApiResourceITest extends ChargingITestBase {
     public EpdqChargeApiResourceITest() {

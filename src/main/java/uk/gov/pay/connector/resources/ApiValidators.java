@@ -20,15 +20,15 @@ import static fj.data.Either.left;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.resources.ChargesApiResource.AMOUNT_KEY;
-import static uk.gov.pay.connector.resources.ChargesApiResource.EMAIL_KEY;
-import static uk.gov.pay.connector.resources.ChargesApiResource.LANGUAGE_KEY;
-import static uk.gov.pay.connector.resources.ChargesApiResource.MAXIMUM_FIELDS_SIZE;
-import static uk.gov.pay.connector.resources.ChargesApiResource.DELAYED_CAPTURE_KEY;
-import static uk.gov.pay.connector.resources.ChargesApiResource.MAX_AMOUNT;
-import static uk.gov.pay.connector.resources.ChargesApiResource.MIN_AMOUNT;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.AMOUNT_KEY;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.DELAYED_CAPTURE_KEY;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.EMAIL_KEY;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.LANGUAGE_KEY;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MAXIMUM_FIELDS_SIZE;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MAX_AMOUNT;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MIN_AMOUNT;
 
-class ApiValidators {
+public class ApiValidators {
 
     private enum ChargeParamValidator {
         EMAIL(EMAIL_KEY) {
@@ -92,7 +92,7 @@ class ApiValidators {
         }
     }
 
-    static Optional<List> validateQueryParams(List<Pair<String, String>> dateParams, List<Pair<String, Long>> nonNegativePairMap) {
+    public static Optional<List> validateQueryParams(List<Pair<String, String>> dateParams, List<Pair<String, Long>> nonNegativePairMap) {
         Map<String, String> invalidQueryParams = new HashMap<>();
 
         dateParams.forEach(param -> {
@@ -119,14 +119,14 @@ class ApiValidators {
         return Optional.empty();
     }
 
-    static Either<String, Boolean> validateGatewayAccountReference(GatewayAccountDao gatewayAccountDao, Long gatewayAccountId) {
+    public static Either<String, Boolean> validateGatewayAccountReference(GatewayAccountDao gatewayAccountDao, Long gatewayAccountId) {
         if (!gatewayAccountDao.findById(gatewayAccountId).isPresent()) {
             return left(format("account with id %s not found", gatewayAccountId));
         }
         return right(true);
     }
 
-    static Optional<List<String>> validateChargeParams(Map<String, String> inputData) {
+    public static Optional<List<String>> validateChargeParams(Map<String, String> inputData) {
         List<String> invalid = inputData.entrySet().stream()
                 .filter(entry -> ChargeParamValidator.fromString(entry.getKey())
                         .map(validator -> !validator.validate(entry.getValue()))
@@ -139,7 +139,7 @@ class ApiValidators {
                 : Optional.of(invalid);
     }
 
-    static boolean validateChargePatchParams(PatchRequestBuilder.PatchRequest chargePatchRequest) {
+    public static boolean validateChargePatchParams(PatchRequestBuilder.PatchRequest chargePatchRequest) {
         boolean invalid = ChargeParamValidator.fromString(chargePatchRequest.getPath())
                 .map(validator -> !validator.validate(chargePatchRequest.getValue()))
                 .orElse(false);
@@ -147,7 +147,7 @@ class ApiValidators {
         return !invalid;
     }
 
-    static Either<List<String>, Pair<ZonedDateTime, ZonedDateTime>> validateFromDateIsBeforeToDate(
+    public static Either<List<String>, Pair<ZonedDateTime, ZonedDateTime>> validateFromDateIsBeforeToDate(
             String fromDateParamName, String fromDate, String toDateParamName, String toDate) {
         List<String> errors = newArrayList();
 
@@ -174,7 +174,7 @@ class ApiValidators {
         return left(errors);
     }
 
-    static Optional<ZonedDateTime> parseZonedDateTime(String zdt) {
+    public static Optional<ZonedDateTime> parseZonedDateTime(String zdt) {
         if (zdt == null) {
             return Optional.empty();
         }

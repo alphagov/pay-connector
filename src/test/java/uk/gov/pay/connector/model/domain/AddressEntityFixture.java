@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
+import uk.gov.pay.connector.charge.model.AddressEntity;
+
 public final class AddressEntityFixture {
 
     private String line1 = "The White Chapel Building";

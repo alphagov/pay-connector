@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.model.status;
 
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 
 public interface InterpretedStatus {

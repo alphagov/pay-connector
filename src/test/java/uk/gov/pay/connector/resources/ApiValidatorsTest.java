@@ -20,16 +20,16 @@ import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.AMOUNT_KEY;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.DELAYED_CAPTURE_KEY;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.EMAIL_KEY;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.LANGUAGE_KEY;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MAX_AMOUNT;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MIN_AMOUNT;
 import static uk.gov.pay.connector.resources.ApiValidators.parseZonedDateTime;
 import static uk.gov.pay.connector.resources.ApiValidators.validateChargeParams;
 import static uk.gov.pay.connector.resources.ApiValidators.validateChargePatchParams;
 import static uk.gov.pay.connector.resources.ApiValidators.validateFromDateIsBeforeToDate;
-import static uk.gov.pay.connector.resources.ChargesApiResource.AMOUNT_KEY;
-import static uk.gov.pay.connector.resources.ChargesApiResource.DELAYED_CAPTURE_KEY;
-import static uk.gov.pay.connector.resources.ChargesApiResource.EMAIL_KEY;
-import static uk.gov.pay.connector.resources.ChargesApiResource.LANGUAGE_KEY;
-import static uk.gov.pay.connector.resources.ChargesApiResource.MAX_AMOUNT;
-import static uk.gov.pay.connector.resources.ChargesApiResource.MIN_AMOUNT;
 
 
 public class ApiValidatorsTest {

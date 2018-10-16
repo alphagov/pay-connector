@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.model.response;
 
 import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import java.util.Optional;
 

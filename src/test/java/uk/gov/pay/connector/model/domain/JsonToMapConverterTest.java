@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.postgresql.util.PGobject;
+import uk.gov.pay.connector.gatewayaccount.util.JsonToMapConverter;
 
 import java.util.Map;
 

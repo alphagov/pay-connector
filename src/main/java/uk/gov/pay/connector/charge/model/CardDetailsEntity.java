@@ -1,10 +1,11 @@
-package uk.gov.pay.connector.model.domain;
+package uk.gov.pay.connector.charge.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import uk.gov.pay.connector.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.model.domain.PersistedCard;
 
 import javax.persistence.Column;
 import javax.persistence.Convert;

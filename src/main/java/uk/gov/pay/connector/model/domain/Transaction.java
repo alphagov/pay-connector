@@ -2,9 +2,11 @@ package uk.gov.pay.connector.model.domain;
 
 import org.eclipse.persistence.annotations.ReadOnly;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumberConverter;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumberConverter;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.model.ServicePaymentReference;
 
 import javax.persistence.ColumnResult;
 import javax.persistence.ConstructorResult;

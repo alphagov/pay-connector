@@ -1,19 +1,21 @@
-package uk.gov.pay.connector.service.search;
+package uk.gov.pay.connector.charge.service;
 
 import com.google.inject.Inject;
+import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.charge.model.ChargeResponse.RefundSummary;
+import uk.gov.pay.connector.charge.model.TransactionResponse.TransactionResponseBuilder;
 import uk.gov.pay.connector.dao.SearchParams;
 import uk.gov.pay.connector.dao.TransactionDao;
-import uk.gov.pay.connector.model.ChargeResponse;
-import uk.gov.pay.connector.model.ChargeResponse.RefundSummary;
-import uk.gov.pay.connector.model.TransactionResponse.TransactionResponseBuilder;
 import uk.gov.pay.connector.model.TransactionType;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.PersistedCard;
 import uk.gov.pay.connector.model.domain.RefundStatus;
 import uk.gov.pay.connector.model.domain.Transaction;
+import uk.gov.pay.connector.service.search.AbstractSearchStrategy;
+import uk.gov.pay.connector.service.search.SearchStrategy;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator;
 
@@ -21,7 +23,7 @@ import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
 import static javax.ws.rs.HttpMethod.GET;
-import static uk.gov.pay.connector.model.TransactionResponse.aTransactionResponseBuilder;
+import static uk.gov.pay.connector.charge.model.TransactionResponse.aTransactionResponseBuilder;
 
 public class TransactionSearchStrategy extends AbstractSearchStrategy<Transaction, ChargeResponse> implements SearchStrategy {
 

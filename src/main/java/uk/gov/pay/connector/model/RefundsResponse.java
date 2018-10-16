@@ -2,7 +2,7 @@ package uk.gov.pay.connector.model;
 
 import black.door.hate.HalRepresentation;
 import black.door.hate.HalResource;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;

@@ -10,7 +10,7 @@ import uk.gov.pay.connector.it.service.CardCaptureProcessBaseITest;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.service.CardCaptureProcess;
 
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {

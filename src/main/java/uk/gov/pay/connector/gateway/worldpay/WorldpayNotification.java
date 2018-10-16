@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import org.eclipse.persistence.oxm.annotations.XmlPath;
 import uk.gov.pay.connector.model.ChargeStatusRequest;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.time.LocalDate;

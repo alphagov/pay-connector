@@ -4,8 +4,8 @@ import com.google.common.collect.ImmutableList;
 import com.jayway.restassured.response.Header;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Test;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.model.ServicePaymentReference;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.util.List;
@@ -25,9 +25,9 @@ import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.AUTHORISATION_READY;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 
 public class ChargesApiResourceJsonPaginationITest extends ChargingITestBase {
     private static final String PROVIDER_NAME = "sandbox";

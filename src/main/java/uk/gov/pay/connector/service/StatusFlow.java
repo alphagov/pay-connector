@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.service;
 
 import com.google.common.collect.ImmutableList;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import java.util.List;
 
-import static uk.gov.pay.connector.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.*;
 
 public class StatusFlow {
 

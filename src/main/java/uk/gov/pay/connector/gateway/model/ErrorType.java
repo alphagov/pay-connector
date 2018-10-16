@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model;
+package uk.gov.pay.connector.gateway.model;
 
 public enum ErrorType {
     GENERIC_GATEWAY_ERROR,

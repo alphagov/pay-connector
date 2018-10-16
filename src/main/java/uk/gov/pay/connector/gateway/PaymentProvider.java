@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway;
 
 import fj.data.Either;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -12,7 +13,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.model.domain.ChargeEntity;
 
 import java.util.Optional;
 

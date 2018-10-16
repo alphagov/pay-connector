@@ -3,13 +3,12 @@ package uk.gov.pay.connector.util;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.model.ChargeStatusRequest;
-import uk.gov.pay.connector.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
