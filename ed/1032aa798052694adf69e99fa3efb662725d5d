@@ -5,3 +5,5 @@ release.alpha_release-482.date=2018-10-16:12:51:51
 staging-2.tag=alpha_staging-2-482
 
 staging-2.alpha_staging-2-482.date=2018-10-16:13:05:21
+
+staging-2.alpha_staging-2-482.status=success
