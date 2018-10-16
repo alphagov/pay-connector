@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.resources;
 
 import black.door.hate.HalRepresentation;
-import uk.gov.pay.connector.dao.SearchParams;
+import uk.gov.pay.connector.charge.dao.SearchParams;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;

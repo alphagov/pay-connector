@@ -3,7 +3,7 @@ package uk.gov.pay.connector.charge.service;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.dao.SearchParams;
+import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.service.search.AbstractSearchStrategy;
 import uk.gov.pay.connector.service.search.SearchStrategy;
 

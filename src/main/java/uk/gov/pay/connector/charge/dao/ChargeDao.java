@@ -5,7 +5,6 @@ import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.dao.JpaDao;
-import uk.gov.pay.connector.dao.SearchParams;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import javax.inject.Inject;

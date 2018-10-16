@@ -34,7 +34,7 @@ import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.resources.CardResource;
 import uk.gov.pay.connector.resources.CardTypesResource;
-import uk.gov.pay.connector.resources.ChargeEventsResource;
+import uk.gov.pay.connector.chargeevents.resource.ChargeEventsResource;
 import uk.gov.pay.connector.resources.ChargeRefundsResource;
 import uk.gov.pay.connector.resources.EmailNotificationResource;
 import uk.gov.pay.connector.resources.HealthCheckResource;

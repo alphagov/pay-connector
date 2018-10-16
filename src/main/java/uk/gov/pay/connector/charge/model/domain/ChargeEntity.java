@@ -13,12 +13,10 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.domain.AbstractVersionedEntity;
-import uk.gov.pay.connector.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
-import uk.gov.pay.connector.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.chargeevents.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundStatus;
-import uk.gov.pay.connector.model.domain.ServicePaymentReferenceConverter;
 import uk.gov.pay.connector.model.domain.UTCDateTimeConverter;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 

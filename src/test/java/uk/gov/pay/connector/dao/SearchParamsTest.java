@@ -1,10 +1,11 @@
 package uk.gov.pay.connector.dao;
 
 import org.junit.Test;
+import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
-import uk.gov.pay.connector.model.CardHolderName;
-import uk.gov.pay.connector.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.CardHolderName;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 
 import java.time.ZonedDateTime;
@@ -15,7 +16,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.model.TransactionType.PAYMENT;
+import static uk.gov.pay.connector.charge.model.TransactionType.PAYMENT;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;

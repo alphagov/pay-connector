@@ -5,14 +5,14 @@ import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.dao.ChargeEventDao;
+import uk.gov.pay.connector.chargeevents.dao.ChargeEventDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.Auth3dsDetails;
+import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import javax.inject.Inject;

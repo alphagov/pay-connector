@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model;
 
 import org.junit.Assert;
 import org.junit.Test;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;

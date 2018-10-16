@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.service;
+package uk.gov.pay.connector.charge.service;
 
 import com.google.common.collect.ImmutableList;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;

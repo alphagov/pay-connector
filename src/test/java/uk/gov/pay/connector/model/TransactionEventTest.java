@@ -1,14 +1,15 @@
 package uk.gov.pay.connector.model;
 
 import org.junit.Test;
+import uk.gov.pay.connector.chargeevents.model.TransactionEvent;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 
 import java.time.ZonedDateTime;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.model.TransactionEvent.Type;
-import static uk.gov.pay.connector.model.TransactionEvent.extractState;
+import static uk.gov.pay.connector.chargeevents.model.TransactionEvent.Type;
+import static uk.gov.pay.connector.chargeevents.model.TransactionEvent.extractState;
 import static uk.gov.pay.connector.model.api.ExternalRefundStatus.EXTERNAL_SUBMITTED;
 
 public class TransactionEventTest {

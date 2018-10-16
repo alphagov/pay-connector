@@ -6,9 +6,9 @@ import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalTransactionState;
-import uk.gov.pay.connector.model.builder.AbstractChargeResponseBuilder;
+import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.PersistedCard;
+import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 
 import java.util.List;
 import java.util.Map;

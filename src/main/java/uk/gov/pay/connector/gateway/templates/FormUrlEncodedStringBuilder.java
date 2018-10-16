@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.templates;
 
 import org.apache.http.client.utils.URLEncodedUtils;
-import uk.gov.pay.connector.service.OrderRequestBuilder.TemplateData;
+import uk.gov.pay.connector.gateway.OrderRequestBuilder.TemplateData;
 
 import java.nio.charset.Charset;
 

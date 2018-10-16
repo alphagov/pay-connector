@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model.domain;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.chargeevents.model.domain.ChargeEventEntity;
 
 import java.time.ZonedDateTime;
 

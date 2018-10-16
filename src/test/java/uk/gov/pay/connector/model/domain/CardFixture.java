@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+
 import static uk.gov.pay.connector.model.domain.AddressFixture.aValidAddress;
 
 public class CardFixture {

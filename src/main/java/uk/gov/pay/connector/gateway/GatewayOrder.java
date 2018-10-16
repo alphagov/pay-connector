@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway;
 
-import uk.gov.pay.connector.model.OrderRequestType;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
 import javax.ws.rs.core.MediaType;
 import java.util.Optional;

@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.service.search;
 
-import uk.gov.pay.connector.dao.SearchParams;
+import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.resources.PaginationResponseBuilder;
 
 import javax.ws.rs.core.Response;

@@ -24,7 +24,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.Authori
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
-import uk.gov.pay.connector.model.domain.Auth3dsDetails;
+import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.AuthUtils;
 

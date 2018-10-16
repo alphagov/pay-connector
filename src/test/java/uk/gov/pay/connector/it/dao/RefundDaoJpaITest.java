@@ -5,7 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.dao.RefundDao;
-import uk.gov.pay.connector.dao.SearchParams;
+import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.model.domain.RefundEntity;
 import uk.gov.pay.connector.model.domain.RefundHistory;

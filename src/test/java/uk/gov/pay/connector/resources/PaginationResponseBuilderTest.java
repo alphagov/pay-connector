@@ -5,7 +5,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.dao.SearchParams;
+import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 
 import javax.ws.rs.core.Response;

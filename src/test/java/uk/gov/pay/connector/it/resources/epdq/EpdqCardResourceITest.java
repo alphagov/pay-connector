@@ -10,7 +10,7 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.domain.Auth3dsDetails.Auth3dsResult.AUTHORISED;
+import static uk.gov.pay.connector.gateway.model.Auth3dsDetails.Auth3dsResult.AUTHORISED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;

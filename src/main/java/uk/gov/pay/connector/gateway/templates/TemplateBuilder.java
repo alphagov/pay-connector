@@ -4,7 +4,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
-import uk.gov.pay.connector.service.OrderRequestBuilder.TemplateData;
+import uk.gov.pay.connector.gateway.OrderRequestBuilder.TemplateData;
 
 import java.io.IOException;
 import java.io.StringWriter;

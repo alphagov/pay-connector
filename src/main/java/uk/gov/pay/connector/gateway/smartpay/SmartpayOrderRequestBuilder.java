@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
-import uk.gov.pay.connector.model.OrderRequestType;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
 import uk.gov.pay.connector.gateway.templates.TemplateBuilder;
-import uk.gov.pay.connector.service.OrderRequestBuilder;
+import uk.gov.pay.connector.gateway.OrderRequestBuilder;
 
 import javax.ws.rs.core.MediaType;
 

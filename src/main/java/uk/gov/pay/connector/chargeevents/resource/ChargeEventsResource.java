@@ -1,12 +1,12 @@
-package uk.gov.pay.connector.resources;
+package uk.gov.pay.connector.chargeevents.resource;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.dao.RefundDao;
-import uk.gov.pay.connector.model.TransactionEvent;
-import uk.gov.pay.connector.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.chargeevents.model.TransactionEvent;
+import uk.gov.pay.connector.chargeevents.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.model.domain.RefundHistory;
 
 import javax.ws.rs.GET;
@@ -21,9 +21,9 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
-import static uk.gov.pay.connector.model.TransactionEvent.Type.PAYMENT;
-import static uk.gov.pay.connector.model.TransactionEvent.Type.REFUND;
-import static uk.gov.pay.connector.model.TransactionEvent.extractState;
+import static uk.gov.pay.connector.chargeevents.model.TransactionEvent.Type.PAYMENT;
+import static uk.gov.pay.connector.chargeevents.model.TransactionEvent.Type.REFUND;
+import static uk.gov.pay.connector.chargeevents.model.TransactionEvent.extractState;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
 @Path("/")

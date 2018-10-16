@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.templates;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.http.NameValuePair;
-import uk.gov.pay.connector.service.OrderRequestBuilder;
+import uk.gov.pay.connector.gateway.OrderRequestBuilder;
 
 public interface PayloadDefinition<T extends OrderRequestBuilder.TemplateData> {
 
