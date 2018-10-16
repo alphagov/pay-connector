@@ -191,37 +191,6 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
-    public void shouldBeBadRequestForUpdateStatusWithEmptyBody() {
-        String chargeId = postToCreateACharge(expectedAmount);
-        String putBody = "";
-
-        connectorRestApi
-                .withChargeId(chargeId)
-                .putChargeStatus(putBody)
-                .statusCode(BAD_REQUEST.getStatusCode())
-                .body(is("{\"message\":\"Field(s) missing: [new_status]\"}"));
-
-        //charge status should remain CREATED
-        validateGetCharge(expectedAmount, chargeId, CREATED, true);
-    }
-
-    @Test
-    public void shouldBeBadRequestForUpdateStatusForUnrecognisedStatus() {
-        String chargeId = postToCreateACharge(expectedAmount);
-        String putBody = toJson(ImmutableMap.of("new_status", "junk"));
-
-        connectorRestApi
-                .withAccountId(accountId)
-                .withChargeId(chargeId)
-                .putChargeStatus(putBody)
-                .statusCode(BAD_REQUEST.getStatusCode())
-                .body(is("{\"message\":\"charge status not recognized: junk\"}"));
-
-        //charge status should remain CREATED
-        validateGetCharge(expectedAmount, chargeId, CREATED, true);
-    }
-
-    @Test
     public void cannotGetCharge_WhenInvalidChargeId() {
         String chargeId = "23235124";
         connectorRestApi
