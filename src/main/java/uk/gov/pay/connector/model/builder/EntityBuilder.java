@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.model.builder;
 
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.NotificationCredentials;
+import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 
 public class EntityBuilder {
 

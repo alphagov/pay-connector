@@ -20,7 +20,7 @@ import uk.gov.pay.connector.refund.model.RefundRequest;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.service.UserNotificationService;
+import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.pay.connector.service.transaction.NonTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.PreTransactionalOperation;
 import uk.gov.pay.connector.service.transaction.TransactionContext;

@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gatewayaccount.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
-import uk.gov.pay.connector.dao.JpaDao;
+import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 

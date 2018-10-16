@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
 import uk.gov.pay.connector.exception.ValidationException;
-import uk.gov.pay.connector.model.domain.EmailCollectionMode;
+import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.validations.RequestValidator;
 
 import java.util.Arrays;

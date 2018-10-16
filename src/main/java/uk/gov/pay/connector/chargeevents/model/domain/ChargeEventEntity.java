@@ -3,7 +3,7 @@ package uk.gov.pay.connector.chargeevents.model.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.AbstractVersionedEntity;
+import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.model.domain.UTCDateTimeConverter;
 
 import javax.persistence.Column;

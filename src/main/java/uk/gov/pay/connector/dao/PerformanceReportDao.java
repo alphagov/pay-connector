@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
+import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.model.domain.report.PerformanceReportEntity;
 import uk.gov.pay.connector.model.domain.report.GatewayAccountPerformanceReportEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;

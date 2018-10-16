@@ -3,7 +3,7 @@ package uk.gov.pay.connector.refund.dao;
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.charge.dao.SearchParams;
-import uk.gov.pay.connector.dao.JpaDao;
+import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;

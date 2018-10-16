@@ -11,8 +11,8 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.EmailCollectionMode;
-import uk.gov.pay.connector.model.domain.EmailNotificationType;
+import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;

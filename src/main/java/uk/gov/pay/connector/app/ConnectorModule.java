@@ -13,7 +13,7 @@ import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidat
 import uk.gov.pay.connector.service.CardExecutorService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.gateway.PaymentProviders;
-import uk.gov.pay.connector.service.notify.NotifyClientFactoryProvider;
+import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactoryProvider;
 import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.util.XrayUtils;
 import uk.gov.pay.connector.validations.RequestValidator;

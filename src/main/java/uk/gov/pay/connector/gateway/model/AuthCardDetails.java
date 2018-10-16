@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.common.model.domain.Address;
 
 import static uk.gov.pay.connector.gateway.model.PayersCardType.CREDIT_OR_DEBIT;
 
