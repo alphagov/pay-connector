@@ -47,8 +47,6 @@ public class SearchRefundsResponse {
     @JsonProperty("status")
     private String status;
 
-    @JsonProperty("charge_id")
-
     private String extChargeId;
 
     @JsonProperty("amount_submitted")
@@ -84,6 +82,7 @@ public class SearchRefundsResponse {
         return status;
     }
 
+    @JsonProperty("charge_id")
     public String getChargeId() {
         return extChargeId;
     }
