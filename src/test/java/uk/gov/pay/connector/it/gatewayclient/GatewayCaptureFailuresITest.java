@@ -28,7 +28,7 @@ public class GatewayCaptureFailuresITest extends BaseGatewayITest {
     }
 
     @Test
-    public void shouldFailCaptureWhenUnexpectedResponseCodeFromGateway() throws Exception {
+    public void shouldFailCaptureWhenUnexpectedResponseCodeFromGateway() {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
         setupGatewayStub().respondWithUnexpectedResponseCodeWhenCapture();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
