@@ -5,6 +5,7 @@ server:
   adminConnectors:
     - type: http
       port: 0
+  registerDefaultExceptionMappers: false
 
 logging:
     level: WARN
