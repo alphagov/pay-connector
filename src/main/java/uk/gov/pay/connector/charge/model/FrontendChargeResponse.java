@@ -46,7 +46,7 @@ public class FrontendChargeResponse extends ChargeResponse {
             return new FrontendChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl,
                     email, description, reference, providerName, createdDate, links, status, refundSummary,
                     settlementSummary, persistedCard, auth3dsData, gatewayAccount, language, delayedCapture,
-                    corporateSurcharge, totalAmount);
+                    corporateCardSurcharge, totalAmount);
         }
     }
 
@@ -67,10 +67,10 @@ public class FrontendChargeResponse extends ChargeResponse {
                                    SettlementSummary settlementSummary, PersistedCard chargeCardDetails,
                                    Auth3dsData auth3dsData, GatewayAccountEntity gatewayAccount,
                                    SupportedLanguage language, boolean delayedCapture,
-                                   Long corporateSurcharge, Long totalAmount) {
+                                   Long corporateCardSurcharge, Long totalAmount) {
         super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference,
                 providerName, createdDate, dataLinks, refundSummary, settlementSummary, chargeCardDetails, auth3dsData,
-                language, delayedCapture, corporateSurcharge, totalAmount);
+                language, delayedCapture, corporateCardSurcharge, totalAmount);
         this.status = status;
         this.gatewayAccount = gatewayAccount;
     }

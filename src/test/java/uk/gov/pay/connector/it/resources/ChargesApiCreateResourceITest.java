@@ -41,7 +41,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     private static final String JSON_PROVIDER_KEY = "payment_provider";
     private static final String JSON_LANGUAGE_KEY = "language";
     private static final String JSON_DELAYED_CAPTURE_KEY = "delayed_capture";
-    private static final String JSON_CORPORATE_SURCHARGE_KEY = "corporate_surcharge";
+    private static final String JSON_CORPORATE_CARD_SURCHARGE_KEY = "corporate_card_surcharge";
     private static final String JSON_TOTAL_AMOUNT_KEY = "total_amount";
     private static final String PROVIDER_NAME = "sandbox";
 
@@ -118,7 +118,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .body(JSON_EMAIL_KEY, is(EMAIL))
                 .body(JSON_LANGUAGE_KEY, is("cy"))
                 .body(JSON_DELAYED_CAPTURE_KEY, is(false))
-                .body(JSON_CORPORATE_SURCHARGE_KEY, is(nullValue()))
+                .body(JSON_CORPORATE_CARD_SURCHARGE_KEY, is(nullValue()))
                 .body(JSON_TOTAL_AMOUNT_KEY, is(nullValue()))
                 .body("containsKey('card_details')", is(false))
                 .body("containsKey('gateway_account')", is(false))

@@ -439,7 +439,7 @@ public class DatabaseFixtures {
         ServicePaymentReference reference = ServicePaymentReference.of("Test reference");
         SupportedLanguage language = SupportedLanguage.ENGLISH;
         boolean delayedCapture = false;
-        Long corporateSurcharge = null;
+        Long corporateCardSurcharge = null;
 
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
 
@@ -520,7 +520,7 @@ public class DatabaseFixtures {
                 throw new IllegalStateException("Test Account must be provided.");
 
             databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId,
-                    reference, description, createdDate, email, language, corporateSurcharge);
+                    reference, description, createdDate, email, language, corporateCardSurcharge);
 
             if (cardDetails != null) {
                 cardDetails.update();
@@ -528,8 +528,8 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public TestCharge withCorporateSurcharge(Long corporateSurcharge) {
-            this.corporateSurcharge = corporateSurcharge;
+        public TestCharge withCorporateCardSurcarge(Long corporateCardSurcharge) {
+            this.corporateCardSurcharge = corporateCardSurcharge;
             return this;
         }
 
@@ -585,8 +585,8 @@ public class DatabaseFixtures {
             return testAccount;
         }
 
-        public Long getCorporateSurcharge() {
-            return corporateSurcharge;
+        public Long getCorporateCardSurcharge() {
+            return corporateCardSurcharge;
         }
     }
 

@@ -302,7 +302,7 @@ public class ChargeServiceTest {
 
         assertThat(chargeResponseForAccount.isPresent(), is(true));
         final ChargeResponse chargeResponse = chargeResponseForAccount.get();
-        assertThat(chargeResponse.getCorporateSurcharge(), is(250L));
+        assertThat(chargeResponse.getCorporateCardSurcharge(), is(250L));
         assertThat(chargeResponse.getTotalAmount(), is(1250L));
     }
 
@@ -334,19 +334,19 @@ public class ChargeServiceTest {
         assertThat(tokenEntity.getChargeEntity().getId(), is(newCharge.getId()));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
 
-        ChargeResponseBuilder chargeResponseWithoutCorporateSurcharge = chargeResponseBuilderOf(chargeEntity.get());
-        chargeResponseWithoutCorporateSurcharge.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
-        chargeResponseWithoutCorporateSurcharge.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId + "/refunds"));
-        chargeResponseWithoutCorporateSurcharge.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
-        chargeResponseWithoutCorporateSurcharge.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+        ChargeResponseBuilder chargeResponseWithoutCorporateCardSurcharge = chargeResponseBuilderOf(chargeEntity.get());
+        chargeResponseWithoutCorporateCardSurcharge.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId));
+        chargeResponseWithoutCorporateCardSurcharge.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/1/charges/" + externalId + "/refunds"));
+        chargeResponseWithoutCorporateCardSurcharge.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
+        chargeResponseWithoutCorporateCardSurcharge.withLink("next_url_post", POST, new URI("http://payments.com/secure"), "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
             put("chargeTokenId", tokenEntity.getToken());
         }});
 
         assertThat(chargeResponseForAccount.isPresent(), is(true));
         final ChargeResponse chargeResponse = chargeResponseForAccount.get();
-        assertThat(chargeResponse.getCorporateSurcharge(), is(nullValue()));
+        assertThat(chargeResponse.getCorporateCardSurcharge(), is(nullValue()));
         assertThat(chargeResponse.getTotalAmount(), is(nullValue()));
-        assertThat(chargeResponse, is(chargeResponseWithoutCorporateSurcharge.build()));
+        assertThat(chargeResponse, is(chargeResponseWithoutCorporateCardSurcharge.build()));
     }
 
     @Test

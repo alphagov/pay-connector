@@ -10,12 +10,12 @@ import java.util.Optional;
 /**
  * Holder for utility methods used to calculate values around corporate surcharge
  */
-public class CorporateSurchargeCalculator {
-    private CorporateSurchargeCalculator() {
+public class CorporateCardSurchargeCalculator {
+    private CorporateCardSurchargeCalculator() {
         // prevent Java for adding a public constructor
     }
 
-    public static Optional<Long> getCorporateSurchargeFor(AuthCardDetails authCardDetails, ChargeEntity chargeEntity) {
+    public static Optional<Long> getCorporateCardSurchargeFor(AuthCardDetails authCardDetails, ChargeEntity chargeEntity) {
         if (authCardDetails.isCorporateCard()) {
             if (authCardDetails.getPayersCardType().equals(PayersCardType.CREDIT) &&
                     chargeEntity.getGatewayAccount().getCorporateCreditCardSurchargeAmount() > 0) {
@@ -47,7 +47,7 @@ public class CorporateSurchargeCalculator {
      * @return A {@link Long}
      */
     public static Long getTotalAmountFor(Transaction transaction) {
-        return transaction.getCorporateSurcharge()
+        return transaction.getCorporateCardSurcharge()
                 .map(surcharge -> surcharge + transaction.getAmount())
                 .orElseGet((transaction::getAmount));
     }

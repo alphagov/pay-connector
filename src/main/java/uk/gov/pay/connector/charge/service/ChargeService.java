@@ -25,7 +25,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.model.domain.TokenEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
-import uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator;
+import uk.gov.pay.connector.util.charge.CorporateCardSurchargeCalculator;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
@@ -170,8 +170,8 @@ public class ChargeService {
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()));
 
         chargeEntity.getCorporateSurcharge().ifPresent(corporateSurcharge ->
-                builderOfResponse.withCorporateSurcharge(corporateSurcharge)
-                        .withTotalAmount(CorporateSurchargeCalculator.getTotalAmountFor(chargeEntity)));
+                builderOfResponse.withCorporateCardSurcharge(corporateSurcharge)
+                        .withTotalAmount(CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity)));
 
         ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
         if (!chargeStatus.toExternal().isFinished() && !chargeStatus.equals(ChargeStatus.AWAITING_CAPTURE_REQUEST)) {

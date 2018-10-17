@@ -31,7 +31,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected ChargeResponse.Auth3dsData auth3dsData;
     protected SupportedLanguage language;
     protected boolean delayedCapture;
-    protected Long corporateSurcharge;
+    protected Long corporateCardSurcharge;
     protected Long totalAmount;
 
     protected abstract T thisObject();
@@ -137,8 +137,8 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
     
-    public T withCorporateSurcharge(Long corporateSurcharge) {
-        this.corporateSurcharge = corporateSurcharge;
+    public T withCorporateCardSurcharge(Long corporateCardSurcharge) {
+        this.corporateCardSurcharge = corporateCardSurcharge;
         return thisObject();
     }
     

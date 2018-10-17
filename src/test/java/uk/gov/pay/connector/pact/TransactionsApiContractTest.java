@@ -186,11 +186,11 @@ public class TransactionsApiContractTest {
     }
     
     @State("a charge with corporate surcharge exists")
-    public void createChargeWithCorporateSurcharge(Map<String, String> params) {
+    public void createChargeWithCorporateCardSurcharge(Map<String, String> params) {
         Long accountId = Long.valueOf(params.get("account_id"));
         setUpGatewayAccount(accountId);
         String chargeExternalId = params.get("charge_id");
-        dbHelper.addChargeWithCorporateSurcharge(1234L, chargeExternalId, accountId.toString(), 2000L,
+        dbHelper.addChargeWithCorporateCardSurcharge(1234L, chargeExternalId, accountId.toString(), 2000L,
                 ChargeStatus.CAPTURED, "https://someurl.example", chargeExternalId, ServicePaymentReference.of("My reference"),
                 ZonedDateTime.now(), SupportedLanguage.ENGLISH, false, 250L);
     }

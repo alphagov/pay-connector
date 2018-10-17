@@ -251,7 +251,7 @@ public class Transaction {
         return userExternalId;
     }
 
-    public Optional<Long> getCorporateSurcharge() {
+    public Optional<Long> getCorporateCardSurcharge() {
         return Optional.ofNullable(corporateSurcharge);
     }
 }

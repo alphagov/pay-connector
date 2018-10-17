@@ -12,10 +12,10 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator.getCorporateSurchargeFor;
-import static uk.gov.pay.connector.util.charge.CorporateSurchargeCalculator.getTotalAmountFor;
+import static uk.gov.pay.connector.util.charge.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
+import static uk.gov.pay.connector.util.charge.CorporateCardSurchargeCalculator.getTotalAmountFor;
 
-public class CorporateSurchargeCalculatorTest {
+public class CorporateCardSurchargeCalculatorTest {
     @Test
     public void shouldGetCorporateSurchargeForCreditCard() {
         AuthCardDetails corporateCreditCard = AuthCardDetailsBuilder.anAuthCardDetails()
@@ -28,7 +28,7 @@ public class CorporateSurchargeCalculatorTest {
         
         assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
         chargeEntity.setCorporateSurcharge(250L);
-        Optional<Long> optionalSurcharge = getCorporateSurchargeFor(corporateCreditCard, chargeEntity);
+        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(corporateCreditCard, chargeEntity);
 
         assertThat(optionalSurcharge.isPresent(), is(true));
         assertThat(optionalSurcharge.get(), is(250L));
@@ -48,7 +48,7 @@ public class CorporateSurchargeCalculatorTest {
         assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
         assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
 
-        Optional<Long> optionalSurcharge = getCorporateSurchargeFor(corporateDebitCard, chargeEntity);
+        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(corporateDebitCard, chargeEntity);
 
         assertThat(optionalSurcharge.isPresent(), is(true));
         assertThat(optionalSurcharge.get(), is(50L));
@@ -67,7 +67,7 @@ public class CorporateSurchargeCalculatorTest {
         assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
         assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
 
-        Optional<Long> optionalSurcharge = getCorporateSurchargeFor(creditNoCorporateCard, chargeEntity);
+        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(creditNoCorporateCard, chargeEntity);
 
         assertThat(optionalSurcharge.isPresent(), is(false));
     }
@@ -85,7 +85,7 @@ public class CorporateSurchargeCalculatorTest {
         assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
         assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
 
-        Optional<Long> optionalSurcharge = getCorporateSurchargeFor(debitNoCorporateCard, chargeEntity);
+        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(debitNoCorporateCard, chargeEntity);
 
         assertThat(optionalSurcharge.isPresent(), is(false));
     }
@@ -103,7 +103,7 @@ public class CorporateSurchargeCalculatorTest {
         assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
         assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
 
-        Optional<Long> optionalSurcharge = getCorporateSurchargeFor(creditOrDebit, chargeEntity);
+        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(creditOrDebit, chargeEntity);
 
         assertThat(optionalSurcharge.isPresent(), is(false));
     }
@@ -121,7 +121,7 @@ public class CorporateSurchargeCalculatorTest {
         assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
         assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
 
-        Optional<Long> optionalSurcharge = getCorporateSurchargeFor(creditOrDebit, chargeEntity);
+        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(creditOrDebit, chargeEntity);
 
         assertThat(optionalSurcharge.isPresent(), is(false));
     }
@@ -138,7 +138,7 @@ public class CorporateSurchargeCalculatorTest {
         assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
         assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
 
-        Optional<Long> optionalSurcharge = getCorporateSurchargeFor(creditOrDebit, chargeEntity);
+        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(creditOrDebit, chargeEntity);
 
         assertThat(optionalSurcharge.isPresent(), is(false));
     }
@@ -146,7 +146,7 @@ public class CorporateSurchargeCalculatorTest {
     @Test
     public void shouldCalculateTotalAmountForCorporateSurchargeGreaterThanZero() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withCorporateSurcharge(250L).build();
-        final Long actualAmount = CorporateSurchargeCalculator.getTotalAmountFor(chargeEntity);
+        final Long actualAmount = CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity);
         final Long expectedAmount = chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().get();
         assertThat(actualAmount, is(expectedAmount));
     }
@@ -154,7 +154,7 @@ public class CorporateSurchargeCalculatorTest {
     @Test
     public void shouldCalculateTotalAmountForCorporateSurchargeIsNull() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        final Long actualAmount = CorporateSurchargeCalculator.getTotalAmountFor(chargeEntity);
+        final Long actualAmount = CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity);
         final Long expectedAmount = chargeEntity.getAmount();
         assertThat(actualAmount, is(expectedAmount));
     }
@@ -162,7 +162,7 @@ public class CorporateSurchargeCalculatorTest {
     @Test
     public void shouldCalculateTotalAmountForCorporateSurchargeIsZero() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withCorporateSurcharge(0L).build();
-        final Long actualAmount = CorporateSurchargeCalculator.getTotalAmountFor(chargeEntity);
+        final Long actualAmount = CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity);
         final Long expectedAmount = chargeEntity.getAmount();
         assertThat(actualAmount, is(expectedAmount));
     }
