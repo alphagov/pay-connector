@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.testing.pact.providers.PayPactRunner;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -182,5 +183,15 @@ public class TransactionsApiContractTest {
         Long accountId = Long.valueOf(params.get("account_id"));
         setUpGatewayAccount(accountId);
         setUpCharges(1, params.get("account_id"), ZonedDateTime.now().minusHours(12));
+    }
+    
+    @State("a charge with corporate surcharge exists")
+    public void createChargeWithCorporateSurcharge(Map<String, String> params) {
+        Long accountId = Long.valueOf(params.get("account_id"));
+        setUpGatewayAccount(accountId);
+        String chargeExternalId = params.get("charge_id");
+        dbHelper.addChargeWithCorporateSurcharge(1234L, chargeExternalId, accountId.toString(), 2000L,
+                ChargeStatus.CAPTURED, "https://someurl.example", chargeExternalId, ServicePaymentReference.of("My reference"),
+                ZonedDateTime.now(), SupportedLanguage.ENGLISH, false, 250L);
     }
 }
