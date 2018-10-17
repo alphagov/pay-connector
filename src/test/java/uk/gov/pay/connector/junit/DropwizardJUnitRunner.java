@@ -80,15 +80,22 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
     }
 
     @Override
+    protected Statement withAfterClasses(Statement statement) {
+        DropwizardConfig declaredConfiguration = dropwizardConfigAnnotation();
+        TestContext testContext = DropwizardTestApplications.getTestContextOf(declaredConfiguration.app(), declaredConfiguration.config());
+        testContext.getDatabaseTestHelper().truncateAllData();
+        return super.withAfterClasses(statement);
+    }
+
+    @Override
     public Object createTest() throws Exception {
         Object testInstance = super.createTest();
         DropwizardConfig declaredConfiguration = dropwizardConfigAnnotation();
         TestContext testContext = DropwizardTestApplications.getTestContextOf(declaredConfiguration.app(), declaredConfiguration.config());
         setTestContextToDeclaredAnnotations(testInstance, testContext);
-
         return testInstance;
     }
-    
+
     private void setTestContextToDeclaredAnnotations(Object testInstance, TestContext testContext) {
         List<FrameworkField> annotatedFields = getTestClass().getAnnotatedFields();
         annotatedFields.forEach(frameworkField -> stream(frameworkField.getAnnotations())

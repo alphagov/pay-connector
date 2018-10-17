@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
+import java.util.Objects;
 
 @Entity
 @Table(name = "card_types")
@@ -79,5 +80,21 @@ public class CardTypeEntity extends UuidAbstractEntity {
 
     public void setRequires3ds(boolean requires3ds) {
         this.requires3ds = requires3ds;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CardTypeEntity that = (CardTypeEntity) o;
+        return requires3ds == that.requires3ds &&
+                Objects.equals(brand, that.brand) &&
+                Objects.equals(label, that.label) &&
+                type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(brand, label, type, requires3ds);
     }
 }

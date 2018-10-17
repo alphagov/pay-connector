@@ -23,14 +23,14 @@ public class TokenDaoJpaITest extends DaoITestBase {
     private DatabaseFixtures.TestCharge defaultTestCharge;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         tokenDao = env.getInstance(TokenDao.class);
         DatabaseFixtures.TestAccount defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .insert();
 
-        this.defaultTestCharge = DatabaseFixtures
+        defaultTestCharge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)

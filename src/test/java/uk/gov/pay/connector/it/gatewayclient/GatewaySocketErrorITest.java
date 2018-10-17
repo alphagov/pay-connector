@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.gatewayclient;
 
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
@@ -11,7 +12,13 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.rules.GuiceAppWithPostgresRule;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.matching;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.dropwizard.testing.ConfigOverride.config;
+import static java.lang.String.format;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -22,12 +29,17 @@ public class GatewaySocketErrorITest extends BaseGatewayITest {
             config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         setupLoggerMockAppender();
     }
 
     @Test
-    public void shouldFailCaptureWhenSocketErrorFromGateway() throws Exception {
+    public void shouldFailCaptureWhenErrorFromGateway() {
+        stubFor(
+                post(urlPathEqualTo("/pal/servlet/soap/Payment"))
+                        .willReturn(aResponse().withStatus(404))
+        );
+        
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
 

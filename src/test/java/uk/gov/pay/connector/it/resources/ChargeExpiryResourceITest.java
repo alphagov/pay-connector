@@ -7,6 +7,7 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -42,8 +43,8 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldExpireChargesBeforeAndAfterAuthorisationAndShouldHaveTheRightEvents() {
-        String extChargeId1 = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId1");
-        String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), "transaction-id");
+        String extChargeId1 = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
 
         worldpayMockClient.mockCancelSuccess();
 
@@ -75,8 +76,8 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldExpireChargesOnlyAfterTheExpiryWindow() {
-        String shouldExpireChargeId = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId1");
-        String shouldntExpireChargeId = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(89), "transaction-id");
+        String shouldExpireChargeId = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String shouldntExpireChargeId = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(89), RandomIdGenerator.newId());
 
         worldpayMockClient.mockCancelSuccess();
 
@@ -116,8 +117,8 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldExpireChargesEvenIfOnGatewayCancellationError() {
-        String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId1");
-        String extChargeId2 = addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId2"); //should not get picked
+        String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String extChargeId2 = addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId()); //should not get picked
 
         worldpayMockClient.mockCancelError();
 
@@ -147,11 +148,12 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldExpireSuccessAndFailForMatchingCharges() {
-        String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId1");
-        String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId2");
-        String extChargeId3 = addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId3"); //should ignore
+        final String gatewayTransactionId1 = RandomIdGenerator.newId();
+        String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), gatewayTransactionId1);
+        String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String extChargeId3 = addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId()); //should ignore
 
-        worldpayMockClient.mockCancelSuccessOnlyFor("gatewayTransactionId1");
+        worldpayMockClient.mockCancelSuccessOnlyFor(gatewayTransactionId1);
 
         connectorRestApiClient
                 .postChargeExpiryTask()
@@ -190,7 +192,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldPreserveCardDetailsIfChargeExpires() {
-        String externalChargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), "transaction-id");
+        String externalChargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 
         worldpayMockClient.mockCancelSuccess();

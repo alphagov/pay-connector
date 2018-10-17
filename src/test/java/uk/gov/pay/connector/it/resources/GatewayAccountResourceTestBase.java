@@ -5,6 +5,7 @@ import com.jayway.restassured.response.ValidatableResponse;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.junit.After;
 import org.junit.Before;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
@@ -121,22 +122,10 @@ public class GatewayAccountResourceTestBase {
         assertThat(accountCredentials, is(new HashMap<>()));
     }
 
-    DatabaseFixtures.TestCardType createMastercardCreditCardTypeRecord() {
-        return databaseFixtures.aMastercardCreditCardType().insert();
-    }
-
-    DatabaseFixtures.TestCardType createVisaDebitCardTypeRecord() {
-        return databaseFixtures.aVisaDebitCardType().insert();
-    }
-
-    DatabaseFixtures.TestCardType createVisaCreditCardTypeRecord() {
-        return databaseFixtures.aVisaCreditCardType().insert();
-    }
-
-    DatabaseFixtures.TestAccount createAccountRecord(DatabaseFixtures.TestCardType... cardTypes) {
+    DatabaseFixtures.TestAccount createAccountRecordWithCards(CardTypeEntity... cardTypes) {
         return databaseFixtures
                 .aTestAccount()
-                .withCardTypes(Arrays.asList(cardTypes))
+                .withCardTypeEntities(Arrays.asList(cardTypes))
                 .insert();
     }
 }

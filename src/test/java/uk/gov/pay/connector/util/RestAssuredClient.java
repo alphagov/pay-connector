@@ -142,13 +142,6 @@ public class RestAssuredClient {
                 .then();
     }
 
-    public ValidatableResponse getTransactionsAPI() {
-        return addQueryParams(given().port(port)
-                .headers(headers))
-                .get("/v1/api/accounts/{accountId}/transactions".replace("{accountId}", accountId))
-                .then();
-    }
-
     public ValidatableResponse getEvents(String chargeId) {
         String requestPath = "/v1/api/accounts/{accountId}/charges/{chargeId}/events"
                 .replace("{accountId}", accountId)
@@ -192,13 +185,6 @@ public class RestAssuredClient {
                 .replace("{chargeId}", chargeId);
         return given().port(port)
                 .post(requestPath)
-                .then();
-    }
-
-    public ValidatableResponse getCardTypes() {
-        String requestPath = "/v1/api/card-types";
-        return given().port(port)
-                .get(requestPath)
                 .then();
     }
 

@@ -7,11 +7,12 @@ import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.StringColumnMapper;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
 import java.sql.SQLException;
@@ -88,20 +89,20 @@ public class DatabaseTestHelper {
         addGatewayAccount(accountId, paymentProvider, credentials, null, TEST, null, null, EmailCollectionMode.MANDATORY, 0, 0, 0, 0);
     }
 
+    public void addGatewayAccount(long accountId, String paymentProvider) {
+        addGatewayAccount(String.valueOf(accountId), paymentProvider);
+    }
+
     public void addGatewayAccount(String accountId, String paymentProvider) {
-        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, null, null,  EmailCollectionMode.MANDATORY, 0, 0, 0, 0);
+        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, null, null, EmailCollectionMode.MANDATORY, 0, 0, 0, 0);
     }
 
-    public void addGatewayAccount(String accountId, String paymentProvider, String description, String analyticsId) {
-        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId,  EmailCollectionMode.MANDATORY, 0, 0, 0, 0);
-    }
-
-    public void addGatewayAccount(String accountId, String paymentProvider, String description, String analyticsId, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount, long corporatePrepaidCreditCardSurchargeAmount, long corporatePrepaidDebitCardSurchargeAmount) {
-        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId,  EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, corporatePrepaidCreditCardSurchargeAmount, corporatePrepaidDebitCardSurchargeAmount);
+    public void addGatewayAccount(String accountId, String paymentProvider, String description, String analyticsId, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount) {
+        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId, EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, 0, 0);
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials, String serviceName, GatewayAccountEntity.Type type, String description, String analyticsId, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount, long corporatePrepaidCreditCardSurchargeAmount, long corporatePrepaidDebitCardSurchargeAmount) {
-        addGatewayAccount(accountId, paymentProvider, credentials, serviceName, type, description, analyticsId,  EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, corporatePrepaidCreditCardSurchargeAmount, corporatePrepaidDebitCardSurchargeAmount);
+        addGatewayAccount(accountId, paymentProvider, credentials, serviceName, type, description, analyticsId, EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, corporatePrepaidCreditCardSurchargeAmount, corporatePrepaidDebitCardSurchargeAmount);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl,
@@ -122,7 +123,8 @@ public class DatabaseTestHelper {
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
-                          String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate, SupportedLanguage language,
+                          String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate, SupportedLanguage
+                                  language,
                           boolean delayedCapture) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference,
                 createdDate == null ? now() : createdDate, 1, null, language, delayedCapture);
@@ -499,31 +501,6 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void updateEmailNotification(Long accountId, String templateBody, boolean enabled, EmailNotificationType type) {
-        jdbi.withHandle(handle ->
-                handle
-                        .createStatement("UPDATE email_notifications SET template_body= :templateBody, enabled= :enabled WHERE account_id=:account_id AND type = :type")
-                        .bind("account_id", accountId)
-                        .bind("enabled", enabled)
-                        .bind("templateBody", templateBody)
-                        .bind("type", type.toString())
-                        .execute()
-        );
-    }
-
-    public void addCardType(UUID id, String label, String type, String brand, boolean requires3ds) {
-        jdbi.withHandle(handle ->
-                handle
-                        .createStatement("INSERT INTO card_types(id, label, type, brand, requires_3ds) VALUES (:id, :label, :type, :brand, :requires3ds)")
-                        .bind("id", id)
-                        .bind("label", label)
-                        .bind("type", type)
-                        .bind("brand", brand)
-                        .bind("requires3ds", requires3ds)
-                        .execute()
-        );
-    }
-
     public void deleteAllCardTypes() {
         jdbi.withHandle(handle ->
                 handle
@@ -647,6 +624,40 @@ public class DatabaseTestHelper {
                         .bind("brand", brand)
                         .bind("type", type)
                         .map(StringColumnMapper.INSTANCE)
+                        .first()
+        );
+    }
+
+    public CardTypeEntity getCardTypeByBrandAndType(String brand, CardTypeEntity.SupportedType type) {
+        return getCardTypeByBrandAndType(brand, type.toString());
+    }
+
+    public CardTypeEntity getMastercardCreditCard() {
+        return getCardTypeByBrandAndType("master-card", CardTypeEntity.SupportedType.CREDIT);
+    }
+
+    public CardTypeEntity getMastercardDebitCard() {
+        return getCardTypeByBrandAndType("master-card", CardTypeEntity.SupportedType.DEBIT);
+    }
+
+    public CardTypeEntity getVisaCreditCard() {
+        return getCardTypeByBrandAndType("visa", CardTypeEntity.SupportedType.CREDIT);
+    }
+
+    public CardTypeEntity getVisaDebitCard() {
+        return getCardTypeByBrandAndType("visa", CardTypeEntity.SupportedType.DEBIT);
+    }
+
+    public CardTypeEntity getMaestroCard() {
+        return getCardTypeByBrandAndType("maestro", CardTypeEntity.SupportedType.DEBIT);
+    }
+
+    public CardTypeEntity getCardTypeByBrandAndType(String brand, String type) {
+        return jdbi.withHandle(h ->
+                h.createQuery("SELECT id, brand, type, label, requires_3ds from card_types WHERE brand = :brand AND type = :type")
+                        .bind("brand", brand)
+                        .bind("type", type)
+                        .map(CardTypeEntity.class)
                         .first()
         );
     }

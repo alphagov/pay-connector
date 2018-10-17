@@ -15,7 +15,8 @@ public class HealthCheckResourceITest {
     
     @Test
     public void checkHealthcheck_isHealthy() {
-        givenSetup()
+        given().port(app.getLocalPort())
+                .contentType(JSON)
                 .get("healthcheck")
                 .then()
                 .statusCode(200)

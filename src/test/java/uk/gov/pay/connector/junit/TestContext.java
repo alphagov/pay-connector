@@ -15,11 +15,17 @@ public class TestContext {
     private DatabaseTestHelper databaseTestHelper;
     private int port;
     private Injector injector;
+    private String databaseUrl;
+    private String databaseUser;
+    private String databasePassword;
 
     TestContext(int port, ConnectorConfiguration connectorConfiguration, Injector injector) {
         this.injector = injector;
         DataSourceFactory dataSourceFactory = connectorConfiguration.getDataSourceFactory();
-        DBI jdbi = new DBI(dataSourceFactory.getUrl(), dataSourceFactory.getUser(), dataSourceFactory.getPassword());
+        databaseUrl = dataSourceFactory.getUrl();
+        databaseUser = dataSourceFactory.getUser();
+        databasePassword = dataSourceFactory.getPassword();
+        DBI jdbi = new DBI(databaseUrl, databaseUser, databasePassword);
         this.databaseTestHelper = new DatabaseTestHelper(jdbi);
         this.port = port;
         this.connectorConfiguration = connectorConfiguration;
@@ -39,5 +45,17 @@ public class TestContext {
 
     public <T> T getInstanceFromGuiceContainer(Class<T> clazz) {
         return injector.getInstance(clazz);
+    }
+
+    String getDatabaseUrl() {
+        return databaseUrl;
+    }
+
+    String getDatabaseUser() {
+        return databaseUser;
+    }
+
+    String getDatabasePassword() {
+        return databasePassword;
     }
 }

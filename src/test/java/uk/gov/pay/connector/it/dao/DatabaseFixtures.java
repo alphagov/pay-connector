@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.dao;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity.SupportedType;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
@@ -66,32 +67,17 @@ public class DatabaseFixtures {
         return new TestCardDetails();
     }
 
-    public TestCardType aMastercardCreditCardType() {
-        return new TestCardType().withLabel("MasterCard").withType(SupportedType.CREDIT).withBrand("mastercard");
-    }
-
-    public TestCardType aMastercardDebitCardType() {
-        return new TestCardType().withLabel("MasterCard").withType(SupportedType.DEBIT).withBrand("mastercard");
-    }
-
-    public TestCardType aVisaCreditCardType() {
-        return new TestCardType().withLabel("Visa").withType(SupportedType.CREDIT).withBrand("visa");
-    }
-
-    public TestCardType aVisaDebitCardType() {
-        return new TestCardType().withLabel("Visa").withType(SupportedType.DEBIT).withBrand("visa");
-    }
-
-    public TestEmailNotification anEmailNotification() {
-        return new TestEmailNotification();
-    }
-
     public TestCardDetails validTestCardDetails() {
         return new TestCardDetails();
     }
 
-    public TestCardType aMaestroDebitCardType() {
-        return new TestCardType().withLabel("Maestro").withType(SupportedType.DEBIT).withBrand("maestro").withRequires3ds(true);
+    public TestCardType aCardTypeFrom(CardTypeEntity cardTypeEntity) {
+        return new TestCardType()
+                .withCardTypeId(cardTypeEntity.getId())
+                .withBrand(cardTypeEntity.getBrand())
+                .withLabel(cardTypeEntity.getLabel())
+                .withType(cardTypeEntity.getType())
+                .withRequires3ds(cardTypeEntity.isRequires3ds());
     }
 
     public class TestRefundHistory {
@@ -371,6 +357,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestAccount withCardTypeEntities(List<CardTypeEntity> cardTypeEntities) {
+            cardTypeEntities.forEach(cardTypeEntity -> cardTypes.add(aCardTypeFrom(cardTypeEntity)));
+            return this;
+        }
+
         public TestAccount withPaymentProvider(String provider) {
             this.paymentProvider = provider;
             return this;
@@ -395,7 +386,7 @@ public class DatabaseFixtures {
             this.analyticsId = analyticsId;
             return this;
         }
-        
+
         public TestAccount withType(GatewayAccountEntity.Type type) {
             this.type = type;
             return this;
@@ -415,6 +406,7 @@ public class DatabaseFixtures {
             this.emailNotifications = notifications;
             return this;
         }
+
         
         public TestAccount withCorporatePrepaidCreditCardSurchargeAmount(long corporatePrepaidCreditCardSurchargeAmount) {
             this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
@@ -748,7 +740,7 @@ public class DatabaseFixtures {
             this.enabled = enabled;
             return this;
         }
-        
+
         public TestEmailNotification insert() {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
@@ -790,11 +782,6 @@ public class DatabaseFixtures {
 
         public TestCardType withRequires3ds(boolean requires3DS) {
             this.requires3DS = requires3DS;
-            return this;
-        }
-
-        public TestCardType insert() {
-            databaseTestHelper.addCardType(id, label, type.toString(), brand, requires3DS);
             return this;
         }
 

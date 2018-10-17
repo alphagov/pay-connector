@@ -3,10 +3,10 @@ package uk.gov.pay.connector.it.resources;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.model.domain.CardFixture;
@@ -18,6 +18,7 @@ import javax.ws.rs.core.HttpHeaders;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+
 import java.util.UUID;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import static com.jayway.restassured.http.ContentType.JSON;
@@ -131,13 +132,11 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
-        DatabaseFixtures.TestCardType testCardType = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aMastercardCreditCardType()
-                .insert();
+        CardTypeEntity mastercardCredit = databaseTestHelper.getMastercardCreditCard();
+
         databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
                 ServicePaymentReference.of("ref"), null, EMAIL);
-        databaseTestHelper.updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "123456", "Mr. McPayment",
+        databaseTestHelper.updateChargeCardDetails(chargeId, mastercardCredit.getBrand(), "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
 
         databaseTestHelper.addToken(chargeId, "tokenId");
@@ -148,7 +147,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .getCharge()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("card_details.card_brand", is(testCardType.getLabel()));
+                .body("card_details.card_brand", is(mastercardCredit.getLabel()));
     }
 
     @Test
@@ -226,9 +225,8 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
-        UUID card = UUID.randomUUID();
-        databaseTestHelper.addCardType(card, "label", "CREDIT", "brand", false);
-        databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), card);
+        final CardTypeEntity mastercardCreditCard = databaseTestHelper.getMastercardCreditCard();
+        databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), mastercardCreditCard.getId());
         databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null,
                 ServicePaymentReference.of("My reference"), createdDate);
         databaseTestHelper.updateChargeCardDetails(chargeId, "VISA", "1234", "123456", "Mr. McPayment",
@@ -264,9 +262,8 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
-        UUID card = UUID.randomUUID();
-        databaseTestHelper.addCardType(card, "label", "CREDIT", "brand", false);
-        databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), card);
+        final CardTypeEntity mastercardCreditCard = databaseTestHelper.getMastercardCreditCard();
+        databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), mastercardCreditCard.getId());
         databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null,
                 ServicePaymentReference.of("My reference"), createdDate);
         databaseTestHelper.updateChargeCardDetails(chargeId, "visa", null, null, null, null,
