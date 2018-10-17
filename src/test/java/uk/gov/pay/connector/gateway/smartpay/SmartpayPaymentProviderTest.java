@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,9 +14,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Matchers;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -32,10 +30,10 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.Notification;
 import uk.gov.pay.connector.model.Notifications;
 import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.util.AuthUtils;
@@ -61,10 +59,9 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
@@ -91,8 +88,6 @@ public class SmartpayPaymentProviderTest {
     @Mock
     private Histogram mockHistogram;
     @Mock
-    private Counter mockCounter;
-    @Mock
     private BiFunction<GatewayOrder, Builder, Builder> mockSessionIdentifier;
     @Mock
     private ClientFactory mockClientFactory;
@@ -102,7 +97,7 @@ public class SmartpayPaymentProviderTest {
     private ExternalRefundAvailabilityCalculator mockExternalRefundAvailabilityCalculator;
 
     @Before
-    public void setup() throws Exception {
+    public void setup() {
         gatewayClientFactory = new GatewayClientFactory(mockClientFactory);
 
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
@@ -300,12 +295,12 @@ public class SmartpayPaymentProviderTest {
         when(mockClient.target(anyString())).thenReturn(mockTarget);
         Builder mockBuilder = mock(Builder.class);
         when(mockTarget.request()).thenReturn(mockBuilder);
-        when(mockBuilder.header(anyString(), anyObject())).thenReturn(mockBuilder);
-        when(mockSessionIdentifier.apply(Matchers.any(GatewayOrder.class), eq(mockBuilder))).thenReturn(mockBuilder);
+        when(mockBuilder.header(anyString(), any(Object.class))).thenReturn(mockBuilder);
+        when(mockSessionIdentifier.apply(any(GatewayOrder.class), eq(mockBuilder))).thenReturn(mockBuilder);
 
         Response response = mock(Response.class);
         when(response.readEntity(String.class)).thenReturn(responsePayload);
-        when(mockBuilder.post(Matchers.any(Entity.class))).thenReturn(response);
+        when(mockBuilder.post(any(Entity.class))).thenReturn(response);
 
         when(response.getStatus()).thenReturn(httpStatus);
     }
@@ -319,13 +314,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     private AuthCardDetails getValidTestCard() {
-        Address address = anAddress();
-        address.setLine1("123 My Street");
-        address.setLine2("This road");
-        address.setPostcode("SW8URR");
-        address.setCity("London");
-        address.setCounty("London state");
-        address.setCountry("GB");
+        Address address = new Address("123 My Street", "This road", "SW8URR", "London", "London state", "GB");
 
         return AuthUtils.buildAuthCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }

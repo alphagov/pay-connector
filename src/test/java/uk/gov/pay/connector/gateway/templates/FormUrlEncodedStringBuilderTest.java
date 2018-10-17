@@ -6,8 +6,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
+import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.OrderRequestBuilder;
 
 import java.nio.charset.Charset;
@@ -22,9 +21,6 @@ public class FormUrlEncodedStringBuilderTest {
 
     @Mock
     private PayloadDefinition mockPayloadDefinition;
-
-    @Mock
-    private SignatureGenerator mockSignatureGenerator;
 
     @Mock
     private OrderRequestBuilder.TemplateData mockTemplateData;

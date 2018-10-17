@@ -4,7 +4,7 @@ import com.jayway.jsonassert.JsonAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -28,7 +28,7 @@ public class RefundResponseTest {
     private UriInfo mockUriInfo;
 
     @Test
-    public void shouldSerializeARefundWithExpectedFieldsDefined() throws Exception {
+    public void shouldSerializeARefundWithExpectedFieldsDefined() {
 
         // given
         RefundEntity refund = RefundEntityFixture.aValidRefundEntity().build();

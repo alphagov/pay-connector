@@ -36,15 +36,8 @@ public class AddressEntity {
         this.country = sanitize(address.getCountry());
     }
 
-    public Address toAddress(){
-        Address address = new Address();
-        address.setLine1(line1);
-        address.setLine2(line2);
-        address.setPostcode(postcode);
-        address.setCity(city);
-        address.setCounty(county);
-        address.setCountry(country);
-        return address;
+    Address toAddress(){
+        return new Address(line1, line2, postcode, city, county, country);
     }
 
     public static AddressEntity anAddress() {

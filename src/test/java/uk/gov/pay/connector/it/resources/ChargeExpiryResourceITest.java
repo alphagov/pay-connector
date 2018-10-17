@@ -140,7 +140,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
 
 
     @Test
-    public void shouldExpireSuccessAndFailForMatchingCharges() throws Exception {
+    public void shouldExpireSuccessAndFailForMatchingCharges() {
         String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId1");
         String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId2");
         String extChargeId3 = addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId3"); //should ignore
@@ -183,7 +183,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldPreserveCardDetailsIfChargeExpires() throws Exception {
+    public void shouldPreserveCardDetailsIfChargeExpires() {
         String externalChargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), "transaction-id");
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 

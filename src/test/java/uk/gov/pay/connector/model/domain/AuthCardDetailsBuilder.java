@@ -8,7 +8,7 @@ public final class AuthCardDetailsBuilder {
     private String cardHolder = "Mr Test";
     private String cvc = "123";
     private String endDate = "12/99";
-    private Address address = AddressFixture.aValidAddress().build();
+    private Address address = Address.anAddress();
     private String cardBrand = "VISA";
     private String userAgentHeader = "Mozilla/5.0";
     private String acceptHeader = "text/html";

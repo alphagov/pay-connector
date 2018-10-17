@@ -10,7 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.dao.PerformanceReportDao;
 import uk.gov.pay.connector.model.domain.report.GatewayAccountPerformanceReportEntity;
 
@@ -42,8 +42,8 @@ public class GatewayAccountPerformanceReportResourceTest {
 
     @Before
     public void setUp() {
-        noTransactionsPerformanceReportEntity = new ArrayList<GatewayAccountPerformanceReportEntity>();
-        someTransactionsPerformanceReportEntity = new ArrayList<GatewayAccountPerformanceReportEntity>();
+        noTransactionsPerformanceReportEntity = new ArrayList<>();
+        someTransactionsPerformanceReportEntity = new ArrayList<>();
 
         GatewayAccountPerformanceReportEntity mockedGatewayAccountPerformanceReport = new GatewayAccountPerformanceReportEntity(
             totalVolume,

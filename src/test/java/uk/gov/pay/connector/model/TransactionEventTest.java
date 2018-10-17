@@ -14,7 +14,7 @@ import static uk.gov.pay.connector.model.api.ExternalRefundStatus.EXTERNAL_SUBMI
 
 public class TransactionEventTest {
 
-    public static final String USER_EXTERNAL_ID = "r378y387y8weriyi";
+    private static final String USER_EXTERNAL_ID = "r378y387y8weriyi";
 
     @Test
     public void equals_shouldReturnTrue_whenSameInstance() {

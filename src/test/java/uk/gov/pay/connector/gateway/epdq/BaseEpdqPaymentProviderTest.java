@@ -42,10 +42,9 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -142,7 +141,7 @@ public abstract class BaseEpdqPaymentProviderTest {
 
     private Invocation.Builder mockClientInvocationBuilder() {
         Invocation.Builder mockClientInvocationBuilder = mock(Invocation.Builder.class);
-        when(mockClientInvocationBuilder.header(anyString(), anyObject())).thenReturn(mockClientInvocationBuilder);
+        when(mockClientInvocationBuilder.header(anyString(), any(Object.class))).thenReturn(mockClientInvocationBuilder);
 
         WebTarget mockTarget = mock(WebTarget.class);
         when(mockTarget.request()).thenReturn(mockClientInvocationBuilder);
@@ -295,7 +294,7 @@ public abstract class BaseEpdqPaymentProviderTest {
         return buildTestRefundRequest(buildTestGatewayAccountEntity());
     }
 
-    AuthorisationGatewayRequest buildTestAuthorisationRequest(GatewayAccountEntity accountEntity) {
+    private AuthorisationGatewayRequest buildTestAuthorisationRequest(GatewayAccountEntity accountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
@@ -303,7 +302,7 @@ public abstract class BaseEpdqPaymentProviderTest {
         return buildTestAuthorisationRequest(chargeEntity);
     }
 
-    CaptureGatewayRequest buildTestCaptureRequest(GatewayAccountEntity accountEntity) {
+    private CaptureGatewayRequest buildTestCaptureRequest(GatewayAccountEntity accountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(accountEntity)
                 .withTransactionId("payId")
@@ -311,7 +310,7 @@ public abstract class BaseEpdqPaymentProviderTest {
         return buildTestCaptureRequest(chargeEntity);
     }
 
-    CancelGatewayRequest buildTestCancelRequest(GatewayAccountEntity accountEntity) {
+    private CancelGatewayRequest buildTestCancelRequest(GatewayAccountEntity accountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(accountEntity)
                 .withTransactionId("payId")
@@ -319,7 +318,7 @@ public abstract class BaseEpdqPaymentProviderTest {
         return buildTestCancelRequest(chargeEntity);
     }
 
-    RefundGatewayRequest buildTestRefundRequest(GatewayAccountEntity accountEntity) {
+    private RefundGatewayRequest buildTestRefundRequest(GatewayAccountEntity accountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(accountEntity)
                 .withTransactionId("payId")
@@ -327,14 +326,8 @@ public abstract class BaseEpdqPaymentProviderTest {
         return buildTestRefundRequest(chargeEntity);
     }
 
-    AuthCardDetails buildTestAuthCardDetails() {
-        Address address = anAddress();
-        address.setLine1("41");
-        address.setLine2("Scala Street");
-        address.setPostcode("EC2A 1AE");
-        address.setCity("London");
-        address.setCountry("GB");
-
+   private AuthCardDetails buildTestAuthCardDetails() {
+       Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", null, "GB");
         return AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
     }
 

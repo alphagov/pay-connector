@@ -6,10 +6,10 @@ import org.apache.http.message.BasicNameValuePair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.EpdqTemplateData;
 import uk.gov.pay.connector.gateway.epdq.EpdqSignedPayloadDefinition.EpdqSignedPayloadDefinitionFactory;
 import uk.gov.pay.connector.gateway.templates.PayloadDefinition;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;

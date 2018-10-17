@@ -17,23 +17,21 @@ public class PayersCardTypesResourceITest {
     private String accountId = "66757943593456";
     private RestAssuredClient connectorApi = new RestAssuredClient(app, accountId);
 
-    private DatabaseFixtures.TestCardType mastercardCreditCardTypeTestRecord;
-
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         app.getDatabaseTestHelper().deleteAllCardTypes();
     }
 
     @Test
-    public void shouldGetNoCardTypesWhenNoCardTypesExist() throws Exception {
+    public void shouldGetNoCardTypesWhenNoCardTypesExist() {
         connectorApi
                 .getCardTypes()
                 .body("card_types.size()", is(0));
     }
 
     @Test
-    public void shouldGetAllCardTypesWhenCardTypesExist() throws Exception {
-        this.mastercardCreditCardTypeTestRecord = DatabaseFixtures
+    public void shouldGetAllCardTypesWhenCardTypesExist() {
+        DatabaseFixtures.TestCardType mastercardCreditCardTypeTestRecord = DatabaseFixtures
                 .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aMastercardCreditCardType()
                 .withRequires3ds(true)
@@ -42,10 +40,10 @@ public class PayersCardTypesResourceITest {
         connectorApi
                 .getCardTypes()
                 .body("card_types.size()", is(1))
-                .body("card_types[0].id", is(this.mastercardCreditCardTypeTestRecord.getId().toString()))
-                .body("card_types[0].brand", is(this.mastercardCreditCardTypeTestRecord.getBrand()))
-                .body("card_types[0].label", is(this.mastercardCreditCardTypeTestRecord.getLabel()))
-                .body("card_types[0].requires3ds", is(this.mastercardCreditCardTypeTestRecord.getRequires3DS()))
-                .body("card_types[0].type", is(this.mastercardCreditCardTypeTestRecord.getType().toString()));
+                .body("card_types[0].id", is(mastercardCreditCardTypeTestRecord.getId().toString()))
+                .body("card_types[0].brand", is(mastercardCreditCardTypeTestRecord.getBrand()))
+                .body("card_types[0].label", is(mastercardCreditCardTypeTestRecord.getLabel()))
+                .body("card_types[0].requires3ds", is(mastercardCreditCardTypeTestRecord.getRequires3DS()))
+                .body("card_types[0].type", is(mastercardCreditCardTypeTestRecord.getType().toString()));
     }
 }

@@ -44,20 +44,12 @@ public class AuthUtils {
     }
 
     public static Address addressFor(String line1, String line2, String city, String postcode, String county, String country) {
-        Address address = Address.anAddress();
-        address.setLine1(line1);
-        address.setLine2(line2);
-        address.setCity(city);
-        address.setPostcode(postcode);
-        address.setCountry(country);
-        address.setCounty(county);
-        return address;
+        return new Address(line1, line2, postcode, city, county, country);
     }
 
     public static Auth3dsDetails buildAuth3dsDetails() {
         Auth3dsDetails auth3dsDetails = new Auth3dsDetails();
         auth3dsDetails.setPaResponse("sample-pa-response");
-
         return auth3dsDetails;
     }
 

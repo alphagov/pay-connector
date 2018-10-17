@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.service;
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
@@ -9,9 +8,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -26,7 +25,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -36,36 +35,35 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureProcessTest {
 
-    public static final int MAXIMUM_RETRIES = 10;
-    CardCaptureProcess cardCaptureProcess;
+    private static final int MAXIMUM_RETRIES = 10;
+    private CardCaptureProcess cardCaptureProcess;
 
     @Mock
-    ChargeDao mockChargeDao;
+    private ChargeDao mockChargeDao;
 
     @Mock
-    CardCaptureService mockCardCaptureService;
+    private CardCaptureService mockCardCaptureService;
 
     @Mock
-    Environment mockEnvironment;
+    private Environment mockEnvironment;
 
     @Mock
     private ConnectorConfiguration mockConnectorConfiguration;
 
     @Mock
-    GatewayResponse mockGatewayResponse;
+    private GatewayResponse mockGatewayResponse;
     
     @Mock
-    MetricRegistry mockMetricRegistry;
+    private MetricRegistry mockMetricRegistry;
     
     @Mock
-    CaptureProcessConfig mockCaptureConfiguration = mock(CaptureProcessConfig.class);
+    private CaptureProcessConfig mockCaptureConfiguration = mock(CaptureProcessConfig.class);
 
     @Before
     public void setup() {
         Histogram mockHistogram = mock(Histogram.class);
 
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
-        Counter mockCounter = mock(Counter.class);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockCaptureConfiguration.getBatchSize()).thenReturn(10);
         when(mockCaptureConfiguration.getRetryFailuresEveryAsJavaDuration()).thenReturn(Duration.ofMinutes(60));
@@ -86,7 +84,7 @@ public class CardCaptureProcessTest {
     @Test
     public void shouldRecordTheQueueSizeOnEveryRun() {
         when(mockCaptureConfiguration.getBatchSize()).thenReturn(0);
-        when(mockChargeDao.countChargesForImmediateCapture(Matchers.any(Duration.class))).thenReturn(15);
+        when(mockChargeDao.countChargesForImmediateCapture(ArgumentMatchers.any(Duration.class))).thenReturn(15);
         
         cardCaptureProcess.runCapture();
 
@@ -97,13 +95,13 @@ public class CardCaptureProcessTest {
     @Test
     public void shouldRegisterGaugesForChargesQueue_AndReturnCorrectSizes() {
         when(mockCaptureConfiguration.getBatchSize()).thenReturn(0);
-        when(mockChargeDao.countChargesForImmediateCapture(Matchers.any(Duration.class))).thenReturn(15);
-        when(mockChargeDao.countChargesAwaitingCaptureRetry(Matchers.any(Duration.class))).thenReturn(10);
+        when(mockChargeDao.countChargesForImmediateCapture(ArgumentMatchers.any(Duration.class))).thenReturn(15);
+        when(mockChargeDao.countChargesAwaitingCaptureRetry(ArgumentMatchers.any(Duration.class))).thenReturn(10);
         cardCaptureProcess.runCapture();
         ArgumentCaptor<MetricRegistry.MetricSupplier> argumentCaptor = ArgumentCaptor.forClass(MetricRegistry.MetricSupplier.class);
 
         verify(mockMetricRegistry, times(2))
-                .gauge(Matchers.anyString(), argumentCaptor.capture());
+                .gauge(anyString(), argumentCaptor.capture());
 
         List<Gauge<Integer>> gauges = argumentCaptor.getAllValues()
                 .stream()
@@ -119,7 +117,7 @@ public class CardCaptureProcessTest {
 
     @Test
     public void shouldRecordTheWaitingQueueSizeOnEveryRun() {
-        when(mockChargeDao.countChargesAwaitingCaptureRetry(Matchers.any(Duration.class))).thenReturn(15);
+        when(mockChargeDao.countChargesAwaitingCaptureRetry(ArgumentMatchers.any(Duration.class))).thenReturn(15);
 
         cardCaptureProcess.runCapture();
 

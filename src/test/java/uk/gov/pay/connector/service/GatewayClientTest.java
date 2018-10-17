@@ -10,11 +10,11 @@ import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
 import javax.ws.rs.ProcessingException;
@@ -33,7 +33,7 @@ import java.util.function.BiFunction;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -45,25 +45,32 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 @RunWith(MockitoJUnitRunner.class)
 public class GatewayClientTest {
 
-    public static final String WORLDPAY_API_ENDPOINT = "http://www.example.com/worldpay/order";
-    GatewayClient gatewayClient;
+    private static final String WORLDPAY_API_ENDPOINT = "http://www.example.com/worldpay/order";
+    private GatewayClient gatewayClient;
 
     private String orderPayload = "a-sample-payload";
 
     private MediaType mediaType = MediaType.APPLICATION_XML_TYPE;
 
-    @Mock Client mockClient;
-    @Mock Response mockResponse;
-    @Mock Builder mockBuilder;
-
-    @Mock MetricRegistry mockMetricRegistry;
-    @Mock Histogram mockHistogram;
-    @Mock Counter mockCounter;
-
-    @Mock GatewayAccountEntity mockGatewayAccountEntity;
+    @Mock
+    private Client mockClient;
+    @Mock
+    private Response mockResponse;
+    @Mock
+    private Builder mockBuilder;
 
     @Mock
-    GatewayOrder mockGatewayOrder;
+    private MetricRegistry mockMetricRegistry;
+    @Mock
+    private Histogram mockHistogram;
+    @Mock
+    private Counter mockCounter;
+
+    @Mock
+    private GatewayAccountEntity mockGatewayAccountEntity;
+
+    @Mock
+    private GatewayOrder mockGatewayOrder;
 
     @Mock
     BiFunction<GatewayOrder, Builder, Builder> mockSessionIdentifier;
@@ -132,8 +139,6 @@ public class GatewayClientTest {
 
     @Test
     public void shouldIncludeCookieIfSessionIdentifierAvailableInOrder() {
-        String providerSessionid = "provider-session-id";
-
         when(mockResponse.getStatus()).thenReturn(200);
 
         gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder);

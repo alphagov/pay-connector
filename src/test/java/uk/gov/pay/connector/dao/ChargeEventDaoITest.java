@@ -65,8 +65,7 @@ public class ChargeEventDaoITest extends DaoITestBase {
                 .withTransactionId(TRANSACTION_ID)
                 .insert();
 
-        Optional<ChargeEntity> charge = chargeDao.findById(CHARGE_ID);
-        ChargeEntity entity = charge.get();
+        ChargeEntity entity = chargeDao.findById(CHARGE_ID).get();
         entity.setStatus(ENTERING_CARD_DETAILS);
 
         chargeEventDao.persistChargeEventOf(entity, Optional.empty());
@@ -105,9 +104,7 @@ public class ChargeEventDaoITest extends DaoITestBase {
                 .withDelayedCapture(true)
                 .insert();
 
-        Optional<ChargeEntity> charge = chargeDao.findById(CHARGE_ID);
-        assertThat(charge.isPresent(), is(true));
-        ChargeEntity entity = charge.get();
+        ChargeEntity entity = chargeDao.findById(CHARGE_ID).get();
         entity.setStatus(ENTERING_CARD_DETAILS);
 
         chargeEventDao.persistChargeEventOf(entity, Optional.empty());
@@ -124,9 +121,7 @@ public class ChargeEventDaoITest extends DaoITestBase {
 
         chargeEventDao.persistChargeEventOf(entity, Optional.empty());
 
-        final Optional<ChargeEntity> maybeChargeEntity = chargeDao.findById(CHARGE_ID);
-        assertThat(maybeChargeEntity.isPresent(), is(true));
-        List<ChargeEventEntity> events = maybeChargeEntity.get().getEvents();
+        List<ChargeEventEntity> events = chargeDao.findById(CHARGE_ID).get().getEvents();
 
         assertThat(events, hasSize(3));
         assertThat(events, shouldIncludeStatus(ENTERING_CARD_DETAILS));

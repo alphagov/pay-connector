@@ -97,21 +97,18 @@ public class ChargesApiResource {
     private final ChargeService chargeService;
     private final ConnectorConfiguration configuration;
     private final ChargeExpiryService chargeExpiryService;
-    private final TransactionSearchStrategy transactionSearchStrategy;
     private SearchService searchService;
 
     @Inject
     public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao,
                               ChargeService chargeService, SearchService searchService,
-                              ChargeExpiryService chargeExpiryService, ConnectorConfiguration configuration,
-                              TransactionSearchStrategy transactionSearchStrategy) {
+                              ChargeExpiryService chargeExpiryService, ConnectorConfiguration configuration) {
         this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
         this.searchService = searchService;
         this.chargeExpiryService = chargeExpiryService;
         this.configuration = configuration;
-        this.transactionSearchStrategy = transactionSearchStrategy;
     }
 
     private static String stringifyChargeRequestWithoutPii(Map<String, String> map) {
@@ -244,54 +241,6 @@ public class ChargesApiResource {
         return Collections.emptyList();
     }
 
-    @GET
-    @Path("/v1/api/accounts/{accountId}/transactions")
-    @Timed
-    @Produces(APPLICATION_JSON)
-    public Response getTransactionsJson(@PathParam(ACCOUNT_ID) Long accountId,
-                                        @QueryParam(EMAIL_KEY) String email,
-                                        @QueryParam(REFERENCE_KEY) String reference,
-                                        @QueryParam(CARDHOLDER_NAME_KEY) String cardHolderName,
-                                        @QueryParam(LAST_DIGITS_CARD_NUMBER_KEY) String lastDigitsCardNumber,
-                                        @QueryParam(FIRST_DIGITS_CARD_NUMBER_KEY) String firstDigitsCardNumber,
-                                        @QueryParam(PAYMENT_STATES_KEY) List<String> paymentStates,
-                                        @QueryParam(REFUND_STATES_KEY) List<String> refundStates,
-                                        @QueryParam(CARD_BRAND_KEY) List<String> cardBrands,
-                                        @QueryParam(FROM_DATE_KEY) String fromDate,
-                                        @QueryParam(TO_DATE_KEY) String toDate,
-                                        @QueryParam(PAGE) Long pageNumber,
-                                        @QueryParam(DISPLAY_SIZE) Long displaySize,
-                                        @Context UriInfo uriInfo) {
-        List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
-        List<Pair<String, Long>> nonNegativePairMap = ImmutableList.of(Pair.of(PAGE, pageNumber), Pair.of(DISPLAY_SIZE, displaySize));
-
-        return ApiValidators
-                .validateQueryParams(inputDatePairMap, nonNegativePairMap) //TODO - improvement, get the entire searchparam object into the validateQueryParams
-                .map(ResponseUtil::badRequestResponse)
-                .orElseGet(() -> {
-                    SearchParams searchParams = new SearchParams()
-                            .withGatewayAccountId(accountId)
-                            .withEmailLike(email)
-                            .withCardHolderNameLike(cardHolderName != null ? CardHolderName.of(cardHolderName) : null)
-                            .withLastDigitsCardNumber(LastDigitsCardNumber.ofNullable(lastDigitsCardNumber))
-                            .withFirstDigitsCardNumber(FirstDigitsCardNumber.ofNullable(firstDigitsCardNumber))
-                            .withReferenceLike(reference != null ? ServicePaymentReference.of(reference) : null)
-                            .withCardBrands(removeBlanks(cardBrands))
-                            .withFromDate(parseDate(fromDate))
-                            .withToDate(parseDate(toDate))
-                            .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
-                            .withTransactionType(inferTransactionTypeFrom(paymentStates, refundStates))
-                            .addExternalChargeStates(paymentStates)
-                            .addExternalRefundStates(refundStates)
-                            .withPage(pageNumber != null ? pageNumber : 1);
-
-                    return gatewayAccountDao.findById(accountId)
-                            .map(gatewayAccount -> listTransactions(searchParams, uriInfo))
-                            .orElseGet(() -> notFoundResponse(format("account with id %s not found", accountId)));
-
-                }); // always the first page if its missing
-    }
-
     private List<String> removeBlanks(List<String> cardBrands) {
         return cardBrands.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
     }
@@ -374,19 +323,7 @@ public class ChargesApiResource {
                     searchParams.buildQueryParamsWithPiiRedaction());
         }
     }
-
-    private Response listTransactions(SearchParams searchParams, UriInfo uriInfo) {
-        long startTime = System.nanoTime();
-        try {
-            return transactionSearchStrategy.search(searchParams, uriInfo);
-        } finally {
-            long endTime = System.nanoTime();
-            logger.info("Transaction Search - took [{}] params [{}]",
-                    (endTime - startTime) / 1000000000.0,
-                    searchParams.buildQueryParamsWithPiiRedaction());
-        }
-    }
-
+    
     private Optional<List<String>> checkInvalidSizeFields(Map<String, String> inputData) {
         List<String> invalidSize = MAXIMUM_FIELDS_SIZE.entrySet().stream()
                 .filter(entry -> !isFieldSizeValid(inputData, entry.getKey(), entry.getValue()))

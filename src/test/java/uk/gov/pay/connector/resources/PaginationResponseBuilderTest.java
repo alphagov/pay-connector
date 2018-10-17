@@ -4,7 +4,7 @@ import com.jayway.jsonassert.JsonAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 
