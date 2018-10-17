@@ -7,7 +7,11 @@ import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.hamcrest.core.Is;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
@@ -22,6 +26,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Typ
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase {
     private DatabaseFixtures.TestAccount defaultTestAccount;
 
@@ -197,7 +203,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("accounts[0].analytics_id", is("an analytics id"))
                 .body("accounts[0].corporate_credit_card_surcharge_amount", is(0))
                 .body("accounts[0].corporate_debit_card_surcharge_amount", is(0))
-                .body("accounts[0]._links.self.href", is("https://localhost:" + app.getLocalPort() + ACCOUNTS_API_URL + 100))
+                .body("accounts[0]._links.self.href", is("https://localhost:" + testContext.getPort() + ACCOUNTS_API_URL + 100))
                 // and credentials should be missing
                 .body("accounts[0].credentials", nullValue())
 
@@ -209,7 +215,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("accounts[2].analytics_id", is("an analytics id"))
                 .body("accounts[2].corporate_credit_card_surcharge_amount", is(0))
                 .body("accounts[2].corporate_debit_card_surcharge_amount", is(0))
-                .body("accounts[2]._links.self.href", is("https://localhost:" + app.getLocalPort() + ACCOUNTS_API_URL + 300))
+                .body("accounts[2]._links.self.href", is("https://localhost:" + testContext.getPort() + ACCOUNTS_API_URL + 300))
                 // and credentials should be missing
                 .body("accounts[2].credentials", nullValue())
 

@@ -47,7 +47,7 @@ import static uk.gov.pay.connector.junit.PostgresTestDocker.getOrCreate;
  */
 public final class DropwizardJUnitRunner extends JUnitParamsRunner {
 
-    private final static int wiremockPort = PortFactory.findFreePort();
+    public final static int WIREMOCK_PORT = PortFactory.findFreePort();
 
     public DropwizardJUnitRunner(Class<?> testClass) throws InitializationError {
         super(testClass);
@@ -63,9 +63,10 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
             configOverride.add(config("database.user", DB_USERNAME));
             configOverride.add(config("database.password", DB_PASSWORD));
         }
-        configOverride.add(config("worldpay.urls.test", "http://localhost:" + wiremockPort + "/jsp/merchant/xml/paymentService.jsp"));
-        configOverride.add(config("smartpay.urls.test", "http://localhost:" + wiremockPort + "/pal/servlet/soap/Payment"));
-        configOverride.add(config("epdq.urls.test", "http://localhost:" + wiremockPort + "/epdq"));
+        configOverride.add(config("worldpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/jsp/merchant/xml/paymentService.jsp"));
+        configOverride.add(config("smartpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/pal/servlet/soap/Payment"));
+        configOverride.add(config("epdq.urls.test", "http://localhost:" + WIREMOCK_PORT + "/epdq"));
+        configOverride.add(config("smartpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/pal/servlet/soap/Payment"));
         Optional<DropwizardTestSupport> createdApp = createIfNotRunning(dropwizardConfigAnnotation.app(), dropwizardConfigAnnotation.config(), configOverride.toArray(new ConfigOverride[0]));
         if (dropwizardConfigAnnotation.withDockerPostgres() && createdApp.isPresent()) {
             try {
@@ -87,11 +88,7 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
 
         return testInstance;
     }
-
-    public static int getWiremockPort() {
-        return wiremockPort;
-    }
-
+    
     private void setTestContextToDeclaredAnnotations(Object testInstance, TestContext testContext) {
         List<FrameworkField> annotatedFields = getTestClass().getAnnotatedFields();
         annotatedFields.forEach(frameworkField -> stream(frameworkField.getAnnotations())

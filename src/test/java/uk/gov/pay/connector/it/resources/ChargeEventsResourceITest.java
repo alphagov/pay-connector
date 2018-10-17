@@ -1,10 +1,17 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.junit.DropwizardTestContext;
+import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.matcher.TransactionEventMatcher;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -27,28 +34,29 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBM
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class ChargeEventsResourceITest {
 
     public static final String SUBMITTED_BY = "r378y387y8weriyi";
+
+    @DropwizardTestContext
+    private TestContext testContext;
     private DatabaseTestHelper databaseTestHelper;
-
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-
     private String accountId = "72332423443245";
     private RestAssuredClient connectorApi;
 
     @Before
     public void setUp() {
-        databaseTestHelper = app.getDatabaseTestHelper();
-        connectorApi = new RestAssuredClient(app.getLocalPort(), accountId);
+        databaseTestHelper = testContext.getDatabaseTestHelper();
+        connectorApi = new RestAssuredClient(testContext.getPort(), accountId);
+        databaseTestHelper.addGatewayAccount(accountId, "sandbox");
     }
 
-    @Before
-    public void setupGatewayAccount() {
-        app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
+    @After
+    public void teardown() {
+        databaseTestHelper.truncateAllData();
     }
-
 
     @Test
     public void shouldGetAllEventsForAGivenChargeWithoutRefunds() throws Exception {

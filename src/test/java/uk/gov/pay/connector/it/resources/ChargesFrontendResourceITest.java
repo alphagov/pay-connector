@@ -2,14 +2,20 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
-import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.junit.DropwizardTestContext;
+import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.model.api.ExternalChargeState;
+import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
@@ -37,8 +43,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
-import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
-import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -47,13 +51,18 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
+import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class ChargesFrontendResourceITest {
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
+    @DropwizardTestContext
+    private TestContext testContext;
+    private DatabaseTestHelper databaseTestHelper;
     private String accountId = "72332423443245";
     private String description = "Test description";
     private String returnUrl = "http://whatever.com";
@@ -70,21 +79,27 @@ public class ChargesFrontendResourceITest {
 
     @Before
     public void setupGatewayAccount() {
-        DatabaseFixtures databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(app.getDatabaseTestHelper());
+        databaseTestHelper = testContext.getDatabaseTestHelper();
+        DatabaseFixtures databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
         DatabaseFixtures.TestCardType mastercard = databaseFixtures.aMastercardDebitCardType().insert();
         DatabaseFixtures.TestCardType visa = databaseFixtures.aVisaCreditCardType().insert();
-        app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider, description, analyticsId,
+        databaseTestHelper.addGatewayAccount(accountId, paymentProvider, description, analyticsId,
                 corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, 0, 0);
-        app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), mastercard.getId());
-        app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), visa.getId());
-        connectorRestApi = new RestAssuredClient(app.getLocalPort(), accountId);
+        databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), mastercard.getId());
+        databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), visa.getId());
+        connectorRestApi = new RestAssuredClient(testContext.getPort(), accountId);
+    }
+    
+    @After
+    public void teardown() {
+        databaseTestHelper.truncateAllData();
     }
 
     @Test
     public void getChargeShouldIncludeExpectedLinksAndGatewayAccount() {
 
         String chargeId = postToCreateACharge(expectedAmount);
-        String expectedLocation = "https://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeId;
+        String expectedLocation = "https://localhost:" + testContext.getPort() + "/v1/frontend/charges/" + chargeId;
 
         validateGetCharge(expectedAmount, chargeId, CREATED, true)
                 .body("links", hasSize(3))
@@ -97,9 +112,9 @@ public class ChargesFrontendResourceITest {
     public void getChargeShouldIncludeCorporateCardSurchargeAndTotalAmount() {
 
         String chargeExternalId = postToCreateACharge(expectedAmount);
-        String expectedLocation = "https://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeExternalId;
-        final Long chargeId = app.getDatabaseTestHelper().getChargeIdByExternalId(chargeExternalId);
-        app.getDatabaseTestHelper().updateCorporateSurcharge(chargeId, corporateCreditCardSurchargeAmount);
+        String expectedLocation = "https://localhost:" + testContext.getPort() + "/v1/frontend/charges/" + chargeExternalId;
+        final Long chargeId = databaseTestHelper.getChargeIdByExternalId(chargeExternalId);
+        databaseTestHelper.updateCorporateSurcharge(chargeId, corporateCreditCardSurchargeAmount);
 
         getChargeFromResource(chargeExternalId)
                 .statusCode(OK.getStatusCode())
@@ -130,13 +145,13 @@ public class ChargesFrontendResourceITest {
         Long chargeId = 123456L;
 
         DatabaseFixtures.TestCardType testCardType = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aMastercardCreditCardType()
                 .insert();
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null,
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null,
                 ServicePaymentReference.of("ref"), null, email);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "123456", "Mr. McPayment",
+        databaseTestHelper.updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, false);
     }
@@ -146,9 +161,9 @@ public class ChargesFrontendResourceITest {
         String externalChargeId = RandomIdGenerator.newId();
         Long chargeId = 123456L;
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null,
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null,
                 ServicePaymentReference.of("ref"), null, email);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown", "1234", "123456", "Mr. McPayment",
+        databaseTestHelper.updateChargeCardDetails(chargeId, "unknown", "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, false);
     }
@@ -160,11 +175,11 @@ public class ChargesFrontendResourceITest {
         String issuerUrl = "https://issuer.example.com/3ds";
         String paRequest = "test-pa-request";
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_3DS_REQUIRED, returnUrl, null,
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_3DS_REQUIRED, returnUrl, null,
                 ServicePaymentReference.of("ref"), null, email);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown", "1234", "123456", "Mr. McPayment",
+        databaseTestHelper.updateChargeCardDetails(chargeId, "unknown", "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
-        app.getDatabaseTestHelper().updateCharge3dsDetails(chargeId, issuerUrl, paRequest, null);
+        databaseTestHelper.updateCharge3dsDetails(chargeId, issuerUrl, paRequest, null);
 
         connectorRestApi
                 .withChargeId(externalChargeId)
@@ -215,18 +230,18 @@ public class ChargesFrontendResourceITest {
         int amount2 = 500;
         String gatewayTransactionId1 = "transaction-id-1";
 
-        app.getDatabaseTestHelper().addCharge(chargeId1, externalChargeId1, accountId, amount1, AUTHORISATION_SUCCESS, returnUrl, gatewayTransactionId1);
-        app.getDatabaseTestHelper().addCharge(chargeId2, externalChargeId2, accountId, amount2, AUTHORISATION_REJECTED, returnUrl, null);
+        databaseTestHelper.addCharge(chargeId1, externalChargeId1, accountId, amount1, AUTHORISATION_SUCCESS, returnUrl, gatewayTransactionId1);
+        databaseTestHelper.addCharge(chargeId2, externalChargeId2, accountId, amount2, AUTHORISATION_REJECTED, returnUrl, null);
 
         String anotherAccountId = "5454545";
         Long chargeId3 = 5001L;
-        app.getDatabaseTestHelper().addGatewayAccount(anotherAccountId, "worldpay");
-        app.getDatabaseTestHelper().addCharge(chargeId3, "charge5001", anotherAccountId, 200, AUTHORISATION_READY, returnUrl, "transaction-id-2");
+        databaseTestHelper.addGatewayAccount(anotherAccountId, "worldpay");
+        databaseTestHelper.addCharge(chargeId3, "charge5001", anotherAccountId, 200, AUTHORISATION_READY, returnUrl, "transaction-id-2");
 
         List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, AUTHORISATION_SUCCESS);
-        setupLifeCycleEventsFor(app, chargeId1, statuses);
-        setupLifeCycleEventsFor(app, chargeId2, statuses);
-        setupLifeCycleEventsFor(app, chargeId3, statuses);
+        setupLifeCycleEventsFor(chargeId1, statuses);
+        setupLifeCycleEventsFor(chargeId2, statuses);
+        setupLifeCycleEventsFor(chargeId3, statuses);
 
         ValidatableResponse response = connectorRestApi.withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON).getChargesV1();
 
@@ -240,14 +255,14 @@ public class ChargesFrontendResourceITest {
     @Test
     public void shouldReturnTransactionsOnDescendingOrderOfChargeId() {
 
-        app.getDatabaseTestHelper().addCharge(101L, "charge101", accountId, 500, AUTHORISATION_SUCCESS, returnUrl, randomUUID().toString());
-        app.getDatabaseTestHelper().addCharge(102L, "charge102", accountId, 300, AUTHORISATION_REJECTED, returnUrl, null);
-        app.getDatabaseTestHelper().addCharge(103L, "charge103", accountId, 100, AUTHORISATION_READY, returnUrl, randomUUID().toString());
+        databaseTestHelper.addCharge(101L, "charge101", accountId, 500, AUTHORISATION_SUCCESS, returnUrl, randomUUID().toString());
+        databaseTestHelper.addCharge(102L, "charge102", accountId, 300, AUTHORISATION_REJECTED, returnUrl, null);
+        databaseTestHelper.addCharge(103L, "charge103", accountId, 100, AUTHORISATION_READY, returnUrl, randomUUID().toString());
 
         List<ChargeStatus> statuses = asList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_READY, AUTHORISATION_SUCCESS, CAPTURE_SUBMITTED, CAPTURED);
-        setupLifeCycleEventsFor(app, 101L, statuses);
-        setupLifeCycleEventsFor(app, 102L, statuses);
-        setupLifeCycleEventsFor(app, 103L, statuses);
+        setupLifeCycleEventsFor(101L, statuses);
+        setupLifeCycleEventsFor(102L, statuses);
+        setupLifeCycleEventsFor(103L, statuses);
 
         ValidatableResponse response = connectorRestApi.withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON).getChargesV1();
 
@@ -498,9 +513,9 @@ public class ChargesFrontendResourceITest {
         }
     }
 
-    private static void setupLifeCycleEventsFor(DropwizardAppWithPostgresRule app, Long chargeId, List<ChargeStatus> statuses) {
+    private void setupLifeCycleEventsFor(Long chargeId, List<ChargeStatus> statuses) {
         statuses.stream().forEach(
-                st -> app.getDatabaseTestHelper().addEvent(chargeId, st.getValue())
+                st -> databaseTestHelper.addEvent(chargeId, st.getValue())
         );
     }
 
