@@ -27,7 +27,7 @@ public class ChargesFrontendResourceTest {
     @Mock
     private static ChargeService chargeService;
     @Mock
-    private static  ChargeDao chargeDao;
+    private static ChargeDao chargeDao;
     @Mock
     private static CardTypeDao cardTypeDao;
     

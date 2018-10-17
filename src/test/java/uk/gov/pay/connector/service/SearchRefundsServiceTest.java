@@ -62,7 +62,7 @@ public class SearchRefundsServiceTest {
         searchRefundsService = new SearchRefundsService(refundDao);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void getAllRefunds_shouldReturnBadRequestResponse_whenQueryParamsAreInvalid() {
         Long pageNumber = -1L;
         Long displaySize = -2L;
