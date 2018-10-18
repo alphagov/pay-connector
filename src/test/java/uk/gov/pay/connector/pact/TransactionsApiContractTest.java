@@ -104,13 +104,6 @@ public class TransactionsApiContractTest {
         setUpGatewayAccount(accountId);
     }
 
-    @State("User 666 exists in the database and has 4 transactions available")
-    public void account666WithTransactionsOld() {
-        long accountId = 666L;
-        setUpGatewayAccount(accountId);
-        setUpCharges(4, Long.toString(accountId), ZonedDateTime.now());
-    }
-
     @State("User 666 exists in the database and has 5 transactions available")
     public void account666WithTransactions() {
         long accountId = 666L;
