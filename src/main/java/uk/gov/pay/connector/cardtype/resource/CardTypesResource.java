@@ -1,7 +1,7 @@
-package uk.gov.pay.connector.resources;
+package uk.gov.pay.connector.cardtype.resource;
 
 import com.google.common.collect.ImmutableMap;
-import uk.gov.pay.connector.dao.CardTypeDao;
+import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;

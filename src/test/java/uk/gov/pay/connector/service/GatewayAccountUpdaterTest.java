@@ -7,11 +7,11 @@ import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
-import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountUpdater;
-import uk.gov.pay.connector.model.PatchRequest;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.PatchRequest;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountUpdater;
 
 import java.util.Map;
 import java.util.Optional;

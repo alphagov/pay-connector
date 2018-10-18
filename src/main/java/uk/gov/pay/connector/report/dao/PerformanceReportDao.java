@@ -1,19 +1,19 @@
-package uk.gov.pay.connector.dao;
-
-import java.time.temporal.ChronoUnit;
-import java.time.ZonedDateTime;
+package uk.gov.pay.connector.report.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.common.dao.JpaDao;
-import uk.gov.pay.connector.model.domain.report.PerformanceReportEntity;
-import uk.gov.pay.connector.model.domain.report.GatewayAccountPerformanceReportEntity;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
+import uk.gov.pay.connector.report.model.domain.GatewayAccountPerformanceReportEntity;
+import uk.gov.pay.connector.report.model.domain.PerformanceReportEntity;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
 
 @Transactional
 public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {

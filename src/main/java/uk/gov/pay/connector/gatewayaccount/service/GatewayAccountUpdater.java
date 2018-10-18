@@ -2,10 +2,10 @@ package uk.gov.pay.connector.gatewayaccount.service;
 
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
-import uk.gov.pay.connector.model.PatchRequest;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.PatchRequest;
 
 import javax.inject.Inject;
 import java.util.HashMap;

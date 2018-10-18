@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model.domain.report;
+package uk.gov.pay.connector.report.model.domain;
 
 import java.math.BigDecimal;
 

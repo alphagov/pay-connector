@@ -1,9 +1,9 @@
-package uk.gov.pay.connector.dao;
+package uk.gov.pay.connector.cardtype.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.dao.JpaDao;
-import uk.gov.pay.connector.model.domain.CardTypeEntity;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
