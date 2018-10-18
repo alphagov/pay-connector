@@ -101,14 +101,14 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactionCharge.getLanguage(), is(testCharge.getLanguage()));
         assertThat(transactionCharge.isDelayedCapture(), is(testCharge.isDelayedCapture()));
         assertDateMatch(transactionCharge.getCreatedDate().toString());
-        assertThat(transactionCharge.getCorporateSurcharge(), is(Optional.empty()));
+        assertThat(transactionCharge.getCorporateCardSurcharge(), is(Optional.empty()));
     }
 
     @Test
-    public void searchChargesWithCorporateSurchargeByGatewayAccount() {
+    public void searchChargesWithCorporateCardSurcargeByGatewayAccount() {
 
         // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithIdAndCorporateSurcharge(1L, now(), 250L);
+        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithIdAndCorporateCardSurcharge(1L, now(), 250L);
 
         SearchParams params = new SearchParams();
 
@@ -129,8 +129,8 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactionCharge.getLanguage(), is(testCharge.getLanguage()));
         assertThat(transactionCharge.isDelayedCapture(), is(testCharge.isDelayedCapture()));
         assertDateMatch(transactionCharge.getCreatedDate().toString());
-        assertThat(transactionCharge.getCorporateSurcharge().isPresent(), is(true));
-        assertThat(transactionCharge.getCorporateSurcharge().get(), is(250L));
+        assertThat(transactionCharge.getCorporateCardSurcharge().isPresent(), is(true));
+        assertThat(transactionCharge.getCorporateCardSurcharge().get(), is(250L));
     }
 
     @Test
@@ -1372,10 +1372,10 @@ public class TransactionDaoITest extends DaoITestBase {
 
     private DatabaseFixtures.TestCharge insertNewChargeWithId(long amount, ZonedDateTime creationDate) {
         return
-                insertNewChargeWithIdAndCorporateSurcharge(amount, creationDate, null);
+                insertNewChargeWithIdAndCorporateCardSurcharge(amount, creationDate, null);
     }
 
-    private DatabaseFixtures.TestCharge insertNewChargeWithIdAndCorporateSurcharge(
+    private DatabaseFixtures.TestCharge insertNewChargeWithIdAndCorporateCardSurcharge(
             long amount,
             ZonedDateTime creationDate,
             Long corporateSurcharge) {
@@ -1388,7 +1388,7 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withCreatedDate(creationDate)
                 .withLanguage(SupportedLanguage.ENGLISH)
-                .withCorporateSurcharge(corporateSurcharge)
+                .withCorporateCardSurcarge(corporateSurcharge)
                 .insert();
     }
 

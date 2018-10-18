@@ -42,7 +42,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
     private static final String JSON_MESSAGE_KEY = "message";
-    private static final String JSON_CORPORATE_SURCHARGE_KEY = "corporate_surcharge";
+    private static final String JSON_CORPORATE_CARD_SURCHARGE_KEY = "corporate_card_surcharge";
     private static final String JSON_TOTAL_AMOUNT_KEY = "total_amount";
     private static final String PROVIDER_NAME = "sandbox";
 
@@ -165,7 +165,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnCorporateSurchargeAndTotalAmount_V1() {
+    public void shouldReturnCorporateCardSurchargeAndTotalAmount_V1() {
 
         long chargeId = nextInt();
         String externalChargeId = "charge1";
@@ -183,12 +183,12 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results[0]." + JSON_CHARGE_KEY, is(externalChargeId))
-                .body("results[0]." + JSON_CORPORATE_SURCHARGE_KEY, is(50))
+                .body("results[0]." + JSON_CORPORATE_CARD_SURCHARGE_KEY, is(50))
                 .body("results[0]." + JSON_TOTAL_AMOUNT_KEY, is(Long.valueOf(AMOUNT).intValue() + 50));
     }
 
     @Test
-    public void shouldReturnCorporateSurchargeAndTotalAmount_V2() {
+    public void shouldReturnCorporateCardSurchargeAndTotalAmount_V2() {
 
         long chargeId = nextInt();
         String externalChargeId = "charge1";
@@ -206,7 +206,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results[0]." + JSON_CHARGE_KEY, is(externalChargeId))
-                .body("results[0]." + JSON_CORPORATE_SURCHARGE_KEY, is(150))
+                .body("results[0]." + JSON_CORPORATE_CARD_SURCHARGE_KEY, is(150))
                 .body("results[0]." + JSON_TOTAL_AMOUNT_KEY, is(Long.valueOf(AMOUNT).intValue() + 150));
     }
 

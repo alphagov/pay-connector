@@ -93,7 +93,7 @@ public class ChargesFrontendResourceITest {
     }
 
     @Test
-    public void getChargeShouldIncludeCorporateSurchargeAndTotalAmount() {
+    public void getChargeShouldIncludeCorporateCardSurchargeAndTotalAmount() {
 
         String chargeExternalId = postToCreateACharge(expectedAmount);
         String expectedLocation = "https://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeExternalId;
@@ -115,7 +115,7 @@ public class ChargesFrontendResourceITest {
                 .body("created_date", isWithin(10, SECONDS))
                 .body("language", is("en"))
                 .body("delayed_capture", is(true))
-                .body("corporate_surcharge", is(213))
+                .body("corporate_card_surcharge", is(213))
                 .body("total_amount", is(6447))
                 .body("links", hasSize(3))
                 .body("links", containsLink("self", GET, expectedLocation))
@@ -415,7 +415,7 @@ public class ChargesFrontendResourceITest {
                 .body("created_date", is(notNullValue()))
                 .body("language", is("en"))
                 .body("delayed_capture", is(true))
-                .body("corporate_surcharge", is(nullValue()))
+                .body("corporate_card_surcharge", is(nullValue()))
                 .body("total_amount", is(nullValue()))
                 .contentType(JSON);
 
@@ -447,7 +447,7 @@ public class ChargesFrontendResourceITest {
                 .body("created_date", isWithin(10, SECONDS))
                 .body("language", is("en"))
                 .body("delayed_capture", is(delayedCapture))
-                .body("corporate_surcharge", is(nullValue()))
+                .body("corporate_card_surcharge", is(nullValue()))
                 .body("total_amount", is(nullValue()));
         validateGatewayAccount(response);
         validateCardDetails(response, chargeStatus);

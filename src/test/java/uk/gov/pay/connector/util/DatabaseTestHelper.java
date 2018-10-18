@@ -136,9 +136,9 @@ public class DatabaseTestHelper {
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
                           String transactionId, ServicePaymentReference reference, String description, ZonedDateTime createdDate, String email,
-                          SupportedLanguage language, Long corporateSurcharge) {
+                          SupportedLanguage language, Long corporateCardSurcharge) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, description, reference,
-                createdDate == null ? now() : createdDate, 1, email, language, false, corporateSurcharge);
+                createdDate == null ? now() : createdDate, 1, email, language, false, corporateCardSurcharge);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
@@ -147,13 +147,13 @@ public class DatabaseTestHelper {
                 createdDate == null ? now() : createdDate, 1, email, SupportedLanguage.ENGLISH, delayedCapture);
     }
 
-    public void addChargeWithCorporateSurcharge(Long chargeId, String externalChargeId, String accountId, long amount,
-                                                ChargeStatus chargeStatus, String returnUrl, String transactionId,
-                                                ServicePaymentReference reference, ZonedDateTime createdDate,
-                                                SupportedLanguage language, boolean delayedCapture, Long corporateSurcharge) {
+    public void addChargeWithCorporateCardSurcharge(Long chargeId, String externalChargeId, String accountId, long amount,
+                                                    ChargeStatus chargeStatus, String returnUrl, String transactionId,
+                                                    ServicePaymentReference reference, ZonedDateTime createdDate,
+                                                    SupportedLanguage language, boolean delayedCapture, Long corporateCardSurcharge) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId,
                 "Test description", reference, createdDate == null ? now() : createdDate, 1, null,
-                language, delayedCapture, corporateSurcharge);
+                language, delayedCapture, corporateCardSurcharge);
     }
 
     private void addCharge(
