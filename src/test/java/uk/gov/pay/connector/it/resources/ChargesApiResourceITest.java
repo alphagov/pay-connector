@@ -10,7 +10,7 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.model.domain.CardFixture;
-import uk.gov.pay.connector.service.CardCaptureProcess;
+
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
@@ -19,7 +19,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.UUID;
-
+import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
@@ -77,6 +77,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("settlement_summary.capture_submit_time", isWithin(10, SECONDS))
                 .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture))
         ;
+        
     }
 
     @Test

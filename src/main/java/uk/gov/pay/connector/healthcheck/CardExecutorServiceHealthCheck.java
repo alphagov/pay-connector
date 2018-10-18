@@ -3,8 +3,7 @@ package uk.gov.pay.connector.healthcheck;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheck;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import uk.gov.pay.connector.service.CardExecutorService;
+import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 
 import javax.inject.Inject;
 import java.util.concurrent.ThreadPoolExecutor;
