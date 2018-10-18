@@ -14,8 +14,8 @@ import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.testing.pact.providers.PayPactRunner;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
-import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -53,8 +53,8 @@ public class TransactionsApiContractTest {
 
     private void setUpGatewayAccount(long accountId) {
         if (dbHelper.getAccountCredentials(accountId) == null) {
-                    DatabaseFixtures
-                            .withDatabaseTestHelper(dbHelper)
+            DatabaseFixtures
+                    .withDatabaseTestHelper(dbHelper)
                     .aTestAccount()
                     .withAccountId(accountId)
                     .withPaymentProvider("sandbox")
@@ -105,10 +105,17 @@ public class TransactionsApiContractTest {
     }
 
     @State("User 666 exists in the database and has 4 transactions available")
-    public void account666WithTransactions() {
+    public void account666WithTransactionsOld() {
         long accountId = 666L;
         setUpGatewayAccount(accountId);
         setUpCharges(4, Long.toString(accountId), ZonedDateTime.now());
+    }
+
+    @State("User 666 exists in the database and has 5 transactions available")
+    public void account666WithTransactions() {
+        long accountId = 666L;
+        setUpGatewayAccount(accountId);
+        setUpCharges(5, Long.toString(accountId), ZonedDateTime.now());
     }
 
     @State("User 666 exists in the database and has 2 available transactions occurring after 2018-05-03T00:00:00.000Z")
@@ -184,7 +191,7 @@ public class TransactionsApiContractTest {
         setUpGatewayAccount(accountId);
         setUpCharges(1, params.get("account_id"), ZonedDateTime.now().minusHours(12));
     }
-    
+
     @State("a charge with corporate surcharge exists")
     public void createChargeWithCorporateCardSurcharge(Map<String, String> params) {
         Long accountId = Long.valueOf(params.get("account_id"));
