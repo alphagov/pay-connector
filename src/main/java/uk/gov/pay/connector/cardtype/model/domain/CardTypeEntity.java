@@ -2,6 +2,7 @@ package uk.gov.pay.connector.cardtype.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

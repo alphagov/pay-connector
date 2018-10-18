@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.cardtype.model.domain.UuidAbstractEntity;
+import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
 import uk.gov.pay.connector.exception.CredentialsException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
