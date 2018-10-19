@@ -1,17 +1,17 @@
 package uk.gov.pay.connector.resources;
 
-import java.math.BigDecimal;
-
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.dao.PerformanceReportDao;
-import uk.gov.pay.connector.model.domain.report.PerformanceReportEntity;
+import uk.gov.pay.connector.report.dao.PerformanceReportDao;
+import uk.gov.pay.connector.report.model.domain.PerformanceReportEntity;
+import uk.gov.pay.connector.report.resource.PerformanceReportResource;
 
 import javax.ws.rs.core.Response;
+import java.math.BigDecimal;
 
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.core.Is.is;

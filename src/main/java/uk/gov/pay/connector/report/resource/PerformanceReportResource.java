@@ -1,27 +1,21 @@
-package uk.gov.pay.connector.resources;
+package uk.gov.pay.connector.report.resource;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import uk.gov.pay.connector.dao.PerformanceReportDao;
-import uk.gov.pay.connector.model.domain.report.PerformanceReportEntity;
-import uk.gov.pay.connector.model.domain.report.GatewayAccountPerformanceReportEntity;
-import static uk.gov.pay.connector.resources.ApiValidators.parseZonedDateTime;
+import uk.gov.pay.connector.report.dao.PerformanceReportDao;
+import uk.gov.pay.connector.report.model.domain.PerformanceReportEntity;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.QueryParam;
-import java.util.List;
+import javax.ws.rs.core.Response;
 import java.util.HashMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static uk.gov.pay.connector.resources.ApiValidators.parseZonedDateTime;
 
 @Path("/")
 public class PerformanceReportResource {

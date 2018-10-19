@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.healthcheck.resource.HealthCheckResource;
 
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
