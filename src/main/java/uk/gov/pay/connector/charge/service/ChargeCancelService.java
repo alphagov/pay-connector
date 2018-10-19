@@ -22,6 +22,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.charge.service.CancelServiceFunctions.changeStatusTo;

@@ -10,18 +10,20 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
+import uk.gov.pay.connector.junit.DropwizardTestContext;
+import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.EpdqMockClient;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
-import uk.gov.pay.connector.util.PortFactory;
+import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZonedDateTime;
@@ -32,7 +34,6 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
-import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
@@ -46,6 +47,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.getWiremockPort;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
@@ -63,40 +65,34 @@ public class ChargingITestBase {
     private static final String CVC = "123";
     private static final String EXPIRY_DATE = "11/99";
     private static final String CARD_BRAND = "cardBrand";
+
     protected static final String RETURN_URL = "http://service.url/success-page/";
     protected static final String EMAIL = randomAlphabetic(242) + "@example.com";
-    protected RestAssuredClient connectorRestApiClient;
     protected static final long AMOUNT = 6234L;
-    protected WorldpayMockClient worldpay;
-    protected SmartpayMockClient smartpay;
-    protected EpdqMockClient epdq;
-    protected final String accountId;
+    protected static final WorldpayMockClient worldpayMockClient = new WorldpayMockClient();
+    protected static final SmartpayMockClient smartpayMockClient = new SmartpayMockClient();
+    protected static final EpdqMockClient epdqMockClient = new EpdqMockClient();
+    
     private final String paymentProvider;
+    protected RestAssuredClient connectorRestApiClient;
+    protected final String accountId;
     protected Map<String, String> credentials;
-    private int port = PortFactory.findFreePort();
 
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
-            config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
-            config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"),
-            config("epdq.urls.test", "http://localhost:" + port + "/epdq")
-    );
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(port);
+    @DropwizardTestContext
+    protected TestContext testContext;
+
+    protected DatabaseTestHelper databaseTestHelper;
+
+    @ClassRule
+    public static WireMockRule wireMockRule = new WireMockRule(getWiremockPort());
 
     public ChargingITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;
         this.accountId = String.valueOf(RandomUtils.nextInt());
-
-        connectorRestApiClient = new RestAssuredClient(app, accountId);
     }
 
     @Before
     public void setup() {
-        worldpay = new WorldpayMockClient();
-        smartpay = new SmartpayMockClient();
-        epdq = new EpdqMockClient();
-
         credentials = ImmutableMap.of(
                 CREDENTIALS_MERCHANT_ID, "merchant-id",
                 CREDENTIALS_USERNAME, "test-user",
@@ -104,7 +100,14 @@ public class ChargingITestBase {
                 CREDENTIALS_SHA_IN_PASSPHRASE, "test-sha-in-passphrase",
                 CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
         );
-        app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider, credentials);
+        databaseTestHelper = testContext.getDatabaseTestHelper();
+        databaseTestHelper.addGatewayAccount(accountId, paymentProvider, credentials);
+        connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
+    }
+
+    @After
+    public void tearDown() {
+        databaseTestHelper.truncateAllData();
     }
 
     public Map<String, String> getCredentials() {
@@ -181,7 +184,7 @@ public class ChargingITestBase {
 
     protected String authoriseNewCharge() {
         String externalChargeId = createNewChargeWithNoTransactionId(AUTHORISATION_SUCCESS);
-        app.getDatabaseTestHelper().updateChargeCardDetails(
+        databaseTestHelper.updateChargeCardDetails(
                 Long.parseLong(externalChargeId.replace("charge-", "")),
                 CardFixture.aValidCard().build());
         return externalChargeId;
@@ -194,16 +197,12 @@ public class ChargingITestBase {
     protected String createNewRefundWith(RefundStatus refundStatus, Long amount, Long chargeId, String reference) {
         long refundId = RandomUtils.nextInt();
         String externalRefundId = "refund-" + refundId;
-        app.getDatabaseTestHelper().addRefund(refundId, externalRefundId, reference, amount, refundStatus.getValue(), chargeId, ZonedDateTime.now());
+        databaseTestHelper.addRefund(refundId, externalRefundId, reference, amount, refundStatus.getValue(), chargeId, ZonedDateTime.now());
         return externalRefundId;
     }
 
     protected String createNewChargeWithNoTransactionId(ChargeStatus status) {
         return createNewChargeWith(status, null);
-    }
-
-    protected String createNewChargeWithGatewayAccountId(ChargeStatus status, String gatewayAccountId) {
-        return createNewChargeWith(status, null, gatewayAccountId);
     }
 
     protected String createNewCharge(ChargeStatus status) {
@@ -213,24 +212,17 @@ public class ChargingITestBase {
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, 6234L, status, "RETURN_URL", gatewayTransactionId);
-        return externalChargeId;
-    }
-
-    protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId, String gatewayAccountId) {
-        long chargeId = RandomUtils.nextInt();
-        String externalChargeId = "charge-" + chargeId;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, gatewayAccountId, 6234L, status, "RETURN_URL", gatewayTransactionId);
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, 6234L, status, "RETURN_URL", gatewayTransactionId);
         return externalChargeId;
     }
 
     protected void createNewRefund(RefundStatus status, long chargeId, String refundExternalId, String reference, long amount) {
         long refundId = RandomUtils.nextInt();
-        app.getDatabaseTestHelper().addRefund(refundId, refundExternalId, reference, amount, status.getValue(), chargeId, ZonedDateTime.now());
+        databaseTestHelper.addRefund(refundId, refundExternalId, reference, amount, status.getValue(), chargeId, ZonedDateTime.now());
     }
 
     protected RequestSpecification givenSetup() {
-        return given().port(app.getLocalPort())
+        return given().port(testContext.getPort())
                 .contentType(JSON);
     }
 
@@ -339,11 +331,11 @@ public class ChargingITestBase {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, "http://somereturn.gov.uk",
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, "http://somereturn.gov.uk",
                 gatewayTransactionId, ServicePaymentReference.of(reference), fromDate);
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
-        app.getDatabaseTestHelper().updateChargeCardDetails(
+        databaseTestHelper.addToken(chargeId, "tokenId");
+        databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
+        databaseTestHelper.updateChargeCardDetails(
                 chargeId,
                 CardFixture.aValidCard().build());
         return externalChargeId;
@@ -400,10 +392,10 @@ public class ChargingITestBase {
     protected String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, ZonedDateTime fromDate, String cardBrand) {
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null, reference, fromDate, EMAIL);
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null, reference, fromDate, EMAIL);
+        databaseTestHelper.addToken(chargeId, "tokenId");
+        databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
+        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
 
         return externalChargeId;
     }

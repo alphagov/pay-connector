@@ -3,7 +3,11 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import javax.ws.rs.core.Response.Status;
 import java.util.HashMap;
@@ -26,6 +30,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
     private static final String FRONTEND_CARD_DETAILS_URL = "/secure";
@@ -89,7 +95,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
         String externalChargeId = response.extract().path(JSON_CHARGE_KEY);
         String documentLocation = expectedChargeLocationFor(accountId, externalChargeId);
-        String chargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(externalChargeId);
+        String chargeTokenId = databaseTestHelper.getChargeTokenByExternalChargeId(externalChargeId);
 
         String hrefNextUrl = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + "/" + chargeTokenId;
         String hrefNextUrlPost = "http://Frontend" + FRONTEND_CARD_DETAILS_URL;
@@ -130,7 +136,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
 
         // Reload the charge token which as it should have changed
-        String newChargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(externalChargeId);
+        String newChargeTokenId = databaseTestHelper.getChargeTokenByExternalChargeId(externalChargeId);
 
         String newHrefNextUrl = "http://Frontend" + FRONTEND_CARD_DETAILS_URL + "/" + newChargeTokenId;
 
@@ -309,7 +315,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {
-        return "https://localhost:" + app.getLocalPort() + "/v1/api/accounts/{accountId}/charges/{chargeId}"
+        return "https://localhost:" + testContext.getPort() + "/v1/api/accounts/{accountId}/charges/{chargeId}"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
     }

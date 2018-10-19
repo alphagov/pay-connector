@@ -2,19 +2,25 @@ package uk.gov.pay.connector.it.resources.worldpay;
 
 import org.hamcrest.Matchers;
 import org.junit.Test;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class WorldpayCardResourceITest extends ChargingITestBase {
 
     private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
@@ -27,7 +33,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
     public void shouldAuthoriseChargeWithoutCorporateCard_ForValidAuthorisationDetails() {
 
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        worldpay.mockAuthorisationSuccess();
+        worldpayMockClient.mockAuthorisationSuccess();
 
         givenSetup()
                 .body(validAuthorisationDetails)
@@ -43,7 +49,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
     public void shouldAuthoriseChargeWithCorporateCard_ForValidAuthorisationDetails() {
 
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        worldpay.mockAuthorisationSuccess();
+        worldpayMockClient.mockAuthorisationSuccess();
 
         String corporateCreditAuthDetails = buildCorporateJsonAuthorisationDetailsFor(PayersCardType.CREDIT);
 
@@ -60,7 +66,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
     @Test
     public void shouldReturnStatusAsRequires3ds() {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        worldpay.mockAuthorisationRequires3ds();
+        worldpayMockClient.mockAuthorisationRequires3ds();
 
         givenSetup()
                 .body(validAuthorisationDetails)
@@ -76,7 +82,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
     public void shouldNotAuthorise_AWorldpayErrorCard() throws Exception {
         String cardDetailsRejectedByWorldpay = buildJsonAuthorisationDetailsFor("REFUSED", "4444333322221111", "visa");
 
-        worldpay.mockAuthorisationFailure();
+        worldpayMockClient.mockAuthorisationFailure();
 
         String expectedErrorMessage = "This transaction was declined.";
         String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
@@ -87,7 +93,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
     public void shouldDeferCaptureCardPayment_IfAsynchronousFeatureFlagIsOn() {
         String chargeId = authoriseNewCharge();
 
-        worldpay.mockCaptureSuccess();
+        worldpayMockClient.mockCaptureSuccess();
 
         givenSetup()
                 .post(captureChargeUrlFor(chargeId))
@@ -101,7 +107,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
     @Test
     public void shouldAuthoriseCharge_For3dsRequiredCharge() {
         String chargeId = createNewCharge(AUTHORISATION_3DS_REQUIRED);
-        worldpay.mockAuthorisationSuccess();
+        worldpayMockClient.mockAuthorisationSuccess();
 
         givenSetup()
                 .body(buildJsonWithPaResponse())
@@ -117,7 +123,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
         String chargeId = createNewCharge(AUTHORISATION_3DS_REQUIRED);
 
         String expectedErrorMessage = "This transaction was declined.";
-        worldpay.mockAuthorisationFailure();
+        worldpayMockClient.mockAuthorisationFailure();
 
         givenSetup()
                 .body(buildJsonWithPaResponse())

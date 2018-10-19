@@ -4,10 +4,12 @@ import com.jayway.restassured.response.ValidatableResponse;
 import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
-import uk.gov.pay.connector.app.ExecutorServiceConfig;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class CardAuthoriseResourceITest extends ChargingITestBase {
 
     public CardAuthoriseResourceITest() {
@@ -67,10 +71,10 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
         String cardBrand = "visa";
         String externalChargeId = shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("4444333322221111", cardBrand));
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
-        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
         assertThat(chargeCardDetails, hasEntry("first_digits_card_number", "444433"));
-        assertThat(app.getDatabaseTestHelper().getChargeCardBrand(chargeId), is(cardBrand));
+        assertThat(databaseTestHelper.getChargeCardBrand(chargeId), is(cardBrand));
     }
 
     @Test
@@ -89,7 +93,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
         String externalChargeId = shouldAuthoriseChargeFor(buildDetailedJsonAuthorisationDetailsFor("4444333322221111", "123", "11/30", cardBrand, cardHolderName, addressLine1, addressLine2, city, county, postcode, country));
 
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
-        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
         assertThat(chargeCardDetails, hasEntry("first_digits_card_number", "444433"));
         assertThat(chargeCardDetails, hasEntry("address_county", sanitizedValue));
@@ -118,7 +122,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
         String externalChargeId = shouldAuthoriseChargeFor(buildDetailedJsonAuthorisationDetailsFor("4444333322221111", "123", "11/30", cardBrand, cardHolderName, addressLine1, addressLine2, city, county, postcode, country));
 
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
-        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
         assertThat(chargeCardDetails, hasEntry("first_digits_card_number", "444433"));
         assertThat(chargeCardDetails, hasEntry("address_county", valueWith10CharactersAsNumbers));
@@ -258,18 +262,6 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
         authoriseAndVerifyFor(chargeId, validCardDetails, msg, 400);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
-    }
-
-    @Test
-    public void shouldReturn202_WhenGatewayAuthorisationResponseIsDelayed() throws NoSuchFieldException, IllegalAccessException {
-        ExecutorServiceConfig conf = app.getConf().getExecutorServiceConfig();
-        Field timeoutInSeconds = conf.getClass().getDeclaredField("timeoutInSeconds");
-        timeoutInSeconds.setAccessible(true);
-        timeoutInSeconds.setInt(conf, 0);
-
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        String message = format("Authorisation for charge already in progress, %s", chargeId);
-        authoriseAndVerifyFor(chargeId, validCardDetails, message, 202);
     }
 
     @Test

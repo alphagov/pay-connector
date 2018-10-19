@@ -6,7 +6,11 @@ import com.jayway.restassured.response.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.io.IOException;
@@ -31,6 +35,8 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_MULTIPLE_NOTIFICATIONS;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends ChargingITestBase {
 
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/smartpay";
@@ -73,7 +79,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
 
         assertFrontendChargeStatusIs(externalChargeId, "CAPTURED");
         long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge-"));
-        List<Map<String, Object>> chargeEvents = app.getDatabaseTestHelper().getChargeEvents(chargeId);
+        List<Map<String, Object>> chargeEvents = databaseTestHelper.getChargeEvents(chargeId);
         assertThat(chargeEvents, hasEvent(CAPTURED));
     }
 
@@ -181,7 +187,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
         createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
         given()
-                .port(app.getLocalPort())
+                .port(testContext.getPort())
                 .body(notificationPayloadForTransaction(randomId(), transactionId, randomId(), "notification-capture"))
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH)
@@ -195,7 +201,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
         createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
         given()
-                .port(app.getLocalPort())
+                .port(testContext.getPort())
                 .body(notificationPayloadForTransaction(randomId(), transactionId, randomId(), "notification-capture"))
                 .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
@@ -205,7 +211,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
 
     private Response notifyConnector(String payload) throws IOException {
         return given()
-                .port(app.getLocalPort())
+                .port(testContext.getPort())
                 .auth().basic("bob", "bobsbigsecret")
                 .body(payload)
                 .contentType(APPLICATION_JSON)
@@ -214,7 +220,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
 
     private Response notifyConnectorWithCredentials(String payload, String username, String password) throws IOException {
         return given()
-                .port(app.getLocalPort())
+                .port(testContext.getPort())
                 .auth().basic(username, password)
                 .body(payload)
                 .contentType(APPLICATION_JSON)
@@ -237,7 +243,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
 
     private void assertRefundStatusIs(String externalRefundId, String expectedStatus) {
         long refundId = Long.parseLong(StringUtils.removeStart(externalRefundId, "refund-"));
-        List<Map<String, Object>> refund = app.getDatabaseTestHelper().getRefund(refundId);
+        List<Map<String, Object>> refund = databaseTestHelper.getRefund(refundId);
         assertThat(refund.get(0).get("status"), is(expectedStatus));
     }
 

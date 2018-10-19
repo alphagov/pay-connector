@@ -1,13 +1,18 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.model.domain.CardFixture;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.service.CardCaptureProcess;
 import uk.gov.pay.connector.util.DateTimeUtils;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.time.ZoneId;
@@ -29,14 +34,16 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
-import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class ChargesApiResourceITest extends ChargingITestBase {
 
     private static final String JSON_CHARGE_KEY = "charge_id";
@@ -63,7 +70,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .statusCode(204);
 
         // Trigger the capture process programmatically which normally would be invoked by the scheduler.
-        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
+        testContext.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
 
         getCharge(chargeId)
                 .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
@@ -100,11 +107,11 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     @Test
     public void shouldGetCardDetails_whenStatusIsBeyondAuthorised() {
         long chargeId = nextInt();
-        String externalChargeId = "charge1";
+        String externalChargeId = RandomIdGenerator.newId();
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, CardFixture.aValidCard().withCardNo("12345678").build());
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null);
+        databaseTestHelper.updateChargeCardDetails(chargeId, CardFixture.aValidCard().withCardNo("12345678").build());
+        databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -121,18 +128,18 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     public void shouldReturnCardBrandLabel_whenChargeIsAuthorised() {
 
         long chargeId = nextInt();
-        String externalChargeId = "charge1";
+        String externalChargeId = RandomIdGenerator.newId();
 
         DatabaseFixtures.TestCardType testCardType = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aMastercardCreditCardType()
                 .insert();
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
                 ServicePaymentReference.of("ref"), null, EMAIL);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "123456", "Mr. McPayment",
+        databaseTestHelper.updateChargeCardDetails(chargeId, testCardType.getBrand(), "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
 
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -147,13 +154,13 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     public void shouldReturnEmptyCardBrandLabel_whenChargeIsAuthorisedAndBrandUnknown() {
 
         long chargeId = nextInt();
-        String externalChargeId = "charge1";
+        String externalChargeId = RandomIdGenerator.newId();
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
                 ServicePaymentReference.of("ref"), null, EMAIL);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
+        databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -170,12 +177,12 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         long chargeId = nextInt();
         String externalChargeId = "charge1";
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
                 ServicePaymentReference.of("ref"), null, EMAIL);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
+        databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
-        app.getDatabaseTestHelper().updateCorporateSurcharge(chargeId, 50L);
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        databaseTestHelper.updateCorporateSurcharge(chargeId, 50L);
+        databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -191,14 +198,14 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     public void shouldReturnCorporateCardSurchargeAndTotalAmount_V2() {
 
         long chargeId = nextInt();
-        String externalChargeId = "charge1";
+        String externalChargeId = RandomIdGenerator.newId();
 
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
                 ServicePaymentReference.of("ref"), null, EMAIL);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
+        databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
-        app.getDatabaseTestHelper().updateCorporateSurcharge(chargeId, 150L);
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        databaseTestHelper.updateCorporateSurcharge(chargeId, 150L);
+        databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -214,19 +221,19 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     public void shouldGetChargeTransactionsForJSONAcceptHeader() {
 
         long chargeId = nextInt();
-        String externalChargeId = "charge3";
+        String externalChargeId = RandomIdGenerator.newId();
 
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
         UUID card = UUID.randomUUID();
-        app.getDatabaseTestHelper().addCardType(card, "label", "CREDIT", "brand", false);
-        app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null,
+        databaseTestHelper.addCardType(card, "label", "CREDIT", "brand", false);
+        databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), card);
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null,
                 ServicePaymentReference.of("My reference"), createdDate);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "VISA", "1234", "123456", "Mr. McPayment",
+        databaseTestHelper.updateChargeCardDetails(chargeId, "VISA", "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+        databaseTestHelper.addToken(chargeId, "tokenId");
+        databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
 
         String description = "Test description";
 
@@ -252,19 +259,19 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     public void shouldGetChargeLegacyTransactions() {
 
         long chargeId = nextInt();
-        String externalChargeId = "charge3";
+        String externalChargeId = RandomIdGenerator.newId();
 
         ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
         UUID card = UUID.randomUUID();
-        app.getDatabaseTestHelper().addCardType(card, "label", "CREDIT", "brand", false);
-        app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), card);
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null,
+        databaseTestHelper.addCardType(card, "label", "CREDIT", "brand", false);
+        databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), card);
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null,
                 ServicePaymentReference.of("My reference"), createdDate);
-        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, "visa", null, null, null, null,
+        databaseTestHelper.updateChargeCardDetails(chargeId, "visa", null, null, null, null,
                 null, null, null, null, null, null);
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+        databaseTestHelper.addToken(chargeId, "tokenId");
+        databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -344,6 +351,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldGetSuccessForExpiryChargeTask_withStatus_awaitingCaptureRequest() {
+
         //create charge
         String extChargeId = addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
                 ServicePaymentReference.of("ref"), ZonedDateTime.now().minusMinutes(90));

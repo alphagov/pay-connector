@@ -2,7 +2,11 @@ package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -24,6 +28,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class ChargeExpiryResourceITest extends ChargingITestBase {
 
     private static final String JSON_CHARGE_KEY = "charge_id";
@@ -39,7 +45,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         String extChargeId1 = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId1");
         String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), "transaction-id");
 
-        worldpay.mockCancelSuccess();
+        worldpayMockClient.mockCancelSuccess();
 
         connectorRestApiClient
                 .postChargeExpiryTask()
@@ -58,8 +64,8 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
                         .body(JSON_CHARGE_KEY, is(chargeId))
                         .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus())));
 
-        List<String> events1 = app.getDatabaseTestHelper().getInternalEvents(extChargeId1);
-        List<String> events2 = app.getDatabaseTestHelper().getInternalEvents(extChargeId2);
+        List<String> events1 = databaseTestHelper.getInternalEvents(extChargeId1);
+        List<String> events2 = databaseTestHelper.getInternalEvents(extChargeId2);
 
         assertTrue(isEqualCollection(events1,
                 asList(CREATED.getValue(), EXPIRED.getValue())));
@@ -72,7 +78,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         String shouldExpireChargeId = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId1");
         String shouldntExpireChargeId = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(89), "transaction-id");
 
-        worldpay.mockCancelSuccess();
+        worldpayMockClient.mockCancelSuccess();
 
         connectorRestApiClient
                 .postChargeExpiryTask()
@@ -99,8 +105,8 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
                 .body(JSON_CHARGE_KEY, is(shouldntExpireChargeId))
                 .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()));
 
-        List<String> events1 = app.getDatabaseTestHelper().getInternalEvents(shouldExpireChargeId);
-        List<String> events2 = app.getDatabaseTestHelper().getInternalEvents(shouldntExpireChargeId);
+        List<String> events1 = databaseTestHelper.getInternalEvents(shouldExpireChargeId);
+        List<String> events2 = databaseTestHelper.getInternalEvents(shouldntExpireChargeId);
 
         assertTrue(isEqualCollection(events1,
                 asList(CREATED.getValue(), EXPIRED.getValue())));
@@ -113,7 +119,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId1");
         String extChargeId2 = addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId2"); //should not get picked
 
-        worldpay.mockCancelError();
+        worldpayMockClient.mockCancelError();
 
         connectorRestApiClient
                 .postChargeExpiryTask()
@@ -131,7 +137,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
                 .body(JSON_CHARGE_KEY, is(extChargeId1))
                 .body(JSON_STATE_KEY, is(EXPIRE_CANCEL_FAILED.toExternal().getStatus()));
 
-        List<String> events = app.getDatabaseTestHelper().getInternalEvents(extChargeId1);
+        List<String> events = databaseTestHelper.getInternalEvents(extChargeId1);
 
         assertTrue(isEqualCollection(events,
                 asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRE_CANCEL_FAILED.getValue())));
@@ -145,7 +151,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId2");
         String extChargeId3 = addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusMinutes(90), "gatewayTransactionId3"); //should ignore
 
-        worldpay.mockCancelSuccessOnlyFor("gatewayTransactionId1");
+        worldpayMockClient.mockCancelSuccessOnlyFor("gatewayTransactionId1");
 
         connectorRestApiClient
                 .postChargeExpiryTask()
@@ -172,8 +178,8 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
                 .body(JSON_CHARGE_KEY, is(extChargeId2))
                 .body(JSON_STATE_KEY, is(EXPIRE_CANCEL_FAILED.toExternal().getStatus()));
 
-        List<String> events1 = app.getDatabaseTestHelper().getInternalEvents(extChargeId1);
-        List<String> events2 = app.getDatabaseTestHelper().getInternalEvents(extChargeId2);
+        List<String> events1 = databaseTestHelper.getInternalEvents(extChargeId1);
+        List<String> events2 = databaseTestHelper.getInternalEvents(extChargeId2);
 
         assertTrue(isEqualCollection(events1,
                 asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue())));
@@ -187,16 +193,16 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         String externalChargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), "transaction-id");
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 
-        worldpay.mockCancelSuccess();
+        worldpayMockClient.mockCancelSuccess();
 
-        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails.isEmpty(), is(false));
 
         connectorRestApiClient
                 .postChargeExpiryTask()
                 .statusCode(OK.getStatusCode());
 
-        chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, is(notNullValue()));
         assertThat(chargeCardDetails.get("card_brand"), is(notNullValue()));
         assertThat(chargeCardDetails.get("last_digits_card_number"), is(notNullValue()));

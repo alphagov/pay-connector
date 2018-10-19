@@ -2,7 +2,11 @@ package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import java.util.Map;
 
@@ -18,6 +22,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERRO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class CardCaptureResourceITest extends ChargingITestBase {
 
     public CardCaptureResourceITest() {
@@ -72,7 +78,7 @@ public class CardCaptureResourceITest extends ChargingITestBase {
         String externalChargeId = authoriseNewCharge();
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
 
-        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails.isEmpty(), is(false));
 
         givenSetup()
@@ -80,7 +86,7 @@ public class CardCaptureResourceITest extends ChargingITestBase {
                 .then()
                 .statusCode(204);
 
-        chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
+        chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, is(notNullValue()));
         assertThat(chargeCardDetails.get("last_digits_card_number"), is(notNullValue()));
         assertThat(chargeCardDetails.get("first_digits_card_number"), is(notNullValue()));

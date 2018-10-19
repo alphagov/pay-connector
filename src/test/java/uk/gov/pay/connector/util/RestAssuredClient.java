@@ -2,7 +2,6 @@ package uk.gov.pay.connector.util;
 
 import com.jayway.restassured.response.ValidatableResponse;
 import com.jayway.restassured.specification.RequestSpecification;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import java.util.HashMap;
 import java.util.List;
@@ -12,15 +11,15 @@ import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 
 public class RestAssuredClient {
-    private final DropwizardAppWithPostgresRule app;
+    private final int port;
     private String accountId;
     private String chargeId;
     private String refundId;
     private Map<String, Object> queryParams;
     private Map<String, String> headers;
 
-    public RestAssuredClient(DropwizardAppWithPostgresRule app, String accountId) {
-        this.app = app;
+    public RestAssuredClient(int port, String accountId) {
+        this.port = port;
         this.accountId = accountId;
         this.queryParams = new HashMap<>();
         this.headers = new HashMap<>();
@@ -57,7 +56,7 @@ public class RestAssuredClient {
         for (Map.Entry<String, Object> queryParamPair : queryParams.entrySet()) {
             Object value = queryParamPair.getValue();
             if (value instanceof List) {
-                for (Object collectionValue : (List)value) {
+                for (Object collectionValue : (List) value) {
                     result.queryParam(queryParamPair.getKey(), collectionValue);
                 }
             } else {
@@ -72,7 +71,7 @@ public class RestAssuredClient {
         String requestPath = "/v1/api/accounts/{accountId}/charges"
                 .replace("{accountId}", accountId);
 
-        return given().port(app.getLocalPort())
+        return given().port(port)
                 .contentType(JSON)
                 .body(postBody)
                 .post(requestPath)
@@ -84,13 +83,13 @@ public class RestAssuredClient {
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
 
-        return given().port(app.getLocalPort())
+        return given().port(port)
                 .get(requestPath)
                 .then();
     }
 
     public ValidatableResponse postChargeExpiryTask() {
-        return given().port(app.getLocalPort())
+        return given().port(port)
                 .post("/v1/tasks/expired-charges-sweep")
                 .then();
     }
@@ -101,7 +100,7 @@ public class RestAssuredClient {
                 .replace("{chargeId}", chargeId)
                 + "/status";
         return given()
-                .port(app.getLocalPort())
+                .port(port)
                 .contentType(JSON).body(putBody)
                 .put(requestPath)
                 .then();
@@ -113,7 +112,7 @@ public class RestAssuredClient {
                 .replace("{chargeId}", chargeId);
 
         return given()
-                .port(app.getLocalPort())
+                .port(port)
                 .contentType(JSON).body(patchBody)
                 .patch(requestPath)
                 .then();
@@ -124,22 +123,29 @@ public class RestAssuredClient {
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId)
                 + "/cancel";
-        return given().port(app.getLocalPort())
+        return given().port(port)
                 .post(requestPath)
                 .then();
     }
 
     public ValidatableResponse getChargesV1() {
-        return addQueryParams(given().port(app.getLocalPort())
+        return addQueryParams(given().port(port)
                 .headers(headers))
                 .get("/v1/api/accounts/{accountId}/charges".replace("{accountId}", accountId))
                 .then();
     }
 
     public ValidatableResponse getChargesV2() {
-        return addQueryParams(given().port(app.getLocalPort())
+        return addQueryParams(given().port(port)
                 .headers(headers))
                 .get("/v2/api/accounts/{accountId}/charges".replace("{accountId}", accountId))
+                .then();
+    }
+
+    public ValidatableResponse getTransactionsAPI() {
+        return addQueryParams(given().port(port)
+                .headers(headers))
+                .get("/v1/api/accounts/{accountId}/transactions".replace("{accountId}", accountId))
                 .then();
     }
 
@@ -147,7 +153,7 @@ public class RestAssuredClient {
         String requestPath = "/v1/api/accounts/{accountId}/charges/{chargeId}/events"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
-        return given().port(app.getLocalPort())
+        return given().port(port)
                 .get(requestPath)
                 .then();
     }
@@ -156,7 +162,7 @@ public class RestAssuredClient {
         String requestPath = "/v1/frontend/charges/{chargeId}"
                 .replace("{chargeId}", chargeId);
         return given()
-                .port(app.getLocalPort())
+                .port(port)
                 .get(requestPath)
                 .then();
     }
@@ -167,7 +173,7 @@ public class RestAssuredClient {
                 .replace("{chargeId}", chargeId)
                 .replace("{refundId}", refundId);
         return given()
-                .port(app.getLocalPort())
+                .port(port)
                 .get(requestPath)
                 .then();
     }
@@ -175,7 +181,7 @@ public class RestAssuredClient {
     public ValidatableResponse getRefunds() {
         String requestPath = "/v1/api/accounts/{accountId}/refunds"
                 .replace("{accountId}", accountId);
-        return addQueryParams(given().port(app.getLocalPort()))
+        return addQueryParams(given().port(port))
                 .get(requestPath)
                 .then();
     }
@@ -184,14 +190,14 @@ public class RestAssuredClient {
         String requestPath = "/v1/frontend/charges/{chargeId}/cancel"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
-        return given().port(app.getLocalPort())
+        return given().port(port)
                 .post(requestPath)
                 .then();
     }
 
     public ValidatableResponse getCardTypes() {
         String requestPath = "/v1/api/card-types";
-        return given().port(app.getLocalPort())
+        return given().port(port)
                 .get(requestPath)
                 .then();
     }
@@ -200,7 +206,7 @@ public class RestAssuredClient {
         String requestPath = "/v1/api/accounts/{accountId}/transactions-summary"
                 .replace("{accountId}", accountId);
 
-        return addQueryParams(given().port(app.getLocalPort()))
+        return addQueryParams(given().port(port))
                 .get(requestPath)
                 .then();
     }
@@ -214,7 +220,7 @@ public class RestAssuredClient {
         final String path = "/v1/api/accounts/{accountId}/charges/{chargeId}/capture"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
-        return given().port(app.getLocalPort())
+        return given().port(port)
                 .post(path)
                 .then();
     }

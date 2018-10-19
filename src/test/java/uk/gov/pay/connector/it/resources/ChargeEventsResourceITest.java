@@ -19,7 +19,13 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 public class ChargeEventsResourceITest {
 
@@ -30,11 +36,12 @@ public class ChargeEventsResourceITest {
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
     private String accountId = "72332423443245";
-    private RestAssuredClient connectorApi = new RestAssuredClient(app, accountId);
+    private RestAssuredClient connectorApi;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         databaseTestHelper = app.getDatabaseTestHelper();
+        connectorApi = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     @Before

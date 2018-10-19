@@ -6,11 +6,13 @@ import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
-import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -32,17 +34,17 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class EpdqRefundITest extends ChargingITestBase {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
-    private DatabaseTestHelper databaseTestHelper;
-    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
 
     public EpdqRefundITest() {
         super("epdq");
@@ -51,7 +53,6 @@ public class EpdqRefundITest extends ChargingITestBase {
     @Before
     public void setup() {
         super.setup();
-        databaseTestHelper = app.getDatabaseTestHelper();
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
@@ -71,7 +72,7 @@ public class EpdqRefundITest extends ChargingITestBase {
     public void shouldBeAbleToRequestARefund_partialAmount() {
         Long refundAmount = 50L;
 
-        epdq.mockRefundSuccess();
+        epdqMockClient.mockRefundSuccess();
         ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
         String refundId = assertRefundResponseWith(defaultTestCharge.getExternalChargeId(), refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
@@ -85,7 +86,7 @@ public class EpdqRefundITest extends ChargingITestBase {
 
         Long refundAmount = defaultTestCharge.getAmount();
 
-        epdq.mockRefundSuccess();
+        epdqMockClient.mockRefundSuccess();
         ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
         String refundId = assertRefundResponseWith(defaultTestCharge.getExternalChargeId(), refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
@@ -107,7 +108,7 @@ public class EpdqRefundITest extends ChargingITestBase {
 
         Long refundAmount = captureSubmittedCharge.getAmount();
 
-        epdq.mockRefundSuccess();
+        epdqMockClient.mockRefundSuccess();
         ValidatableResponse validatableResponse = postRefundFor(captureSubmittedCharge.getExternalChargeId(), refundAmount, captureSubmittedCharge.getAmount());
         String refundId = assertRefundResponseWith(captureSubmittedCharge.getExternalChargeId(), refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
@@ -124,11 +125,11 @@ public class EpdqRefundITest extends ChargingITestBase {
         Long chargeId = defaultTestCharge.getChargeId();
         String externalChargeId = defaultTestCharge.getExternalChargeId();
 
-        epdq.mockRefundSuccess();
+        epdqMockClient.mockRefundSuccess();
         ValidatableResponse firstValidatableResponse = postRefundFor(externalChargeId, firstRefundAmount, defaultTestCharge.getAmount());
         String firstRefundId = assertRefundResponseWith(externalChargeId, firstRefundAmount, firstValidatableResponse, ACCEPTED.getStatusCode());
 
-        epdq.mockRefundSuccess();
+        epdqMockClient.mockRefundSuccess();
         ValidatableResponse secondValidatableResponse = postRefundFor(externalChargeId, secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount);
         String secondRefundId = assertRefundResponseWith(externalChargeId, secondRefundAmount, secondValidatableResponse, ACCEPTED.getStatusCode());
 
@@ -139,7 +140,7 @@ public class EpdqRefundITest extends ChargingITestBase {
                 aRefundMatching(secondRefundId, is(notNullValue()), chargeId, secondRefundAmount, "REFUND SUBMITTED"),
                 aRefundMatching(firstRefundId, is(notNullValue()), chargeId, firstRefundAmount, "REFUND SUBMITTED")));
 
-        getChargeApi.withChargeId(externalChargeId)
+        connectorRestApiClient.withChargeId(externalChargeId)
                 .getCharge()
                 .statusCode(200)
                 .body("refund_summary.status", is("full"))
@@ -160,7 +161,7 @@ public class EpdqRefundITest extends ChargingITestBase {
 
         Long refundAmount = 20L;
 
-        epdq.mockRefundSuccess();
+        epdqMockClient.mockRefundSuccess();
         postRefundFor(testCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("pending"))
@@ -177,7 +178,7 @@ public class EpdqRefundITest extends ChargingITestBase {
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         Long chargeId = defaultTestCharge.getChargeId();
 
-        epdq.mockRefundSuccess();
+        epdqMockClient.mockRefundSuccess();
         postRefundFor(externalChargeId, refundAmount, defaultTestCharge.getAmount())
                 .statusCode(ACCEPTED.getStatusCode());
 
@@ -193,7 +194,7 @@ public class EpdqRefundITest extends ChargingITestBase {
     @Test
     public void shouldFailRequestingARefund_whenAmountIsBiggerThanChargeAmount() {
         Long refundAmount = defaultTestCharge.getAmount() + 20;
-        epdq.mockRefundSuccess();
+        epdqMockClient.mockRefundSuccess();
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_not_available"))
@@ -236,7 +237,7 @@ public class EpdqRefundITest extends ChargingITestBase {
         Long firstRefundAmount = 80L;
         Long secondRefundAmount = 30L; // 10 more than available
 
-        epdq.mockRefundSuccess();
+        epdqMockClient.mockRefundSuccess();
         ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), firstRefundAmount, defaultTestCharge.getAmount());
         String firstRefundId = assertRefundResponseWith(defaultTestCharge.getExternalChargeId(), firstRefundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
@@ -244,7 +245,7 @@ public class EpdqRefundITest extends ChargingITestBase {
         assertThat(refundsFoundByChargeId.size(), is(1));
         assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getChargeId(), firstRefundAmount, "REFUND SUBMITTED")));
 
-        epdq.mockRefundSuccess();
+        epdqMockClient.mockRefundSuccess();
         postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount)
                 .statusCode(400)
                 .body("reason", is("amount_not_available"))
@@ -259,7 +260,7 @@ public class EpdqRefundITest extends ChargingITestBase {
     public void shouldFailRequestingARefund_whenGatewayOperationFails() {
         Long refundAmount = defaultTestCharge.getAmount();
 
-        epdq.mockRefundError();
+        epdqMockClient.mockRefundError();
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
                 .body("message",
@@ -321,7 +322,7 @@ public class EpdqRefundITest extends ChargingITestBase {
                 .insert();
 
         String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
-                app.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
+                testContext.getPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
 
         getRefundsFor(defaultTestAccount.getAccountId(),
                 defaultTestCharge.getExternalChargeId())
@@ -442,7 +443,7 @@ public class EpdqRefundITest extends ChargingITestBase {
                 .body("created_date", is(notNullValue()));
 
         String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
-                app.getLocalPort(), defaultTestAccount.getAccountId(), externalChargeId);
+                testContext.getPort(), defaultTestAccount.getAccountId(), externalChargeId);
 
         String refundId = response.extract().path("refund_id");
         response.body("_links.self.href", is(paymentUrl + "/refunds/" + refundId))

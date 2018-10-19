@@ -3,8 +3,12 @@ package uk.gov.pay.connector.it.resources;
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.core.Is;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -21,6 +25,8 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.hasSize;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class SearchRefundsResourceITest extends ChargingITestBase {
 
     private static final String PROVIDER_NAME = "sandbox";
@@ -37,12 +43,12 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
         String email = randomAlphabetic(242) + "@example.com";
         long chargeId = nextLong();
 
-        app.getDatabaseTestHelper().addCharge(chargeId, "charge1", accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
+        databaseTestHelper.addCharge(chargeId, "charge1", accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
                 ServicePaymentReference.of("ref"), null, email);
 
-        app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId, now().minusHours(2));
-        app.getDatabaseTestHelper().addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId, now().minusHours(3));
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        databaseTestHelper.addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId, now().minusHours(2));
+        databaseTestHelper.addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId, now().minusHours(3));
+        databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient.withAccountId(accountId)
                 .withQueryParam("page", "1")
@@ -64,7 +70,7 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
         String email = randomAlphabetic(242) + "@example.com";
         long chargeId = nextLong();
 
-        app.getDatabaseTestHelper().addCharge(chargeId, "charge2", accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
+        databaseTestHelper.addCharge(chargeId, "charge2", accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
                 ServicePaymentReference.of("ref"), null, email);
 
         connectorRestApiClient.withAccountId(accountId)

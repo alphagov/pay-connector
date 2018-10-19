@@ -2,16 +2,18 @@ package uk.gov.pay.connector.it.resources.epdq;
 
 import com.google.common.collect.Lists;
 import com.jayway.restassured.response.ValidatableResponse;
-import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
+import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -28,7 +30,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBM
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
-@RunWith(JUnitParamsRunner.class)
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class EpdqNotificationResourceITest extends ChargingITestBase {
 
     private static final String RESPONSE_EXPECTED_BY_EPDQ = "[OK]";
@@ -129,7 +132,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldFailWhenUnexpectedContentType() throws Exception {
-        given().port(app.getLocalPort())
+        given().port(testContext.getPort())
                 .body(notificationPayloadForTransaction("any", "1", "WHATEVER", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE)))
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH)
@@ -146,7 +149,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     }
 
     private ValidatableResponse notifyConnector(String payload) throws Exception {
-        return given().port(app.getLocalPort())
+        return given().port(testContext.getPort())
                 .body(payload)
                 .contentType(APPLICATION_FORM_URLENCODED)
                 .post(NOTIFICATION_PATH)

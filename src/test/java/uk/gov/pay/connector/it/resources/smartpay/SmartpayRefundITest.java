@@ -6,11 +6,13 @@ import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
-import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -31,16 +33,16 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class SmartpayRefundITest extends ChargingITestBase {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
-    private DatabaseTestHelper databaseTestHelper;
-    private RestAssuredClient getChargeApi = new RestAssuredClient(app, accountId);
 
     public SmartpayRefundITest() {
         super("smartpay");
@@ -49,7 +51,6 @@ public class SmartpayRefundITest extends ChargingITestBase {
     @Before
     public void setup() {
         super.setup();
-        databaseTestHelper = app.getDatabaseTestHelper();
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
@@ -69,7 +70,7 @@ public class SmartpayRefundITest extends ChargingITestBase {
     public void shouldBeAbleToRequestARefund_partialAmount() {
         Long refundAmount = 50L;
 
-        smartpay.mockRefundSuccess();
+        smartpayMockClient.mockRefundSuccess();
         ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
         String refundId = assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
@@ -83,7 +84,7 @@ public class SmartpayRefundITest extends ChargingITestBase {
 
         Long refundAmount = defaultTestCharge.getAmount();
 
-        smartpay.mockRefundSuccess();
+        smartpayMockClient.mockRefundSuccess();
         ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
         String refundId = assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
@@ -100,11 +101,11 @@ public class SmartpayRefundITest extends ChargingITestBase {
         Long chargeId = defaultTestCharge.getChargeId();
         String externalChargeId = defaultTestCharge.getExternalChargeId();
 
-        smartpay.mockRefundSuccess();
+        smartpayMockClient.mockRefundSuccess();
         ValidatableResponse firstValidatableResponse = postRefundFor(externalChargeId, firstRefundAmount, defaultTestCharge.getAmount());
         String firstRefundId = assertRefundResponseWith(firstRefundAmount, firstValidatableResponse, ACCEPTED.getStatusCode());
 
-        smartpay.mockRefundSuccess();
+        smartpayMockClient.mockRefundSuccess();
         ValidatableResponse secondValidatableResponse = postRefundFor(externalChargeId, secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount);
         String secondRefundId = assertRefundResponseWith(secondRefundAmount, secondValidatableResponse, ACCEPTED.getStatusCode());
 
@@ -115,7 +116,7 @@ public class SmartpayRefundITest extends ChargingITestBase {
                 aRefundMatching(secondRefundId, is("8514774917520978"), chargeId, secondRefundAmount, "REFUND SUBMITTED"),
                 aRefundMatching(firstRefundId, is("8514774917520978"), chargeId, firstRefundAmount, "REFUND SUBMITTED")));
 
-        getChargeApi.withChargeId(externalChargeId)
+        connectorRestApiClient.withChargeId(externalChargeId)
                 .getCharge()
                 .statusCode(200)
                 .body("refund_summary.status", is("full"))
@@ -136,7 +137,7 @@ public class SmartpayRefundITest extends ChargingITestBase {
 
         Long refundAmount = 20L;
 
-        smartpay.mockRefundSuccess();
+        smartpayMockClient.mockRefundSuccess();
         postRefundFor(testCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("pending"))
@@ -153,7 +154,7 @@ public class SmartpayRefundITest extends ChargingITestBase {
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         Long chargeId = defaultTestCharge.getChargeId();
 
-        smartpay.mockRefundSuccess();
+        smartpayMockClient.mockRefundSuccess();
         postRefundFor(externalChargeId, refundAmount, defaultTestCharge.getAmount())
                 .statusCode(ACCEPTED.getStatusCode());
 
@@ -169,7 +170,7 @@ public class SmartpayRefundITest extends ChargingITestBase {
     @Test
     public void shouldFailRequestingARefund_whenAmountIsBiggerThanChargeAmount() {
         Long refundAmount = defaultTestCharge.getAmount() + 20;
-        smartpay.mockRefundSuccess();
+        smartpayMockClient.mockRefundSuccess();
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_not_available"))
@@ -212,7 +213,7 @@ public class SmartpayRefundITest extends ChargingITestBase {
         Long firstRefundAmount = 80L;
         Long secondRefundAmount = 30L; // 10 more than available
 
-        smartpay.mockRefundSuccess();
+        smartpayMockClient.mockRefundSuccess();
         ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), firstRefundAmount, defaultTestCharge.getAmount());
         String firstRefundId = assertRefundResponseWith(firstRefundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
@@ -234,7 +235,7 @@ public class SmartpayRefundITest extends ChargingITestBase {
     public void shouldFailRequestingARefund_whenGatewayOperationFails() {
         Long refundAmount = defaultTestCharge.getAmount();
 
-        smartpay.mockRefundError();
+        smartpayMockClient.mockRefundError();
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
                 .body("message", is("SmartPay refund response " +
@@ -291,7 +292,7 @@ public class SmartpayRefundITest extends ChargingITestBase {
                 .insert();
 
         String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
-                app.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
+                testContext.getPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
 
         ValidatableResponse validatableResponse = getRefundsFor(defaultTestAccount.getAccountId(),
                 defaultTestCharge.getExternalChargeId())
@@ -416,7 +417,7 @@ public class SmartpayRefundITest extends ChargingITestBase {
                 .body("created_date", is(notNullValue()));
 
         String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
-                app.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
+                testContext.getPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
 
         String refundId = response.extract().path("refund_id");
         response.body("_links.self.href", is(paymentUrl + "/refunds/" + refundId))

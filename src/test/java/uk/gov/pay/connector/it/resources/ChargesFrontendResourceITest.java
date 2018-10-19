@@ -66,7 +66,7 @@ public class ChargesFrontendResourceITest {
     private long corporateCreditCardSurchargeAmount = 213L;
     private long corporateDebitCardSurchargeAmount = 57L;
 
-    private RestAssuredClient connectorRestApi = new RestAssuredClient(app, accountId);
+    private RestAssuredClient connectorRestApi;
 
     @Before
     public void setupGatewayAccount() {
@@ -77,6 +77,7 @@ public class ChargesFrontendResourceITest {
                 corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount);
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), mastercard.getId());
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), visa.getId());
+        connectorRestApi = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     @Test
