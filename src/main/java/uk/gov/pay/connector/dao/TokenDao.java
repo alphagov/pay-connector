@@ -2,6 +2,7 @@ package uk.gov.pay.connector.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
+import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.model.domain.TokenEntity;
 
 import javax.inject.Inject;

@@ -20,9 +20,9 @@ import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.Notification;
-import uk.gov.pay.connector.model.Notifications;
-import uk.gov.pay.connector.model.Notifications.Builder;
+import uk.gov.pay.connector.usernotification.model.Notification;
+import uk.gov.pay.connector.usernotification.model.Notifications;
+import uk.gov.pay.connector.usernotification.model.Notifications.Builder;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 
 import javax.ws.rs.client.Invocation;

@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
 import org.junit.Test;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;

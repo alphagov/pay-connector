@@ -8,7 +8,7 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
-import uk.gov.pay.connector.model.domain.NotificationCredentials;
+import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 
 import java.util.Arrays;
 import java.util.HashMap;

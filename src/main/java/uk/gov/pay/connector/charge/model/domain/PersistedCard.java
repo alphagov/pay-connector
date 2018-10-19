@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.common.model.domain.Address;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)

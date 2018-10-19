@@ -3,8 +3,8 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.model.domain.EmailNotificationType;
-import uk.gov.pay.connector.resources.EmailNotificationResource;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
+import uk.gov.pay.connector.usernotification.resource.EmailNotificationResource;
 
 import java.util.HashMap;
 import java.util.Map;

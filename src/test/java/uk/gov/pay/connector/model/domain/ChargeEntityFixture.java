@@ -8,6 +8,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevents.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 

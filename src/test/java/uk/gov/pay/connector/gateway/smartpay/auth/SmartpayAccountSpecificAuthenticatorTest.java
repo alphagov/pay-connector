@@ -10,7 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.NotificationCredentials;
+import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 import uk.gov.pay.connector.util.HashUtil;
 
 import java.util.Optional;

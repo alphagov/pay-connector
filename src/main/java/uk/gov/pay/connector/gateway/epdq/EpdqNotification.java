@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.epdq;
 import com.google.common.base.Strings;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
-import uk.gov.pay.connector.model.ChargeStatusRequest;
+import uk.gov.pay.connector.usernotification.model.ChargeStatusRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import java.util.List;

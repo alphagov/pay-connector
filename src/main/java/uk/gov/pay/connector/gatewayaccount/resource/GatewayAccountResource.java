@@ -16,12 +16,12 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.exception.CredentialsException;
 import uk.gov.pay.connector.model.PatchRequest;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
-import uk.gov.pay.connector.model.domain.EmailNotificationType;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.model.domain.UuidAbstractEntity;
-import uk.gov.pay.connector.service.GatewayAccountNotificationCredentialsService;
+import uk.gov.pay.connector.usernotification.service.GatewayAccountNotificationCredentialsService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 

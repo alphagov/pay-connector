@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.exception.RefundException;

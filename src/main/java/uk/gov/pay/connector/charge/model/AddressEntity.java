@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.charge.model;
 
-import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.common.model.domain.Address;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;

@@ -3,8 +3,7 @@ package uk.gov.pay.connector.refund.model.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.eclipse.persistence.annotations.Customizer;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.domain.AbstractVersionedEntity;
-import uk.gov.pay.connector.model.domain.HistoryCustomizer;
+import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.model.domain.UTCDateTimeConverter;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 

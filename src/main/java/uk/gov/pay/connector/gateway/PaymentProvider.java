@@ -10,8 +10,8 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.Notification;
-import uk.gov.pay.connector.model.Notifications;
+import uk.gov.pay.connector.usernotification.model.Notification;
+import uk.gov.pay.connector.usernotification.model.Notifications;
 import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 
 import java.util.Optional;

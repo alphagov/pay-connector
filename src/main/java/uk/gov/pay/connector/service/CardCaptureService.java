@@ -18,6 +18,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;

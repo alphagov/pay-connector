@@ -10,7 +10,7 @@ import uk.gov.pay.connector.gateway.model.status.StatusMapFromStatus;
 import uk.gov.pay.connector.gateway.model.status.UnknownStatus;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.model.domain.Status;
+import uk.gov.pay.connector.common.model.Status;
 import uk.gov.pay.connector.gateway.model.status.IgnoredStatus;
 
 import java.util.ArrayList;

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang3.tuple.Pair;
-import uk.gov.pay.connector.model.ChargeStatusRequest;
+import uk.gov.pay.connector.usernotification.model.ChargeStatusRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import java.time.ZonedDateTime;

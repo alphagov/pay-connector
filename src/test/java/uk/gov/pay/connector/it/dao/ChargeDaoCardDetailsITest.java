@@ -10,7 +10,7 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.model.domain.Address;
+import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
