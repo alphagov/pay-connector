@@ -14,6 +14,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.dao.CardTypeDao;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.exception.CredentialsException;
+import uk.gov.pay.connector.gatewayaccount.model.NewGatewayAccountRequest;
 import uk.gov.pay.connector.model.PatchRequest;
 import uk.gov.pay.connector.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.model.domain.EmailNotificationEntity;
@@ -211,16 +212,21 @@ public class GatewayAccountResource {
     @Path("/v1/api/accounts")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response createNewGatewayAccount(JsonNode node, @Context UriInfo uriInfo) {
-        String accountType = node.has(PROVIDER_ACCOUNT_TYPE) ? node.get(PROVIDER_ACCOUNT_TYPE).textValue() : TEST.toString();
+    public Response createNewGatewayAccount(NewGatewayAccountRequest newGatewayAccountRequest, @Context UriInfo uriInfo) {
+//        String accountType = node.has(PROVIDER_ACCOUNT_TYPE) ? node.get(PROVIDER_ACCOUNT_TYPE).textValue() : TEST.toString();
+        
+        String accountType = TEST.toString();
+        
         Type type;
+        
         try {
             type = GatewayAccountEntity.Type.fromString(accountType);
         } catch (IllegalArgumentException iae) {
             return badRequestResponse(format("Unsupported payment provider account type '%s', should be one of (test, live)", accountType));
         }
 
-        String provider = node.has(PAYMENT_PROVIDER_KEY) ? node.get(PAYMENT_PROVIDER_KEY).textValue() : PaymentGatewayName.SANDBOX.getName();
+//        String provider = node.has(PAYMENT_PROVIDER_KEY) ? node.get(PAYMENT_PROVIDER_KEY).textValue() : PaymentGatewayName.SANDBOX.getName();
+        String provider = PaymentGatewayName.SANDBOX.getName();
 
         if (!PaymentGatewayName.isValidPaymentGateway(provider)) {
             return badRequestResponse(format("Unsupported payment provider %s.", provider));
@@ -231,18 +237,18 @@ public class GatewayAccountResource {
 
         logger.info("Setting the new account to accept all card types by default", provider, accountType);
         entity.setCardTypes(cardTypeDao.findAllNon3ds());
-        if (node.has(SERVICE_NAME_FIELD_NAME)) {
-            entity.setServiceName(node.get(SERVICE_NAME_FIELD_NAME).textValue());
+        if (newGatewayAccountRequest.getServiceName() != null) {
+            entity.setServiceName(newGatewayAccountRequest.getServiceName());
         }
-        if (node.has(DESCRIPTION_FIELD_NAME)) {
-            entity.setDescription(node.get(DESCRIPTION_FIELD_NAME).textValue());
-        }
-        if (node.has(ANALYTICS_ID_FIELD_NAME)) {
-            entity.setAnalyticsId(node.get(ANALYTICS_ID_FIELD_NAME).textValue());
-        }
+//        if (request.has(DESCRIPTION_FIELD_NAME)) {
+//            entity.setDescription(request.get(DESCRIPTION_FIELD_NAME).textValue());
+//        }
+//        if (request.has(ANALYTICS_ID_FIELD_NAME)) {
+//            entity.setAnalyticsId(request.get(ANALYTICS_ID_FIELD_NAME).textValue());
+//        }
         
-        entity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(entity));
-        entity.addNotification(EmailNotificationType.REFUND_ISSUED, new EmailNotificationEntity(entity));
+//        entity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(entity));
+//        entity.addNotification(EmailNotificationType.REFUND_ISSUED, new EmailNotificationEntity(entity));
         gatewayDao.persist(entity);
         URI newLocation = uriInfo.
                 getBaseUriBuilder().
