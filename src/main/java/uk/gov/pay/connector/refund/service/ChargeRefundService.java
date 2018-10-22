@@ -12,6 +12,7 @@ import uk.gov.pay.connector.charge.service.transaction.PreTransactionalOperation
 import uk.gov.pay.connector.charge.service.transaction.TransactionContext;
 import uk.gov.pay.connector.charge.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.charge.service.transaction.TransactionalOperation;
+import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -26,7 +27,6 @@ import uk.gov.pay.connector.refund.model.RefundRequest;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
-import uk.gov.pay.connector.util.charge.RefundCalculator;
 
 import javax.inject.Inject;
 import java.util.Optional;

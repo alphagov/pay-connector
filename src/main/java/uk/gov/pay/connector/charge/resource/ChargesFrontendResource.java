@@ -106,7 +106,7 @@ public class ChargesFrontendResource {
             @PathParam("chargeId") String chargeId,
             @Valid @NotNull NewChargeStatusRequest newChargeStatusRequest) {
         ChargeStatus newChargeStatus;
-        
+
         try {
             newChargeStatus = ChargeStatus.fromString(newChargeStatusRequest.getNewStatus());
         } catch (IllegalArgumentException e) {

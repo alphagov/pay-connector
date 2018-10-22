@@ -38,7 +38,8 @@ public class AuthorisationGatewayRequest implements GatewayRequest {
     }
 
     @Override
-    public GatewayAccountEntity getGatewayAccount() {return charge.getGatewayAccount();
+    public GatewayAccountEntity getGatewayAccount() {
+        return charge.getGatewayAccount();
     }
 
     @Override

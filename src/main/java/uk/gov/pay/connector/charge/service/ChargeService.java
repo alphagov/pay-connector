@@ -16,6 +16,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
+import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
@@ -26,7 +27,6 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
-import uk.gov.pay.connector.util.charge.RefundCalculator;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
