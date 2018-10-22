@@ -26,6 +26,7 @@ import uk.gov.pay.connector.refund.model.RefundRequest;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
+import uk.gov.pay.connector.util.charge.RefundCalculator;
 
 import javax.inject.Inject;
 import java.util.Optional;
@@ -63,11 +64,12 @@ public class ChargeRefundService {
     private final PaymentProviders providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
     private final UserNotificationService userNotificationService;
+
     @Inject
     public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders providers,
                                Provider<TransactionFlow> transactionFlowProvider,
                                UserNotificationService userNotificationService
-                               ) {
+    ) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.providers = providers;
@@ -107,7 +109,7 @@ public class ChargeRefundService {
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
             checkIfChargeIsRefundableOrTerminate(chargeEntity, refundAvailability, gatewayAccount);
 
-            long totalAmountToBeRefunded = chargeEntity.getTotalAmountToBeRefunded();
+            long totalAmountToBeRefunded = RefundCalculator.getTotalAmountToBeRefunded(chargeEntity);
             checkIfRefundRequestIsInConflictOrTerminate(refundRequest, chargeEntity, totalAmountToBeRefunded);
 
             checkIfRefundAmountWithinLimitOrTerminate(refundRequest, chargeEntity, refundAvailability, gatewayAccount, totalAmountToBeRefunded);
@@ -166,7 +168,7 @@ public class ChargeRefundService {
         RefundEntity refundEntity = new RefundEntity(charge, refundRequest.getAmount(), refundRequest.getUserExternalId());
         charge.getRefunds().add(refundEntity);
         refundDao.persist(refundEntity);
-        
+
         return refundEntity;
     }
 

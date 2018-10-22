@@ -26,6 +26,7 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
+import uk.gov.pay.connector.util.charge.RefundCalculator;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
@@ -207,8 +208,8 @@ public class ChargeService {
     private ChargeResponse.RefundSummary buildRefundSummary(ChargeEntity charge) {
         ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
         refund.setStatus(providers.byName(charge.getPaymentGatewayName()).getExternalChargeRefundAvailability(charge).getStatus());
-        refund.setAmountSubmitted(charge.getRefundedAmount());
-        refund.setAmountAvailable(charge.getTotalAmountToBeRefunded());
+        refund.setAmountSubmitted(RefundCalculator.getRefundedAmount(charge));
+        refund.setAmountAvailable(RefundCalculator.getTotalAmountToBeRefunded(charge));
         return refund;
     }
 

@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.util.charge.RefundCalculator;
 
 import java.util.Collections;
 import java.util.List;
@@ -51,7 +52,7 @@ public class DefaultExternalRefundAvailabilityCalculator implements ExternalRefu
         if (chargeEntity.hasStatus(statusesThatMapToExternalPending)) {
             return EXTERNAL_PENDING;
         } else if (chargeEntity.hasStatus(statusesThatMapToExternalAvailableOrExternalFull)) {
-            if (chargeEntity.getTotalAmountToBeRefunded() > 0) {
+            if (RefundCalculator.getTotalAmountToBeRefunded(chargeEntity) > 0) {
                 return EXTERNAL_AVAILABLE;
             } else {
                 return EXTERNAL_FULL;
