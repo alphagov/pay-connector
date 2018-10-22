@@ -656,6 +656,12 @@ public class DatabaseFixtures {
             return this;
         }
 
+
+        public TestRefund withExternalRefundId(String externalRefundId) {
+            this.externalRefundId = externalRefundId;
+            return this;
+        }
+
         public TestRefund insert() {
             if (testCharge == null)
                 throw new IllegalStateException("Test charge must be provided.");
