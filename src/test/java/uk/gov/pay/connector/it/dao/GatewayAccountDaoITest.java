@@ -68,6 +68,8 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertThat(account.getNotificationCredentials(), is(nullValue()));
         assertThat(account.getCorporateCreditCardSurchargeAmount(), is(0L));
         assertThat(account.getCorporateDebitCardSurchargeAmount(), is(0L));
+        assertThat(account.getCorporatePrepaidCreditCardSurchargeAmount(), is(0L));
+        assertThat(account.getCorporatePrepaidDebitCardSurchargeAmount(), is(0L));
 
         databaseTestHelper.getAccountCredentials(account.getId());
 
@@ -109,6 +111,8 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
         assertThat(gatewayAccount.getCorporateCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));
         assertThat(gatewayAccount.getCorporateDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
+        assertThat(gatewayAccount.getCorporatePrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidCreditCardSurchargeAmount()));
+        assertThat(gatewayAccount.getCorporatePrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidDebitCardSurchargeAmount()));
         assertThat(gatewayAccount.getCardTypes(), contains(
                 allOf(
                         hasProperty("id", is(Matchers.notNullValue())),
@@ -123,6 +127,28 @@ public class GatewayAccountDaoITest extends DaoITestBase {
                 )));
     }
 
+    @Test
+    public void findById_shouldFindGatewayAccountWithCorporateSurcharges() {
+        DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCorporateSurcharges();
+
+        Optional<GatewayAccountEntity> gatewayAccountOpt =
+                gatewayAccountDao.findById(GatewayAccountEntity.class, accountRecord.getAccountId());
+
+        assertTrue(gatewayAccountOpt.isPresent());
+        GatewayAccountEntity gatewayAccount = gatewayAccountOpt.get();
+        assertThat(gatewayAccount.getGatewayName(), is(accountRecord.getPaymentProvider()));
+        Map<String, String> credentialsMap = gatewayAccount.getCredentials();
+        assertThat(credentialsMap.size(), is(0));
+        assertThat(gatewayAccount.getServiceName(), is(accountRecord.getServiceName()));
+        assertThat(gatewayAccount.getDescription(), is(accountRecord.getDescription()));
+        assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
+        assertThat(gatewayAccount.getCorporateCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));
+        assertThat(gatewayAccount.getCorporateDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
+        assertThat(gatewayAccount.getCorporatePrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidCreditCardSurchargeAmount()));
+        assertThat(gatewayAccount.getCorporatePrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidDebitCardSurchargeAmount()));
+        
+    }
+    
     @Test
     public void findById_shouldUpdateAccountCardTypes() {
         DatabaseFixtures.TestCardType mastercardCreditCardTypeRecord = createMastercardCreditCardTypeRecord();
@@ -269,8 +295,10 @@ public class GatewayAccountDaoITest extends DaoITestBase {
                 TEST,
                 "description-1",
                 "analytics-id-1",
-                250,
-                50);
+                0,
+                0,
+                0,
+                0);
         databaseTestHelper.addGatewayAccount("456",
                 "provider-2",
                 null,
@@ -278,8 +306,10 @@ public class GatewayAccountDaoITest extends DaoITestBase {
                 TEST,
                 "description-2",
                 "analytics-id-2",
-                0,
-                0);
+                250,
+                50,
+                250,
+                50);
         databaseTestHelper.addGatewayAccount("789",
                 "provider-3",
                 null,
@@ -287,6 +317,8 @@ public class GatewayAccountDaoITest extends DaoITestBase {
                 GatewayAccountEntity.Type.LIVE,
                 "description-3",
                 "analytics-id-3",
+                0,
+                0,
                 0,
                 0);
 
@@ -299,15 +331,17 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertEquals("service-name-1", gatewayAccounts.get(0).getServiceName());
         assertEquals(TEST.toString(), gatewayAccounts.get(0).getType());
         assertEquals("analytics-id-1", gatewayAccounts.get(0).getAnalyticsId());
-        assertEquals(250L, gatewayAccounts.get(0).getCorporateCreditCardSurchargeAmount());
-        assertEquals(50L, gatewayAccounts.get(0).getCorporateDebitCardSurchargeAmount());
+        assertEquals(0L, gatewayAccounts.get(0).getCorporateCreditCardSurchargeAmount());
+        assertEquals(0L, gatewayAccounts.get(0).getCorporateDebitCardSurchargeAmount());
+        assertEquals(0L, gatewayAccounts.get(0).getCorporatePrepaidCreditCardSurchargeAmount());
+        assertEquals(0L, gatewayAccounts.get(0).getCorporatePrepaidDebitCardSurchargeAmount());
 
         assertEquals("provider-2", gatewayAccounts.get(1).getPaymentProvider());
         assertEquals("provider-3", gatewayAccounts.get(2).getPaymentProvider());
-        assertEquals(0L, gatewayAccounts.get(1).getCorporateCreditCardSurchargeAmount());
-        assertEquals(0L, gatewayAccounts.get(1).getCorporateDebitCardSurchargeAmount());
-        assertEquals(0L, gatewayAccounts.get(2).getCorporateCreditCardSurchargeAmount());
-        assertEquals(0L, gatewayAccounts.get(2).getCorporateDebitCardSurchargeAmount());
+        assertEquals(250L, gatewayAccounts.get(1).getCorporateCreditCardSurchargeAmount());
+        assertEquals(50L, gatewayAccounts.get(1).getCorporateDebitCardSurchargeAmount());
+        assertEquals(250L, gatewayAccounts.get(1).getCorporatePrepaidCreditCardSurchargeAmount());
+        assertEquals(50L, gatewayAccounts.get(1).getCorporatePrepaidDebitCardSurchargeAmount());
         assertThat(gatewayAccounts.get(1).getAccountId(), is(456L));
         assertThat(gatewayAccounts.get(2).getAccountId(), is(789L));
     }
@@ -326,6 +360,8 @@ public class GatewayAccountDaoITest extends DaoITestBase {
                 "description-1",
                 "analytics-id-1",
                 0,
+                0,
+                0,
                 0
         );
 
@@ -337,6 +373,8 @@ public class GatewayAccountDaoITest extends DaoITestBase {
                 TEST,
                 "description-2",
                 "analytics-id-2",
+                0,
+                0,
                 0,
                 0
         );
@@ -367,6 +405,8 @@ public class GatewayAccountDaoITest extends DaoITestBase {
                 "description-1",
                 "analytics-id-1",
                 0,
+                0,
+                0,
                 0
         );
 
@@ -379,6 +419,8 @@ public class GatewayAccountDaoITest extends DaoITestBase {
                 "description-2",
                 "analytics-id-2",
                 250,
+                50,
+                250,
                 50
         );
 
@@ -390,6 +432,8 @@ public class GatewayAccountDaoITest extends DaoITestBase {
                 TEST,
                 "description-3",
                 "analytics-id-3",
+                0,
+                0,
                 0,
                 0
         );
@@ -407,6 +451,8 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertEquals("analytics-id-2", gatewayAccounts.get(0).getAnalyticsId());
         assertEquals(250L, gatewayAccounts.get(0).getCorporateCreditCardSurchargeAmount());
         assertEquals(50L, gatewayAccounts.get(0).getCorporateDebitCardSurchargeAmount());
+        assertEquals(250L, gatewayAccounts.get(0).getCorporateCreditCardSurchargeAmount());
+        assertEquals(50L, gatewayAccounts.get(0).getCorporateDebitCardSurchargeAmount());
 
         assertThat(gatewayAccounts.get(1).getAccountId(), is(789L));
         assertEquals("provider-3", gatewayAccounts.get(1).getPaymentProvider());
@@ -414,8 +460,6 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         assertEquals("service-name-3", gatewayAccounts.get(1).getServiceName());
         assertEquals(TEST.toString(), gatewayAccounts.get(1).getType());
         assertEquals("analytics-id-3", gatewayAccounts.get(1).getAnalyticsId());
-        assertEquals(0L, gatewayAccounts.get(1).getCorporateCreditCardSurchargeAmount());
-        assertEquals(0L, gatewayAccounts.get(1).getCorporateDebitCardSurchargeAmount());
     }
 
     @Test
@@ -433,6 +477,8 @@ public class GatewayAccountDaoITest extends DaoITestBase {
                 TEST,
                 "description-1",
                 "analytics-id-1",
+                0,
+                0,
                 0,
                 0);
         Optional<GatewayAccountEntity> gatewayAccountOptional = gatewayAccountDao.findById(accountId);
@@ -466,6 +512,16 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         return databaseFixtures
                 .aTestAccount()
                 .withCardTypes(Arrays.asList(cardTypes))
+                .insert();
+    }
+
+    private DatabaseFixtures.TestAccount createAccountRecordWithCorporateSurcharges() {
+        return databaseFixtures
+                .aTestAccount()
+                .withCorporateCreditCardSurchargeAmount(250L)
+                .withCorporateDebitCardSurchargeAmount(50L)
+                .withCorporatePrepaidCreditCardSurchargeAmount(250L)
+                .withCorporatePrepaidDebitCardSurchargeAmount(50L)
                 .insert();
     }
 }

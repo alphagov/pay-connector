@@ -36,7 +36,7 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
 
     public List<GatewayAccountResourceDTO> list(List<Long> accountIds) {
         String query = "SELECT NEW uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO"
-                       + " (gae.id, gae.gatewayName, gae.type, gae.description, gae.serviceName, gae.analyticsId, gae.corporateCreditCardSurchargeAmount, gae.corporateDebitCardSurchargeAmount, gae.allowWebPayments)"
+                       + " (gae.id, gae.gatewayName, gae.type, gae.description, gae.serviceName, gae.analyticsId, gae.corporateCreditCardSurchargeAmount, gae.corporateDebitCardSurchargeAmount, gae.allowWebPayments, gae.corporatePrepaidCreditCardSurchargeAmount, gae.corporatePrepaidDebitCardSurchargeAmount)"
                        + " FROM GatewayAccountEntity gae"
                        + " WHERE gae.id IN :accountIds"
                        + " ORDER BY gae.id";
@@ -50,7 +50,7 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
 
     public List<GatewayAccountResourceDTO> listAll() {
         String query = "SELECT NEW uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO" +
-                "(gae.id, gae.gatewayName, gae.type, gae.description, gae.serviceName, gae.analyticsId, gae.corporateCreditCardSurchargeAmount, gae.corporateDebitCardSurchargeAmount, gae.allowWebPayments) " +
+                "(gae.id, gae.gatewayName, gae.type, gae.description, gae.serviceName, gae.analyticsId, gae.corporateCreditCardSurchargeAmount, gae.corporateDebitCardSurchargeAmount, gae.allowWebPayments, gae.corporatePrepaidCreditCardSurchargeAmount, gae.corporatePrepaidDebitCardSurchargeAmount) " +
                 "FROM GatewayAccountEntity gae order by gae.id";
 
         return entityManager
