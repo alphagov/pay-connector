@@ -8,10 +8,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 public class SearchRefundsService {
-
-    private static final Long MAX_DISPLAY_SIZE = 500L;
+    
     private RefundDao refundDao;
-    private RefundSearchStrategy refundSearchStrategy;
 
     @Inject
     public SearchRefundsService(RefundDao refundDao) {
@@ -19,10 +17,7 @@ public class SearchRefundsService {
     }
 
     public Response getAllRefunds(UriInfo uriInfo, SearchParams searchParams) {
-        refundSearchStrategy = new RefundSearchStrategy(refundDao);
-        
-        //todo defaults?
-        return refundSearchStrategy.search(searchParams, uriInfo);
+        return new RefundSearchStrategy(refundDao).search(searchParams, uriInfo);
     }
 }
 

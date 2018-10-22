@@ -51,13 +51,13 @@ public class ResponseUtil {
         return responseWith(BAD_REQUEST, message, code);
     }
 
-    public static Response badRequestResponse(List message) {
+    public static Response badRequestResponse(List<String> message) {
         logger.error(message.toString());
         return responseWithMessageMap(BAD_REQUEST, message);
     }
 
     public static Response preconditionFailedResponse(String message) {
-        logger.info(message.toString());
+        logger.info(message);
         return responseWithMessageMap(PRECONDITION_FAILED, message);
     }
 

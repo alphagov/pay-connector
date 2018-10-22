@@ -1,47 +1,20 @@
 package uk.gov.pay.connector.charge.model;
 
-import uk.gov.pay.connector.exception.ValidationException;
+public class DisplaySize extends PositiveLong {
 
-public class DisplaySize {
-    
-    private Long displaySize;
-
-    public DisplaySize(Long displaySize) {
-        this.displaySize = displaySize;
+    private DisplaySize(Long pageNumber) {
+        super(pageNumber);
     }
 
-    private static boolean isValid(Long displaySize) {
-        return displaySize > 0;
+    private DisplaySize(Long pageNumber, Long defaultValue) {
+        super(pageNumber, defaultValue);
     }
 
-    public static DisplaySize of(Long displaySize) {
-        if (!(isValid(displaySize))) {
-            throw new ValidationException("DisplaySize is invalid");
-        }
-        return new DisplaySize(displaySize);
+    public static DisplaySize of(Long pageNumber) {
+        return new DisplaySize(pageNumber);
     }
 
-    public Long getDisplaySize() {
-        return displaySize;
-    }
-
-    @Override
-    public String toString() {
-        return String.valueOf(displaySize);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        DisplaySize that = (DisplaySize) o;
-
-        return displaySize != null ? displaySize.equals(that.displaySize) : that.displaySize == null;
-    }
-
-    @Override
-    public int hashCode() {
-        return displaySize != null ? displaySize.hashCode() : 0;
+    public static DisplaySize ofDefault(Long positiveLong, Long defaultValue) {
+        return new DisplaySize(positiveLong, defaultValue);
     }
 }

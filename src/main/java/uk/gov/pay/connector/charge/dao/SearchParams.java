@@ -1,16 +1,21 @@
 package uk.gov.pay.connector.charge.dao;
 
-import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.CardHolderName;
+import uk.gov.pay.connector.charge.model.DisplaySize;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.FromDate;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.PageNumber;
+import uk.gov.pay.connector.charge.model.PositiveLong;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.model.ToDate;
 import uk.gov.pay.connector.charge.model.TransactionType;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.exception.ValidationException;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 import uk.gov.pay.connector.model.api.ExternalRefundStatus;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,10 +37,10 @@ public class SearchParams {
     private Long gatewayAccountId;
     private ServicePaymentReference reference;
     private String email;
-    private ZonedDateTime fromDate;
-    private ZonedDateTime toDate;
-    private Long page;
-    private Long displaySize;
+    private FromDate fromDate;
+    private ToDate toDate;
+    private PageNumber page;
+    private DisplaySize displaySize;
     private List<String> cardBrands = new ArrayList<>();
     private Set<ChargeStatus> internalStates = new HashSet<>();
     private Set<String> externalChargeStates = new HashSet<>();
@@ -199,42 +204,38 @@ public class SearchParams {
         return this;
     }
 
-    public ZonedDateTime getFromDate() {
+    public FromDate getFromDate() {
         return fromDate;
     }
 
-    public SearchParams withFromDate(ZonedDateTime fromDate) {
+    public SearchParams withFromDate(FromDate fromDate) {
         this.fromDate = fromDate;
         return this;
     }
 
-    public ZonedDateTime getToDate() {
+    public ToDate getToDate() {
         return toDate;
     }
 
-    public SearchParams withToDate(ZonedDateTime toDate) {
+    public SearchParams withToDate(ToDate toDate) {
         this.toDate = toDate;
         return this;
     }
 
-    public Long getPage() {
+    public PositiveLong getPage() {
         return page;
     }
 
-    public SearchParams withPage(Long page) {
+    public SearchParams withPage(PageNumber page) {
         this.page = page;
         return this;
     }
 
-    public Long getDisplaySize() {
+    public DisplaySize getDisplaySize() {
         return displaySize;
     }
 
-    public SearchParams withDisplaySize(Long displaySize) {
-        if (displaySize <= 0) {
-            throw new IllegalArgumentException("displaySize must be a positive integer");
-        }
-
+    public SearchParams withDisplaySize(DisplaySize displaySize) {
         this.displaySize = displaySize;
         return this;
     }
@@ -301,7 +302,7 @@ public class SearchParams {
         }
         return builder.toString().replaceFirst("&", "");
     }
-
+    
     private List<ExternalChargeState> parseChargeState(String state) {
         if (isBlank(state)) {
             return new ArrayList<>();

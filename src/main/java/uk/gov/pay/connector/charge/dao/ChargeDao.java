@@ -3,6 +3,8 @@ package uk.gov.pay.connector.charge.dao;
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
+import uk.gov.pay.connector.charge.model.FromDate;
+import uk.gov.pay.connector.charge.model.ToDate;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -93,7 +95,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
     public List<ChargeEntity> findBeforeDateWithStatusIn(ZonedDateTime date, List<ChargeStatus> statuses) {
         SearchParams params = new SearchParams()
-                .withToDate(date)
+                .withToDate(ToDate.of(date))
                 .withInternalStates(statuses);
         return findAllBy(params);
     }
@@ -103,8 +105,8 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                                                                     List<ChargeStatus> statuses) {
         SearchParams params = new SearchParams()
                 .withGatewayAccountId(gatewayAccountId)
-                .withFromDate(from)
-                .withToDate(to)
+                .withFromDate(FromDate.of(from))
+                .withToDate(ToDate.of(to))
                 .withInternalStates(statuses);
         return findAllBy(params);
     }
@@ -121,9 +123,9 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         Query query = entityManager.get().createQuery(cq);
 
         if (params.getPage() != null && params.getDisplaySize() != null) {
-            Long firstResult = (params.getPage() - 1) * params.getDisplaySize(); // page coming from params is 1 based, so -1
+            Long firstResult = (params.getPage().getRawValue() - 1) * params.getDisplaySize().getRawValue(); // page coming from params is 1 based, so -1
             query.setFirstResult(firstResult.intValue());
-            query.setMaxResults(params.getDisplaySize().intValue());
+            query.setMaxResults(params.getDisplaySize().getRawValue().intValue());
         }
         return query.getResultList();
     }
@@ -159,9 +161,9 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
             predicates.add(charge.get(CARD_DETAILS).get("cardBrand").in(params.getCardBrands()));
         }
         if (params.getFromDate() != null)
-            predicates.add(cb.greaterThanOrEqualTo(charge.get(CREATED_DATE), params.getFromDate()));
+            predicates.add(cb.greaterThanOrEqualTo(charge.get(CREATED_DATE), params.getFromDate().getRawValue()));
         if (params.getToDate() != null)
-            predicates.add(cb.lessThan(charge.get(CREATED_DATE), params.getToDate()));
+            predicates.add(cb.lessThan(charge.get(CREATED_DATE), params.getToDate().getRawValue()));
 
         return predicates;
     }

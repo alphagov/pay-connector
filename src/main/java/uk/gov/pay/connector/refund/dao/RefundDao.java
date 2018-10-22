@@ -125,9 +125,9 @@ public class RefundDao extends JpaDao<RefundEntity> {
         if (params.getGatewayAccountId() != null)
             predicates.add(cb.equal(refundEntityRoot.get(CHARGE_ENTITY).get(GATEWAY_ACCOUNT).get("id"), params.getGatewayAccountId()));
         if (params.getFromDate() != null)
-            predicates.add(cb.greaterThanOrEqualTo(refundEntityRoot.get(CREATED_DATE), params.getFromDate()));
+            predicates.add(cb.greaterThanOrEqualTo(refundEntityRoot.get(CREATED_DATE), params.getFromDate().getRawValue()));
         if (params.getToDate() != null)
-            predicates.add(cb.lessThan(refundEntityRoot.get(CREATED_DATE), params.getToDate()));
+            predicates.add(cb.lessThan(refundEntityRoot.get(CREATED_DATE), params.getToDate().getRawValue()));
 
         return predicates;
     }
@@ -145,9 +145,9 @@ public class RefundDao extends JpaDao<RefundEntity> {
         Query query = entityManager.get().createQuery(cq);
 
         if (params.getPage() != null && params.getDisplaySize() != null) {
-            Long firstResult = (params.getPage() - 1) * params.getDisplaySize();
+            Long firstResult = (params.getPage().getRawValue() - 1) * params.getDisplaySize().getRawValue();
             query.setFirstResult(firstResult.intValue());
-            query.setMaxResults(params.getDisplaySize().intValue());
+            query.setMaxResults(params.getDisplaySize().getRawValue().intValue());
         }
         return query.getResultList();
     }

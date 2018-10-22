@@ -4,6 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.SearchParams;
+import uk.gov.pay.connector.charge.model.DisplaySize;
+import uk.gov.pay.connector.charge.model.FromDate;
+import uk.gov.pay.connector.charge.model.PageNumber;
+import uk.gov.pay.connector.charge.model.ToDate;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.refund.service.SearchRefundsService;
 
@@ -16,11 +20,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.time.ZonedDateTime;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
 @Path("/")
@@ -53,10 +55,10 @@ public class SearchRefundsResource {
                                           @Context UriInfo uriInfo) {
         logger.info("Getting all refunds for account id {}", accountId);
         SearchParams refundSearchParams = new SearchParams()
-                .withFromDate(parseDate(fromDate))
-                .withToDate(parseDate(toDate))
-                .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
-                .withPage(pageNumber != null ? pageNumber : 1);
+                .withFromDate(FromDate.ofNullable(fromDate))
+                .withToDate(ToDate.ofNullable(toDate))
+                .withDisplaySize(DisplaySize.ofDefault(displaySize, configuration.getTransactionsPaginationConfig().getDisplayPageSize()))
+                .withPage(PageNumber.ofDefault(pageNumber, 1L));
 
         
         return gatewayAccountDao.findById(accountId)
@@ -66,12 +68,4 @@ public class SearchRefundsResource {
 
     }
 
-    //todo do not do this
-    private ZonedDateTime parseDate(String date) {
-        ZonedDateTime parse = null;
-        if (isNotBlank(date)) {
-            parse = ZonedDateTime.parse(date);
-        }
-        return parse;
-    }
 }

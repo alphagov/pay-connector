@@ -1,6 +1,10 @@
 package uk.gov.pay.connector.charge.model;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Objects;
+
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class ServicePaymentReference {
 
@@ -10,6 +14,13 @@ public class ServicePaymentReference {
         this.servicePaymentReference = Objects.requireNonNull(servicePaymentReference);
     }
 
+    public static ServicePaymentReference ofNullable(String servicePaymentReference) {
+        if (isBlank(servicePaymentReference)) {
+            return null;
+        }
+        return new ServicePaymentReference(servicePaymentReference);
+    }
+    
     public static ServicePaymentReference of(String servicePaymentReference) {
         return new ServicePaymentReference(servicePaymentReference);
     }

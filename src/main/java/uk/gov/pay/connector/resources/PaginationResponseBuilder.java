@@ -2,6 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import black.door.hate.HalRepresentation;
 import uk.gov.pay.connector.charge.dao.SearchParams;
+import uk.gov.pay.connector.charge.model.PageNumber;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -26,7 +27,7 @@ public class PaginationResponseBuilder<T> {
     public PaginationResponseBuilder(SearchParams searchParams, UriInfo uriInfo) {
         this.searchParams = searchParams;
         this.uriInfo = uriInfo;
-        selfPageNum = searchParams.getPage();
+        selfPageNum = searchParams.getPage().getRawValue();
         selfLink = uriWithParams(searchParams.buildQueryParams());
     }
 
@@ -41,7 +42,7 @@ public class PaginationResponseBuilder<T> {
     }
 
     public Response buildResponse() {
-        Long size = searchParams.getDisplaySize();
+        Long size = searchParams.getDisplaySize().getRawValue();
         long lastPage = totalCount > 0 ? (totalCount + size - 1) / size : 1;
         buildLinks(lastPage);
 
@@ -67,17 +68,17 @@ public class PaginationResponseBuilder<T> {
     }
 
     private void buildLinks(long lastPage) {
-        searchParams.withPage(1L);
+        searchParams.withPage(PageNumber.of(1L));
         firstLink = uriWithParams(searchParams.buildQueryParams());
 
-        searchParams.withPage(lastPage);
+        searchParams.withPage(PageNumber.of(lastPage));
         lastLink = uriWithParams(searchParams.buildQueryParams());
 
-        searchParams.withPage(selfPageNum - 1);
-        prevLink = selfPageNum == 1L ? null : uriWithParams(searchParams.buildQueryParams());
+        prevLink = selfPageNum == 1L ? null : uriWithParams(searchParams.withPage(
+                PageNumber.of(selfPageNum - 1)).buildQueryParams());
 
-        searchParams.withPage(selfPageNum + 1);
-        nextLink = selfPageNum == lastPage ? null : uriWithParams(searchParams.buildQueryParams());
+        nextLink = selfPageNum == lastPage ? null : uriWithParams(searchParams.withPage(
+                PageNumber.of(selfPageNum + 1)).buildQueryParams());
     }
 
     private URI uriWithParams(String params) {

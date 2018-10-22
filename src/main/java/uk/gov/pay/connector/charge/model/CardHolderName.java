@@ -1,6 +1,10 @@
 package uk.gov.pay.connector.charge.model;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Objects;
+
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class CardHolderName {
 
@@ -14,6 +18,13 @@ public class CardHolderName {
         return new CardHolderName(cardHolderName);
     }
 
+    public static CardHolderName ofNullable(String cardHolderName) {
+        if (isBlank(cardHolderName)) {
+            return null;
+        }
+        return new CardHolderName(cardHolderName);
+    }
+    
     @Override
     public boolean equals(Object other) {
         if (other != null && other.getClass() == CardHolderName.class) {

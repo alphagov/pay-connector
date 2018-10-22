@@ -3,16 +3,20 @@ package uk.gov.pay.connector.it.dao;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.commons.model.SupportedLanguage;
-import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.charge.dao.TransactionDao;
-import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.charge.model.CardHolderName;
+import uk.gov.pay.connector.charge.model.DisplaySize;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.FromDate;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.PageNumber;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.model.ToDate;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.charge.model.domain.Transaction;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.ZonedDateTime;
@@ -27,15 +31,15 @@ import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.charge.model.TransactionType.PAYMENT;
 import static uk.gov.pay.connector.charge.model.TransactionType.REFUND;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_STARTED;
 import static uk.gov.pay.connector.model.api.ExternalRefundStatus.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.model.api.ExternalRefundStatus.EXTERNAL_SUCCESS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 
@@ -304,8 +308,8 @@ public class TransactionDaoITest extends DaoITestBase {
 
         // when
         SearchParams params = new SearchParams()
-                .withPage(1L)
-                .withDisplaySize(3L);
+                .withPage(PageNumber.of(1L))
+                .withDisplaySize(DisplaySize.of(3L));
 
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
         // then
@@ -326,8 +330,8 @@ public class TransactionDaoITest extends DaoITestBase {
         // when
         params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withPage(2L)
-                .withDisplaySize(3L);
+                .withPage(PageNumber.of(2L))
+                .withDisplaySize(DisplaySize.of(3L));
 
         transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
 
@@ -352,8 +356,8 @@ public class TransactionDaoITest extends DaoITestBase {
         // when
         params = new SearchParams()
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withPage(3L)
-                .withDisplaySize(3L);
+                .withPage(PageNumber.of(3L))
+                .withDisplaySize(DisplaySize.of(3L));
 
         transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
 
@@ -384,8 +388,8 @@ public class TransactionDaoITest extends DaoITestBase {
         insertNewRefundForCharge(charge3, REFUND_USER_EXTERNAL_ID, 5L, now().plusHours(8));
 
         SearchParams params = new SearchParams()
-                .withPage(1L)
-                .withDisplaySize(2L);
+                .withPage(PageNumber.of(1L))
+                .withDisplaySize(DisplaySize.of(2L));
 
         // when
         Long count = transactionDao.getTotalFor(defaultTestAccount.getAccountId(), params);
@@ -809,8 +813,8 @@ public class TransactionDaoITest extends DaoITestBase {
         SearchParams params = new SearchParams()
                 .withReferenceLike(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
-                .withFromDate(ZonedDateTime.parse(FROM_DATE))
-                .withToDate(ZonedDateTime.parse(TO_DATE));
+                .withFromDate(FromDate.of(FROM_DATE))
+                .withToDate(ToDate.of(TO_DATE));
 
         // when
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
@@ -851,7 +855,7 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withTransactionType(PAYMENT)
                 .withReferenceLike(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
-                .withFromDate(ZonedDateTime.parse(FROM_DATE));
+                .withFromDate(FromDate.of(FROM_DATE));
 
         // when
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
@@ -882,7 +886,7 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withTransactionType(REFUND)
                 .withReferenceLike(testCharge.getReference())
                 .addExternalRefundStates(singletonList(EXTERNAL_SUBMITTED.getStatus()))
-                .withFromDate(ZonedDateTime.parse(FROM_DATE));
+                .withFromDate(FromDate.of(FROM_DATE));
 
         // when
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
@@ -1270,8 +1274,8 @@ public class TransactionDaoITest extends DaoITestBase {
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
                 .withCardBrand(testCardDetails.getCardBrand())
                 .withEmailLike(testCharge.getEmail())
-                .withFromDate(ZonedDateTime.parse(FROM_DATE))
-                .withToDate(ZonedDateTime.parse(TO_DATE));
+                .withFromDate(FromDate.of(FROM_DATE))
+                .withToDate(ToDate.of(TO_DATE));
 
         // when
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
@@ -1303,7 +1307,7 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withTransactionType(PAYMENT)
                 .withReferenceLike(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
-                .withToDate(ZonedDateTime.parse(TO_DATE));
+                .withToDate(ToDate.of(TO_DATE));
 
         // when
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
@@ -1334,7 +1338,7 @@ public class TransactionDaoITest extends DaoITestBase {
         SearchParams params = new SearchParams()
                 .withReferenceLike(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
-                .withFromDate(ZonedDateTime.parse(TO_DATE));
+                .withFromDate(FromDate.of(TO_DATE));
 
         // when
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
@@ -1353,7 +1357,7 @@ public class TransactionDaoITest extends DaoITestBase {
         SearchParams params = new SearchParams()
                 .withReferenceLike(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
-                .withToDate(ZonedDateTime.parse(FROM_DATE));
+                .withToDate(ToDate.of(FROM_DATE));
 
         // when
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);

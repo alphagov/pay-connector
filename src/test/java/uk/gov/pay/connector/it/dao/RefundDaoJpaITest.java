@@ -4,6 +4,8 @@ import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.dao.SearchParams;
+import uk.gov.pay.connector.charge.model.FromDate;
+import uk.gov.pay.connector.charge.model.ToDate;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.refund.dao.RefundDao;
@@ -134,12 +136,12 @@ public class RefundDaoJpaITest extends DaoITestBase {
 
     @Test
     public void findAllBy_shouldFindByDateRange() {
-        ZonedDateTime fromDate = ZonedDateTime.parse("2016-01-02T01:00:00Z");
-        ZonedDateTime toDate = ZonedDateTime.parse("2016-01-03T01:00:00Z");
-        addSuccessfulRefundsToAccount("oldRefund", fromDate.minusMinutes(1L));
-        addSuccessfulRefundsToAccount("inRangeRefund1", toDate.minusMinutes(1L));
-        addSuccessfulRefundsToAccount("inRangeRefund2", fromDate.plusMinutes(1L));
-        addSuccessfulRefundsToAccount("futureRefund", toDate.plusMinutes(1L));
+        FromDate fromDate = FromDate.of("2016-01-02T01:00:00Z");
+        ToDate toDate = ToDate.of("2016-01-03T01:00:00Z");
+        addSuccessfulRefundsToAccount("oldRefund", fromDate.getRawValue().minusMinutes(1L));
+        addSuccessfulRefundsToAccount("inRangeRefund1", toDate.getRawValue().minusMinutes(1L));
+        addSuccessfulRefundsToAccount("inRangeRefund2", fromDate.getRawValue().plusMinutes(1L));
+        addSuccessfulRefundsToAccount("futureRefund", toDate.getRawValue().plusMinutes(1L));
         SearchParams searchParams = new SearchParams()
                 .withGatewayAccountId(sandboxAccount.getAccountId())
                 .withFromDate(fromDate)

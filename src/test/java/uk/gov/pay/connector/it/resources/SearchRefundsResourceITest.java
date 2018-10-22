@@ -11,7 +11,6 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import javax.ws.rs.core.HttpHeaders;
-
 import java.time.ZonedDateTime;
 
 import static com.jayway.restassured.http.ContentType.JSON;

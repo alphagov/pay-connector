@@ -1,27 +1,28 @@
 package uk.gov.pay.connector.charge.resource;
 
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.dao.SearchParams;
+import uk.gov.pay.connector.charge.model.CardHolderName;
+import uk.gov.pay.connector.charge.model.DisplaySize;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.FromDate;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.PageNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.model.ToDate;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.SearchService;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
-import uk.gov.pay.connector.charge.model.CardHolderName;
-import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.resources.ApiValidators;
 import uk.gov.pay.connector.resources.CommaDelimitedSetParameter;
-import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -46,11 +47,11 @@ import static java.lang.String.format;
 import static java.util.Arrays.stream;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static uk.gov.pay.connector.charge.model.TransactionType.inferTransactionTypeFrom;
 import static uk.gov.pay.connector.charge.service.ChargeExpiryService.EXPIRABLE_STATUSES;
 import static uk.gov.pay.connector.charge.service.SearchService.TYPE.CHARGE;
 import static uk.gov.pay.connector.charge.service.SearchService.TYPE.TRANSACTION;
-import static uk.gov.pay.connector.charge.model.TransactionType.inferTransactionTypeFrom;
+import static uk.gov.pay.connector.resources.ApiValidators.validateChargeParams;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidSizeResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
@@ -146,41 +147,32 @@ public class ChargesApiResource {
                                    @QueryParam(DISPLAY_SIZE) Long displaySize,
                                    @HeaderParam("features") CommaDelimitedSetParameter features,
                                    @Context UriInfo uriInfo) {
-
-        List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
-        List<Pair<String, Long>> nonNegativePairMap = ImmutableList.of(Pair.of(PAGE, pageNumber), Pair.of(DISPLAY_SIZE, displaySize));
+        
+        SearchParams searchParams = new SearchParams()
+                .withGatewayAccountId(accountId)
+                .withEmailLike(email)
+                .withCardHolderNameLike(CardHolderName.ofNullable(cardHolderName))
+                .withLastDigitsCardNumber(LastDigitsCardNumber.ofNullable(lastDigitsCardNumber))
+                .withFirstDigitsCardNumber(FirstDigitsCardNumber.ofNullable(firstDigitsCardNumber))
+                .withReferenceLike(ServicePaymentReference.ofNullable(reference))
+                .withCardBrands(removeBlanks(cardBrands))
+                .withFromDate(FromDate.ofNullable(fromDate))
+                .withToDate(ToDate.ofNullable(toDate))
+                .withDisplaySize(DisplaySize.ofDefault(displaySize, configuration.getTransactionsPaginationConfig().getDisplayPageSize()))
+                .withPage(PageNumber.ofDefault(pageNumber, 1L));
 
         boolean isFeatureTransactionsEnabled = features != null && features.has("REFUNDS_IN_TX_LIST");
-
-        return ApiValidators
-                .validateQueryParams(inputDatePairMap, nonNegativePairMap) //TODO - improvement, get the entire searchparam object into the validateQueryParams
-                .map(ResponseUtil::badRequestResponse)
-                .orElseGet(() -> {
-                    SearchParams searchParams = new SearchParams()
-                            .withGatewayAccountId(accountId)
-                            .withEmailLike(email)
-                            .withCardHolderNameLike(cardHolderName != null ? CardHolderName.of(cardHolderName) : null)
-                            .withLastDigitsCardNumber(LastDigitsCardNumber.ofNullable(lastDigitsCardNumber))
-                            .withFirstDigitsCardNumber(FirstDigitsCardNumber.ofNullable(firstDigitsCardNumber))
-                            .withReferenceLike(reference != null ? ServicePaymentReference.of(reference) : null)
-                            .withCardBrands(removeBlanks(cardBrands))
-                            .withFromDate(parseDate(fromDate))
-                            .withToDate(parseDate(toDate))
-                            .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
-                            .withPage(pageNumber != null ? pageNumber : 1);
-
-                    if (isFeatureTransactionsEnabled) {
-                        searchParams
-                                .withTransactionType(inferTransactionTypeFrom(toList(paymentStates), toList(refundStates)))
-                                .addExternalChargeStates(toList(paymentStates))
-                                .addExternalRefundStates(toList(refundStates));
-                    } else {
-                        searchParams.withExternalState(state);
-                    }
-                    return gatewayAccountDao.findById(accountId)
-                            .map(gatewayAccount -> listCharges(searchParams, isFeatureTransactionsEnabled, uriInfo))
-                            .orElseGet(() -> notFoundResponse(format("account with id %s not found", accountId)));
-                }); // always the first page if its missing
+        if (isFeatureTransactionsEnabled) {
+            searchParams
+                    .withTransactionType(inferTransactionTypeFrom(toList(paymentStates), toList(refundStates)))
+                    .addExternalChargeStates(toList(paymentStates))
+                    .addExternalRefundStates(toList(refundStates));
+        } else {
+            searchParams.withExternalState(state);
+        }
+        return gatewayAccountDao.findById(accountId)
+                .map(gatewayAccount -> listCharges(searchParams, isFeatureTransactionsEnabled, uriInfo))
+                .orElseGet(() -> notFoundResponse(format("account with id %s not found", accountId))); // always the first page if its missing
     }
 
     @GET
@@ -202,35 +194,27 @@ public class ChargesApiResource {
                                      @QueryParam(DISPLAY_SIZE) Long displaySize,
                                      @Context UriInfo uriInfo) {
 
-        List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
-        List<Pair<String, Long>> nonNegativePairMap = ImmutableList.of(Pair.of(PAGE, pageNumber), Pair.of(DISPLAY_SIZE, displaySize));
+        SearchParams searchParams = new SearchParams()
+                .withGatewayAccountId(accountId)
+                .withEmailLike(email)
+                .withCardHolderNameLike(CardHolderName.ofNullable(cardHolderName))
+                .withLastDigitsCardNumber(LastDigitsCardNumber.ofNullable(lastDigitsCardNumber))
+                .withFirstDigitsCardNumber(FirstDigitsCardNumber.ofNullable(firstDigitsCardNumber))
+                .withReferenceLike(ServicePaymentReference.ofNullable(reference))
+                .withCardBrands(removeBlanks(cardBrands))
+                .withFromDate(FromDate.ofNullable(fromDate))
+                .withToDate(ToDate.ofNullable(toDate))
+                .withDisplaySize(DisplaySize.ofDefault(displaySize, configuration.getTransactionsPaginationConfig().getDisplayPageSize()))
+                .withPage(PageNumber.ofDefault(pageNumber, 1L))
+                .withTransactionType(inferTransactionTypeFrom(toList(paymentStates), toList(refundStates)))
+                .addExternalChargeStatesV2(toList(paymentStates))
+                .addExternalRefundStates(toList(refundStates));
+
         //Client using v2 API will have the feature flag enabled by default
-        boolean isFeatureTransactionsEnabled = true;
+        return gatewayAccountDao.findById(accountId)
+                .map(gatewayAccount -> listCharges(searchParams, true, uriInfo))
+                .orElseGet(() -> notFoundResponse(format("account with id %s not found", accountId))); // always the first page if its missing
 
-        return ApiValidators
-                .validateQueryParams(inputDatePairMap, nonNegativePairMap) //TODO - improvement, get the entire searchparam object into the validateQueryParams
-                .map(ResponseUtil::badRequestResponse)
-                .orElseGet(() -> {
-                    SearchParams searchParams = new SearchParams()
-                            .withGatewayAccountId(accountId)
-                            .withEmailLike(email)
-                            .withCardHolderNameLike(cardHolderName != null ? CardHolderName.of(cardHolderName) : null)
-                            .withLastDigitsCardNumber(LastDigitsCardNumber.ofNullable(lastDigitsCardNumber))
-                            .withFirstDigitsCardNumber(FirstDigitsCardNumber.ofNullable(firstDigitsCardNumber))
-                            .withReferenceLike(reference != null ? ServicePaymentReference.of(reference) : null)
-                            .withCardBrands(removeBlanks(cardBrands))
-                            .withFromDate(parseDate(fromDate))
-                            .withToDate(parseDate(toDate))
-                            .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
-                            .withPage(pageNumber != null ? pageNumber : 1)
-                            .withTransactionType(inferTransactionTypeFrom(toList(paymentStates), toList(refundStates)))
-                            .addExternalChargeStatesV2(toList(paymentStates))
-                            .addExternalRefundStates(toList(refundStates));
-
-                    return gatewayAccountDao.findById(accountId)
-                            .map(gatewayAccount -> listCharges(searchParams, isFeatureTransactionsEnabled, uriInfo))
-                            .orElseGet(() -> notFoundResponse(format("account with id %s not found", accountId)));
-                }); // always the first page if its missing
     }
 
     private List<String> toList(CommaDelimitedSetParameter commaDelimitedSetParameter) {
@@ -258,7 +242,7 @@ public class ChargesApiResource {
             return fieldsInvalidSizeResponse(invalidSizeFields.get());
         }
 
-        Optional<List<String>> invalidFields = ApiValidators.validateChargeParams(chargeRequest);
+        Optional<List<String>> invalidFields = validateChargeParams(chargeRequest);
         if (invalidFields.isPresent()) {
             return fieldsInvalidResponse(invalidFields.get());
         }
@@ -287,14 +271,6 @@ public class ChargesApiResource {
         }
         logger.debug("Charge expiry window size in seconds: " + chargeExpiryWindowSeconds);
         return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
-    }
-
-    private ZonedDateTime parseDate(String date) {
-        ZonedDateTime parse = null;
-        if (isNotBlank(date)) {
-            parse = ZonedDateTime.parse(date);
-        }
-        return parse;
     }
 
     private Optional<List<String>> checkMissingFields(Map<String, String> inputData) {

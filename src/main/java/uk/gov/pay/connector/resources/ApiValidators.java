@@ -3,6 +3,7 @@ package uk.gov.pay.connector.resources;
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.connector.exception.ValidationException;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 
@@ -90,33 +91,6 @@ public class ApiValidators {
         public static Optional<ChargeParamValidator> fromString(String type) {
             return Optional.ofNullable(stringToEnum.get(type));
         }
-    }
-
-    public static Optional<List> validateQueryParams(List<Pair<String, String>> dateParams, List<Pair<String, Long>> nonNegativePairMap) {
-        Map<String, String> invalidQueryParams = new HashMap<>();
-
-        dateParams.forEach(param -> {
-            String dateString = param.getRight();
-            if (isNotBlank(dateString) && !parseZonedDateTime(dateString).isPresent()) {
-                invalidQueryParams.put(param.getLeft(), "query param '%s' not in correct format");
-            }
-        });
-
-        nonNegativePairMap.forEach(param -> {
-            if (param.getRight() != null && param.getRight() < 1) {
-                invalidQueryParams.put(param.getLeft(), "query param '%s' should be a non zero positive integer");
-            }
-        });
-
-        if (!invalidQueryParams.isEmpty()) {
-            List<String> invalidResponse = newArrayList();
-            invalidResponse.addAll(invalidQueryParams.keySet()
-                    .stream()
-                    .map(param -> String.format(invalidQueryParams.get(param), param))
-                    .collect(Collectors.toList()));
-            return Optional.of(invalidResponse);
-        }
-        return Optional.empty();
     }
 
     public static Either<String, Boolean> validateGatewayAccountReference(GatewayAccountDao gatewayAccountDao, Long gatewayAccountId) {

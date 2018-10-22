@@ -9,12 +9,12 @@ import org.jooq.SelectJoinStep;
 import org.jooq.SelectOrderByStep;
 import org.jooq.SelectSeekStep1;
 import org.jooq.impl.DSL;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumberConverter;
 import uk.gov.pay.connector.charge.model.TransactionType;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.charge.model.LastDigitsCardNumberConverter;
-import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.charge.model.domain.Transaction;
 import uk.gov.pay.connector.model.domain.UTCDateTimeConverter;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -78,8 +78,8 @@ public class TransactionDao {
                 .orderBy(field("date_created").desc());
 
         if (params.getPage() != null && params.getDisplaySize() != null) {
-            int offset = Long.valueOf((params.getPage() - 1) * params.getDisplaySize()).intValue();
-            int limit = params.getDisplaySize().intValue();
+            int offset = Long.valueOf((params.getPage().getRawValue() - 1) * params.getDisplaySize().getRawValue()).intValue();
+            int limit = params.getDisplaySize().getRawValue().intValue();
 
             query.offset(offset).limit(limit);
         }
@@ -163,15 +163,16 @@ public class TransactionDao {
         }
         if (params.getFromDate() != null) {
             queryFiltersForCharges = queryFiltersForCharges.and(
-                    field("c.created_date").greaterOrEqual(utcDateTimeConverter.convertToDatabaseColumn(params.getFromDate())));
+                    field("c.created_date").greaterOrEqual(utcDateTimeConverter.convertToDatabaseColumn(params.getFromDate().getRawValue())));
             queryFiltersForRefunds = queryFiltersForRefunds.and(
-                    field("r.created_date").greaterOrEqual(utcDateTimeConverter.convertToDatabaseColumn(params.getFromDate())));
+                    field("r.created_date").greaterOrEqual(utcDateTimeConverter.convertToDatabaseColumn(params.getFromDate().getRawValue())));
         }
         if (params.getToDate() != null) {
             queryFiltersForCharges = queryFiltersForCharges.and(
-                    field("c.created_date").lessThan(utcDateTimeConverter.convertToDatabaseColumn(params.getToDate())));
+                    field("c.created_date").lessThan(utcDateTimeConverter.convertToDatabaseColumn(params.getToDate().getRawValue()
+                    )));
             queryFiltersForRefunds = queryFiltersForRefunds.and(
-                    field("r.created_date").lessThan(utcDateTimeConverter.convertToDatabaseColumn(params.getToDate())));
+                    field("r.created_date").lessThan(utcDateTimeConverter.convertToDatabaseColumn(params.getToDate().getRawValue())));
         }
         if (params.getExternalChargeStates() != null && !params.getExternalChargeStates().isEmpty()) {
             queryFiltersForCharges = queryFiltersForCharges.and(
@@ -251,8 +252,8 @@ public class TransactionDao {
             queryForRefunds.orderBy(field("r.created_date").desc());
 
             if (params.getPage() != null && params.getDisplaySize() != null) {
-                int offset = Long.valueOf((params.getPage() - 1) * params.getDisplaySize()).intValue();
-                int limit = params.getDisplaySize().intValue();
+                int offset = Long.valueOf((params.getPage().getRawValue() - 1) * params.getDisplaySize().getRawValue()).intValue();
+                int limit = params.getDisplaySize().getRawValue().intValue();
 
                 queryForCharges.limit(offset + limit);
                 queryForRefunds.limit(offset + limit);

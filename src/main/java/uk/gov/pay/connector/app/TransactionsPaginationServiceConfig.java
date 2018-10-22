@@ -4,9 +4,9 @@ import io.dropwizard.Configuration;
 
 public class TransactionsPaginationServiceConfig extends Configuration {
 
-    private int displayPageSize;
+    private long displayPageSize;
 
-    public int getDisplayPageSize() {
+    public long getDisplayPageSize() {
         return displayPageSize;
     }
 }

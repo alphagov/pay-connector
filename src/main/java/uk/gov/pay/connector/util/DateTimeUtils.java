@@ -1,6 +1,9 @@
 package uk.gov.pay.connector.util;
 
-import java.time.*;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
@@ -65,8 +68,7 @@ public class DateTimeUtils {
     public static String toUTCDateString(ZonedDateTime zonedDateTime) {
         return zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDate().format(localDateFormatter);
     }
-
-
+    
     public static String toUserFriendlyDate(ZonedDateTime zonedDateTime) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy - HH:mm:ss");
 

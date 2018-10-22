@@ -18,7 +18,7 @@ public class ValidationExceptionMapper implements ExceptionMapper<ValidationExce
     @Override
     public Response toResponse(ValidationException exception) {
         LOGGER.error(exception.getMessage());
-        Map<String, List<String>> entity = ImmutableMap.of("errors", exception.getErrors());
+        Map<String, List<String>> entity = ImmutableMap.of("message", exception.getErrors());
         return Response.status(400).entity(entity).type(APPLICATION_JSON).build();
     }
 }

@@ -5,28 +5,24 @@ import uk.gov.pay.connector.exception.ValidationException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 
-public class DateParam {
+public abstract class DateParam {
     
     private ZonedDateTime date;
 
-    public DateParam(ZonedDateTime date) {
+    DateParam(ZonedDateTime date) {
         this.date = date;
     }
     
-    public static DateParam of(String date) {
+    DateParam(String date) {
         try {
-            ZonedDateTime parsedDate = ZonedDateTime.parse(date);
-            return new DateParam(parsedDate);
+            this.date = ZonedDateTime.parse(date);
         } catch (DateTimeParseException exc) {
-            throw new ValidationException("DateParam is invalid");
+            throw new ValidationException("Date is invalid");
         }
     }
 
-    public static DateParam ofNullable(String date) {
-        if (date == null) {
-            return null;
-        }
-        return DateParam.of(date);
+    public ZonedDateTime getRawValue() {
+        return date;
     }
 
     @Override

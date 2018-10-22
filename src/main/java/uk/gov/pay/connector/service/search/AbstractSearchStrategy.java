@@ -17,10 +17,10 @@ public abstract class AbstractSearchStrategy<T, R> implements SearchStrategy, Bu
     @Override
     public Response search(SearchParams searchParams, UriInfo uriInfo) {
         Long totalCount = getTotalFor(searchParams);
-        Long size = searchParams.getDisplaySize();
+        Long size = searchParams.getDisplaySize().getRawValue();
         if (totalCount > 0 && size > 0) {
             long lastPage = (totalCount + size - 1) / size;
-            if (searchParams.getPage() > lastPage || searchParams.getPage() < 1) {
+            if (searchParams.getPage().getRawValue() > lastPage || searchParams.getPage().getRawValue() < 1) {
                 return notFoundResponse("the requested page not found");
             }
         }

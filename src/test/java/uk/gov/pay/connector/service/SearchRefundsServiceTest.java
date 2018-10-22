@@ -10,7 +10,10 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.charge.model.DisplaySize;
+import uk.gov.pay.connector.charge.model.PageNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.exception.ValidationException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -44,7 +47,7 @@ public class SearchRefundsServiceTest {
     private GatewayAccountEntity gatewayAccount;
     private static final String EXT_CHARGE_ID = "someExternalId";
     static final String EXT_REFUND_ID = "someExternalRefundId";
-    static final Long PAGE_NUMBER = 1L;
+    static final PageNumber PAGE_NUMBER = PageNumber.of(1L);
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -62,14 +65,13 @@ public class SearchRefundsServiceTest {
         searchRefundsService = new SearchRefundsService(refundDao);
     }
 
-    @Test
+    @Test(expected = ValidationException.class)
     public void getAllRefunds_shouldReturnBadRequestResponse_whenQueryParamsAreInvalid() {
-        Long pageNumber = -1L;
         Long displaySize = -2L;
 
         SearchParams searchParams = new SearchParams()
-                .withPage(pageNumber)
-                .withDisplaySize(displaySize);
+                .withPage(PageNumber.of(-1L))
+                .withDisplaySize(DisplaySize.of(displaySize));
 
         Response actualResponse = searchRefundsService.getAllRefunds(
                 uriInfo,
@@ -85,11 +87,10 @@ public class SearchRefundsServiceTest {
 
     @Test
     public void getAllRefunds_shouldReturnPageNotFoundResponseWhenQueryParamPageExceedsMax() {
-        Long pageNumber = 2L;
         Long displaySize = 20L;
         SearchParams searchParams = new SearchParams()
-                .withPage(pageNumber)
-                .withDisplaySize(displaySize);
+                .withPage(PageNumber.of(2L))
+                .withDisplaySize(DisplaySize.of(displaySize));
         List<RefundEntity> refundEntities = getRefundEntity(1, gatewayAccount);
 
         when(refundDao.getTotalFor(any(SearchParams.class))).thenReturn(Long.valueOf(refundEntities.size()));
@@ -112,7 +113,7 @@ public class SearchRefundsServiceTest {
         List<RefundEntity> refundEntities = getRefundEntity(3, gatewayAccount);
         SearchParams searchParams = new SearchParams()
                 .withPage(PAGE_NUMBER)
-                .withDisplaySize(displaySize);
+                .withDisplaySize(DisplaySize.of(displaySize));
         when(refundDao.getTotalFor(any(SearchParams.class))).thenReturn(displaySize);
         when(refundDao.findAllBy(any(SearchParams.class))).thenReturn(refundEntities);
         when(uriInfo.getBaseUriBuilder()).thenReturn(fromUri("http://app.com/"));

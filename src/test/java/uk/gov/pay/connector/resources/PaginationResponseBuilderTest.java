@@ -6,6 +6,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.SearchParams;
+import uk.gov.pay.connector.charge.model.DisplaySize;
+import uk.gov.pay.connector.charge.model.PageNumber;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
 
 import javax.ws.rs.core.Response;
@@ -33,8 +35,8 @@ public class PaginationResponseBuilderTest {
         SearchParams searchParams = new SearchParams()
                 .withGatewayAccountId(1L)
                 .withExternalState(ExternalChargeState.EXTERNAL_STARTED.getStatus())
-                .withDisplaySize(100L)
-                .withPage(2L);
+                .withDisplaySize(DisplaySize.of(100L))
+                .withPage(PageNumber.of(2L));
 
         when(mockUriInfo.getBaseUriBuilder()).thenReturn(UriBuilder.fromUri("http://app.com"),
                 UriBuilder.fromUri("http://app.com"), UriBuilder.fromUri("http://app.com"),

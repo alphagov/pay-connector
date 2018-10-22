@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableList;
 import com.jayway.restassured.response.ValidatableResponse;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -12,6 +13,7 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.HttpHeaders;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -193,24 +195,17 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldShowValidationsForDateAndPageDisplaySize() {
-        ImmutableList<String> expectedList = ImmutableList.of(
-                "query param 'from_date' not in correct format",
-                "query param 'to_date' not in correct format",
-                "query param 'display_size' should be a non zero positive integer",
-                "query param 'page' should be a non zero positive integer");
-
+    public void shouldShowValidationErrorForInvalidQueryParam() {
         connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("to_date", "-1")
-                .withQueryParam("from_date", "-1")
-                .withQueryParam("page", "-1")
-                .withQueryParam("display_size", "-2")
+                .withQueryParam("page", "1")
+                .withQueryParam("display_size", "2")
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getChargesV1()
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
-                .body("message", is(expectedList));
+                .body("message", is(Collections.singletonList("Date is invalid")));
     }
 
     @Test

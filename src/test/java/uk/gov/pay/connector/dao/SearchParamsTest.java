@@ -2,13 +2,15 @@ package uk.gov.pay.connector.dao;
 
 import org.junit.Test;
 import uk.gov.pay.connector.charge.dao.SearchParams;
-import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.CardHolderName;
+import uk.gov.pay.connector.charge.model.DisplaySize;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.FromDate;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.PageNumber;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.model.ToDate;
 import uk.gov.pay.connector.model.api.ExternalChargeState;
-
-import java.time.ZonedDateTime;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -17,7 +19,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.TransactionType.PAYMENT;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -38,6 +39,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELL
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
 
 public class SearchParamsTest {
 
@@ -59,23 +61,23 @@ public class SearchParamsTest {
           
 
         SearchParams params = new SearchParams()
-                .withDisplaySize(5L)
+                .withDisplaySize(DisplaySize.of(5L))
                 .withExternalState(EXTERNAL_CREATED.getStatus())
                 .withCardBrand("visa")
                 .withGatewayAccountId(111L)
-                .withPage(2L)
+                .withPage(PageNumber.of(2L))
                 .withLastDigitsCardNumber(LastDigitsCardNumber.of("1234"))
                 .withFirstDigitsCardNumber(FirstDigitsCardNumber.of("123456"))
                 .withReferenceLike(ServicePaymentReference.of("ref"))
                 .withEmailLike("user")
                 .withCardHolderNameLike(CardHolderName.of("bla"))
-                .withFromDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[UTC]"))
-                .withToDate(ZonedDateTime.parse("2012-07-30T12:30:40Z[UTC]"));
+                .withFromDate(FromDate.of("2012-06-30T12:30:40Z[UTC]"))
+                .withToDate(ToDate.of("2012-07-30T12:30:40Z[UTC]"));
 
         assertThat(params.buildQueryParams(), is(expectedQueryString));
         assertThat(params.getGatewayAccountId(), is(111L));
-        assertThat(params.getDisplaySize(), is(5L));
-        assertThat(params.getPage(), is(2L));
+        assertThat(params.getDisplaySize().getRawValue(), is(5L));
+        assertThat(params.getPage().getRawValue(), is(2L));
     }
 
     @Test
@@ -92,15 +94,15 @@ public class SearchParamsTest {
                         "&card_brand=visa";
 
         SearchParams params = new SearchParams()
-                .withDisplaySize(5L)
+                .withDisplaySize(DisplaySize.of(5L))
                 .withExternalState(EXTERNAL_CREATED.getStatus())
                 .withCardBrand("visa")
                 .withGatewayAccountId(111L)
-                .withPage(2L)
+                .withPage(PageNumber.of(2L))
                 .withReferenceLike(ServicePaymentReference.of("ref"))
                 .withEmailLike("user")
-                .withFromDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[UTC]"))
-                .withToDate(ZonedDateTime.parse("2012-07-30T12:30:40Z[UTC]"));
+                .withFromDate(FromDate.of("2012-06-30T12:30:40Z[UTC]"))
+                .withToDate(ToDate.of("2012-07-30T12:30:40Z[UTC]"));
 
         assertThat(params.buildQueryParamsWithPiiRedaction(), is(expectedQueryString));
     }
@@ -150,7 +152,7 @@ public class SearchParamsTest {
                         "&card_brand=master-card";
 
         SearchParams params = new SearchParams()
-                .withDisplaySize(5L)
+                .withDisplaySize(DisplaySize.of(5L))
                 .withTransactionType(PAYMENT)
                 .withFirstDigitsCardNumber(FirstDigitsCardNumber.of("695943"))
                 .withLastDigitsCardNumber(LastDigitsCardNumber.of("6749"))
@@ -159,11 +161,11 @@ public class SearchParamsTest {
                 .addExternalRefundStates(singletonList("submitted"))
                 .withCardBrands(asList("visa", "master-card"))
                 .withGatewayAccountId(111L)
-                .withPage(2L)
+                .withPage(PageNumber.of(2L))
                 .withReferenceLike(ServicePaymentReference.of("ref"))
                 .withEmailLike("user@example.com")
-                .withFromDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[UTC]"))
-                .withToDate(ZonedDateTime.parse("2012-07-30T12:30:40Z[UTC]"));
+                .withFromDate(FromDate.of("2012-06-30T12:30:40Z[UTC]"))
+                .withToDate(ToDate.of("2012-07-30T12:30:40Z[UTC]"));
 
         assertThat(params.buildQueryParams(), is(expectedQueryString));
     }
@@ -182,7 +184,7 @@ public class SearchParamsTest {
                 .addExternalChargeStates(singletonList("success"))
                 .addExternalRefundStates(singletonList("success"))
                 .withGatewayAccountId(111L)
-                .withPage(2L)
+                .withPage(PageNumber.of(2L))
                 .withReferenceLike(ServicePaymentReference.of("ref"))
                 .withEmailLike("user@example.com");
 
