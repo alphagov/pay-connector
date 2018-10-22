@@ -15,17 +15,20 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.exception.CredentialsException;
 import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.PatchRequest;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountObjectConvertor;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
-import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
-import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.usernotification.service.GatewayAccountNotificationCredentialsService;
 
 import javax.inject.Inject;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -50,9 +53,8 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidSizeResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
@@ -76,6 +78,7 @@ public class GatewayAccountResource {
     private static final String PAYMENT_PROVIDER_KEY = "payment_provider";
     private static final String USERNAME_KEY = "username";
     private static final String PASSWORD_KEY = "password";
+    private final GatewayAccountService gatewayAccountService;
     private final GatewayAccountDao gatewayDao;
     private final CardTypeDao cardTypeDao;
     private final Map<String, List<String>> providerCredentialFields;
@@ -85,9 +88,10 @@ public class GatewayAccountResource {
 
 
     @Inject
-    public GatewayAccountResource(GatewayAccountDao gatewayDao, CardTypeDao cardTypeDao, ConnectorConfiguration conf,
+    public GatewayAccountResource(GatewayAccountService gatewayAccountService, GatewayAccountDao gatewayDao, CardTypeDao cardTypeDao, ConnectorConfiguration conf,
                                   GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService,
                                   GatewayAccountRequestValidator validator, GatewayAccountServicesFactory gatewayAccountServicesFactory) {
+        this.gatewayAccountService = gatewayAccountService;
         this.gatewayDao = gatewayDao;
         this.cardTypeDao = cardTypeDao;
         this.gatewayAccountNotificationCredentialsService = gatewayAccountNotificationCredentialsService;
@@ -118,58 +122,58 @@ public class GatewayAccountResource {
     // As such, split out the common functionality in a private method and call
     // it twice for each explicitly defined resource
     private Response getGatewayAccounts(
-      String accountIdsArg,
-      UriInfo uriInfo
+            String accountIdsArg,
+            UriInfo uriInfo
     ) {
-      logger.debug("Parsing {} to filter all gateway accounts.", accountIdsArg);
-      List<Long> accountIds;
+        logger.debug("Parsing {} to filter all gateway accounts.", accountIdsArg);
+        List<Long> accountIds;
 
-      try{
-        accountIds = COMMA_SEPARATOR.splitToList(accountIdsArg)
-          .stream()
-          .map(Long::parseLong)
-          .collect(Collectors.toList());
-      } catch (NumberFormatException e) {
-        return badRequestResponse(format("Could not parse accountIds %s as Longs.", accountIdsArg));
-      }
+        try {
+            accountIds = COMMA_SEPARATOR.splitToList(accountIdsArg)
+                    .stream()
+                    .map(Long::parseLong)
+                    .collect(Collectors.toList());
+        } catch (NumberFormatException e) {
+            return badRequestResponse(format("Could not parse accountIds %s as Longs.", accountIdsArg));
+        }
 
-      List<GatewayAccountResourceDTO> gatewayAccountResourceDTOList;
+        List<GatewayAccountResourceDTO> gatewayAccountResourceDTOList;
 
-      if (accountIds.isEmpty()) {
-        gatewayAccountResourceDTOList = gatewayDao.listAll();
-      } else {
-        gatewayAccountResourceDTOList = gatewayDao.list(accountIds);
-      }
+        if (accountIds.isEmpty()) {
+            gatewayAccountResourceDTOList = gatewayDao.listAll();
+        } else {
+            gatewayAccountResourceDTOList = gatewayDao.list(accountIds);
+        }
 
-      logger.debug("Getting gateway accounts {}.", accountIdsArg);
+        logger.debug("Getting gateway accounts {}.", accountIdsArg);
 
-      gatewayAccountResourceDTOList.forEach(account -> {
-        account.addLink("self", buildUri(uriInfo, account.getAccountId()));
-      });
+        gatewayAccountResourceDTOList.forEach(account -> {
+            account.addLink("self", buildUri(uriInfo, account.getAccountId()));
+        });
 
-      return Response
-        .ok(ImmutableMap.of("accounts", gatewayAccountResourceDTOList))
-        .build();
+        return Response
+                .ok(ImmutableMap.of("accounts", gatewayAccountResourceDTOList))
+                .build();
     }
 
     @GET
     @Path("/v1/api/accounts")
     @Produces(APPLICATION_JSON)
     public Response getApiGatewayAccounts(
-        @DefaultValue("") @QueryParam("accountIds") String accountIdsArg,
-        @Context UriInfo uriInfo
+            @DefaultValue("") @QueryParam("accountIds") String accountIdsArg,
+            @Context UriInfo uriInfo
     ) {
-      return getGatewayAccounts(accountIdsArg, uriInfo);
+        return getGatewayAccounts(accountIdsArg, uriInfo);
     }
 
     @GET
     @Path("/v1/frontend/accounts")
     @Produces(APPLICATION_JSON)
     public Response getFrontendGatewayAccounts(
-        @DefaultValue("") @QueryParam("accountIds") String accountIdsArg,
-        @Context UriInfo uriInfo
+            @DefaultValue("") @QueryParam("accountIds") String accountIdsArg,
+            @Context UriInfo uriInfo
     ) {
-      return getGatewayAccounts(accountIdsArg, uriInfo);
+        return getGatewayAccounts(accountIdsArg, uriInfo);
     }
 
     private URI buildUri(UriInfo uriInfo, long accountId) {
@@ -211,53 +215,18 @@ public class GatewayAccountResource {
     @Path("/v1/api/accounts")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response createNewGatewayAccount(JsonNode node, @Context UriInfo uriInfo) {
-        String accountType = node.has(PROVIDER_ACCOUNT_TYPE) ? node.get(PROVIDER_ACCOUNT_TYPE).textValue() : TEST.toString();
-        Type type;
-        try {
-            type = GatewayAccountEntity.Type.fromString(accountType);
-        } catch (IllegalArgumentException iae) {
-            return badRequestResponse(format("Unsupported payment provider account type '%s', should be one of (test, live)", accountType));
-        }
+    @Valid
+    public Response createNewGatewayAccount(@Valid @NotNull GatewayAccountRequest gatewayAccountRequest,
+                                            @Context UriInfo uriInfo) {
 
-        String provider = node.has(PAYMENT_PROVIDER_KEY) ? node.get(PAYMENT_PROVIDER_KEY).textValue() : PaymentGatewayName.SANDBOX.getName();
+        logger.info("Creating new gateway account using the {} provider pointing to {}",
+                gatewayAccountRequest.getPaymentProvider(), gatewayAccountRequest.getProviderAccountType());
 
-        if (!PaymentGatewayName.isValidPaymentGateway(provider)) {
-            return badRequestResponse(format("Unsupported payment provider %s.", provider));
-        }
+        GatewayAccountEntity entity = gatewayAccountService.createGatewayAccount(gatewayAccountRequest);
 
-        logger.info("Creating new gateway account using the {} provider pointing to {}", provider, accountType);
-        GatewayAccountEntity entity = new GatewayAccountEntity(provider, newHashMap(), type);
+        GatewayAccountResponse gatewayAccountResponse = GatewayAccountObjectConvertor.createResponseFrom(entity, uriInfo);
 
-        logger.info("Setting the new account to accept all card types by default", provider, accountType);
-        entity.setCardTypes(cardTypeDao.findAllNon3ds());
-        if (node.has(SERVICE_NAME_FIELD_NAME)) {
-            entity.setServiceName(node.get(SERVICE_NAME_FIELD_NAME).textValue());
-        }
-        if (node.has(DESCRIPTION_FIELD_NAME)) {
-            entity.setDescription(node.get(DESCRIPTION_FIELD_NAME).textValue());
-        }
-        if (node.has(ANALYTICS_ID_FIELD_NAME)) {
-            entity.setAnalyticsId(node.get(ANALYTICS_ID_FIELD_NAME).textValue());
-        }
-        
-        entity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(entity));
-        entity.addNotification(EmailNotificationType.REFUND_ISSUED, new EmailNotificationEntity(entity));
-        gatewayDao.persist(entity);
-        URI newLocation = uriInfo.
-                getBaseUriBuilder().
-                path("/v1/api/accounts/{accountId}").build(entity.getId());
-
-        Map<String, Object> account = newHashMap();
-        account.put("gateway_account_id", String.valueOf(entity.getId()));
-        account.put(PROVIDER_ACCOUNT_TYPE, entity.getType());
-        account.put(DESCRIPTION_FIELD_NAME, entity.getDescription());
-        account.put(SERVICE_NAME_FIELD_NAME, entity.getServiceName());
-        account.put(ANALYTICS_ID_FIELD_NAME, entity.getAnalyticsId());
-
-        addSelfLink(newLocation, account);
-
-        return Response.created(newLocation).entity(account).build();
+        return Response.created(gatewayAccountResponse.getLocation()).entity(gatewayAccountResponse).build();
     }
 
     @PATCH
@@ -265,13 +234,13 @@ public class GatewayAccountResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
-    public Response patchGatewayAccount(@PathParam("accountId") Long gatewayAccountId, JsonNode payload) { 
+    public Response patchGatewayAccount(@PathParam("accountId") Long gatewayAccountId, JsonNode payload) {
         validator.validatePatchRequest(payload);
-        
+
         return gatewayAccountServicesFactory.getUpdateService()
-                        .doPatch(gatewayAccountId, PatchRequest.from(payload))
-                        .map(gatewayAccount -> Response.ok().build())
-                        .orElseGet(() -> Response.status(NOT_FOUND).build());
+                .doPatch(gatewayAccountId, PatchRequest.from(payload))
+                .map(gatewayAccount -> Response.ok().build())
+                .orElseGet(() -> Response.status(NOT_FOUND).build());
     }
 
     @PATCH

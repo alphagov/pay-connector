@@ -6,12 +6,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
+import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.PatchRequest;
-import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountUpdater;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 
 import java.util.Map;
 import java.util.Optional;
@@ -22,14 +23,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class GatewayAccountUpdaterTest {
+public class GatewayAccountServiceTest {
 
     private GatewayAccountDao gatewayAccountDao = mock(GatewayAccountDao.class);
-    private GatewayAccountUpdater updater;
+    private CardTypeDao cardTypeDao = mock(CardTypeDao.class);
+    private GatewayAccountService updater;
 
     @Before
     public void setUp() {
-        updater = new GatewayAccountUpdater(gatewayAccountDao);
+        updater = new GatewayAccountService(gatewayAccountDao, cardTypeDao);
     }
 
     @Test
