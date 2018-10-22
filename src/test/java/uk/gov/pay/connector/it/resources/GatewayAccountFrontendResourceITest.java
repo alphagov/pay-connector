@@ -484,8 +484,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
         CardTypeEntity visaDebitCard = databaseTestHelper.getVisaDebitCard();
 
-        DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(
-                mastercardCreditCard, visaCreditCard);
+        DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(mastercardCreditCard, visaCreditCard);
         String body = buildAcceptedCardTypesBody(mastercardCreditCard, visaDebitCard);
         updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), body)
                 .then()

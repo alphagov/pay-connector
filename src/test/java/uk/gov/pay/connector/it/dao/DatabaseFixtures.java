@@ -27,7 +27,7 @@ import java.util.UUID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 
-public class DatabaseFixtures {
+public class  DatabaseFixtures {
 
     private DatabaseTestHelper databaseTestHelper;
 
@@ -270,7 +270,19 @@ public class DatabaseFixtures {
         }
 
         public TestCardDetails update() {
-            databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber == null ? null : lastDigitsCardNumber.toString(), firstDigitsCardNumber == null ? null : firstDigitsCardNumber.toString(), cardHolderName, expiryDate, billingAddress.getLine1(), billingAddress.getLine2(), billingAddress.getPostcode(), billingAddress.getCity(), billingAddress.getCounty(), billingAddress.getCountry());
+            databaseTestHelper.updateChargeCardDetails(
+                    chargeId, 
+                    cardBrand, 
+                    lastDigitsCardNumber == null ? null : lastDigitsCardNumber.toString(), 
+                    firstDigitsCardNumber == null ? null : firstDigitsCardNumber.toString(), 
+                    cardHolderName, 
+                    expiryDate, 
+                    billingAddress.getLine1(), 
+                    billingAddress.getLine2(), 
+                    billingAddress.getPostcode(), 
+                    billingAddress.getCity(), 
+                    billingAddress.getCounty(), 
+                    billingAddress.getCountry());
             return this;
         }
 

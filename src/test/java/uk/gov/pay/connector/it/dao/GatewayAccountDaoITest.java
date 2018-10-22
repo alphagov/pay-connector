@@ -41,15 +41,14 @@ public class GatewayAccountDaoITest extends DaoITestBase {
     private long gatewayAccountId;
 
     @Before
-    public void setup() throws Exception {
-        super.setup();
+    public void setUp() {
         gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
         gatewayAccountId = nextLong();
     }
 
     @After
-    public void tearDown() {
+    public void truncate() {
         databaseTestHelper.truncateAllData();
     }
 

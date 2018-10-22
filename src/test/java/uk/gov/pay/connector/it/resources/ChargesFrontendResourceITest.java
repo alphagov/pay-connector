@@ -89,12 +89,7 @@ public class ChargesFrontendResourceITest {
         databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), visaCredit.getId());
         connectorRestApi = new RestAssuredClient(testContext.getPort(), accountId);
     }
-
-//    @After
-//    public void teardown() {
-//        databaseTestHelper.truncateAllData();
-//    }
-
+    
     @Test
     public void getChargeShouldIncludeExpectedLinksAndGatewayAccount() {
 

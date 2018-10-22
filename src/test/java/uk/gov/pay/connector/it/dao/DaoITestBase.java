@@ -6,7 +6,10 @@ import liquibase.Liquibase;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.skife.jdbi.v2.DBI;
 import uk.gov.pay.connector.rules.PostgresDockerRule;
@@ -16,15 +19,16 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Properties;
 
-public class DaoITestBase {
-    @Rule
-    public PostgresDockerRule postgres;
+abstract public class DaoITestBase {
+    
+    @ClassRule
+    public static PostgresDockerRule postgres;
 
-    protected DatabaseTestHelper databaseTestHelper;
-    private JpaPersistModule jpaModule;
-    protected GuicedTestEnvironment env;
-
-    public DaoITestBase() {
+    protected static DatabaseTestHelper databaseTestHelper;
+    private static JpaPersistModule jpaModule;
+    protected static GuicedTestEnvironment env;
+    
+    static {
         try {
             postgres = new PostgresDockerRule();
         } catch (DockerException e) {
@@ -32,8 +36,8 @@ public class DaoITestBase {
         }
     }
 
-    @Before
-    public void setup() throws Exception {
+    @BeforeClass
+    public static void setup() throws Exception {
         final Properties properties = new Properties();
         properties.put("javax.persistence.jdbc.driver", postgres.getDriverClass());
         properties.put("javax.persistence.jdbc.url", postgres.getConnectionUrl());
@@ -59,8 +63,8 @@ public class DaoITestBase {
         env = GuicedTestEnvironment.from(jpaModule).start();
     }
 
-    @After
-    public void tearDown() {
+    @AfterClass
+    public static void tearDown() {
         Connection connection = null;
         try {
             connection = DriverManager.getConnection(postgres.getConnectionUrl(), postgres.getUsername(), postgres.getPassword());

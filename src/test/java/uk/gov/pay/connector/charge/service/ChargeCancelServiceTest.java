@@ -26,6 +26,7 @@ import uk.gov.pay.connector.service.transaction.TransactionFlow;
 
 import java.util.Optional;
 
+import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.any;
@@ -81,7 +82,7 @@ public class ChargeCancelServiceTest {
     public void doSystemCancel_shouldCancel_withStatusThatDoesNotNeedCancellationInGatewayProvider() throws Exception {
 
         String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = 123L;
+        Long gatewayAccountId = nextLong();
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)
                 .withStatus(ChargeStatus.ENTERING_CARD_DETAILS)
@@ -103,7 +104,7 @@ public class ChargeCancelServiceTest {
     public void doSystemCancel_shouldCancel_havingChargeStatusThatNeedsCancellationInGatewayProvider_withCancelledGatewayResponse() throws Exception {
 
         String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = 123L;
+        Long gatewayAccountId = nextLong();
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)
                 .withTransactionId("transaction-id")
@@ -138,7 +139,7 @@ public class ChargeCancelServiceTest {
     public void doSystemCancel_shouldFail_whenChargeNotFound() throws Exception {
 
         String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = 123L;
+        Long gatewayAccountId = nextLong();
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.empty());
 
@@ -211,7 +212,7 @@ public class ChargeCancelServiceTest {
     public void doSystemCancel_shouldCancelWorldPayCharge_withStatus_awaitingCaptureRequest() {
 
         String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = 123L;
+        Long gatewayAccountId = nextLong();
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)
                 .withTransactionId("transaction-id")
@@ -246,7 +247,7 @@ public class ChargeCancelServiceTest {
     public void doSystemCancel_shouldCancelSmartPayCharge_withStatus_awaitingCaptureRequest() {
 
         String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = 123L;
+        Long gatewayAccountId = nextLong();
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)
                 .withTransactionId("transaction-id")
@@ -281,7 +282,7 @@ public class ChargeCancelServiceTest {
     public void doSystemCancel_shouldCancelEPDQCharge_withStatus_awaitingCaptureRequest() {
 
         String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = 123L;
+        Long gatewayAccountId = nextLong();
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)
                 .withTransactionId("transaction-id")
