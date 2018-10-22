@@ -34,7 +34,6 @@ import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -108,7 +107,7 @@ public class ChargeServiceTest {
     private ChargeService service;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
 
@@ -215,9 +214,7 @@ public class ChargeServiceTest {
                 .withValidPaths(ImmutableSet.of("email"))
                 .build();
 
-
         service.updateCharge(chargeEntityExternalId, patchRequest);
-
     }
 
     @Test
@@ -275,9 +272,9 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldFindChargeForChargeId_withCorporateSurcharge() {
-
         Long chargeId = 101L;
         Long accountId = 10L;
+        Long totalAmount = 1250L;
 
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(1L);
@@ -303,11 +300,11 @@ public class ChargeServiceTest {
         assertThat(chargeResponseForAccount.isPresent(), is(true));
         final ChargeResponse chargeResponse = chargeResponseForAccount.get();
         assertThat(chargeResponse.getCorporateCardSurcharge(), is(250L));
-        assertThat(chargeResponse.getTotalAmount(), is(1250L));
+        assertThat(chargeResponse.getTotalAmount(), is(totalAmount));
+        assertThat(chargeResponse.getRefundSummary().getAmountAvailable(), is(totalAmount));
     }
 
     private void shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenChargeStatusIs(ChargeStatus status) throws Exception {
-
         Long chargeId = 101L;
         Long accountId = 10L;
 
@@ -358,7 +355,7 @@ public class ChargeServiceTest {
     public void shouldFindChargeForChargeIdAndAccountIdWithoutNextUrlWhenChargeStatusAwaitingCaptureRequest() throws Exception {
         shouldFindChargeForChargeIdAndAccountIdWithoutNextUrlWhenChargeStatusIs(AWAITING_CAPTURE_REQUEST);
     }
-    
+
     private void shouldFindChargeForChargeIdAndAccountIdWithoutNextUrlWhenChargeStatusIs(ChargeStatus status) throws Exception {
         Long chargeId = 101L;
         Long accountId = 10L;
@@ -390,7 +387,6 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldNotFindAChargeWhenNoChargeForChargeIdAndAccountId() {
-
         String externalChargeId = "101abc";
         Long accountId = 10L;
         Optional<ChargeEntity> nonExistingCharge = Optional.empty();
@@ -403,7 +399,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldUpdateTransactionStatus_whenUpdatingChargeStatusFromInitialStatus() throws Exception {
+    public void shouldUpdateTransactionStatus_whenUpdatingChargeStatusFromInitialStatus() {
         service.create(CHARGE_REQUEST, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
@@ -420,7 +416,7 @@ public class ChargeServiceTest {
     }
 
     @Deprecated
-    private ChargeResponseBuilder chargeResponseBuilderOf(ChargeEntity chargeEntity) throws URISyntaxException {
+    private ChargeResponseBuilder chargeResponseBuilderOf(ChargeEntity chargeEntity) {
         ChargeResponse.RefundSummary refunds = new ChargeResponse.RefundSummary();
         refunds.setAmountAvailable(chargeEntity.getAmount());
         refunds.setAmountSubmitted(0L);
