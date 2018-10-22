@@ -5,7 +5,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -29,7 +29,7 @@ public class ChargesFrontendResourceTest {
     @Mock
     private static  ChargeDao chargeDao;
     @Mock
-    private static  CardTypeDao cardTypeDao;
+    private static CardTypeDao cardTypeDao;
     
     @ClassRule
     public static ResourceTestRule resources = ResourceTestRuleWithCustomExceptionMappersBuilder.getBuilder()

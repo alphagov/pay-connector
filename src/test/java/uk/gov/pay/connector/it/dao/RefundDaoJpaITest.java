@@ -3,14 +3,15 @@ package uk.gov.pay.connector.it.dao;
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.charge.dao.SearchParams;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
 
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         refundDao = env.getInstance(RefundDao.class);
         databaseTestHelper.deleteAllCardTypes();
 
@@ -124,21 +125,40 @@ public class RefundDaoJpaITest extends DaoITestBase {
     @Test 
     public void findAllBy_shouldFindAllRefundsByQueryParamsWithAccountId() {
         SearchParams searchParams = new SearchParams().withGatewayAccountId(sandboxAccount.getAccountId());
-        addSuccessfulRefundsToAccount();
-        addSuccessfulRefundsToAccount();
+        addSuccessfulRefundsToAccount("refund1", now().minusMinutes(30));
+        addSuccessfulRefundsToAccount("refund2", now().minusMinutes(30));
         
         List<RefundEntity> refunds = refundDao.findAllBy(searchParams);
         assertThat(refunds.size(), is(2));
     }
 
-    private void addSuccessfulRefundsToAccount() {
+    @Test
+    public void findAllBy_shouldFindByDateRange() {
+        ZonedDateTime fromDate = ZonedDateTime.parse("2016-01-02T01:00:00Z");
+        ZonedDateTime toDate = ZonedDateTime.parse("2016-01-03T01:00:00Z");
+        addSuccessfulRefundsToAccount("oldRefund", fromDate.minusMinutes(1L));
+        addSuccessfulRefundsToAccount("inRangeRefund1", toDate.minusMinutes(1L));
+        addSuccessfulRefundsToAccount("inRangeRefund2", fromDate.plusMinutes(1L));
+        addSuccessfulRefundsToAccount("futureRefund", toDate.plusMinutes(1L));
+        SearchParams searchParams = new SearchParams()
+                .withGatewayAccountId(sandboxAccount.getAccountId())
+                .withFromDate(fromDate)
+                .withToDate(toDate);
+        List<RefundEntity> refunds = refundDao.findAllBy(searchParams);
+        assertThat(refunds.size(), is(2));
+        assertThat(refunds.get(0).getExternalId(), is("inRangeRefund1"));
+        assertThat(refunds.get(1).getExternalId(), is("inRangeRefund2"));
+    }
+
+    private void addSuccessfulRefundsToAccount(String externalRefundId, ZonedDateTime zonedDateTime) {
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestRefund()
+                .withExternalRefundId(externalRefundId)
                 .withTestCharge(chargeTestRecord)
                 .withReference("reference")
                 .withRefundStatus(REFUNDED)
-                .withCreatedDate(now().minusMinutes(30))
+                .withCreatedDate(zonedDateTime)
                 .insert();
     }
 

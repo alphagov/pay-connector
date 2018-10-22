@@ -8,11 +8,11 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import uk.gov.pay.connector.charge.dao.SearchParams;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.refund.dao.RefundDao;
-import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.SearchRefundsService;
@@ -62,16 +62,18 @@ public class SearchRefundsServiceTest {
         searchRefundsService = new SearchRefundsService(refundDao);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void getAllRefunds_shouldReturnBadRequestResponse_whenQueryParamsAreInvalid() {
         Long pageNumber = -1L;
         Long displaySize = -2L;
 
+        SearchParams searchParams = new SearchParams()
+                .withPage(pageNumber)
+                .withDisplaySize(displaySize);
+
         Response actualResponse = searchRefundsService.getAllRefunds(
                 uriInfo,
-                ACCOUNT_ID,
-                pageNumber,
-                displaySize);
+                searchParams);
 
         Map<String, List<String>> expectedMessage = ImmutableMap.of("message", asList(
                 "query param 'display_size' should be a non zero positive integer",
@@ -85,11 +87,14 @@ public class SearchRefundsServiceTest {
     public void getAllRefunds_shouldReturnPageNotFoundResponseWhenQueryParamPageExceedsMax() {
         Long pageNumber = 2L;
         Long displaySize = 20L;
+        SearchParams searchParams = new SearchParams()
+                .withPage(pageNumber)
+                .withDisplaySize(displaySize);
         List<RefundEntity> refundEntities = getRefundEntity(1, gatewayAccount);
 
         when(refundDao.getTotalFor(any(SearchParams.class))).thenReturn(Long.valueOf(refundEntities.size()));
 
-        Response response = searchRefundsService.getAllRefunds(uriInfo, ACCOUNT_ID, pageNumber, displaySize);
+        Response response = searchRefundsService.getAllRefunds(uriInfo, searchParams);
 
         ImmutableMap<String, Object> actualResponse = (ImmutableMap<String, Object>) response.getEntity();
         Response.StatusType statusType = response.getStatusInfo();
@@ -102,50 +107,19 @@ public class SearchRefundsServiceTest {
     }
 
     @Test
-    public void shouldReturnDefaultDisplayWhenQueryParamDisplayExceedsMax() {
-        String DEFAULT_DISPLAY_SIZE = "500";
-        Long EXCEEDS_DISPLAY_SIZE = 600L;
-        List<RefundEntity> refundEntities = getRefundEntity(1, gatewayAccount);
-
-        when(refundDao.getTotalFor(any(SearchParams.class))).thenReturn(EXCEEDS_DISPLAY_SIZE);
-        when(refundDao.findAllBy(any(SearchParams.class))).thenReturn(refundEntities);
-        when(uriInfo.getBaseUriBuilder()).thenReturn(fromUri("http://app.com/"));
-        when(uriInfo.getPath()).thenReturn(format("/v1/api/accounts/%s/refunds", ACCOUNT_ID));
-        when(uriInfo.getBaseUri()).thenReturn(fromUri("http://app.com/").build());
-
-        Response response = searchRefundsService.getAllRefunds(uriInfo, ACCOUNT_ID, PAGE_NUMBER, EXCEEDS_DISPLAY_SIZE);
-
-        String body = (String) response.getEntity();
-
-        JsonAssert.with(body)
-                .assertThat("$.results.*", hasSize(1))
-                .assertThat("$.total", is(600))
-                .assertThat("$.count", is(1))
-                .assertThat("$.page", is(1))
-                .assertThat("$._links.self.href",
-                        is(format("http://app.com/v1/api/accounts/%s/refunds?page=%s&display_size=%s",
-                                ACCOUNT_ID, PAGE_NUMBER, DEFAULT_DISPLAY_SIZE)))
-                .assertThat("$.results[0].links[0].rel", is("self"))
-                .assertThat("$.results[0].links[0].href",
-                        is(format("http://app.com/v1/api/accounts/%s/charges/%s/refunds/%s",
-                                ACCOUNT_ID, EXT_CHARGE_ID, EXT_REFUND_ID)))
-                .assertThat("$.results[0].links[1].rel", is("payment_url"))
-                .assertThat("$.results[0].links[1].href",
-                        is(format("http://app.com/v1/api/accounts/%s/charges/%s", ACCOUNT_ID, EXT_CHARGE_ID)));
-    }
-
-    @Test
     public void getAllRefunds_shouldReturnRefundsWhenRefundsExist() {
         Long displaySize = 3L;
         List<RefundEntity> refundEntities = getRefundEntity(3, gatewayAccount);
-
+        SearchParams searchParams = new SearchParams()
+                .withPage(PAGE_NUMBER)
+                .withDisplaySize(displaySize);
         when(refundDao.getTotalFor(any(SearchParams.class))).thenReturn(displaySize);
         when(refundDao.findAllBy(any(SearchParams.class))).thenReturn(refundEntities);
         when(uriInfo.getBaseUriBuilder()).thenReturn(fromUri("http://app.com/"));
         when(uriInfo.getPath()).thenReturn(format("/v1/api/accounts/%s/refunds", ACCOUNT_ID));
         when(uriInfo.getBaseUri()).thenReturn(fromUri("http://app.com/").build());
 
-        Response response = searchRefundsService.getAllRefunds(uriInfo, ACCOUNT_ID, PAGE_NUMBER, displaySize);
+        Response response = searchRefundsService.getAllRefunds(uriInfo, searchParams);
 
         String body = (String) response.getEntity();
 

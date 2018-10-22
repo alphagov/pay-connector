@@ -14,7 +14,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.SearchService;
-import uk.gov.pay.connector.charge.service.TransactionSearchStrategy;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.charge.model.CardHolderName;

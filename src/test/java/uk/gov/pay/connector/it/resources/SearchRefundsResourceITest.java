@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang.math.RandomUtils;
-import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -13,6 +12,8 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import javax.ws.rs.core.HttpHeaders;
 
+import java.time.ZonedDateTime;
+
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
@@ -22,6 +23,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.hasSize;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
@@ -46,8 +48,13 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
         databaseTestHelper.addCharge(chargeId, "charge1", accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
                 ServicePaymentReference.of("ref"), null, email);
 
-        databaseTestHelper.addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId, now().minusHours(2));
-        databaseTestHelper.addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId, now().minusHours(3));
+        String refundExternalId1 = randomAlphanumeric(10);
+        String refundExternalId2 = randomAlphanumeric(10);
+        String refundDate1 = "2016-02-03T00:00:00Z";
+        String refundDate2 = "2016-02-02T00:00:00Z";
+        
+        databaseTestHelper.addRefund(RandomUtils.nextInt(), refundExternalId1, "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId, ZonedDateTime.parse(refundDate1));
+        databaseTestHelper.addRefund(RandomUtils.nextInt(), refundExternalId2, "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId, ZonedDateTime.parse(refundDate2));
         databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient.withAccountId(accountId)
@@ -57,10 +64,22 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
                 .getRefunds()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("results.size()", Is.is(2))
-                .body("total", Is.is(2))
-                .body("count", Is.is(2))
-                .body("page", Is.is(1))
+                .body("results.size()", is(2))
+                .body("results[0].charge_id", is("charge1"))
+                .body("results[0].refund_id", is(refundExternalId1))
+                .body("results[0].status", is("REFUND SUBMITTED"))
+                .body("results[0].amount_submitted", is(1))
+                .body("results[0].links.size()", is(2))
+                .body("results[0].created_date", is(refundDate1))
+                .body("results[1].charge_id", is("charge1"))
+                .body("results[1].refund_id", is(refundExternalId2))
+                .body("results[1].status", is("REFUNDED"))
+                .body("results[1].amount_submitted", is(2))
+                .body("results[1].links.size()", is(2))
+                .body("results[1].created_date", is(refundDate2))
+                .body("total", is(2))
+                .body("count", is(2))
+                .body("page", is(1))
                 .body("results", hasSize(2));
     }
 
@@ -80,10 +99,10 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
                 .getRefunds()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("results.size()", Is.is(0))
-                .body("total", Is.is(0))
-                .body("count", Is.is(0))
-                .body("page", Is.is(1))
+                .body("results.size()", is(0))
+                .body("total", is(0))
+                .body("count", is(0))
+                .body("page", is(1))
                 .body("results", hasSize(0));
     }
 
@@ -95,6 +114,6 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getRefunds()
                 .statusCode(NOT_FOUND.getStatusCode())
-                .body("message", Is.is(format("Gateway account with id %s does not exist", INVALID_ACCOUNT_ID)));
+                .body("message", is(format("Gateway account with id %s does not exist", INVALID_ACCOUNT_ID)));
     }
 }
