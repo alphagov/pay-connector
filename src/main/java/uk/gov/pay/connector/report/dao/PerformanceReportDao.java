@@ -60,6 +60,7 @@ public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {
         + " WHERE c.status = :status"
         + " AND   g.type = :type"
         + " GROUP BY g.id"
+        + " ORDER BY g.id ASC"
       )
       .setParameter("status", CAPTURED.toString())
       .setParameter("type", LIVE)

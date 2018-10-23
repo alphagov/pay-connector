@@ -32,7 +32,8 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
     private GatewayAccountDao gatewayAccountDao;
 
     @Before
-    public void setUp()  {
+    public void setup() throws Exception {
+        super.setup();
         chargeDao = env.getInstance(ChargeDao.class);
         gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
 

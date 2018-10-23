@@ -21,10 +21,11 @@ import static org.junit.Assert.assertThat;
 public class PerformanceReportDaoITest extends DaoITestBase {
 
     private PerformanceReportDao performanceReportDao;
-    DatabaseFixtures.TestAccount testAccountFixture;
+    private DatabaseFixtures.TestAccount testAccountFixture;
 
     @Before
-    public void setUp()  {
+    public void setup() throws Exception {
+        super.setup();
         performanceReportDao = env.getInstance(PerformanceReportDao.class);
         testAccountFixture = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -56,24 +57,31 @@ public class PerformanceReportDaoITest extends DaoITestBase {
 
     @Test
     public void shouldAggregateNumberAndValueOfPaymentsForGatewayAccount() {
+        DatabaseFixtures.TestAccount gatewayAccount = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withAccountId(173L)
+                .withType(GatewayAccountEntity.Type.LIVE)
+                .insert();
         DatabaseFixtures.TestAccount anotherGatewayAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
+                .withAccountId(174L)
                 .withType(GatewayAccountEntity.Type.LIVE)
                 .insert();
-        insertCharge(testAccountFixture, 10L, ZonedDateTime.now());
-        insertCharge(testAccountFixture, 2L, ZonedDateTime.now());
+        insertCharge(gatewayAccount, 10L, ZonedDateTime.now());
+        insertCharge(gatewayAccount, 2L, ZonedDateTime.now());
         insertCharge(anotherGatewayAccount, 6L, ZonedDateTime.now());
         insertCharge(anotherGatewayAccount, 3L, ZonedDateTime.now());
         insertCharge(anotherGatewayAccount, 6L, ZonedDateTime.now());
         List<GatewayAccountPerformanceReportEntity> gatewayAccountPerformanceReportEntities = performanceReportDao.aggregateNumberAndValueOfPaymentsByGatewayAccount();
         assertThat(gatewayAccountPerformanceReportEntities.size(), is(2));
-        assertThat(gatewayAccountPerformanceReportEntities.get(0).getAverageAmount(), is(closeTo(valueOf(5L), ZERO)));
-        assertThat(gatewayAccountPerformanceReportEntities.get(0).getTotalAmount(), is(closeTo(valueOf(15L), ZERO)));
-        assertThat(gatewayAccountPerformanceReportEntities.get(0).getTotalVolume(), is(3L));
-        assertThat(gatewayAccountPerformanceReportEntities.get(1).getAverageAmount(), is(closeTo(valueOf(6L), ZERO)));
-        assertThat(gatewayAccountPerformanceReportEntities.get(1).getTotalAmount(), is(closeTo(valueOf(12L), ZERO)));
-        assertThat(gatewayAccountPerformanceReportEntities.get(1).getTotalVolume(), is(2L));
+        assertThat(gatewayAccountPerformanceReportEntities.get(0).getAverageAmount(), is(closeTo(valueOf(6L), ZERO)));
+        assertThat(gatewayAccountPerformanceReportEntities.get(0).getTotalAmount(), is(closeTo(valueOf(12L), ZERO)));
+        assertThat(gatewayAccountPerformanceReportEntities.get(0).getTotalVolume(), is(2L));
+        assertThat(gatewayAccountPerformanceReportEntities.get(1).getAverageAmount(), is(closeTo(valueOf(5L), ZERO)));
+        assertThat(gatewayAccountPerformanceReportEntities.get(1).getTotalAmount(), is(closeTo(valueOf(15L), ZERO)));
+        assertThat(gatewayAccountPerformanceReportEntities.get(1).getTotalVolume(), is(3L));
     }
 
     @Test
