@@ -909,4 +909,44 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="Add corporate prepaid credit card surcharge amount column to gateway accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="corporate_prepaid_credit_card_surcharge_amount" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="Add default value to corporate prepaid credit card surcharge amount column" author="">
+        <addDefaultValue tableName="gateway_accounts"
+                         columnName="corporate_prepaid_credit_card_surcharge_amount"
+                         defaultValue="0"
+        />
+    </changeSet>
+
+    <changeSet id="Update corporate prepaid credit card surcharge amount column to default value" author="">
+        <update tableName="gateway_accounts">
+            <column name="corporate_prepaid_credit_card_surcharge_amount" value="0"/>
+            <where>corporate_prepaid_credit_card_surcharge_amount IS NULL</where>
+        </update>
+    </changeSet>
+
+    <changeSet id="Add corporate prepaid debit card surcharge amount column to gateway accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="corporate_prepaid_debit_card_surcharge_amount" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="Add default value to corporate prepaid debit card surcharge amount column" author="">
+        <addDefaultValue tableName="gateway_accounts"
+                         columnName="corporate_prepaid_debit_card_surcharge_amount"
+                         defaultValue="0"
+        />
+    </changeSet>
+
+    <changeSet id="Update corporate prepaid debit card surcharge amount column to default value" author="">
+        <update tableName="gateway_accounts">
+            <column name="corporate_prepaid_debit_card_surcharge_amount" value="0"/>
+            <where>corporate_prepaid_debit_card_surcharge_amount IS NULL</where>
+        </update>
+    </changeSet>
+
 </databaseChangeLog>
