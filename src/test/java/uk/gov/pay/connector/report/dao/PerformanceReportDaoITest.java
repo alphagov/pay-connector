@@ -24,7 +24,7 @@ public class PerformanceReportDaoITest extends DaoITestBase {
     private DatabaseFixtures.TestAccount testAccountFixture;
 
     @Before
-    public void setup() throws Exception {
+    public void setUp() throws Exception {
         super.setup();
         performanceReportDao = env.getInstance(PerformanceReportDao.class);
         testAccountFixture = DatabaseFixtures

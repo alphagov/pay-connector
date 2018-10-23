@@ -97,8 +97,8 @@ public class DatabaseTestHelper {
         addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, null, null, EmailCollectionMode.MANDATORY, 0, 0, 0, 0);
     }
 
-    public void addGatewayAccount(String accountId, String paymentProvider, String description, String analyticsId, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount) {
-        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId, EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, 0, 0);
+    public void addGatewayAccount(String accountId, String paymentProvider, String description, String analyticsId, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount, long corporatePrepaidCreditCardSurchargeAmount, long corporatePrepaidDebitCardSurchargeAmount) {
+        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId,  EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, corporatePrepaidCreditCardSurchargeAmount, corporatePrepaidDebitCardSurchargeAmount);
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials, String serviceName, GatewayAccountEntity.Type type, String description, String analyticsId, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount, long corporatePrepaidCreditCardSurchargeAmount, long corporatePrepaidDebitCardSurchargeAmount) {
