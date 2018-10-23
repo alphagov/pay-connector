@@ -74,7 +74,7 @@ public class ChargesFrontendResourceITest {
         DatabaseFixtures.TestCardType mastercard = databaseFixtures.aMastercardDebitCardType().insert();
         DatabaseFixtures.TestCardType visa = databaseFixtures.aVisaCreditCardType().insert();
         app.getDatabaseTestHelper().addGatewayAccount(accountId, paymentProvider, description, analyticsId,
-                corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount);
+                corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, 0, 0);
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), mastercard.getId());
         app.getDatabaseTestHelper().addAcceptedCardType(Long.valueOf(accountId), visa.getId());
         connectorRestApi = new RestAssuredClient(app.getLocalPort(), accountId);

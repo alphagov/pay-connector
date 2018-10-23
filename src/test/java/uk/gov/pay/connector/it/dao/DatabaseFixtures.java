@@ -310,6 +310,8 @@ public class DatabaseFixtures {
         private List<TestCardType> cardTypes = new ArrayList<>();
         private long corporateCreditCardSurchargeAmount;
         private long corporateDebitCardSurchargeAmount;
+        private long corporatePrepaidCreditCardSurchargeAmount;
+        private long corporatePrepaidDebitCardSurchargeAmount;
 
         public long getAccountId() {
             return accountId;
@@ -345,6 +347,14 @@ public class DatabaseFixtures {
 
         public EmailCollectionMode getEmailCollectionMode() {
             return emailCollectionMode;
+        }
+
+        public long getCorporatePrepaidCreditCardSurchargeAmount() {
+            return corporatePrepaidCreditCardSurchargeAmount;
+        }
+
+        public long getCorporatePrepaidDebitCardSurchargeAmount() {
+            return corporatePrepaidDebitCardSurchargeAmount;
         }
 
         public Map<EmailNotificationType, TestEmailNotification> getEmailNotifications() {
@@ -406,6 +416,16 @@ public class DatabaseFixtures {
             return this;
         }
         
+        public TestAccount withCorporatePrepaidCreditCardSurchargeAmount(long corporatePrepaidCreditCardSurchargeAmount) {
+            this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
+            return this;
+        }
+        
+        public TestAccount withCorporatePrepaidDebitCardSurchargeAmount(long corporatePrepaidDebitCardSurchargeAmount) {
+            this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
+            return this;
+        }
+        
         public TestAccount insert() {
             databaseTestHelper.addGatewayAccount(
                     String.valueOf(accountId),
@@ -417,7 +437,9 @@ public class DatabaseFixtures {
                     analyticsId,
                     emailCollectionMode,
                     corporateCreditCardSurchargeAmount,
-                    corporateDebitCardSurchargeAmount);
+                    corporateDebitCardSurchargeAmount,
+                    corporatePrepaidCreditCardSurchargeAmount,
+                    corporatePrepaidDebitCardSurchargeAmount);
             for (TestCardType cardType : cardTypes) {
                 databaseTestHelper.addAcceptedCardType(this.getAccountId(), cardType.getId());
             }

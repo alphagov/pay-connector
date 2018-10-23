@@ -107,6 +107,25 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
+    public void getAccountShouldReturnCorporatePrepaidCreditCardSurchargeAmountAndCorporatePrepaidDebitCardSurchargeAmount() {
+        int corporatePrepaidCreditCardSurchargeAmount = 250;
+        int corporatePrepaidDebitCardSurchargeAmount = 50;
+        this.defaultTestAccount = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withCorporatePrepaidCreditCardSurchargeAmount(corporatePrepaidCreditCardSurchargeAmount)
+                .withCorporatePrepaidDebitCardSurchargeAmount(corporatePrepaidDebitCardSurchargeAmount)
+                .insert();
+
+        givenSetup()
+                .get(ACCOUNTS_API_URL + defaultTestAccount.getAccountId())
+                .then()
+                .statusCode(200)
+                .body("corporate_prepaid_credit_card_surcharge_amount", is(corporatePrepaidCreditCardSurchargeAmount))
+                .body("corporate_prepaid_debit_card_surcharge_amount", is(corporatePrepaidDebitCardSurchargeAmount));
+    }
+
+    @Test
     public void shouldReturnAccountInformationForGetAccountById() {
         this.defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -218,6 +237,21 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
         assertCorrectCreateResponse(response);
         assertGettingAccountReturnsProviderName(response, "sandbox", TEST);
+    }
+
+    @Test
+    public void createGatewayAccount_shouldNotReturnCorporateSurcharges() {
+        String payload = toJson(ImmutableMap.of("name", "test account"));
+        ValidatableResponse response = givenSetup()
+                .body(payload)
+                .post(ACCOUNTS_API_URL)
+                .then()
+                .statusCode(201);
+        
+        response.body("corporate_credit_card_surcharge_amount", is(nullValue()));
+        response.body("corporate_debit_card_surcharge_amount", is(nullValue()));
+        response.body("corporate_prepaid_credit_card_surcharge_amount", is(nullValue()));
+        response.body("corporate_prepaid_debit_card_surcharge_amount", is(nullValue()));
     }
 
     @Test

@@ -41,6 +41,12 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("allow_web_payments")
     private boolean allowWebPayments;
 
+    @JsonProperty("corporate_prepaid_credit_card_surcharge_amount")
+    private long corporatePrepaidCreditCardSurchargeAmount;
+
+    @JsonProperty("corporate_prepaid_debit_card_surcharge_amount")
+    private long corporatePrepaidDebitCardSurchargeAmount;
+
     public GatewayAccountResourceDTO() {
     }
 
@@ -52,7 +58,9 @@ public class GatewayAccountResourceDTO {
                                      String analyticsId,
                                      long corporateCreditCardSurchargeAmount,
                                      long corporateDebitCardSurchargeAmount, 
-                                     boolean allowWebPayments) {
+                                     boolean allowWebPayments,
+                                     long corporatePrepaidCreditCardSurchargeAmount,
+                                     long corporatePrepaidDebitCardSurchargeAmount) {
         this.accountId = accountId;
         this.paymentProvider = paymentProvider;
         this.type = type;
@@ -62,6 +70,8 @@ public class GatewayAccountResourceDTO {
         this.corporateCreditCardSurchargeAmount = corporateCreditCardSurchargeAmount;
         this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
         this.allowWebPayments = allowWebPayments;
+        this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
+        this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
     }
 
     public long getAccountId() {
@@ -106,5 +116,13 @@ public class GatewayAccountResourceDTO {
 
     public boolean isAllowWebPayments() {
         return allowWebPayments;
+    }
+
+    public long getCorporatePrepaidCreditCardSurchargeAmount() {
+        return corporatePrepaidCreditCardSurchargeAmount;
+    }
+
+    public long getCorporatePrepaidDebitCardSurchargeAmount() {
+        return corporatePrepaidDebitCardSurchargeAmount;
     }
 }

@@ -116,6 +116,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "corporate_debit_card_surcharge_amount")
     private long corporateDebitCardSurchargeAmount;
 
+    @Column(name = "corporate_prepaid_credit_card_surcharge_amount")
+    private long corporatePrepaidCreditCardSurchargeAmount;
+
+    @Column(name = "corporate_prepaid_debit_card_surcharge_amount")
+    private long corporatePrepaidDebitCardSurchargeAmount;
+
     @Column(name = "notify_settings", columnDefinition = "json")
     @Convert(converter = JsonToMapConverter.class)
     private Map<String, String> notifySettings;
@@ -232,6 +238,18 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return corporateDebitCardSurchargeAmount;
     }
 
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonProperty("corporate_prepaid_credit_card_surcharge_amount")
+    public long getCorporatePrepaidCreditCardSurchargeAmount() {
+        return corporatePrepaidCreditCardSurchargeAmount;
+    }
+
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonProperty("corporate_prepaid_debit_card_surcharge_amount")
+    public long getCorporatePrepaidDebitCardSurchargeAmount() {
+        return corporatePrepaidDebitCardSurchargeAmount;
+    }
+
     public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
         this.notificationCredentials = notificationCredentials;
     }
@@ -303,6 +321,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         account.put("toggle_3ds", String.valueOf(isRequires3ds()));
         account.put("corporate_credit_card_surcharge_amount", getCorporateCreditCardSurchargeAmount());
         account.put("corporate_debit_card_surcharge_amount", getCorporateDebitCardSurchargeAmount());
+        account.put("corporate_prepaid_credit_card_surcharge_amount", getCorporatePrepaidCreditCardSurchargeAmount());
+        account.put("corporate_prepaid_debit_card_surcharge_amount", getCorporatePrepaidDebitCardSurchargeAmount());
         account.put("allow_web_payments", String.valueOf(allowWebPayments));
         return account;
     }
@@ -326,5 +346,13 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setCorporateDebitCardSurchargeAmount(long corporateDebitCardSurchargeAmount) {
         this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
+    }
+    
+    public void setCorporatePrepaidCreditCardSurchargeAmount(long corporatePrepaidCreditCardSurchargeAmount) {
+        this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
+    }
+
+    public void setCorporatePrepaidDebitCardSurchargeAmount(long corporatePrepaidDebitCardSurchargeAmount) {
+        this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
     }
 }
