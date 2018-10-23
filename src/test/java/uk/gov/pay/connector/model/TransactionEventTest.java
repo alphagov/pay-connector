@@ -2,7 +2,7 @@ package uk.gov.pay.connector.model;
 
 import org.junit.Test;
 import uk.gov.pay.connector.chargeevent.model.TransactionEvent;
-import uk.gov.pay.connector.model.api.ExternalChargeState;
+import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 
 import java.time.ZonedDateTime;
 
@@ -10,7 +10,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.chargeevent.model.TransactionEvent.Type;
 import static uk.gov.pay.connector.chargeevent.model.TransactionEvent.extractState;
-import static uk.gov.pay.connector.model.api.ExternalRefundStatus.EXTERNAL_SUBMITTED;
+import static uk.gov.pay.connector.common.model.api.ExternalRefundStatus.EXTERNAL_SUBMITTED;
 
 public class TransactionEventTest {
 

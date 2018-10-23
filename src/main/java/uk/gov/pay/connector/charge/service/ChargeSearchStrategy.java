@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.charge.service;
 
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.charge.dao.SearchParams;
-import uk.gov.pay.connector.service.search.AbstractSearchStrategy;
-import uk.gov.pay.connector.service.search.SearchStrategy;
+import uk.gov.pay.connector.common.service.search.AbstractSearchStrategy;
+import uk.gov.pay.connector.common.service.search.SearchStrategy;
 
 import javax.ws.rs.core.UriInfo;
 import java.util.List;

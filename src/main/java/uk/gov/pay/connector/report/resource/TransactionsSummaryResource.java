@@ -4,13 +4,13 @@ import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.report.model.TransactionsSummaryResponse;
+import uk.gov.pay.connector.common.model.api.ExternalChargeState;
+import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
-import uk.gov.pay.connector.model.api.ExternalChargeState;
-import uk.gov.pay.connector.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.report.model.TransactionsSummaryResponse;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
@@ -27,8 +27,8 @@ import java.util.List;
 import static fj.data.Either.reduce;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.resources.ApiValidators.validateFromDateIsBeforeToDate;
-import static uk.gov.pay.connector.resources.ApiValidators.validateGatewayAccountReference;
+import static uk.gov.pay.connector.common.validator.ApiValidators.validateFromDateIsBeforeToDate;
+import static uk.gov.pay.connector.common.validator.ApiValidators.validateGatewayAccountReference;
 
 @Path("/")
 public class TransactionsSummaryResource {

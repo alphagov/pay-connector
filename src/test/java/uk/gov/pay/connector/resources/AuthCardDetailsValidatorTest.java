@@ -2,6 +2,7 @@ package uk.gov.pay.connector.resources;
 
 import org.junit.Test;
 import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.common.validator.AuthCardDetailsValidator;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
 import static org.junit.Assert.assertFalse;

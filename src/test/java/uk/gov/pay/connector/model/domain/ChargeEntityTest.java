@@ -2,20 +2,20 @@ package uk.gov.pay.connector.model.domain;
 
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.exception.InvalidStateTransitionException;
+import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_CREATED;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_STARTED;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
-import static uk.gov.pay.connector.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
-import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_STARTED;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
+import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 public class ChargeEntityTest {
 

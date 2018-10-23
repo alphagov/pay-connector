@@ -8,6 +8,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -22,8 +24,6 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayBaseResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.service.transaction.TransactionFlow;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;

@@ -6,12 +6,12 @@ import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
-import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.exception.ConflictRuntimeException;
-import uk.gov.pay.connector.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
+import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -37,7 +37,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERRO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
-import static uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions.isValidTransition;
+import static uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions.isValidTransition;
 
 public class CardCaptureService extends CardService implements TransactionalGatewayOperation<BaseCaptureResponse> {
 

@@ -1,23 +1,23 @@
 package uk.gov.pay.connector.charge.service;
 
 import com.google.inject.Inject;
+import uk.gov.pay.connector.charge.dao.SearchParams;
+import uk.gov.pay.connector.charge.dao.TransactionDao;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.ChargeResponse.RefundSummary;
 import uk.gov.pay.connector.charge.model.TransactionResponse.TransactionResponseBuilder;
-import uk.gov.pay.connector.charge.dao.SearchParams;
-import uk.gov.pay.connector.charge.dao.TransactionDao;
 import uk.gov.pay.connector.charge.model.TransactionType;
-import uk.gov.pay.connector.model.api.ExternalChargeState;
-import uk.gov.pay.connector.model.api.ExternalRefundStatus;
-import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
-import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.charge.model.domain.Transaction;
-import uk.gov.pay.connector.service.search.AbstractSearchStrategy;
-import uk.gov.pay.connector.service.search.SearchStrategy;
+import uk.gov.pay.connector.common.model.api.ExternalChargeState;
+import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
+import uk.gov.pay.connector.common.service.charge.CorporateCardSurchargeCalculator;
+import uk.gov.pay.connector.common.service.search.AbstractSearchStrategy;
+import uk.gov.pay.connector.common.service.search.SearchStrategy;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DateTimeUtils;
-import uk.gov.pay.connector.util.charge.CorporateCardSurchargeCalculator;
 
 import javax.ws.rs.core.UriInfo;
 import java.util.List;

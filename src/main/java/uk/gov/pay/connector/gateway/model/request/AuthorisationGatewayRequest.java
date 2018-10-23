@@ -1,10 +1,11 @@
 package uk.gov.pay.connector.gateway.model.request;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.common.service.charge.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.GatewayOperation;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.util.charge.CorporateCardSurchargeCalculator;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+
 import java.util.Optional;
 
 public class AuthorisationGatewayRequest implements GatewayRequest {

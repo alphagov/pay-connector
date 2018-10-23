@@ -12,10 +12,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
-import uk.gov.pay.connector.exception.CredentialsException;
+import uk.gov.pay.connector.common.exception.CredentialsException;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.builder.EntityBuilder;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 import uk.gov.pay.connector.util.HashUtil;
 

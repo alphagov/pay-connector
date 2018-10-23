@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fj.data.Either;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.BasePaymentProvider;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOperation;
@@ -23,7 +24,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
 import uk.gov.pay.connector.usernotification.model.Notifications.Builder;
-import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 
 import javax.ws.rs.client.Invocation;
 import java.util.EnumMap;
