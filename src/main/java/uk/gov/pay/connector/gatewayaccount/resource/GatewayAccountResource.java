@@ -21,7 +21,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.PatchRequest;
-import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountObjectConvertor;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.usernotification.service.GatewayAccountNotificationCredentialsService;
@@ -53,7 +52,6 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidSizeResponse;
@@ -74,8 +72,6 @@ public class GatewayAccountResource {
     private static final String REQUIRES_3DS_FIELD_NAME = "toggle_3ds";
     private static final String CARD_TYPES_FIELD_NAME = "card_types";
     private static final int SERVICE_NAME_FIELD_LENGTH = 50;
-    private static final String PROVIDER_ACCOUNT_TYPE = "type";
-    private static final String PAYMENT_PROVIDER_KEY = "payment_provider";
     private static final String USERNAME_KEY = "username";
     private static final String PASSWORD_KEY = "password";
     private final GatewayAccountService gatewayAccountService;
@@ -85,8 +81,7 @@ public class GatewayAccountResource {
     private final GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService;
     private final GatewayAccountRequestValidator validator;
     private final GatewayAccountServicesFactory gatewayAccountServicesFactory;
-
-
+    
     @Inject
     public GatewayAccountResource(GatewayAccountService gatewayAccountService, GatewayAccountDao gatewayDao, CardTypeDao cardTypeDao, ConnectorConfiguration conf,
                                   GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService,
@@ -220,11 +215,10 @@ public class GatewayAccountResource {
                                             @Context UriInfo uriInfo) {
 
         logger.info("Creating new gateway account using the {} provider pointing to {}",
-                gatewayAccountRequest.getPaymentProvider(), gatewayAccountRequest.getProviderAccountType());
+                gatewayAccountRequest.getPaymentProvider(), 
+                gatewayAccountRequest.getProviderAccountType());
 
-        GatewayAccountEntity entity = gatewayAccountService.createGatewayAccount(gatewayAccountRequest);
-
-        GatewayAccountResponse gatewayAccountResponse = GatewayAccountObjectConvertor.createResponseFrom(entity, uriInfo);
+        GatewayAccountResponse gatewayAccountResponse = gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);
 
         return Response.created(gatewayAccountResponse.getLocation()).entity(gatewayAccountResponse).build();
     }

@@ -1,26 +1,34 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
+public class GatewayAccountResponse {
 
-//@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class GatewayAccountResponse extends AbstractGatewayAccount{
+    @JsonProperty("type")
+    private final String providerAccountType;
+
+    @JsonProperty("service_name")
+    private final String serviceName;
+
+    @JsonProperty("description")
+    private final String description;
+
+    @JsonProperty("analytics_id")
+    private final String analyticsId;
 
     @JsonProperty("gateway_account_id")
     private final String gatewayAccountId;
+    
     @JsonProperty("links")
     private final List<Map<String, Object>> links;
+    
     @JsonIgnore
     private final URI location;
 
@@ -32,7 +40,34 @@ public class GatewayAccountResponse extends AbstractGatewayAccount{
         this.analyticsId = gatewayAccountResponseBuilder.analyticsId;
         this.links = gatewayAccountResponseBuilder.links;
         this.location = gatewayAccountResponseBuilder.location;
+    }
 
+    public String getProviderAccountType() {
+        return providerAccountType;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getAnalyticsId() {
+        return analyticsId;
+    }
+
+    public String getGatewayAccountId() {
+        return gatewayAccountId;
+    }
+
+    public List<Map<String, Object>> getLinks() {
+        return links;
+    }
+
+    public URI getLocation() {
+        return location;
     }
 
     public static class GatewayAccountResponseBuilder {
@@ -85,17 +120,5 @@ public class GatewayAccountResponse extends AbstractGatewayAccount{
             this.location = href;
             return this;
         }
-    }
-
-    public String getGatewayAccountId() {
-        return gatewayAccountId;
-    }
-
-    public List<Map<String, Object>> getLinks() {
-        return links;
-    }
-
-    public URI getLocation() {
-        return location;
     }
 }

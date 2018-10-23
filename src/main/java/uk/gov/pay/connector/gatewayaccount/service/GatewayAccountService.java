@@ -9,15 +9,16 @@ import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.PatchRequest;
 
 import javax.inject.Inject;
+import javax.ws.rs.core.UriInfo;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_WEB_PAYMENTS;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_EMAIL_COLLECTION_MODE;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_NOTIFY_SETTINGS;
@@ -47,7 +48,7 @@ public class GatewayAccountService {
     }
 
     @Transactional
-    public GatewayAccountEntity createGatewayAccount(GatewayAccountRequest gatewayAccountRequest) {
+    public GatewayAccountResponse createGatewayAccount(GatewayAccountRequest gatewayAccountRequest, UriInfo uriInfo) {
 
         GatewayAccountEntity gatewayAccountEntity = GatewayAccountObjectConvertor.createEntityFrom(gatewayAccountRequest);
 
@@ -58,7 +59,7 @@ public class GatewayAccountService {
 
         gatewayAccountDao.persist(gatewayAccountEntity);
         
-        return gatewayAccountEntity;
+        return GatewayAccountObjectConvertor.createResponseFrom(gatewayAccountEntity, uriInfo);
     }
 
 
