@@ -4,16 +4,16 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.ServicePaymentReference;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +32,8 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
     private GatewayAccountDao gatewayAccountDao;
 
     @Before
-    public void setUp()  {
+    public void setup() throws Exception {
+        super.setup();
         chargeDao = env.getInstance(ChargeDao.class);
         gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
 
@@ -41,16 +42,16 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
     private void createChargeWithIdAndDetails(long chargeId, DatabaseFixtures.TestCardDetails testCardDetails) {
         DatabaseFixtures.TestAccount testAccountFixture = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
-                .aTestAccount();
-        testAccountFixture.insert();
-        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
+                .aTestAccount()
+                .insert();
+        DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(chargeId)
                 .withCardDetails(testCardDetails)
                 .withTestAccount(testAccountFixture)
-                .withChargeStatus(ChargeStatus.CAPTURE_SUBMITTED);
-        testCharge.insert();
+                .withChargeStatus(ChargeStatus.CAPTURE_SUBMITTED)
+                .insert();
     }
     
     private DatabaseFixtures.TestCardDetails createCardDetailsForChargeWithId(long chargeId) {

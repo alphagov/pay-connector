@@ -26,7 +26,7 @@ public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {
     return (PerformanceReportEntity) entityManager
       .get()
       .createQuery(
-        "SELECT new uk.gov.pay.connector.model.domain.report.PerformanceReportEntity("
+        "SELECT new  uk.gov.pay.connector.report.model.domain.PerformanceReportEntity("
         + "   COALESCE(COUNT(c.amount), 0),"
         + "   COALESCE(SUM(c.amount),   0),"
         + "   COALESCE(AVG(c.amount),   0)"
@@ -46,7 +46,7 @@ public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {
     return entityManager
       .get()
       .createQuery(
-        "SELECT new uk.gov.pay.connector.model.domain.report.GatewayAccountPerformanceReportEntity("
+        "SELECT new uk.gov.pay.connector.report.model.domain.GatewayAccountPerformanceReportEntity("
         + "   COALESCE(COUNT(c.amount), 0),"
         + "   COALESCE(SUM(c.amount),   0),"
         + "   COALESCE(AVG(c.amount),   0),"
@@ -60,6 +60,7 @@ public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {
         + " WHERE c.status = :status"
         + " AND   g.type = :type"
         + " GROUP BY g.id"
+        + " ORDER BY g.id ASC"
       )
       .setParameter("status", CAPTURED.toString())
       .setParameter("type", LIVE)
@@ -73,7 +74,7 @@ public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {
     return (PerformanceReportEntity) entityManager
       .get()
       .createQuery(
-        "SELECT new uk.gov.pay.connector.model.domain.report.PerformanceReportEntity("
+        "SELECT new uk.gov.pay.connector.report.model.domain.PerformanceReportEntity("
         + "   COALESCE(COUNT(c.amount), 0),"
         + "   COALESCE(SUM(c.amount),   0),"
         + "   COALESCE(AVG(c.amount),   0)"
