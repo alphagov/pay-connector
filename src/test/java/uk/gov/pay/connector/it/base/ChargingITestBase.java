@@ -16,6 +16,7 @@ import org.junit.ClassRule;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.model.domain.CardFixture;
@@ -47,7 +48,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
-import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.getWiremockPort;
+import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
@@ -84,7 +85,7 @@ public class ChargingITestBase {
     protected DatabaseTestHelper databaseTestHelper;
 
     @ClassRule
-    public static WireMockRule wireMockRule = new WireMockRule(getWiremockPort());
+    public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
 
     public ChargingITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;

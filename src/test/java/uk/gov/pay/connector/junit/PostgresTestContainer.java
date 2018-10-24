@@ -106,7 +106,7 @@ final class PostgresTestContainer {
         Stopwatch timer = Stopwatch.createStarted();
         boolean succeeded = false;
         while (!succeeded && timer.elapsed(TimeUnit.SECONDS) < DB_TIMEOUT_SEC) {
-            Thread.sleep(500);
+            Thread.sleep(100);
             succeeded = checkPostgresConnection();
         }
         if (!succeeded) {

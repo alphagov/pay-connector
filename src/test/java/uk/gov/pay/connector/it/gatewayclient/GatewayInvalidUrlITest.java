@@ -23,12 +23,12 @@ public class GatewayInvalidUrlITest extends BaseGatewayITest {
 
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         setupLoggerMockAppender();
     }
 
     @Test
-    public void shouldFailCaptureWhenInvalidConnectorUrl() throws Exception {
+    public void shouldFailCaptureWhenInvalidConnectorUrl() {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
         setupGatewayStub().respondWithUnexpectedResponseCodeWhenCapture();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();

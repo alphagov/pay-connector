@@ -1,50 +1,53 @@
 package uk.gov.pay.connector.it.resources;
 
+import io.dropwizard.testing.junit.ResourceTestRule;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
-import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
-import uk.gov.pay.connector.util.RestAssuredClient;
+import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
+import uk.gov.pay.connector.cardtype.dao.CardTypeEntityBuilder;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.cardtype.resource.CardTypesResource;
 
-import static org.hamcrest.core.Is.is;
+import javax.ws.rs.core.GenericType;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
 
 public class PayersCardTypesResourceITest {
-
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-
-    private String accountId = "66757943593456";
-    private RestAssuredClient connectorRestApiClient;
+    private static final CardTypeDao mockedDao = mock(CardTypeDao.class);
+    @ClassRule
+    public static ResourceTestRule resources = ResourceTestRule.builder().addResource(new CardTypesResource(mockedDao)).build();
+    private CardTypeEntity cardTypeEntity;
 
     @Before
     public void setUp() {
-        app.getDatabaseTestHelper().deleteAllCardTypes();
-        connectorRestApiClient = new RestAssuredClient(app.getLocalPort(), accountId);
+        cardTypeEntity = CardTypeEntityBuilder.aCardTypeEntity().build();
+        when(mockedDao.findAll()).thenReturn(Collections.singletonList(cardTypeEntity));
     }
 
-    @Test
-    public void shouldGetNoCardTypesWhenNoCardTypesExist() {
-        connectorRestApiClient
-                .getCardTypes()
-                .body("card_types.size()", is(0));
+    @After
+    public void tearDown() {
+        reset(mockedDao);
     }
 
     @Test
     public void shouldGetAllCardTypesWhenCardTypesExist() {
-        DatabaseFixtures.TestCardType mastercardCreditCardTypeTestRecord = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
-                .aMastercardCreditCardType()
-                .withRequires3ds(true)
-                .insert();
-
-        connectorRestApiClient
-                .getCardTypes()
-                .body("card_types.size()", is(1))
-                .body("card_types[0].id", is(mastercardCreditCardTypeTestRecord.getId().toString()))
-                .body("card_types[0].brand", is(mastercardCreditCardTypeTestRecord.getBrand()))
-                .body("card_types[0].label", is(mastercardCreditCardTypeTestRecord.getLabel()))
-                .body("card_types[0].requires3ds", is(mastercardCreditCardTypeTestRecord.getRequires3DS()))
-                .body("card_types[0].type", is(mastercardCreditCardTypeTestRecord.getType().toString()));
+        final Map<String, List<CardTypeEntity>> response = resources.target("/v1/api/card-types")
+                .request()
+                .get(new GenericType<Map<String, List<CardTypeEntity>>>() {
+                });
+        List<CardTypeEntity> cardTypeEntities = response.get("card_types");
+        assertThat(cardTypeEntities, hasSize(1));
+        CardTypeEntity visaCard = cardTypeEntities.get(0);
+        assertThat(visaCard, is(cardTypeEntity));
     }
 }

@@ -41,7 +41,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
 
 
     @Before
-    public void setup() throws Exception {
+    public void setUp() throws Exception {
         super.setup();
         refundDao = env.getInstance(RefundDao.class);
         databaseTestHelper.deleteAllCardTypes();

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;

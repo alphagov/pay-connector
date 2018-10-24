@@ -2,67 +2,63 @@ package uk.gov.pay.connector.it.dao;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.junit.DropwizardTestContext;
+import uk.gov.pay.connector.junit.TestContext;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
-import static uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity.SupportedType.CREDIT;
 import static uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity.SupportedType.DEBIT;
 
-public class SupportedTypeDaoJpaITest extends DaoITestBase {
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+public class SupportedTypeDaoJpaITest {
 
     private CardTypeDao cardTypeDao;
 
-    private DatabaseFixtures.TestCardType masterCardCreditCardTypeTestRecord;
-    private DatabaseFixtures.TestCardType masterCardDebitCardTypeTestRecord;
+    @DropwizardTestContext
+    protected TestContext testContext;
 
     @Before
-    public void setUp() throws Exception {
-        cardTypeDao = env.getInstance(CardTypeDao.class);
-
-        databaseTestHelper.deleteAllCardTypes();
-
-        DatabaseFixtures.TestCardType masterCardCreditCardType = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aMastercardCreditCardType();
-        DatabaseFixtures.TestCardType masterCardDebitCardType = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aMastercardDebitCardType();
-        DatabaseFixtures.TestCardType visaCardDebitCardType = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aVisaDebitCardType();
-        DatabaseFixtures.TestCardType maestroCardDebitCardType = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aMaestroDebitCardType();
-        masterCardCreditCardTypeTestRecord = masterCardCreditCardType.insert();
-        masterCardDebitCardTypeTestRecord = masterCardDebitCardType.insert();
-        visaCardDebitCardType.insert();
-        maestroCardDebitCardType.insert();
+    public void setup() {
+        cardTypeDao = testContext.getInstanceFromGuiceContainer(CardTypeDao.class);
     }
 
     @Test
     public void findByBrand_shouldFindCardTypes() {
-        List<CardTypeEntity> cardTypes = cardTypeDao.findByBrand(masterCardCreditCardTypeTestRecord.getBrand());
+        List<CardTypeEntity> cardTypes = cardTypeDao.findByBrand("master-card");
 
         assertThat(cardTypes.size(), is(2));
 
-        CardTypeEntity firstCardType = cardTypes.get(0);
-        assertNotNull(firstCardType.getId());
-        assertThat(firstCardType.getBrand(), is(masterCardCreditCardTypeTestRecord.getBrand()));
-        assertThat(firstCardType.getType(), is(masterCardCreditCardTypeTestRecord.getType()));
-        assertThat(firstCardType.getLabel(), is(masterCardCreditCardTypeTestRecord.getLabel()));
-        assertNotNull(firstCardType.getVersion());
+        Optional<CardTypeEntity> maybeCreditCard =
+                cardTypes.stream().filter(card -> card.getType().equals(CardTypeEntity.SupportedType.CREDIT)).findFirst();
+        assertThat(maybeCreditCard.isPresent(), is(true));
+        CardTypeEntity creditCard = maybeCreditCard.get();
+        assertNotNull(creditCard.getId());
+        assertThat(creditCard.getBrand(), is("master-card"));
+        assertThat(creditCard.getType().toString(), is(CardTypeEntity.SupportedType.CREDIT.toString()));
+        assertThat(creditCard.getLabel(), is("Mastercard"));
+        assertNotNull(creditCard.getVersion());
 
-        CardTypeEntity secondCardType = cardTypes.get(1);
-        assertNotNull(secondCardType.getId());
-        assertThat(secondCardType.getBrand(), is(masterCardDebitCardTypeTestRecord.getBrand()));
-        assertThat(secondCardType.getType(), is(masterCardDebitCardTypeTestRecord.getType()));
-        assertThat(secondCardType.getLabel(), is(masterCardDebitCardTypeTestRecord.getLabel()));
-        assertNotNull(secondCardType.getVersion());
+        Optional<CardTypeEntity> maybeDebitCard =
+                cardTypes.stream().filter(card -> card.getType().equals(CardTypeEntity.SupportedType.DEBIT)).findFirst();
+        assertThat(maybeDebitCard.isPresent(), is(true));
+        CardTypeEntity debitCard = maybeDebitCard.get();
+        assertNotNull(debitCard.getId());
+        assertNotNull(debitCard.getId());
+        assertThat(debitCard.getBrand(), is("master-card"));
+        assertThat(debitCard.getType().toString(), is(CardTypeEntity.SupportedType.DEBIT.toString()));
+        assertThat(debitCard.getLabel(), is("Mastercard"));
+        assertNotNull(debitCard.getVersion());
     }
 
     @Test
@@ -76,18 +72,9 @@ public class SupportedTypeDaoJpaITest extends DaoITestBase {
 
         List<CardTypeEntity> cardTypes = cardTypeDao.findAllNon3ds();
 
-        assertThat(cardTypes.size(), is(3));
-
-        CardTypeEntity firstCardType = cardTypes.get(0);
-        assertThat(firstCardType.getBrand(), is("mastercard"));
-        assertThat(firstCardType.getType(), is(CREDIT));
-
-        CardTypeEntity secondCardType = cardTypes.get(1);
-        assertThat(secondCardType.getBrand(), is("mastercard"));
-        assertThat(secondCardType.getType(), is(DEBIT));
-
-        CardTypeEntity thirdCardType = cardTypes.get(2);
-        assertThat(thirdCardType.getBrand(), is("visa"));
+        assertThat(cardTypes.size(), is(9));
+        final Optional<CardTypeEntity> maybe3DSCard = cardTypes.stream().filter(CardTypeEntity::isRequires3ds).findFirst();
+        assertThat(maybe3DSCard.isPresent(), is(false));
     }
 
     @Test
@@ -95,11 +82,13 @@ public class SupportedTypeDaoJpaITest extends DaoITestBase {
 
         List<CardTypeEntity> cardTypes = cardTypeDao.findAll();
 
-        assertThat(cardTypes.size(), is(4));
+        assertThat(cardTypes.size(), is(10));
 
-        CardTypeEntity fourthCardType = cardTypes.get(3);
-        assertThat(fourthCardType.getBrand(), is("maestro"));
-        assertThat(fourthCardType.getType(), is(DEBIT));
-        assertThat(fourthCardType.isRequires3ds(), is(true));
+        final Optional<CardTypeEntity> maybe3DSCard = cardTypes.stream().filter(CardTypeEntity::isRequires3ds).findFirst();
+        assertThat(maybe3DSCard.isPresent(), is(true));
+        CardTypeEntity cardWith3DS = maybe3DSCard.get();
+        assertThat(cardWith3DS.getBrand(), is("maestro"));
+        assertThat(cardWith3DS.getType(), is(DEBIT));
+        assertThat(cardWith3DS.isRequires3ds(), is(true));
     }
 }

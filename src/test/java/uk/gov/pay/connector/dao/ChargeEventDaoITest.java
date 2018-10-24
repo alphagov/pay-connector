@@ -8,10 +8,12 @@ import org.junit.Test;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -20,10 +22,10 @@ import java.util.Optional;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
@@ -31,9 +33,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READ
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 public class ChargeEventDaoITest extends DaoITestBase {
-
-    private static final long CHARGE_ID = 56735L;
-    private static final String EXTERNAL_CHARGE_ID = "charge456";
 
     private static final String TRANSACTION_ID = "345654";
     private static final String TRANSACTION_ID_2 = "345655";
@@ -56,16 +55,17 @@ public class ChargeEventDaoITest extends DaoITestBase {
     @Test
     public void persistChargeEventOfChargeEntity_succeeds() {
 
-        DatabaseFixtures
+        Long chargeId = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(CHARGE_ID)
-                .withExternalChargeId(EXTERNAL_CHARGE_ID)
+                .withChargeId(nextLong())
+                .withExternalChargeId(RandomIdGenerator.newId())
                 .withTransactionId(TRANSACTION_ID)
-                .insert();
+                .insert()
+                .getChargeId();
 
-        ChargeEntity entity = chargeDao.findById(CHARGE_ID).get();
+        ChargeEntity entity = chargeDao.findById(chargeId).get();
         entity.setStatus(ENTERING_CARD_DETAILS);
 
         chargeEventDao.persistChargeEventOf(entity, Optional.empty());
@@ -82,7 +82,7 @@ public class ChargeEventDaoITest extends DaoITestBase {
 
         chargeEventDao.persistChargeEventOf(entity, Optional.empty());
 
-        List<ChargeEventEntity> events = chargeDao.findById(CHARGE_ID).get().getEvents();
+        List<ChargeEventEntity> events = chargeDao.findById(chargeId).get().getEvents();
 
         assertThat(events, hasSize(3));
         assertThat(events, shouldIncludeStatus(ENTERING_CARD_DETAILS));
@@ -94,17 +94,18 @@ public class ChargeEventDaoITest extends DaoITestBase {
     @Test
     public void shouldPersistEventForStatus_awaitingCaptureRequest() {
 
-        DatabaseFixtures
+        Long chargeId = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(CHARGE_ID)
-                .withExternalChargeId(EXTERNAL_CHARGE_ID)
+                .withChargeId(nextLong())
+                .withExternalChargeId(RandomIdGenerator.newId())
                 .withTransactionId(TRANSACTION_ID)
                 .withDelayedCapture(true)
-                .insert();
+                .insert()
+                .getChargeId();
 
-        ChargeEntity entity = chargeDao.findById(CHARGE_ID).get();
+        ChargeEntity entity = chargeDao.findById(chargeId).get();
         entity.setStatus(ENTERING_CARD_DETAILS);
 
         chargeEventDao.persistChargeEventOf(entity, Optional.empty());
@@ -121,7 +122,7 @@ public class ChargeEventDaoITest extends DaoITestBase {
 
         chargeEventDao.persistChargeEventOf(entity, Optional.empty());
 
-        List<ChargeEventEntity> events = chargeDao.findById(CHARGE_ID).get().getEvents();
+        List<ChargeEventEntity> events = chargeDao.findById(chargeId).get().getEvents();
 
         assertThat(events, hasSize(3));
         assertThat(events, shouldIncludeStatus(ENTERING_CARD_DETAILS));

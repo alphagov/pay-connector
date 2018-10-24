@@ -8,6 +8,7 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.DnsUtils;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.io.IOException;
@@ -16,6 +17,7 @@ import static com.jayway.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -37,7 +39,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldHandleAChargeNotification() throws Exception {
-        String transactionId = "transaction-id";
+        String transactionId = RandomIdGenerator.newId();
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
         String response = notifyConnector(transactionId, "CAPTURED")
@@ -52,8 +54,8 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldHandleARefundNotification() throws Exception {
-        String transactionId = "transaction-id";
-        String refundExternalId = "12345";
+        String transactionId = RandomIdGenerator.newId();
+        String refundExternalId = String.valueOf(nextLong());
         int refundAmount = 1000;
 
         String externalChargeId = createNewChargeWithRefund(transactionId, refundExternalId, refundAmount);
@@ -71,7 +73,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     @Test
     public void shouldIgnoreAuthorisedNotification() throws Exception {
 
-        String transactionId = "transaction-id";
+        String transactionId = RandomIdGenerator.newId();
         String chargeId = createNewChargeWith(CAPTURED, transactionId);
 
         String response = notifyConnector(transactionId, "AUTHORISED")
@@ -86,7 +88,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldNotAddUnknownStatusToDatabaseFromANotification() throws Exception {
-        String transactionId = "transaction-id";
+        String transactionId = RandomIdGenerator.newId();
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
         String response = notifyConnector(transactionId, "GARBAGE")

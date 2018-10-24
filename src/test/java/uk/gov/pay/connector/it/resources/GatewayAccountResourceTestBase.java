@@ -3,11 +3,13 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.Maps;
 import com.jayway.restassured.response.ValidatableResponse;
 import com.jayway.restassured.specification.RequestSpecification;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
-import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.junit.DropwizardTestContext;
+import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.Arrays;
@@ -27,20 +29,25 @@ public class GatewayAccountResourceTestBase {
 
     public static final String ACCOUNTS_API_URL = "/v1/api/accounts/";
     public static final String ACCOUNTS_FRONTEND_URL = "/v1/frontend/accounts/";
-    protected DatabaseTestHelper databaseTestHelper;
 
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    @DropwizardTestContext
+    protected TestContext testContext;
+    protected DatabaseTestHelper databaseTestHelper;
     protected DatabaseFixtures databaseFixtures;
 
     @Before
     public void setUp() {
-        databaseTestHelper = app.getDatabaseTestHelper();
+        databaseTestHelper = testContext.getDatabaseTestHelper();
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
     }
 
+    @After
+    public void tearDown() {
+        databaseTestHelper.truncateAllData();
+    }
+
     protected RequestSpecification givenSetup() {
-        return given().port(app.getLocalPort())
+        return given().port(testContext.getPort())
                 .contentType(JSON);
     }
 
@@ -111,26 +118,14 @@ public class GatewayAccountResourceTestBase {
 
     private void assertGatewayAccountCredentialsAreEmptyInDB(ValidatableResponse response) {
         String gateway_account_id = response.extract().path("gateway_account_id");
-        Map<String, String> accountCredentials = app.getDatabaseTestHelper().getAccountCredentials(Long.valueOf(gateway_account_id));
+        Map<String, String> accountCredentials = databaseTestHelper.getAccountCredentials(Long.valueOf(gateway_account_id));
         assertThat(accountCredentials, is(new HashMap<>()));
     }
 
-    DatabaseFixtures.TestCardType createMastercardCreditCardTypeRecord() {
-        return databaseFixtures.aMastercardCreditCardType().insert();
-    }
-
-    DatabaseFixtures.TestCardType createVisaDebitCardTypeRecord() {
-        return databaseFixtures.aVisaDebitCardType().insert();
-    }
-
-    DatabaseFixtures.TestCardType createVisaCreditCardTypeRecord() {
-        return databaseFixtures.aVisaCreditCardType().insert();
-    }
-
-    DatabaseFixtures.TestAccount createAccountRecord(DatabaseFixtures.TestCardType... cardTypes) {
+    DatabaseFixtures.TestAccount createAccountRecordWithCards(CardTypeEntity... cardTypes) {
         return databaseFixtures
                 .aTestAccount()
-                .withCardTypes(Arrays.asList(cardTypes))
+                .withCardTypeEntities(Arrays.asList(cardTypes))
                 .insert();
     }
 }

@@ -22,12 +22,12 @@ public class GatewaySocketReadTimeoutITest extends BaseGatewayITest {
             config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         setupLoggerMockAppender();
     }
 
     @Test
-    public void shouldFailCaptureWhenConnectionTimeoutFromGateway() throws Exception {
+    public void shouldFailCaptureWhenConnectionTimeoutFromGateway() {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
         setupGatewayStub().respondWithTimeoutWhenCapture();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();

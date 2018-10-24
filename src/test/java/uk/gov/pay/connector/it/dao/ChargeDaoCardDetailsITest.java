@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.nullValue;
@@ -32,7 +33,7 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
     private GatewayAccountDao gatewayAccountDao;
 
     @Before
-    public void setup() throws Exception {
+    public void setUp() throws Exception {
         super.setup();
         chargeDao = env.getInstance(ChargeDao.class);
         gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
@@ -65,7 +66,7 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
 
     @Test
     public void findById_shouldFindCardDetails() {
-        long chargeId = 123L;
+        long chargeId = nextLong();
         DatabaseFixtures.TestCardDetails testCardDetails = createCardDetailsForChargeWithId(chargeId);
         Optional<ChargeEntity> chargeDaoOptional = chargeDao.findById(chargeId);
 
@@ -89,7 +90,7 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
 
     @Test
     public void findById_shouldFindCardDetailsIfCardDigitsAreNotPresent() {
-        long chargeId = 123L;
+        long chargeId = nextLong();
         DatabaseFixtures.TestCardDetails testCardDetails = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCardDetails()

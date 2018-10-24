@@ -9,21 +9,23 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.RestAssured;
 import org.hamcrest.core.Is;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.util.PortFactory;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.junit.DropwizardTestContext;
+import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.List;
 import java.util.Map;
@@ -31,53 +33,49 @@ import java.util.Map;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.config.ConnectionConfig.connectionConfig;
 import static com.jayway.restassured.http.ContentType.JSON;
-import static io.dropwizard.testing.ConfigOverride.config;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
+import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AuthUtils.aValidAuthorisationDetails;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayAuthFailuresITest {
+
     private static final String TRANSACTION_ID = "7914440428682669";
     private static final Map<String, String> CREDENTIALS =
             ImmutableMap.of("username", "a-user", "password", "a-password", "merchant_id", "aMerchantCode");
     private static final String PAYMENT_PROVIDER = "smartpay";
 
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
+    @ClassRule
+    public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
 
-    @Captor
-    ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
-
-    private int port = PortFactory.findFreePort();
-
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(port);
-
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
-            config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment")
-    );
-
+    @DropwizardTestContext
+    private TestContext testContext;
     private GatewayStub gatewayStub;
-
+    private DatabaseTestHelper databaseTestHelper;
     private DatabaseFixtures.TestCharge chargeTestRecord;
+    private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
+    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
 
     @Before
     public void setup() {
         gatewayStub = new GatewayStub(TRANSACTION_ID);
 
+        databaseTestHelper = testContext.getDatabaseTestHelper();
+        
         DatabaseFixtures.TestAccount testAccount = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withPaymentProvider(PAYMENT_PROVIDER)
                 .withCredentials(CREDENTIALS);
 
         DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(testAccount)
                 .withChargeStatus(ChargeStatus.ENTERING_CARD_DETAILS)
@@ -91,6 +89,11 @@ public class GatewayAuthFailuresITest {
         root.addAppender(mockAppender);
     }
 
+    @After
+    public void teardown() {
+        databaseTestHelper.truncateAllData();
+    }
+
     @Test
     public void shouldFailAuthWhenUnexpectedHttpStatusCodeFromGateway() throws Exception {
         gatewayStub.respondWithUnexpectedResponseCodeWhenCardAuth();
@@ -99,7 +102,7 @@ public class GatewayAuthFailuresITest {
         String cardAuthUrl = "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeTestRecord.getExternalChargeId());
 
         given().config(RestAssured.config().connectionConfig(connectionConfig().closeIdleConnectionsAfterEachResponse()))
-                .port(app.getLocalPort())
+                .port(testContext.getPort())
                 .contentType(JSON)
                 .when()
                 .body(aValidAuthorisationDetails())
@@ -110,8 +113,8 @@ public class GatewayAuthFailuresITest {
                 .body("message", is(errorMessage));
 
         assertThatLastGatewayClientLoggingEventIs(
-                String.format("Gateway returned unexpected status code: 999, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test", port));
-        assertThat(app.getDatabaseTestHelper().getChargeStatus(chargeTestRecord.getChargeId()), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
+                String.format("Gateway returned unexpected status code: 999, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test", WIREMOCK_PORT));
+        assertThat(databaseTestHelper.getChargeStatus(chargeTestRecord.getChargeId()), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
     }
 
     private void assertThatLastGatewayClientLoggingEventIs(String loggingEvent) {

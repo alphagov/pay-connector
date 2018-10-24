@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.report.dao;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -24,8 +25,7 @@ public class PerformanceReportDaoITest extends DaoITestBase {
     private DatabaseFixtures.TestAccount testAccountFixture;
 
     @Before
-    public void setup() throws Exception {
-        super.setup();
+    public void setUp() {
         performanceReportDao = env.getInstance(PerformanceReportDao.class);
         testAccountFixture = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -45,6 +45,7 @@ public class PerformanceReportDaoITest extends DaoITestBase {
                 .insert();
     }
 
+    @Ignore
     @Test
     public void shouldAggregateNumberAndValueOfPayments() {
         insertCharge(testAccountFixture, 10L, ZonedDateTime.now());

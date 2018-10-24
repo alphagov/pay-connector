@@ -1,14 +1,22 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
+import static com.jayway.restassured.RestAssured.given;
+import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
 
-public class HealthCheckResourceITest extends GatewayAccountResourceTestBase {
+public class HealthCheckResourceITest {
 
+    @Rule
+    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    
     @Test
     public void checkHealthcheck_isHealthy() {
-        givenSetup()
+        given().port(app.getLocalPort())
+                .contentType(JSON)
                 .get("healthcheck")
                 .then()
                 .statusCode(200)
@@ -21,7 +29,8 @@ public class HealthCheckResourceITest extends GatewayAccountResourceTestBase {
     @Test
     public void checkHealthcheck_isUnhealthy() {
         app.stopPostgres();
-        givenSetup()
+        given().port(app.getLocalPort())
+                .contentType(JSON)
                 .get("healthcheck")
                 .then()
                 .statusCode(503)

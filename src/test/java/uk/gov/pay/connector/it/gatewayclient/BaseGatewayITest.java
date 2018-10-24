@@ -24,6 +24,7 @@ import uk.gov.pay.connector.util.PortFactory;
 import java.util.List;
 import java.util.Map;
 
+import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -33,7 +34,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 
 @RunWith(MockitoJUnitRunner.class)
 abstract public class BaseGatewayITest {
-    private static final String TRANSACTION_ID = "7914440428682669";
+    private static final String TRANSACTION_ID = String.valueOf(nextLong());
     private static final Map<String, String> CREDENTIALS =
             ImmutableMap.of(
                     CREDENTIALS_MERCHANT_ID, "merchant-id",
