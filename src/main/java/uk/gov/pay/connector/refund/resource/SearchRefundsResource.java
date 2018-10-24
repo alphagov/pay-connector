@@ -53,6 +53,7 @@ public class SearchRefundsResource {
                                           @Context UriInfo uriInfo) {
         logger.info("Getting all refunds for account id {}", accountId);
         SearchParams refundSearchParams = new SearchParams()
+                .withGatewayAccountId(accountId)
                 .withFromDate(parseDate(fromDate))
                 .withToDate(parseDate(toDate))
                 .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())

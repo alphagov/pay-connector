@@ -44,10 +44,13 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
         String returnUrl = "http://return.url/return-page/";
         String email = randomAlphabetic(242) + "@example.com";
         long chargeId = nextLong();
-
+        long chargeId2 = nextLong();
+        databaseTestHelper.addGatewayAccount("123", "SANDBOX", credentials);
         databaseTestHelper.addCharge(chargeId, "charge1", accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
                 ServicePaymentReference.of("ref"), null, email);
-
+        databaseTestHelper.addCharge(chargeId2, "charge2", "123", AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
+                ServicePaymentReference.of("ref"), null, email);
+        
         String refundExternalId1 = randomAlphanumeric(10);
         String refundExternalId2 = randomAlphanumeric(10);
         String refundDate1 = "2016-02-03T00:00:00Z";
@@ -55,6 +58,7 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
         
         databaseTestHelper.addRefund(RandomUtils.nextInt(), refundExternalId1, "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId, ZonedDateTime.parse(refundDate1));
         databaseTestHelper.addRefund(RandomUtils.nextInt(), refundExternalId2, "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId, ZonedDateTime.parse(refundDate2));
+        databaseTestHelper.addRefund(RandomUtils.nextInt(), "shouldnotberetrieved", "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, ZonedDateTime.parse(refundDate1));
         databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient.withAccountId(accountId)
