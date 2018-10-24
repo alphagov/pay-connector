@@ -43,8 +43,8 @@ public class SearchRefundsServiceTest {
     private SearchRefundsService searchRefundsService;
     private GatewayAccountEntity gatewayAccount;
     private static final String EXT_CHARGE_ID = "someExternalId";
-    static final String EXT_REFUND_ID = "someExternalRefundId";
-    static final Long PAGE_NUMBER = 1L;
+    private static final String EXT_REFUND_ID = "someExternalRefundId";
+    private static final Long PAGE_NUMBER = 1L;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();

@@ -23,6 +23,7 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 @RunWith(PayPactRunner.class)
@@ -69,7 +70,7 @@ public class TransactionsApiContractTest {
 
     private void setUpCharges(int numberOfCharges, String accountId, ZonedDateTime createdDate) {
         for (int i = 0; i < numberOfCharges; i++) {
-            Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+            long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
             setUpSingleCharge(accountId, chargeId, Long.toString(chargeId), ChargeStatus.CREATED, createdDate, false);
         }
     }
@@ -85,16 +86,16 @@ public class TransactionsApiContractTest {
         setUpSingleCharge(accountId, chargeId, chargeExternalId, chargeStatus, createdDate, delayedCapture, "aName", "0001", "123456");
     }
 
-    private void setUpChargeAndRefunds(int numberOfRefunds, String accountID) {
+    private void setUpChargeAndRefunds(int numberOfRefunds, String accountID, ZonedDateTime createdDate) {
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         dbHelper.addCharge(chargeId, Long.toString(chargeId), accountID, 100L, ChargeStatus.CREATED, "aReturnUrl",
                 "aTransactionId", ServicePaymentReference.of("aReference"), ZonedDateTime.now().minusHours(12), "test@test.com@");
 
         for (int i = 0; i < numberOfRefunds; i++) {
-            Long refundId = ThreadLocalRandom.current().nextLong(100, 100000);
+            long refundId = ThreadLocalRandom.current().nextLong(100, 100000);
 
             dbHelper.addRefund(refundId, String.valueOf(refundId), "reference", 1L, RefundStatus.REFUNDED.getValue(),
-                    chargeId, ZonedDateTime.now().minusHours(11));
+                    chargeId, createdDate);
         }
     }
 
@@ -173,9 +174,12 @@ public class TransactionsApiContractTest {
 
     @State("Refunds exist")
     public void refundsExist(Map<String, String> params) {
-        Long accountId = Long.valueOf(params.get("account_id"));
+        long accountId = Long.parseLong(params.get("account_id"));
+        ZonedDateTime createdDate = Optional.ofNullable(params.get("created_date"))
+                .map(ZonedDateTime::parse)
+                .orElse(ZonedDateTime.now());
         setUpGatewayAccount(accountId);
-        setUpChargeAndRefunds(2, params.get("account_id"));
+        setUpChargeAndRefunds(2, params.get("account_id"), createdDate);
     }
 
     @State("Account exists")
@@ -187,10 +191,10 @@ public class TransactionsApiContractTest {
 
     @State("a charge with corporate surcharge exists")
     public void createChargeWithCorporateCardSurcharge(Map<String, String> params) {
-        Long accountId = Long.valueOf(params.get("account_id"));
+        long accountId = Long.parseLong(params.get("account_id"));
         setUpGatewayAccount(accountId);
         String chargeExternalId = params.get("charge_id");
-        dbHelper.addChargeWithCorporateCardSurcharge(1234L, chargeExternalId, accountId.toString(), 2000L,
+        dbHelper.addChargeWithCorporateCardSurcharge(1234L, chargeExternalId, Long.toString(accountId), 2000L,
                 ChargeStatus.CAPTURED, "https://someurl.example", chargeExternalId, ServicePaymentReference.of("My reference"),
                 ZonedDateTime.now(), SupportedLanguage.ENGLISH, false, 250L);
     }
