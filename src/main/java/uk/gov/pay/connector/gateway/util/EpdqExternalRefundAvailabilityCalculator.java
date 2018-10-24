@@ -2,8 +2,8 @@ package uk.gov.pay.connector.gateway.util;
 
 import com.google.common.collect.ImmutableList;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 
 import java.util.List;
 

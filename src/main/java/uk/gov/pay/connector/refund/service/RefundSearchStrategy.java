@@ -1,12 +1,12 @@
 package uk.gov.pay.connector.refund.service;
 
-import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.charge.dao.SearchParams;
+import uk.gov.pay.connector.common.service.search.AbstractSearchStrategy;
+import uk.gov.pay.connector.common.service.search.BuildResponseStrategy;
+import uk.gov.pay.connector.common.service.search.SearchStrategy;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.SearchRefundsResponse;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
-import uk.gov.pay.connector.service.search.AbstractSearchStrategy;
-import uk.gov.pay.connector.service.search.BuildResponseStrategy;
-import uk.gov.pay.connector.service.search.SearchStrategy;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.UriBuilder;

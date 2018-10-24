@@ -6,7 +6,7 @@ import fj.data.Either;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
-import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
+import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -26,10 +26,10 @@ import static uk.gov.pay.connector.charge.resource.ChargesApiResource.EMAIL_KEY;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.LANGUAGE_KEY;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MAX_AMOUNT;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MIN_AMOUNT;
-import static uk.gov.pay.connector.resources.ApiValidators.parseZonedDateTime;
-import static uk.gov.pay.connector.resources.ApiValidators.validateChargeParams;
-import static uk.gov.pay.connector.resources.ApiValidators.validateChargePatchParams;
-import static uk.gov.pay.connector.resources.ApiValidators.validateFromDateIsBeforeToDate;
+import static uk.gov.pay.connector.common.validator.ApiValidators.parseZonedDateTime;
+import static uk.gov.pay.connector.common.validator.ApiValidators.validateChargeParams;
+import static uk.gov.pay.connector.common.validator.ApiValidators.validateChargePatchParams;
+import static uk.gov.pay.connector.common.validator.ApiValidators.validateFromDateIsBeforeToDate;
 
 
 public class ApiValidatorsTest {

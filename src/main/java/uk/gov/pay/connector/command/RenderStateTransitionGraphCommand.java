@@ -4,7 +4,7 @@ import io.dropwizard.cli.Command;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
-import uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions;
+import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 
 import java.io.IOException;
 import java.nio.charset.Charset;

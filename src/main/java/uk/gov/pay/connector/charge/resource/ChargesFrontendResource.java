@@ -15,10 +15,10 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.common.service.PatchRequestBuilder;
+import uk.gov.pay.connector.common.service.charge.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.builder.PatchRequestBuilder;
 import uk.gov.pay.connector.util.DateTimeUtils;
-import uk.gov.pay.connector.util.charge.CorporateCardSurchargeCalculator;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -41,8 +41,8 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.charge.model.FrontendChargeResponse.aFrontendChargeResponse;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.EMAIL_KEY;
-import static uk.gov.pay.connector.model.builder.PatchRequestBuilder.aPatchRequestBuilder;
-import static uk.gov.pay.connector.resources.ApiValidators.validateChargePatchParams;
+import static uk.gov.pay.connector.common.service.PatchRequestBuilder.aPatchRequestBuilder;
+import static uk.gov.pay.connector.common.validator.ApiValidators.validateChargePatchParams;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 

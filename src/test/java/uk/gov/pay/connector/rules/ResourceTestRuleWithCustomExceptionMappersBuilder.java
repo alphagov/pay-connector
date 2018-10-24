@@ -3,8 +3,8 @@ package uk.gov.pay.connector.rules;
 import io.dropwizard.jersey.errors.EarlyEofExceptionMapper;
 import io.dropwizard.jersey.jackson.JsonProcessingExceptionMapper;
 import io.dropwizard.testing.junit.ResourceTestRule;
-import uk.gov.pay.connector.exception.ConstraintViolationExceptionMapper;
-import uk.gov.pay.connector.exception.ValidationExceptionMapper;
+import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
+import uk.gov.pay.connector.common.exception.ValidationExceptionMapper;
 
 public class ResourceTestRuleWithCustomExceptionMappersBuilder {
     public static ResourceTestRule.Builder getBuilder() {

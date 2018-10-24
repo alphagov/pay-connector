@@ -5,36 +5,35 @@ import com.google.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.transaction.TransactionContext;
+import uk.gov.pay.connector.charge.service.transaction.TransactionFlow;
+import uk.gov.pay.connector.charge.service.transaction.TransactionalOperation;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
-import uk.gov.pay.connector.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.service.transaction.TransactionContext;
-import uk.gov.pay.connector.service.transaction.TransactionFlow;
-import uk.gov.pay.connector.service.transaction.TransactionalOperation;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.charge.service.CancelServiceFunctions.changeStatusTo;
-import static uk.gov.pay.connector.charge.service.CancelServiceFunctions.doGatewayCancel;
-import static uk.gov.pay.connector.charge.service.CancelServiceFunctions.prepareForTerminate;
-import static uk.gov.pay.connector.gateway.model.GatewayError.baseError;
-import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.service.CancelServiceFunctions.changeStatusTo;
+import static uk.gov.pay.connector.charge.service.CancelServiceFunctions.doGatewayCancel;
+import static uk.gov.pay.connector.charge.service.CancelServiceFunctions.prepareForTerminate;
 import static uk.gov.pay.connector.charge.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.charge.service.StatusFlow.USER_CANCELLATION_FLOW;
+import static uk.gov.pay.connector.gateway.model.GatewayError.baseError;
+import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
 public class ChargeCancelService {
 

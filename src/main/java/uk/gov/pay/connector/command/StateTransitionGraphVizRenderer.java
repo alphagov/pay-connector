@@ -3,7 +3,7 @@ package uk.gov.pay.connector.command;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.tuple.Triple;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.model.domain.PaymentGatewayStateTransitions;
+import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 
 import java.util.StringJoiner;
 

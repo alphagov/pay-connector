@@ -4,6 +4,7 @@ import fj.data.Either;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.BasePaymentProvider;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOperation;
@@ -22,7 +23,6 @@ import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
-import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 
 import javax.ws.rs.client.Invocation.Builder;
 import java.time.ZoneOffset;

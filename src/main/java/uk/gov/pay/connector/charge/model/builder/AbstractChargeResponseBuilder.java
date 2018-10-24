@@ -4,8 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
-import uk.gov.pay.connector.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 
 import java.net.URI;
 import java.util.ArrayList;

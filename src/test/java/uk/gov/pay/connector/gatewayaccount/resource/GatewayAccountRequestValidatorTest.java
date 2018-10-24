@@ -5,9 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.exception.ValidationException;
-import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator;
-import uk.gov.pay.connector.validations.RequestValidator;
+import uk.gov.pay.connector.common.exception.ValidationException;
+import uk.gov.pay.connector.common.validator.RequestValidator;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;

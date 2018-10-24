@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.sandbox;
 
 import fj.data.Either;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.BasePaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.StatusMapper;
@@ -23,7 +24,6 @@ import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
-import uk.gov.pay.connector.model.api.ExternalChargeRefundAvailability;
 
 import java.util.Optional;
 

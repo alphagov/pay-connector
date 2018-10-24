@@ -5,7 +5,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
-import static uk.gov.pay.connector.model.domain.NumbersInStringsSanitizer.sanitize;
+import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 
 @Embeddable
 public class AddressEntity {

@@ -15,7 +15,7 @@ import java.util.HashMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.ok;
-import static uk.gov.pay.connector.resources.ApiValidators.parseZonedDateTime;
+import static uk.gov.pay.connector.common.validator.ApiValidators.parseZonedDateTime;
 
 @Path("/")
 public class PerformanceReportResource {
