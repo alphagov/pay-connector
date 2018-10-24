@@ -105,6 +105,8 @@ Content-Type: application/json
     "service_name": "service name",
     "corporate_credit_card_surcharge_amount": 250,
     "corporate_debit_card_surcharge_amount": 50
+    "corporate_prepaid credit_card_surcharge_amount": 250,
+    "corporate_prepaid debit_card_surcharge_amount": 50
 }
 ```
 
@@ -120,6 +122,8 @@ Content-Type: application/json
 | `service_name`                                     |                  | The service name that is saved for this account, present if not empty.                            |
 | `corporate_credit_card_surcharge_amount`           | X                | A corporate credit card surcharge amount in pence. The default value is `0`.                      |
 | `corporate_debit_card_surcharge_amount`            | X                | A corporate debit card surcharge amount in pence. The default value is `0`.                       |
+| `corporate_prepaid_credit_card_surcharge_amount`   | X                | A corporate prepaid credit card surcharge amount in pence. The default value is `0`.              |
+| `corporate_prepaid_debit_card_surcharge_amount`    | X                | A corporate prepaid debit card surcharge amount in pence. The default value is `0`.               |
 
 ---------------------------------------------------------------------------------------------------------------
 ## GET /v1/api/accounts
@@ -148,6 +152,8 @@ Content-Type: application/json
       "analytics_id": "an analytics id",
       "corporate_credit_card_surcharge_amount": 0,
       "corporate_debit_card_surcharge_amount": 0,
+      "corporate_prepaid_credit_card_surcharge_amount": 0,
+      "corporate_prepaid_debit_card_surcharge_amount": 0,
       "_links": {
         "self": {
           "href": "https://connector.example.com/v1/api/accounts/100"
@@ -163,6 +169,8 @@ Content-Type: application/json
       "analytics_id": "an analytics id",
       "corporate_credit_card_surcharge_amount": 250,
       "corporate_debit_card_surcharge_amount": 0,
+      "corporate_prepaid_credit_card_surcharge_amount": 250,
+      "corporate_prepaid_debit_card_surcharge_amount": 0,
       "_links": {
         "self": {
           "href": "https://connector.example.com/v1/api/accounts/200"
@@ -177,6 +185,8 @@ Content-Type: application/json
       "analytics_id": "an analytics id",
       "corporate_credit_card_surcharge_amount": 0,
       "corporate_debit_card_surcharge_amount": 0,
+      "corporate_prepaid_credit_card_surcharge_amount": 0,
+      "corporate_prepaid_debit_card_surcharge_amount": 0,
       "_links": {
         "self": {
           "href": "https://connector.example.com/v1/api/accounts/400"
@@ -200,6 +210,8 @@ Content-Type: application/json
 | `service_name`                                     |                    | The service name that is saved for this account, present if not empty.                            |
 | `corporate_credit_card_surcharge_amount`           | X                  | A corporate credit card surcharge amount in pence. The default value is `0`.                      |
 | `corporate_debit_card_surcharge_amount`            | X                  | A corporate debit card surcharge amount in pence. The default value is `0`.                       |
+| `corporate_prepaid_credit_card_surcharge_amount`   | X                  | A corporate prepaid credit card surcharge amount in pence. The default value is `0`.              |
+| `corporate_prepaid_debit_card_surcharge_amount`    | X                  | A corporate prepaid debit card surcharge amount in pence. The default value is `0`.               |
 | `_links.self`                                      | X                  | A self link to get this account resource by account-id.                                           |
 
 ---------------------------------------------------------------------------------------------------------------
@@ -875,6 +887,8 @@ Content-Type: application/json
     "analytics_id": "some identifier",
     "corporate_credit_card_surcharge_amount": 0,
     "corporate_debit_card_surcharge_amount": 0,
+    "corporate_prepaid_credit_card_surcharge_amount": 0,
+    "corporate_prepaid_debit_card_surcharge_amount": 0,
     "credentials: {
       "username:" "Username"
     }
@@ -892,6 +906,8 @@ Content-Type: application/json
 | `analytics_id`                                     | X              | An identifier used to identify the service in Google Analytics. The default value is `null`.                      |
 | `corporate_credit_card_surcharge_amount`           | X              | A corporate credit card surcharge amount in pence. The default value is `0`.                                      |
 | `corporate_debit_card_surcharge_amount`            | X              | A corporate debit card surcharge amount in pence. The default value is `0`.                                       |
+| `corporate_prepaid_credit_card_surcharge_amount`   | X              | A corporate prepaid credit card surcharge amount in pence. The default value is `0`.                              |
+| `corporate_prepaid_debit_card_surcharge_amount`    | X              | A corporate prepaid debit card surcharge amount in pence. The default value is `0`.                               |
 
 -----------------------------------------------------------------------------------------------------------
 ## PUT /v1/frontend/accounts/{accountId}
@@ -1027,6 +1043,8 @@ Content-Type: application/json
         "analytics_id": null,
         "corporate_credit_card_surcharge_amount": 0,
         "corporate_debit_card_surcharge_amount": 0,
+        "corporate_prepaid_credit_card_surcharge_amount": 0,
+        "corporate_prepaid_debit_card_surcharge_amount": 0,
         "card_types": [
             {
                 "id": "79404bb9-31fb-4ad6-xxxx-789c3b044059",
@@ -1099,14 +1117,16 @@ Content-Type: application/json
 #### Response field description
 
 | Field                                              | always present             | Description                                                                     |
-| -------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------- |
-| `amount`                                           | X                          | The amount (in minor units) of the charge.                                      |
-| `status`                                           | X                          | The current (internal) status of the charge.                                    |
-| `card_brand`                                       |                            | The brand label of the card.                                                    |
-| `language`                                         | X                          | The ISO-639-1 code representing the language of the payment e.g. `"en"`.        |
-| `delayed_capture`                                  | X                          | Whether the payment requires or required an explicit request to capture.        |
-| `corporate_credit_card_surcharge_amount`           | X                          | A corporate credit card surcharge amount in pence. The default value is `0`.    |
-| `corporate_debit_card_surcharge_amount`            | X                          | A corporate debit card surcharge amount in pence. The default value is `0`.     |
+| -------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------ |
+| `amount`                                           | X                          | The amount (in minor units) of the charge.                                           |
+| `status`                                           | X                          | The current (internal) status of the charge.                                         |
+| `card_brand`                                       |                            | The brand label of the card.                                                         |
+| `language`                                         | X                          | The ISO-639-1 code representing the language of the payment e.g. `"en"`.             |
+| `delayed_capture`                                  | X                          | Whether the payment requires or required an explicit request to capture.             |
+| `corporate_credit_card_surcharge_amount`           | X                          | A corporate credit card surcharge amount in pence. The default value is `0`.         |
+| `corporate_debit_card_surcharge_amount`            | X                          | A corporate debit card surcharge amount in pence. The default value is `0`.          |
+| `corporate_prepaid_credit_card_surcharge_amount`   | X                          | A corporate prepaid credit card surcharge amount in pence. The default value is `0`. |
+| `corporate_prepaid_debit_card_surcharge_amount`    | X                          | A corporate prepaid debit card surcharge amount in pence. The default value is `0`.  |
 
 -----------------------------------------------------------------------------------------------------------
 
