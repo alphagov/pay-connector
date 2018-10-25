@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
+import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
@@ -27,7 +28,7 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
     
     @Test
     public void createStripeGatewayAccountWithoutCredentials() throws Exception {
-        GatewayAccountRequest input = new GatewayAccountRequest("test", "stripe", "My shiny new stripe service", null, null);
+        GatewayAccountRequest input = new GatewayAccountRequest("test", "stripe", "My shiny new stripe service", null, null, null);
         givenSetup()
                 .body(new ObjectMapper().writeValueAsString(input))
                 .post(ACCOUNTS_API_URL)
@@ -40,12 +41,27 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 .body("links.size()", is(1))
                 .body("links[0].href", matchesPattern("https://localhost:[0-9]*/v1/api/accounts/[0-9]*"))
                 .body("links[0].rel", is("self"))
-                .body("links[0].method", is("GET"))
-        ;
+                .body("links[0].method", is("GET"));
     }
     
     @Test
-    public void createStripeGatewayAccountWithCredentials() {
-        
+    public void createStripeGatewayAccountWithCredentials() throws Exception {
+        StripeCredentials credentials = new StripeCredentials("abc");
+        GatewayAccountRequest input = new GatewayAccountRequest("test", "stripe", "My shiny new stripe service", null, null, credentials);
+        givenSetup()
+                .body(new ObjectMapper().writeValueAsString(input))
+                .post(ACCOUNTS_API_URL)
+                .then()
+                .statusCode(201)
+                .contentType(JSON)
+                .body("gateway_account_id", not(isEmptyString()))
+                .body("service_name", is("My shiny new stripe service"))
+                .body("type", is("test"))
+                .body("links.size()", is(1))
+                .body("links[0].href", matchesPattern("https://localhost:[0-9]*/v1/api/accounts/[0-9]*"))
+                .body("links[0].rel", is("self"))
+                .body("links[0].method", is("GET"));
     }
+    
+    //TODO get account /v1/frontend/accounts/{accountId} returns stripe credentials
 }

@@ -55,7 +55,7 @@ public class GatewayAccountResourceValidationTest {
     @Test
     public void shouldReturn400WhenProviderAccountTypeIsInvalid() {
 
-        GatewayAccountRequest input = new GatewayAccountRequest("invalid", null, null, null, null);
+        GatewayAccountRequest input = new GatewayAccountRequest("invalid", null, null, null, null, null);
 
         Response response = resources.client()
                 .target("/v1/api/accounts")
@@ -70,7 +70,7 @@ public class GatewayAccountResourceValidationTest {
     
     @Test
     public void shouldReturn400WhenPaymentProviderIsInvalid() {
-        GatewayAccountRequest input = new GatewayAccountRequest(null, "blockchain", null, null, null);
+        GatewayAccountRequest input = new GatewayAccountRequest(null, "blockchain", null, null, null, null);
 
         Response response = resources.client()
                 .target("/v1/api/accounts")

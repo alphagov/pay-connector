@@ -29,7 +29,8 @@ public class GatewayAccountRequest {
                                  @JsonProperty("payment_provider") String paymentProvider,
                                  @JsonProperty("service_name") String serviceName,
                                  @JsonProperty("description") String description,
-                                 @JsonProperty("analytics_id") String analyticsId) {
+                                 @JsonProperty("analytics_id") String analyticsId,
+                                 @JsonProperty("credentials") StripeCredentials credentials) {
         this.serviceName = serviceName;
         this.description = description;
         this.analyticsId = analyticsId;
