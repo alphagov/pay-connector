@@ -11,29 +11,28 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Typ
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GatewayAccountRequest {
 
-    @JsonProperty("type")
     private String providerAccountType;
 
-    @JsonProperty("service_name")
     private String serviceName;
 
-    @JsonProperty("description")
     private String description;
 
     private String analyticsId;
 
-    @JsonProperty("payment_provider")
     private String paymentProvider;
+
+    private Credentials credentials;
     
     public GatewayAccountRequest(@JsonProperty("type") String providerAccountType,
                                  @JsonProperty("payment_provider") String paymentProvider,
                                  @JsonProperty("service_name") String serviceName,
                                  @JsonProperty("description") String description,
                                  @JsonProperty("analytics_id") String analyticsId,
-                                 @JsonProperty("credentials") StripeCredentials credentials) {
+                                 @JsonProperty("credentials") Credentials credentials) {
         this.serviceName = serviceName;
         this.description = description;
         this.analyticsId = analyticsId;
+        this.credentials = credentials;
 
         this.providerAccountType = (providerAccountType == null || providerAccountType.isEmpty()) ?
                 TEST.toString() : providerAccountType;
@@ -78,5 +77,9 @@ public class GatewayAccountRequest {
 
     public String getAnalyticsId() {
         return analyticsId;
+    }
+
+    public Credentials getCredentials() {
+        return credentials;
     }
 }
