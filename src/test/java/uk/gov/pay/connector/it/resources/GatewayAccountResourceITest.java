@@ -313,26 +313,6 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void createAGatewayAccountForSandbox() {
-        createAGatewayAccountFor("sandbox");
-    }
-
-    @Test
-    public void createAGatewayAccountForWorldpay() {
-        createAGatewayAccountFor("worldpay");
-    }
-
-    @Test
-    public void createAGatewayAccountForSmartpay() {
-        createAGatewayAccountFor("smartpay");
-    }
-
-    @Test
-    public void createAGatewayAccountForEpdq() {
-        createAGatewayAccountFor("epdq");
-    }
-
-    @Test
     public void createValidNotificationCredentials_responseShouldBe200_Ok() {
         String gatewayAccountId = createAGatewayAccountFor("smartpay");
         givenSetup()

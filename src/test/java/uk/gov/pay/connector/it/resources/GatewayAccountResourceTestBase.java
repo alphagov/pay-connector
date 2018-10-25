@@ -51,7 +51,6 @@ public class GatewayAccountResourceTestBase {
                 .contentType(JSON);
     }
 
-    //TODO remove this after complete migration
     String createAGatewayAccountFor(String testProvider) {
         return createAGatewayAccountFor(testProvider, null, null);
     }

@@ -10,15 +10,19 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Typ
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GatewayAccountRequest {
-    
+
+    @JsonProperty("type")
     private String providerAccountType;
-    
+
+    @JsonProperty("service_name")
     private String serviceName;
 
+    @JsonProperty("description")
     private String description;
 
     private String analyticsId;
 
+    @JsonProperty("payment_provider")
     private String paymentProvider;
     
     public GatewayAccountRequest(@JsonProperty("type") String providerAccountType,
