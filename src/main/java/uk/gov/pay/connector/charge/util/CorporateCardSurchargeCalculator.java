@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.common.service.charge;
+package uk.gov.pay.connector.charge.util;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.Transaction;

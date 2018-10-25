@@ -13,7 +13,7 @@ import uk.gov.pay.connector.charge.model.domain.Transaction;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
-import uk.gov.pay.connector.common.service.charge.CorporateCardSurchargeCalculator;
+import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.common.service.search.AbstractSearchStrategy;
 import uk.gov.pay.connector.common.service.search.SearchStrategy;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
