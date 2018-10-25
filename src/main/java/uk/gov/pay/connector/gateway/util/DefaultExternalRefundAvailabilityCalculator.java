@@ -52,7 +52,7 @@ public class DefaultExternalRefundAvailabilityCalculator implements ExternalRefu
         if (chargeEntity.hasStatus(statusesThatMapToExternalPending)) {
             return EXTERNAL_PENDING;
         } else if (chargeEntity.hasStatus(statusesThatMapToExternalAvailableOrExternalFull)) {
-            if (RefundCalculator.getTotalAmountToBeRefunded(chargeEntity) > 0) {
+            if (RefundCalculator.getTotalAmountAvailableToBeRefunded(chargeEntity) > 0) {
                 return EXTERNAL_AVAILABLE;
             } else {
                 return EXTERNAL_FULL;

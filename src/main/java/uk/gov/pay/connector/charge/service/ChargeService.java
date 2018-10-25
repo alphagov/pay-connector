@@ -209,7 +209,7 @@ public class ChargeService {
         ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
         refund.setStatus(providers.byName(charge.getPaymentGatewayName()).getExternalChargeRefundAvailability(charge).getStatus());
         refund.setAmountSubmitted(RefundCalculator.getRefundedAmount(charge));
-        refund.setAmountAvailable(RefundCalculator.getTotalAmountToBeRefunded(charge));
+        refund.setAmountAvailable(RefundCalculator.getTotalAmountAvailableToBeRefunded(charge));
         return refund;
     }
 

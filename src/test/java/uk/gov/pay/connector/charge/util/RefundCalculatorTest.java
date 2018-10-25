@@ -17,7 +17,7 @@ public class RefundCalculatorTest {
     public void getTotalAmountToBeRefunded_shouldReturnFullAmount_whenNoCorporateSurchargeAndNoRefunds() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
 
-        long actualAmount = RefundCalculator.getTotalAmountToBeRefunded(chargeEntity);
+        long actualAmount = RefundCalculator.getTotalAmountAvailableToBeRefunded(chargeEntity);
         long expectedAmount = chargeEntity.getAmount();
 
         assertThat(actualAmount, is(expectedAmount));
@@ -25,12 +25,12 @@ public class RefundCalculatorTest {
 
     @Test
     public void getTotalAmountToBeRefunded_shouldReturnRemainingAmount_whenNoCorporateSurchargeAndHasRefunds() {
-        RefundEntity refund1 = RefundEntityFixture.aValidRefundEntity().withAmount(10L).withStatus(RefundStatus.REFUNDED).build();
-        RefundEntity refund2 = RefundEntityFixture.aValidRefundEntity().withAmount(20L).withStatus(RefundStatus.CREATED).build();
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withRefunds(Arrays.asList(refund1, refund2)).build();
+        RefundEntity refundedRefund = RefundEntityFixture.aValidRefundEntity().withAmount(10L).withStatus(RefundStatus.REFUNDED).build();
+        RefundEntity createdRefund = RefundEntityFixture.aValidRefundEntity().withAmount(20L).withStatus(RefundStatus.CREATED).build();
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withRefunds(Arrays.asList(refundedRefund, createdRefund)).build();
 
-        long actualAmount = RefundCalculator.getTotalAmountToBeRefunded(chargeEntity);
-        long expectedAmount = chargeEntity.getAmount() - refund1.getAmount() - refund2.getAmount();
+        long actualAmount = RefundCalculator.getTotalAmountAvailableToBeRefunded(chargeEntity);
+        long expectedAmount = chargeEntity.getAmount() - refundedRefund.getAmount() - createdRefund.getAmount();
 
         assertThat(actualAmount, is(expectedAmount));
     }
@@ -40,7 +40,7 @@ public class RefundCalculatorTest {
         long corporateSurcharge = 250L;
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withCorporateSurcharge(corporateSurcharge).build();
 
-        long actualAmount = RefundCalculator.getTotalAmountToBeRefunded(chargeEntity);
+        long actualAmount = RefundCalculator.getTotalAmountAvailableToBeRefunded(chargeEntity);
         long expectedAmount = chargeEntity.getAmount() + corporateSurcharge;
 
         assertThat(actualAmount, is(expectedAmount));
@@ -49,34 +49,34 @@ public class RefundCalculatorTest {
     @Test
     public void getTotalAmountToBeRefunded_shouldReturnRemainingAmountIncludingSurcharge_whenChargeHasCorporateSurchargeAndHasRefunds() {
         long corporateSurcharge = 250L;
-        RefundEntity refund1 = RefundEntityFixture.aValidRefundEntity().withAmount(10L).withStatus(RefundStatus.REFUNDED).build();
-        RefundEntity refund2 = RefundEntityFixture.aValidRefundEntity().withAmount(20L).withStatus(RefundStatus.CREATED).build();
+        RefundEntity refundedRefund = RefundEntityFixture.aValidRefundEntity().withAmount(10L).withStatus(RefundStatus.REFUNDED).build();
+        RefundEntity createdRefund = RefundEntityFixture.aValidRefundEntity().withAmount(20L).withStatus(RefundStatus.CREATED).build();
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withCorporateSurcharge(corporateSurcharge)
-                .withRefunds(Arrays.asList(refund1, refund2))
+                .withRefunds(Arrays.asList(refundedRefund, createdRefund))
                 .build();
 
-        long actualAmount = RefundCalculator.getTotalAmountToBeRefunded(chargeEntity);
-        long expectedAmount = chargeEntity.getAmount() + corporateSurcharge - refund1.getAmount() - refund2.getAmount();
+        long actualAmount = RefundCalculator.getTotalAmountAvailableToBeRefunded(chargeEntity);
+        long expectedAmount = chargeEntity.getAmount() + corporateSurcharge - refundedRefund.getAmount() - createdRefund.getAmount();
 
         assertThat(actualAmount, is(expectedAmount));
     }
 
     @Test
     public void getRefundedAmount_shouldIncludeCreatedSubmittedAndRefundedRefunds() {
-        RefundEntity refund1 = RefundEntityFixture.aValidRefundEntity().withAmount(10L).withStatus(RefundStatus.CREATED).build();
-        RefundEntity refund2 = RefundEntityFixture.aValidRefundEntity().withAmount(20L).withStatus(RefundStatus.REFUND_SUBMITTED).build();
-        RefundEntity refund3 = RefundEntityFixture.aValidRefundEntity().withAmount(30L).withStatus(RefundStatus.REFUNDED).build();
-        RefundEntity refund4 = RefundEntityFixture.aValidRefundEntity().withAmount(30L).withStatus(RefundStatus.REFUND_ERROR).build();
+        RefundEntity createdRefund = RefundEntityFixture.aValidRefundEntity().withAmount(10L).withStatus(RefundStatus.CREATED).build();
+        RefundEntity submittedRefund = RefundEntityFixture.aValidRefundEntity().withAmount(20L).withStatus(RefundStatus.REFUND_SUBMITTED).build();
+        RefundEntity refundedRefund = RefundEntityFixture.aValidRefundEntity().withAmount(30L).withStatus(RefundStatus.REFUNDED).build();
+        RefundEntity errorRefund = RefundEntityFixture.aValidRefundEntity().withAmount(30L).withStatus(RefundStatus.REFUND_ERROR).build();
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-                .withRefunds(Arrays.asList(refund1, refund2, refund3, refund4))
+                .withRefunds(Arrays.asList(createdRefund, submittedRefund, refundedRefund, errorRefund))
                 .build();
 
         long actualAmount = RefundCalculator.getRefundedAmount(chargeEntity);
 
         // refunds with status of REFUND_ERROR should not be included in returned amount
-        long expectedAmount = refund1.getAmount() + refund2.getAmount() + refund3.getAmount();
+        long expectedAmount = createdRefund.getAmount() + submittedRefund.getAmount() + refundedRefund.getAmount();
 
         assertThat(actualAmount, is(expectedAmount));
     }

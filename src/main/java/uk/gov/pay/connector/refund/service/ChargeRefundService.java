@@ -109,7 +109,7 @@ public class ChargeRefundService {
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
             checkIfChargeIsRefundableOrTerminate(chargeEntity, refundAvailability, gatewayAccount);
 
-            long totalAmountToBeRefunded = RefundCalculator.getTotalAmountToBeRefunded(chargeEntity);
+            long totalAmountToBeRefunded = RefundCalculator.getTotalAmountAvailableToBeRefunded(chargeEntity);
             checkIfRefundRequestIsInConflictOrTerminate(refundRequest, chargeEntity, totalAmountToBeRefunded);
 
             checkIfRefundAmountWithinLimitOrTerminate(refundRequest, chargeEntity, refundAvailability, gatewayAccount, totalAmountToBeRefunded);

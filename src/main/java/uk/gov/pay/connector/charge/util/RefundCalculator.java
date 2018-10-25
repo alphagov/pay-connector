@@ -13,23 +13,10 @@ public class RefundCalculator {
         // prevent Java for adding a public constructor
     }
 
-    /**
-     * Get the total amount available to be refunded. Will be the total amount, including any additional charges
-     * minus the amount that has already been refunded.
-     *
-     * @param chargeEntity The {@link ChargeEntity} to get the amount available to be refunded for
-     * @return long - amount available to be refunded
-     */
-    public static long getTotalAmountToBeRefunded(ChargeEntity chargeEntity) {
+    public static long getTotalAmountAvailableToBeRefunded(ChargeEntity chargeEntity) {
         return CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity) - getRefundedAmount(chargeEntity);
     }
 
-    /**
-     * Get the total amount that has been refunded for the given {@link ChargeEntity}
-     *
-     * @param chargeEntity The {@link ChargeEntity} to get the amount refunded for
-     * @return long - refunded amount
-     */
     public static long getRefundedAmount(ChargeEntity chargeEntity) {
         return chargeEntity.getRefunds().stream()
                 .filter(p -> p.hasStatus(RefundStatus.CREATED, RefundStatus.REFUND_SUBMITTED, RefundStatus.REFUNDED))
