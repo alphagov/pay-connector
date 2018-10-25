@@ -14,7 +14,6 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import static com.jayway.restassured.http.ContentType.JSON;
-import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -234,7 +233,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() {
-        String payload = toJson(ImmutableMap.of("name", "test account"));
+        String payload = toJson(ImmutableMap.of("name", "test account","type","test"));
+
         ValidatableResponse response = givenSetup()
                 .body(payload)
                 .post(ACCOUNTS_API_URL)
@@ -297,31 +297,6 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
         assertCorrectCreateResponse(response, TEST);
         assertGettingAccountReturnsProviderName(response, "worldpay", TEST);
-    }
-
-    @Test
-    public void createGatewayAccountWithIncorrectProviderUrlType() {
-        String payload = toJson(ImmutableMap.of("payment_provider", "worldpay", "type", "incorrect-type"));
-        givenSetup()
-                .body(payload)
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(400)
-                .body("message", is("Unsupported payment provider account type 'incorrect-type', should be one of (test, live)"));
-    }
-
-    @Test
-    public void createAccountShouldFailIfPaymentProviderIsNotRecognised() {
-        String testProvider = "random";
-        String payload = toJson(ImmutableMap.of("payment_provider", testProvider));
-
-        givenSetup()
-                .body(payload)
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(400)
-                .contentType(JSON)
-                .body("message", is(format("Unsupported payment provider %s.", testProvider)));
     }
 
     @Test
