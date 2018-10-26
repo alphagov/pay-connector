@@ -23,6 +23,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
@@ -118,7 +119,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
     @Test
     public void shouldExpireChargesEvenIfOnGatewayCancellationError() {
         String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        String extChargeId2 = addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId()); //should not get picked
+        addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId()); //should not get picked
 
         worldpayMockClient.mockCancelError();
 
@@ -151,8 +152,9 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         final String gatewayTransactionId1 = RandomIdGenerator.newId();
         String extChargeId1 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), gatewayTransactionId1);
         String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        String extChargeId3 = addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId()); //should ignore
+        addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId()); //should ignore
 
+        worldpayMockClient.mockCancelError();
         worldpayMockClient.mockCancelSuccessOnlyFor(gatewayTransactionId1);
 
         connectorRestApiClient
@@ -217,4 +219,85 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         assertThat(chargeCardDetails.get("address_country"), is(notNullValue()));
     }
 
+    @Test
+    public void shouldNotExpireChargesWhenAwaitingCaptureDelayIsLessThan48Hours() {
+        String chargeToBeExpiredCreatedStatus = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String chargeToBeExpiredAwaitingCaptureRequest = addCharge(AWAITING_CAPTURE_REQUEST, "ref", ZonedDateTime.now().minusHours(48L).plusMinutes(1L), RandomIdGenerator.newId());
+
+        worldpayMockClient.mockCancelSuccess();
+
+        connectorRestApiClient
+                .postChargeExpiryTask()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("expiry-success", is(1))
+                .body("expiry-failed", is(0));
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(chargeToBeExpiredCreatedStatus)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(chargeToBeExpiredCreatedStatus))
+                .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(chargeToBeExpiredAwaitingCaptureRequest)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(chargeToBeExpiredAwaitingCaptureRequest))
+                .body(JSON_STATE_KEY, is(AWAITING_CAPTURE_REQUEST.toExternal().getStatus()));
+
+        List<String> events1 = databaseTestHelper.getInternalEvents(chargeToBeExpiredCreatedStatus);
+        List<String> events2 = databaseTestHelper.getInternalEvents(chargeToBeExpiredAwaitingCaptureRequest);
+
+        assertTrue(isEqualCollection(events1,
+                asList(CREATED.getValue(), EXPIRED.getValue())));
+        assertTrue(isEqualCollection(events2,
+                asList(AWAITING_CAPTURE_REQUEST.getValue())));
+    }
+
+    @Test
+    public void shouldExpireChargesWhenAwaitingCaptureDelayIsMoreThan48Hours() {
+        String chargeToBeExpiredCreatedStatus = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String chargeToBeExpiredAwaitingCaptureRequest = addCharge(AWAITING_CAPTURE_REQUEST, "ref", ZonedDateTime.now().minusHours(48L).minusMinutes(1L), RandomIdGenerator.newId());
+
+        worldpayMockClient.mockCancelSuccess();
+
+        connectorRestApiClient
+                .postChargeExpiryTask()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("expiry-success", is(2))
+                .body("expiry-failed", is(0));
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(chargeToBeExpiredCreatedStatus)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(chargeToBeExpiredCreatedStatus))
+                .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(chargeToBeExpiredAwaitingCaptureRequest)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(chargeToBeExpiredAwaitingCaptureRequest))
+                .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
+
+        List<String> events2 = databaseTestHelper.getInternalEvents(chargeToBeExpiredCreatedStatus);
+        List<String> events3 = databaseTestHelper.getInternalEvents(chargeToBeExpiredAwaitingCaptureRequest);
+
+        assertTrue(isEqualCollection(events2,
+                asList(CREATED.getValue(), EXPIRED.getValue())));
+        assertTrue(isEqualCollection(events3,
+                asList(AWAITING_CAPTURE_REQUEST.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue())));
+    }
 }
