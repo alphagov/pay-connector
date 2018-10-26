@@ -4,7 +4,11 @@ import com.google.common.base.Stopwatch;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.LogStream;
 import com.spotify.docker.client.exceptions.DockerException;
-import com.spotify.docker.client.messages.*;
+import com.spotify.docker.client.messages.ContainerConfig;
+import com.spotify.docker.client.messages.ContainerInfo;
+import com.spotify.docker.client.messages.HostConfig;
+import com.spotify.docker.client.messages.LogConfig;
+import com.spotify.docker.client.messages.PortBinding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +29,6 @@ public class PostgresContainer {
     private final String containerId;
     private final int port;
     private DockerClient docker;
-    private String host;
     private volatile boolean stopped = false;
 
     private static final String DB_PASSWORD = "mysecretpassword";
@@ -34,11 +37,10 @@ public class PostgresContainer {
     private static final String GOVUK_POSTGRES_IMAGE = "govukpay/postgres:9.6.6";
     private static final String INTERNAL_PORT = "5432";
 
-    public PostgresContainer(DockerClient docker, String host) throws DockerException, InterruptedException, IOException, ClassNotFoundException {
+    public PostgresContainer(DockerClient docker) throws DockerException, InterruptedException, IOException, ClassNotFoundException {
         Class.forName("org.postgresql.Driver");
 
         this.docker = docker;
-        this.host = host;
 
         failsafeDockerPull(docker, GOVUK_POSTGRES_IMAGE);
         docker.listImages(DockerClient.ListImagesParam.create("name", GOVUK_POSTGRES_IMAGE));
@@ -65,7 +67,7 @@ public class PostgresContainer {
     }
 
     public String getConnectionUrl() {
-        return "jdbc:postgresql://" + host + ":" + port + "/";
+        return "jdbc:postgresql://" + docker.getHost() + ":" + port + "/";
     }
 
     private void failsafeDockerPull(DockerClient docker, String image) {
