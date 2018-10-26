@@ -19,7 +19,7 @@ public class GatewayInvalidUrlITest extends BaseGatewayITest {
 
     @Rule
     public GuiceAppWithPostgresRule app = new GuiceAppWithPostgresRule(
-            config("smartpay.urls.test", "http://gobbledygook.invalid.url"));
+            config("smartpay.urls.test", "http://invalidone.invalid"));
 
 
     @Before
@@ -33,7 +33,12 @@ public class GatewayInvalidUrlITest extends BaseGatewayITest {
         setupGatewayStub().respondWithUnexpectedResponseCodeWhenCapture();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
 
-        assertThatLastGatewayClientLoggingEventIs("DNS resolution error for gateway url=http://gobbledygook.invalid.url");
+        // TODO:
+        // remove "DNS resolution error for gateway url=http://invalidone.invalid" when migrated to Java >= 1.8.0_191
+        assertThatLastGatewayClientLoggingEventIs(
+                "DNS resolution error for gateway url=http://invalidone.invalid",
+                "Socket Exception for gateway url=http://invalidone.invalid"
+        );
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));
     }
 }
