@@ -37,7 +37,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.charge.service.ChargeExpiryService.EXPIRABLE_STATUSES;
+import static uk.gov.pay.connector.charge.service.ChargeExpiryService.EXPIRABLE_REGULAR_STATUSES;
 import static uk.gov.pay.connector.charge.service.ChargeExpiryService.GATEWAY_CANCELLABLE_STATUSES;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
@@ -135,7 +135,7 @@ public class ChargeExpiryServiceTest {
         GatewayResponse<WorldpayBaseResponse> gatewayResponse = gatewayResponseBuilder.withResponse(
                 mockWorldpayCancelResponse).build();
 
-        EXPIRABLE_STATUSES.stream()
+        EXPIRABLE_REGULAR_STATUSES.stream()
                 .filter(status -> !GATEWAY_CANCELLABLE_STATUSES.contains(status))
                 .forEach(status -> {
                     ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()

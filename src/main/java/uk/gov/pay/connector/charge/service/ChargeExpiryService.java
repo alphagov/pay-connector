@@ -45,12 +45,13 @@ public class ChargeExpiryService {
     private static final String EXPIRY_SUCCESS = "expiry-success";
     private static final String EXPIRY_FAILED = "expiry-failed";
 
-    public static final List<ChargeStatus> EXPIRABLE_STATUSES = ImmutableList.of(
+    public static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ImmutableList.of(
             CREATED,
             ENTERING_CARD_DETAILS,
             AUTHORISATION_3DS_REQUIRED,
-            AUTHORISATION_SUCCESS,
-            AWAITING_CAPTURE_REQUEST);
+            AUTHORISATION_SUCCESS);
+
+    public static final List<ChargeStatus> EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS = ImmutableList.of(AWAITING_CAPTURE_REQUEST);
 
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;

@@ -19,8 +19,6 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
-import java.util.UUID;
-
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
@@ -352,7 +350,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
         //create charge
         String extChargeId = addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
-                ServicePaymentReference.of("ref"), ZonedDateTime.now().minusMinutes(90));
+                ServicePaymentReference.of("ref"), ZonedDateTime.now().minusHours(48L));
 
         // run expiry task
         connectorRestApiClient
