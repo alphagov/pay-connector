@@ -17,7 +17,6 @@ import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
-import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.persistence.Access;
@@ -136,8 +135,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     //for fixture
     public ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, ServicePaymentReference reference,
-                 GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate, SupportedLanguage language,
-                 boolean delayedCapture, Long corporateSurcharge) {
+                        GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate, SupportedLanguage language,
+                        boolean delayedCapture, Long corporateSurcharge) {
         this.amount = amount;
         this.status = status.getValue();
         this.returnUrl = returnUrl;
@@ -259,17 +258,6 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public boolean hasExternalStatus(ExternalChargeState... state) {
         return Arrays.stream(state).anyMatch(s -> fromString(getStatus()).toExternal().equals(s));
-    }
-
-    public long getTotalAmountToBeRefunded() {
-        return this.amount - getRefundedAmount();
-    }
-
-    public long getRefundedAmount() {
-        return this.refunds.stream()
-                .filter(p -> p.hasStatus(RefundStatus.CREATED, RefundStatus.REFUND_SUBMITTED, RefundStatus.REFUNDED))
-                .mapToLong(RefundEntity::getAmount)
-                .sum();
     }
 
     public ZonedDateTime getCaptureSubmitTime() {

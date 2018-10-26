@@ -16,11 +16,12 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
+import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
-import uk.gov.pay.connector.common.service.charge.CorporateCardSurchargeCalculator;
+import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.token.dao.TokenDao;
@@ -207,8 +208,8 @@ public class ChargeService {
     private ChargeResponse.RefundSummary buildRefundSummary(ChargeEntity charge) {
         ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
         refund.setStatus(providers.byName(charge.getPaymentGatewayName()).getExternalChargeRefundAvailability(charge).getStatus());
-        refund.setAmountSubmitted(charge.getRefundedAmount());
-        refund.setAmountAvailable(charge.getTotalAmountToBeRefunded());
+        refund.setAmountSubmitted(RefundCalculator.getRefundedAmount(charge));
+        refund.setAmountAvailable(RefundCalculator.getTotalAmountAvailableToBeRefunded(charge));
         return refund;
     }
 

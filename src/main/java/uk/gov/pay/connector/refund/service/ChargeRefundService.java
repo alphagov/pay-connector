@@ -12,6 +12,7 @@ import uk.gov.pay.connector.charge.service.transaction.PreTransactionalOperation
 import uk.gov.pay.connector.charge.service.transaction.TransactionContext;
 import uk.gov.pay.connector.charge.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.charge.service.transaction.TransactionalOperation;
+import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -63,11 +64,12 @@ public class ChargeRefundService {
     private final PaymentProviders providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
     private final UserNotificationService userNotificationService;
+
     @Inject
     public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders providers,
                                Provider<TransactionFlow> transactionFlowProvider,
                                UserNotificationService userNotificationService
-                               ) {
+    ) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.providers = providers;
@@ -107,7 +109,7 @@ public class ChargeRefundService {
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
             checkIfChargeIsRefundableOrTerminate(chargeEntity, refundAvailability, gatewayAccount);
 
-            long totalAmountToBeRefunded = chargeEntity.getTotalAmountToBeRefunded();
+            long totalAmountToBeRefunded = RefundCalculator.getTotalAmountAvailableToBeRefunded(chargeEntity);
             checkIfRefundRequestIsInConflictOrTerminate(refundRequest, chargeEntity, totalAmountToBeRefunded);
 
             checkIfRefundAmountWithinLimitOrTerminate(refundRequest, chargeEntity, refundAvailability, gatewayAccount, totalAmountToBeRefunded);
@@ -166,7 +168,7 @@ public class ChargeRefundService {
         RefundEntity refundEntity = new RefundEntity(charge, refundRequest.getAmount(), refundRequest.getUserExternalId());
         charge.getRefunds().add(refundEntity);
         refundDao.persist(refundEntity);
-        
+
         return refundEntity;
     }
 

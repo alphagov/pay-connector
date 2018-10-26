@@ -36,7 +36,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
-import static uk.gov.pay.connector.common.service.charge.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
+import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
 
