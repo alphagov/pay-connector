@@ -24,6 +24,7 @@ import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.model.ChargeCreateRequest;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -73,26 +74,26 @@ public class ChargeService {
     }
 
     @Transactional
-    public Optional<ChargeResponse> create(Map<String, String> chargeRequest, Long accountId, UriInfo uriInfo) {
+    public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
 
-            if (gatewayAccount.isLive() && !chargeRequest.get("return_url").startsWith("https://")) {
+            if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
                 logger.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
             }
 
-            String chargeRequestLanguage = chargeRequest.get("language");
-            SupportedLanguage language = chargeRequestLanguage != null
-                    ? SupportedLanguage.fromIso639AlphaTwoCode(chargeRequestLanguage)
+            SupportedLanguage language = chargeRequest.getLanguage() != null
+                    ? chargeRequest.getLanguage()
                     : SupportedLanguage.ENGLISH;
 
-            ChargeEntity chargeEntity = new ChargeEntity(new Long(chargeRequest.get("amount")),
-                    chargeRequest.get("return_url"),
-                    chargeRequest.get("description"),
-                    ServicePaymentReference.of(chargeRequest.get("reference")),
+            ChargeEntity chargeEntity = new ChargeEntity(
+                    chargeRequest.getAmount(),
+                    chargeRequest.getReturnUrl(),
+                    chargeRequest.getDescription(),
+                    ServicePaymentReference.of(chargeRequest.getReference()),
                     gatewayAccount,
-                    chargeRequest.get("email"),
+                    chargeRequest.getEmail(),
                     language,
-                    Boolean.valueOf(chargeRequest.getOrDefault("delayed_capture", "false")),
+                    chargeRequest.isDelayedCapture(),
                     null); //TODO add logic
             chargeDao.persist(chargeEntity);
 

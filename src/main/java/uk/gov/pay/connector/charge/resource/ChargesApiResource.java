@@ -20,9 +20,12 @@ import uk.gov.pay.connector.charge.service.SearchService;
 import uk.gov.pay.connector.common.model.CommaDelimitedSetParameter;
 import uk.gov.pay.connector.common.validator.ApiValidators;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.model.ChargeCreateRequest;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -37,21 +40,15 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
-import static java.util.Arrays.stream;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.model.TransactionType.inferTransactionTypeFrom;
 import static uk.gov.pay.connector.charge.service.SearchService.TYPE.CHARGE;
 import static uk.gov.pay.connector.charge.service.SearchService.TYPE.TRANSACTION;
-import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidResponse;
-import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidSizeResponse;
-import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
@@ -63,17 +60,15 @@ public class ChargesApiResource {
     public static final String LANGUAGE_KEY = "language";
     public static final String DELAYED_CAPTURE_KEY = "delayed_capture";
     private static final String DESCRIPTION_KEY = "description";
-    private static final String RETURN_URL_KEY = "return_url";
     private static final String REFERENCE_KEY = "reference";
     private static final String CARDHOLDER_NAME_KEY = "cardholder_name";
-    public static final String LAST_DIGITS_CARD_NUMBER_KEY = "last_digits_card_number";
-    public static final String FIRST_DIGITS_CARD_NUMBER_KEY = "first_digits_card_number";
+    private static final String LAST_DIGITS_CARD_NUMBER_KEY = "last_digits_card_number";
+    private static final String FIRST_DIGITS_CARD_NUMBER_KEY = "first_digits_card_number";
     public static final Map<String, Integer> MAXIMUM_FIELDS_SIZE = ImmutableMap.of(
             DESCRIPTION_KEY, 255,
             REFERENCE_KEY, 255,
             EMAIL_KEY, 254
     );
-    private static final String[] REQUIRED_FIELDS = {AMOUNT_KEY, DESCRIPTION_KEY, REFERENCE_KEY, RETURN_URL_KEY};
     private static final String STATE_KEY = "state";
     private static final String PAYMENT_STATES_KEY = "payment_states";
     private static final String REFUND_STATES_KEY = "refund_states";
@@ -85,8 +80,8 @@ public class ChargesApiResource {
     private static final String DISPLAY_SIZE = "display_size";
     private static final Set<String> CHARGE_REQUEST_KEYS_THAT_MAY_HAVE_PII = Collections.singleton("description");
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
-    public static int MIN_AMOUNT = 1;
-    public static int MAX_AMOUNT = 10_000_000;
+    public static final int MIN_AMOUNT = 1;
+    public static final int MAX_AMOUNT = 10_000_000;
     private final ChargeDao chargeDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final ChargeService chargeService;
@@ -106,12 +101,6 @@ public class ChargesApiResource {
         this.configuration = configuration;
     }
 
-    private static String stringifyChargeRequestWithoutPii(Map<String, String> map) {
-        return map.entrySet().stream()
-                .filter(entry -> !CHARGE_REQUEST_KEYS_THAT_MAY_HAVE_PII.contains(entry.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
-                .toString();
-    }
 
     @GET
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}")
@@ -243,23 +232,12 @@ public class ChargesApiResource {
     @POST
     @Path("/v1/api/accounts/{accountId}/charges")
     @Produces(APPLICATION_JSON)
-    public Response createNewCharge(@PathParam(ACCOUNT_ID) Long accountId, Map<String, String> chargeRequest, @Context UriInfo uriInfo) {
-        Optional<List<String>> missingFields = checkMissingFields(chargeRequest);
-        if (missingFields.isPresent()) {
-            return fieldsMissingResponse(missingFields.get());
-        }
-
-        Optional<List<String>> invalidSizeFields = checkInvalidSizeFields(chargeRequest);
-        if (invalidSizeFields.isPresent()) {
-            return fieldsInvalidSizeResponse(invalidSizeFields.get());
-        }
-
-        Optional<List<String>> invalidFields = ApiValidators.validateChargeParams(chargeRequest);
-        if (invalidFields.isPresent()) {
-            return fieldsInvalidResponse(invalidFields.get());
-        }
-
-        logger.info("Creating new charge - {}", stringifyChargeRequestWithoutPii(chargeRequest));
+    public Response createNewCharge(
+            @PathParam(ACCOUNT_ID) Long accountId,
+            @NotNull @Valid ChargeCreateRequest chargeRequest,
+            @Context UriInfo uriInfo
+    ) {
+        logger.info("Creating new charge - {}", chargeRequest.toStringWithoutPersonalIdentifiableInformation());
 
         return chargeService.create(chargeRequest, accountId, uriInfo)
                 .map(response -> created(response.getLink("self")).entity(response).build())
@@ -282,16 +260,6 @@ public class ChargesApiResource {
         return parse;
     }
 
-    private Optional<List<String>> checkMissingFields(Map<String, String> inputData) {
-        List<String> missing = stream(REQUIRED_FIELDS)
-                .filter(field -> !inputData.containsKey(field))
-                .collect(Collectors.toList());
-
-        return missing.isEmpty()
-                ? Optional.empty()
-                : Optional.of(missing);
-    }
-
     private Response listCharges(SearchParams searchParams, boolean isFeatureTransactionsEnabled, UriInfo uriInfo) {
         long startTime = System.nanoTime();
         try {
@@ -306,21 +274,5 @@ public class ChargesApiResource {
                     (endTime - startTime) / 1000000000.0,
                     searchParams.buildQueryParamsWithPiiRedaction());
         }
-    }
-    
-    private Optional<List<String>> checkInvalidSizeFields(Map<String, String> inputData) {
-        List<String> invalidSize = MAXIMUM_FIELDS_SIZE.entrySet().stream()
-                .filter(entry -> !isFieldSizeValid(inputData, entry.getKey(), entry.getValue()))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-
-        return invalidSize.isEmpty()
-                ? Optional.empty()
-                : Optional.of(invalidSize);
-    }
-
-    private boolean isFieldSizeValid(Map<String, String> chargeRequest, String fieldName, int fieldSize) {
-        Optional<String> value = Optional.ofNullable(chargeRequest.get(fieldName));
-        return !value.isPresent() || value.get().length() <= fieldSize; //already checked that mandatory fields are already there
     }
 }

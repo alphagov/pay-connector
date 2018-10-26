@@ -19,14 +19,15 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
@@ -301,7 +302,11 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body(JSON_CHARGE_KEY, is(nullValue()))
-                .body(JSON_MESSAGE_KEY, is("Field(s) are too big: [description, reference, email]"));
+                .body(JSON_MESSAGE_KEY, containsInAnyOrder(
+                        "Field [email] can have a size between 0 and 254",
+                        "Field [description] can have a size between 0 and 255",
+                        "Field [reference] can have a size between 0 and 255"
+                ));
     }
 
     @Test
@@ -311,7 +316,12 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body(JSON_CHARGE_KEY, is(nullValue()))
-                .body(JSON_MESSAGE_KEY, is("Field(s) missing: [amount, description, reference, return_url]"));
+                .body(JSON_MESSAGE_KEY, containsInAnyOrder(
+                        "Field [reference] cannot be null",
+                        "Field [return_url] cannot be null",
+                        "Field [description] cannot be null",
+                        "Field [amount] can be between 1 and 10_000_000"
+                ));
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {
