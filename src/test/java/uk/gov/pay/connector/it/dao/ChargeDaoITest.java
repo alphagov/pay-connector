@@ -81,7 +81,7 @@ public class ChargeDaoITest extends DaoITestBase {
         defaultTestCardDetails = new DatabaseFixtures(databaseTestHelper).validTestCardDetails();
         insertTestAccount();
     }
-    
+
     @After
     public void clear() {
         databaseTestHelper.truncateAllData();
@@ -149,7 +149,7 @@ public class ChargeDaoITest extends DaoITestBase {
         ChargeEntity charge = charges.get(0);
         assertCharge(defaultTestCardDetails.getCardBrand(), testCharge, charge);
     }
-    
+
     @Test
     public void searchChargesByFullCardHolderNameMatch() {
         // given
