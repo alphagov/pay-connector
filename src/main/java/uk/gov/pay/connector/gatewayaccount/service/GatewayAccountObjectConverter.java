@@ -12,12 +12,12 @@ import java.util.Map;
 
 import static com.google.common.collect.Maps.newHashMap;
 
-public class GatewayAccountObjectConvertor {
+public class GatewayAccountObjectConverter {
 
     public static GatewayAccountEntity createEntityFrom(GatewayAccountRequest gatewayAccountRequest) {
 
-        Map<String, String> credentials = gatewayAccountRequest.getCredentials() != null ? 
-                gatewayAccountRequest.getCredentials().toMap() : newHashMap();
+        Map<String, String> credentials = gatewayAccountRequest.getCredentials().isPresent() ? 
+                gatewayAccountRequest.getCredentials().get().toMap() : newHashMap();
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(
                 gatewayAccountRequest.getPaymentProvider(), 

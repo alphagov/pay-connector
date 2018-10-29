@@ -50,7 +50,7 @@ public class GatewayAccountService {
     @Transactional
     public GatewayAccountResponse createGatewayAccount(GatewayAccountRequest gatewayAccountRequest, UriInfo uriInfo) {
 
-        GatewayAccountEntity gatewayAccountEntity = GatewayAccountObjectConvertor.createEntityFrom(gatewayAccountRequest);
+        GatewayAccountEntity gatewayAccountEntity = GatewayAccountObjectConverter.createEntityFrom(gatewayAccountRequest);
 
         logger.info("Setting the new account to accept all card types by default", gatewayAccountRequest.getPaymentProvider(),
                 gatewayAccountRequest.getProviderAccountType());
@@ -59,7 +59,7 @@ public class GatewayAccountService {
 
         gatewayAccountDao.persist(gatewayAccountEntity);
         
-        return GatewayAccountObjectConvertor.createResponseFrom(gatewayAccountEntity, uriInfo);
+        return GatewayAccountObjectConverter.createResponseFrom(gatewayAccountEntity, uriInfo);
     }
 
 
