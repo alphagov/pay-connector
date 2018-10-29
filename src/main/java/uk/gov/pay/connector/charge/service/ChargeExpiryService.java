@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.service;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Provider;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,8 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 
 import javax.inject.Inject;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +47,10 @@ public class ChargeExpiryService {
 
     private static final String EXPIRY_SUCCESS = "expiry-success";
     private static final String EXPIRY_FAILED = "expiry-failed";
+    private static final int ONE_HOUR_AND_A_HALF = 5400;
+    private static final int FORTY_EIGHT_HOURS = 172800;
+    private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
+    private static final String AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW = "AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW";
 
     public static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ImmutableList.of(
             CREATED,
@@ -85,6 +92,17 @@ public class ChargeExpiryService {
 
         return ImmutableMap.of(EXPIRY_SUCCESS, expiredSuccess + expireWithCancellationResult.getLeft(),
                 EXPIRY_FAILED, expireWithCancellationResult.getRight());
+    }
+
+    public Map<String, Integer> sweepAndExpireCharges() {
+        List<ChargeEntity> chargesToExpire = new ArrayList<>();
+        chargesToExpire.addAll(chargeDao.findBeforeDateWithStatusIn(getExpiryDateForRegularCharges(), 
+                EXPIRABLE_REGULAR_STATUSES));
+        chargesToExpire.addAll(chargeDao.findBeforeDateWithStatusIn(getExpiryDateForAwaitingCaptureRequest(), 
+                EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS));
+        logger.info("Charges found for expiry - number_of_charges={}, since_date={}, awaiting_capture_date{}", 
+                chargesToExpire.size(), getExpiryDateForRegularCharges(), getExpiryDateForAwaitingCaptureRequest());
+        return expire(chargesToExpire);
     }
 
     private int expireChargesWithCancellationNotRequired(List<ChargeEntity> nonAuthSuccessCharges) {
@@ -173,5 +191,23 @@ public class ChargeExpiryService {
         gatewayResponse.getGatewayError().ifPresent(error ->
                 logger.error("Gateway error while cancelling the Charge - charge_external_id={}, gateway_error={}",
                         chargeEntity.getExternalId(), error));
+    }
+
+    private ZonedDateTime getExpiryDateForRegularCharges() {
+        int chargeExpiryWindowSeconds = ONE_HOUR_AND_A_HALF;
+        if (StringUtils.isNotBlank(System.getenv(CHARGE_EXPIRY_WINDOW))) {
+            chargeExpiryWindowSeconds = Integer.parseInt(System.getenv(CHARGE_EXPIRY_WINDOW));
+        }
+        logger.debug("Charge expiry window size in seconds: " + chargeExpiryWindowSeconds);
+        return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
+    }
+
+    private ZonedDateTime getExpiryDateForAwaitingCaptureRequest() {
+        int chargeExpiryWindowSeconds = FORTY_EIGHT_HOURS;
+        if (StringUtils.isNotBlank(System.getenv(AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW))) {
+            chargeExpiryWindowSeconds = Integer.parseInt(System.getenv(AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW));
+        }
+        logger.debug("Charge expiry window size for awaiting_delay_capture in seconds: " + chargeExpiryWindowSeconds);
+        return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
     }
 }

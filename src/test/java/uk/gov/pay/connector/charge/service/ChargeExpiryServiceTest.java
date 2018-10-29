@@ -32,6 +32,7 @@ import static java.util.Collections.singletonList;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -60,16 +61,22 @@ public class ChargeExpiryServiceTest {
 
     @Mock
     private WorldpayCancelResponse mockWorldpayCancelResponse;
+    
+    private GatewayResponse<BaseCancelResponse> gatewayResponse;
+    private GatewayAccountEntity gatewayAccount;
 
     @Before
     public void setup() {
         chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new);
+        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
+        GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
+        gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayCancelResponse).build();
+        gatewayAccount = ChargeEntityFixture.defaultGatewayAccountEntity();
+        gatewayAccount.setGatewayName("worldpay");
     }
 
     @Test
     public void shouldExpireChargesWithStatus_authorisationSuccess_byCallingProviderToCancel() {
-        GatewayAccountEntity gatewayAccount = ChargeEntityFixture.defaultGatewayAccountEntity();
-        gatewayAccount.setGatewayName("worldpay");
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
                 .withCreatedDate(ZonedDateTime.now())
@@ -77,13 +84,9 @@ public class ChargeExpiryServiceTest {
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
-        GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse<BaseCancelResponse> gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayCancelResponse).build();
-
         when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
 
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
-        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
         ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
         ArgumentCaptor<CancelGatewayRequest> cancelCaptor = ArgumentCaptor.forClass(CancelGatewayRequest.class);
@@ -98,8 +101,6 @@ public class ChargeExpiryServiceTest {
 
     @Test
     public void shouldExpireChargesWithStatus_awaitingCaptureRequest_byCallingProviderToCancel() {
-        GatewayAccountEntity gatewayAccount = ChargeEntityFixture.defaultGatewayAccountEntity();
-        gatewayAccount.setGatewayName("worldpay");
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
                 .withCreatedDate(ZonedDateTime.now())
@@ -107,13 +108,9 @@ public class ChargeExpiryServiceTest {
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
-        GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse<BaseCancelResponse> gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayCancelResponse).build();
-
         when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
 
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
-        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
         ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
         ArgumentCaptor<CancelGatewayRequest> cancelCaptor = ArgumentCaptor.forClass(CancelGatewayRequest.class);
@@ -128,13 +125,6 @@ public class ChargeExpiryServiceTest {
 
     @Test
     public void shouldExpireChargesWithoutCallingProviderToCancel() {
-        GatewayAccountEntity gatewayAccount = ChargeEntityFixture.defaultGatewayAccountEntity();
-        gatewayAccount.setGatewayName("worldpay");
-
-        GatewayResponseBuilder<WorldpayBaseResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse<WorldpayBaseResponse> gatewayResponse = gatewayResponseBuilder.withResponse(
-                mockWorldpayCancelResponse).build();
-
         EXPIRABLE_REGULAR_STATUSES.stream()
                 .filter(status -> !GATEWAY_CANCELLABLE_STATUSES.contains(status))
                 .forEach(status -> {
@@ -158,8 +148,6 @@ public class ChargeExpiryServiceTest {
 
     @Test
     public void shouldUpdateStatusWhenCancellationFails() {
-        GatewayAccountEntity gatewayAccount = ChargeEntityFixture.defaultGatewayAccountEntity();
-        gatewayAccount.setGatewayName("worldpay");
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
                 .withCreatedDate(ZonedDateTime.now())
@@ -169,13 +157,12 @@ public class ChargeExpiryServiceTest {
 
         GatewayError mockGatewayError = mock(GatewayError.class);
         GatewayResponseBuilder<WorldpayBaseResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse<WorldpayBaseResponse> gatewayResponse = gatewayResponseBuilder
+        GatewayResponse<WorldpayBaseResponse> gatewayErrorResponse = gatewayResponseBuilder
                 .withGatewayError(mockGatewayError)
                 .build();
 
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
-        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
-        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
+        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayErrorResponse);
         ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
         doNothing().when(mockChargeEventDao).persistChargeEventOf(captor.capture(), any());
 
@@ -184,5 +171,34 @@ public class ChargeExpiryServiceTest {
         assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRE_CANCEL_FAILED.getValue()));
     }
 
+    @Test
+    public void shouldSweepAndExpireCharges() {
+        ChargeEntity chargeEntityAwaitingCapture = ChargeEntityFixture.aValidChargeEntity()
+                .withAmount(200L)
+                .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
+                .withStatus(ChargeStatus.AWAITING_CAPTURE_REQUEST)
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
 
+        ChargeEntity chargeEntityAuthorisationSuccess = ChargeEntityFixture.aValidChargeEntity()
+                .withAmount(200L)
+                .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
+                .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+
+        when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
+
+        when(mockChargeDao.findByExternalId(chargeEntityAwaitingCapture.getExternalId())).thenReturn(Optional.of(chargeEntityAwaitingCapture));
+        when(mockChargeDao.findByExternalId(chargeEntityAuthorisationSuccess.getExternalId())).thenReturn(Optional.of(chargeEntityAuthorisationSuccess));
+        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
+        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(), any());
+        when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(ChargeExpiryService.EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS))).thenReturn(singletonList(chargeEntityAwaitingCapture));
+        when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(ChargeExpiryService.EXPIRABLE_REGULAR_STATUSES))).thenReturn(singletonList(chargeEntityAuthorisationSuccess));
+
+        chargeExpiryService.sweepAndExpireCharges();
+
+        assertThat(chargeEntityAwaitingCapture.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
+        assertThat(chargeEntityAuthorisationSuccess.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
+    }
 }

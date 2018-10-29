@@ -292,12 +292,12 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
                 .body(JSON_CHARGE_KEY, is(chargeToBeExpiredAwaitingCaptureRequest))
                 .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
 
-        List<String> events2 = databaseTestHelper.getInternalEvents(chargeToBeExpiredCreatedStatus);
-        List<String> events3 = databaseTestHelper.getInternalEvents(chargeToBeExpiredAwaitingCaptureRequest);
+        List<String> events1 = databaseTestHelper.getInternalEvents(chargeToBeExpiredCreatedStatus);
+        List<String> events2 = databaseTestHelper.getInternalEvents(chargeToBeExpiredAwaitingCaptureRequest);
 
-        assertTrue(isEqualCollection(events2,
+        assertTrue(isEqualCollection(events1,
                 asList(CREATED.getValue(), EXPIRED.getValue())));
-        assertTrue(isEqualCollection(events3,
+        assertTrue(isEqualCollection(events2,
                 asList(AWAITING_CAPTURE_REQUEST.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue())));
     }
 }
