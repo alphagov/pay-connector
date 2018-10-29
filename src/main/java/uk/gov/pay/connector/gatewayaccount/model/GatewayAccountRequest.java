@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.validation.ValidationMethod;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
+import java.util.Optional;
+
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -21,7 +23,7 @@ public class GatewayAccountRequest {
 
     private String paymentProvider;
 
-    private Credentials credentials;
+    private Optional<Credentials> credentials;
     
     public GatewayAccountRequest(@JsonProperty("type") String providerAccountType,
                                  @JsonProperty("payment_provider") String paymentProvider,
@@ -32,7 +34,7 @@ public class GatewayAccountRequest {
         this.serviceName = serviceName;
         this.description = description;
         this.analyticsId = analyticsId;
-        this.credentials = credentials;
+        this.credentials = Optional.ofNullable(credentials);
 
         this.providerAccountType = (providerAccountType == null || providerAccountType.isEmpty()) ?
                 TEST.toString() : providerAccountType;
@@ -79,7 +81,7 @@ public class GatewayAccountRequest {
         return analyticsId;
     }
 
-    public Credentials getCredentials() {
+    public Optional<Credentials> getCredentials() {
         return credentials;
     }
 }
