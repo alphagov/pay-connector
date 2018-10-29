@@ -31,7 +31,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTestBase {
 
     GatewayAccountDao gatewayAccountDao;
-    
+
     @Before
     public void setUp() {
         super.setUp();
@@ -43,9 +43,9 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
     public void createAGatewayAccount(String provider) {
         createAGatewayAccountFor(provider, "my test service", "analytics");
     }
-    
+
     @Test
-    public void createStripeGatewayAccountWithoutCredentials() throws Exception {
+    public void createStripeGatewayAccountWithoutCredentials() {
         Map<String, Object> payload = ImmutableMap.of(
                 "type", "test",
                 "payment_provider", "stripe",
@@ -64,9 +64,9 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 .body("links[0].rel", is("self"))
                 .body("links[0].method", is("GET"));
     }
-    
+
     @Test
-    public void createStripeGatewayAccountWithCredentials() throws Exception {
+    public void createStripeGatewayAccountWithCredentials() {
         Map<String, Object> payload = ImmutableMap.of(
                 "type", "test",
                 "payment_provider", "stripe",
@@ -93,10 +93,10 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
         assertThat(gatewayAccount.isPresent(), is(true));
         assertThat(gatewayAccount.get().getCredentials().get("account_id"), is("abc"));
     }
-    
+
     @Test
     public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() {
-        String payload = toJson(ImmutableMap.of("name", "test account","type","test"));
+        String payload = toJson(ImmutableMap.of("name", "test account", "type", "test"));
 
         ValidatableResponse response = givenSetup()
                 .body(payload)

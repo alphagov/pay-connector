@@ -16,8 +16,7 @@ public class GatewayAccountObjectConvertor {
 
     public static GatewayAccountEntity createEntityFrom(GatewayAccountRequest gatewayAccountRequest) {
 
-        Map<String, String> credentials = gatewayAccountRequest.getCredentials().isPresent() ? 
-                gatewayAccountRequest.getCredentials().get().toMap() : newHashMap();
+        Map<String, String> credentials = gatewayAccountRequest.getCredentials();
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(
                 gatewayAccountRequest.getPaymentProvider(), 

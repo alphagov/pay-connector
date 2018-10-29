@@ -6,8 +6,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.validation.ValidationMethod;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
+import static com.google.common.collect.Maps.newHashMap;
+import static uk.gov.pay.connector.gatewayaccount.CredentialsMapper.getCredentialsMapperForPaymentProvider;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -23,18 +27,24 @@ public class GatewayAccountRequest {
 
     private String paymentProvider;
 
-    private Optional<Credentials> credentials;
+    private Map credentials;
     
     public GatewayAccountRequest(@JsonProperty("type") String providerAccountType,
                                  @JsonProperty("payment_provider") String paymentProvider,
                                  @JsonProperty("service_name") String serviceName,
                                  @JsonProperty("description") String description,
                                  @JsonProperty("analytics_id") String analyticsId,
-                                 @JsonProperty("credentials") Credentials credentials) {
+                                 @JsonProperty("credentials") Map<String, String> credentials) {
         this.serviceName = serviceName;
         this.description = description;
         this.analyticsId = analyticsId;
-        this.credentials = Optional.ofNullable(credentials);
+
+        Optional<Function<Map<String, String>, Map<String, String>>> credentialsMapper = getCredentialsMapperForPaymentProvider(paymentProvider);
+        if (credentialsMapper.isPresent()) {
+            this.credentials = credentialsMapper.get().apply(credentials);
+        } else {
+            this.credentials = newHashMap();
+        }
 
         this.providerAccountType = (providerAccountType == null || providerAccountType.isEmpty()) ?
                 TEST.toString() : providerAccountType;
@@ -81,7 +91,7 @@ public class GatewayAccountRequest {
         return analyticsId;
     }
 
-    public Optional<Credentials> getCredentials() {
+    public Map getCredentials() {
         return credentials;
     }
 }
