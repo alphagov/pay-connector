@@ -1,19 +1,19 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ImmutableMap;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.util.Map;
 
-public class Credentials {
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "credentials_type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = StripeCredentials.class, name = "stripe"),
+})
+public abstract class Credentials {
     
-    private String accountId;
-
-    public Credentials(@JsonProperty("account_id") String accountId) {
-        this.accountId = accountId;
-    }
-
-    public Map<String, String> toMap() {
-        return ImmutableMap.of("account_id", accountId);
-    }
+    public abstract Map<String, String> toMap();
+    
 }

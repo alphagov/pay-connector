@@ -71,7 +71,9 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 "type", "test",
                 "payment_provider", "stripe",
                 "service_name", "My shiny new stripe service",
-                "credentials", ImmutableMap.of("account_id", "abc"));
+                "credentials", ImmutableMap.of(
+                        "credentials_type", "stripe",
+                        "account_id", "abc"));
         String gatewayAccountId = givenSetup()
                 .body(toJson(payload))
                 .post(ACCOUNTS_API_URL)
