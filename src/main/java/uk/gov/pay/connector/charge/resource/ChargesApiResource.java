@@ -14,7 +14,6 @@ import uk.gov.pay.connector.charge.model.CardHolderName;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.SearchService;
@@ -48,8 +47,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.model.TransactionType.inferTransactionTypeFrom;
-import static uk.gov.pay.connector.charge.service.ChargeExpiryService.EXPIRABLE_REGULAR_STATUSES;
-import static uk.gov.pay.connector.charge.service.ChargeExpiryService.EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS;
 import static uk.gov.pay.connector.charge.service.SearchService.TYPE.CHARGE;
 import static uk.gov.pay.connector.charge.service.SearchService.TYPE.TRANSACTION;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidResponse;
@@ -87,10 +84,6 @@ public class ChargesApiResource {
     private static final String PAGE = "page";
     private static final String DISPLAY_SIZE = "display_size";
     private static final Set<String> CHARGE_REQUEST_KEYS_THAT_MAY_HAVE_PII = Collections.singleton("description");
-    private static final int ONE_HOUR_AND_A_HALF = 5400;
-    private static final int FORTY_EIGHT_HOURS = 172800;
-    private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
-    private static final String AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW = "AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW";
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
     public static int MIN_AMOUNT = 1;
     public static int MAX_AMOUNT = 10_000_000;
@@ -277,35 +270,8 @@ public class ChargesApiResource {
     @Path("/v1/tasks/expired-charges-sweep")
     @Produces(APPLICATION_JSON)
     public Response expireCharges(@Context UriInfo uriInfo) {
-        List<ChargeEntity> charges = findAllChargesToBeExpired();
-        logger.info("Charges found for expiry - number_of_charges={}, since_date={}", charges.size(), getExpiryDateForRegularCharges());
-        Map<String, Integer> resultMap = chargeExpiryService.expire(charges);
+        Map<String, Integer> resultMap = chargeExpiryService.sweepAndExpireCharges();
         return successResponseWithEntity(resultMap);
-    }
-    
-    private List<ChargeEntity> findAllChargesToBeExpired() {
-        List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(getExpiryDateForRegularCharges(), EXPIRABLE_REGULAR_STATUSES);
-        charges.addAll(chargeDao.findBeforeDateWithStatusIn(getExpiryDateForAwaitingCaptureRequest(), EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS));
-        logger.info("Charges found for expiry - number_of_charges={}, since_date={}, awaiting_capture_date{}", charges.size(), getExpiryDateForRegularCharges(), getExpiryDateForAwaitingCaptureRequest());
-        return charges;
-    }
-
-    private ZonedDateTime getExpiryDateForRegularCharges() {
-        int chargeExpiryWindowSeconds = ONE_HOUR_AND_A_HALF;
-        if (StringUtils.isNotBlank(System.getenv(CHARGE_EXPIRY_WINDOW))) {
-            chargeExpiryWindowSeconds = Integer.parseInt(System.getenv(CHARGE_EXPIRY_WINDOW));
-        }
-        logger.debug("Charge expiry window size in seconds: " + chargeExpiryWindowSeconds);
-        return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
-    }
-
-    private ZonedDateTime getExpiryDateForAwaitingCaptureRequest() {
-        int chargeExpiryWindowSeconds = FORTY_EIGHT_HOURS;
-        if (StringUtils.isNotBlank(System.getenv(AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW))) {
-            chargeExpiryWindowSeconds = Integer.parseInt(System.getenv(AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW));
-        }
-        logger.debug("Charge expiry window size for awaiting_delay_capture in seconds: " + chargeExpiryWindowSeconds);
-        return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
     }
 
     private ZonedDateTime parseDate(String date) {
