@@ -71,7 +71,7 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 "type", "test",
                 "payment_provider", "stripe",
                 "service_name", "My shiny new stripe service",
-                "credentials", ImmutableMap.of("account_id", "abc"));
+                "credentials", ImmutableMap.of("stripe_account_id", "abc"));
         String gatewayAccountId = givenSetup()
                 .body(toJson(payload))
                 .post(ACCOUNTS_API_URL)
@@ -91,7 +91,7 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 .getString("gateway_account_id");
         Optional<GatewayAccountEntity> gatewayAccount = gatewayAccountDao.findById(Long.valueOf(gatewayAccountId));
         assertThat(gatewayAccount.isPresent(), is(true));
-        assertThat(gatewayAccount.get().getCredentials().get("account_id"), is("abc"));
+        assertThat(gatewayAccount.get().getCredentials().get("stripe_account_id"), is("abc"));
     }
     
     @Test

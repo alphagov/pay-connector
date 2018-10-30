@@ -9,11 +9,11 @@ public class StripeCredentials {
 
     private String accountId;
 
-    public StripeCredentials(@JsonProperty("account_id") String accountId) {
+    public StripeCredentials(@JsonProperty("stripe_account_id") String accountId) {
         this.accountId = accountId;
     }
 
     public Map<String, String> toMap() {
-        return ImmutableMap.of("account_id", accountId);
+        return ImmutableMap.of("stripe_account_id", accountId);
     }
 }
