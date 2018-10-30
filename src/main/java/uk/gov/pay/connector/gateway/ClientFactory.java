@@ -50,10 +50,13 @@ public class ClientFactory {
                 .using(clientConfiguration);
         
         if (operation.isPresent()) {
-            defaultClientBuilder.withProperty(READ_TIMEOUT, getReadTimeoutInMillis(operation.get(), gateway))
+            defaultClientBuilder
+                    .withProperty(READ_TIMEOUT, getReadTimeoutInMillis(operation.get(), gateway))
                     .withProperty(CONNECTION_MANAGER, createConnectionManager(gateway.getName(), operation.get().getConfigKey(), metricRegistry));
         } else {
-            defaultClientBuilder.withProperty(READ_TIMEOUT, getDefaultTimeout());
+            defaultClientBuilder
+                    .withProperty(READ_TIMEOUT, getDefaultTimeout())
+                    .withProperty(CONNECTION_MANAGER, createConnectionManager(gateway.getName(), "all", metricRegistry));
         }
 
         if (conf.getCustomJerseyClient().isProxyEnabled()) {
