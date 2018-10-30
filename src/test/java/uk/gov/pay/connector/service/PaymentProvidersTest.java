@@ -34,10 +34,12 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.GatewayOperation.*;
+import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
+import static uk.gov.pay.connector.gateway.GatewayOperation.CANCEL;
+import static uk.gov.pay.connector.gateway.GatewayOperation.CAPTURE;
+import static uk.gov.pay.connector.gateway.GatewayOperation.REFUND;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PaymentProvidersTest {
@@ -83,18 +85,15 @@ public class PaymentProvidersTest {
     @Before
     public void setup() {
         Environment environment = mock(Environment.class);
-        when(config.getWorldpayConfig()).thenReturn(worldpayConfig);
-        when(config.getGatewayConfigFor(PaymentGatewayName.WORLDPAY)).thenReturn(worldpayConfig);
         when(config.getGatewayConfigFor(PaymentGatewayName.SMARTPAY)).thenReturn(smartpayConfig);
         when(config.getGatewayConfigFor(EPDQ)).thenReturn(epdqConfig);
         when(config.getLinks()).thenReturn(linksConfig);
         when(linksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
-        when(worldpayConfig.getUrls()).thenReturn(worldpayUrlMap);
         when(smartpayConfig.getUrls()).thenReturn(smartpayUrlMap);
         when(epdqConfig.getUrls()).thenReturn(epdqUrlMap);
         when(environment.metrics()).thenReturn(metricRegistry);
 
-        providers = new PaymentProviders(config, gatewayClientFactory, new ObjectMapper(), environment);
+        providers = new PaymentProviders(config, gatewayClientFactory, new ObjectMapper(), environment, mock(WorldpayPaymentProvider.class));
     }
 
     @Test
@@ -123,15 +122,6 @@ public class PaymentProvidersTest {
 
     @Test
     public void shouldSetupGatewayClientForGatewayOperations() {
-        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, AUTHORISE, worldpayUrlMap,
-            WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
-        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, CANCEL, worldpayUrlMap,
-            WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
-        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, CAPTURE, worldpayUrlMap,
-            WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
-        verify(gatewayClientFactory).createGatewayClient(WORLDPAY, REFUND, worldpayUrlMap,
-            WorldpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
-
         verify(gatewayClientFactory).createGatewayClient(SMARTPAY, AUTHORISE, smartpayUrlMap,
             SmartpayPaymentProvider.includeSessionIdentifier(), metricRegistry);
         verify(gatewayClientFactory).createGatewayClient(SMARTPAY, CANCEL, smartpayUrlMap,
