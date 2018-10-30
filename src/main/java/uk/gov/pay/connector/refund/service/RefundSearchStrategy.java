@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.refund.service;
 
 import uk.gov.pay.connector.charge.dao.SearchParams;
+import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
+import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.search.AbstractSearchStrategy;
 import uk.gov.pay.connector.common.service.search.BuildResponseStrategy;
 import uk.gov.pay.connector.common.service.search.SearchStrategy;
@@ -51,7 +53,7 @@ public class RefundSearchStrategy extends AbstractSearchStrategy<RefundEntity, S
         return responseBuilder
                 .withRefundId(externalRefundId)
                 .withCreatedDate(DateTimeUtils.toUTCDateTimeString(refundEntity.getCreatedDate()))
-                .withStatus(String.valueOf(refundEntity.getStatus()))
+                .withStatus(refundEntity.getStatus().toExternal().getStatus())
                 .withChargeId(externalChargeId)
                 .withAmountSubmitted(refundEntity.getAmount())
                 .withLink("self", GET, selfUriFor(uriInfo, accountId, externalChargeId, externalRefundId))
