@@ -80,7 +80,6 @@ public class SearchParams {
     public Set<String> getExternalChargeStates() {
         return this.internalChargeStatuses.stream()
                 .map(s -> s.toExternal().getStatus())
-                .sorted()
                 .collect(Collectors.toSet());
     }
 
@@ -93,7 +92,6 @@ public class SearchParams {
     public Set<String> getExternalRefundStates() {
         return this.internalRefundStatuses.stream()
                 .map(s -> s.toExternal().getStatus())
-                .sorted()
                 .collect(Collectors.toSet());
     }
 
@@ -277,11 +275,9 @@ public class SearchParams {
                 .findFirst()
                 .ifPresent(state -> builder.append("&state=").append(state));
 
-        String paymentStates = this.externalChargeStates.stream()
-                .collect(Collectors.joining(","));
+        String paymentStates = String.join(",", this.externalChargeStates);
 
-        String refundStates = this.externalRefundStates.stream()
-                .collect(Collectors.joining(","));
+        String refundStates = String.join(",", this.externalRefundStates);
 
         if (isNotEmpty(paymentStates)) {
             builder.append("&payment_states=").append(paymentStates);

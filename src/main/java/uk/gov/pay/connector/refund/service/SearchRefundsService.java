@@ -9,7 +9,6 @@ import javax.ws.rs.core.UriInfo;
 
 public class SearchRefundsService {
 
-    private static final Long MAX_DISPLAY_SIZE = 500L;
     private RefundDao refundDao;
     private RefundSearchStrategy refundSearchStrategy;
 
