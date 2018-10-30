@@ -7,15 +7,18 @@ import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntit
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
 import javax.ws.rs.core.UriInfo;
-
 import java.net.URI;
+import java.util.Map;
 
-import static com.google.common.collect.Maps.newHashMap;
-
-public class GatewayAccountObjectConvertor {
+public class GatewayAccountObjectConverter {
 
     public static GatewayAccountEntity createEntityFrom(GatewayAccountRequest gatewayAccountRequest) {
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(gatewayAccountRequest.getPaymentProvider(), newHashMap(),
+
+        Map<String, String> credentials = gatewayAccountRequest.getCredentialsAsMap();
+
+        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(
+                gatewayAccountRequest.getPaymentProvider(), 
+                credentials,
                 GatewayAccountEntity.Type.fromString(gatewayAccountRequest.getProviderAccountType()));
 
         gatewayAccountEntity.setServiceName(gatewayAccountRequest.getServiceName());

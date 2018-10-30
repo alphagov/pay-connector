@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.http.ContentType;
-import com.jayway.restassured.response.ValidatableResponse;
 import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -232,74 +231,6 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() {
-        String payload = toJson(ImmutableMap.of("name", "test account","type","test"));
-
-        ValidatableResponse response = givenSetup()
-                .body(payload)
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(201);
-
-        assertCorrectCreateResponse(response);
-        assertGettingAccountReturnsProviderName(response, "sandbox", TEST);
-    }
-
-    @Test
-    public void createGatewayAccount_shouldNotReturnCorporateSurcharges() {
-        String payload = toJson(ImmutableMap.of("name", "test account"));
-        ValidatableResponse response = givenSetup()
-                .body(payload)
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(201);
-        
-        response.body("corporate_credit_card_surcharge_amount", is(nullValue()));
-        response.body("corporate_debit_card_surcharge_amount", is(nullValue()));
-        response.body("corporate_prepaid_credit_card_surcharge_amount", is(nullValue()));
-        response.body("corporate_prepaid_debit_card_surcharge_amount", is(nullValue()));
-    }
-
-    @Test
-    public void createGatewayAccountWithProviderUrlTypeLive() {
-        String payload = toJson(ImmutableMap.of("payment_provider", "worldpay", "type", LIVE.toString()));
-        ValidatableResponse response = givenSetup()
-                .body(payload)
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(201);
-
-        assertCorrectCreateResponse(response, LIVE);
-        assertGettingAccountReturnsProviderName(response, "worldpay", LIVE);
-    }
-
-    @Test
-    public void createGatewayAccountWithNameDescriptionAndAnalyticsId() {
-        String payload = toJson(ImmutableMap.of("service_name", "my service name", "description", "desc", "analytics_id", "analytics-id"));
-        ValidatableResponse response = givenSetup()
-                .body(payload)
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(201);
-
-        assertCorrectCreateResponse(response, TEST, "desc", "analytics-id", "my service name");
-        assertGettingAccountReturnsProviderName(response, "sandbox", TEST);
-    }
-
-    @Test
-    public void createGatewayAccountWithMissingProviderUrlTypeCreatesTestType() {
-        String payload = toJson(ImmutableMap.of("payment_provider", "worldpay"));
-        ValidatableResponse response = givenSetup()
-                .body(payload)
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(201);
-
-        assertCorrectCreateResponse(response, TEST);
-        assertGettingAccountReturnsProviderName(response, "worldpay", TEST);
-    }
-
-    @Test
     public void getAccountShouldReturn404IfAccountIdIsNotNumeric() {
         String unknownAccountId = "92348739wsx673hdg";
 
@@ -310,26 +241,6 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .statusCode(NOT_FOUND.getStatusCode())
                 .body("code", Is.is(404))
                 .body("message", Is.is("HTTP 404 Not Found"));
-    }
-
-    @Test
-    public void createAGatewayAccountForSandbox() {
-        createAGatewayAccountFor("sandbox");
-    }
-
-    @Test
-    public void createAGatewayAccountForWorldpay() {
-        createAGatewayAccountFor("worldpay");
-    }
-
-    @Test
-    public void createAGatewayAccountForSmartpay() {
-        createAGatewayAccountFor("smartpay");
-    }
-
-    @Test
-    public void createAGatewayAccountForEpdq() {
-        createAGatewayAccountFor("epdq");
     }
 
     @Test

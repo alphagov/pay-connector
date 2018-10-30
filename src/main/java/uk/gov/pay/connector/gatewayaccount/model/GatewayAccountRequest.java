@@ -3,16 +3,30 @@ package uk.gov.pay.connector.gatewayaccount.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.dropwizard.validation.ValidationMethod;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
+import java.util.Map;
+
+import static com.google.common.collect.Maps.newHashMap;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "payment_provider",
+        visible = true,
+        defaultImpl = GatewayAccountRequest.class)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = StripeGatewayAccountRequest.class, name = "stripe")
+})
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GatewayAccountRequest {
-    
+
     private String providerAccountType;
-    
+
     private String serviceName;
 
     private String description;
@@ -73,5 +87,9 @@ public class GatewayAccountRequest {
 
     public String getAnalyticsId() {
         return analyticsId;
+    }
+
+    public Map<String, String> getCredentialsAsMap() {
+        return newHashMap();
     }
 }
