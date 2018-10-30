@@ -50,7 +50,7 @@ public class SandboxPaymentProviderTest {
 
     @Before
     public void setup() {
-        provider = new SandboxPaymentProvider(mockExternalRefundAvailabilityCalculator);
+        provider = new SandboxPaymentProvider();
     }
 
     @Test
@@ -206,12 +206,4 @@ public class SandboxPaymentProviderTest {
         assertThat(refundResponse.getErrorCode(), is(nullValue()));
         assertThat(refundResponse.getErrorMessage(), is(nullValue()));
     }
-
-    @Test
-    public void shouldReturnExternalRefundAvailability() {
-        ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
-        when(mockExternalRefundAvailabilityCalculator.calculate(mockChargeEntity)).thenReturn(EXTERNAL_AVAILABLE);
-        assertThat(provider.getExternalChargeRefundAvailability(mockChargeEntity), is(EXTERNAL_AVAILABLE));
-    }
-
 }
