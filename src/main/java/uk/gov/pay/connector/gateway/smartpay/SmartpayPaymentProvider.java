@@ -33,7 +33,6 @@ import javax.inject.Inject;
 import javax.ws.rs.client.Invocation;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
@@ -82,7 +81,6 @@ public class SmartpayPaymentProvider implements PaymentProvider<BaseResponse, Pa
                             responseBuilder::withGatewayError,
                             responseBuilder::withResponse
                     );
-            extractResponseIdentifier().apply(response.right().value()).ifPresent(responseBuilder::withSessionIdentifier);
             return responseBuilder.build();
         }
     }
@@ -214,12 +212,5 @@ public class SmartpayPaymentProvider implements PaymentProvider<BaseResponse, Pa
 
     private String getMerchantCode(GatewayRequest request) {
         return request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID);
-    }
-
-    private Function<GatewayClient.Response, Optional<String>> extractResponseIdentifier() {
-        return response -> {
-            Optional<String> emptyResponseIdentifierForSmartpay = Optional.empty();
-            return emptyResponseIdentifierForSmartpay;
-        };
     }
 }

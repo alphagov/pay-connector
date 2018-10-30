@@ -31,11 +31,11 @@ import uk.gov.pay.connector.usernotification.model.Notifications;
 import javax.inject.Inject;
 import javax.ws.rs.client.Invocation.Builder;
 import java.time.ZoneOffset;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
 import static fj.data.Either.left;
-import static fj.data.Either.reduce;
 import static fj.data.Either.right;
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
@@ -66,10 +66,11 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
     public WorldpayPaymentProvider(ConnectorConfiguration configuration,
                                    GatewayClientFactory gatewayClientFactory,
                                    Environment environment) {
-        authoriseClient = gatewayClientFactory.createGatewayClient(WORLDPAY, AUTHORISE, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
-        cancelClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CANCEL, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
-        captureClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CAPTURE, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
-        refundClient = gatewayClientFactory.createGatewayClient(WORLDPAY, REFUND, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
+        Map<String, String> worldpayUrls = configuration.getGatewayConfigFor(WORLDPAY).getUrls();
+        authoriseClient = gatewayClientFactory.createGatewayClient(WORLDPAY, AUTHORISE, worldpayUrls, includeSessionIdentifier(), environment.metrics());
+        cancelClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CANCEL, worldpayUrls, includeSessionIdentifier(), environment.metrics());
+        captureClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CAPTURE, worldpayUrls, includeSessionIdentifier(), environment.metrics());
+        refundClient = gatewayClientFactory.createGatewayClient(WORLDPAY, REFUND, worldpayUrls, includeSessionIdentifier(), environment.metrics());
         this.isNotificationEndpointSecured = configuration.getWorldpayConfig().isSecureNotificationEnabled();
         this.notificationDomain = configuration.getWorldpayConfig().getNotificationDomain();
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();

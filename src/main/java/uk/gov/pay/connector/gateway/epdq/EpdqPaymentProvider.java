@@ -39,12 +39,12 @@ import javax.inject.Inject;
 import javax.ws.rs.client.Invocation;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static fj.data.Either.left;
-import static fj.data.Either.reduce;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
@@ -97,10 +97,11 @@ public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String
     public EpdqPaymentProvider(ConnectorConfiguration configuration,
                                GatewayClientFactory gatewayClientFactory,
                                Environment environment) {
-        authoriseClient = gatewayClientFactory.createGatewayClient(EPDQ, AUTHORISE, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
-        cancelClient = gatewayClientFactory.createGatewayClient(EPDQ, CANCEL, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
-        captureClient = gatewayClientFactory.createGatewayClient(EPDQ, CAPTURE, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
-        refundClient = gatewayClientFactory.createGatewayClient(EPDQ, REFUND, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
+        Map<String, String> epdqUrls = configuration.getGatewayConfigFor(EPDQ).getUrls();
+        authoriseClient = gatewayClientFactory.createGatewayClient(EPDQ, AUTHORISE, epdqUrls, includeSessionIdentifier(), environment.metrics());
+        cancelClient = gatewayClientFactory.createGatewayClient(EPDQ, CANCEL, epdqUrls, includeSessionIdentifier(), environment.metrics());
+        captureClient = gatewayClientFactory.createGatewayClient(EPDQ, CAPTURE, epdqUrls, includeSessionIdentifier(), environment.metrics());
+        refundClient = gatewayClientFactory.createGatewayClient(EPDQ, REFUND, epdqUrls, includeSessionIdentifier(), environment.metrics());
         this.signatureGenerator = new EpdqSha512SignatureGenerator();
         this.frontendUrl = configuration.getLinks().getFrontendUrl();
         this.metricRegistry = environment.metrics();
@@ -133,7 +134,6 @@ public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String
                             responseBuilder::withGatewayError,
                             responseBuilder::withResponse
                     );
-            extractResponseIdentifier().apply(response.right().value()).ifPresent(responseBuilder::withSessionIdentifier);
             return responseBuilder.build();
         }
     }
@@ -323,13 +323,6 @@ public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String
                 .withTransactionId(request.getTransactionId())
                 .withAmount(request.getAmount())
                 .build();
-    }
-
-    private Function<GatewayClient.Response, Optional<String>> extractResponseIdentifier() {
-        return response -> {
-            Optional<String> emptyResponseIdentifierForEpdq = Optional.empty();
-            return emptyResponseIdentifierForEpdq;
-        };
     }
 
     public static BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> includeSessionIdentifier() {
