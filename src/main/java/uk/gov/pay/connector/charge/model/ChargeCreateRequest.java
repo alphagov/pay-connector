@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gatewayaccount.model;
+package uk.gov.pay.connector.charge.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -39,11 +39,11 @@ public class ChargeCreateRequest {
     private String email;
 
     @JsonProperty("delayed_capture")
-    private boolean delayedCapture;
+    private boolean delayedCapture = false;
 
     @JsonDeserialize(using = SupportedLanguageJsonDeserializer.class)
     @JsonProperty("language")
-    private SupportedLanguage language;
+    private SupportedLanguage language = SupportedLanguage.ENGLISH;
 
     public ChargeCreateRequest() {
         // for Jackson

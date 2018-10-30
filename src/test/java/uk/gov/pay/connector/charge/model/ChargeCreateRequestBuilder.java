@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gatewayaccount.model;
+package uk.gov.pay.connector.charge.model;
 
 import uk.gov.pay.commons.model.SupportedLanguage;
 

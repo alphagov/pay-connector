@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.charge.model.CardHolderName;
+import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -19,7 +20,6 @@ import uk.gov.pay.connector.charge.service.SearchService;
 import uk.gov.pay.connector.common.model.CommaDelimitedSetParameter;
 import uk.gov.pay.connector.common.validator.ApiValidators;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
-import uk.gov.pay.connector.gatewayaccount.model.ChargeCreateRequest;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;

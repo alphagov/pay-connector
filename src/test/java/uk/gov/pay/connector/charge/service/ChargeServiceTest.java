@@ -14,6 +14,8 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
+import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -26,8 +28,6 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
-import uk.gov.pay.connector.gatewayaccount.model.ChargeCreateRequest;
-import uk.gov.pay.connector.gatewayaccount.model.ChargeCreateRequestBuilder;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.token.dao.TokenDao;
@@ -77,7 +77,7 @@ public class ChargeServiceTest {
     private static final long CHARGE_ENTITY_ID = 12345L;
     private static final String[] EXTERNAL_CHARGE_ID = new String[1];
 
-    private ChargeCreateRequestBuilder REQUEST_BUILDER;
+    private ChargeCreateRequestBuilder requestBuilder;
 
     @Mock
     private TokenDao mockedTokenDao;
@@ -104,7 +104,7 @@ public class ChargeServiceTest {
 
     @Before
     public void setUp() {
-        REQUEST_BUILDER = ChargeCreateRequestBuilder
+        requestBuilder = ChargeCreateRequestBuilder
                 .aChargeCreateRequest()
                 .withAmount(100L)
                 .withReturnUrl("http://return-service.com")
@@ -142,7 +142,7 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldCreateAChargeWithDefaultLanguageAndDefaultDelayedCapture() {
-        service.create(REQUEST_BUILDER.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
@@ -168,7 +168,7 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldCreateAChargeWithDelayedCaptureTrue() {
-        final ChargeCreateRequest request = REQUEST_BUILDER.withDelayedCapture(true).build();
+        final ChargeCreateRequest request = requestBuilder.withDelayedCapture(true).build();
         service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
@@ -177,7 +177,7 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldCreateAChargeWithDelayedCaptureFalse() {
-        final ChargeCreateRequest request = REQUEST_BUILDER.withDelayedCapture(false).build();
+        final ChargeCreateRequest request = requestBuilder.withDelayedCapture(false).build();
         service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
@@ -186,7 +186,7 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldCreateAChargeWithNonDefaultLanguage() {
-        final ChargeCreateRequest request = REQUEST_BUILDER.withLanguage(SupportedLanguage.WELSH).build();
+        final ChargeCreateRequest request = requestBuilder.withLanguage(SupportedLanguage.WELSH).build();
 
         service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
@@ -219,7 +219,7 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldCreateAToken() {
-        service.create(REQUEST_BUILDER.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = forClass(TokenEntity.class);
         verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
@@ -231,7 +231,7 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldCreateAResponse() throws Exception {
-        ChargeResponse response = service.create(REQUEST_BUILDER.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
+        ChargeResponse response = service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
@@ -400,7 +400,7 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldUpdateTransactionStatus_whenUpdatingChargeStatusFromInitialStatus() {
-        service.create(REQUEST_BUILDER.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
