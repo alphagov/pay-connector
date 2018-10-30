@@ -10,14 +10,11 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Map;
 
-import static com.google.common.collect.Maps.newHashMap;
-
 public class GatewayAccountObjectConverter {
 
     public static GatewayAccountEntity createEntityFrom(GatewayAccountRequest gatewayAccountRequest) {
 
-        Map<String, String> credentials = gatewayAccountRequest.getCredentials().isPresent() ? 
-                gatewayAccountRequest.getCredentials().get().toMap() : newHashMap();
+        Map<String, String> credentials = gatewayAccountRequest.getCredentialsAsMap();
 
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(
                 gatewayAccountRequest.getPaymentProvider(), 

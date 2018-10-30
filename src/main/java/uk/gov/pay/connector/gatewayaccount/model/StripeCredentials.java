@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
-public class StripeCredentials extends Credentials {
+public class StripeCredentials {
 
     private String accountId;
 

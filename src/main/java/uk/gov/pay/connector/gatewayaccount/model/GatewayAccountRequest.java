@@ -3,13 +3,25 @@ package uk.gov.pay.connector.gatewayaccount.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.dropwizard.validation.ValidationMethod;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
-import java.util.Optional;
+import java.util.Map;
 
+import static com.google.common.collect.Maps.newHashMap;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "payment_provider",
+        visible = true,
+        defaultImpl = GatewayAccountRequest.class)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = StripeGatewayAccountRequest.class, name = "stripe")
+})
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GatewayAccountRequest {
 
@@ -22,19 +34,15 @@ public class GatewayAccountRequest {
     private String analyticsId;
 
     private String paymentProvider;
-
-    private Optional<Credentials> credentials;
     
     public GatewayAccountRequest(@JsonProperty("type") String providerAccountType,
                                  @JsonProperty("payment_provider") String paymentProvider,
                                  @JsonProperty("service_name") String serviceName,
                                  @JsonProperty("description") String description,
-                                 @JsonProperty("analytics_id") String analyticsId,
-                                 @JsonProperty("credentials") Credentials credentials) {
+                                 @JsonProperty("analytics_id") String analyticsId) {
         this.serviceName = serviceName;
         this.description = description;
         this.analyticsId = analyticsId;
-        this.credentials = Optional.ofNullable(credentials);
 
         this.providerAccountType = (providerAccountType == null || providerAccountType.isEmpty()) ?
                 TEST.toString() : providerAccountType;
@@ -81,7 +89,7 @@ public class GatewayAccountRequest {
         return analyticsId;
     }
 
-    public Optional<Credentials> getCredentials() {
-        return credentials;
+    public Map<String, String> getCredentialsAsMap() {
+        return newHashMap();
     }
 }
