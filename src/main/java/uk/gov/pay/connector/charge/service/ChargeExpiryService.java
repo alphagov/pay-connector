@@ -3,10 +3,11 @@ package uk.gov.pay.connector.charge.service;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Provider;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ChargeSweepConfig;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -47,10 +48,6 @@ public class ChargeExpiryService {
 
     private static final String EXPIRY_SUCCESS = "expiry-success";
     private static final String EXPIRY_FAILED = "expiry-failed";
-    private static final int ONE_HOUR_AND_A_HALF = 5400;
-    private static final int FORTY_EIGHT_HOURS = 172800;
-    private static final String CHARGE_EXPIRY_WINDOW = "CHARGE_EXPIRY_WINDOW_SECONDS";
-    private static final String AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW = "AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW";
 
     public static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ImmutableList.of(
             CREATED,
@@ -68,16 +65,19 @@ public class ChargeExpiryService {
             AUTHORISATION_SUCCESS,
             AWAITING_CAPTURE_REQUEST
     );
+    private final ChargeSweepConfig chargeSweepConfig;
 
     @Inject
     public ChargeExpiryService(ChargeDao chargeDao,
                                ChargeEventDao chargeEventDao,
                                PaymentProviders providers,
-                               Provider<TransactionFlow> transactionFlowProvider) {
+                               Provider<TransactionFlow> transactionFlowProvider,
+                               ConnectorConfiguration config) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.providers = providers;
         this.transactionFlowProvider = transactionFlowProvider;
+        this.chargeSweepConfig = config.getChargeSweepConfig();
     }
 
     public Map<String, Integer> expire(List<ChargeEntity> charges) {
@@ -194,19 +194,13 @@ public class ChargeExpiryService {
     }
 
     private ZonedDateTime getExpiryDateForRegularCharges() {
-        int chargeExpiryWindowSeconds = ONE_HOUR_AND_A_HALF;
-        if (StringUtils.isNotBlank(System.getenv(CHARGE_EXPIRY_WINDOW))) {
-            chargeExpiryWindowSeconds = Integer.parseInt(System.getenv(CHARGE_EXPIRY_WINDOW));
-        }
+        int chargeExpiryWindowSeconds = chargeSweepConfig.getDefaultChargeExpiryThreshold();
         logger.debug("Charge expiry window size in seconds: " + chargeExpiryWindowSeconds);
         return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
     }
 
     private ZonedDateTime getExpiryDateForAwaitingCaptureRequest() {
-        int chargeExpiryWindowSeconds = FORTY_EIGHT_HOURS;
-        if (StringUtils.isNotBlank(System.getenv(AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW))) {
-            chargeExpiryWindowSeconds = Integer.parseInt(System.getenv(AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW));
-        }
+        int chargeExpiryWindowSeconds = chargeSweepConfig.getAwaitingCaptureExpiryThreshold();
         logger.debug("Charge expiry window size for awaiting_delay_capture in seconds: " + chargeExpiryWindowSeconds);
         return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
     }

@@ -2,6 +2,7 @@
 ## POST /v1/tasks/expired-charges-sweep
 
 This starts a task to expire the charges with a default window of 90 minutes. The default value can be overridden by setting an environment variable CHARGE_EXPIRY_WINDOW_SECONDS in seconds. Response of the call will tell you how many charges were successfully expired and how many of them failed for some reason.
+This endpoint also expires charges in AWAITING_CAPTURE_REQUEST status. The default window is 48 hours. It can be overriden by setting an environment variable AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW in seconds.
 
 ### Request example
 

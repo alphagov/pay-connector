@@ -128,3 +128,7 @@ graphiteHost: ${METRICS_HOST:-localhost}
 graphitePort: ${METRICS_PORT:-8092}
 
 xrayEnabled: false
+
+chargesSweepConfig:
+  defaultChargeExpiryThreshold: ${CHARGE_EXPIRY_WINDOW_SECONDS:-5400}
+  awaitingCaptureExpiryThreshold: ${AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW:-172800}
