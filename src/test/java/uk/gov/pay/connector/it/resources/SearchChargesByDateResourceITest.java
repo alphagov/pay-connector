@@ -2,11 +2,16 @@ package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.junit.DropwizardTestContext;
+import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -16,21 +21,27 @@ import java.time.ZonedDateTime;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.Matchers.is;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class SearchChargesByDateResourceITest {
 
     private static final int AMOUNT = 6234;
 
-    @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-    private String accountId = "72332423443245";
+    @DropwizardTestContext
+    private TestContext testContext;
+    private DatabaseTestHelper databaseTestHelper;
+    private String accountId;
     private RestAssuredClient connectorRestApiClient;
 
     @Before
     public void setupGatewayAccount() {
-        app.getDatabaseTestHelper().addGatewayAccount(accountId, "sandbox");
-        connectorRestApiClient = new RestAssuredClient(app.getLocalPort(), accountId);
+        databaseTestHelper = testContext.getDatabaseTestHelper();
+        accountId = String.valueOf(nextLong());
+        databaseTestHelper.addGatewayAccount(accountId, "sandbox");
+        connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
     }
 
     @Test
@@ -213,10 +224,10 @@ public class SearchChargesByDateResourceITest {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = ChargeStatus.CREATED;
-        app.getDatabaseTestHelper().addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, "http://return.com/1", null,
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, "http://return.com/1", null,
                 ServicePaymentReference.of("reference"), createdDate);
-        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
-        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+        databaseTestHelper.addToken(chargeId, "tokenId");
+        databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
         return externalChargeId;
     }
 }
