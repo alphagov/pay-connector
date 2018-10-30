@@ -33,7 +33,6 @@ import javax.ws.rs.client.Invocation.Builder;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import static fj.data.Either.left;
 import static fj.data.Either.reduce;
@@ -54,7 +53,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, String> {
 
     public static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
-    
+
     private final GatewayClient authoriseClient;
     private final GatewayClient cancelClient;
     private final GatewayClient captureClient;
@@ -103,13 +102,11 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
             return GatewayResponse.with(response.left().value());
         } else {
             GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
-            reduce(
-                    authoriseClient.unmarshallResponse(response.right().value(), responseClass)
-                            .bimap(
-                                    responseBuilder::withGatewayError,
-                                    responseBuilder::withResponse
-                            )
-            );
+            authoriseClient.unmarshallResponse(response.right().value(), responseClass)
+                    .bimap(
+                            responseBuilder::withGatewayError,
+                            responseBuilder::withResponse
+                    );
             Optional.ofNullable(response.right().value().getResponseCookies().get(WORLDPAY_MACHINE_COOKIE_NAME))
                     .ifPresent(responseBuilder::withSessionIdentifier);
             return responseBuilder.build();
@@ -161,10 +158,10 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
             Notifications.Builder<String> builder = Notifications.builder();
             WorldpayNotification worldpayNotification = XMLUnmarshaller.unmarshall(payload, WorldpayNotification.class);
             builder.addNotificationFor(
-                worldpayNotification.getTransactionId(),
-                worldpayNotification.getReference(),
-                worldpayNotification.getStatus(),
-                worldpayNotification.getBookingDate().atStartOfDay(ZoneOffset.UTC),
+                    worldpayNotification.getTransactionId(),
+                    worldpayNotification.getReference(),
+                    worldpayNotification.getStatus(),
+                    worldpayNotification.getBookingDate().atStartOfDay(ZoneOffset.UTC),
                     null
             );
 
@@ -181,9 +178,9 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
 
     public static BiFunction<GatewayOrder, Builder, Builder> includeSessionIdentifier() {
         return (order, builder) ->
-            order.getProviderSessionId()
-                    .map(sessionId -> builder.cookie(WORLDPAY_MACHINE_COOKIE_NAME, sessionId))
-                    .orElseGet(() -> builder);
+                order.getProviderSessionId()
+                        .map(sessionId -> builder.cookie(WORLDPAY_MACHINE_COOKIE_NAME, sessionId))
+                        .orElseGet(() -> builder);
     }
 
     private GatewayOrder buildAuthoriseOrder(AuthorisationGatewayRequest request) {

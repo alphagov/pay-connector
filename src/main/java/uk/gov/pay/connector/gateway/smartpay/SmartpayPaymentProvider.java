@@ -2,15 +2,18 @@ package uk.gov.pay.connector.gateway.smartpay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fj.data.Either;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.gateway.BasePaymentProvider;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayOperation;
+import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
+import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -19,35 +22,43 @@ import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
 import uk.gov.pay.connector.usernotification.model.Notifications.Builder;
 
+import javax.inject.Inject;
 import javax.ws.rs.client.Invocation;
-import java.util.EnumMap;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static fj.data.Either.left;
 import static fj.data.Either.right;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
-public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, Pair<String, Boolean>> {
+public class SmartpayPaymentProvider implements PaymentProvider<BaseResponse, Pair<String, Boolean>> {
 
     private final ObjectMapper objectMapper;
+    private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
+    private final GatewayClient client;
 
-    public SmartpayPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, ObjectMapper objectMapper,
-                                   ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator) {
-        super(clients, externalRefundAvailabilityCalculator);
+    @Inject
+    public SmartpayPaymentProvider(ConnectorConfiguration configuration,
+                                   GatewayClientFactory gatewayClientFactory,
+                                   Environment environment,
+                                   ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
+        this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+        client = gatewayClientFactory.createGatewayClient(SMARTPAY, configuration.getGatewayConfigFor(SMARTPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
     }
 
     @Override
     public PaymentGatewayName getPaymentGatewayName() {
-        return PaymentGatewayName.SMARTPAY;
+        return SMARTPAY;
     }
 
     @Override
@@ -57,27 +68,47 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, P
 
     @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
-        return sendReceive(request, buildAuthoriseOrderFor(), SmartpayAuthorisationResponse.class, extractResponseIdentifier());
+        Either<GatewayError, GatewayClient.Response> response = client.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrderFor(request));
+        return getGatewayResponse(response, SmartpayAuthorisationResponse.class);
+    }
+
+    private GatewayResponse<BaseResponse> getGatewayResponse(Either<GatewayError, GatewayClient.Response> response, Class<? extends BaseResponse> responseClass) {
+        if (response.isLeft()) {
+            return GatewayResponse.with(response.left().value());
+        } else {
+            GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
+            client.unmarshallResponse(response.right().value(), responseClass)
+                    .bimap(
+                            responseBuilder::withGatewayError,
+                            responseBuilder::withResponse
+                    );
+            extractResponseIdentifier().apply(response.right().value()).ifPresent(responseBuilder::withSessionIdentifier);
+            return responseBuilder.build();
+        }
     }
 
     @Override
     public GatewayResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
-        return sendReceive(request, build3dsResponseAuthOrderFor(), SmartpayAuthorisationResponse.class, extractResponseIdentifier());
+        Either<GatewayError, GatewayClient.Response> response = client.postRequestFor(null, request.getGatewayAccount(), build3dsResponseAuthOrderFor(request));
+        return getGatewayResponse(response, SmartpayAuthorisationResponse.class);
     }
 
     @Override
     public GatewayResponse capture(CaptureGatewayRequest request) {
-        return sendReceive(request, buildCaptureOrderFor(), SmartpayCaptureResponse.class, extractResponseIdentifier());
+        Either<GatewayError, GatewayClient.Response> response = client.postRequestFor(null, request.getGatewayAccount(), buildCaptureOrderFor(request));
+        return getGatewayResponse(response, SmartpayCaptureResponse.class);
     }
 
     @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
-        return sendReceive(request, buildRefundOrderFor(), SmartpayRefundResponse.class, extractResponseIdentifier());
+        Either<GatewayError, GatewayClient.Response> response = client.postRequestFor(null, request.getGatewayAccount(), buildRefundOrderFor(request));
+        return getGatewayResponse(response, SmartpayRefundResponse.class);
     }
 
     @Override
     public GatewayResponse cancel(CancelGatewayRequest request) {
-        return sendReceive(request, buildCancelOrderFor(), SmartpayCancelResponse.class, extractResponseIdentifier());
+        Either<GatewayError, GatewayClient.Response> response = client.postRequestFor(null, request.getGatewayAccount(), buildCancelOrderFor(request));
+        return getGatewayResponse(response, SmartpayCancelResponse.class);
 
     }
 
@@ -136,46 +167,44 @@ public class SmartpayPaymentProvider extends BasePaymentProvider<BaseResponse, P
         return (order, builder) -> builder;
     }
 
-    private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor() {
-        return request -> {
-            SmartpayOrderRequestBuilder smartpayOrderRequestBuilder = request.getGatewayAccount().isRequires3ds() ?
-                    SmartpayOrderRequestBuilder.aSmartpay3dsRequiredOrderRequestBuilder() : SmartpayOrderRequestBuilder.aSmartpayAuthoriseOrderRequestBuilder();
+    private GatewayOrder buildAuthoriseOrderFor(AuthorisationGatewayRequest request) {
+        SmartpayOrderRequestBuilder smartpayOrderRequestBuilder = request.getGatewayAccount().isRequires3ds() ?
+                SmartpayOrderRequestBuilder.aSmartpay3dsRequiredOrderRequestBuilder() : SmartpayOrderRequestBuilder.aSmartpayAuthoriseOrderRequestBuilder();
 
-            return smartpayOrderRequestBuilder
-                    .withMerchantCode(getMerchantCode(request))
-                    .withPaymentPlatformReference(request.getChargeExternalId())
-                    .withDescription(request.getDescription())
-                    .withAmount(request.getAmount())
-                    .withAuthorisationDetails(request.getAuthCardDetails())
-                    .build();
-        };
+        return smartpayOrderRequestBuilder
+                .withMerchantCode(getMerchantCode(request))
+                .withPaymentPlatformReference(request.getChargeExternalId())
+                .withDescription(request.getDescription())
+                .withAmount(request.getAmount())
+                .withAuthorisationDetails(request.getAuthCardDetails())
+                .build();
     }
 
-    private Function<Auth3dsResponseGatewayRequest, GatewayOrder> build3dsResponseAuthOrderFor() {
-        return request -> SmartpayOrderRequestBuilder.aSmartpayAuthorise3dsOrderRequestBuilder()
+    private GatewayOrder build3dsResponseAuthOrderFor(Auth3dsResponseGatewayRequest request) {
+        return SmartpayOrderRequestBuilder.aSmartpayAuthorise3dsOrderRequestBuilder()
                 .withPaResponse(request.getAuth3DsDetails().getPaResponse())
                 .withMd(request.getAuth3DsDetails().getMd())
                 .withMerchantCode(getMerchantCode(request))
                 .build();
     }
 
-    private Function<CaptureGatewayRequest, GatewayOrder> buildCaptureOrderFor() {
-        return request -> SmartpayOrderRequestBuilder.aSmartpayCaptureOrderRequestBuilder()
+    private GatewayOrder buildCaptureOrderFor(CaptureGatewayRequest request) {
+        return SmartpayOrderRequestBuilder.aSmartpayCaptureOrderRequestBuilder()
                 .withTransactionId(request.getTransactionId())
                 .withMerchantCode(getMerchantCode(request))
                 .withAmount(request.getAmount())
                 .build();
     }
 
-    private Function<CancelGatewayRequest, GatewayOrder> buildCancelOrderFor() {
-        return request -> SmartpayOrderRequestBuilder.aSmartpayCancelOrderRequestBuilder()
+    private GatewayOrder buildCancelOrderFor(CancelGatewayRequest request) {
+        return SmartpayOrderRequestBuilder.aSmartpayCancelOrderRequestBuilder()
                 .withTransactionId(request.getTransactionId())
                 .withMerchantCode(getMerchantCode(request))
                 .build();
     }
 
-    private Function<RefundGatewayRequest, GatewayOrder> buildRefundOrderFor() {
-        return request -> SmartpayOrderRequestBuilder.aSmartpayRefundOrderRequestBuilder()
+    private GatewayOrder buildRefundOrderFor(RefundGatewayRequest request) {
+        return SmartpayOrderRequestBuilder.aSmartpayRefundOrderRequestBuilder()
                 .withReference(request.getReference())
                 .withTransactionId(request.getTransactionId())
                 .withMerchantCode(getMerchantCode(request))

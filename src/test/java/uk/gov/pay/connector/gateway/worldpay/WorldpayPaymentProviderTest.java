@@ -55,6 +55,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 
 import static fj.data.Either.left;
@@ -126,7 +127,7 @@ public class WorldpayPaymentProviderTest {
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockClientFactory.createWithDropwizardClient(
-                eq(PaymentGatewayName.WORLDPAY), any(GatewayOperation.class), any(MetricRegistry.class))
+                eq(PaymentGatewayName.WORLDPAY), any(Optional.class), any(MetricRegistry.class))
         )
                 .thenReturn(mockClient);
         

@@ -15,11 +15,13 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
 import javax.ws.rs.client.Invocation.Builder;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GatewayClientFactoryTest {
@@ -37,10 +39,10 @@ public class GatewayClientFactoryTest {
         Builder mockBuilder = mock(Builder.class);
         BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier = (GatewayOrder o, Builder b) -> mockBuilder;
 
-        GatewayClient gatewayClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, GatewayOperation.AUTHORISE,
+        GatewayClient gatewayClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, AUTHORISE,
                 gatewayUrlMap, sessionIdentifier, mockMetricRegistry);
 
         assertNotNull(gatewayClient);
-        verify(mockClientFactory).createWithDropwizardClient(PaymentGatewayName.WORLDPAY, GatewayOperation.AUTHORISE, mockMetricRegistry);
+        verify(mockClientFactory).createWithDropwizardClient(PaymentGatewayName.WORLDPAY, Optional.of(AUTHORISE), mockMetricRegistry);
     }
 }

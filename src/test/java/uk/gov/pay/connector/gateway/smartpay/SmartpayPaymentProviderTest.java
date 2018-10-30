@@ -7,23 +7,21 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import fj.data.Either;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.ClientFactory;
-import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.GatewayOperation;
-import uk.gov.pay.connector.gateway.GatewayOperationClientBuilder;
-import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -31,7 +29,6 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
@@ -47,9 +44,7 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.EnumMap;
-import java.util.Map;
-import java.util.function.BiFunction;
+import java.util.Optional;
 
 import static com.google.common.io.Resources.getResource;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -64,7 +59,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
@@ -78,51 +72,36 @@ public class SmartpayPaymentProviderTest {
 
     private SmartpayPaymentProvider provider;
     private GatewayClientFactory gatewayClientFactory;
-    private Map<String, String> urlMap = ImmutableMap.of(TEST.toString(), "http://smartpay.url");
 
     @Mock
     private Client mockClient;
-    @Mock
-    private MetricRegistry mockMetricRegistry;
-    @Mock
-    private Histogram mockHistogram;
-    @Mock
-    private BiFunction<GatewayOrder, Builder, Builder> mockSessionIdentifier;
     @Mock
     private ClientFactory mockClientFactory;
     @Mock
     private GatewayAccountEntity mockGatewayAccountEntity;
     @Mock
-    private ExternalRefundAvailabilityCalculator mockExternalRefundAvailabilityCalculator;
+    private ConnectorConfiguration configuration;
+    @Mock
+    private GatewayConfig gatewayConfig;
+    @Mock
+    private Environment environment;
+    @Mock
+    private MetricRegistry metricRegistry;
 
     @Before
     public void setup() {
         gatewayClientFactory = new GatewayClientFactory(mockClientFactory);
 
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
-        when(mockClientFactory.createWithDropwizardClient(eq(PaymentGatewayName.SMARTPAY), any(GatewayOperation.class), any(MetricRegistry.class)))
+        when(mockClientFactory.createWithDropwizardClient(eq(PaymentGatewayName.SMARTPAY), any(Optional.class), any(MetricRegistry.class)))
                 .thenReturn(mockClient);
+        when(configuration.getGatewayConfigFor(PaymentGatewayName.SMARTPAY)).thenReturn(gatewayConfig);
+        when(gatewayConfig.getUrls()).thenReturn(ImmutableMap.of(TEST.toString(), "http://smartpay.url"));
+        when(environment.metrics()).thenReturn(metricRegistry);
+        when(metricRegistry.histogram(anyString())).thenReturn(mock(Histogram.class));
 
         mockSmartpaySuccessfulOrderSubmitResponse();
 
-        GatewayClient authClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.SMARTPAY, GatewayOperation.AUTHORISE,
-                urlMap, mockSessionIdentifier, mockMetricRegistry);
-        GatewayClient cancelClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.SMARTPAY, GatewayOperation.CANCEL,
-                urlMap, mockSessionIdentifier, mockMetricRegistry);
-        GatewayClient refundClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.SMARTPAY, GatewayOperation.REFUND,
-                urlMap, mockSessionIdentifier, mockMetricRegistry);
-        GatewayClient captureClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.SMARTPAY, GatewayOperation.CAPTURE,
-                urlMap, mockSessionIdentifier, mockMetricRegistry);
-
-
-        EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()
-                .authClient(authClient)
-                .captureClient(captureClient)
-                .cancelClient(cancelClient)
-                .refundClient(refundClient)
-                .build();
-
-        provider = new SmartpayPaymentProvider(gatewayClients, new ObjectMapper(), mockExternalRefundAvailabilityCalculator);
+        provider = new SmartpayPaymentProvider(configuration, gatewayClientFactory, environment, new ObjectMapper());
     }
 
     @Test
@@ -252,13 +231,6 @@ public class SmartpayPaymentProviderTest {
         assertThat(provider.verifyNotification(mock(Notification.class), mockGatewayAccountEntity), is(true));
     }
 
-    @Test
-    public void shouldReturnExternalRefundAvailability() {
-        ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
-        when(mockExternalRefundAvailabilityCalculator.calculate(mockChargeEntity)).thenReturn(EXTERNAL_AVAILABLE);
-        MatcherAssert.assertThat(provider.getExternalChargeRefundAvailability(mockChargeEntity), is(EXTERNAL_AVAILABLE));
-    }
-
     private GatewayAccountEntity aServiceAccount() {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
         gatewayAccount.setId(1L);
@@ -295,7 +267,6 @@ public class SmartpayPaymentProviderTest {
         Builder mockBuilder = mock(Builder.class);
         when(mockTarget.request()).thenReturn(mockBuilder);
         when(mockBuilder.header(anyString(), any(Object.class))).thenReturn(mockBuilder);
-        when(mockSessionIdentifier.apply(any(GatewayOrder.class), eq(mockBuilder))).thenReturn(mockBuilder);
 
         Response response = mock(Response.class);
         when(response.readEntity(String.class)).thenReturn(responsePayload);
