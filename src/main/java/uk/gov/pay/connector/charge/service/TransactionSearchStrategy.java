@@ -23,6 +23,7 @@ import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
 import static javax.ws.rs.HttpMethod.GET;
+import static javax.ws.rs.HttpMethod.POST;
 import static uk.gov.pay.connector.charge.model.TransactionResponse.aTransactionResponseBuilder;
 
 public class TransactionSearchStrategy extends AbstractSearchStrategy<Transaction, ChargeResponse> implements SearchStrategy {
@@ -83,6 +84,13 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
                 .withLink("refunds", GET, uriInfo.getBaseUriBuilder()
                         .path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
                         .build(transaction.getGatewayAccountId(), transaction.getExternalId()));
+        
+        if (ChargeStatus.AWAITING_CAPTURE_REQUEST.getValue().equals(transaction.getStatus())) {
+            transactionResponseBuilder
+                    .withLink("capture", POST, uriInfo.getBaseUriBuilder()
+                    .path("/v1/api/accounts/{accountId}/charges/{chargeId}/capture")
+                    .build(transaction.getGatewayAccountId(), transaction.getExternalId()));
+        }
         if (refundSummary != null) {
             transactionResponseBuilder.withRefunds(refundSummary);
         }

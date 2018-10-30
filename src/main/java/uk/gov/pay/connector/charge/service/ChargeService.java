@@ -170,6 +170,10 @@ public class ChargeService {
                 .withAuth3dsData(auth3dsData)
                 .withLink("self", GET, selfUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()));
+        
+        if (ChargeStatus.AWAITING_CAPTURE_REQUEST.getValue().equals(chargeEntity.getStatus())) {
+            builderOfResponse.withLink("capture", POST, captureUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()));
+        }
 
         chargeEntity.getCorporateSurcharge().ifPresent(corporateSurcharge ->
                 builderOfResponse.withCorporateCardSurcharge(corporateSurcharge)
@@ -232,6 +236,12 @@ public class ChargeService {
     private URI refundsUriFor(UriInfo uriInfo, Long accountId, String chargeId) {
         return uriInfo.getBaseUriBuilder()
                 .path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
+                .build(accountId, chargeId);
+    }
+    
+    private URI captureUriFor(UriInfo uriInfo, Long accountId, String chargeId) {
+        return uriInfo.getBaseUriBuilder()
+                .path("/v1/api/accounts/{accountId}/charges/{chargeId}/capture")
                 .build(accountId, chargeId);
     }
 
