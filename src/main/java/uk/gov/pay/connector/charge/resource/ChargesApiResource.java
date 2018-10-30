@@ -8,7 +8,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.charge.model.CardHolderName;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
@@ -78,11 +77,9 @@ public class ChargesApiResource {
     private static final String ACCOUNT_ID = "accountId";
     private static final String PAGE = "page";
     private static final String DISPLAY_SIZE = "display_size";
-    private static final Set<String> CHARGE_REQUEST_KEYS_THAT_MAY_HAVE_PII = Collections.singleton("description");
     private static final Logger logger = LoggerFactory.getLogger(ChargesApiResource.class);
     public static final int MIN_AMOUNT = 1;
     public static final int MAX_AMOUNT = 10_000_000;
-    private final ChargeDao chargeDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final ChargeService chargeService;
     private final ConnectorConfiguration configuration;
@@ -90,10 +87,9 @@ public class ChargesApiResource {
     private SearchService searchService;
 
     @Inject
-    public ChargesApiResource(ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao,
+    public ChargesApiResource(GatewayAccountDao gatewayAccountDao,
                               ChargeService chargeService, SearchService searchService,
                               ChargeExpiryService chargeExpiryService, ConnectorConfiguration configuration) {
-        this.chargeDao = chargeDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
         this.searchService = searchService;
