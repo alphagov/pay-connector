@@ -26,9 +26,12 @@ import uk.gov.pay.connector.util.TrustStoreLoader;
 import javax.inject.Inject;
 import javax.net.ssl.HostnameVerifier;
 import javax.ws.rs.client.Client;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
+import static org.glassfish.jersey.apache.connector.ApacheClientProperties.CONNECTION_MANAGER;
+import static org.glassfish.jersey.client.ClientProperties.READ_TIMEOUT;
 
 public class ClientFactory {
     private final Environment environment;
@@ -41,14 +44,29 @@ public class ClientFactory {
     }
 
     public Client createWithDropwizardClient(PaymentGatewayName gateway, GatewayOperation operation, MetricRegistry metricRegistry) {
+        return createWithDropwizardClient(gateway, Optional.of(operation), metricRegistry);
+    }
+
+    public Client createWithDropwizardClient(PaymentGatewayName gateway, MetricRegistry metricRegistry) {
+        return createWithDropwizardClient(gateway, Optional.empty(), metricRegistry);
+    }
+
+    private Client createWithDropwizardClient(PaymentGatewayName gateway, Optional<GatewayOperation> operation, MetricRegistry metricRegistry) {
         JerseyClientConfiguration clientConfiguration = conf.getClientConfiguration();
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
                 .using(new ApacheConnectorProvider())
-                .using(clientConfiguration)
-                .withProperty(ClientProperties.READ_TIMEOUT, getReadTimeoutInMillis(operation, gateway))
-                .withProperty(ApacheClientProperties.CONNECTION_MANAGER, createConnectionManager(gateway.getName(), operation.getConfigKey(), metricRegistry));
+                .using(clientConfiguration);
 
-        // optionally set proxy; see comment below why this has to be done
+        if (operation.isPresent()) {
+            defaultClientBuilder
+                    .withProperty(READ_TIMEOUT, getReadTimeoutInMillis(operation.get(), gateway))
+                    .withProperty(CONNECTION_MANAGER, createConnectionManager(gateway.getName(), operation.get().getConfigKey(), metricRegistry));
+        } else {
+            defaultClientBuilder
+                    .withProperty(READ_TIMEOUT, getDefaultTimeout())
+                    .withProperty(CONNECTION_MANAGER, createConnectionManager(gateway.getName(), "all", metricRegistry));
+        }
+
         if (conf.getCustomJerseyClient().isProxyEnabled()) {
             defaultClientBuilder
                     .withProperty(ClientProperties.PROXY_URI, proxyUrl(clientConfiguration.getProxyConfiguration()));
@@ -56,9 +74,9 @@ public class ClientFactory {
 
         Client client = defaultClientBuilder.build(gateway.getName());
         client.register(RestClientLoggingFilter.class);
-        
+
         if (conf.isXrayEnabled()) client.register(XRayHttpClientFilter.class);
-        
+
         return client;
     }
 
@@ -67,6 +85,10 @@ public class ClientFactory {
         if (overrides != null && overrides.getReadTimeout() != null) {
             return (int) overrides.getReadTimeout().toMilliseconds();
         }
+        return getDefaultTimeout();
+    }
+
+    private int getDefaultTimeout() {
         return (int) conf.getCustomJerseyClient().getReadTimeout().toMilliseconds();
     }
 
@@ -88,7 +110,7 @@ public class ClientFactory {
                                                 .newInstance()
                                                 .trustStore(TrustStoreLoader.getTrustStore())
                                                 .createSSLContext(),
-                                        new String[] { "TLSv1.2" },
+                                        new String[]{"TLSv1.2"},
                                         null,
                                         (HostnameVerifier) null
                                 )

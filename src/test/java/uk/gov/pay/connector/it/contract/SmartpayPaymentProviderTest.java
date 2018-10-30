@@ -5,6 +5,7 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import io.dropwizard.setup.Environment;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assume;
 import org.junit.Before;
@@ -12,11 +13,13 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayOperation;
-import uk.gov.pay.connector.gateway.GatewayOperationClientBuilder;
+import uk.gov.pay.connector.gateway.GatewayClientFactory;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
@@ -36,8 +39,8 @@ import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import javax.ws.rs.client.Client;
 import java.io.IOException;
 import java.net.URL;
-import java.util.EnumMap;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -47,6 +50,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -200,17 +204,16 @@ public class SmartpayPaymentProviderTest {
         return response;
     }
 
-    private PaymentProvider getSmartpayPaymentProvider() throws Exception {
+    private PaymentProvider getSmartpayPaymentProvider() {
         Client client = TestClientFactory.createJerseyClient();
         GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
                 SmartpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
-        EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()
-                .authClient(gatewayClient)
-                .captureClient(gatewayClient)
-                .cancelClient(gatewayClient)
-                .refundClient(gatewayClient)
-                .build();
-        return new SmartpayPaymentProvider(gatewayClients, new ObjectMapper(), defaultExternalRefundAvailabilityCalculator);
+        GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
+        when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(Map.class), any(BiFunction.class), null)).thenReturn(gatewayClient);
+        ConnectorConfiguration configuration = mock(ConnectorConfiguration.class);
+        GatewayConfig gatewayConfig = mock(GatewayConfig.class);
+        when(configuration.getGatewayConfigFor(PaymentGatewayName.SMARTPAY)).thenReturn(gatewayConfig);
+        return new SmartpayPaymentProvider(configuration, gatewayClientFactory, mock(Environment.class), new ObjectMapper());
     }
 
     private String notificationPayloadForTransaction(String transactionId) throws IOException {
