@@ -163,51 +163,6 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldVerifyNotificationSignature() {
-        when(mockGatewayAccountEntity.getCredentials()).thenReturn(Collections.singletonMap(CREDENTIALS_SHA_OUT_PASSPHRASE, "passphrase"));
-
-        when(mockNotification.getPayload()).thenReturn(Optional.of(Arrays.asList(
-                new BasicNameValuePair("key1", "value1"),
-                new BasicNameValuePair("SHASIGN", "signature")
-        )));
-
-        when(mockSignatureGenerator.sign(Collections.singletonList(new BasicNameValuePair
-                ("key1", "value1")), "passphrase")).thenReturn("signature");
-
-        assertThat(provider.verifyNotification(mockNotification, mockGatewayAccountEntity), is(true));
-    }
-
-    @Test
-    public void shouldVerifyNotificationSignatureIgnoringCase() {
-        when(mockGatewayAccountEntity.getCredentials()).thenReturn(Collections.singletonMap(CREDENTIALS_SHA_OUT_PASSPHRASE, "passphrase"));
-
-        when(mockNotification.getPayload()).thenReturn(Optional.of(Arrays.asList(
-                new BasicNameValuePair("key1", "value1"),
-                new BasicNameValuePair("SHASIGN", "SIGNATURE")
-        )));
-
-        when(mockSignatureGenerator.sign(Collections.singletonList(new BasicNameValuePair
-                ("key1", "value1")), "passphrase")).thenReturn("signature");
-
-        assertThat(provider.verifyNotification(mockNotification, mockGatewayAccountEntity), is(true));
-    }
-
-    @Test
-    public void shouldNotVerifyNotificationIfWrongSignature() {
-        when(mockGatewayAccountEntity.getCredentials()).thenReturn(Collections.singletonMap(CREDENTIALS_SHA_OUT_PASSPHRASE, "passphrase"));
-
-        when(mockNotification.getPayload()).thenReturn(Optional.of(Arrays.asList(
-                new BasicNameValuePair("key1", "value1"),
-                new BasicNameValuePair("SHASIGN", "signature")
-        )));
-
-        when(mockSignatureGenerator.sign(Collections.singletonList(new BasicNameValuePair
-                ("key1", "value1")), "passphrase")).thenReturn("wrong signature");
-
-        assertThat(provider.verifyNotification(mockNotification, mockGatewayAccountEntity), is(false));
-    }
-
-    @Test
     public void shouldNotVerifyNotificationIfEmptyPayload() {
         when(mockNotification.getPayload()).thenReturn(Optional.empty());
 
@@ -232,12 +187,4 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
         assertThat(notification.getStatus(), is(NOTIFICATION_STATUS));
         assertThat(notification.getGatewayEventDate(), IsNull.nullValue());
     }
-
-    @Test
-    public void shouldReturnExternalRefundAvailability() {
-        ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
-        when(mockExternalRefundAvailabilityCalculator.calculate(mockChargeEntity)).thenReturn(EXTERNAL_AVAILABLE);
-        assertThat(provider.getExternalChargeRefundAvailability(mockChargeEntity), is(EXTERNAL_AVAILABLE));
-    }
-
 }

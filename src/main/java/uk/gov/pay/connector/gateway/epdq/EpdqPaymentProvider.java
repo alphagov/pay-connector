@@ -2,16 +2,18 @@ package uk.gov.pay.connector.gateway.epdq;
 
 import com.codahale.metrics.MetricRegistry;
 import fj.data.Either;
+import io.dropwizard.setup.Environment;
 import org.apache.http.NameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.gateway.BasePaymentProvider;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayOperation;
+import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
@@ -27,23 +29,30 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
 
+import javax.inject.Inject;
 import javax.ws.rs.client.Invocation;
 import java.nio.charset.Charset;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static fj.data.Either.left;
+import static fj.data.Either.reduce;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
+import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
+import static uk.gov.pay.connector.gateway.GatewayOperation.CANCEL;
+import static uk.gov.pay.connector.gateway.GatewayOperation.CAPTURE;
+import static uk.gov.pay.connector.gateway.GatewayOperation.REFUND;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.SHASIGN_KEY;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdq3DsAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
@@ -57,7 +66,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 
-public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, String> {
+public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EpdqPaymentProvider.class);
 
@@ -78,13 +87,24 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
     private final SignatureGenerator signatureGenerator;
     private final String frontendUrl;
     private final MetricRegistry metricRegistry;
+    private final GatewayClient authoriseClient;
+    private final GatewayClient cancelClient;
+    private final GatewayClient captureClient;
+    private final GatewayClient refundClient;
+    private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
-    public EpdqPaymentProvider(EnumMap<GatewayOperation, GatewayClient> clients, SignatureGenerator signatureGenerator,
-                               ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator, String frontendUrl, MetricRegistry metricRegistry) {
-        super(clients, externalRefundAvailabilityCalculator);
-        this.signatureGenerator = signatureGenerator;
-        this.frontendUrl = frontendUrl;
-        this.metricRegistry = metricRegistry;
+    @Inject
+    public EpdqPaymentProvider(ConnectorConfiguration configuration,
+                               GatewayClientFactory gatewayClientFactory,
+                               Environment environment) {
+        authoriseClient = gatewayClientFactory.createGatewayClient(EPDQ, AUTHORISE, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
+        cancelClient = gatewayClientFactory.createGatewayClient(EPDQ, CANCEL, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
+        captureClient = gatewayClientFactory.createGatewayClient(EPDQ, CAPTURE, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
+        refundClient = gatewayClientFactory.createGatewayClient(EPDQ, REFUND, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
+        this.signatureGenerator = new EpdqSha512SignatureGenerator();
+        this.frontendUrl = configuration.getLinks().getFrontendUrl();
+        this.metricRegistry = environment.metrics();
+        this.externalRefundAvailabilityCalculator = new EpdqExternalRefundAvailabilityCalculator();
     }
 
     @Override
@@ -99,29 +119,51 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
 
     @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
-        return sendReceive(ROUTE_FOR_NEW_ORDER, request, buildAuthoriseOrderFor(frontendUrl), EpdqAuthorisationResponse.class, extractResponseIdentifier());
+        Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(ROUTE_FOR_NEW_ORDER, request.getGatewayAccount(), buildAuthoriseOrder(request, frontendUrl));
+        return getGatewayResponse(response, EpdqAuthorisationResponse.class);
+    }
+
+    private GatewayResponse<BaseResponse> getGatewayResponse(Either<GatewayError, GatewayClient.Response> response, Class<? extends BaseResponse> responseClass) {
+        if (response.isLeft()) {
+            return GatewayResponse.with(response.left().value());
+        } else {
+            GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
+            reduce(
+                    authoriseClient.unmarshallResponse(response.right().value(), responseClass)
+                            .bimap(
+                                    responseBuilder::withGatewayError,
+                                    responseBuilder::withResponse
+                            )
+            );
+            extractResponseIdentifier().apply(response.right().value()).ifPresent(responseBuilder::withSessionIdentifier);
+            return responseBuilder.build();
+        }
     }
 
     @Override
     public GatewayResponse capture(CaptureGatewayRequest request) {
-        return sendReceive(ROUTE_FOR_MAINTENANCE_ORDER, request, buildCaptureOrderFor(), EpdqCaptureResponse.class, extractResponseIdentifier());
+        Either<GatewayError, GatewayClient.Response> response = captureClient.postRequestFor(ROUTE_FOR_MAINTENANCE_ORDER, request.getGatewayAccount(), buildCaptureOrder(request));
+        return getGatewayResponse(response, EpdqCaptureResponse.class);
     }
 
     @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
-        return sendReceive(ROUTE_FOR_MAINTENANCE_ORDER, request, buildRefundOrderFor(), EpdqRefundResponse.class, extractResponseIdentifier());
+        Either<GatewayError, GatewayClient.Response> response = refundClient.postRequestFor(ROUTE_FOR_MAINTENANCE_ORDER, request.getGatewayAccount(), buildRefundOrder(request));
+        return getGatewayResponse(response, EpdqRefundResponse.class);
     }
 
     @Override
     public GatewayResponse cancel(CancelGatewayRequest request) {
-        return sendReceive(ROUTE_FOR_MAINTENANCE_ORDER, request, buildCancelOrderFor(), EpdqCancelResponse.class, extractResponseIdentifier());
+        Either<GatewayError, GatewayClient.Response> response = cancelClient.postRequestFor(ROUTE_FOR_MAINTENANCE_ORDER, request.getGatewayAccount(), buildCancelOrder(request));
+        return getGatewayResponse(response, EpdqCancelResponse.class);
     }
 
     @Override
     public GatewayResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
-        GatewayResponse<EpdqAuthorisationResponse> gatewayResponse = sendReceive(ROUTE_FOR_QUERY_ORDER, request, buildQueryOrderRequestFor(), EpdqAuthorisationResponse.class, extractResponseIdentifier());
+        Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, request.getGatewayAccount(), buildQueryOrderRequestFor().apply(request));
+        GatewayResponse<BaseResponse> gatewayResponse = getGatewayResponse(response, EpdqAuthorisationResponse.class);
 
-        BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse().map(epdqStatus -> epdqStatus.authoriseStatus()).orElse(BaseAuthoriseResponse.AuthoriseStatus.ERROR);
+        BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse().map(epdqStatus -> ((EpdqAuthorisationResponse) epdqStatus).authoriseStatus()).orElse(BaseAuthoriseResponse.AuthoriseStatus.ERROR);
         final Auth3dsDetails.Auth3dsResult auth3DResult = request.getAuth3DsDetails().getAuth3DsResult() == null ?
                 Auth3dsDetails.Auth3dsResult.ERROR : // we treat no result from frontend as an error
                 request.getAuth3DsDetails().getAuth3DsResult();
@@ -198,7 +240,7 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
      * The outgoing response is error biased. Meaning, we have to make sure that the authorisation success can only happen if both frontend as well as epdq confirms its a success.
      * In all other combinations it is not authorised and the frontend error state take precedence followed by gateway error state for the resulting status.
      */
-    private GatewayResponse reconstructErrorBiasedGatewayResponse(GatewayResponse<EpdqAuthorisationResponse> gatewayResponse, BaseAuthoriseResponse.AuthoriseStatus authoriseStatus, Auth3dsDetails.Auth3dsResult auth3DResult) {
+    private GatewayResponse reconstructErrorBiasedGatewayResponse(GatewayResponse<BaseResponse> gatewayResponse, BaseAuthoriseResponse.AuthoriseStatus authoriseStatus, Auth3dsDetails.Auth3dsResult auth3DResult) {
         GatewayResponse.GatewayResponseBuilder<EpdqAuthorisationResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         if (auth3DResult.equals(Auth3dsDetails.Auth3dsResult.ERROR)) {
             return responseBuilder.withGatewayError(GatewayError.baseError(format("epdq.authorise-3ds.result.mismatch expected=%s, actual=%s", Auth3dsDetails.Auth3dsResult.ERROR, authoriseStatus.name())))
@@ -232,30 +274,27 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
                 .build();
     }
 
-    private Function<AuthorisationGatewayRequest, GatewayOrder> buildAuthoriseOrderFor(String frontendUrl) {
-        return request -> {
-            EpdqOrderRequestBuilder epdqOrderRequestBuilder =
-                    request.getGatewayAccount().isRequires3ds() ?
-                            anEpdq3DsAuthoriseOrderRequestBuilder(frontendUrl) :
-                            anEpdqAuthoriseOrderRequestBuilder();
+    private GatewayOrder buildAuthoriseOrder(AuthorisationGatewayRequest request, String frontendUrl) {
+        EpdqOrderRequestBuilder epdqOrderRequestBuilder =
+                request.getGatewayAccount().isRequires3ds() ?
+                        anEpdq3DsAuthoriseOrderRequestBuilder(frontendUrl) :
+                        anEpdqAuthoriseOrderRequestBuilder();
 
-
-            return epdqOrderRequestBuilder
-                    .withOrderId(request.getChargeExternalId())
-                    .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
-                    .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
-                            CREDENTIALS_SHA_IN_PASSPHRASE))
-                    .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
-                    .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                    .withDescription(request.getDescription())
-                    .withAmount(request.getAmount())
-                    .withAuthorisationDetails(request.getAuthCardDetails())
-                    .build();
-        };
+        return epdqOrderRequestBuilder
+                .withOrderId(request.getChargeExternalId())
+                .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
+                .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
+                        CREDENTIALS_SHA_IN_PASSPHRASE))
+                .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withDescription(request.getDescription())
+                .withAmount(request.getAmount())
+                .withAuthorisationDetails(request.getAuthCardDetails())
+                .build();
     }
 
-    private Function<CaptureGatewayRequest, GatewayOrder> buildCaptureOrderFor() {
-        return request -> anEpdqCaptureOrderRequestBuilder()
+    private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {
+        return anEpdqCaptureOrderRequestBuilder()
                 .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
                 .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
                 .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
@@ -265,8 +304,8 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
                 .build();
     }
 
-    private Function<CancelGatewayRequest, GatewayOrder> buildCancelOrderFor() {
-        return request -> anEpdqCancelOrderRequestBuilder()
+    private GatewayOrder buildCancelOrder(CancelGatewayRequest request) {
+        return anEpdqCancelOrderRequestBuilder()
                 .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
                 .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
                 .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
@@ -276,8 +315,8 @@ public class EpdqPaymentProvider extends BasePaymentProvider<BaseResponse, Strin
                 .build();
     }
 
-    private Function<RefundGatewayRequest, GatewayOrder> buildRefundOrderFor() {
-        return request -> anEpdqRefundOrderRequestBuilder()
+    private GatewayOrder buildRefundOrder(RefundGatewayRequest request) {
+        return anEpdqRefundOrderRequestBuilder()
                 .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
                 .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
                 .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(

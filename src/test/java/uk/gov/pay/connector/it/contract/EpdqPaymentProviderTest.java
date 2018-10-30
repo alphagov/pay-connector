@@ -4,47 +4,52 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
+import io.dropwizard.setup.Environment;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayClient;
+import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
-import uk.gov.pay.connector.gateway.GatewayOperationClientBuilder;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
 import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCaptureResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqRefundResponse;
+import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
-import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.TestClientFactory;
 
 import javax.ws.rs.client.Client;
 import java.io.IOException;
 import java.net.URL;
-import java.util.EnumMap;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -68,6 +73,8 @@ public class EpdqPaymentProviderTest {
     private MetricRegistry mockMetricRegistry;
     private Histogram mockHistogram;
     private Counter mockCounter;
+    @Mock
+    private Environment environment;
 
     @Test
     public void shouldAuthoriseSuccessfully() {
@@ -171,13 +178,17 @@ public class EpdqPaymentProviderTest {
         Client client = TestClientFactory.createJerseyClient();
         GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
                 EpdqPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
-        EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder.builder()
-                .authClient(gatewayClient)
-                .captureClient(gatewayClient)
-                .cancelClient(gatewayClient)
-                .refundClient(gatewayClient)
-                .build();
-        return new EpdqPaymentProvider(gatewayClients, new EpdqSha512SignatureGenerator(), new EpdqExternalRefundAvailabilityCalculator(), "http://frontendUrl", mockMetricRegistry);
+        ConnectorConfiguration configuration = mock(ConnectorConfiguration.class);
+        LinksConfig linksConfig = mock(LinksConfig.class);
+        when(configuration.getLinks()).thenReturn(linksConfig);
+        when(linksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
+        
+        GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
+        when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any(Map.class), any(BiFunction.class), any())).thenReturn(gatewayClient);
+        
+        when(environment.metrics()).thenReturn(mockMetricRegistry);
+        
+        return new EpdqPaymentProvider(configuration, gatewayClientFactory, environment);
     }
 
     private static AuthorisationGatewayRequest buildAuthorisationRequest(ChargeEntity chargeEntity) {

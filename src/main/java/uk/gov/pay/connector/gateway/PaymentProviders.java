@@ -42,7 +42,8 @@ public class PaymentProviders<T extends BaseResponse> {
                             GatewayClientFactory gatewayClientFactory, 
                             ObjectMapper objectMapper, 
                             Environment environment,
-                            WorldpayPaymentProvider worldpayPaymentProvider) {
+                            WorldpayPaymentProvider worldpayPaymentProvider,
+                            EpdqPaymentProvider epdqPaymentProvider) {
         this.gatewayClientFactory = gatewayClientFactory;
         this.environment = environment;
         this.config = config;
@@ -50,7 +51,7 @@ public class PaymentProviders<T extends BaseResponse> {
         this.paymentProviders.put(PaymentGatewayName.WORLDPAY, worldpayPaymentProvider);
         this.paymentProviders.put(PaymentGatewayName.SMARTPAY, createSmartPayProvider(objectMapper));
         this.paymentProviders.put(PaymentGatewayName.SANDBOX, new SandboxPaymentProvider(defaultExternalRefundAvailabilityCalculator));
-        this.paymentProviders.put(PaymentGatewayName.EPDQ, createEpdqProvider());
+        this.paymentProviders.put(PaymentGatewayName.EPDQ, epdqPaymentProvider);
     }
 
     private GatewayClient gatewayClientForOperation(PaymentGatewayName gateway,
@@ -75,17 +76,6 @@ public class PaymentProviders<T extends BaseResponse> {
                 objectMapper,
                 defaultExternalRefundAvailabilityCalculator
         );
-    }
-
-    private PaymentProvider createEpdqProvider() {
-        EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
-                .authClient(gatewayClientForOperation(PaymentGatewayName.EPDQ, GatewayOperation.AUTHORISE, EpdqPaymentProvider.includeSessionIdentifier()))
-                .cancelClient(gatewayClientForOperation(PaymentGatewayName.EPDQ, GatewayOperation.CANCEL, EpdqPaymentProvider.includeSessionIdentifier()))
-                .captureClient(gatewayClientForOperation(PaymentGatewayName.EPDQ, GatewayOperation.CAPTURE, EpdqPaymentProvider.includeSessionIdentifier()))
-                .refundClient(gatewayClientForOperation(PaymentGatewayName.EPDQ, GatewayOperation.REFUND, EpdqPaymentProvider.includeSessionIdentifier()))
-                .build();
-
-        return new EpdqPaymentProvider(gatewayClientEnumMap, new EpdqSha512SignatureGenerator(), epdqExternalRefundAvailabilityCalculator, config.getLinks().getFrontendUrl(), environment.metrics());
     }
 
     public PaymentProvider<T, ?> byName(PaymentGatewayName gateway) {
