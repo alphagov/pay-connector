@@ -30,14 +30,17 @@ abstract public class BasePaymentProvider<T extends BaseResponse, R> implements 
         this.externalRefundAvailabilityCalculator = externalRefundAvailabilityCalculator;
     }
 
-    protected <U extends GatewayRequest> GatewayResponse sendReceive(U request, Function<U, GatewayOrder> order,
+    protected <U extends GatewayRequest> GatewayResponse sendReceive(U request, 
+                                                                     Function<U, GatewayOrder> order,
                                                                      Class<? extends BaseResponse> clazz,
                                                                      Function<GatewayClient.Response, Optional<String>> responseIdentifier) {
 
         return sendReceive(null, request, order, clazz, responseIdentifier);
     }
 
-    protected <U extends GatewayRequest> GatewayResponse sendReceive(String route, U request, Function<U, GatewayOrder> order,
+    protected <U extends GatewayRequest> GatewayResponse sendReceive(String route, 
+                                                                     U request, 
+                                                                     Function<U, GatewayOrder> order,
                                                                      Class<? extends BaseResponse> clazz,
                                                                      Function<GatewayClient.Response, Optional<String>> responseIdentifier) {
         GatewayClient gatewayClient = gatewayOperationClientMap.get(request.getRequestType());

@@ -8,11 +8,14 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.GatewayClient;
+import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
-import uk.gov.pay.connector.gateway.GatewayOperationClientBuilder;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -24,15 +27,14 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.AuthUtils;
 
 import javax.ws.rs.client.ClientBuilder;
 import java.io.IOException;
 import java.net.URL;
-import java.util.EnumMap;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.not;
@@ -42,6 +44,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -251,13 +254,14 @@ public class WorldpayPaymentProviderTest {
             WorldpayPaymentProvider.includeSessionIdentifier(),
                 mockMetricRegistry
         );
-        EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
-                .authClient(gatewayClient)
-                .captureClient(gatewayClient)
-                .cancelClient(gatewayClient)
-                .refundClient(gatewayClient)
-                .build();
-        return new WorldpayPaymentProvider(gatewayClientEnumMap, false, null, defaultExternalRefundAvailabilityCalculator);
+
+        ConnectorConfiguration configuration = mock(ConnectorConfiguration.class);
+        when(configuration.getGatewayConfigFor(PaymentGatewayName.WORLDPAY)).thenReturn(getWorldpayConfig());
+        
+        GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
+        when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any(Map.class), any(BiFunction.class), null)).thenReturn(gatewayClient);
+        
+        return new WorldpayPaymentProvider(configuration, gatewayClientFactory, null);
     }
 
     private GatewayConfig getWorldpayConfig() {
