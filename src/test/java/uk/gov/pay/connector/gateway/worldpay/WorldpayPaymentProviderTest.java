@@ -31,7 +31,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequestImpl;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -426,13 +426,13 @@ public class WorldpayPaymentProviderTest {
                 .replace("{{bookingDateYear}}", bookingDateYear);
     }
 
-    private AuthorisationGatewayRequest getCardAuthorisationRequest() {
+    private AuthorisationGatewayRequestImpl getCardAuthorisationRequest() {
         return getCardAuthorisationRequest(aServiceAccount());
     }
 
-    private AuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
+    private AuthorisationGatewayRequestImpl getCardAuthorisationRequest(ChargeEntity chargeEntity) {
         AuthCardDetails authCardDetails = getValidTestCard();
-        return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        return new AuthorisationGatewayRequestImpl(chargeEntity, authCardDetails);
     }
 
     private Auth3dsResponseGatewayRequest get3dsResponseGatewayRequest(ChargeEntity chargeEntity) {
@@ -441,7 +441,7 @@ public class WorldpayPaymentProviderTest {
         return new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsDetails);
     }
 
-    private AuthorisationGatewayRequest getCardAuthorisationRequest(GatewayAccountEntity accountEntity) {
+    private AuthorisationGatewayRequestImpl getCardAuthorisationRequest(GatewayAccountEntity accountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(accountEntity)
                 .build();

@@ -25,7 +25,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequestImpl;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
@@ -129,7 +129,7 @@ public class SmartpayPaymentProviderTest {
                 .withGatewayAccountEntity(aServiceAccount())
                 .build();
 
-        GatewayResponse<SmartpayAuthorisationResponse> response = provider.authorise(new AuthorisationGatewayRequest(chargeEntity, authCardDetails));
+        GatewayResponse<SmartpayAuthorisationResponse> response = provider.authorise(new AuthorisationGatewayRequestImpl(chargeEntity, authCardDetails));
 
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
@@ -147,7 +147,7 @@ public class SmartpayPaymentProviderTest {
                 .build();
         mockSmartpay3dsRequiredOrderSubmitResponse();
 
-        GatewayResponse<SmartpayAuthorisationResponse> response = provider.authorise(new AuthorisationGatewayRequest(chargeEntity, authCardDetails));
+        GatewayResponse<SmartpayAuthorisationResponse> response = provider.authorise(new AuthorisationGatewayRequestImpl(chargeEntity, authCardDetails));
 
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().isPresent(), is(true));

@@ -22,7 +22,7 @@ import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequestImpl;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
@@ -116,7 +116,7 @@ public class SmartpayPaymentProviderTest {
     public void shouldSendA3dsOrderForMerchantSuccessfully() throws Exception {
         gatewayAccountEntity.setRequires3ds(true);
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationGatewayRequest request = getCard3dsAuthorisationRequest(chargeEntity);
+        AuthorisationGatewayRequestImpl request = getCard3dsAuthorisationRequest(chargeEntity);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().getIssuerUrl(), is(notNullValue()));
@@ -138,7 +138,7 @@ public class SmartpayPaymentProviderTest {
         accountWithInvalidCredentials.setType(TEST);
 
         chargeEntity.setGatewayAccount(accountWithInvalidCredentials);
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
+        AuthorisationGatewayRequestImpl request = getCardAuthorisationRequest(chargeEntity);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
 
         assertFalse(response.isSuccessful());
@@ -178,7 +178,7 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void shouldRefundToAnExistingPaymentSuccessfully() throws Exception {
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
+        AuthorisationGatewayRequestImpl request = getCardAuthorisationRequest(chargeEntity);
         PaymentProvider smartpay = getSmartpayPaymentProvider();
         GatewayResponse<SmartpayAuthorisationResponse> authoriseResponse = smartpay.authorise(request);
         assertTrue(authoriseResponse.isSuccessful());
@@ -197,7 +197,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     private GatewayResponse testCardAuthorisation(PaymentProvider paymentProvider, ChargeEntity chargeEntity) {
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
+        AuthorisationGatewayRequestImpl request = getCardAuthorisationRequest(chargeEntity);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
 
@@ -230,15 +230,15 @@ public class SmartpayPaymentProviderTest {
                 .replace("{{transactionId2}}", transactionId2);
     }
 
-    public static AuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
+    public static AuthorisationGatewayRequestImpl getCardAuthorisationRequest(ChargeEntity chargeEntity) {
         Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", "London", "GB");
 
         AuthCardDetails authCardDetails = aValidSmartpayCard();
         authCardDetails.setAddress(address);
-        return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        return new AuthorisationGatewayRequestImpl(chargeEntity, authCardDetails);
     }
 
-    public static AuthorisationGatewayRequest getCard3dsAuthorisationRequest(ChargeEntity chargeEntity) {
+    public static AuthorisationGatewayRequestImpl getCard3dsAuthorisationRequest(ChargeEntity chargeEntity) {
         Address address = new Address("6-60", "Simon Carmiggeltstraat", "1011DJ", "Amsterdam", "NH", "NL");
 
         AuthCardDetails authCardDetails = aValidSmartpay3dsCard();
@@ -246,7 +246,7 @@ public class SmartpayPaymentProviderTest {
         authCardDetails.setAcceptHeader("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
         authCardDetails.setUserAgentHeader("Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008052912 Firefox/3.0");
 
-        return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        return new AuthorisationGatewayRequestImpl(chargeEntity, authCardDetails);
     }
 
     public static AuthCardDetails aValidSmartpayCard() {

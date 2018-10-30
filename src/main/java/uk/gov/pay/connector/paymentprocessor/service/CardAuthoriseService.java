@@ -83,7 +83,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
     public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         return getPaymentProviderFor(chargeEntity)
-                .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, authCardDetails));
+                .authorise(AuthorisationGatewayRequestImpl.valueOf(chargeEntity, authCardDetails));
     }
 
     @Override
