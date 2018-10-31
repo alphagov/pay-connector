@@ -10,11 +10,11 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.report.model.domain.GatewayAccountPerformanceReportEntity;
 import uk.gov.pay.connector.report.model.domain.PerformanceReportEntity;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import static java.math.BigDecimal.ZERO;
-import static java.math.BigDecimal.valueOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.number.BigDecimalCloseTo.closeTo;
 import static org.junit.Assert.assertThat;
@@ -51,8 +51,8 @@ public class PerformanceReportDaoITest extends DaoITestBase {
         insertCharge(testAccountFixture, 10L, ZonedDateTime.now());
         insertCharge(testAccountFixture, 2L, ZonedDateTime.now());
         PerformanceReportEntity performanceReportEntity = performanceReportDao.aggregateNumberAndValueOfPayments();
-        assertThat(performanceReportEntity.getAverageAmount(), is(closeTo(valueOf(6L), ZERO)));
-        assertThat(performanceReportEntity.getTotalAmount(), is(closeTo(valueOf(12L), ZERO)));
+        assertThat(performanceReportEntity.getAverageAmount(), is(closeTo(new BigDecimal("6"), ZERO)));
+        assertThat(performanceReportEntity.getTotalAmount(), is(closeTo(new BigDecimal("12"), ZERO)));
         assertThat(performanceReportEntity.getTotalVolume(), is(2L));
     }
 
@@ -77,11 +77,11 @@ public class PerformanceReportDaoITest extends DaoITestBase {
         insertCharge(anotherGatewayAccount, 6L, ZonedDateTime.now());
         List<GatewayAccountPerformanceReportEntity> gatewayAccountPerformanceReportEntities = performanceReportDao.aggregateNumberAndValueOfPaymentsByGatewayAccount();
         assertThat(gatewayAccountPerformanceReportEntities.size(), is(2));
-        assertThat(gatewayAccountPerformanceReportEntities.get(0).getAverageAmount(), is(closeTo(valueOf(6L), ZERO)));
-        assertThat(gatewayAccountPerformanceReportEntities.get(0).getTotalAmount(), is(closeTo(valueOf(12L), ZERO)));
+        assertThat(gatewayAccountPerformanceReportEntities.get(0).getAverageAmount(), is(closeTo(new BigDecimal("6"), ZERO)));
+        assertThat(gatewayAccountPerformanceReportEntities.get(0).getTotalAmount(), is(closeTo(new BigDecimal("12"), ZERO)));
         assertThat(gatewayAccountPerformanceReportEntities.get(0).getTotalVolume(), is(2L));
-        assertThat(gatewayAccountPerformanceReportEntities.get(1).getAverageAmount(), is(closeTo(valueOf(5L), ZERO)));
-        assertThat(gatewayAccountPerformanceReportEntities.get(1).getTotalAmount(), is(closeTo(valueOf(15L), ZERO)));
+        assertThat(gatewayAccountPerformanceReportEntities.get(1).getAverageAmount(), is(closeTo(new BigDecimal("5"), ZERO)));
+        assertThat(gatewayAccountPerformanceReportEntities.get(1).getTotalAmount(), is(closeTo(new BigDecimal("15"), ZERO)));
         assertThat(gatewayAccountPerformanceReportEntities.get(1).getTotalVolume(), is(3L));
     }
 
@@ -94,8 +94,8 @@ public class PerformanceReportDaoITest extends DaoITestBase {
         insertCharge(testAccountFixture, 2L, validDate1);
         insertCharge(testAccountFixture, 10L, validDate2);
         PerformanceReportEntity performanceReportEntity = performanceReportDao.aggregateNumberAndValueOfPaymentsForAGivenDay(validDate1);
-        assertThat(performanceReportEntity.getAverageAmount(), is(closeTo(valueOf(6L), ZERO)));
-        assertThat(performanceReportEntity.getTotalAmount(), is(closeTo(valueOf(12L), ZERO)));
+        assertThat(performanceReportEntity.getAverageAmount(), is(closeTo(new BigDecimal("6"), ZERO)));
+        assertThat(performanceReportEntity.getTotalAmount(), is(closeTo(new BigDecimal("12"), ZERO)));
         assertThat(performanceReportEntity.getTotalVolume(), is(2L));
     }
 }
