@@ -5,6 +5,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -23,6 +24,18 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 @RunWith(MockitoJUnitRunner.class)
 public class PaymentProvidersTest {
 
+    @Mock
+    WorldpayPaymentProvider worldpayPaymentProvider;
+    
+    @Mock
+    EpdqPaymentProvider epdqPaymentProvider;
+    
+    @Mock
+    SmartpayPaymentProvider smartpayPaymentProvider;
+    
+    @Mock
+    SandboxPaymentProvider sandboxPaymentProvider;
+    
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
@@ -30,7 +43,7 @@ public class PaymentProvidersTest {
 
     @Before
     public void setup() {
-        providers = new PaymentProviders(mock(WorldpayPaymentProvider.class), mock(EpdqPaymentProvider.class), mock(SmartpayPaymentProvider.class));
+        providers = new PaymentProviders(worldpayPaymentProvider, epdqPaymentProvider, smartpayPaymentProvider, sandboxPaymentProvider);
     }
 
     @Test

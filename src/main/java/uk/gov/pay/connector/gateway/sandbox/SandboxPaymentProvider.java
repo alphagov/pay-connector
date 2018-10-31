@@ -3,8 +3,8 @@ package uk.gov.pay.connector.gateway.sandbox;
 import fj.data.Either;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.gateway.BasePaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
@@ -20,6 +20,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
+import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
@@ -31,10 +32,12 @@ import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
-public class SandboxPaymentProvider extends BasePaymentProvider<BaseResponse, String> {
+public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, String> {
 
-    public SandboxPaymentProvider(ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator) {
-        super(null, externalRefundAvailabilityCalculator);
+    private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
+
+    public SandboxPaymentProvider() {
+        this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
     }
 
     @Override

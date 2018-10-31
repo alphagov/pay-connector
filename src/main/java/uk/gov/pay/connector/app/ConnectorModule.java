@@ -12,6 +12,7 @@ import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
+import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
@@ -89,5 +90,10 @@ public class ConnectorModule extends AbstractModule {
     @Provides
     public SignatureGenerator signatureGenerator() {
         return new EpdqSha512SignatureGenerator();
+    }
+    
+    @Provides
+    public SandboxPaymentProvider sandboxPaymentProvider() {
+        return new SandboxPaymentProvider();
     }
 }
