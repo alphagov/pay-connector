@@ -8,21 +8,16 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.charge.model.AddressEntity;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
-import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -30,12 +25,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
@@ -48,8 +39,9 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                                 CardTypeDao cardTypeDao,
                                 PaymentProviders providers,
                                 CardExecutorService cardExecutorService,
+                                ChargeService chargeService,
                                 Environment environment) {
-        super(chargeDao, chargeEventDao, providers, cardExecutorService, environment);
+        super(chargeDao, chargeEventDao, providers, cardExecutorService, chargeService, environment);
         this.cardTypeDao = cardTypeDao;
     }
 
@@ -69,13 +61,11 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
                 chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             } else {
-                preOperation(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
+                lockChargeForProcessing(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
 
                 getCorporateCardSurchargeFor(authCardDetails, chargeEntity).ifPresent(chargeEntity::setCorporateSurcharge);
 
-                getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(transactionIdValue -> {
-                    setGatewayTransactionId(chargeEntity, transactionIdValue);
-                });
+                getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(chargeEntity::setGatewayTransactionId);
             }
 
             return chargeEntity;
@@ -103,74 +93,48 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
     }
 
     @Transactional
-    public GatewayResponse<BaseAuthoriseResponse> postOperation(String chargeId, AuthCardDetails authCardDetails, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+    public void processGatewayAuthorisationResponse(String chargeId, AuthCardDetails authCardDetails, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
 
-        return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
+        chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
 
-            ChargeStatus status = operationResponse.getBaseResponse()
-                    .map(BaseAuthoriseResponse::authoriseStatus)
-                    .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
-                    .orElseGet(() -> operationResponse.getGatewayError()
-                            .map(this::mapError)
-                            .orElse(ChargeStatus.AUTHORISATION_ERROR));
+            Optional<String> transactionId = operationResponse.getBaseResponse().map(BaseAuthoriseResponse::getTransactionId);
+            if (!transactionId.isPresent() || StringUtils.isBlank(transactionId.get())) {
+                logger.warn("AuthCardDetails authorisation response received with no transaction id. -  charge_external_id={}",
+                        chargeEntity.getExternalId());
+            }
 
-            String transactionId = operationResponse.getBaseResponse()
-                    .map(BaseAuthoriseResponse::getTransactionId).orElse("");
-
-            operationResponse.getSessionIdentifier().ifPresent(chargeEntity::setProviderSessionId);
+            ChargeStatus status = determineChargeStatus(operationResponse.getBaseResponse(), operationResponse.getGatewayError());
 
             logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                     chargeEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(),
-                    StringUtils.isNotBlank(transactionId) ? transactionId : "missing transaction ID",
+                    transactionId.orElse("missing transaction ID"),
                     chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
                     operationResponse, chargeEntity.getStatus(), status);
 
-            GatewayAccountEntity account = chargeEntity.getGatewayAccount();
+            Optional<Auth3dsDetailsEntity> auth3dsDetailsEntity = extractAuth3dsDetails(operationResponse);
 
-            metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
+            chargeService.updateChargePostAuthorisation(status, chargeEntity, transactionId,
+                    auth3dsDetailsEntity, operationResponse.getSessionIdentifier(),
+                    authCardDetails);
 
-            chargeEntity.setStatus(status);
-            operationResponse.getBaseResponse().ifPresent(response ->
-                    response.getGatewayParamsFor3ds().map(GatewayParamsFor3ds::toAuth3dsDetailsEntity)
-                            .ifPresent(chargeEntity::set3dsDetails)
-            );
+            metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise.result.%s",
+                    chargeEntity.getGatewayAccount().getGatewayName(),
+                    chargeEntity.getGatewayAccount().getType(),
+                    chargeEntity.getGatewayAccount().getId(),
+                    status.toString())).inc();
 
-            if (StringUtils.isBlank(transactionId)) {
-                logger.warn("AuthCardDetails authorisation response received with no transaction id. -  charge_external_id={}", chargeEntity.getExternalId());
-            } else {
-                setGatewayTransactionId(chargeEntity, transactionId);
-            }
-
-            CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
-            chargeEntity.setCardDetails(detailsEntity);
-
-            chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-            logger.info("Stored confirmation details for charge - charge_external_id={}",
-                    chargeEntity.getExternalId());
-            return operationResponse;
+            return chargeEntity;
 
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    private ChargeStatus mapError(GatewayError gatewayError) {
-        switch (gatewayError.getErrorType()) {
-            case GENERIC_GATEWAY_ERROR:
-                return AUTHORISATION_ERROR;
-            case GATEWAY_CONNECTION_TIMEOUT_ERROR:
-                return AUTHORISATION_TIMEOUT;
-            default:
-                return AUTHORISATION_UNEXPECTED_ERROR;
-        }
-    }
-
-    private CardDetailsEntity buildCardDetailsEntity(AuthCardDetails authCardDetails) {
-        CardDetailsEntity detailsEntity = new CardDetailsEntity();
-        detailsEntity.setCardBrand(sanitize(authCardDetails.getCardBrand()));
-        detailsEntity.setBillingAddress(new AddressEntity(authCardDetails.getAddress()));
-        detailsEntity.setCardHolderName(sanitize(authCardDetails.getCardHolder()));
-        detailsEntity.setExpiryDate(authCardDetails.getEndDate());
-        detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
-        detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
-        return detailsEntity;
+    private Optional<Auth3dsDetailsEntity> extractAuth3dsDetails(GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+        return operationResponse.getBaseResponse()
+                .map(response -> {
+                    return response.getGatewayParamsFor3ds().map(gatewayParamsFor3ds ->
+                            Optional.of(gatewayParamsFor3ds.toAuth3dsDetailsEntity()))
+                            .orElse(Optional.empty());
+                })
+                .orElse(Optional.empty());
     }
 }
