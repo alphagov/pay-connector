@@ -16,7 +16,6 @@ import org.mockserver.integration.ClientAndServer;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.gateway.ClientFactory;
-import uk.gov.pay.connector.gateway.GatewayOperation;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
@@ -29,13 +28,15 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 import static org.mockserver.socket.PortFactory.findFreePort;
 import static org.mockserver.verify.VerificationTimes.exactly;
 import static org.mockserver.verify.VerificationTimes.once;
+import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 
@@ -73,7 +74,7 @@ public class ClientFactoryTest {
 
         when(mockMetricRegistry.register(any(), any())).thenReturn(null);
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE, mockMetricRegistry);
+                .createWithDropwizardClient(WORLDPAY, AUTHORISE, mockMetricRegistry);
 
         client.target(serverUrl).path("hello").request().get();
 
@@ -93,7 +94,7 @@ public class ClientFactoryTest {
         when(mockMetricRegistry.register(any(), any())).thenReturn(null);
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE, mockMetricRegistry);
+                .createWithDropwizardClient(WORLDPAY, AUTHORISE, mockMetricRegistry);
 
         client.target(serverUrl).path("hello").request().get();
 
@@ -116,7 +117,7 @@ public class ClientFactoryTest {
                 .respond(response("world").withStatusCode(200).withDelay(TimeUnit.MILLISECONDS, 2000));
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE, mockMetricRegistry);
+                .createWithDropwizardClient(WORLDPAY, AUTHORISE, mockMetricRegistry);
 
         Invocation.Builder request = client.target(serverUrl).path(path).request();
         long startTime = System.currentTimeMillis();
@@ -188,7 +189,7 @@ public class ClientFactoryTest {
                 .respond(response("world").withStatusCode(200).withDelay(TimeUnit.MILLISECONDS, 2000));
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient(WORLDPAY, GatewayOperation.AUTHORISE, mockMetricRegistry);
+                .createWithDropwizardClient(WORLDPAY, AUTHORISE, mockMetricRegistry);
 
         Invocation.Builder request = client.target(serverUrl).path(path).request();
 
@@ -211,7 +212,7 @@ public class ClientFactoryTest {
                 .respond(response("world").withStatusCode(200).withDelay(TimeUnit.MILLISECONDS, 2000));
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient(SMARTPAY, GatewayOperation.AUTHORISE, mockMetricRegistry);
+                .createWithDropwizardClient(SMARTPAY, AUTHORISE, mockMetricRegistry);
 
         Invocation.Builder request = client.target(serverUrl).path(path).request();
         Long authOverriddenTimeout = app.getConfiguration().getSmartpayConfig().getJerseyClientOverrides()

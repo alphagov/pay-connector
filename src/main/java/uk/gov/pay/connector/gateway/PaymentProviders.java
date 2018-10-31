@@ -3,7 +3,6 @@ package uk.gov.pay.connector.gateway;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
@@ -31,51 +30,16 @@ import static jersey.repackaged.com.google.common.collect.Maps.newHashMap;
 public class PaymentProviders<T extends BaseResponse> {
 
     private final Map<PaymentGatewayName, PaymentProvider> paymentProviders = newHashMap();
-    private final GatewayClientFactory gatewayClientFactory;
-    private final Environment environment;
-    private final ConnectorConfiguration config;
     private final ExternalRefundAvailabilityCalculator defaultExternalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
-    private final ExternalRefundAvailabilityCalculator epdqExternalRefundAvailabilityCalculator = new EpdqExternalRefundAvailabilityCalculator();
 
     @Inject
-    public PaymentProviders(ConnectorConfiguration config, 
-                            GatewayClientFactory gatewayClientFactory, 
-                            ObjectMapper objectMapper, 
-                            Environment environment,
-                            WorldpayPaymentProvider worldpayPaymentProvider,
-                            EpdqPaymentProvider epdqPaymentProvider) {
-        this.gatewayClientFactory = gatewayClientFactory;
-        this.environment = environment;
-        this.config = config;
-
+    public PaymentProviders(WorldpayPaymentProvider worldpayPaymentProvider,
+                            EpdqPaymentProvider epdqPaymentProvider, 
+                            SmartpayPaymentProvider smartpayPaymentProvider) {
         this.paymentProviders.put(PaymentGatewayName.WORLDPAY, worldpayPaymentProvider);
-        this.paymentProviders.put(PaymentGatewayName.SMARTPAY, createSmartPayProvider(objectMapper));
+        this.paymentProviders.put(PaymentGatewayName.SMARTPAY, smartpayPaymentProvider);
         this.paymentProviders.put(PaymentGatewayName.SANDBOX, new SandboxPaymentProvider(defaultExternalRefundAvailabilityCalculator));
         this.paymentProviders.put(PaymentGatewayName.EPDQ, epdqPaymentProvider);
-    }
-
-    private GatewayClient gatewayClientForOperation(PaymentGatewayName gateway,
-                                                    GatewayOperation operation,
-                                                    BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> sessionIdentifier) {
-        return gatewayClientFactory.createGatewayClient(
-                gateway, operation, config.getGatewayConfigFor(gateway).getUrls(), sessionIdentifier, environment.metrics()
-        );
-    }
-
-    private PaymentProvider createSmartPayProvider(ObjectMapper objectMapper) {
-        EnumMap<GatewayOperation, GatewayClient> gatewayClients = GatewayOperationClientBuilder
-                .builder()
-                .authClient(gatewayClientForOperation(PaymentGatewayName.SMARTPAY, GatewayOperation.AUTHORISE, SmartpayPaymentProvider.includeSessionIdentifier()))
-                .captureClient(gatewayClientForOperation(PaymentGatewayName.SMARTPAY, GatewayOperation.CAPTURE, SmartpayPaymentProvider.includeSessionIdentifier()))
-                .cancelClient(gatewayClientForOperation(PaymentGatewayName.SMARTPAY, GatewayOperation.CANCEL, SmartpayPaymentProvider.includeSessionIdentifier()))
-                .refundClient(gatewayClientForOperation(PaymentGatewayName.SMARTPAY, GatewayOperation.REFUND, SmartpayPaymentProvider.includeSessionIdentifier()))
-                .build();
-
-        return new SmartpayPaymentProvider(
-                gatewayClients,
-                objectMapper,
-                defaultExternalRefundAvailabilityCalculator
-        );
     }
 
     public PaymentProvider<T, ?> byName(PaymentGatewayName gateway) {

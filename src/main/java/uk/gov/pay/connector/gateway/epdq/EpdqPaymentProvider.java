@@ -158,7 +158,7 @@ public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String
 
     @Override
     public GatewayResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
-        Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, request.getGatewayAccount(), buildQueryOrderRequestFor().apply(request));
+        Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, request.getGatewayAccount(), buildQueryOrderRequestFor(request));
         GatewayResponse<BaseResponse> gatewayResponse = getGatewayResponse(response, EpdqAuthorisationResponse.class);
 
         BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse().map(epdqStatus -> ((EpdqAuthorisationResponse) epdqStatus).authoriseStatus()).orElse(BaseAuthoriseResponse.AuthoriseStatus.ERROR);
@@ -261,8 +261,8 @@ public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String
         return !respondMatches;
     }
 
-    private Function<Auth3dsResponseGatewayRequest, GatewayOrder> buildQueryOrderRequestFor() {
-        return request -> anEpdqQueryOrderRequestBuilder()
+    private GatewayOrder buildQueryOrderRequestFor(Auth3dsResponseGatewayRequest request) {
+        return anEpdqQueryOrderRequestBuilder()
                 .withOrderId(request.getChargeExternalId())
                 .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
                 .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
