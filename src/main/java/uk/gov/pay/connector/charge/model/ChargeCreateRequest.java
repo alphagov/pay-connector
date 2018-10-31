@@ -100,7 +100,6 @@ public class ChargeCreateRequest {
                 ", returnUrl='" + returnUrl + '\'' +
                 delayedCapture != null ? ", delayed_capture=" + delayedCapture : "" +
                 language != null ? ", language=" + language.toString() : "" +
-                email != null ? ", email='" + email + '\'' : "" +
                 '}';
     }
 }
