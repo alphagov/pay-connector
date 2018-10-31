@@ -21,14 +21,8 @@ pipeline {
     RUN_END_TO_END_ON_PR = "${params.runEndToEndTestsOnPR}"
     RUN_ZAP_ON_PR = "${params.runZapTestsOnPR}"
   }
-
   stages {
     stage('Maven Build') {
-      when {
-        not {
-          branch 'master'
-        }
-      }
       steps {
         script {
           def long stepBuildTime = System.currentTimeMillis()
@@ -43,16 +37,6 @@ pipeline {
         failure {
           postMetric("connector.maven-build.failure", 1)
         }
-      }
-    }
-    stage('Maven Build Without Unit Tests') {
-      when {
-        branch 'master'
-      }
-      steps {
-        sh 'docker pull govukpay/postgres:9.6.6'
-        sh 'mvn -Dmaven.test.skip=true clean package'
-        runProviderContractTests()
       }
     }
     stage('Docker Build') {
