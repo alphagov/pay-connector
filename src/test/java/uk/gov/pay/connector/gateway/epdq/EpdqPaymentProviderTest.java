@@ -206,7 +206,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
 
         assertThat(provider.verifyNotification(mockNotification, mockGatewayAccountEntity), is(false));
     }
-
+    
     @Test
     public void shouldNotVerifyNotificationIfEmptyPayload() {
         when(mockNotification.getPayload()).thenReturn(Optional.empty());
@@ -232,12 +232,4 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
         assertThat(notification.getStatus(), is(NOTIFICATION_STATUS));
         assertThat(notification.getGatewayEventDate(), IsNull.nullValue());
     }
-
-    @Test
-    public void shouldReturnExternalRefundAvailability() {
-        ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
-        when(mockExternalRefundAvailabilityCalculator.calculate(mockChargeEntity)).thenReturn(EXTERNAL_AVAILABLE);
-        assertThat(provider.getExternalChargeRefundAvailability(mockChargeEntity), is(EXTERNAL_AVAILABLE));
-    }
-
 }
