@@ -2,18 +2,17 @@ package uk.gov.pay.connector.it.dao;
 
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,11 +32,9 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
     private GatewayAccountDao gatewayAccountDao;
 
     @Before
-    public void setUp() throws Exception {
-        super.setup();
+    public void setUp() {
         chargeDao = env.getInstance(ChargeDao.class);
         gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
-
     }
 
     private void createChargeWithIdAndDetails(long chargeId, DatabaseFixtures.TestCardDetails testCardDetails) {
@@ -54,7 +51,7 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
                 .withChargeStatus(ChargeStatus.CAPTURE_SUBMITTED)
                 .insert();
     }
-    
+
     private DatabaseFixtures.TestCardDetails createCardDetailsForChargeWithId(long chargeId) {
         DatabaseFixtures.TestCardDetails testCardDetails = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -122,11 +119,8 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
         gatewayAccountDao.persist(testAccount);
 
         Address billingAddress = Address.anAddress();
-        //TODO change to fixture
-        ChargeEntity chargeEntity = new ChargeEntity(2323L, "returnUrl", "description",
-                ServicePaymentReference.of("ref"), testAccount, "email@email.test", SupportedLanguage.ENGLISH,
-                false, null);
-        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"),LastDigitsCardNumber.of("1258"), "Mr. Pay Mc Payment", "03/09", "VISA", new AddressEntity(billingAddress));
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"), "Mr. Pay Mc Payment", "03/09", "VISA", new AddressEntity(billingAddress));
         chargeEntity.setCardDetails(cardDetailsEntity);
         chargeDao.persist(chargeEntity);
 

@@ -18,12 +18,13 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 
 public class ChargeEntityFixture {
 
-    private Long id = 1L;
+    private Long id = ThreadLocalRandom.current().nextLong();
     private String externalId = RandomIdGenerator.newId();
     private Long amount = 500L;
     private String returnUrl = "http://return.com";
@@ -145,7 +146,7 @@ public class ChargeEntityFixture {
         this.gatewayAccountEntity.setNotifySettings(notifySettings);
         return this;
     }
-    
+
     public ChargeEntityFixture withCorporateSurcharge(Long corporateSurcharge) {
         this.corporateSurcharge = corporateSurcharge;
         return this;
