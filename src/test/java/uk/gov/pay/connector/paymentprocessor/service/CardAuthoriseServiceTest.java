@@ -336,7 +336,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         try {
             cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
             fail("Expected test to fail with ConflictRuntimeException due to configuration conflicting in 3ds requirements");
-        } catch (ConflictRuntimeException e) {
+        } catch (IllegalStateRuntimeException e) {
             assertThat(charge.getStatus(), is(AUTHORISATION_ABORTED.toString()));
             verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
         }
@@ -530,28 +530,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         assertThat(response.isFailed(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
-    }
-
-    @Test(expected = ConflictRuntimeException.class)
-    public void doAuthorise_shouldThrowAConflictRuntimeException_whenOptimisticLockExceptionIsThrownInPreAuthorise() {
-
-        providerWillAuthorise();
-
-        /**
-         * FIXME (PP-2626)
-         * This is not going to be thrown from this method, but just to test preOp throwing
-         * OptimisticLockException when commit the transaction. We won't do merge in pre-op
-         * The related code won't be removed until we know is not an issue doing it so, logging
-         * will be in place since there are not evidence (through any test or current logging)
-         * that is in reality a subject of a real scenario.
-         */
-
-        doThrow(new OptimisticLockException())
-                .when(mockedChargeDao).findByExternalId(charge.getExternalId());
-
-        cardAuthorisationService.doAuthorise(charge.getExternalId(), AuthUtils.aValidAuthorisationDetails());
-
-        verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
     private void providerWillRespondToAuthoriseWith(GatewayResponse value) {

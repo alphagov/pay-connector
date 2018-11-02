@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
-import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
@@ -13,6 +12,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
@@ -26,8 +26,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
@@ -46,32 +44,28 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         this.cardTypeDao = cardTypeDao;
     }
 
+    private void ensureCardBrandGateway3DSCompatibility(ChargeEntity chargeEntity, String cardBrand) {
+        if (gatewayCardBrand3DSMismatch(chargeEntity, cardBrand)) {
+            logger.error("AuthCardDetails authorisation failed pre operation. Card brand requires 3ds but Gateway account has 3ds disabled - charge_external_id={}, operation_type={}, card_brand={}",
+                    chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), cardBrand);
+            chargeEntity.setStatus(AUTHORISATION_ABORTED);
+            chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
+
+            throw new IllegalStateRuntimeException(chargeEntity.getExternalId());
+        }
+    }
+
     @Transactional
     public ChargeEntity preOperation(String chargeId, AuthCardDetails authCardDetails) {
+        ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
+        ensureCardBrandGateway3DSCompatibility(charge, authCardDetails.getCardBrand());
+        getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
+        getPaymentProviderFor(charge).generateTransactionId().ifPresent(charge::setGatewayTransactionId);
+        return charge;
+    }
 
-        return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
-
-            String cardBrand = authCardDetails.getCardBrand();
-
-            if (!chargeEntity.getGatewayAccount().isRequires3ds() && cardBrandRequires3ds(cardBrand)) {
-
-                chargeEntity.setStatus(AUTHORISATION_ABORTED);
-
-                logger.error("AuthCardDetails authorisation failed pre operation. Card brand requires 3ds but Gateway account has 3ds disabled - charge_external_id={}, operation_type={}, card_brand={}",
-                        chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), cardBrand);
-
-                chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-            } else {
-                chargeService.lockChargeForProcessing(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
-
-                getCorporateCardSurchargeFor(authCardDetails, chargeEntity).ifPresent(chargeEntity::setCorporateSurcharge);
-
-                getPaymentProviderFor(chargeEntity).generateTransactionId().ifPresent(chargeEntity::setGatewayTransactionId);
-            }
-
-            return chargeEntity;
-
-        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+    private boolean gatewayCardBrand3DSMismatch(ChargeEntity chargeEntity, String cardBrand) {
+        return !chargeEntity.getGatewayAccount().isRequires3ds() && cardBrandRequires3ds(cardBrand);
     }
 
     private boolean cardBrandRequires3ds(String cardBrand) {
@@ -84,13 +78,6 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
     public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         return getPaymentProviderFor(chargeEntity)
                 .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, authCardDetails));
-    }
-
-    @Override
-    protected List<ChargeStatus> getLegalStates() {
-        return ImmutableList.of(
-                ENTERING_CARD_DETAILS
-        );
     }
 
     @Transactional

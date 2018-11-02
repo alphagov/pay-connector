@@ -236,7 +236,7 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
     @Test
     public void shouldReturnAuthError_IfChargeExpired() {
         String chargeId = createNewChargeWithNoTransactionId(EXPIRED);
-        authoriseAndVerifyFor(chargeId, validCardDetails, format("Authorisation for charge failed as already expired, %s", chargeId), 400);
+        authoriseAndVerifyFor(chargeId, validCardDetails, format("Charge not in correct state to be processed, %s", chargeId), 400);
         assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
     }
 

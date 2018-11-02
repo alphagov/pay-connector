@@ -10,7 +10,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
-import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -22,8 +21,6 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.Authori
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
-import javax.persistence.OptimisticLockException;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -62,16 +59,7 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
         Supplier authorisationSupplier = () -> {
             ChargeEntity charge;
 
-            try {
-                charge = preOperation(chargeId, gatewayAuthRequest);
-                if (charge.hasStatus(ChargeStatus.AUTHORISATION_ABORTED)) {
-                    throw new ConflictRuntimeException(chargeId, "configuration mismatch");
-                }
-            } catch (OptimisticLockException e) {
-                LOG.info("OptimisticLockException in doAuthorise for charge external_id={}", chargeId);
-                throw new ConflictRuntimeException(chargeId);
-            }
-
+            charge = preOperation(chargeId, gatewayAuthRequest);
             GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
             processGatewayAuthorisationResponse(chargeId, gatewayAuthRequest, operationResponse);
             return operationResponse;
@@ -94,9 +82,6 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
     protected abstract void processGatewayAuthorisationResponse(String chargeId, T gatewayAuthRequest, GatewayResponse<BaseAuthoriseResponse> operationResponse);
 
     protected abstract GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity charge, T gatewayAuthRequest);
-
-    protected abstract List<ChargeStatus> getLegalStates();
-
 
     protected ChargeStatus determineChargeStatus(Optional<BaseAuthoriseResponse> baseResponse,
                                                  Optional<GatewayError> gatewayError) {

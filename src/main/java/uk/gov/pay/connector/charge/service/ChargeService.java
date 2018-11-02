@@ -10,7 +10,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.exception.ChargeExpiredRuntimeException;
+import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
@@ -28,6 +28,7 @@ import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
@@ -35,7 +36,6 @@ import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
@@ -49,7 +49,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.HttpMethod.GET;
@@ -59,7 +58,6 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 
 public class ChargeService {
@@ -246,39 +244,23 @@ public class ChargeService {
         });
     }
 
-    public ChargeEntity lockChargeForProcessing(ChargeEntity chargeEntity, OperationType operationType, List<ChargeStatus> legalStatuses, ChargeStatus lockingStatus) {
-
-        GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
-
-        logger.info("Card pre-operation - charge_external_id={}, charge_status={}, account_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
-                chargeEntity.getExternalId(),
-                fromString(chargeEntity.getStatus()),
-                gatewayAccount.getId(),
-                chargeEntity.getAmount(),
-                operationType.getValue(),
-                gatewayAccount.getGatewayName(),
-                gatewayAccount.getType(),
-                lockingStatus);
-
-        if (chargeEntity.hasStatus(ChargeStatus.EXPIRED)) {
-            throw new ChargeExpiredRuntimeException(operationType.getValue(), chargeEntity.getExternalId());
-        }
-
-        if (!chargeEntity.hasStatus(legalStatuses)) {
-            if (chargeEntity.hasStatus(lockingStatus)) {
-                throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), chargeEntity.getExternalId());
+    public ChargeEntity lockChargeForProcessing(String chargeId, OperationType operationType) {
+        return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
+            try {
+                chargeEntity.setStatus(operationType.getLockingStatus());
+            } catch (InvalidStateTransitionException e) {
+                logger.warn("Could not transition charge {} from status {} to status {} - exception is {}",
+                        chargeEntity.getId(),
+                        chargeEntity.getStatus(),
+                        operationType.getLockingStatus(),
+                        e.getMessage());
+                if (chargeEntity.hasStatus(operationType.getLockingStatus())) {
+                    throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), chargeEntity.getExternalId());
+                }
+                throw new IllegalStateRuntimeException(chargeEntity.getExternalId());
             }
-            
-            String legalStates = legalStatuses.stream().map(ChargeStatus::toString).collect(Collectors.joining(", "));
-            
-            logger.error("Charge is not in a legal status to do the pre-operation - charge_external_id={}, status={}, legal_states={}",
-                    chargeEntity.getExternalId(), chargeEntity.getStatus(), legalStates);
-            throw new IllegalStateRuntimeException(chargeEntity.getExternalId());
-        }
-
-        chargeEntity.setStatus(lockingStatus);
-
-        return chargeEntity;
+            return chargeEntity;
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     private CardDetailsEntity buildCardDetailsEntity(AuthCardDetails authCardDetails) {
