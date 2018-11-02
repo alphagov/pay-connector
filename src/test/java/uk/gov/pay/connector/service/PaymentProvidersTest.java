@@ -13,6 +13,7 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
+import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 
 import static org.hamcrest.core.Is.is;
@@ -36,6 +37,9 @@ public class PaymentProvidersTest {
     @Mock
     SandboxPaymentProvider sandboxPaymentProvider;
     
+    @Mock
+    StripePaymentProvider stripePaymentProvider;
+    
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
@@ -43,7 +47,7 @@ public class PaymentProvidersTest {
 
     @Before
     public void setup() {
-        providers = new PaymentProviders(worldpayPaymentProvider, epdqPaymentProvider, smartpayPaymentProvider, sandboxPaymentProvider);
+        providers = new PaymentProviders(worldpayPaymentProvider, epdqPaymentProvider, smartpayPaymentProvider, sandboxPaymentProvider, stripePaymentProvider);
     }
 
     @Test

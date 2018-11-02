@@ -22,6 +22,7 @@ import uk.gov.pay.connector.model.domain.CardFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.EpdqMockClient;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
+import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -72,6 +73,7 @@ public class ChargingITestBase {
     protected static final WorldpayMockClient worldpayMockClient = new WorldpayMockClient();
     protected static final SmartpayMockClient smartpayMockClient = new SmartpayMockClient();
     protected static final EpdqMockClient epdqMockClient = new EpdqMockClient();
+    protected static final StripeMockClient stripeMockClient = new StripeMockClient();
     
     private final String paymentProvider;
     protected RestAssuredClient connectorRestApiClient;

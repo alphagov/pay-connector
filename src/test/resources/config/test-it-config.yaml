@@ -50,6 +50,12 @@ epdq:
     capture:
       readTimeout: 1000ms
 
+stripe:
+  urls:
+    test: https://api.stripe.com
+    live: https://api.stripe.com
+  credentials: ['username','password']
+
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}

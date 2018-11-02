@@ -9,6 +9,7 @@ public class GatewayOrder {
 
     private OrderRequestType orderRequestType;
     private String payload;
+    // Wordldpay specific property, not needed for everyone
     private String providerSessionId;
     private MediaType mediaType;
 

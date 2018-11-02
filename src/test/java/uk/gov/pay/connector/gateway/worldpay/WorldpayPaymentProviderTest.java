@@ -162,13 +162,6 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         chargeEntity.setGatewayTransactionId("transaction-id");
 
-        EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
-                .authClient(mockGatewayClient)
-                .captureClient(mockGatewayClient)
-                .cancelClient(mockGatewayClient)
-                .refundClient(mockGatewayClient)
-                .build();
-
         chargeEntity.setGatewayAccount(mockGatewayAccountEntity);
         ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
 

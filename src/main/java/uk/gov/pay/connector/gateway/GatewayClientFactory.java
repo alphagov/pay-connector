@@ -20,11 +20,11 @@ public class GatewayClientFactory {
     public GatewayClient createGatewayClient(PaymentGatewayName gateway, 
                                              GatewayOperation operation,
                                              Map<String, String> gatewayUrlMap, 
-                                             BiFunction<GatewayOrder, Builder, Builder> sessionIdentier,
+                                             BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier,
                                              MetricRegistry metricRegistry)
     {
         Client client = clientFactory.createWithDropwizardClient(gateway, operation, metricRegistry);
-        return new GatewayClient(client, gatewayUrlMap, sessionIdentier, metricRegistry);
+        return new GatewayClient(client, gatewayUrlMap, sessionIdentifier, metricRegistry);
     }
 
     public GatewayClient createGatewayClient(PaymentGatewayName gateway,

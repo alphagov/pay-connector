@@ -43,6 +43,10 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    private GatewayConfig stripeConfig;
+
+    @Valid
+    @NotNull
     private DataSourceFactory dataSourceFactory;
 
     @Valid
@@ -73,7 +77,7 @@ public class ConnectorConfiguration extends Configuration {
 
     @NotNull
     private String graphitePort;
-    
+
     @NotNull
     private Boolean xrayEnabled;
 
@@ -101,20 +105,24 @@ public class ConnectorConfiguration extends Configuration {
         return epdqConfig;
     }
 
+    @JsonProperty("stripe")
+    public GatewayConfig getStripeConfig() {
+        return stripeConfig;
+    }
+
     public GatewayConfig getGatewayConfigFor(PaymentGatewayName gateway) {
-        if (gateway == PaymentGatewayName.WORLDPAY) {
-            return getWorldpayConfig();
+        switch (gateway) {
+            case WORLDPAY:
+                return getWorldpayConfig();
+            case SMARTPAY:
+                return getSmartpayConfig();
+            case EPDQ:
+                return getEpdqConfig();
+            case STRIPE:
+                return getStripeConfig();
+            default:
+                throw new PaymentGatewayName.Unsupported();
         }
-
-        if (gateway == PaymentGatewayName.SMARTPAY) {
-            return getSmartpayConfig();
-        }
-
-        if (gateway == PaymentGatewayName.EPDQ) {
-            return getEpdqConfig();
-        }
-
-        throw new PaymentGatewayName.Unsupported();
     }
 
     @JsonProperty("jpa")
