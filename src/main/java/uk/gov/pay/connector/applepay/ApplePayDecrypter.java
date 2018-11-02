@@ -35,15 +35,15 @@ public class ApplePayDecrypter {
     private static final byte[] COUNTER = {0x00, 0x00, 0x00, 0x01};
     private static final byte[] APPLE_OEM = "Apple".getBytes(UTF_8);
     private static final byte[] ALG_IDENTIFIER_BYTES = "id-aes256-GCM".getBytes(UTF_8);
-
+    private static final String MERCHANT_ID_CERTIFICATE_OID = "1.2.840.113635.100.6.32";
     static {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    private byte[] privateKeyBytes;
-    private byte[] publicCertificate;
+    private final byte[] privateKeyBytes;
+    private final byte[] publicCertificate;
 
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     @Inject
     public ApplePayDecrypter(ConnectorConfiguration configuration, ObjectMapper objectMapper) {
@@ -66,8 +66,8 @@ public class ApplePayDecrypter {
             byte[] rawData = decrypt(certificate, privateKey, ephemeralKey, data);
             return objectMapper.readValue(new String(rawData, UTF_8), ApplePaymentData.class);
         } catch (Exception e) {
-            LOGGER.error("Error while trying to decrypt apple payload");
-            throw new InvalidKeyException("Error while trying to decrypt apple payload");
+            LOGGER.error("Error while trying to decrypt apple pay payload");
+            throw new InvalidKeyException("Error while trying to decrypt apple pay payload");
         }
     }
 
@@ -102,7 +102,7 @@ public class ApplePayDecrypter {
         byteArrayOutputStream.write(ALG_IDENTIFIER_BYTES);
         byteArrayOutputStream.write(APPLE_OEM);
         // Add Merchant Id
-        byteArrayOutputStream.write(Hex.decode(new String((certificate.getExtensionValue("1.2.840.113635.100.6.32")), UTF_8).substring(4)));
+        byteArrayOutputStream.write(Hex.decode(new String((certificate.getExtensionValue(MERCHANT_ID_CERTIFICATE_OID)), UTF_8).substring(4)));
         return MessageDigest.getInstance("SHA256", "BC")
                 .digest(byteArrayOutputStream.toByteArray());
     }
