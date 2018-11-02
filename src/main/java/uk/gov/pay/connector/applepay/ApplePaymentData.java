@@ -1,10 +1,11 @@
 package uk.gov.pay.connector.applepay;
 
-import uk.gov.pay.connector.gateway.model.AuthorisationDetails;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 import java.util.Map;
 
-public class ApplePaymentData implements AuthorisationDetails {
+public class ApplePaymentData {
     private String applicationPrimaryAccountNumber;
     private String applicationExpirationDate;
     private String currencyCode;

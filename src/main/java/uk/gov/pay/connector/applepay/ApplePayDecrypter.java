@@ -15,15 +15,19 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Security;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
@@ -107,15 +111,14 @@ public class ApplePayDecrypter {
                 .digest(byteArrayOutputStream.toByteArray());
     }
 
-    private Certificate generateCertificate() throws Exception {
-        InputStream stream = new ByteArrayInputStream(publicCertificate);
-        CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-        Certificate certificate = certificateFactory.generateCertificate(stream);
-        stream.close();
-        return certificate;
+    private Certificate generateCertificate() throws IOException, CertificateException {
+        try (InputStream stream = new ByteArrayInputStream(publicCertificate)) {
+            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+            return certificateFactory.generateCertificate(stream);
+        }
     }
 
-    private PrivateKey generatePrivateKey() throws Exception {
+    private PrivateKey generatePrivateKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
         return KeyFactory.getInstance("EC")
                 .generatePrivate(new PKCS8EncodedKeySpec(privateKeyBytes));
     }
