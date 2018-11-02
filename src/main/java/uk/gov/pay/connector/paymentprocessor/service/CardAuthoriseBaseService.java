@@ -23,7 +23,6 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.persistence.OptimisticLockException;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -94,9 +93,6 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
     protected abstract void processGatewayAuthorisationResponse(String chargeId, T gatewayAuthRequest, GatewayResponse<BaseAuthoriseResponse> operationResponse);
 
     protected abstract GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity charge, T gatewayAuthRequest);
-
-    protected abstract List<ChargeStatus> getLegalStates();
-
 
     protected ChargeStatus determineChargeStatus(Optional<BaseAuthoriseResponse> baseResponse,
                                                  Optional<GatewayError> gatewayError) {

@@ -28,6 +28,7 @@ import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
@@ -49,7 +50,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.HttpMethod.GET;
@@ -246,7 +246,9 @@ public class ChargeService {
         });
     }
 
-    public ChargeEntity lockChargeForProcessing(ChargeEntity chargeEntity, OperationType operationType, List<ChargeStatus> legalStatuses, ChargeStatus lockingStatus) {
+    public ChargeEntity lockChargeForProcessing(ChargeEntity chargeEntity, OperationType operationType) {
+
+        ChargeStatus lockingStatus = operationType.getLockingStatus();
 
         GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 
@@ -264,19 +266,14 @@ public class ChargeService {
             throw new ChargeExpiredRuntimeException(operationType.getValue(), chargeEntity.getExternalId());
         }
 
-        if (!chargeEntity.hasStatus(legalStatuses)) {
+        try {
+            chargeEntity.setStatus(lockingStatus);
+        } catch (InvalidStateTransitionException e) {
             if (chargeEntity.hasStatus(lockingStatus)) {
                 throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), chargeEntity.getExternalId());
             }
-            
-            String legalStates = legalStatuses.stream().map(ChargeStatus::toString).collect(Collectors.joining(", "));
-            
-            logger.error("Charge is not in a legal status to do the pre-operation - charge_external_id={}, status={}, legal_states={}",
-                    chargeEntity.getExternalId(), chargeEntity.getStatus(), legalStates);
             throw new IllegalStateRuntimeException(chargeEntity.getExternalId());
         }
-
-        chargeEntity.setStatus(lockingStatus);
 
         return chargeEntity;
     }

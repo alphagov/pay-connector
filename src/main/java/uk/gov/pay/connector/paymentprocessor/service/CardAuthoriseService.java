@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
-import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
@@ -26,8 +25,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 
 public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
@@ -62,7 +59,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
                 chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             } else {
-                chargeService.lockChargeForProcessing(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
+                chargeService.lockChargeForProcessing(chargeEntity, OperationType.AUTHORISATION);
 
                 getCorporateCardSurchargeFor(authCardDetails, chargeEntity).ifPresent(chargeEntity::setCorporateSurcharge);
 
@@ -84,13 +81,6 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
     public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         return getPaymentProviderFor(chargeEntity)
                 .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, authCardDetails));
-    }
-
-    @Override
-    protected List<ChargeStatus> getLegalStates() {
-        return ImmutableList.of(
-                ENTERING_CARD_DETAILS
-        );
     }
 
     @Transactional
