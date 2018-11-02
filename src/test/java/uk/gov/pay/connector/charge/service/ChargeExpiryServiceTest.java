@@ -6,6 +6,8 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.ChargeSweepConfig;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -62,12 +64,19 @@ public class ChargeExpiryServiceTest {
     @Mock
     private WorldpayCancelResponse mockWorldpayCancelResponse;
     
+    @Mock
+    private ChargeSweepConfig mockedChargeSweepConfig;
+
+    @Mock
+    private ConnectorConfiguration mockedConfig;
+    
     private GatewayResponse<BaseCancelResponse> gatewayResponse;
     private GatewayAccountEntity gatewayAccount;
 
     @Before
     public void setup() {
-        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new);
+        when(mockedConfig.getChargeSweepConfig()).thenReturn(mockedChargeSweepConfig);
+        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new, mockedConfig);
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
         gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayCancelResponse).build();

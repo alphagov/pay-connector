@@ -9,7 +9,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-public class    ConnectorConfiguration extends Configuration {
+public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
@@ -62,6 +62,11 @@ public class    ConnectorConfiguration extends Configuration {
     @NotNull
     @JsonProperty("customJerseyClient")
     private CustomJerseyClientConfiguration customJerseyClient;
+    
+    @Valid
+    @NotNull
+    @JsonProperty("chargesSweepConfig")
+    private ChargeSweepConfig chargeSweepConfig;
 
     @NotNull
     private String graphiteHost;
@@ -151,5 +156,9 @@ public class    ConnectorConfiguration extends Configuration {
 
     public Boolean isXrayEnabled() {
         return xrayEnabled;
+    }
+    
+    public ChargeSweepConfig getChargeSweepConfig() {
+        return chargeSweepConfig;
     }
 }
