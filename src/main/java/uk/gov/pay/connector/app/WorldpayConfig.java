@@ -14,7 +14,7 @@ public class WorldpayConfig extends GatewayConfig {
         return secureNotificationEnabled;
     }
 
-    public ApplePayConfig getApplePay() {
+    public ApplePayConfig getApplePayConfig() {
         return applePay;
     }
 }

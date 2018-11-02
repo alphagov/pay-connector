@@ -2,13 +2,12 @@ package uk.gov.pay.connector.applepay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
-import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ApplePayConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
@@ -17,7 +16,6 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.PrivateKey;
@@ -29,10 +27,11 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public class ApplePayDecrypter {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplePayDecrypter.class);
 
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final byte[] COUNTER = {0x00, 0x00, 0x00, 0x01};
     private static final byte[] APPLE_OEM = "Apple".getBytes(UTF_8);
     private static final byte[] ALG_IDENTIFIER_BYTES = "id-aes256-GCM".getBytes(UTF_8);
@@ -48,7 +47,7 @@ public class ApplePayDecrypter {
 
     @Inject
     public ApplePayDecrypter(ConnectorConfiguration configuration, ObjectMapper objectMapper) {
-        ApplePayConfig applePayConfig = configuration.getWorldpayConfig().getApplePay();
+        ApplePayConfig applePayConfig = configuration.getWorldpayConfig().getApplePayConfig();
         this.privateKeyBytes = applePayConfig.getPrivateKey();
         this.publicCertificate = applePayConfig.getPublicCertificate();
         this.objectMapper = objectMapper;
@@ -103,7 +102,7 @@ public class ApplePayDecrypter {
         byteArrayOutputStream.write(ALG_IDENTIFIER_BYTES);
         byteArrayOutputStream.write(APPLE_OEM);
         // Add Merchant Id
-        byteArrayOutputStream.write(HexBin.decode(new String((certificate.getExtensionValue("1.2.840.113635.100.6.32")), UTF_8).substring(4)));
+        byteArrayOutputStream.write(Hex.decode(new String((certificate.getExtensionValue("1.2.840.113635.100.6.32")), UTF_8).substring(4)));
         return MessageDigest.getInstance("SHA256", "BC")
                 .digest(byteArrayOutputStream.toByteArray());
     }
