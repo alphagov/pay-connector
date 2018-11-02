@@ -96,8 +96,6 @@ public class WorldpayPaymentProviderTest {
     private WorldpayPaymentProvider provider;
     private Map<String, String> urlMap = ImmutableMap.of(TEST.toString(), "http://worldpay.url");
 
-    EnumMap<GatewayOperation, GatewayClient> gatewayClients;
-
     @Mock
     private Client mockClient;
     @Mock
@@ -129,7 +127,7 @@ public class WorldpayPaymentProviderTest {
                 eq(PaymentGatewayName.WORLDPAY), any(GatewayOperation.class), any(MetricRegistry.class))
         )
                 .thenReturn(mockClient);
-        
+
         when(configuration.getGatewayConfigFor(PaymentGatewayName.WORLDPAY)).thenReturn(gatewayConfig);
         when(gatewayConfig.getUrls()).thenReturn(urlMap);
         when(configuration.getWorldpayConfig()).thenReturn(mock(WorldpayConfig.class));
@@ -173,24 +171,24 @@ public class WorldpayPaymentProviderTest {
 
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
         when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any(Map.class), any(BiFunction.class), any())).thenReturn(mockGatewayClient);
-        
+
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
         worldpayPaymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity));
 
         String expectedRefundRequest =
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<!DOCTYPE paymentService PUBLIC \"-//WorldPay//DTD WorldPay PaymentService v1//EN\"\n" +
-                "        \"http://dtd.worldpay.com/paymentService_v1.dtd\">\n" +
-                "<paymentService version=\"1.4\" merchantCode=\"MERCHANTCODE\">\n" +
-                "    <modify>\n" +
-                "        <orderModification orderCode=\"transaction-id\">\n" +
-                "            <refund reference=\"" +refundEntity.getExternalId()+ "\">\n" +
-                "                <amount currencyCode=\"GBP\" exponent=\"2\" value=\"500\"/>\n" +
-                "            </refund>\n" +
-                "        </orderModification>\n" +
-                "    </modify>\n" +
-                "</paymentService>\n" +
-                "";
+                        "<!DOCTYPE paymentService PUBLIC \"-//WorldPay//DTD WorldPay PaymentService v1//EN\"\n" +
+                        "        \"http://dtd.worldpay.com/paymentService_v1.dtd\">\n" +
+                        "<paymentService version=\"1.4\" merchantCode=\"MERCHANTCODE\">\n" +
+                        "    <modify>\n" +
+                        "        <orderModification orderCode=\"transaction-id\">\n" +
+                        "            <refund reference=\"" + refundEntity.getExternalId() + "\">\n" +
+                        "                <amount currencyCode=\"GBP\" exponent=\"2\" value=\"500\"/>\n" +
+                        "            </refund>\n" +
+                        "        </orderModification>\n" +
+                        "    </modify>\n" +
+                        "</paymentService>\n" +
+                        "";
 
         verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), argThat(argument -> argument.getPayload().equals(expectedRefundRequest) && argument.getOrderRequestType().equals(OrderRequestType.REFUND)));
     }
@@ -225,13 +223,6 @@ public class WorldpayPaymentProviderTest {
     public void shouldInclude3dsElementsWhen3dsToggleEnabled() throws Exception {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         chargeEntity.setGatewayTransactionId("transaction-id");
-
-        EnumMap<GatewayOperation, GatewayClient> gatewayClientEnumMap = GatewayOperationClientBuilder.builder()
-                .authClient(mockGatewayClient)
-                .captureClient(mockGatewayClient)
-                .cancelClient(mockGatewayClient)
-                .refundClient(mockGatewayClient)
-                .build();
 
         chargeEntity.setGatewayAccount(mockGatewayAccountEntity);
         ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
@@ -278,7 +269,7 @@ public class WorldpayPaymentProviderTest {
 
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
         when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any(Map.class), any(BiFunction.class), any())).thenReturn(mockGatewayClient);
-        
+
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
 
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
@@ -315,7 +306,7 @@ public class WorldpayPaymentProviderTest {
 
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
         when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any(Map.class), any(BiFunction.class), any())).thenReturn(mockGatewayClient);
-        
+
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
 
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));

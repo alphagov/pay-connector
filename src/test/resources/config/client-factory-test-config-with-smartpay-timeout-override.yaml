@@ -55,6 +55,12 @@ epdq:
     capture:
       readTimeout: 1000ms
 
+stripe:
+  urls:
+    test: https://api.stripe.com
+    live: https://api.stripe.com
+  credentials: ['username','password']
+
 jerseyClient:
   timeout: 500ms
   connectionTimeout: 500ms

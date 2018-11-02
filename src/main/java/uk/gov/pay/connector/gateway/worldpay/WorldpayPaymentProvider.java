@@ -179,7 +179,7 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
         return (order, builder) ->
                 order.getProviderSessionId()
                         .map(sessionId -> builder.cookie(WORLDPAY_MACHINE_COOKIE_NAME, sessionId))
-                        .orElseGet(() -> builder);
+                        .orElse(builder);
     }
 
     private GatewayOrder buildAuthoriseOrder(AuthorisationGatewayRequest request) {

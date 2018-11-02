@@ -216,7 +216,7 @@ public class CardCaptureService implements TransactionalGatewayOperation<BaseCap
         return charge;
     }
 
-    public PaymentProvider<BaseCaptureResponse, ?> getPaymentProviderFor(ChargeEntity chargeEntity) {
+    private PaymentProvider<BaseCaptureResponse, ?> getPaymentProviderFor(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName());
     }
 }

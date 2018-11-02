@@ -5,10 +5,10 @@ import com.google.common.base.Stopwatch;
 import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshallerException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
@@ -27,8 +27,6 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.Response.Status.OK;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gateway.model.GatewayError.baseError;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionSocketException;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionTimeoutException;
@@ -36,6 +34,8 @@ import static uk.gov.pay.connector.gateway.model.GatewayError.malformedResponseR
 import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCodeFromGateway;
 import static uk.gov.pay.connector.gateway.model.GatewayError.unknownHostException;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.encode;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 
 public class GatewayClient {
     private final Logger logger = LoggerFactory.getLogger(GatewayClient.class);
@@ -46,7 +46,7 @@ public class GatewayClient {
     private final BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier;
 
     public GatewayClient(Client client, Map<String, String> gatewayUrlMap,
-        BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier, MetricRegistry metricRegistry) {
+                         BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier, MetricRegistry metricRegistry) {
         this.gatewayUrlMap = gatewayUrlMap;
         this.client = client;
         this.metricRegistry = metricRegistry;
@@ -114,9 +114,58 @@ public class GatewayClient {
         }
     }
 
+    public javax.ws.rs.core.Response postStripeRequestFor(GatewayAccountEntity account, GatewayOrder request, String path) throws GatewayError {
+        String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
+        javax.ws.rs.core.Response response = null;
+
+        String gatewayUrl = gatewayUrlMap.get(account.getType());
+
+        Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
+        try {
+            logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
+            Builder requestBuilder = client.target(gatewayUrl + path)
+                    .request()
+                    .header(AUTHORIZATION, encode(
+                            account.getCredentials().get(CREDENTIALS_USERNAME),
+                            account.getCredentials().get(CREDENTIALS_PASSWORD)));
+
+            response = sessionIdentifier.apply(request, requestBuilder)
+                    .post(Entity.entity(request.getPayload(), request.getMediaType()));
+
+            if (response.getStatusInfo().getFamily() == javax.ws.rs.core.Response.Status.Family.SERVER_ERROR) {
+                logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}", response.getStatus(), gatewayUrl, account.getType());
+                incrementFailureCounter(metricRegistry, metricsPrefix);
+                throw GatewayError.unexpectedStatusCodeFromGateway("Unexpected HTTP status code " + response.getStatus() + " from gateway");
+            }
+            
+            return response;
+        } catch (ProcessingException pe) {
+            incrementFailureCounter(metricRegistry, metricsPrefix);
+            if (pe.getCause() != null) {
+                if (pe.getCause() instanceof UnknownHostException) {
+                    logger.error(format("DNS resolution error for gateway url=%s", gatewayUrl), pe);
+                    throw GatewayError.unknownHostException("Gateway Url DNS resolution error");
+                }
+                if (pe.getCause() instanceof SocketTimeoutException) {
+                    logger.error(format("Connection timed out error for gateway url=%s", gatewayUrl), pe);
+                    throw GatewayError.gatewayConnectionTimeoutException("Gateway connection timeout error");
+                }
+                if (pe.getCause() instanceof SocketException) {
+                    logger.error(format("Socket Exception for gateway url=%s", gatewayUrl), pe);
+                    throw GatewayError.gatewayConnectionSocketException("Gateway connection socket error");
+                }
+            }
+            logger.error(format("Exception for gateway url=%s", gatewayUrl), pe);
+            throw GatewayError.baseError(pe.getMessage());
+        } finally {
+            responseTimeStopwatch.stop();
+            metricRegistry.histogram(metricsPrefix + ".response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
+        }
+    }
+
     public <T> Either<GatewayError, T> unmarshallResponse(GatewayClient.Response response, Class<T> clazz) {
         String payload = response.getEntity();
-        logger.debug("response payload=" + payload);
+        logger.debug("response payload={}", payload);
         try {
             return right(XMLUnmarshaller.unmarshall(payload, clazz));
         } catch (XMLUnmarshallerException e) {
@@ -130,7 +179,7 @@ public class GatewayClient {
         metricRegistry.counter(metricsPrefix + ".failures").inc();
     }
 
-    static public class Response {
+    public static class Response {
         private final int status;
         private final String entity;
         private final Map<String, String> responseCookies = new HashMap<>();
