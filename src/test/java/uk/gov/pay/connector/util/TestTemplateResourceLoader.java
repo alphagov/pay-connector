@@ -1,9 +1,6 @@
 package uk.gov.pay.connector.util;
 
-import com.google.common.io.Resources;
-
-import java.io.IOException;
-import java.nio.charset.Charset;
+import static io.dropwizard.testing.FixtureHelpers.fixture;
 
 public class TestTemplateResourceLoader {
     private static final String TEMPLATE_BASE_NAME = "templates";
@@ -13,9 +10,9 @@ public class TestTemplateResourceLoader {
     private static final String WORLDPAY_BASE_NAME = TEMPLATE_BASE_NAME + "/worldpay";
 
     public static final String WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-success-response.xml";
-    public static final String WORLDPAY_AUTHORISATION_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-error-response.xml";
+    static final String WORLDPAY_AUTHORISATION_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-error-response.xml";
     public static final String WORLDPAY_AUTHORISATION_FAILED_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-failed-response.xml";
-    public static final String WORLDPAY_AUTHORISATION_CANCELLED_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-cancelled-response.xml";
+    static final String WORLDPAY_AUTHORISATION_CANCELLED_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-cancelled-response.xml";
     public static final String WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS = WORLDPAY_BASE_NAME + "/special-char-valid-authorise-worldpay-request-address.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-3ds-request-min-address.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-excluding-3ds.xml";
@@ -49,12 +46,12 @@ public class TestTemplateResourceLoader {
     public static final String SMARTPAY_AUTHORISATION_SUCCESS_RESPONSE = SMARTPAY_BASE_NAME + "/authorisation-success-response.xml";
     public static final String SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE = SMARTPAY_BASE_NAME + "/authorisation-3ds-required-response.xml";
     public static final String SMARTPAY_AUTHORISATION_FAILED_RESPONSE = SMARTPAY_BASE_NAME + "/authorisation-failed-response.xml";
-    public static final String SMARTPAY_AUTHORISATION_ERROR_RESPONSE = SMARTPAY_BASE_NAME + "/authorisation-error-response.xml";
+    static final String SMARTPAY_AUTHORISATION_ERROR_RESPONSE = SMARTPAY_BASE_NAME + "/authorisation-error-response.xml";
     public static final String SMARTPAY_SPECIAL_CHAR_VALID_AUTHORISE_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/special-char-valid-authorise-smartpay-request.xml";
     public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request.xml";
     public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_MINIMAL = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request-minimal.xml";
 
-    public static final String SMARTPAY_CANCEL_ERROR_RESPONSE = SMARTPAY_BASE_NAME + "/cancel-error-response.xml";
+    static final String SMARTPAY_CANCEL_ERROR_RESPONSE = SMARTPAY_BASE_NAME + "/cancel-error-response.xml";
     public static final String SMARTPAY_CANCEL_SUCCESS_RESPONSE = SMARTPAY_BASE_NAME + "/cancel-success-response.xml";
     public static final String SMARTPAY_VALID_CANCEL_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/valid-cancel-smartpay-request.xml";
 
@@ -75,9 +72,7 @@ public class TestTemplateResourceLoader {
     public static final String SMARTPAY_VALID_REFUND_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/valid-refund-smartpay-request.xml";
 
     // EPDQ
-
-    public static final String EPDQ_BASE_NAME = TEMPLATE_BASE_NAME + "/epdq";
-
+    private static final String EPDQ_BASE_NAME = TEMPLATE_BASE_NAME + "/epdq";
     public static final String EPDQ_AUTHORISATION_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/authorisation-success-response.xml";
     public static final String EPDQ_AUTHORISATION_SUCCESS_3D_RESPONSE = EPDQ_BASE_NAME + "/authorisation-success-3d-response.xml";
     public static final String EPDQ_AUTHORISATION_ERROR_RESPONSE = EPDQ_BASE_NAME + "/authorisation-error-response.xml";
@@ -97,7 +92,7 @@ public class TestTemplateResourceLoader {
 
     public static final String EPDQ_CANCEL_REQUEST = EPDQ_BASE_NAME + "/cancel-request.txt";
     public static final String EPDQ_CANCEL_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/cancel-success-response.xml";
-    public static final String EPDQ_CANCEL_WAITING_RESPONSE = EPDQ_BASE_NAME + "/cancel-waiting-response.xml";
+    static final String EPDQ_CANCEL_WAITING_RESPONSE = EPDQ_BASE_NAME + "/cancel-waiting-response.xml";
     public static final String EPDQ_CANCEL_ERROR_RESPONSE = EPDQ_BASE_NAME + "/cancel-error-response.xml";
 
     public static final String EPDQ_REFUND_REQUEST = EPDQ_BASE_NAME + "/refund-request.txt";
@@ -108,12 +103,8 @@ public class TestTemplateResourceLoader {
 
     public static final String EPDQ_NOTIFICATION_TEMPLATE = EPDQ_BASE_NAME + "/notification-template.txt";
 
-    static public String load(String location) {
-        try {
-            return Resources.toString(Resources.getResource(location), Charset.defaultCharset());
-        } catch (IOException e) {
-            throw new RuntimeException("Could not load template", e);
-        }
+    public static String load(String location) {
+        return fixture(location);
     }
 
 }

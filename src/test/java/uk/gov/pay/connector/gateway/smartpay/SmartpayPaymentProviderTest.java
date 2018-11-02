@@ -5,7 +5,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Resources;
 import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
@@ -42,10 +41,8 @@ import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.Charset;
 
-import static com.google.common.io.Resources.getResource;
+import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -289,8 +286,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     private String notificationPayloadForTransaction(String originalReference, String pspReference, String merchantReference, String fileName) throws IOException {
-        URL resource = getResource("templates/smartpay/" + fileName + ".json");
-        return Resources.toString(resource, Charset.defaultCharset())
+        return fixture("templates/smartpay/" + fileName + ".json")
                 .replace("{{originalReference}}", originalReference)
                 .replace("{{pspReference}}", pspReference)
                 .replace("{{merchantReference}}", merchantReference);

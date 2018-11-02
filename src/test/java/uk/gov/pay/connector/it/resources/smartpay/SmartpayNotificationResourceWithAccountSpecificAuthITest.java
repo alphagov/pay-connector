@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources.smartpay;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Resources;
 import com.jayway.restassured.response.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
@@ -14,13 +13,11 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.io.Resources.getResource;
 import static com.jayway.restassured.RestAssured.given;
+import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -148,7 +145,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
     }
 
     @Test
-    public void shouldHandleMultipleSmartpayNotifications() throws Exception {
+    public void shouldHandleMultipleSmartpayNotifications() {
 
         String transactionId = randomId();
         String transactionId2 = randomId();
@@ -167,7 +164,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
     }
 
     @Test
-    public void shouldKeepLatestSmartpayStatusFromNotifications() throws Exception {
+    public void shouldKeepLatestSmartpayStatusFromNotifications() {
         String transactionId = randomId();
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
@@ -209,7 +206,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
                 .statusCode(415);
     }
 
-    private Response notifyConnector(String payload) throws IOException {
+    private Response notifyConnector(String payload) {
         return given()
                 .port(testContext.getPort())
                 .auth().basic("bob", "bobsbigsecret")
@@ -218,7 +215,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
                 .post(NOTIFICATION_PATH);
     }
 
-    private Response notifyConnectorWithCredentials(String payload, String username, String password) throws IOException {
+    private Response notifyConnectorWithCredentials(String payload, String username, String password) {
         return given()
                 .port(testContext.getPort())
                 .auth().basic(username, password)
@@ -228,14 +225,13 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
     }
 
     private String notificationPayloadForTransaction(String merchantReference, String originalReference, String pspReference, String fileName) throws IOException {
-        URL resource = getResource("templates/smartpay/" + fileName + ".json");
-        return Resources.toString(resource, Charset.defaultCharset())
+        return fixture("templates/smartpay/" + fileName + ".json")
                 .replace("{{merchantReference}}", merchantReference)
                 .replace("{{originalReference}}", originalReference)
                 .replace("{{pspReference}}", pspReference);
     }
 
-    private String multipleNotifications(String transactionId, String transactionId2) throws IOException {
+    private String multipleNotifications(String transactionId, String transactionId2) {
         return TestTemplateResourceLoader.load(SMARTPAY_MULTIPLE_NOTIFICATIONS)
                 .replace("{{pspReference1}}", transactionId)
                 .replace("{{pspReference2}}", transactionId2);

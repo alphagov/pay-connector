@@ -1,15 +1,14 @@
 package uk.gov.pay.connector.it.util;
 
-import com.google.common.io.Resources;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockserver.integration.ClientAndServer;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
+import uk.gov.pay.connector.gateway.util.XMLUnmarshallerException;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
 
-import java.nio.charset.Charset;
-
+import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -31,9 +30,9 @@ public class XMLUnmarshallerTest {
     }
 
     @Test
-    public void shouldUnmarshallXmlIgnoringDTD() throws Exception {
+    public void shouldUnmarshallXmlIgnoringDTD() throws XMLUnmarshallerException {
 
-        String successPayload = Resources.toString(Resources.getResource("templates/it/worldpay-cancel-notfication-example-it-dtd-validation-disabled.xml"), Charset.defaultCharset())
+        String successPayload = fixture("templates/it/worldpay-cancel-notfication-example-it-dtd-validation-disabled.xml")
                 .replace("{{port}}", String.valueOf(MOCKSERVER_PORT));
 
         mockServer
