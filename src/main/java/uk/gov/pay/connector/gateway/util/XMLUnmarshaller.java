@@ -15,6 +15,7 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.sax.SAXSource;
 import java.io.ByteArrayInputStream;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING;
 
 public class XMLUnmarshaller {
@@ -43,7 +44,7 @@ public class XMLUnmarshaller {
     }
 
     private static <T> T unmarshall(String payload, Class<T> clazz, XMLReader xmlReader) throws JAXBException {
-        InputSource inputSource = new InputSource(new ByteArrayInputStream(payload.getBytes()));
+        InputSource inputSource = new InputSource(new ByteArrayInputStream(payload.getBytes(UTF_8)));
         JAXBContext jaxbContext = JAXBContext.newInstance(clazz);
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
         return unmarshaller.unmarshal(new SAXSource(xmlReader, inputSource), clazz).getValue();

@@ -1,14 +1,13 @@
 package uk.gov.pay.connector.applepay;
 
+import org.apache.commons.lang3.RandomUtils;
+
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
-import java.util.UUID;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class AsymmetricKeyVerifier {
     private static final String SIGNATURE_ALGORITHM_NAME = "SHA256withECDSA";
@@ -22,7 +21,7 @@ public class AsymmetricKeyVerifier {
     }
 
     boolean verify() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-        byte[] data = UUID.randomUUID().toString().getBytes(UTF_8);
+        byte[] data = RandomUtils.nextBytes(16);
         byte[] digitalSignature = signData(data);
         Signature signer = Signature.getInstance(SIGNATURE_ALGORITHM_NAME);
         signer.initVerify(publicKey);

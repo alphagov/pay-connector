@@ -1,10 +1,12 @@
 package uk.gov.pay.connector.app;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class WorldpayConfig extends GatewayConfig {
     private boolean secureNotificationEnabled;
     private String notificationDomain;
-    private ApplePayConfig applePay;
+    private ApplePayConfig applePayConfig;
 
     public String getNotificationDomain() {
         return notificationDomain;
@@ -14,7 +16,8 @@ public class WorldpayConfig extends GatewayConfig {
         return secureNotificationEnabled;
     }
 
+    @JsonProperty("applePay")
     public ApplePayConfig getApplePayConfig() {
-        return applePay;
+        return applePayConfig;
     }
 }
