@@ -14,6 +14,7 @@ import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -23,7 +24,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 
 public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3dsDetails> {
-
 
     @Inject
     public Card3dsResponseAuthService(ChargeDao chargeDao,
@@ -43,7 +43,7 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
     @Transactional
     public ChargeEntity preOperation(String chargeId, Auth3dsDetails auth3DsDetails) {
         return chargeDao.findByExternalId(chargeId)
-                .map(chargeEntity -> lockChargeForProcessing(chargeEntity, OperationType.AUTHORISATION_3DS, getLegalStates(), AUTHORISATION_3DS_READY))
+                .map(chargeEntity -> chargeService.lockChargeForProcessing(chargeEntity, OperationType.AUTHORISATION_3DS, getLegalStates(), AUTHORISATION_3DS_READY))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 

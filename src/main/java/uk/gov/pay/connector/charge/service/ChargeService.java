@@ -10,6 +10,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.exception.ChargeExpiredRuntimeException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
@@ -26,12 +27,16 @@ import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -44,6 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.HttpMethod.GET;
@@ -53,6 +59,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 
 public class ChargeService {
@@ -178,7 +185,7 @@ public class ChargeService {
                 .withAuth3dsData(auth3dsData)
                 .withLink("self", GET, selfUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()));
-        
+
         if (ChargeStatus.AWAITING_CAPTURE_REQUEST.getValue().equals(chargeEntity.getStatus())) {
             builderOfResponse.withLink("capture", POST, captureUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()));
         }
@@ -239,6 +246,41 @@ public class ChargeService {
         });
     }
 
+    public ChargeEntity lockChargeForProcessing(ChargeEntity chargeEntity, OperationType operationType, List<ChargeStatus> legalStatuses, ChargeStatus lockingStatus) {
+
+        GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
+
+        logger.info("Card pre-operation - charge_external_id={}, charge_status={}, account_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
+                chargeEntity.getExternalId(),
+                fromString(chargeEntity.getStatus()),
+                gatewayAccount.getId(),
+                chargeEntity.getAmount(),
+                operationType.getValue(),
+                gatewayAccount.getGatewayName(),
+                gatewayAccount.getType(),
+                lockingStatus);
+
+        if (chargeEntity.hasStatus(ChargeStatus.EXPIRED)) {
+            throw new ChargeExpiredRuntimeException(operationType.getValue(), chargeEntity.getExternalId());
+        }
+
+        if (!chargeEntity.hasStatus(legalStatuses)) {
+            if (chargeEntity.hasStatus(lockingStatus)) {
+                throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), chargeEntity.getExternalId());
+            }
+            
+            String legalStates = legalStatuses.stream().map(ChargeStatus::toString).collect(Collectors.joining(", "));
+            
+            logger.error("Charge is not in a legal status to do the pre-operation - charge_external_id={}, status={}, legal_states={}",
+                    chargeEntity.getExternalId(), chargeEntity.getStatus(), legalStates);
+            throw new IllegalStateRuntimeException(chargeEntity.getExternalId());
+        }
+
+        chargeEntity.setStatus(lockingStatus);
+
+        return chargeEntity;
+    }
+
     private CardDetailsEntity buildCardDetailsEntity(AuthCardDetails authCardDetails) {
         CardDetailsEntity detailsEntity = new CardDetailsEntity();
         detailsEntity.setCardBrand(sanitize(authCardDetails.getCardBrand()));
@@ -295,7 +337,7 @@ public class ChargeService {
                 .path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
                 .build(accountId, chargeId);
     }
-    
+
     private URI captureUriFor(UriInfo uriInfo, Long accountId, String chargeId) {
         return uriInfo.getBaseUriBuilder()
                 .path("/v1/api/accounts/{accountId}/charges/{chargeId}/capture")
