@@ -6,6 +6,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.SignatureException;
 
@@ -21,7 +22,8 @@ public class AsymmetricKeyVerifier {
     }
 
     boolean verify() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-        byte[] data = RandomUtils.nextBytes(16);
+        byte[] data = new byte[16];
+        SecureRandom.getInstanceStrong().nextBytes(data);
         byte[] digitalSignature = signData(data);
         Signature signer = Signature.getInstance(SIGNATURE_ALGORITHM_NAME);
         signer.initVerify(publicKey);
