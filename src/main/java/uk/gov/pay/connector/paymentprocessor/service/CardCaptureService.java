@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
@@ -9,15 +10,18 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.inject.Inject;
@@ -39,7 +43,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBM
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions.isValidTransition;
 
-public class CardCaptureService extends CardService implements TransactionalGatewayOperation<BaseCaptureResponse> {
+public class CardCaptureService implements TransactionalGatewayOperation<BaseCaptureResponse> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CardCaptureService.class);
     private static final List<ChargeStatus> LEGAL_STATUSES = ImmutableList.of(
@@ -56,11 +60,22 @@ public class CardCaptureService extends CardService implements TransactionalGate
     );
 
     private final UserNotificationService userNotificationService;
-
+    private final ChargeService chargeService;
+    private final ChargeDao chargeDao;
+    private final ChargeEventDao chargeEventDao;
+    private final PaymentProviders providers;
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    protected MetricRegistry metricRegistry;
 
     @Inject
-    public CardCaptureService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, PaymentProviders providers, UserNotificationService userNotificationService, Environment environment) {
-        super(chargeDao, chargeEventDao, providers, environment);
+    public CardCaptureService(ChargeService chargeService, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
+                              PaymentProviders providers, UserNotificationService userNotificationService,
+                              Environment environment) {
+        this.chargeService = chargeService;
+        this.chargeDao = chargeDao;
+        this.chargeEventDao = chargeEventDao;
+        this.providers = providers;
+        this.metricRegistry = environment.metrics();
         this.userNotificationService = userNotificationService;
     }
 
@@ -80,7 +95,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Override
     public ChargeEntity preOperation(String chargeId) {
         return chargeDao.findByExternalId(chargeId)
-                .map(chargeEntity -> lockChargeForProcessing(chargeEntity, CardService.OperationType.CAPTURE, LEGAL_STATUSES, CAPTURE_READY))
+                .map(chargeEntity -> chargeService.lockChargeForProcessing(chargeEntity, OperationType.CAPTURE, LEGAL_STATUSES, CAPTURE_READY))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
@@ -199,5 +214,9 @@ public class CardCaptureService extends CardService implements TransactionalGate
         charge.setStatus(targetStatus);
         chargeEventDao.persistChargeEventOf(charge, Optional.empty());
         return charge;
+    }
+
+    public PaymentProvider<BaseCaptureResponse, ?> getPaymentProviderFor(ChargeEntity chargeEntity) {
+        return providers.byName(chargeEntity.getPaymentGatewayName());
     }
 }

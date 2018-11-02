@@ -24,17 +24,25 @@ import org.mockito.Mockito;
 import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
+import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.persistence.OptimisticLockException;
@@ -94,7 +102,11 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        cardCaptureService = new CardCaptureService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockUserNotificationService,
+        ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
+        chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
+                null, null, mockConfiguration, null);
+        
+        cardCaptureService = new CardCaptureService(chargeService, mockedChargeDao, mockedChargeEventDao, mockedProviders, mockUserNotificationService,
                 mockEnvironment);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);

@@ -18,6 +18,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -61,7 +62,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
                 chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             } else {
-                lockChargeForProcessing(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
+                chargeService.lockChargeForProcessing(chargeEntity, OperationType.AUTHORISATION, getLegalStates(), AUTHORISATION_READY);
 
                 getCorporateCardSurchargeFor(authCardDetails, chargeEntity).ifPresent(chargeEntity::setCorporateSurcharge);
 

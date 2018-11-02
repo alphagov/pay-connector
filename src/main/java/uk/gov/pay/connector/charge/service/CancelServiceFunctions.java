@@ -18,7 +18,7 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.paymentprocessor.service.CardService.OperationType;
+import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import java.time.ZonedDateTime;
 import java.util.List;

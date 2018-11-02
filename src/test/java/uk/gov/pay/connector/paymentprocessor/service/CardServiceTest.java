@@ -6,6 +6,7 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -20,6 +21,7 @@ public abstract class CardServiceTest {
     protected PaymentProviders mockedProviders = mock(PaymentProviders.class);
     protected MetricRegistry mockMetricRegistry;
     protected ChargeDao mockedChargeDao = mock(ChargeDao.class);
+    protected ChargeService chargeService;
     protected ChargeEventDao mockedChargeEventDao = mock(ChargeEventDao.class);
     protected CardTypeDao mockedCardTypeDao = mock(CardTypeDao.class);
 
