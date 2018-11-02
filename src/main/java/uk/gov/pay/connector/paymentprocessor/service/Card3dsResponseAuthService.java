@@ -7,31 +7,32 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 
 public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3dsDetails> {
+
 
     @Inject
     public Card3dsResponseAuthService(ChargeDao chargeDao,
                                       ChargeEventDao chargeEventDao,
                                       PaymentProviders providers,
                                       CardExecutorService cardExecutorService,
+                                      ChargeService chargeService,
                                       Environment environment) {
-        super(chargeDao, chargeEventDao, providers, cardExecutorService, environment);
+        super(chargeDao, chargeEventDao, providers, cardExecutorService, chargeService, environment);
     }
 
     public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, Auth3dsDetails auth3DsDetails) {
@@ -42,40 +43,32 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
     @Transactional
     public ChargeEntity preOperation(String chargeId, Auth3dsDetails auth3DsDetails) {
         return chargeDao.findByExternalId(chargeId)
-                .map(chargeEntity -> preOperation(chargeEntity, OperationType.AUTHORISATION_3DS, getLegalStates(), AUTHORISATION_3DS_READY))
+                .map(chargeEntity -> lockChargeForProcessing(chargeEntity, OperationType.AUTHORISATION_3DS, getLegalStates(), AUTHORISATION_3DS_READY))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     @Transactional
-    public GatewayResponse<BaseAuthoriseResponse> postOperation(String chargeId,
-                                                                Auth3dsDetails auth3DsDetails,
-                                                                GatewayResponse<BaseAuthoriseResponse> operationResponse) {
-        return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
+    public void processGatewayAuthorisationResponse(String chargeId, Auth3dsDetails auth3DsDetails, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
 
-            ChargeStatus status = operationResponse.getBaseResponse()
-                    .map(BaseAuthoriseResponse::authoriseStatus)
-                    .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
-                    .orElse(ChargeStatus.AUTHORISATION_ERROR);
+        chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
 
-            String transactionId = operationResponse.getBaseResponse()
-                    .map(BaseAuthoriseResponse::getTransactionId).orElse("");
+            Optional<String> transactionId = operationResponse.getBaseResponse().map(BaseAuthoriseResponse::getTransactionId);
+            ChargeStatus status = determineChargeStatus(operationResponse.getBaseResponse(), Optional.empty());
 
             logger.info("3DS response authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                     chargeEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), chargeEntity.getGatewayTransactionId(),
                     chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
                     operationResponse, chargeEntity.getStatus(), status);
 
-            GatewayAccountEntity account = chargeEntity.getGatewayAccount();
+            chargeService.updateChargePost3dsAuthorisation(status, chargeEntity, transactionId);
 
-            metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise-3ds.result.%s", account.getGatewayName(), account.getType(), account.getId(), status.toString())).inc();
+            metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise-3ds.result.%s",
+                    chargeEntity.getGatewayAccount().getGatewayName(),
+                    chargeEntity.getGatewayAccount().getType(),
+                    chargeEntity.getGatewayAccount().getId(),
+                    status.toString())).inc();
 
-            chargeEntity.setStatus(status);
-
-            if (!isBlank(transactionId)) {
-                setGatewayTransactionId(chargeEntity, transactionId);
-            }
-            chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-            return operationResponse;
+            return chargeEntity;
 
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }

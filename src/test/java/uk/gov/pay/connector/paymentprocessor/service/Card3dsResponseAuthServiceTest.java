@@ -13,10 +13,12 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.exception.ChargeExpiredRuntimeException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
@@ -59,6 +61,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     private static final String GENERATED_TRANSACTION_ID = "generated-transaction-id";
 
     private ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);
+    private ChargeService chargeService;
     private Card3dsResponseAuthService card3dsResponseAuthService;
     private CardExecutorService mockExecutorService = mock(CardExecutorService.class);
 
@@ -70,7 +73,11 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedChargeDao, mockedChargeEventDao, mockedProviders, mockExecutorService, mockEnvironment);
+        ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
+        chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
+                null, mockConfiguration, null);
+        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedChargeDao, mockedChargeEventDao,
+                mockedProviders, mockExecutorService, chargeService, mockEnvironment);
     }
 
     public void setupMockExecutorServiceMock() {

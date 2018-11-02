@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.service;
 
 import com.google.inject.persist.Transactional;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.SupportedLanguage;
@@ -9,10 +10,15 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.AddressEntity;
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
@@ -24,6 +30,7 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
@@ -42,6 +49,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
@@ -191,6 +199,55 @@ public class ChargeService {
         }
 
         return builderOfResponse;
+    }
+
+    public void updateChargePostAuthorisation(ChargeStatus status,
+                                              ChargeEntity chargeEntity,
+                                              Optional<String> transactionId,
+                                              Optional<Auth3dsDetailsEntity> auth3dsDetailsEntity,
+                                              Optional<String> sessionIdentifier,
+                                              AuthCardDetails authCardDetails) {
+
+        chargeEntity.setStatus(status);
+        setTransactionId(chargeEntity, transactionId);
+        sessionIdentifier.ifPresent(chargeEntity::setProviderSessionId);
+
+        auth3dsDetailsEntity.ifPresent(chargeEntity::set3dsDetails);
+
+        CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
+        chargeEntity.setCardDetails(detailsEntity);
+
+        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
+        logger.info("Stored confirmation details for charge - charge_external_id={}",
+                chargeEntity.getExternalId());
+
+    }
+
+    public void updateChargePost3dsAuthorisation(ChargeStatus status, ChargeEntity chargeEntity,
+                                                 Optional<String> transactionId) {
+        chargeEntity.setStatus(status);
+        setTransactionId(chargeEntity, transactionId);
+
+        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
+    }
+
+    private void setTransactionId(ChargeEntity chargeEntity, Optional<String> transactionId) {
+        transactionId.ifPresent(txId -> {
+            if (!isBlank(txId)) {
+                chargeEntity.setGatewayTransactionId(txId);
+            }
+        });
+    }
+
+    private CardDetailsEntity buildCardDetailsEntity(AuthCardDetails authCardDetails) {
+        CardDetailsEntity detailsEntity = new CardDetailsEntity();
+        detailsEntity.setCardBrand(sanitize(authCardDetails.getCardBrand()));
+        detailsEntity.setBillingAddress(new AddressEntity(authCardDetails.getAddress()));
+        detailsEntity.setCardHolderName(sanitize(authCardDetails.getCardHolder()));
+        detailsEntity.setExpiryDate(authCardDetails.getEndDate());
+        detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
+        detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
+        return detailsEntity;
     }
 
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {

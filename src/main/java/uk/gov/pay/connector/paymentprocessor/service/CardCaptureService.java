@@ -80,7 +80,7 @@ public class CardCaptureService extends CardService implements TransactionalGate
     @Override
     public ChargeEntity preOperation(String chargeId) {
         return chargeDao.findByExternalId(chargeId)
-                .map(chargeEntity -> preOperation(chargeEntity, CardService.OperationType.CAPTURE, LEGAL_STATUSES, CAPTURE_READY))
+                .map(chargeEntity -> lockChargeForProcessing(chargeEntity, CardService.OperationType.CAPTURE, LEGAL_STATUSES, CAPTURE_READY))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 

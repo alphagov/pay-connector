@@ -52,7 +52,7 @@ public abstract class CardService<T extends BaseResponse> {
         this.metricRegistry = environment.metrics();
     }
 
-    public ChargeEntity preOperation(ChargeEntity chargeEntity, OperationType operationType, List<ChargeStatus> legalStatuses, ChargeStatus lockingStatus) {
+    public ChargeEntity lockChargeForProcessing(ChargeEntity chargeEntity, OperationType operationType, List<ChargeStatus> legalStatuses, ChargeStatus lockingStatus) {
 
         GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 

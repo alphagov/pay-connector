@@ -10,11 +10,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
@@ -89,13 +91,19 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     private CardAuthoriseService cardAuthorisationService;
 
+    private ChargeService chargeService;
+
     @Before
     public void setUpCardAuthorisationService() {
         mockMetricRegistry = mock(MetricRegistry.class);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
+
+        ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
+        chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
+                null, null, mockConfiguration, null);
         cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedProviders, mockExecutorService,
+                mockedCardTypeDao, mockedProviders, mockExecutorService, chargeService,
                 mockEnvironment);
     }
 
