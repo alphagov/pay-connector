@@ -19,7 +19,8 @@ public class GatewaySocketReadTimeoutITest extends BaseGatewayITest {
 
     @Rule
     public GuiceAppWithPostgresRule app = new GuiceAppWithPostgresRule(
-            config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
+            config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"),
+            config("customJerseyClient.readTimeout", "5ms"));
 
     @Before
     public void setUp() {
