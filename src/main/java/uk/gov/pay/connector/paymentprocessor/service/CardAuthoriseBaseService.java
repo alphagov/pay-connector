@@ -5,11 +5,9 @@ import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -31,24 +29,16 @@ import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.
 
 public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CardAuthoriseBaseService.class);
-
     private final CardExecutorService cardExecutorService;
-
     protected final ChargeService chargeService;
-    protected final ChargeDao chargeDao;
-    protected final ChargeEventDao chargeEventDao;
     private final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected MetricRegistry metricRegistry;
 
-    public CardAuthoriseBaseService(ChargeDao chargeDao, ChargeEventDao chargeEventDao,
-                                    PaymentProviders providers,
+    CardAuthoriseBaseService(PaymentProviders providers,
                                     CardExecutorService cardExecutorService,
                                     ChargeService chargeService,
                                     Environment environment) {
-        this.chargeDao = chargeDao;
-        this.chargeEventDao = chargeEventDao;
         this.providers = providers;
         this.cardExecutorService = cardExecutorService;
         this.chargeService = chargeService;
@@ -57,9 +47,9 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
 
     public GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, T gatewayAuthRequest) {
         Supplier authorisationSupplier = () -> {
-            ChargeEntity charge = prepareChargeForAuthorisation(chargeId, gatewayAuthRequest);
+            final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, gatewayAuthRequest);
             GatewayResponse<BaseAuthoriseResponse> operationResponse = authorise(charge, gatewayAuthRequest);
-            processGatewayAuthorisationResponse(chargeId, gatewayAuthRequest, operationResponse);
+            processGatewayAuthorisationResponse(charge, gatewayAuthRequest, operationResponse);
             return operationResponse;
         };
 
@@ -77,12 +67,12 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
 
     protected abstract ChargeEntity prepareChargeForAuthorisation(String chargeId, T gatewayAuthRequest);
 
-    protected abstract void processGatewayAuthorisationResponse(String chargeId, T gatewayAuthRequest, GatewayResponse<BaseAuthoriseResponse> operationResponse);
+    protected abstract void processGatewayAuthorisationResponse(ChargeEntity charge, T gatewayAuthRequest, GatewayResponse<BaseAuthoriseResponse> operationResponse);
 
     protected abstract GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, T gatewayAuthRequest);
 
-    protected ChargeStatus determineChargeStatus(Optional<BaseAuthoriseResponse> baseResponse,
-                                                 Optional<GatewayError> gatewayError) {
+    ChargeStatus extractChargeStatus(Optional<BaseAuthoriseResponse> baseResponse,
+                                     Optional<GatewayError> gatewayError) {
 
         return baseResponse
                 .map(BaseAuthoriseResponse::authoriseStatus)
@@ -92,7 +82,7 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
                         .orElse(ChargeStatus.AUTHORISATION_ERROR));
     }
 
-    protected PaymentProvider<BaseAuthoriseResponse, ?> getPaymentProviderFor(ChargeEntity chargeEntity) {
+    PaymentProvider<BaseAuthoriseResponse, ?> getPaymentProviderFor(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName());
     }
 

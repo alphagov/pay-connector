@@ -2,12 +2,9 @@ package uk.gov.pay.connector.paymentprocessor.service;
 
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
@@ -19,15 +16,18 @@ import javax.inject.Inject;
 import java.util.Optional;
 
 public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3dsDetails> {
-
     @Inject
-    public Card3dsResponseAuthService(ChargeDao chargeDao,
-                                      ChargeEventDao chargeEventDao,
-                                      PaymentProviders providers,
+    public Card3dsResponseAuthService(PaymentProviders providers,
                                       CardExecutorService cardExecutorService,
                                       ChargeService chargeService,
                                       Environment environment) {
-        super(chargeDao, chargeEventDao, providers, cardExecutorService, chargeService, environment);
+        super(providers, cardExecutorService, chargeService, environment);
+    }
+
+    @Override
+    @Transactional
+    public ChargeEntity prepareChargeForAuthorisation(String chargeId, Auth3dsDetails auth3DsDetails) {
+        return chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION_3DS);
     }
 
     @Override
@@ -35,36 +35,32 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
         return getPaymentProviderFor(chargeEntity)
                 .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(chargeEntity, auth3DsDetails));
     }
-
+    
+    @Override
     @Transactional
-    public ChargeEntity prepareChargeForAuthorisation(String chargeId, Auth3dsDetails auth3DsDetails) {
-        return chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION_3DS);
-    }
-
-    @Transactional
-    public void processGatewayAuthorisationResponse(String chargeId, Auth3dsDetails auth3DsDetails, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
-
-        chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
-
+    public void processGatewayAuthorisationResponse(
+            ChargeEntity oldCharge, 
+            Auth3dsDetails auth3DsDetails, 
+            GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+        
             Optional<String> transactionId = operationResponse.getBaseResponse().map(BaseAuthoriseResponse::getTransactionId);
-            ChargeStatus status = determineChargeStatus(operationResponse.getBaseResponse(), Optional.empty());
+            ChargeStatus status = extractChargeStatus(operationResponse.getBaseResponse(), Optional.empty());
+            ChargeEntity updatedCharge = chargeService.updateChargePost3dsAuthorisation(oldCharge.getExternalId(), status, transactionId);
 
             logger.info("3DS response authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
-                    chargeEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), chargeEntity.getGatewayTransactionId(),
-                    chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
-                    operationResponse, chargeEntity.getStatus(), status);
+                    updatedCharge.getExternalId(), 
+                    updatedCharge.getPaymentGatewayName().getName(), 
+                    updatedCharge.getGatewayTransactionId(),
+                    updatedCharge.getGatewayAccount().getAnalyticsId(), 
+                    updatedCharge.getGatewayAccount().getId(),
+                    operationResponse, oldCharge.getStatus(), 
+                    status);
 
-            chargeService.updateChargePost3dsAuthorisation(status, chargeEntity, transactionId);
 
             metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise-3ds.result.%s",
-                    chargeEntity.getGatewayAccount().getGatewayName(),
-                    chargeEntity.getGatewayAccount().getType(),
-                    chargeEntity.getGatewayAccount().getId(),
+                    updatedCharge.getGatewayAccount().getGatewayName(),
+                    updatedCharge.getGatewayAccount().getType(),
+                    updatedCharge.getGatewayAccount().getId(),
                     status.toString())).inc();
-
-            return chargeEntity;
-
-        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
-
 }

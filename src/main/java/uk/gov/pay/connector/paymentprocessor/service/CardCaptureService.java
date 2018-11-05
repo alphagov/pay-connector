@@ -32,7 +32,6 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
@@ -46,11 +45,6 @@ import static uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransi
 public class CardCaptureService implements TransactionalGatewayOperation<BaseCaptureResponse> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CardCaptureService.class);
-    private static final List<ChargeStatus> LEGAL_STATUSES = ImmutableList.of(
-            AUTHORISATION_SUCCESS,
-            CAPTURE_APPROVED,
-            CAPTURE_APPROVED_RETRY
-    );
     private static final List<ChargeStatus> IGNORABLE_CAPTURE_STATES = ImmutableList.of(
             CAPTURE_APPROVED,
             CAPTURE_APPROVED_RETRY,
@@ -114,7 +108,7 @@ public class CardCaptureService implements TransactionalGatewayOperation<BaseCap
     }
 
     @Transactional
-    public void markChargeAsCaptureError(String chargeId) {
+    void markChargeAsCaptureError(String chargeId) {
         LOG.error("CAPTURE_ERROR for charge [charge_external_id={}] - reached maximum number of capture attempts",
                 chargeId);
         chargeDao.findByExternalId(chargeId).ifPresent(chargeEntity -> {
@@ -214,7 +208,7 @@ public class CardCaptureService implements TransactionalGatewayOperation<BaseCap
         return charge;
     }
 
-    public PaymentProvider<BaseCaptureResponse, ?> getPaymentProviderFor(ChargeEntity chargeEntity) {
+    PaymentProvider<BaseCaptureResponse, ?> getPaymentProviderFor(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName());
     }
 }

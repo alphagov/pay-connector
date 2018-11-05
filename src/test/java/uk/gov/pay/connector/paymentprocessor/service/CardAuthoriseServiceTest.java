@@ -17,7 +17,6 @@ import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
@@ -30,9 +29,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayRespon
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
-import uk.gov.pay.connector.util.AuthUtils;
 
-import javax.persistence.OptimisticLockException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -47,7 +44,6 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -102,8 +98,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null);
-        cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedProviders, mockExecutorService, chargeService,
+        cardAuthorisationService = new CardAuthoriseService(mockedCardTypeDao, mockedProviders, mockExecutorService, chargeService,
                 mockEnvironment);
     }
 
