@@ -57,10 +57,8 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
 
     public GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, T gatewayAuthRequest) {
         Supplier authorisationSupplier = () -> {
-            ChargeEntity charge;
-
-            charge = preOperation(chargeId, gatewayAuthRequest);
-            GatewayResponse<BaseAuthoriseResponse> operationResponse = operation(charge, gatewayAuthRequest);
+            ChargeEntity charge = prepareChargeForAuthorisation(chargeId, gatewayAuthRequest);
+            GatewayResponse<BaseAuthoriseResponse> operationResponse = authorise(charge, gatewayAuthRequest);
             processGatewayAuthorisationResponse(chargeId, gatewayAuthRequest, operationResponse);
             return operationResponse;
         };
@@ -77,11 +75,11 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
         }
     }
 
-    protected abstract ChargeEntity preOperation(String chargeId, T gatewayAuthRequest);
+    protected abstract ChargeEntity prepareChargeForAuthorisation(String chargeId, T gatewayAuthRequest);
 
     protected abstract void processGatewayAuthorisationResponse(String chargeId, T gatewayAuthRequest, GatewayResponse<BaseAuthoriseResponse> operationResponse);
 
-    protected abstract GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity charge, T gatewayAuthRequest);
+    protected abstract GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, T gatewayAuthRequest);
 
     protected ChargeStatus determineChargeStatus(Optional<BaseAuthoriseResponse> baseResponse,
                                                  Optional<GatewayError> gatewayError) {

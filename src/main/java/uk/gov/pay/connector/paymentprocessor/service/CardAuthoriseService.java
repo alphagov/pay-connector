@@ -56,7 +56,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
     }
 
     @Transactional
-    public ChargeEntity preOperation(String chargeId, AuthCardDetails authCardDetails) {
+    public ChargeEntity prepareChargeForAuthorisation(String chargeId, AuthCardDetails authCardDetails) {
         ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
         ensureCardBrandGateway3DSCompatibility(charge, authCardDetails.getCardBrand());
         getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
@@ -75,7 +75,8 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         return cardTypes.stream().anyMatch(CardTypeEntity::isRequires3ds);
     }
 
-    public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         return getPaymentProviderFor(chargeEntity)
                 .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, authCardDetails));
     }
