@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
-import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -17,11 +16,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
-import java.util.List;
 import java.util.Optional;
-
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 
 public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3dsDetails> {
 
@@ -42,9 +37,7 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
 
     @Transactional
     public ChargeEntity preOperation(String chargeId, Auth3dsDetails auth3DsDetails) {
-        return chargeDao.findByExternalId(chargeId)
-                .map(chargeEntity -> chargeService.lockChargeForProcessing(chargeEntity, OperationType.AUTHORISATION_3DS, getLegalStates(), AUTHORISATION_3DS_READY))
-                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+        return chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION_3DS);
     }
 
     @Transactional
@@ -73,10 +66,4 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    @Override
-    protected List<ChargeStatus> getLegalStates() {
-        return ImmutableList.of(
-                AUTHORISATION_3DS_REQUIRED
-        );
-    }
 }

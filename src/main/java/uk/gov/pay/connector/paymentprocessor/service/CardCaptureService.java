@@ -94,9 +94,7 @@ public class CardCaptureService implements TransactionalGatewayOperation<BaseCap
     @Transactional
     @Override
     public ChargeEntity preOperation(String chargeId) {
-        return chargeDao.findByExternalId(chargeId)
-                .map(chargeEntity -> chargeService.lockChargeForProcessing(chargeEntity, OperationType.CAPTURE, LEGAL_STATUSES, CAPTURE_READY))
-                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+        return chargeService.lockChargeForProcessing(chargeId, OperationType.CAPTURE);
     }
 
     @Transactional

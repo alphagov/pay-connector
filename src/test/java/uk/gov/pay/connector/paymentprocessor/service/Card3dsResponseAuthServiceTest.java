@@ -249,27 +249,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         card3dsResponseAuthService.doAuthorise(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
-
-    @Test(expected = ConflictRuntimeException.class)
-    public void shouldThrowAConflictRuntimeExceptionWhenOptimisticExceptionThrownAtChargeReload() throws Exception {
-
-        /**
-         * FIXME (PP-2626)
-         * This is not going to be thrown from this method, but just to test preOp throwing
-         * OptimisticLockException when commit the transaction. We won't do merge in pre-op
-         * The related code won't be removed until we know is not an issue doing it so, logging
-         * will be in place since there are not evidence (through any test or current logging)
-         * that is in reality a subject of a real scenario.
-         */
-
-        doThrow(OptimisticLockException.class).when(mockedChargeDao).findByExternalId(charge.getExternalId());
-        setupMockExecutorServiceMock();
-
-        card3dsResponseAuthService.doAuthorise(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
-        verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
-    }
-
-    @Test(expected = ChargeExpiredRuntimeException.class)
+    
+    @Test(expected = IllegalStateRuntimeException.class)
     public void shouldThrowChargeExpiredRuntimeExceptionWhenChargeExpired() {
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.EXPIRED);
 
