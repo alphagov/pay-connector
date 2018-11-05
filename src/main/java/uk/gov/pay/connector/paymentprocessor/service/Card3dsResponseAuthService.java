@@ -30,13 +30,14 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
         super(chargeDao, chargeEventDao, providers, cardExecutorService, chargeService, environment);
     }
 
-    public GatewayResponse<BaseAuthoriseResponse> operation(ChargeEntity chargeEntity, Auth3dsDetails auth3DsDetails) {
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, Auth3dsDetails auth3DsDetails) {
         return getPaymentProviderFor(chargeEntity)
                 .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(chargeEntity, auth3DsDetails));
     }
 
     @Transactional
-    public ChargeEntity preOperation(String chargeId, Auth3dsDetails auth3DsDetails) {
+    public ChargeEntity prepareChargeForAuthorisation(String chargeId, Auth3dsDetails auth3DsDetails) {
         return chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION_3DS);
     }
 
