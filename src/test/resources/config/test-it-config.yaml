@@ -26,6 +26,9 @@ worldpay:
   secureNotificationEnabled: true
   notificationDomain: "amazonaws.com"
   credentials: ['username','password','merchant_id']
+  applePay:
+    privateKey: some-private-key
+    publicCertificate: some-public-certificate
 
 smartpay:
   urls:
