@@ -2,8 +2,7 @@ package uk.gov.pay.connector.applepay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.util.encoders.Hex;
+import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ApplePayConfig;
@@ -11,7 +10,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
-import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -21,7 +20,6 @@ import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -40,9 +38,6 @@ public class ApplePayDecrypter {
     private static final byte[] APPLE_OEM = "Apple".getBytes(UTF_8);
     private static final byte[] ALG_IDENTIFIER_BYTES = "id-aes256-GCM".getBytes(UTF_8);
     private static final String MERCHANT_ID_CERTIFICATE_OID = "1.2.840.113635.100.6.32";
-    static {
-        Security.addProvider(new BouncyCastleProvider());
-    }
 
     private final byte[] privateKeyBytes;
     private final byte[] publicCertificate;
@@ -77,11 +72,11 @@ public class ApplePayDecrypter {
 
     private byte[] decrypt(Certificate certificate, PrivateKey merchantPrivateKey, byte[] ephemeralPublicKeyBytes, byte[] data) throws Exception {
         // Reconstitute Ephemeral Public Key
-        KeyFactory keyFactory = KeyFactory.getInstance("ECDH", "BC");
+        KeyFactory keyFactory = KeyFactory.getInstance("EC");
         X509EncodedKeySpec encodedKeySpec = new X509EncodedKeySpec(ephemeralPublicKeyBytes);
         ECPublicKey ephemeralPublicKey = (ECPublicKey) keyFactory.generatePublic(encodedKeySpec);
         // Perform KeyAgreement
-        KeyAgreement agreement = KeyAgreement.getInstance("ECDH", "BC");
+        KeyAgreement agreement = KeyAgreement.getInstance("ECDH");
         agreement.init(merchantPrivateKey);
         agreement.doPhase(ephemeralPublicKey, true);
         byte[] sharedSecret = agreement.generateSecret();
@@ -90,11 +85,9 @@ public class ApplePayDecrypter {
         byte[] derivedSecret = performKeyDerivationFunction(((X509Certificate) certificate), sharedSecret);
 
         // Use the derived secret to decrypt the data
+        Cipher aesCipher = Cipher.getInstance("AES/GCM/NoPadding");
         SecretKeySpec key = new SecretKeySpec(derivedSecret, "AES");
-        byte[] ivBytes = new byte[16];
-        IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
-        Cipher aesCipher = Cipher.getInstance("AES/GCM/NoPadding", "BC");
-        aesCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+        aesCipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, new byte[16]));
         return aesCipher.doFinal(data);
     }
 
@@ -106,8 +99,8 @@ public class ApplePayDecrypter {
         byteArrayOutputStream.write(ALG_IDENTIFIER_BYTES);
         byteArrayOutputStream.write(APPLE_OEM);
         // Add Merchant Id
-        byteArrayOutputStream.write(Hex.decode(new String((certificate.getExtensionValue(MERCHANT_ID_CERTIFICATE_OID)), UTF_8).substring(4)));
-        return MessageDigest.getInstance("SHA256", "BC")
+        byteArrayOutputStream.write(Hex.decodeHex(new String((certificate.getExtensionValue(MERCHANT_ID_CERTIFICATE_OID)), UTF_8).substring(4).toCharArray()));
+        return MessageDigest.getInstance("SHA-256")
                 .digest(byteArrayOutputStream.toByteArray());
     }
 
