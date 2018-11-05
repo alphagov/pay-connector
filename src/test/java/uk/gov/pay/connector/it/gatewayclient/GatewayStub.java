@@ -98,6 +98,6 @@ public class GatewayStub {
     }
 
     public void respondWithTimeoutWhenCapture() {
-        respondWithStatusCodeAndPayloadWhenCapture(OK_200, CAPTURE_SUCCESS_PAYLOAD, 100000);
+        respondWithStatusCodeAndPayloadWhenCapture(OK_200, CAPTURE_SUCCESS_PAYLOAD, 10);
     }
 }
