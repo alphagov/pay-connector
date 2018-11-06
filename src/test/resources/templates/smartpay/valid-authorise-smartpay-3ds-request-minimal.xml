@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<soap:Envelope
+        xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:ns1="http://payment.services.adyen.com"
+        xmlns:ns2="http://common.services.adyen.com"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <soap:Body>
+        <ns1:authorise>
+            <ns1:paymentRequest>
+                <ns1:additionalData>
+                    <ns2:entry>
+                        <ns2:key xsi:type="xsd:string">executeThreeD</ns2:key>
+                        <ns2:value xsi:type="xsd:string">true</ns2:value>
+                    </ns2:entry>
+                </ns1:additionalData>
+                <ns1:browserInfo>
+                    <ns2:acceptHeader>text/html</ns2:acceptHeader>
+                    <ns2:userAgent>Mozilla/5.0</ns2:userAgent>
+                </ns1:browserInfo>
+                <ns1:amount>
+                    <ns2:currency>GBP</ns2:currency>
+                    <ns2:value>2000</ns2:value>
+                </ns1:amount>
+                <ns1:card>
+                    <ns1:cvc>737</ns1:cvc>
+                    <ns1:expiryMonth>08</ns1:expiryMonth>
+                    <ns1:expiryYear>2018</ns1:expiryYear>
+                    <ns1:holderName>Mr. Payment</ns1:holderName>
+                    <ns1:number>5555444433331111</ns1:number>
+                    <ns1:billingAddress>
+                        <ns2:houseNumberOrName>41 Acacia Avenue</ns2:houseNumberOrName>
+                        <ns2:street>N/A</ns2:street>
+                        <ns2:postalCode>EC2A 1AE</ns2:postalCode>
+                        <ns2:stateOrProvince></ns2:stateOrProvince>
+                        <ns2:city>London</ns2:city>
+                        <ns2:country>GB</ns2:country>
+                    </ns1:billingAddress>
+                </ns1:card>
+                <ns1:merchantAccount>MerchantAccount</ns1:merchantAccount>
+                <ns1:reference>MyPlatformReference</ns1:reference>
+                <ns1:shopperReference>MyDescription</ns1:shopperReference>
+            </ns1:paymentRequest>
+        </ns1:authorise>
+    </soap:Body>
+</soap:Envelope>

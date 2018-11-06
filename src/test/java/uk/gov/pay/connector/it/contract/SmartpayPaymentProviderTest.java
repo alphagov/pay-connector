@@ -6,7 +6,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
-import org.hamcrest.CoreMatchers;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -21,7 +20,6 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.epdq.EpdqCaptureHandler;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -32,8 +30,6 @@ import uk.gov.pay.connector.gateway.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayCaptureHandler;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayCaptureResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
-import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.TestClientFactory;
@@ -41,6 +37,7 @@ import uk.gov.pay.connector.util.TestClientFactory;
 import javax.ws.rs.client.Client;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -72,8 +69,7 @@ public class SmartpayPaymentProviderTest {
     private ChargeEntity chargeEntity;
     private GatewayAccountEntity gatewayAccountEntity;
     private MetricRegistry mockMetricRegistry;
-    private DefaultExternalRefundAvailabilityCalculator defaultExternalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
-
+    private Environment mockEnvironment;
 
     @Before
     public void setUpAndCheckThatSmartpayIsUp() throws IOException {
@@ -103,12 +99,26 @@ public class SmartpayPaymentProviderTest {
         Counter mockCounter = mock(Counter.class);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
+        mockEnvironment = mock(Environment.class);
+        when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
     }
 
     @Test
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        testCardAuthorisation(paymentProvider, chargeEntity);
+        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
+        GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
+        assertTrue(response.isSuccessful());
+    }
+
+    @Test
+    public void shouldSendSuccessfullyAnOrderForMerchantWithNoAddressInRequest() throws Exception {
+        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
+        request.getAuthCardDetails().setAddress(null);
+
+        GatewayResponse response = paymentProvider.authorise(request);
+        assertTrue(response.isSuccessful());
     }
 
     @Test
@@ -148,11 +158,14 @@ public class SmartpayPaymentProviderTest {
     public void shouldSuccessfullySendACaptureRequest() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         SmartpayCaptureHandler smartpayCaptureHandler = (SmartpayCaptureHandler) paymentProvider.getCaptureHandler();
-        GatewayResponse<SmartpayAuthorisationResponse> response = testCardAuthorisation(paymentProvider, chargeEntity);
 
-        assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
+        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
+        GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
+
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         String transactionId = response.getBaseResponse().get().getPspReference();
-        assertThat(transactionId, CoreMatchers.is(not(nullValue())));
+        assertThat(transactionId, is(not(nullValue())));
 
         chargeEntity.setGatewayTransactionId(transactionId);
 
@@ -163,11 +176,13 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldSuccessfullySendACancelRequest() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        GatewayResponse<SmartpayAuthorisationResponse> response = testCardAuthorisation(paymentProvider, chargeEntity);
+        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
+        GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
+        assertTrue(response.isSuccessful());
 
-        assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         String transactionId = response.getBaseResponse().get().getPspReference();
-        assertThat(transactionId, CoreMatchers.is(not(nullValue())));
+        assertThat(transactionId, is(not(nullValue())));
 
         chargeEntity.setGatewayTransactionId(transactionId);
 
@@ -197,24 +212,22 @@ public class SmartpayPaymentProviderTest {
 
     }
 
-    private GatewayResponse testCardAuthorisation(PaymentProvider paymentProvider, ChargeEntity chargeEntity) {
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
-        GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
-        assertTrue(response.isSuccessful());
-
-        return response;
-    }
-
     private PaymentProvider getSmartpayPaymentProvider() {
         Client client = TestClientFactory.createJerseyClient();
+
         GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
                 SmartpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
+
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
-        when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(Map.class), any(BiFunction.class), null)).thenReturn(gatewayClient);
-        ConnectorConfiguration configuration = mock(ConnectorConfiguration.class);
+        when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(Map.class), any(BiFunction.class), any(MetricRegistry.class))).thenReturn(gatewayClient);
+
         GatewayConfig gatewayConfig = mock(GatewayConfig.class);
+        when(gatewayConfig.getUrls()).thenReturn(Collections.EMPTY_MAP);
+
+        ConnectorConfiguration configuration = mock(ConnectorConfiguration.class);
         when(configuration.getGatewayConfigFor(PaymentGatewayName.SMARTPAY)).thenReturn(gatewayConfig);
-        return new SmartpayPaymentProvider(configuration, gatewayClientFactory, mock(Environment.class), new ObjectMapper());
+
+        return new SmartpayPaymentProvider(configuration, gatewayClientFactory, mockEnvironment, new ObjectMapper());
     }
 
     public static AuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
