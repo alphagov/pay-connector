@@ -11,8 +11,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.AuthorisationProvider;
+import uk.gov.pay.connector.gateway.AuthorisationProviders;
 import uk.gov.pay.connector.gateway.exception.GenericGatewayRuntimeException;
 import uk.gov.pay.connector.gateway.model.AuthorisationDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -31,19 +31,17 @@ import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.
 
 public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CardAuthoriseBaseService.class);
-
     private final CardExecutorService cardExecutorService;
 
     protected final ChargeService chargeService;
     protected final ChargeDao chargeDao;
     protected final ChargeEventDao chargeEventDao;
-    private final PaymentProviders providers;
+    private final AuthorisationProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected MetricRegistry metricRegistry;
 
-    public CardAuthoriseBaseService(ChargeDao chargeDao, ChargeEventDao chargeEventDao,
-                                    PaymentProviders providers,
+    CardAuthoriseBaseService(ChargeDao chargeDao, ChargeEventDao chargeEventDao,
+                                    AuthorisationProviders providers,
                                     CardExecutorService cardExecutorService,
                                     ChargeService chargeService,
                                     Environment environment) {
@@ -81,7 +79,7 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
 
     protected abstract GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, T gatewayAuthRequest);
 
-    protected ChargeStatus determineChargeStatus(Optional<BaseAuthoriseResponse> baseResponse,
+    ChargeStatus determineChargeStatus(Optional<BaseAuthoriseResponse> baseResponse,
                                                  Optional<GatewayError> gatewayError) {
 
         return baseResponse
@@ -92,7 +90,7 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
                         .orElse(ChargeStatus.AUTHORISATION_ERROR));
     }
 
-    protected PaymentProvider<BaseAuthoriseResponse, ?> getPaymentProviderFor(ChargeEntity chargeEntity) {
+    AuthorisationProvider<BaseAuthoriseResponse> getAuthorisationProviderFor(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName());
     }
 

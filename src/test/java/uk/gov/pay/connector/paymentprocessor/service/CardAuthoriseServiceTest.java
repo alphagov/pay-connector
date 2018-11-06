@@ -17,9 +17,10 @@ import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.gateway.AuthorisationProvider;
+import uk.gov.pay.connector.gateway.AuthorisationProviders;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -30,9 +31,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayRespon
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
-import uk.gov.pay.connector.util.AuthUtils;
 
-import javax.persistence.OptimisticLockException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -47,7 +46,6 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -84,10 +82,16 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private CardExecutorService mockExecutorService;
 
     @Mock
+    private AuthorisationProvider mockedPaymentProvider;
+    
+    @Mock
     private Environment mockEnvironment;
 
     @Mock
     private Counter mockCounter;
+    
+    @Mock
+    private AuthorisationProviders mockedAuthorisationProviders;
 
     private CardAuthoriseService cardAuthorisationService;
 
@@ -103,7 +107,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null);
         cardAuthorisationService = new CardAuthoriseService(mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedProviders, mockExecutorService, chargeService,
+                mockedCardTypeDao, mockedAuthorisationProviders, mockExecutorService, chargeService,
                 mockEnvironment);
     }
 
@@ -234,7 +238,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         String generatedTransactionId = "this-will-be-override-to-TRANSACTION-ID-from-provider";
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedAuthorisationProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(generatedTransactionId));
 
         GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), aValidAuthorisationDetails());
@@ -296,7 +300,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     public void doAuthorise_shouldRetainGeneratedTransactionId_WhenProviderAuthorisationFails() {
 
         String generatedTransactionId = "generated-transaction-id";
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedAuthorisationProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(generatedTransactionId));
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         when(mockedPaymentProvider.authorise(any())).thenThrow(RuntimeException.class);
@@ -535,7 +539,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private void providerWillRespondToAuthoriseWith(GatewayResponse value) {
         when(mockedPaymentProvider.authorise(any())).thenReturn(value);
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedAuthorisationProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
     }
 
@@ -557,7 +561,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .build();
         when(mockedPaymentProvider.authorise(any())).thenReturn(worldpay3dsResponse);
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedAuthorisationProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
     }
 
@@ -573,7 +577,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .build();
         when(mockedPaymentProvider.authorise(any())).thenReturn(epdq3dsResponse);
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedAuthorisationProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
     }
 
@@ -593,7 +597,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         setupPaymentProviderMock(gatewayError);
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedAuthorisationProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
     }
 }

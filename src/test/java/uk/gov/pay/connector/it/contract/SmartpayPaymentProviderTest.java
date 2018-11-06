@@ -17,6 +17,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.gateway.AuthorisationProvider;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -34,7 +35,6 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.TestClientFactory;
-import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.client.Client;
 import java.io.IOException;
@@ -59,9 +59,6 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.AuthUtils.buildAuthCardDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_NOTIFICATION_CAPTURE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS;
 
 @Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
 @RunWith(MockitoJUnitRunner.class)
@@ -108,14 +105,14 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
-        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        SmartpayPaymentProvider paymentProvider = getSmartpayPaymentProvider();
         testCardAuthorisation(paymentProvider, chargeEntity);
     }
 
     @Test
     public void shouldSendA3dsOrderForMerchantSuccessfully() throws Exception {
         gatewayAccountEntity.setRequires3ds(true);
-        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        SmartpayPaymentProvider paymentProvider = getSmartpayPaymentProvider();
         AuthorisationGatewayRequest request = getCard3dsAuthorisationRequest(chargeEntity);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
@@ -126,7 +123,7 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
-        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        SmartpayPaymentProvider paymentProvider = getSmartpayPaymentProvider();
         GatewayAccountEntity accountWithInvalidCredentials = new GatewayAccountEntity();
         accountWithInvalidCredentials.setId(11L);
         accountWithInvalidCredentials.setGatewayName("smartpay");
@@ -147,7 +144,7 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void shouldSuccessfullySendACaptureRequest() throws Exception {
-        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        SmartpayPaymentProvider paymentProvider = getSmartpayPaymentProvider();
         GatewayResponse<SmartpayAuthorisationResponse> response = testCardAuthorisation(paymentProvider, chargeEntity);
 
         assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
@@ -162,7 +159,8 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void shouldSuccessfullySendACancelRequest() throws Exception {
-        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        SmartpayPaymentProvider paymentProvider = getSmartpayPaymentProvider();
+
         GatewayResponse<SmartpayAuthorisationResponse> response = testCardAuthorisation(paymentProvider, chargeEntity);
 
         assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
@@ -179,8 +177,9 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldRefundToAnExistingPaymentSuccessfully() throws Exception {
         AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
+        SmartpayPaymentProvider paymentProvider = getSmartpayPaymentProvider();
         PaymentProvider smartpay = getSmartpayPaymentProvider();
-        GatewayResponse<SmartpayAuthorisationResponse> authoriseResponse = smartpay.authorise(request);
+        GatewayResponse<SmartpayAuthorisationResponse> authoriseResponse = paymentProvider.authorise(request);
         assertTrue(authoriseResponse.isSuccessful());
 
         chargeEntity.setGatewayTransactionId(authoriseResponse.getBaseResponse().get().getPspReference());
@@ -196,7 +195,7 @@ public class SmartpayPaymentProviderTest {
 
     }
 
-    private GatewayResponse testCardAuthorisation(PaymentProvider paymentProvider, ChargeEntity chargeEntity) {
+    private GatewayResponse testCardAuthorisation(AuthorisationProvider<SmartpayAuthorisationResponse> paymentProvider, ChargeEntity chargeEntity) {
         AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
@@ -204,7 +203,7 @@ public class SmartpayPaymentProviderTest {
         return response;
     }
 
-    private PaymentProvider getSmartpayPaymentProvider() {
+    private SmartpayPaymentProvider getSmartpayPaymentProvider() {
         Client client = TestClientFactory.createJerseyClient();
         GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
                 SmartpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
@@ -214,22 +213,8 @@ public class SmartpayPaymentProviderTest {
         GatewayConfig gatewayConfig = mock(GatewayConfig.class);
         when(configuration.getGatewayConfigFor(PaymentGatewayName.SMARTPAY)).thenReturn(gatewayConfig);
         return new SmartpayPaymentProvider(configuration, gatewayClientFactory, mock(Environment.class), new ObjectMapper());
-    }
-
-    private String notificationPayloadForTransaction(String transactionId) throws IOException {
-        return TestTemplateResourceLoader.load(SMARTPAY_NOTIFICATION_CAPTURE).replace("{{transactionId}}", transactionId);
-    }
-
-    private String notificationPayloadForTransactionWithUnknownStatus(String transactionId) throws IOException {
-        return TestTemplateResourceLoader.load(SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS).replace("{{transactionId}}", transactionId);
-    }
-
-    private String multipleNotificationPayloadForTransactions(String transactionId, String transactionId2) throws IOException {
-        return TestTemplateResourceLoader.load(SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES)
-                .replace("{{transactionId}}", transactionId)
-                .replace("{{transactionId2}}", transactionId2);
-    }
-
+    } 
+    
     public static AuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
         Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", "London", "GB");
 

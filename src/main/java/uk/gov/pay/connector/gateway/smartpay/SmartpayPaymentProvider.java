@@ -7,6 +7,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.gateway.AuthorisationProvider;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOrder;
@@ -39,7 +40,7 @@ import static fj.data.Either.right;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
-public class SmartpayPaymentProvider implements PaymentProvider<BaseResponse, Pair<String, Boolean>> {
+public class SmartpayPaymentProvider implements PaymentProvider<BaseResponse, Pair<String, Boolean>>, AuthorisationProvider {
 
     private final ObjectMapper objectMapper;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;

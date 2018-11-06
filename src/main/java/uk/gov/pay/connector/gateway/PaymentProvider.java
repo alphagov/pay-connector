@@ -3,8 +3,6 @@ package uk.gov.pay.connector.gateway;
 import fj.data.Either;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
@@ -14,20 +12,12 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
 
-import java.util.Optional;
-
 public interface PaymentProvider<T extends BaseResponse, R> {
 
     PaymentGatewayName getPaymentGatewayName();
 
     StatusMapper getStatusMapper();
-
-    Optional<String> generateTransactionId();
-
-    GatewayResponse<T> authorise(AuthorisationGatewayRequest request);
-
-    GatewayResponse<T> authorise3dsResponse(Auth3dsResponseGatewayRequest request);
-
+    
     GatewayResponse<T> capture(CaptureGatewayRequest request);
 
     GatewayResponse<T> refund(RefundGatewayRequest request);

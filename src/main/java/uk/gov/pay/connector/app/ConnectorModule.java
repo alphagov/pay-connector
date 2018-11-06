@@ -10,9 +10,12 @@ import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
 import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
+import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
@@ -38,9 +41,11 @@ public class ConnectorModule extends AbstractModule {
         bind(Environment.class).toInstance(environment);
         bind(CardExecutorService.class).in(Singleton.class);
         bind(PaymentProviders.class).in(Singleton.class);
-        bind(EntityBuilder.class);
-        bind(HashUtil.class);
-        bind(RequestValidator.class);
+        bind(EpdqPaymentProvider.class).in(Singleton.class);
+        bind(SmartpayPaymentProvider.class).in(Singleton.class);
+        bind(WorldpayPaymentProvider.class).in(Singleton.class);
+        bind(SandboxPaymentProvider.class).in(Singleton.class);
+        
         bind(GatewayAccountRequestValidator.class).in(Singleton.class);
 
         install(jpaModule(configuration));
@@ -90,10 +95,5 @@ public class ConnectorModule extends AbstractModule {
     @Provides
     public SignatureGenerator signatureGenerator() {
         return new EpdqSha512SignatureGenerator();
-    }
-    
-    @Provides
-    public SandboxPaymentProvider sandboxPaymentProvider() {
-        return new SandboxPaymentProvider();
     }
 }

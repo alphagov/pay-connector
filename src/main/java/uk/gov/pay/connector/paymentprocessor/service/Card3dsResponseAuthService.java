@@ -8,7 +8,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.AuthorisationProviders;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -23,7 +23,7 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
     @Inject
     public Card3dsResponseAuthService(ChargeDao chargeDao,
                                       ChargeEventDao chargeEventDao,
-                                      PaymentProviders providers,
+                                      AuthorisationProviders providers,
                                       CardExecutorService cardExecutorService,
                                       ChargeService chargeService,
                                       Environment environment) {
@@ -32,7 +32,7 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
 
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, Auth3dsDetails auth3DsDetails) {
-        return getPaymentProviderFor(chargeEntity)
+        return getAuthorisationProviderFor(chargeEntity)
                 .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(chargeEntity, auth3DsDetails));
     }
 

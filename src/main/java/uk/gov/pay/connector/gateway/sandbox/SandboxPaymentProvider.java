@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.sandbox;
 import fj.data.Either;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.gateway.AuthorisationProvider;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
@@ -32,7 +33,7 @@ import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
-public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, String> {
+public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, String>, AuthorisationProvider {
 
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
