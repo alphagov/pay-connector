@@ -51,17 +51,12 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
         return null;
     }
 
-    public static StripeAuthorisationResponse of(GatewayError error) {
-        // todo fix this
-        return new StripeAuthorisationResponse(null);
-    }
-
     public static StripeAuthorisationResponse of(Response response) {
         return new StripeAuthorisationResponse(response.readEntity(StripeJsonResponse.class));
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class StripeJsonResponse {
+    private static class StripeJsonResponse {
         @JsonProperty("id")
         private String id;
         @JsonProperty("status")
