@@ -8,7 +8,7 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR
 import static uk.gov.pay.connector.gateway.model.ErrorType.MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY;
 import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
 
-public class GatewayError extends Exception {
+public class GatewayError extends RuntimeException {
     private String message;
     private ErrorType errorType;
 

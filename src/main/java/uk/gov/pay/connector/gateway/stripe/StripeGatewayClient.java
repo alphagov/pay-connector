@@ -40,7 +40,7 @@ public class StripeGatewayClient implements ConnectorClient {
 
     public Response postRequest(GatewayAccountEntity account, GatewayOrder request, String path) throws GatewayError {
         String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
-        Response response = null;
+        Response response;
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         String stripeUrl = stripeGatewayConfig.getUrl();
