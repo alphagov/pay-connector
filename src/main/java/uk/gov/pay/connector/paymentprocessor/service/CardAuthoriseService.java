@@ -80,15 +80,16 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
     @Override
     @Transactional
     public void processGatewayAuthorisationResponse(
-            ChargeEntity oldCharge,
+            String chargeExternalId,
+            ChargeStatus oldChargeStatus,
             AuthCardDetails authCardDetails,
             GatewayResponse<BaseAuthoriseResponse> operationResponse) {
 
-        Optional<String> transactionId = extractTransactionId(oldCharge.getExternalId(), operationResponse);
+        Optional<String> transactionId = extractTransactionId(chargeExternalId, operationResponse);
         ChargeStatus status = extractChargeStatus(operationResponse.getBaseResponse(), operationResponse.getGatewayError());
 
         ChargeEntity updatedCharge = chargeService.updateChargePostAuthorisation(
-                oldCharge.getExternalId(), 
+                chargeExternalId, 
                 status, 
                 transactionId,
                 extractAuth3dsDetails(operationResponse), 
@@ -99,7 +100,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                 updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
                 transactionId.orElse("missing transaction ID"),
                 updatedCharge.getGatewayAccount().getAnalyticsId(), updatedCharge.getGatewayAccount().getId(),
-                operationResponse, oldCharge.getStatus(), status);
+                operationResponse, oldChargeStatus, status);
         
         metricRegistry.counter(String.format(
                 "gateway-operations.%s.%s.%s.authorise.result.%s",

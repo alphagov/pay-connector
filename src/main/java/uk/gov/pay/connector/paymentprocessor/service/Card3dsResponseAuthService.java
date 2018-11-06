@@ -39,13 +39,14 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
     @Override
     @Transactional
     public void processGatewayAuthorisationResponse(
-            ChargeEntity oldCharge, 
+            String chargeExternalId,
+            ChargeStatus oldChargeStatus, 
             Auth3dsDetails auth3DsDetails, 
             GatewayResponse<BaseAuthoriseResponse> operationResponse) {
         
             Optional<String> transactionId = operationResponse.getBaseResponse().map(BaseAuthoriseResponse::getTransactionId);
             ChargeStatus status = extractChargeStatus(operationResponse.getBaseResponse(), Optional.empty());
-            ChargeEntity updatedCharge = chargeService.updateChargePost3dsAuthorisation(oldCharge.getExternalId(), status, transactionId);
+            ChargeEntity updatedCharge = chargeService.updateChargePost3dsAuthorisation(chargeExternalId, status, transactionId);
 
             logger.info("3DS response authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                     updatedCharge.getExternalId(), 
@@ -53,7 +54,7 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
                     updatedCharge.getGatewayTransactionId(),
                     updatedCharge.getGatewayAccount().getAnalyticsId(), 
                     updatedCharge.getGatewayAccount().getId(),
-                    operationResponse, oldCharge.getStatus(), 
+                    operationResponse, oldChargeStatus, 
                     status);
 
 

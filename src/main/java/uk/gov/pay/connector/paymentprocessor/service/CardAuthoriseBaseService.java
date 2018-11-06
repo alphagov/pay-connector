@@ -49,7 +49,12 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
         Supplier authorisationSupplier = () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, gatewayAuthRequest);
             GatewayResponse<BaseAuthoriseResponse> operationResponse = authorise(charge, gatewayAuthRequest);
-            processGatewayAuthorisationResponse(charge, gatewayAuthRequest, operationResponse);
+            processGatewayAuthorisationResponse(
+                    charge.getExternalId(),
+                    ChargeStatus.fromString(charge.getStatus()),
+                    gatewayAuthRequest,
+                    operationResponse);
+            
             return operationResponse;
         };
 
@@ -65,11 +70,11 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
         }
     }
 
-    protected abstract ChargeEntity prepareChargeForAuthorisation(String chargeId, T gatewayAuthRequest);
+    abstract ChargeEntity prepareChargeForAuthorisation(String chargeId, T gatewayAuthRequest);
 
-    protected abstract void processGatewayAuthorisationResponse(ChargeEntity charge, T gatewayAuthRequest, GatewayResponse<BaseAuthoriseResponse> operationResponse);
+    abstract void processGatewayAuthorisationResponse(String chargeExternalId, ChargeStatus oldStatus, T gatewayAuthRequest, GatewayResponse<BaseAuthoriseResponse> operationResponse);
 
-    protected abstract GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, T gatewayAuthRequest);
+    abstract GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, T gatewayAuthRequest);
 
     ChargeStatus extractChargeStatus(Optional<BaseAuthoriseResponse> baseResponse,
                                      Optional<GatewayError> gatewayError) {
