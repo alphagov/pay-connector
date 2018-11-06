@@ -1,14 +1,17 @@
 package uk.gov.pay.connector.gateway.stripe;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
+import uk.gov.pay.connector.common.exception.CredentialsException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 
 import javax.ws.rs.core.MediaType;
-import java.util.Currency;
 import java.util.HashMap;
 import java.util.Map;
+
+import static java.lang.String.format;
 
 class StripeGatewayOrder extends GatewayOrder {
     private StripeGatewayOrder(OrderRequestType orderRequestType, String payload, String providerSessionId, MediaType mediaType) {
@@ -22,6 +25,14 @@ class StripeGatewayOrder extends GatewayOrder {
         params.put("description", request.getDescription());
         params.put("source", sourceId);
         params.put("capture", false);
+        Map<String, Object> destinationParams = new HashMap<>();
+        String stripeAccountId = request.getGatewayAccount().getCredentials().get("stripe_account_id");
+        
+        if (StringUtils.isBlank(stripeAccountId))
+            throw new CredentialsException(format("There is no stripe_account_id for gateway account with id %s", request.getGatewayAccount().getId()));
+            
+        destinationParams.put("account", stripeAccountId);
+        params.put("destination", destinationParams);
         String payload = new JSONObject(params).toString();
         return new StripeGatewayOrder(OrderRequestType.AUTHORISE, payload, null, MediaType.APPLICATION_JSON_TYPE);
     }

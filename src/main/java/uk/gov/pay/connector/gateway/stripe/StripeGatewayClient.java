@@ -5,7 +5,7 @@ import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.gateway.ConnectorClient;
+import uk.gov.pay.connector.gateway.PaymentGatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 
-public class StripeGatewayClient implements ConnectorClient {
+public class StripeGatewayClient implements PaymentGatewayClient {
 
     private final Logger logger = LoggerFactory.getLogger(StripeGatewayClient.class);
 
@@ -40,7 +40,7 @@ public class StripeGatewayClient implements ConnectorClient {
 
     public Response postRequest(GatewayAccountEntity account, GatewayOrder request, String path) throws GatewayError {
         String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
-        Response response = null;
+        Response response;
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         String stripeUrl = stripeGatewayConfig.getUrl();

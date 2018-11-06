@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway;
 
 import com.codahale.metrics.MetricRegistry;
 
-public interface ConnectorClient {
+public interface PaymentGatewayClient {
 
     default void incrementFailureCounter(MetricRegistry metricRegistry, String metricsPrefix) {
         metricRegistry.counter(metricsPrefix + ".failures").inc();

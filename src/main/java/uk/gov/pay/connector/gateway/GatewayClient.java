@@ -37,7 +37,7 @@ import static uk.gov.pay.connector.gateway.util.AuthUtil.encode;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 
-public class GatewayClient implements ConnectorClient {
+public class GatewayClient implements PaymentGatewayClient {
     private final Logger logger = LoggerFactory.getLogger(GatewayClient.class);
 
     private final Client client;
