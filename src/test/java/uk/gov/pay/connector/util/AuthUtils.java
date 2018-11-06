@@ -4,18 +4,24 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
 import static uk.gov.pay.connector.gateway.model.AuthCardDetails.anAuthCardDetails;
 
 public class AuthUtils {
 
+    private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yy");
+    private static String expiryDate = ZonedDateTime.now().plusYears(1).format(formatter);
+
     public static AuthCardDetails aValidAuthorisationDetails() {
         String validSandboxCard = "4242424242424242";
-        return buildAuthCardDetails(validSandboxCard, "123", "12/17", "card-brand");
+        return buildAuthCardDetails(validSandboxCard, "123", expiryDate, "card-brand");
     }
 
     public static AuthCardDetails buildAuthCardDetails(String cardHolderName) {
         String validSandboxCard = "4242424242424242";
-        return buildAuthCardDetails(cardHolderName, validSandboxCard, "123", "12/21", "card-brand", goodAddress());
+        return buildAuthCardDetails(cardHolderName, validSandboxCard, "123", expiryDate, "card-brand", goodAddress());
     }
 
     public static AuthCardDetails buildAuthCardDetails(String cardNumber, String cvc, String expiryDate, String cardBrand) {

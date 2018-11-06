@@ -2,10 +2,10 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
-import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.util.AuthUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -13,7 +13,6 @@ import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.common.model.domain.Address.anAddress;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
@@ -25,6 +24,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_FULL_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_MIN_ADDRESS;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITHOUT_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CANCEL_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CAPTURE_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
@@ -56,7 +56,7 @@ public class WorldpayOrderRequestBuilderTest {
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFieldsWhen3dsEnabled() throws Exception {
 
-        Address minAddress = new Address("123 My Street", null,"SW8URR", "London", null,"GB");
+        Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(minAddress);
 
@@ -101,7 +101,7 @@ public class WorldpayOrderRequestBuilderTest {
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestWhenSpecialCharactersInUserInput() throws Exception {
 
-        Address address = new Address("123 & My Street","This road -->", "SW8 > URR", "London !>", null, "GB");
+        Address address = new Address("123 & My Street", "This road -->", "SW8 > URR", "London !>", null, "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(address);
 
@@ -117,6 +117,25 @@ public class WorldpayOrderRequestBuilderTest {
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+    }
+
+    @Test
+    public void shouldGenerateValidAuthoriseOrderRequestWhenAddressIsMissing() throws Exception {
+        AuthCardDetails authCardDetails = getValidTestCard(null);
+
+        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
+                .withSessionId("uniqueSessionId")
+                .withAcceptHeader("text/html")
+                .withUserAgentHeader("Mozilla/5.0")
+                .withTransactionId("MyUniqueTransactionId!")
+                .withMerchantCode("MERCHANTCODE")
+                .withDescription("This is the description")
+                .withAmount("500")
+                .withAuthorisationDetails(authCardDetails)
+                .build();
+
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITHOUT_ADDRESS), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
