@@ -14,7 +14,7 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.BaseAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
@@ -87,7 +87,7 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
     }
 
     @Override
-    public GatewayResponse authorise(BaseAuthorisationGatewayRequest request) {
+    public GatewayResponse authorise(AuthorisationGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrder(request));
         return GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
     }
@@ -163,10 +163,10 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
         return (order, builder) ->
                 order.getProviderSessionId()
                         .map(sessionId -> builder.cookie(WORLDPAY_MACHINE_COOKIE_NAME, sessionId))
-                        .orElseGet(() -> builder);
+                        .orElse(builder);
     }
 
-    private GatewayOrder buildAuthoriseOrder(BaseAuthorisationGatewayRequest request) {
+    private GatewayOrder buildAuthoriseOrder(AuthorisationGatewayRequest request) {
         return aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId(request.getChargeExternalId())
                 .with3dsRequired(request.getGatewayAccount().isRequires3ds())
