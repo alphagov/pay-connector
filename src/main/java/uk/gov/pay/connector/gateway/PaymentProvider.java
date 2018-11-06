@@ -27,6 +27,8 @@ public interface PaymentProvider<T extends BaseResponse, R> {
     GatewayResponse<T> authorise(AuthorisationGatewayRequest request);
 
     GatewayResponse<T> authorise3dsResponse(Auth3dsResponseGatewayRequest request);
+    
+    CaptureHandler getCaptureHandler();
 
     GatewayResponse<T> capture(CaptureGatewayRequest request);
 

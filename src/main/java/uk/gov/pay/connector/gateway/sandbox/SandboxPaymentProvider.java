@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.sandbox;
 import fj.data.Either;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
@@ -15,7 +16,6 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -36,8 +36,11 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, Str
 
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
+    SandboxCaptureHandler sandboxCaptureHandler;
+
     public SandboxPaymentProvider() {
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+        this.sandboxCaptureHandler = new SandboxCaptureHandler();
     }
 
     @Override
@@ -70,6 +73,11 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, Str
     }
 
     @Override
+    public CaptureHandler getCaptureHandler() {
+        return sandboxCaptureHandler;
+    }
+
+    @Override
     public PaymentGatewayName getPaymentGatewayName() {
         return PaymentGatewayName.SANDBOX;
     }
@@ -81,7 +89,7 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, Str
 
     @Override
     public GatewayResponse capture(CaptureGatewayRequest request) {
-        return createGatewayBaseCaptureResponse();
+        return getCaptureHandler().capture(request);
     }
 
     @Override
@@ -192,34 +200,6 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, Str
             @Override
             public String toString() {
                 return "Sandbox cancel response (transactionId: " + getTransactionId() + ')';
-            }
-        }).build();
-    }
-
-    private GatewayResponse<BaseCaptureResponse> createGatewayBaseCaptureResponse() {
-        GatewayResponseBuilder<BaseCaptureResponse> gatewayResponseBuilder = responseBuilder();
-        return gatewayResponseBuilder.withResponse(new BaseCaptureResponse() {
-
-            private final String transactionId = randomUUID().toString();
-
-            @Override
-            public String getErrorCode() {
-                return null;
-            }
-
-            @Override
-            public String getErrorMessage() {
-                return null;
-            }
-
-            @Override
-            public String getTransactionId() {
-                return transactionId;
-            }
-
-            @Override
-            public String toString() {
-                return "Sandbox capture response (transactionId: " + getTransactionId() + ')';
             }
         }).build();
     }
