@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.GatewayOrder;
@@ -39,18 +38,15 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
 
     private static final Logger logger = LoggerFactory.getLogger(StripePaymentProvider.class);
 
-    private GatewayClient authoriseClient;
+    private StripeGatewayClient client;
 
     @Inject
-    public StripePaymentProvider(ConnectorConfiguration configuration,
-                                 GatewayClientFactory gatewayClientFactory,
-                                 Environment environment) {
-        this.authoriseClient = gatewayClientFactory.createGatewayClient(
+    public StripePaymentProvider(GatewayClientFactory gatewayClientFactory, Environment environment, ConnectorConfiguration configuration) {
+        this.client = gatewayClientFactory.createStripeGatewayClient(
                 PaymentGatewayName.STRIPE,
                 GatewayOperation.AUTHORISE,
-                configuration.getGatewayConfigFor(STRIPE).getUrls(),
-                includeSessionIdentifier(),
-                environment.metrics()
+                environment.metrics(),
+                configuration.getStripeConfig()
         );
     }
 
@@ -76,12 +72,12 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         Response authorisationResponse;
         Response sourceResponse;
         try {
-            sourceResponse = authoriseClient.postStripeRequestFor(
+            sourceResponse = client.postRequest(
                     request.getGatewayAccount(), 
                     StripeGatewayOrder.newSource(request), 
                     "/v1/sources");
             String sourceId = sourceResponse.readEntity(Map.class).get("id").toString();
-            authorisationResponse = authoriseClient.postStripeRequestFor(
+            authorisationResponse = client.postRequest(
                     request.getGatewayAccount(), 
                     StripeGatewayOrder.anAuthorisationOrder(request, sourceId), 
                     "/v1/charges");

@@ -43,7 +43,7 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
-    private GatewayConfig stripeConfig;
+    private StripeGatewayConfig stripeConfig;
 
     @Valid
     @NotNull
@@ -106,7 +106,7 @@ public class ConnectorConfiguration extends Configuration {
     }
 
     @JsonProperty("stripe")
-    public GatewayConfig getStripeConfig() {
+    public StripeGatewayConfig getStripeConfig() {
         return stripeConfig;
     }
 
@@ -118,8 +118,6 @@ public class ConnectorConfiguration extends Configuration {
                 return getSmartpayConfig();
             case EPDQ:
                 return getEpdqConfig();
-            case STRIPE:
-                return getStripeConfig();
             default:
                 throw new PaymentGatewayName.Unsupported();
         }

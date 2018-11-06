@@ -55,10 +55,8 @@ epdq:
       readTimeout: 1000ms
 
 stripe:
-  urls:
-    test: https://api.stripe.com
-    live: https://api.stripe.com
-  credentials: ['username','password']
+  url: ${GDS_CONNECTOR_STRIPE_URL:-https://api.stripe.com}
+  authToken: ${GDS_CONNECTOR_STRIPE_AUTH_TOKEN:-sk_test}
 
 jerseyClient:
   timeout: 500ms
