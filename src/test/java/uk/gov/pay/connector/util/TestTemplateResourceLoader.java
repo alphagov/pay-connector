@@ -52,6 +52,10 @@ public class TestTemplateResourceLoader {
     public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request.xml";
     public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_MINIMAL = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request-minimal.xml";
     public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_WITHOUT_ADDRESS = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request-without-address.xml";
+    public static final String SMARTPAY_SPECIAL_CHAR_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST = SMARTPAY_BASE_NAME + "/special-char-valid-authorise-smartpay-3ds-request.xml";
+    public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-3ds-request.xml";
+    public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST_MINIMAL = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-3ds-request-minimal.xml";
+    public static final String SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST_WITHOUT_ADDRESS = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-3ds-request-without-address.xml";
 
     static final String SMARTPAY_CANCEL_ERROR_RESPONSE = SMARTPAY_BASE_NAME + "/cancel-error-response.xml";
     public static final String SMARTPAY_CANCEL_SUCCESS_RESPONSE = SMARTPAY_BASE_NAME + "/cancel-success-response.xml";
