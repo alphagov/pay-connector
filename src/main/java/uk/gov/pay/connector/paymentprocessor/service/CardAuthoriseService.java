@@ -110,18 +110,6 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                 status.toString())).inc();
     }
 
-    private Optional<String> extractTransactionId(String chargeExternalId, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
-        Optional<String> transactionId = operationResponse.getBaseResponse()
-                .map(BaseAuthoriseResponse::getTransactionId);
-
-        if (!transactionId.isPresent() || StringUtils.isBlank(transactionId.get())) {
-            logger.warn("AuthCardDetails authorisation response received with no transaction id. -  charge_external_id={}",
-                    chargeExternalId);
-        }
-        
-        return transactionId;
-    }
-
     private Optional<Auth3dsDetailsEntity> extractAuth3dsDetails(GatewayResponse<BaseAuthoriseResponse> operationResponse) {
         return operationResponse.getBaseResponse()
                 .flatMap(BaseAuthoriseResponse::getGatewayParamsFor3ds)

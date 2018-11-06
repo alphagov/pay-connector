@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE paymentService PUBLIC "-//WorldPay//DTD WorldPay PaymentService v1//EN"
+        "http://dtd.worldpay.com/paymentService_v1.dtd">
+<paymentService version="1.4" merchantCode="${merchantCode}">
+    <submit>
+        <order orderCode="${transactionId?xml}" shopperLanguageCode="en">
+            <description>${description?xml}</description>
+            <amount currencyCode="GBP" exponent="2" value="${amount}"/>
+            <paymentDetails>
+                <EMVCO_TOKEN-SSL type="APPLEPAY">
+                    <tokenNumber>${authCardDetails.applePaymentData.applicationPrimaryAccountNumber?xml}</tokenNumber>
+                    <expiryDate><date month="${authCardDetails.applePaymentData.date[2..3]}" year="20${authCardDetails.applePaymentData.date[0..1]}"/></expiryDate>
+                    <#if authCardDetails.applePaymentData.cardHolderName??>
+                    <cardHolderName>${authCardDetails.applePaymentData.cardHolderName?xml}</cardHolderName>
+                    </#if>
+                    <cryptogram>${authCardDetails.applePaymentData.onlinePaymentCryptogram?xml}</cryptogram>
+                    <#if authCardDetails.applePaymentData.eciIndicator??>
+                    <eciIndicator>${authCardDetails.applePaymentData.eciIndicator?xml}</eciIndicator>
+                    </#if>
+                </EMVCO_TOKEN-SSL>
+            </paymentDetails>
+        </order>
+    </submit>
+</paymentService>

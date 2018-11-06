@@ -13,6 +13,7 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -44,8 +45,8 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, Str
     }
 
     @Override
-    public GatewayResponse authorise(AuthorisationGatewayRequest request) {
-        String cardNumber = request.getAuthCardDetails().getCardNo();
+    public GatewayResponse authorise(GatewayRequest request) {
+        String cardNumber = ((AuthorisationGatewayRequest) request).getAuthCardDetails().getCardNo();
         GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
 
         if (SandboxCardNumbers.isErrorCard(cardNumber)) {

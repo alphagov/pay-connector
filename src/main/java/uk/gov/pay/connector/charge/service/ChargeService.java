@@ -240,6 +240,7 @@ public class ChargeService {
 
     }
 
+    //todo check with dom
     public ChargeEntity updateChargePost3dsAuthorisation(String chargeExternalId, ChargeStatus status,
                                                  Optional<String> transactionId) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
@@ -286,7 +287,9 @@ public class ChargeService {
         detailsEntity.setBillingAddress(new AddressEntity(authCardDetails.getAddress()));
         detailsEntity.setCardHolderName(sanitize(authCardDetails.getCardHolder()));
         detailsEntity.setExpiryDate(authCardDetails.getEndDate());
-        detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
+        if (authCardDetails.getCardNo().length() > 6) {
+            detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
+        }
         detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
         return detailsEntity;
     }

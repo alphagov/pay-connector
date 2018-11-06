@@ -20,7 +20,7 @@ public class WorldpayCaptureResponse extends WorldpayBaseResponse implements Bas
 
     @Override
     public String toString() {
-        StringJoiner joiner = new StringJoiner(", ", "Worldpay capture response (", ")");
+        StringJoiner joiner = new StringJoiner(", ", "Worldpay authorise response (", ")");
         if (StringUtils.isNotBlank(getTransactionId())) {
             joiner.add("orderCode: " + getTransactionId());
         }

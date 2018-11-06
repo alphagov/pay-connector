@@ -1,9 +1,11 @@
 package uk.gov.pay.connector.app;
 
 
+import io.dropwizard.Configuration;
+
 import java.nio.charset.StandardCharsets;
 
-public class ApplePayConfig {
+public class ApplePayConfig extends Configuration {
     private String publicCertificate;
     private String privateKey;
 

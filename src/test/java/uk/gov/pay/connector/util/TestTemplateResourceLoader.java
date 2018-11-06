@@ -23,10 +23,10 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_3DS_RESPONSE = WORLDPAY_BASE_NAME + "/3ds-response.xml";
     public static final String WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST = WORLDPAY_BASE_NAME + "/valid-3ds-response-auth-worldpay-request.xml";
 
-    public static final String WORLDPAY_CAPTURE_SUCCESS_RESPONSE = WORLDPAY_BASE_NAME + "/capture-success-response.xml";
-    public static final String WORLDPAY_CAPTURE_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/capture-error-response.xml";
-    public static final String WORLDPAY_SPECIAL_CHAR_VALID_CAPTURE_WORLDPAY_REQUEST = WORLDPAY_BASE_NAME + "/special-char-valid-capture-worldpay-request.xml";
-    public static final String WORLDPAY_VALID_CAPTURE_WORLDPAY_REQUEST = WORLDPAY_BASE_NAME + "/valid-capture-worldpay-request.xml";
+    public static final String WORLDPAY_CAPTURE_SUCCESS_RESPONSE = WORLDPAY_BASE_NAME + "/authorise-success-response.xml";
+    public static final String WORLDPAY_CAPTURE_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/authorise-error-response.xml";
+    public static final String WORLDPAY_SPECIAL_CHAR_VALID_CAPTURE_WORLDPAY_REQUEST = WORLDPAY_BASE_NAME + "/special-char-valid-authorise-worldpay-request.xml";
+    public static final String WORLDPAY_VALID_CAPTURE_WORLDPAY_REQUEST = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request.xml";
 
     public static final String WORLDPAY_CANCEL_SUCCESS_RESPONSE = WORLDPAY_BASE_NAME + "/cancel-success-response.xml";
     public static final String WORLDPAY_CANCEL_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/cancel-error-response.xml";
@@ -55,16 +55,16 @@ public class TestTemplateResourceLoader {
     public static final String SMARTPAY_CANCEL_SUCCESS_RESPONSE = SMARTPAY_BASE_NAME + "/cancel-success-response.xml";
     public static final String SMARTPAY_VALID_CANCEL_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/valid-cancel-smartpay-request.xml";
 
-    public static final String SMARTPAY_CAPTURE_ERROR_RESPONSE = SMARTPAY_BASE_NAME + "/capture-error-response.xml";
-    public static final String SMARTPAY_CAPTURE_SUCCESS_RESPONSE = SMARTPAY_BASE_NAME + "/capture-success-response.xml";
-    public static final String SMARTPAY_SPECIAL_CHAR_VALID_CAPTURE_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/special-char-valid-capture-smartpay-request.xml";
-    public static final String SMARTPAY_VALID_CAPTURE_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/valid-capture-smartpay-request.xml";
+    public static final String SMARTPAY_CAPTURE_ERROR_RESPONSE = SMARTPAY_BASE_NAME + "/authorise-error-response.xml";
+    public static final String SMARTPAY_CAPTURE_SUCCESS_RESPONSE = SMARTPAY_BASE_NAME + "/authorise-success-response.xml";
+    public static final String SMARTPAY_SPECIAL_CHAR_VALID_CAPTURE_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/special-char-valid-authorise-smartpay-request.xml";
+    public static final String SMARTPAY_VALID_CAPTURE_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/valid-authorise-smartpay-request.xml";
 
     public static final String SMARTPAY_MULTIPLE_NOTIFICATIONS = SMARTPAY_BASE_NAME + "/multiple-notifications.json";
     public static final String SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES = SMARTPAY_BASE_NAME + "/multiple-notifications-different-dates.xml";
     public static final String SMARTPAY_NOTIFICATION_AUTHORISATION = SMARTPAY_BASE_NAME + "/notification-authorisation.xml";
-    public static final String SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS = SMARTPAY_BASE_NAME + "/notification-capture-with-unknown-status.xml";
-    public static final String SMARTPAY_NOTIFICATION_CAPTURE = SMARTPAY_BASE_NAME + "/notification-capture.xml";
+    public static final String SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS = SMARTPAY_BASE_NAME + "/notification-authorise-with-unknown-status.xml";
+    public static final String SMARTPAY_NOTIFICATION_CAPTURE = SMARTPAY_BASE_NAME + "/notification-authorise.xml";
     public static final String SMARTPAY_NOTIFICATION_REFUND = SMARTPAY_BASE_NAME + "/notification-refund.xml";
 
     public static final String SMARTPAY_REFUND_ERROR_RESPONSE = SMARTPAY_BASE_NAME + "/refund-error-response.xml";
@@ -86,9 +86,9 @@ public class TestTemplateResourceLoader {
     public static final String EPDQ_AUTHORISATION_STATUS_ERROR_RESPONSE = EPDQ_BASE_NAME + "/authorisation-status-error-response.xml";
 
 
-    public static final String EPDQ_CAPTURE_REQUEST = EPDQ_BASE_NAME + "/capture-request.txt";
-    public static final String EPDQ_CAPTURE_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/capture-success-response.xml";
-    public static final String EPDQ_CAPTURE_ERROR_RESPONSE = EPDQ_BASE_NAME + "/capture-error-response.xml";
+    public static final String EPDQ_CAPTURE_REQUEST = EPDQ_BASE_NAME + "/authorise-request.txt";
+    public static final String EPDQ_CAPTURE_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/authorise-success-response.xml";
+    public static final String EPDQ_CAPTURE_ERROR_RESPONSE = EPDQ_BASE_NAME + "/authorise-error-response.xml";
 
     public static final String EPDQ_CANCEL_REQUEST = EPDQ_BASE_NAME + "/cancel-request.txt";
     public static final String EPDQ_CANCEL_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/cancel-success-response.xml";

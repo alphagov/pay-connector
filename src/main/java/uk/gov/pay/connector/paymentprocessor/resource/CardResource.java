@@ -3,6 +3,8 @@ package uk.gov.pay.connector.paymentprocessor.resource;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.applepay.ApplePayService;
+import uk.gov.pay.connector.applepay.api.ApplePayToken;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -36,17 +38,29 @@ public class CardResource {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final CardAuthoriseService cardAuthoriseService;
+    private final ApplePayService applePayAuthoriseService;
     private final Card3dsResponseAuthService card3dsResponseAuthService;
     private final CardCaptureService cardCaptureService;
     private final ChargeCancelService chargeCancelService;
-
+    
     @Inject
-    public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
+    public CardResource(CardAuthoriseService cardAuthoriseService, ApplePayService applePayAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
                         CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService) {
         this.cardAuthoriseService = cardAuthoriseService;
+        this.applePayAuthoriseService = applePayAuthoriseService;
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.cardCaptureService = cardCaptureService;
         this.chargeCancelService = chargeCancelService;
+    }
+
+    @POST
+    @Path("/v1/frontend/charges/{chargeId}/wallets")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    public Response authoriseAndCaptureCharge(@PathParam("chargeId") String chargeId, ApplePayToken encryptedPayload) {
+        applePayAuthoriseService.authorise(chargeId, encryptedPayload);
+        cardCaptureService.markChargeAsEligibleForCapture(chargeId);
+        return Response.ok().build();
     }
 
     @POST
@@ -66,7 +80,7 @@ public class CardResource {
 
         return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
     }
-
+    
     @POST
     @Path("/v1/frontend/charges/{chargeId}/3ds")
     @Consumes(APPLICATION_JSON)
@@ -77,7 +91,7 @@ public class CardResource {
     }
 
     @POST
-    @Path("/v1/frontend/charges/{chargeId}/capture")
+    @Path("/v1/frontend/charges/{chargeId}/authorise")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) {
@@ -87,7 +101,7 @@ public class CardResource {
     }
 
     @POST
-    @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/capture")
+    @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/authorise")
     @Produces(APPLICATION_JSON)
     public Response markChargeAsCaptureApproved(@PathParam("accountId") Long accountId,
                                                 @PathParam("chargeId") String chargeId,

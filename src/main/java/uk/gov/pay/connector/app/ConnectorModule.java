@@ -8,6 +8,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
+import uk.gov.pay.connector.applepay.ApplePayDecrypter;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
@@ -37,6 +38,7 @@ public class ConnectorModule extends AbstractModule {
         bind(ConnectorConfiguration.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
         bind(CardExecutorService.class).in(Singleton.class);
+        bind(ApplePayDecrypter.class).in(Singleton.class);
         bind(PaymentProviders.class).in(Singleton.class);
         bind(EntityBuilder.class);
         bind(HashUtil.class);

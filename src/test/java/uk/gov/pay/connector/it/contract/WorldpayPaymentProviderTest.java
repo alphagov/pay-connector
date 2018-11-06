@@ -133,7 +133,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     /**
-     * Worldpay does not care about a successful authorization reference to make a capture request.
+     * Worldpay does not care about a successful authorization reference to make a authorise request.
      * It simply accepts anything as long as the request is well formed. (And ignores it silently)
      */
     @Test

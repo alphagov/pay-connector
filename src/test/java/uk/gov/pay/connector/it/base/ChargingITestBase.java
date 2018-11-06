@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.jayway.restassured.RestAssured.given;
+import static com.jayway.restassured.RestAssured.head;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
