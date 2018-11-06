@@ -26,7 +26,7 @@ import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviderFactory;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
@@ -96,7 +96,7 @@ public class ChargeServiceTest {
     @Mock
     private LinksConfig mockedLinksConfig;
     @Mock
-    private PaymentProviders mockedProviders;
+    private PaymentProviderFactory mockedProviders;
     @Mock
     private PaymentProvider mockedPaymentProvider;
 

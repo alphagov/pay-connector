@@ -16,7 +16,7 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.common.model.Status;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviderFactory;
 import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.status.IgnoredStatus;
 import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
@@ -75,7 +75,7 @@ public class NotificationServiceTest {
     private RefundDao mockedRefundDao;
 
     @Mock
-    private PaymentProviders mockedPaymentProviders;
+    private PaymentProviderFactory mockedPaymentProviderFactory;
 
     @Mock
     private PaymentProvider mockedPaymentProvider;
@@ -89,7 +89,7 @@ public class NotificationServiceTest {
     @Before
     public void setUp() {
         when(mockedPaymentProvider.getPaymentGatewayName()).thenReturn(SANDBOX);
-        when(mockedPaymentProviders.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProviderFactory.byName(SANDBOX)).thenReturn(mockedPaymentProvider);
         when(mockedChargeDao.findByProviderAndTransactionId(SANDBOX.getName(), TRANSACTION_ID)).thenReturn(Optional.of(mockedChargeEntity));
         when(mockedChargeEntity.getStatus()).thenReturn(ChargeStatus.CAPTURED.toString());
         when(mockedChargeEntity.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE)).thenReturn("a_passphrase");
@@ -97,7 +97,7 @@ public class NotificationServiceTest {
 
         when(mockedPaymentProvider.verifyNotification(any(Notification.class), any(GatewayAccountEntity.class))).thenReturn(true);
 
-        notificationService = new NotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviders, mockDnsUtils, mockedUserNotificationService);
+        notificationService = new NotificationService(mockedChargeDao, mockedChargeEventDao, mockedRefundDao, mockedPaymentProviderFactory, mockDnsUtils, mockedUserNotificationService);
     }
 
     private Notifications<Pair<String, Boolean>> createNotificationFor(String transactionId, String reference, Pair<String, Boolean> status) {
@@ -368,7 +368,7 @@ public class NotificationServiceTest {
 
     @Test
     public void whenSecureNotificationEndpointIsEnabled_shouldRejectNotificationIfIpIsNotValid() throws Exception {
-        when(mockedPaymentProviders.byName(WORLDPAY)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProviderFactory.byName(WORLDPAY)).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.isNotificationEndpointSecured()).thenReturn(true);
         when(mockedPaymentProvider.getNotificationDomain()).thenReturn("something.com");
 
@@ -385,7 +385,7 @@ public class NotificationServiceTest {
 
         StatusMapper mockedStatusMapper = createMockedStatusMapper(InterpretedStatus.Type.CHARGE_STATUS, CAPTURED);
         when(mockedPaymentProvider.getStatusMapper()).thenReturn(mockedStatusMapper);
-        when(mockedPaymentProviders.byName(WORLDPAY)).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProviderFactory.byName(WORLDPAY)).thenReturn(mockedPaymentProvider);
 
         when(mockDnsUtils.ipMatchesDomain(ipAddress, domain)).thenReturn(true);
         when(mockedPaymentProvider.isNotificationEndpointSecured()).thenReturn(true);

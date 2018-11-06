@@ -19,9 +19,7 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
-import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCaptureResponse;
@@ -80,7 +78,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldAuthoriseSuccessfully() {
         setUpAndCheckThatEpdqIsUp();
-        PaymentProvider paymentProvider = getEpdqPaymentProvider();
+        EpdqPaymentProvider paymentProvider = getEpdqPaymentProvider();
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
@@ -89,7 +87,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldAuthoriseWith3dsOnSuccessfully() {
         setUpFor3dsAndCheckThatEpdqIsUp();
-        PaymentProvider paymentProvider = getEpdqPaymentProvider();
+        EpdqPaymentProvider paymentProvider = getEpdqPaymentProvider();
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
@@ -99,7 +97,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldCheckAuthorisationStatusSuccessfully() {
         setUpAndCheckThatEpdqIsUp();
-        PaymentProvider paymentProvider = getEpdqPaymentProvider();
+        EpdqPaymentProvider paymentProvider = getEpdqPaymentProvider();
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
@@ -113,7 +111,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldAuthoriseSuccessfullyWhenCardholderNameContainsRightSingleQuotationMark() {
         setUpAndCheckThatEpdqIsUp();
-        PaymentProvider paymentProvider = getEpdqPaymentProvider();
+        EpdqPaymentProvider paymentProvider = getEpdqPaymentProvider();
         String cardholderName = "John O’Connor"; // That’s a U+2019 RIGHT SINGLE QUOTATION MARK, not a U+0027 APOSTROPHE
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity, cardholderName);
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
@@ -123,7 +121,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldCaptureSuccessfully() {
         setUpAndCheckThatEpdqIsUp();
-        PaymentProvider paymentProvider = getEpdqPaymentProvider();
+        EpdqPaymentProvider paymentProvider = getEpdqPaymentProvider();
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
@@ -140,7 +138,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldCancelSuccessfully() {
         setUpAndCheckThatEpdqIsUp();
-        PaymentProvider paymentProvider = getEpdqPaymentProvider();
+        EpdqPaymentProvider paymentProvider = getEpdqPaymentProvider();
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
@@ -157,7 +155,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldRefundSuccessfully() {
         setUpAndCheckThatEpdqIsUp();
-        PaymentProvider paymentProvider = getEpdqPaymentProvider();
+        EpdqPaymentProvider paymentProvider = getEpdqPaymentProvider();
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
@@ -175,7 +173,7 @@ public class EpdqPaymentProviderTest {
         assertThat(refundResponse.isSuccessful(), is(true));
     }
 
-    private PaymentProvider getEpdqPaymentProvider() {
+    private EpdqPaymentProvider getEpdqPaymentProvider() {
         Client client = TestClientFactory.createJerseyClient();
         GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
                 EpdqPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
@@ -191,7 +189,7 @@ public class EpdqPaymentProviderTest {
         
         return new EpdqPaymentProvider(configuration, gatewayClientFactory, environment, mock(SignatureGenerator.class));
     }
-
+    
     private static AuthorisationGatewayRequest buildAuthorisationRequest(ChargeEntity chargeEntity) {
         return buildAuthorisationRequest(chargeEntity, "Mr. Payment");
     }

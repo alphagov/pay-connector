@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.gateway.handler.AuthorisationHandler;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOrder;
@@ -41,10 +42,8 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import static fj.data.Either.left;
-import static fj.data.Either.reduce;
 import static fj.data.Either.right;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
@@ -66,7 +65,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 
-public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String> {
+public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String>, AuthorisationHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EpdqPaymentProvider.class);
 

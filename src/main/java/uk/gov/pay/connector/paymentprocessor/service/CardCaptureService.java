@@ -16,7 +16,7 @@ import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviderFactory;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -57,13 +57,13 @@ public class CardCaptureService implements TransactionalGatewayOperation<BaseCap
     private final ChargeService chargeService;
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
-    private final PaymentProviders providers;
+    private final PaymentProviderFactory providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected MetricRegistry metricRegistry;
 
     @Inject
     public CardCaptureService(ChargeService chargeService, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
-                              PaymentProviders providers, UserNotificationService userNotificationService,
+                              PaymentProviderFactory providers, UserNotificationService userNotificationService,
                               Environment environment) {
         this.chargeService = chargeService;
         this.chargeDao = chargeDao;

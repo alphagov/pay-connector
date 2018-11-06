@@ -12,7 +12,7 @@ import uk.gov.pay.connector.charge.service.transaction.TransactionContext;
 import uk.gov.pay.connector.charge.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.charge.service.transaction.TransactionalOperation;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviderFactory;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
@@ -45,13 +45,13 @@ public class ChargeCancelService {
 
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
-    private final PaymentProviders providers;
+    private final PaymentProviderFactory providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
 
     @Inject
     public ChargeCancelService(ChargeDao chargeDao,
                                ChargeEventDao chargeEventDao,
-                               PaymentProviders providers,
+                               PaymentProviderFactory providers,
                                Provider<TransactionFlow> transactionFlowProvider) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;

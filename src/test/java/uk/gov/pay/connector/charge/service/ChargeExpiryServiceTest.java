@@ -15,7 +15,7 @@ import uk.gov.pay.connector.charge.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviderFactory;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -56,7 +56,7 @@ public class ChargeExpiryServiceTest {
     private ChargeEventDao mockChargeEventDao;
 
     @Mock
-    private PaymentProviders mockPaymentProviders;
+    private PaymentProviderFactory mockPaymentProviderFactory;
 
     @Mock
     private PaymentProvider mockPaymentProvider;
@@ -76,8 +76,8 @@ public class ChargeExpiryServiceTest {
     @Before
     public void setup() {
         when(mockedConfig.getChargeSweepConfig()).thenReturn(mockedChargeSweepConfig);
-        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new, mockedConfig);
-        when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
+        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviderFactory, TransactionFlow::new, mockedConfig);
+        when(mockPaymentProviderFactory.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
         gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayCancelResponse).build();
         gatewayAccount = ChargeEntityFixture.defaultGatewayAccountEntity();

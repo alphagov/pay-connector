@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -20,6 +21,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.gateway.handler.AuthorisationHandler;
+import uk.gov.pay.connector.gateway.handler.GatewayHandler;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
@@ -61,6 +64,12 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     private Card3dsResponseAuthService card3dsResponseAuthService;
     private CardExecutorService mockExecutorService = mock(CardExecutorService.class);
 
+    @Mock
+    private GatewayHandler mockedGatewayHandler;
+
+    @Mock
+    private AuthorisationHandler mockedPaymentProvider;
+
     @Before
     public void setUpCardAuthorisationService() {
         Environment mockEnvironment = mock(Environment.class);
@@ -72,7 +81,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
                 null, mockConfiguration, null);
-        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, mockExecutorService, chargeService, mockEnvironment);
+        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedGatewayHandler, mockExecutorService, chargeService, mockEnvironment);
     }
 
     public void setupMockExecutorServiceMock() {
@@ -104,7 +113,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         setupMockExecutorServiceMock();
         setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.AUTHORISED, null, argumentCaptor);
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedGatewayHandler.getAuthorisationHandler(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
         GatewayResponse response = card3dsResponseAuthService.doAuthorise(charge.getExternalId(), auth3dsDetails);
 
@@ -120,7 +129,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     public void doAuthorise_shouldRetainGeneratedTransactionId_evenIfAuthorisationAborted() throws Exception {
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedGatewayHandler.getAuthorisationHandler(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.authorise3dsResponse(any())).thenThrow(RuntimeException.class);
 
         setupMockExecutorServiceMock();
@@ -148,7 +157,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         setupMockExecutorServiceMock();
         setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.AUTHORISED, null, argumentCaptor);
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedGatewayHandler.getAuthorisationHandler(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
         card3dsResponseAuthService.doAuthorise(charge.getExternalId(), auth3dsDetails);
 
@@ -277,7 +286,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         setupMockExecutorServiceMock();
         setupPaymentProviderMock(transactionId, authoriseStatus, null, argumentCaptor);
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedGatewayHandler.getAuthorisationHandler(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
         return card3dsResponseAuthService.doAuthorise(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
     }
@@ -289,7 +298,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         setupMockExecutorServiceMock();
         setupPaymentProviderMock(null, AuthoriseStatus.REJECTED, "error-code", argumentCaptor);
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedGatewayHandler.getAuthorisationHandler(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
         return card3dsResponseAuthService.doAuthorise(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
     }

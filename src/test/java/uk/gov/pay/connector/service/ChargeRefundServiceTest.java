@@ -14,7 +14,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviderFactory;
 import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -70,7 +70,7 @@ public class ChargeRefundServiceTest {
     @Mock
     private RefundDao mockRefundDao;
     @Mock
-    private PaymentProviders mockProviders;
+    private PaymentProviderFactory mockProviders;
     @Mock
     private PaymentProvider mockProvider;
     @Mock

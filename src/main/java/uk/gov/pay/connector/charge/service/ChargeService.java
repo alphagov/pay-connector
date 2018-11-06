@@ -33,7 +33,7 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviderFactory;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
@@ -72,12 +72,12 @@ public class ChargeService {
     private final TokenDao tokenDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final LinksConfig linksConfig;
-    private final PaymentProviders providers;
+    private final PaymentProviderFactory providers;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
-                         ConnectorConfiguration config, PaymentProviders providers) {
+                         ConnectorConfiguration config, PaymentProviderFactory providers) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;

@@ -10,15 +10,15 @@ import java.util.Map;
 
 import static jersey.repackaged.com.google.common.collect.Maps.newHashMap;
 
-public class PaymentProviders {
+public class PaymentProviderFactory {
 
     private final Map<PaymentGatewayName, PaymentProvider> paymentProviders = newHashMap();
 
     @Inject
-    public PaymentProviders(WorldpayPaymentProvider worldpayPaymentProvider,
-                            EpdqPaymentProvider epdqPaymentProvider, 
-                            SmartpayPaymentProvider smartpayPaymentProvider,
-                            SandboxPaymentProvider sandboxPaymentProvider) {
+    public PaymentProviderFactory(WorldpayPaymentProvider worldpayPaymentProvider,
+                                  EpdqPaymentProvider epdqPaymentProvider,
+                                  SmartpayPaymentProvider smartpayPaymentProvider,
+                                  SandboxPaymentProvider sandboxPaymentProvider) {
         this.paymentProviders.put(PaymentGatewayName.WORLDPAY, worldpayPaymentProvider);
         this.paymentProviders.put(PaymentGatewayName.SMARTPAY, smartpayPaymentProvider);
         this.paymentProviders.put(PaymentGatewayName.SANDBOX, sandboxPaymentProvider);

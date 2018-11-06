@@ -16,7 +16,7 @@ import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviderFactory;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -61,12 +61,12 @@ public class ChargeRefundService {
 
     private final ChargeDao chargeDao;
     private final RefundDao refundDao;
-    private final PaymentProviders providers;
+    private final PaymentProviderFactory providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
     private final UserNotificationService userNotificationService;
 
     @Inject
-    public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders providers,
+    public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviderFactory providers,
                                Provider<TransactionFlow> transactionFlowProvider,
                                UserNotificationService userNotificationService
     ) {
@@ -102,7 +102,7 @@ public class ChargeRefundService {
         };
     }
 
-    private PreTransactionalOperation<TransactionContext, RefundEntity> prepareForRefund(PaymentProviders providers, Long accountId, String chargeId, RefundRequest refundRequest) {
+    private PreTransactionalOperation<TransactionContext, RefundEntity> prepareForRefund(PaymentProviderFactory providers, Long accountId, String chargeId, RefundRequest refundRequest) {
         return context -> chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId).map(chargeEntity -> {
 
             ExternalChargeRefundAvailability refundAvailability = providers.byName(chargeEntity.getPaymentGatewayName()).getExternalChargeRefundAvailability(chargeEntity);
@@ -133,7 +133,7 @@ public class ChargeRefundService {
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    private NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayRefund(PaymentProviders providers) {
+    private NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayRefund(PaymentProviderFactory providers) {
         return context -> {
             RefundEntity refundEntity = context.get(RefundEntity.class);
             return getPaymentProviderFor(providers, refundEntity.getChargeEntity()).refund(RefundGatewayRequest.valueOf(refundEntity));
@@ -233,7 +233,7 @@ public class ChargeRefundService {
         return "";
     }
 
-    public PaymentProvider<BaseRefundResponse, ?> getPaymentProviderFor(PaymentProviders providers, ChargeEntity chargeEntity) {
+    public PaymentProvider<BaseRefundResponse, ?> getPaymentProviderFor(PaymentProviderFactory providers, ChargeEntity chargeEntity) {
         PaymentProvider<BaseRefundResponse, ?> paymentProvider = providers.byName(chargeEntity.getPaymentGatewayName());
         return paymentProvider;
     }

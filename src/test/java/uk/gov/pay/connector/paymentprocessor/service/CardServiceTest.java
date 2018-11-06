@@ -9,7 +9,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviderFactory;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.mock;
 public abstract class CardServiceTest {
 
     protected final PaymentProvider mockedPaymentProvider = mock(PaymentProvider.class);
-    protected PaymentProviders mockedProviders = mock(PaymentProviders.class);
+    protected PaymentProviderFactory mockedProviders = mock(PaymentProviderFactory.class);
     protected MetricRegistry mockMetricRegistry;
     protected ChargeDao mockedChargeDao = mock(ChargeDao.class);
     protected ChargeService chargeService;

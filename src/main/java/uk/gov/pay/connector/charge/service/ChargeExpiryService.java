@@ -16,7 +16,7 @@ import uk.gov.pay.connector.charge.service.transaction.TransactionContext;
 import uk.gov.pay.connector.charge.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.charge.service.transaction.TransactionalOperation;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviderFactory;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 
@@ -59,7 +59,7 @@ public class ChargeExpiryService {
 
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
-    private final PaymentProviders providers;
+    private final PaymentProviderFactory providers;
     private final Provider<TransactionFlow> transactionFlowProvider;
     static final List<ChargeStatus> GATEWAY_CANCELLABLE_STATUSES = Arrays.asList(
             AUTHORISATION_SUCCESS,
@@ -70,7 +70,7 @@ public class ChargeExpiryService {
     @Inject
     public ChargeExpiryService(ChargeDao chargeDao,
                                ChargeEventDao chargeEventDao,
-                               PaymentProviders providers,
+                               PaymentProviderFactory providers,
                                Provider<TransactionFlow> transactionFlowProvider,
                                ConnectorConfiguration config) {
         this.chargeDao = chargeDao;

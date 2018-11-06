@@ -7,6 +7,7 @@ import org.joda.time.DateTimeZone;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.gateway.handler.AuthorisationHandler;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOrder;
@@ -49,7 +50,7 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
-public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, String> {
+public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, String>, AuthorisationHandler {
 
     public static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
 

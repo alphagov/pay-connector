@@ -14,7 +14,7 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviderFactory;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -88,7 +88,7 @@ class CancelServiceFunctions {
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    static NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayCancel(PaymentProviders providers) {
+    static NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayCancel(PaymentProviderFactory providers) {
         return context -> {
             ChargeEntity chargeEntity = context.get(ChargeEntity.class);
             return providers.byName(chargeEntity.getPaymentGatewayName())

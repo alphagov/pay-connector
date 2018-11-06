@@ -16,7 +16,7 @@ import uk.gov.pay.connector.charge.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviderFactory;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -68,14 +68,14 @@ public class ChargeCancelServiceTest {
     private ChargeEventDao mockChargeEventDao;
 
     @Mock
-    private PaymentProviders mockPaymentProviders;
+    private PaymentProviderFactory mockPaymentProviderFactory;
 
     @Mock
     private PaymentProvider mockPaymentProvider;
 
     @Before
     public void setup() {
-        chargeCancelService = new ChargeCancelService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new);
+        chargeCancelService = new ChargeCancelService(mockChargeDao, mockChargeEventDao, mockPaymentProviderFactory, TransactionFlow::new);
     }
 
     @Test
@@ -119,7 +119,7 @@ public class ChargeCancelServiceTest {
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
         doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class), eq(Optional.empty()));
-        when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
+        when(mockPaymentProviderFactory.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
         Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
@@ -183,7 +183,7 @@ public class ChargeCancelServiceTest {
 
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
         doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class), eq(Optional.empty()));
-        when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
+        when(mockPaymentProviderFactory.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
         Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doUserCancel(externalChargeId);
@@ -227,7 +227,7 @@ public class ChargeCancelServiceTest {
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
         doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class), eq(Optional.empty()));
-        when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
+        when(mockPaymentProviderFactory.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
         Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
@@ -262,7 +262,7 @@ public class ChargeCancelServiceTest {
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
         doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class), eq(Optional.empty()));
-        when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
+        when(mockPaymentProviderFactory.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
         Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
@@ -297,7 +297,7 @@ public class ChargeCancelServiceTest {
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
         doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class), eq(Optional.empty()));
-        when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
+        when(mockPaymentProviderFactory.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
         Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);

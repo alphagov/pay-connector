@@ -9,7 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviderFactory;
 import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 
 @RunWith(MockitoJUnitRunner.class)
-public class PaymentProvidersTest {
+public class PaymentProviderFactoryTest {
 
     @Mock
     WorldpayPaymentProvider worldpayPaymentProvider;
@@ -39,11 +39,11 @@ public class PaymentProvidersTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    private PaymentProviders providers;
+    private PaymentProviderFactory providers;
 
     @Before
     public void setup() {
-        providers = new PaymentProviders(worldpayPaymentProvider, epdqPaymentProvider, smartpayPaymentProvider, sandboxPaymentProvider);
+        providers = new PaymentProviderFactory(worldpayPaymentProvider, epdqPaymentProvider, smartpayPaymentProvider, sandboxPaymentProvider);
     }
 
     @Test

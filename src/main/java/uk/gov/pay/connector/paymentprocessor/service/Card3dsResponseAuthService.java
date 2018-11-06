@@ -5,7 +5,7 @@ import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.handler.GatewayHandler;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -17,7 +17,7 @@ import java.util.Optional;
 
 public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3dsDetails> {
     @Inject
-    public Card3dsResponseAuthService(PaymentProviders providers,
+    public Card3dsResponseAuthService(GatewayHandler providers,
                                       CardExecutorService cardExecutorService,
                                       ChargeService chargeService,
                                       Environment environment) {
@@ -32,7 +32,7 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
 
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, Auth3dsDetails auth3DsDetails) {
-        return getPaymentProviderFor(chargeEntity)
+        return getAuthorisationProviderFor(chargeEntity)
                 .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(chargeEntity, auth3DsDetails));
     }
     

@@ -10,7 +10,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.handler.GatewayHandler;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
@@ -31,7 +31,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
     @Inject
     public CardAuthoriseService(CardTypeDao cardTypeDao,
-                                PaymentProviders providers,
+                                GatewayHandler providers,
                                 CardExecutorService cardExecutorService,
                                 ChargeService chargeService,
                                 Environment environment) {
@@ -45,8 +45,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
         ensureCardBrandGateway3DSCompatibility(charge, authCardDetails.getCardBrand());
         getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
-        getPaymentProviderFor(charge).generateTransactionId().ifPresent(charge::setGatewayTransactionId);
-        
+        getAuthorisationProviderFor(charge).generateTransactionId().ifPresent(charge::setGatewayTransactionId);
         return charge;
     }
 
@@ -73,7 +72,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
-        return getPaymentProviderFor(chargeEntity)
+        return getAuthorisationProviderFor(chargeEntity)
                 .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, authCardDetails));
     }
 

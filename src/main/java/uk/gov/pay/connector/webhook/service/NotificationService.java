@@ -11,7 +11,7 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.PaymentProviderFactory;
 import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.dao.RefundDao;
@@ -39,23 +39,23 @@ public class NotificationService {
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
     private final RefundDao refundDao;
-    private final PaymentProviders paymentProviders;
+    private final PaymentProviderFactory paymentProviderFactory;
     private final DnsUtils dnsUtils;
     private final UserNotificationService userNotificationService;
 
     @Inject
-    public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviders paymentProviders, DnsUtils dnsUtils, UserNotificationService userNotificationService) {
+    public NotificationService(ChargeDao chargeDao, ChargeEventDao chargeEventDao, RefundDao refundDao, PaymentProviderFactory paymentProviderFactory, DnsUtils dnsUtils, UserNotificationService userNotificationService) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.refundDao = refundDao;
-        this.paymentProviders = paymentProviders;
+        this.paymentProviderFactory = paymentProviderFactory;
         this.dnsUtils = dnsUtils;
         this.userNotificationService = userNotificationService;
     }
 
     @Transactional
     public boolean handleNotificationFor(String ipAddress, PaymentGatewayName paymentGatewayName, String payload) {
-        PaymentProvider paymentProvider = paymentProviders.byName(paymentGatewayName);
+        PaymentProvider paymentProvider = paymentProviderFactory.byName(paymentGatewayName);
         Handler handler = new Handler(paymentProvider);
         if (handler.hasSecuredEndpoint() && !handler.matchesIpWithDomain(ipAddress)) {
             logger.error("{} notification received from domain not {}", paymentProvider.getPaymentGatewayName().getName(), paymentProvider.getNotificationDomain());
