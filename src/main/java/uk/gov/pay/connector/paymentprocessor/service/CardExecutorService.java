@@ -27,7 +27,6 @@ import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.FAILED;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
 
-// this service runs the supplied function in a new Thread
 public class CardExecutorService<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(CardExecutorService.class);

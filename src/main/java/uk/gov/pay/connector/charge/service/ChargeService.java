@@ -56,6 +56,7 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
@@ -113,6 +114,12 @@ public class ChargeService {
             chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
             return Optional.of(populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
         }).orElseGet(Optional::empty);
+    }
+    
+    @Transactional
+    public void abortCharge(ChargeEntity charge) {
+        charge.setStatus(AUTHORISATION_ABORTED);
+        chargeEventDao.persistChargeEventOf(charge, Optional.empty());
     }
 
     @Transactional
@@ -206,34 +213,44 @@ public class ChargeService {
         return builderOfResponse;
     }
 
-    public void updateChargePostAuthorisation(ChargeStatus status,
-                                              ChargeEntity chargeEntity,
-                                              Optional<String> transactionId,
-                                              Optional<Auth3dsDetailsEntity> auth3dsDetailsEntity,
-                                              Optional<String> sessionIdentifier,
-                                              AuthCardDetails authCardDetails) {
+    public ChargeEntity updateChargePostAuthorisation(String chargeExternalId,
+                                                      ChargeStatus status,
+                                                      Optional<String> transactionId,
+                                                      Optional<Auth3dsDetailsEntity> auth3dsDetails,
+                                                      Optional<String> sessionIdentifier,
+                                                      AuthCardDetails authCardDetails) {
+        return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
+            charge.setStatus(status);
 
-        chargeEntity.setStatus(status);
-        setTransactionId(chargeEntity, transactionId);
-        sessionIdentifier.ifPresent(chargeEntity::setProviderSessionId);
+            setTransactionId(charge, transactionId);
+            sessionIdentifier.ifPresent(charge::setProviderSessionId);
+            auth3dsDetails.ifPresent(charge::set3dsDetails);
 
-        auth3dsDetailsEntity.ifPresent(chargeEntity::set3dsDetails);
+            CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
+            charge.setCardDetails(detailsEntity);
 
-        CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
-        chargeEntity.setCardDetails(detailsEntity);
+            chargeEventDao.persistChargeEventOf(charge, Optional.empty());
 
-        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-        logger.info("Stored confirmation details for charge - charge_external_id={}",
-                chargeEntity.getExternalId());
+            logger.info("Stored confirmation details for charge - charge_external_id={}",
+                    chargeExternalId);
+
+            return charge;
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
+
 
     }
 
-    public void updateChargePost3dsAuthorisation(ChargeStatus status, ChargeEntity chargeEntity,
+    public ChargeEntity updateChargePost3dsAuthorisation(String chargeExternalId, ChargeStatus status,
                                                  Optional<String> transactionId) {
-        chargeEntity.setStatus(status);
-        setTransactionId(chargeEntity, transactionId);
+        return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
+            charge.setStatus(status);
+            setTransactionId(charge, transactionId);
+            chargeEventDao.persistChargeEventOf(charge, Optional.empty());
+            
+            return charge;
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
 
-        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
+        
     }
 
     private void setTransactionId(ChargeEntity chargeEntity, Optional<String> transactionId) {
