@@ -26,7 +26,7 @@ class StripeGatewayOrder extends GatewayOrder {
         return new StripeGatewayOrder(OrderRequestType.AUTHORISE, payload, null, MediaType.APPLICATION_JSON_TYPE);
     }
 
-    public static GatewayOrder newSource(AuthorisationGatewayRequest request) {
+    static GatewayOrder newSource(AuthorisationGatewayRequest request) {
         Map<String, Object> sourceParams = new HashMap<>();
         sourceParams.put("type", "card");
         sourceParams.put("amount", request.getAmount());
