@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.model.response;
 
-import fj.data.Either;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,33 +7,32 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 
 import java.util.Optional;
 
-import static fj.data.Either.left;
-import static fj.data.Either.right;
 import static uk.gov.pay.connector.gateway.model.GatewayError.baseError;
 
 public class GatewayResponse<T extends BaseResponse> {
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayResponse.class);
 
-    protected Either<GatewayError, T> response;
+    private GatewayError gatewayError;
+    private T baseResponse;
 
     private String sessionIdentifier;
 
     private GatewayResponse(T baseResponse, String sessionIdentifier) {
-        this.response = right(baseResponse);
+        this.baseResponse = baseResponse;
         this.sessionIdentifier = sessionIdentifier;
     }
 
     private GatewayResponse(GatewayError error) {
-        this.response = left(error);
+        this.gatewayError = error;
     }
 
     public boolean isSuccessful() {
-        return response.isRight();
+        return baseResponse != null;
     }
 
     public boolean isFailed() {
-        return response.isLeft();
+        return gatewayError != null;
     }
 
     public Optional<String> getSessionIdentifier() {
@@ -42,22 +40,20 @@ public class GatewayResponse<T extends BaseResponse> {
     }
 
     public Optional<T> getBaseResponse() {
-        return response.either(
-                e -> Optional.empty(),
-                Optional::of
-        );
+        return Optional.ofNullable(baseResponse);
     }
 
     public Optional<GatewayError> getGatewayError() {
-        return response.either(
-                Optional::of,
-                r -> Optional.empty()
-        );
+        return Optional.ofNullable(gatewayError);
     }
 
     @Override
     public String toString() {
-        return response.either(GatewayError::toString, T::toString);
+        if (isFailed()) {
+            return gatewayError.toString();
+        } else {
+            return baseResponse.toString();
+        }
     }
 
     public static <T extends BaseResponse> GatewayResponse<T> with(GatewayError gatewayError) {
@@ -96,14 +92,11 @@ public class GatewayResponse<T extends BaseResponse> {
             if (gatewayError != null) {
                 return new GatewayResponse<>(gatewayError);
             }
-
-            if (StringUtils.isNotBlank(response.getErrorCode()) || StringUtils.isNotBlank(response.getErrorMessage())) {
+            if (StringUtils.isNotBlank(response.getErrorCode()) ||
+                    StringUtils.isNotBlank(response.getErrorMessage())) {
                 return new GatewayResponse<>(baseError(response.toString()));
             }
-
             return new GatewayResponse<>(response, sessionIdentifier);
         }
     }
 }
-
-
