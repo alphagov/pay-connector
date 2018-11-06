@@ -8,11 +8,11 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.Optional;
 
-public class AuthorisationGatewayRequest implements GatewayRequest {
+public class BaseAuthorisationGatewayRequest implements GatewayRequest {
     private AuthCardDetails authCardDetails;
     private ChargeEntity charge;
 
-    public AuthorisationGatewayRequest(ChargeEntity charge, AuthCardDetails authCardDetails) {
+    public BaseAuthorisationGatewayRequest(ChargeEntity charge, AuthCardDetails authCardDetails) {
         this.charge = charge;
         this.authCardDetails = authCardDetails;
     }
@@ -47,7 +47,7 @@ public class AuthorisationGatewayRequest implements GatewayRequest {
         return GatewayOperation.AUTHORISE;
     }
 
-    public static AuthorisationGatewayRequest valueOf(ChargeEntity charge, AuthCardDetails authCardDetails) {
-        return new AuthorisationGatewayRequest(charge, authCardDetails);
+    public static BaseAuthorisationGatewayRequest valueOf(ChargeEntity charge, AuthCardDetails authCardDetails) {
+        return new BaseAuthorisationGatewayRequest(charge, authCardDetails);
     }
 }

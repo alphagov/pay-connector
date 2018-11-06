@@ -22,7 +22,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.BaseAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -334,13 +334,13 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
                 .replace("{{bookingDateYear}}", bookingDateYear);
     }
 
-    private AuthorisationGatewayRequest getCardAuthorisationRequest() {
+    private BaseAuthorisationGatewayRequest getCardAuthorisationRequest() {
         return getCardAuthorisationRequest(aServiceAccount());
     }
 
-    private AuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
+    private BaseAuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
         AuthCardDetails authCardDetails = getValidTestCard();
-        return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        return new BaseAuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
 
     private Auth3dsResponseGatewayRequest get3dsResponseGatewayRequest(ChargeEntity chargeEntity) {
@@ -349,7 +349,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         return new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsDetails);
     }
 
-    private AuthorisationGatewayRequest getCardAuthorisationRequest(GatewayAccountEntity accountEntity) {
+    private BaseAuthorisationGatewayRequest getCardAuthorisationRequest(GatewayAccountEntity accountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(accountEntity)
                 .build();

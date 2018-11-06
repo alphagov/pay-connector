@@ -13,7 +13,7 @@ import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.BaseAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
@@ -74,7 +74,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
         return getPaymentProviderFor(chargeEntity)
-                .authorise(AuthorisationGatewayRequest.valueOf(chargeEntity, authCardDetails));
+                .authorise(BaseAuthorisationGatewayRequest.valueOf(chargeEntity, authCardDetails));
     }
 
     @Override

@@ -10,7 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.BaseAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -85,7 +85,7 @@ public class SandboxPaymentProviderTest {
 
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo("4242424242424242");
-        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
+        GatewayResponse gatewayResponse = provider.authorise(new BaseAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -105,7 +105,7 @@ public class SandboxPaymentProviderTest {
 
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo("4000000000000069");
-        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
+        GatewayResponse gatewayResponse = provider.authorise(new BaseAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -125,7 +125,7 @@ public class SandboxPaymentProviderTest {
 
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo("4000000000000119");
-        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
+        GatewayResponse gatewayResponse = provider.authorise(new BaseAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.isFailed(), is(true));
@@ -142,7 +142,7 @@ public class SandboxPaymentProviderTest {
 
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo("3456789987654567");
-        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
+        GatewayResponse gatewayResponse = provider.authorise(new BaseAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.isFailed(), is(true));
