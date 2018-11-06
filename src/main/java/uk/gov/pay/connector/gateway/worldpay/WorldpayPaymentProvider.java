@@ -16,7 +16,6 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -70,12 +69,11 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
         cancelClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CANCEL, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
         captureClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CAPTURE, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
         refundClient = gatewayClientFactory.createGatewayClient(WORLDPAY, REFUND, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
-        this.isNotificationEndpointSecured = configuration.getWorldpayConfig().isSecureNotificationEnabled();
-        this.notificationDomain = configuration.getWorldpayConfig().getNotificationDomain();
-        this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+        isNotificationEndpointSecured = configuration.getWorldpayConfig().isSecureNotificationEnabled();
+        notificationDomain = configuration.getWorldpayConfig().getNotificationDomain();
+        externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
 
         worldpayCaptureHandler = new WorldpayCaptureHandler(captureClient);
-
     }
 
     @Override
@@ -103,11 +101,6 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
     @Override
     public CaptureHandler getCaptureHandler() {
         return worldpayCaptureHandler;
-    }
-
-    @Override
-    public GatewayResponse capture(CaptureGatewayRequest request) {
-        return getCaptureHandler().capture(request);
     }
 
     @Override

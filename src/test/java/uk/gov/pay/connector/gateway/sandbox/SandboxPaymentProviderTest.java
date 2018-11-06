@@ -41,6 +41,7 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR
 public class SandboxPaymentProviderTest {
 
     private SandboxPaymentProvider provider;
+    private SandboxCaptureHandler sandboxCaptureHandler;
 
     @Mock
     private ExternalRefundAvailabilityCalculator mockExternalRefundAvailabilityCalculator;
@@ -51,6 +52,7 @@ public class SandboxPaymentProviderTest {
     @Before
     public void setup() {
         provider = new SandboxPaymentProvider();
+        sandboxCaptureHandler = (SandboxCaptureHandler) provider.getCaptureHandler();
     }
 
     @Test
@@ -162,7 +164,7 @@ public class SandboxPaymentProviderTest {
     @Test
     public void capture_shouldSucceedWhenCapturingAnyCharge() {
 
-        GatewayResponse<BaseCaptureResponse> gatewayResponse = provider.capture(CaptureGatewayRequest.valueOf(ChargeEntityFixture.aValidChargeEntity().build()));
+        GatewayResponse<BaseCaptureResponse> gatewayResponse = sandboxCaptureHandler.capture(CaptureGatewayRequest.valueOf(ChargeEntityFixture.aValidChargeEntity().build()));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));

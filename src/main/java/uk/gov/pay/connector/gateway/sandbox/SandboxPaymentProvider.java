@@ -88,11 +88,6 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, Str
     }
 
     @Override
-    public GatewayResponse capture(CaptureGatewayRequest request) {
-        return getCaptureHandler().capture(request);
-    }
-
-    @Override
     public GatewayResponse cancel(CancelGatewayRequest request) {
         return createGatewayBaseCancelResponse();
     }

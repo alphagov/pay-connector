@@ -6,7 +6,6 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -29,8 +28,6 @@ public interface PaymentProvider<T extends BaseResponse, R> {
     GatewayResponse<T> authorise3dsResponse(Auth3dsResponseGatewayRequest request);
     
     CaptureHandler getCaptureHandler();
-
-    GatewayResponse<T> capture(CaptureGatewayRequest request);
 
     GatewayResponse<T> refund(RefundGatewayRequest request);
 

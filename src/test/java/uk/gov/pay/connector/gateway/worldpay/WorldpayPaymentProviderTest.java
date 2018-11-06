@@ -19,6 +19,7 @@ import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
@@ -94,6 +95,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 public class WorldpayPaymentProviderTest {
 
     private WorldpayPaymentProvider provider;
+    private WorldpayCaptureHandler worldpayCaptureHandler;
     private Map<String, String> urlMap = ImmutableMap.of(TEST.toString(), "http://worldpay.url");
 
     EnumMap<GatewayOperation, GatewayClient> gatewayClients;
@@ -136,6 +138,7 @@ public class WorldpayPaymentProviderTest {
         when(environment.metrics()).thenReturn(mockMetricRegistry);
 
         provider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
+        worldpayCaptureHandler = (WorldpayCaptureHandler) provider.getCaptureHandler();
     }
 
     @Test
@@ -339,7 +342,7 @@ public class WorldpayPaymentProviderTest {
     public void shouldCaptureAPaymentSuccessfully() throws Exception {
         mockWorldpaySuccessfulCaptureResponse();
 
-        GatewayResponse response = provider.capture(getCaptureRequest());
+        GatewayResponse response = worldpayCaptureHandler.capture(getCaptureRequest());
         assertTrue(response.isSuccessful());
     }
 
@@ -358,7 +361,7 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldErrorIfOrderReferenceNotKnownInCapture() {
         mockWorldpayErrorResponse(200);
-        GatewayResponse<WorldpayCaptureResponse> response = provider.capture(getCaptureRequest());
+        GatewayResponse<WorldpayCaptureResponse> response = worldpayCaptureHandler.capture(getCaptureRequest());
 
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
@@ -368,7 +371,7 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldErrorIfWorldpayResponseIsNot200() {
         mockWorldpayErrorResponse(400);
-        GatewayResponse<WorldpayCaptureResponse> response = provider.capture(getCaptureRequest());
+        GatewayResponse<WorldpayCaptureResponse> response = worldpayCaptureHandler.capture(getCaptureRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
         assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",

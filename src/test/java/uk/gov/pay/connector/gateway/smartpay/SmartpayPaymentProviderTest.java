@@ -67,6 +67,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_CAPT
 public class SmartpayPaymentProviderTest {
 
     private SmartpayPaymentProvider provider;
+    private SmartpayCaptureHandler smartpayCaptureHandler;
     private GatewayClientFactory gatewayClientFactory;
 
     @Mock
@@ -98,6 +99,7 @@ public class SmartpayPaymentProviderTest {
         mockSmartpaySuccessfulOrderSubmitResponse();
 
         provider = new SmartpayPaymentProvider(configuration, gatewayClientFactory, environment, new ObjectMapper());
+        smartpayCaptureHandler = (SmartpayCaptureHandler) provider.getCaptureHandler();
     }
 
     @Test
@@ -187,7 +189,7 @@ public class SmartpayPaymentProviderTest {
                 .withGatewayAccountEntity(aServiceAccount())
                 .build();
 
-        GatewayResponse<WorldpayCaptureResponse> response = provider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        GatewayResponse<SmartpayCaptureResponse> response = smartpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(response.isSuccessful());
     }
 

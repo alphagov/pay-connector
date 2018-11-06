@@ -78,6 +78,7 @@ public abstract class BaseEpdqPaymentProviderTest {
 
     protected GatewayClientFactory gatewayClientFactory;
     protected EpdqPaymentProvider provider;
+    protected EpdqCaptureHandler epdqCaptureHandler;
 
     @Mock
     private Client mockClient;
@@ -125,6 +126,7 @@ public abstract class BaseEpdqPaymentProviderTest {
         when(linksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
         
         provider = new EpdqPaymentProvider(configuration, gatewayClientFactory, environment, mockSignatureGenerator);
+        epdqCaptureHandler = (EpdqCaptureHandler) provider.getCaptureHandler();
     }
 
     private Invocation.Builder mockClientInvocationBuilder() {

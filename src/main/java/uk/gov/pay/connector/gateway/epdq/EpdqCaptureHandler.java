@@ -7,7 +7,6 @@ import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCaptureResponse;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
 
@@ -27,7 +26,7 @@ public class EpdqCaptureHandler implements CaptureHandler {
     }
 
     @Override
-    public GatewayResponse<BaseResponse> capture(CaptureGatewayRequest request) {
+    public GatewayResponse<EpdqCaptureResponse> capture(CaptureGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = client.postRequestFor(ROUTE_FOR_MAINTENANCE_ORDER, request.getGatewayAccount(), buildCaptureOrder(request));
         return GatewayResponseGenerator.getEpdqGatewayResponse(client, response, EpdqCaptureResponse.class);
     }

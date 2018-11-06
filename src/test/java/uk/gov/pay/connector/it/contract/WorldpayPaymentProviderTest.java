@@ -23,6 +23,7 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureHandler;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
@@ -137,17 +138,19 @@ public class WorldpayPaymentProviderTest {
      */
     @Test
     public void shouldBeAbleToSendCaptureRequestForMerchant() throws Exception {
-        WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
-        GatewayResponse response = connector.capture(CaptureGatewayRequest.valueOf(chargeEntity));
-
+        WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
+        WorldpayCaptureHandler worldpayCaptureHandler = (WorldpayCaptureHandler) paymentProvider.getCaptureHandler();
+        GatewayResponse response = worldpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        
         assertTrue(response.isSuccessful());
         assertTrue(response.getSessionIdentifier().isPresent());
     }
 
     @Test
     public void shouldBeAbleToSubmitAPartialRefundAfterACaptureHasBeenSubmitted() throws InterruptedException {
-        WorldpayPaymentProvider connector = getValidWorldpayPaymentProvider();
-        GatewayResponse<WorldpayOrderStatusResponse> response = successfulWorldpayCardAuth(connector);
+        WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
+        WorldpayCaptureHandler worldpayCaptureHandler = (WorldpayCaptureHandler) paymentProvider.getCaptureHandler();
+        GatewayResponse<WorldpayOrderStatusResponse> response = successfulWorldpayCardAuth(paymentProvider);
 
         assertThat(response.getBaseResponse().isPresent(), is(true));
         String transactionId = response.getBaseResponse().get().getTransactionId();
@@ -156,13 +159,13 @@ public class WorldpayPaymentProviderTest {
         assertThat(transactionId, is(not(nullValue())));
 
         chargeEntity.setGatewayTransactionId(transactionId);
-        GatewayResponse<WorldpayCaptureResponse> captureResponse = connector.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        GatewayResponse<WorldpayCaptureResponse> captureResponse = worldpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
 
         assertThat(captureResponse.isSuccessful(), is(true));
 
         RefundEntity refundEntity = new RefundEntity(chargeEntity, 1L, userExternalId);
 
-        GatewayResponse refundGatewayResponse = connector.refund(RefundGatewayRequest.valueOf(refundEntity));
+        GatewayResponse refundGatewayResponse = paymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity));
 
         assertTrue(refundGatewayResponse.isSuccessful());
     }

@@ -18,7 +18,6 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
@@ -55,7 +54,7 @@ public class SmartpayPaymentProvider implements PaymentProvider<BaseResponse, Pa
                                    Environment environment,
                                    ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
-        this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+        externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         client = gatewayClientFactory.createGatewayClient(SMARTPAY, configuration.getGatewayConfigFor(SMARTPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
         
         this.smartpayCaptureHandler = new SmartpayCaptureHandler(client);
@@ -86,11 +85,6 @@ public class SmartpayPaymentProvider implements PaymentProvider<BaseResponse, Pa
     @Override
     public CaptureHandler getCaptureHandler() {
         return smartpayCaptureHandler;
-    }
-
-    @Override
-    public GatewayResponse capture(CaptureGatewayRequest request) {
-        return getCaptureHandler().capture(request);
     }
 
     @Override
@@ -198,7 +192,6 @@ public class SmartpayPaymentProvider implements PaymentProvider<BaseResponse, Pa
         return request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID);
     }
     
-    // fixme - get rid of me later
     public static BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> includeSessionIdentifier() {
         return (order, builder) -> builder;
     }

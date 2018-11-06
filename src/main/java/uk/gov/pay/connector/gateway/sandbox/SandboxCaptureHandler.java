@@ -3,7 +3,6 @@ package uk.gov.pay.connector.gateway.sandbox;
 import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 
 import static java.util.UUID.randomUUID;
@@ -12,8 +11,8 @@ import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.Gatewa
 public class SandboxCaptureHandler implements CaptureHandler {
 
     @Override
-    public GatewayResponse<BaseResponse> capture(CaptureGatewayRequest request) {
-        GatewayResponse.GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
+    public GatewayResponse<BaseCaptureResponse> capture(CaptureGatewayRequest request) {
+        GatewayResponse.GatewayResponseBuilder<BaseCaptureResponse> gatewayResponseBuilder = responseBuilder();
         return gatewayResponseBuilder.withResponse(new BaseCaptureResponse() {
 
             private final String transactionId = randomUUID().toString();

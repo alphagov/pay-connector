@@ -75,7 +75,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     @Test
     public void shouldCapture() {
         mockPaymentProviderResponse(200, successCaptureResponse());
-        GatewayResponse<EpdqCaptureResponse> response = provider.capture(buildTestCaptureRequest());
+        GatewayResponse<EpdqCaptureResponse> response = epdqCaptureHandler.capture(buildTestCaptureRequest());
         verifyPaymentProviderRequest(successCaptureRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().getTransactionId(), is("3014644340"));
@@ -84,7 +84,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     @Test
     public void shouldNotCaptureIfPaymentProviderReturnsUnexpectedStatusCode() {
         mockPaymentProviderResponse(200, errorCaptureResponse());
-        GatewayResponse<EpdqCaptureResponse> response = provider.capture(buildTestCaptureRequest());
+        GatewayResponse<EpdqCaptureResponse> response = epdqCaptureHandler.capture(buildTestCaptureRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
     }
@@ -92,7 +92,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     @Test
     public void shouldNotCaptureIfPaymentProviderReturnsNon200HttpStatusCode() {
         mockPaymentProviderResponse(400, errorCaptureResponse());
-        GatewayResponse<EpdqCaptureResponse> response = provider.capture(buildTestCaptureRequest());
+        GatewayResponse<EpdqCaptureResponse> response = epdqCaptureHandler.capture(buildTestCaptureRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
         assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",

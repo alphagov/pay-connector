@@ -127,11 +127,6 @@ public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String
     }
 
     @Override
-    public GatewayResponse capture(CaptureGatewayRequest request) {
-        return getCaptureHandler().capture(request);
-    }
-
-    @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = refundClient.postRequestFor(ROUTE_FOR_MAINTENANCE_ORDER, request.getGatewayAccount(), buildRefundOrder(request));
         return GatewayResponseGenerator.getEpdqGatewayResponse(refundClient, response, EpdqRefundResponse.class);

@@ -12,7 +12,7 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORL
 
 public class GatewayResponseGenerator {
 
-    public static GatewayResponse<BaseResponse> getSmartpayGatewayResponse(GatewayClient client, Either<GatewayError, GatewayClient.Response> response, Class<? extends BaseResponse> responseClass) {
+    public static GatewayResponse getSmartpayGatewayResponse(GatewayClient client, Either<GatewayError, GatewayClient.Response> response, Class<? extends BaseResponse> responseClass) {
         if (response.isLeft()) {
             return GatewayResponse.with(response.left().value());
         } else {
@@ -26,7 +26,7 @@ public class GatewayResponseGenerator {
         }
     }
 
-    public static GatewayResponse<BaseResponse> getEpdqGatewayResponse(GatewayClient client, Either<GatewayError, GatewayClient.Response> response, Class<? extends BaseResponse> responseClass) {
+    public static GatewayResponse getEpdqGatewayResponse(GatewayClient client, Either<GatewayError, GatewayClient.Response> response, Class<? extends BaseResponse> responseClass) {
         if (response.isLeft()) {
             return GatewayResponse.with(response.left().value());
         } else {
@@ -40,7 +40,7 @@ public class GatewayResponseGenerator {
         }
     }
 
-    public static GatewayResponse<BaseResponse> getWorldpayGatewayResponse(GatewayClient client, Either<GatewayError, GatewayClient.Response> response, Class<? extends BaseResponse> responseClass
+    public static GatewayResponse getWorldpayGatewayResponse(GatewayClient client, Either<GatewayError, GatewayClient.Response> response, Class<? extends BaseResponse> responseClass
                                                                    ) {
         if (response.isLeft()) {
             return GatewayResponse.with(response.left().value());
