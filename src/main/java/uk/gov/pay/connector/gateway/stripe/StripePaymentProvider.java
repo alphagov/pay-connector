@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe;
 
+import com.google.common.collect.ImmutableMap;
 import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
@@ -27,17 +28,25 @@ import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.joining;
+import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.model.OrderRequestType.AUTHORISE;
 
+@Singleton
 public class StripePaymentProvider implements PaymentProvider<BaseResponse, String> {
 
     private static final Logger logger = LoggerFactory.getLogger(StripePaymentProvider.class);
@@ -79,16 +88,18 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         Response sourceResponse = client.postRequest(
                 request.getGatewayAccount(),
                 AUTHORISE,
-                URI.create(stripeGatewayConfig.getUrl() + "/v1/sources"),
-                stripeSourcePayload(request),
-                getAuthHeaderValue());
+                URI.create(stripeGatewayConfig.getUrl() + "/v1/tokens"),
+                stripeUrlEncodedSourcePayload(request),
+                getAuthHeaderValue(),
+                APPLICATION_FORM_URLENCODED_TYPE);
         String sourceId = sourceResponse.readEntity(Map.class).get("id").toString();
         Response authorisationResponse = client.postRequest(
                 request.getGatewayAccount(),
                 AUTHORISE,
                 URI.create(stripeGatewayConfig.getUrl() + "/v1/charges"),
-                stripeAuthorisePayload(request, sourceId),
-                getAuthHeaderValue());
+                stripeAuthoriseJsonPayload(request, sourceId),
+                getAuthHeaderValue(),
+                APPLICATION_JSON_TYPE);
 
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         return responseBuilder.withResponse(StripeAuthorisationResponse.of(authorisationResponse)).build();
@@ -107,7 +118,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     public CaptureHandler getCaptureHandler() {
         throw new UnsupportedOperationException();
     }
-    
+
     @Override
     public GatewayResponse<BaseResponse> refund(RefundGatewayRequest request) {
         return null;
@@ -143,7 +154,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         throw new UnsupportedOperationException();
     }
 
-    private String stripeAuthorisePayload(AuthorisationGatewayRequest request, String sourceId) {
+    private String stripeAuthoriseJsonPayload(AuthorisationGatewayRequest request, String sourceId) {
         Map<String, Object> params = new HashMap<>();
         params.put("amount", request.getAmount());
         params.put("currency", "GBP");
@@ -162,15 +173,23 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         return new JSONObject(params).toString();
     }
 
-    private String stripeSourcePayload(AuthorisationGatewayRequest request) {
-        Map<String, Object> sourceParams = new HashMap<>();
-        sourceParams.put("type", "card");
-        sourceParams.put("amount", request.getAmount());
-        sourceParams.put("currency", "GBP");
-        sourceParams.put("usage", "single_use");
-        Map<String, Object> ownerParams = new HashMap<>();
-        ownerParams.put("name", request.getAuthCardDetails().getCardHolder());
-        sourceParams.put("owner", ownerParams);
-        return new JSONObject(sourceParams).toString();
+    private String stripeUrlEncodedSourcePayload(AuthorisationGatewayRequest request) {
+        Map<String, String> sourceParams = ImmutableMap.of(
+                "card[cvc]", request.getAuthCardDetails().getCvc(),
+                "card[exp_month]", request.getAuthCardDetails().expiryMonth(),
+                "card[exp_year]", request.getAuthCardDetails().expiryYear(),
+                "card[number]", request.getAuthCardDetails().getCardNo());
+        
+        return sourceParams.keySet().stream()
+                .map(key -> encode(key) + "=" + encode(sourceParams.get(key)))
+                .collect(joining("&"));
+    }
+
+    private String encode(String value) {
+        try {
+            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(format("Exception thrown when encoding %s", value));
+        }
     }
 }

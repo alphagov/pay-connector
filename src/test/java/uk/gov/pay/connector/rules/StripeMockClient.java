@@ -12,9 +12,9 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHOR
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_SOURCE_SUCCESS_RESPONSE;
 
 public class StripeMockClient {
-    public void mockCreateSource() {
+    public void mockCreateToken() {
         String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_SOURCE_SUCCESS_RESPONSE);
-        paymentServiceResponse(payload, "/v1/sources");
+        paymentServiceResponse(payload, "/v1/tokens");
     }
 
     private void paymentServiceResponse(String responseBody, String path) {

@@ -53,7 +53,7 @@ public class StripeResourceITest {
         databaseTestHelper = testContext.getDatabaseTestHelper();
         accountId = String.valueOf(RandomUtils.nextInt());
         
-        stripeMockClient.mockCreateSource();
+        stripeMockClient.mockCreateToken();
         stripeMockClient.mockCreateCharge();
     }
     
