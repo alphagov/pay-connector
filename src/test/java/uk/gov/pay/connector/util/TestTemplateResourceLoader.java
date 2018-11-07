@@ -87,6 +87,7 @@ public class TestTemplateResourceLoader {
     public static final String EPDQ_AUTHORISATION_WAITING_RESPONSE = EPDQ_BASE_NAME + "/authorisation-waiting-response.xml";
     public static final String EPDQ_AUTHORISATION_OTHER_RESPONSE = EPDQ_BASE_NAME + "/authorisation-other-response.xml";
     public static final String EPDQ_AUTHORISATION_REQUEST = EPDQ_BASE_NAME + "/authorisation-request.txt";
+    public static final String EPDQ_AUTHORISATION_REQUEST_WITHOUT_ADDRESS = EPDQ_BASE_NAME + "/authorisation-request-without-address.txt";
     public static final String EPDQ_AUTHORISATION_STATUS_REQUEST = EPDQ_BASE_NAME + "/authorisation-status-request.txt";
     public static final String EPDQ_AUTHORISATION_STATUS_DECLINED_RESPONSE = EPDQ_BASE_NAME + "/authorisation-status-declined-response.xml";
     public static final String EPDQ_AUTHORISATION_STATUS_ERROR_RESPONSE = EPDQ_BASE_NAME + "/authorisation-status-error-response.xml";

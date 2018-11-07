@@ -9,8 +9,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -138,4 +138,24 @@ public class EpdqPayloadDefinitionForNewOrderTest {
                 .build()));
     }
 
+    @Test
+    public void shouldOmitAddressWhenInputAddressIsNull() {
+        when(mockAuthCardDetails.getAddress()).thenReturn(null);
+
+        ImmutableList<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(mockTemplateData);
+
+        assertThat(result, is(ImmutableList.builder().add(
+                new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
+                new BasicNameValuePair(CARD_NO_KEY, CARD_NO),
+                new BasicNameValuePair(CARDHOLDER_NAME_KEY, CARDHOLDER_NAME),
+                new BasicNameValuePair(CURRENCY_KEY, CURRENCY),
+                new BasicNameValuePair(CVC_KEY, CVC),
+                new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE),
+                new BasicNameValuePair(OPERATION_KEY, OPERATION_TYPE),
+                new BasicNameValuePair(ORDER_ID_KEY, ORDER_ID),
+                new BasicNameValuePair(PSPID_KEY, PSP_ID),
+                new BasicNameValuePair(PSWD_KEY, PASSWORD),
+                new BasicNameValuePair(USERID_KEY, USER_ID))
+                .build()));
+    }
 }
