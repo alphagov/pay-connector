@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.model;
 
-import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_SOCKET_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_URL_DNS_ERROR;
@@ -51,6 +50,6 @@ public class GatewayError {
 
     @Override
     public String toString() {
-        return format("Gateway error: %s; Error type: %s", message, errorType);
+        return "Gateway error: " + message;
     }
 }

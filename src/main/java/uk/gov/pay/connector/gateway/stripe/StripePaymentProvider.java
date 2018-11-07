@@ -10,6 +10,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -18,7 +19,6 @@ import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -104,10 +104,10 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     }
 
     @Override
-    public GatewayResponse<BaseResponse> capture(CaptureGatewayRequest request) {
-        return null;
+    public CaptureHandler getCaptureHandler() {
+        throw new UnsupportedOperationException();
     }
-
+    
     @Override
     public GatewayResponse<BaseResponse> refund(RefundGatewayRequest request) {
         return null;
@@ -140,7 +140,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
 
     @Override
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     private String stripeAuthorisePayload(AuthorisationGatewayRequest request, String sourceId) {

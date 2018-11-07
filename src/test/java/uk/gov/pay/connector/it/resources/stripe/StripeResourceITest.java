@@ -32,18 +32,18 @@ import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class StripeResourceITest {
 
-    String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
+    private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
     
-    String paymentProvider = PaymentGatewayName.STRIPE.getName();
+    private String paymentProvider = PaymentGatewayName.STRIPE.getName();
     
-    String accountId;
+    private String accountId;
     
-    StripeMockClient stripeMockClient = new StripeMockClient();
+    private StripeMockClient stripeMockClient = new StripeMockClient();
 
     @DropwizardTestContext
-    TestContext testContext;
+    private TestContext testContext;
     
-    DatabaseTestHelper databaseTestHelper;
+    private DatabaseTestHelper databaseTestHelper;
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);

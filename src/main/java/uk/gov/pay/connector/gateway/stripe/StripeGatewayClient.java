@@ -4,7 +4,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.gateway.PaymentGatewayClient;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
@@ -23,7 +22,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 
-public class StripeGatewayClient implements PaymentGatewayClient {
+public class StripeGatewayClient {
 
     private final Logger logger = LoggerFactory.getLogger(StripeGatewayClient.class);
 
@@ -41,12 +40,11 @@ public class StripeGatewayClient implements PaymentGatewayClient {
                                 String jsonPayload, 
                                 String authHeaderValue) {
         String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), requestType);
-        Response response;
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
             logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
-            response = client.target(url.toString())
+            Response response = client.target(url.toString())
                     .request()
                     .header(AUTHORIZATION, authHeaderValue)
                     .post(Entity.entity(jsonPayload, APPLICATION_JSON_TYPE));
@@ -80,5 +78,9 @@ public class StripeGatewayClient implements PaymentGatewayClient {
             responseTimeStopwatch.stop();
             metricRegistry.histogram(metricsPrefix + ".response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
+    }
+
+    private void incrementFailureCounter(MetricRegistry metricRegistry, String metricsPrefix) {
+        metricRegistry.counter(metricsPrefix + ".failures").inc();
     }
 }

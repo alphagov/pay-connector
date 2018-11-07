@@ -103,9 +103,8 @@ public class CardExecutorService<T> {
         try {
             return Pair.of(COMPLETED, futureObject.get(config.getTimeoutInSeconds(), TimeUnit.SECONDS));
         } catch (ExecutionException | InterruptedException exception) {
-            Throwable cause = exception.getCause();
-            if (cause instanceof WebApplicationException) {
-                throw (WebApplicationException) cause;
+            if (exception.getCause() instanceof WebApplicationException) {
+                throw (WebApplicationException) exception.getCause();
             }
             return Pair.of(FAILED, null);
         } catch (TimeoutException timeoutException) {

@@ -26,19 +26,19 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 public class PaymentProvidersTest {
 
     @Mock
-    WorldpayPaymentProvider worldpayPaymentProvider;
+    private WorldpayPaymentProvider worldpayPaymentProvider;
     
     @Mock
-    EpdqPaymentProvider epdqPaymentProvider;
+    private EpdqPaymentProvider epdqPaymentProvider;
     
     @Mock
-    SmartpayPaymentProvider smartpayPaymentProvider;
+    private SmartpayPaymentProvider smartpayPaymentProvider;
     
     @Mock
-    SandboxPaymentProvider sandboxPaymentProvider;
+    private SandboxPaymentProvider sandboxPaymentProvider;
     
     @Mock
-    StripePaymentProvider stripePaymentProvider;
+    private StripePaymentProvider stripePaymentProvider;
     
     @Rule
     public ExpectedException expectedException = ExpectedException.none();

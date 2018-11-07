@@ -2,14 +2,10 @@ package uk.gov.pay.connector.gateway.stripe;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.util.Optional;
 
 import static java.lang.String.format;
