@@ -144,6 +144,7 @@ public class CardCaptureService implements TransactionalGatewayOperation<BaseCap
     @Override
     public GatewayResponse<BaseCaptureResponse> operation(ChargeEntity chargeEntity) {
         return getPaymentProviderFor(chargeEntity)
+                .getCaptureHandler()
                 .capture(CaptureGatewayRequest.valueOf(chargeEntity));
     }
 

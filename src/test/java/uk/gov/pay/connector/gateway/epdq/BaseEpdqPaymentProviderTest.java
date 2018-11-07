@@ -79,6 +79,7 @@ public abstract class BaseEpdqPaymentProviderTest {
     protected GatewayClientFactory gatewayClientFactory;
     protected EpdqPaymentProvider provider;
 
+
     @Mock
     private Client mockClient;
     @Mock
@@ -109,7 +110,7 @@ public abstract class BaseEpdqPaymentProviderTest {
     @Before
     public void setup() {
         gatewayClientFactory = new GatewayClientFactory(mockClientFactory);
-        
+
         mockClientInvocationBuilder = mockClientInvocationBuilder();
         when(environment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
@@ -123,7 +124,7 @@ public abstract class BaseEpdqPaymentProviderTest {
 
         when(configuration.getLinks()).thenReturn(linksConfig);
         when(linksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
-        
+
         provider = new EpdqPaymentProvider(configuration, gatewayClientFactory, environment, mockSignatureGenerator);
     }
 
@@ -314,8 +315,8 @@ public abstract class BaseEpdqPaymentProviderTest {
         return buildTestRefundRequest(chargeEntity);
     }
 
-   private AuthCardDetails buildTestAuthCardDetails() {
-       Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", null, "GB");
+    private AuthCardDetails buildTestAuthCardDetails() {
+        Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", null, "GB");
         return AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
     }
 

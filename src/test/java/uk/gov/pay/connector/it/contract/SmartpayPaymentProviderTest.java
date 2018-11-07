@@ -21,6 +21,7 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.epdq.EpdqCaptureHandler;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -28,6 +29,8 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayAuthorisationResponse;
+import uk.gov.pay.connector.gateway.smartpay.SmartpayCaptureHandler;
+import uk.gov.pay.connector.gateway.smartpay.SmartpayCaptureResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
@@ -148,6 +151,7 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldSuccessfullySendACaptureRequest() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+        SmartpayCaptureHandler smartpayCaptureHandler = (SmartpayCaptureHandler) paymentProvider.getCaptureHandler();
         GatewayResponse<SmartpayAuthorisationResponse> response = testCardAuthorisation(paymentProvider, chargeEntity);
 
         assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
@@ -156,7 +160,7 @@ public class SmartpayPaymentProviderTest {
 
         chargeEntity.setGatewayTransactionId(transactionId);
 
-        GatewayResponse<WorldpayCaptureResponse> captureGatewayResponse = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        GatewayResponse<SmartpayCaptureResponse> captureGatewayResponse = smartpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(captureGatewayResponse.isSuccessful());
     }
 
@@ -180,12 +184,13 @@ public class SmartpayPaymentProviderTest {
     public void shouldRefundToAnExistingPaymentSuccessfully() throws Exception {
         AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
         PaymentProvider smartpay = getSmartpayPaymentProvider();
+        SmartpayCaptureHandler smartpayCaptureHandler = (SmartpayCaptureHandler) smartpay.getCaptureHandler();
         GatewayResponse<SmartpayAuthorisationResponse> authoriseResponse = smartpay.authorise(request);
         assertTrue(authoriseResponse.isSuccessful());
 
         chargeEntity.setGatewayTransactionId(authoriseResponse.getBaseResponse().get().getPspReference());
 
-        GatewayResponse<WorldpayCaptureResponse> captureGatewayResponse = smartpay.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        GatewayResponse<SmartpayCaptureResponse> captureGatewayResponse = smartpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(captureGatewayResponse.isSuccessful());
 
         RefundEntity refundEntity = new RefundEntity(chargeEntity, 1L, userExternalId);

@@ -2,11 +2,10 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import fj.data.Either;
 import io.dropwizard.setup.Environment;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOrder;
@@ -17,12 +16,12 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
@@ -45,7 +44,6 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
-import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCaptureOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
@@ -61,6 +59,8 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
     private final String notificationDomain;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
+    private final WorldpayCaptureHandler worldpayCaptureHandler;
+
     @Inject
     public WorldpayPaymentProvider(ConnectorConfiguration configuration,
                                    GatewayClientFactory gatewayClientFactory,
@@ -69,9 +69,11 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
         cancelClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CANCEL, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
         captureClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CAPTURE, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
         refundClient = gatewayClientFactory.createGatewayClient(WORLDPAY, REFUND, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
-        this.isNotificationEndpointSecured = configuration.getWorldpayConfig().isSecureNotificationEnabled();
-        this.notificationDomain = configuration.getWorldpayConfig().getNotificationDomain();
-        this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+        isNotificationEndpointSecured = configuration.getWorldpayConfig().isSecureNotificationEnabled();
+        notificationDomain = configuration.getWorldpayConfig().getNotificationDomain();
+        externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+
+        worldpayCaptureHandler = new WorldpayCaptureHandler(captureClient);
     }
 
     @Override
@@ -87,48 +89,30 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
     @Override
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrder(request));
-        return getGatewayResponse(response, WorldpayOrderStatusResponse.class);
+        return GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
     }
 
     @Override
     public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), build3dsResponseAuthOrder(request));
-        return getGatewayResponse(response, WorldpayOrderStatusResponse.class);
-    }
-
-    private GatewayResponse<BaseResponse> getGatewayResponse(Either<GatewayError, GatewayClient.Response> response, Class<? extends BaseResponse> responseClass) {
-        if (response.isLeft()) {
-            return GatewayResponse.with(response.left().value());
-        } else {
-            GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
-            authoriseClient.unmarshallResponse(response.right().value(), responseClass)
-                    .bimap(
-                            responseBuilder::withGatewayError,
-                            responseBuilder::withResponse
-                    );
-            Optional.ofNullable(response.right().value().getResponseCookies().get(WORLDPAY_MACHINE_COOKIE_NAME))
-                    .ifPresent(responseBuilder::withSessionIdentifier);
-            return responseBuilder.build();
-        }
+        return GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
     }
 
     @Override
-    public GatewayResponse capture(CaptureGatewayRequest request) {
-        Either<GatewayError, GatewayClient.Response> response = captureClient.postRequestFor(null, request.getGatewayAccount(), buildCaptureOrder(request));
-        return getGatewayResponse(response, WorldpayCaptureResponse.class);
+    public CaptureHandler getCaptureHandler() {
+        return worldpayCaptureHandler;
     }
 
     @Override
     public GatewayResponse refund(RefundGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = refundClient.postRequestFor(null, request.getGatewayAccount(), buildRefundOrder(request));
-        return getGatewayResponse(response, WorldpayRefundResponse.class);
+        return GatewayResponseGenerator.getWorldpayGatewayResponse(refundClient, response, WorldpayRefundResponse.class);
     }
 
     @Override
     public GatewayResponse cancel(CancelGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = cancelClient.postRequestFor(null, request.getGatewayAccount(), buildCancelOrder(request));
-        return getGatewayResponse(response, WorldpayCancelResponse.class);
-
+        return GatewayResponseGenerator.getWorldpayGatewayResponse(cancelClient, response, WorldpayCancelResponse.class);
     }
 
     @Override
@@ -201,15 +185,6 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withProviderSessionId(request.getProviderSessionId().orElse(""))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .build();
-    }
-
-    private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {
-        return aWorldpayCaptureOrderRequestBuilder()
-                .withDate(DateTime.now(DateTimeZone.UTC))
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .withAmount(request.getAmount())
-                .withTransactionId(request.getTransactionId())
                 .build();
     }
 

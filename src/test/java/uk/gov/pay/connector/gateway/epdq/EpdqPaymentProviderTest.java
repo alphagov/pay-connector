@@ -8,7 +8,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCaptureResponse;
@@ -26,9 +25,7 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 
@@ -66,33 +63,6 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     public void shouldNotAuthoriseIfPaymentProviderReturnsNon200HttpStatusCode() {
         mockPaymentProviderResponse(400, errorAuthResponse());
         GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise(buildTestAuthorisationRequest());
-        assertThat(response.isFailed(), is(true));
-        assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",
-                UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
-    }
-
-    @Test
-    public void shouldCapture() {
-        mockPaymentProviderResponse(200, successCaptureResponse());
-        GatewayResponse<EpdqCaptureResponse> response = provider.capture(buildTestCaptureRequest());
-        verifyPaymentProviderRequest(successCaptureRequest());
-        assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().get().getTransactionId(), is("3014644340"));
-    }
-
-    @Test
-    public void shouldNotCaptureIfPaymentProviderReturnsUnexpectedStatusCode() {
-        mockPaymentProviderResponse(200, errorCaptureResponse());
-        GatewayResponse<EpdqCaptureResponse> response = provider.capture(buildTestCaptureRequest());
-        assertThat(response.isFailed(), is(true));
-        assertThat(response.getGatewayError().isPresent(), is(true));
-    }
-
-    @Test
-    public void shouldNotCaptureIfPaymentProviderReturnsNon200HttpStatusCode() {
-        mockPaymentProviderResponse(400, errorCaptureResponse());
-        GatewayResponse<EpdqCaptureResponse> response = provider.capture(buildTestCaptureRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
         assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",
@@ -206,7 +176,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
 
         assertThat(provider.verifyNotification(mockNotification, mockGatewayAccountEntity), is(false));
     }
-    
+
     @Test
     public void shouldNotVerifyNotificationIfEmptyPayload() {
         when(mockNotification.getPayload()).thenReturn(Optional.empty());
