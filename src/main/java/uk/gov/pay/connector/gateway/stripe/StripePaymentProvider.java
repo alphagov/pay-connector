@@ -2,14 +2,16 @@ package uk.gov.pay.connector.gateway.stripe;
 
 import fj.data.Either;
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.StringUtils;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
-import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
@@ -25,27 +27,33 @@ import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
 
 import javax.inject.Inject;
-import javax.ws.rs.client.Invocation;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiFunction;
 
+import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.model.OrderRequestType.AUTHORISE;
 
 public class StripePaymentProvider implements PaymentProvider<BaseResponse, String> {
 
     private static final Logger logger = LoggerFactory.getLogger(StripePaymentProvider.class);
 
-    private StripeGatewayClient client;
+    private final StripeGatewayClient client;
+    private final StripeGatewayConfig stripeGatewayConfig;
 
     @Inject
-    public StripePaymentProvider(GatewayClientFactory gatewayClientFactory, Environment environment, ConnectorConfiguration configuration) {
+    public StripePaymentProvider(GatewayClientFactory gatewayClientFactory,
+                                 Environment environment,
+                                 ConnectorConfiguration configuration) {
+        this.stripeGatewayConfig = configuration.getStripeConfig();
         this.client = gatewayClientFactory.createStripeGatewayClient(
                 PaymentGatewayName.STRIPE,
                 GatewayOperation.AUTHORISE,
-                environment.metrics(),
-                configuration.getStripeConfig()
+                environment.metrics()
         );
     }
 
@@ -69,17 +77,25 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         logger.info("Calling Stripe for authorisation of charge [{}]", request.getChargeExternalId());
 
         Response sourceResponse = client.postRequest(
-                request.getGatewayAccount(), 
-                StripeGatewayOrder.newSource(request), 
-                "/v1/sources");
+                request.getGatewayAccount(),
+                AUTHORISE,
+                URI.create(stripeGatewayConfig.getUrl() + "/v1/sources"),
+                stripeSourcePayload(request),
+                getAuthHeaderValue());
         String sourceId = sourceResponse.readEntity(Map.class).get("id").toString();
         Response authorisationResponse = client.postRequest(
                 request.getGatewayAccount(),
-                StripeGatewayOrder.anAuthorisationOrder(request, sourceId),
-                "/v1/charges");
+                AUTHORISE,
+                URI.create(stripeGatewayConfig.getUrl() + "/v1/charges"),
+                stripeAuthorisePayload(request, sourceId),
+                getAuthHeaderValue());
 
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         return responseBuilder.withResponse(StripeAuthorisationResponse.of(authorisationResponse)).build();
+    }
+
+    private String getAuthHeaderValue() {
+        return "Bearer " + stripeGatewayConfig.getAuthToken();
     }
 
     @Override
@@ -127,7 +143,34 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         return null;
     }
 
-    static BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> includeSessionIdentifier() {
-        return (order, builder) -> builder;
+    private String stripeAuthorisePayload(AuthorisationGatewayRequest request, String sourceId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("amount", request.getAmount());
+        params.put("currency", "GBP");
+        params.put("description", request.getDescription());
+        params.put("source", sourceId);
+        params.put("capture", false);
+        Map<String, Object> destinationParams = new HashMap<>();
+        String stripeAccountId = request.getGatewayAccount().getCredentials().get("stripe_account_id");
+
+        if (StringUtils.isBlank(stripeAccountId)) {
+            throw new WebApplicationException(format("There is no stripe_account_id for gateway account with id %s", request.getGatewayAccount().getId()));
+        }
+
+        destinationParams.put("account", stripeAccountId);
+        params.put("destination", destinationParams);
+        return new JSONObject(params).toString();
+    }
+
+    private String stripeSourcePayload(AuthorisationGatewayRequest request) {
+        Map<String, Object> sourceParams = new HashMap<>();
+        sourceParams.put("type", "card");
+        sourceParams.put("amount", request.getAmount());
+        sourceParams.put("currency", "GBP");
+        sourceParams.put("usage", "single_use");
+        Map<String, Object> ownerParams = new HashMap<>();
+        ownerParams.put("name", request.getAuthCardDetails().getCardHolder());
+        sourceParams.put("owner", ownerParams);
+        return new JSONObject(sourceParams).toString();
     }
 }
