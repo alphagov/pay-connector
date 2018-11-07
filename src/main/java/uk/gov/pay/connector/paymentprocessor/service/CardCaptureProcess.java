@@ -93,8 +93,10 @@ public class CardCaptureProcess {
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram("gateway-operations.capture-process.running_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
-            logger.info("Capture complete [captured={}] [skipped={}] [capture_error={}] [failed_capture={}] [total={}]",
-                    captured, skipped, error, failedCapture, readyCaptureQueueSize);
+            if (readyCaptureQueueSize > 0) {
+                logger.info("Capture complete [captured={}] [skipped={}] [capture_error={}] [failed_capture={}] [total={}]",
+                        captured, skipped, error, failedCapture, readyCaptureQueueSize);
+            }
         }
         MDC.remove(HEADER_REQUEST_ID);
     }
