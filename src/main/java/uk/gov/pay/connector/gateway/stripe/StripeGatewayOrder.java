@@ -44,6 +44,7 @@ class StripeGatewayOrder extends GatewayOrder {
         sourceParams.put("type", "card");
         sourceParams.put("amount", request.getAmount());
         sourceParams.put("currency", "GBP");
+        sourceParams.put("usage", "single_use");
         Map<String, Object> ownerParams = new HashMap<>();
         ownerParams.put("name", request.getAuthCardDetails().getCardHolder());
         sourceParams.put("owner", ownerParams);
