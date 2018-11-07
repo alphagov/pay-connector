@@ -10,7 +10,7 @@ public class AuthUtils {
 
     public static AuthCardDetails aValidAuthorisationDetails() {
         String validSandboxCard = "4242424242424242";
-        return buildAuthCardDetails(validSandboxCard, "123", "12/17", "card-brand");
+        return buildAuthCardDetails(validSandboxCard, "123", "12/21", "card-brand");
     }
 
     public static AuthCardDetails buildAuthCardDetails(String cardHolderName) {
