@@ -31,7 +31,7 @@ public class EpdqPayloadDefinitionForNewOrder implements PayloadDefinition<EpdqT
     public ImmutableList<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData) {
 
         // Keep this list in alphabetical order
-        return newParameterBuilder()
+        EpdqPayloadDefinition.ParameterBuilder parameterBuilder = newParameterBuilder()
                 .add(AMOUNT_KEY, templateData.getAmount())
                 .add(CARD_NO_KEY, templateData.getAuthCardDetails().getCardNo())
                 .add(CARDHOLDER_NAME_KEY, templateData.getAuthCardDetails().getCardHolder())
@@ -39,16 +39,23 @@ public class EpdqPayloadDefinitionForNewOrder implements PayloadDefinition<EpdqT
                 .add(CVC_KEY, templateData.getAuthCardDetails().getCvc())
                 .add(EXPIRY_DATE_KEY, templateData.getAuthCardDetails().getEndDate())
                 .add(OPERATION_KEY, templateData.getOperationType())
-                .add(ORDER_ID_KEY, templateData.getOrderId())
-                .add(OWNER_ADDRESS_KEY, concatAddressLines(templateData.getAuthCardDetails().getAddress().getLine1(),
-                                templateData.getAuthCardDetails().getAddress().getLine2()))
-                .add(OWNER_COUNTRY_CODE_KEY, templateData.getAuthCardDetails().getAddress().getCountry())
-                .add(OWNER_TOWN_KEY, templateData.getAuthCardDetails().getAddress().getCity())
-                .add(OWNER_ZIP_KEY, templateData.getAuthCardDetails().getAddress().getPostcode())
-                .add(PSPID_KEY, templateData.getMerchantCode())
+                .add(ORDER_ID_KEY, templateData.getOrderId());
+
+        if (templateData.getAuthCardDetails().getAddress() != null) {
+            String addressLines = concatAddressLines(templateData.getAuthCardDetails().getAddress().getLine1(),
+                    templateData.getAuthCardDetails().getAddress().getLine2());
+
+            parameterBuilder.add(OWNER_ADDRESS_KEY, addressLines)
+                    .add(OWNER_COUNTRY_CODE_KEY, templateData.getAuthCardDetails().getAddress().getCountry())
+                    .add(OWNER_TOWN_KEY, templateData.getAuthCardDetails().getAddress().getCity())
+                    .add(OWNER_ZIP_KEY, templateData.getAuthCardDetails().getAddress().getPostcode());
+        }
+
+        parameterBuilder.add(PSPID_KEY, templateData.getMerchantCode())
                 .add(PSWD_KEY, templateData.getPassword())
-                .add(USERID_KEY, templateData.getUserId())
-                .build();
+                .add(USERID_KEY, templateData.getUserId());
+
+        return parameterBuilder.build();
     }
 
     private static String concatAddressLines(String addressLine1, String addressLine2) {
