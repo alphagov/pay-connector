@@ -22,6 +22,7 @@ import java.util.Map;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.util.Collections.emptyMap;
+import static org.hamcrest.Matchers.containsString;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
@@ -82,7 +83,8 @@ public class StripeResourceITest {
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(externalChargeId))
                 .then()
-                .statusCode(500);
+                .statusCode(500)
+                .body("message", containsString("There is no stripe_account_id for gateway account with id"));
     }
     
     private String addCharge() {

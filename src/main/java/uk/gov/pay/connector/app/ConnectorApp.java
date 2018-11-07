@@ -32,8 +32,6 @@ import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
 import uk.gov.pay.connector.common.exception.ValidationExceptionMapper;
 import uk.gov.pay.connector.filters.LoggingFilter;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
-import uk.gov.pay.connector.gateway.exception.CredentialExceptionMapper;
-import uk.gov.pay.connector.gateway.exception.GatewayErrorExceptionMapper;
 import uk.gov.pay.connector.gateway.smartpay.auth.BasicAuthUser;
 import uk.gov.pay.connector.gateway.smartpay.auth.SmartpayAccountSpecificAuthenticator;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountResource;
@@ -99,11 +97,9 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         
         environment.jersey().register(new ConstraintViolationExceptionMapper());
         environment.jersey().register(new ValidationExceptionMapper());
-        environment.jersey().register(new GatewayErrorExceptionMapper());
         environment.jersey().register(new LoggingExceptionMapper<Throwable>() {});
         environment.jersey().register(new JsonProcessingExceptionMapper());
         environment.jersey().register(new EarlyEofExceptionMapper());
-        environment.jersey().register(new CredentialExceptionMapper());
         
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(ChargeEventsResource.class));

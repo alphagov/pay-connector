@@ -11,6 +11,7 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.ws.rs.ProcessingException;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -38,7 +39,8 @@ public class StripeGatewayClient implements PaymentGatewayClient {
         this.stripeGatewayConfig = stripeGatewayConfig;
     }
 
-    public Response postRequest(GatewayAccountEntity account, GatewayOrder request, String path) throws GatewayError {
+    //todo make more generic
+    public Response postRequest(GatewayAccountEntity account, GatewayOrder request, String path) {
         String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
         Response response;
 
@@ -54,7 +56,7 @@ public class StripeGatewayClient implements PaymentGatewayClient {
             if (response.getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
                 logger.error("Stripe gateway returned server error: {}, for gateway url={} with type {}", response.getStatus(), stripeUrl, account.getType());
                 incrementFailureCounter(metricRegistry, metricsPrefix);
-                throw GatewayError.unexpectedStatusCodeFromGateway("Unexpected HTTP status code " + response.getStatus() + " from gateway");
+                throw new WebApplicationException("Unexpected HTTP status code " + response.getStatus() + " from gateway");
             }
 
             return response;
@@ -63,19 +65,19 @@ public class StripeGatewayClient implements PaymentGatewayClient {
             if (pe.getCause() != null) {
                 if (pe.getCause() instanceof UnknownHostException) {
                     logger.error(format("DNS resolution error for gateway url=%s", stripeUrl), pe);
-                    throw GatewayError.unknownHostException("Gateway Url DNS resolution error");
+                    throw new WebApplicationException("Gateway Url DNS resolution error");
                 }
                 if (pe.getCause() instanceof SocketTimeoutException) {
                     logger.error(format("Connection timed out error for gateway url=%s", stripeUrl), pe);
-                    throw GatewayError.gatewayConnectionTimeoutException("Gateway connection timeout error");
+                    throw new WebApplicationException("Gateway connection timeout error");
                 }
                 if (pe.getCause() instanceof SocketException) {
                     logger.error(format("Socket Exception for gateway url=%s", stripeUrl), pe);
-                    throw GatewayError.gatewayConnectionSocketException("Gateway connection socket error");
+                    throw new WebApplicationException("Gateway connection socket error");
                 }
             }
             logger.error(format("Exception for gateway url=%s", stripeUrl), pe);
-            throw GatewayError.baseError(pe.getMessage());
+            throw new WebApplicationException(pe.getMessage());
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram(metricsPrefix + ".response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));

@@ -13,7 +13,6 @@ import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
-import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -69,23 +68,16 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
         logger.info("Calling Stripe for authorisation of charge [{}]", request.getChargeExternalId());
 
-        Response authorisationResponse;
-        Response sourceResponse;
-        try {
-            sourceResponse = client.postRequest(
-                    request.getGatewayAccount(), 
-                    StripeGatewayOrder.newSource(request), 
-                    "/v1/sources");
-            String sourceId = sourceResponse.readEntity(Map.class).get("id").toString();
-            authorisationResponse = client.postRequest(
-                    request.getGatewayAccount(), 
-                    StripeGatewayOrder.anAuthorisationOrder(request, sourceId), 
-                    "/v1/charges");
-        } catch (GatewayError gatewayError) {
-            return GatewayResponse.with(gatewayError);
-        } 
+        Response sourceResponse = client.postRequest(
+                request.getGatewayAccount(), 
+                StripeGatewayOrder.newSource(request), 
+                "/v1/sources");
+        String sourceId = sourceResponse.readEntity(Map.class).get("id").toString();
+        Response authorisationResponse = client.postRequest(
+                request.getGatewayAccount(),
+                StripeGatewayOrder.anAuthorisationOrder(request, sourceId),
+                "/v1/charges");
 
-        logger.error("returning GatewayResponse from StripePaymentProvider");
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         return responseBuilder.withResponse(StripeAuthorisationResponse.of(authorisationResponse)).build();
     }

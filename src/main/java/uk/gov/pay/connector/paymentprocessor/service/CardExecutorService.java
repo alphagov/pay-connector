@@ -9,8 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
-import uk.gov.pay.connector.common.exception.CredentialsException;
-import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.util.XrayUtils;
 
 import javax.ws.rs.WebApplicationException;
@@ -108,12 +106,6 @@ public class CardExecutorService<T> {
             Throwable cause = exception.getCause();
             if (cause instanceof WebApplicationException) {
                 throw (WebApplicationException) cause;
-            }
-            if (cause instanceof CredentialsException) {
-                throw (CredentialsException) cause;
-            }
-            if (cause instanceof GatewayError) {
-                throw (GatewayError) cause;
             }
             return Pair.of(FAILED, null);
         } catch (TimeoutException timeoutException) {
