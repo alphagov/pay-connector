@@ -8,17 +8,14 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
@@ -33,15 +30,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SandboxPaymentProviderTest {
 
     private SandboxPaymentProvider provider;
-    private SandboxCaptureHandler sandboxCaptureHandler;
 
     @Mock
     private ExternalRefundAvailabilityCalculator mockExternalRefundAvailabilityCalculator;
@@ -52,7 +46,6 @@ public class SandboxPaymentProviderTest {
     @Before
     public void setup() {
         provider = new SandboxPaymentProvider();
-        sandboxCaptureHandler = (SandboxCaptureHandler) provider.getCaptureHandler();
     }
 
     @Test
@@ -162,38 +155,6 @@ public class SandboxPaymentProviderTest {
     }
 
     @Test
-    public void capture_shouldSucceedWhenCapturingAnyCharge() {
-
-        GatewayResponse<BaseCaptureResponse> gatewayResponse = sandboxCaptureHandler.capture(CaptureGatewayRequest.valueOf(ChargeEntityFixture.aValidChargeEntity().build()));
-
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
-        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
-        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
-
-        BaseCaptureResponse captureResponse = gatewayResponse.getBaseResponse().get();
-        assertThat(captureResponse.getTransactionId(), is(notNullValue()));
-        assertThat(captureResponse.getErrorCode(), is(nullValue()));
-        assertThat(captureResponse.getErrorMessage(), is(nullValue()));
-    }
-
-    @Test
-    public void capture_shouldSucceedWhenCancellingAnyCharge() {
-
-        GatewayResponse<BaseCancelResponse> gatewayResponse = provider.cancel(CancelGatewayRequest.valueOf(ChargeEntityFixture.aValidChargeEntity().build()));
-
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
-        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
-        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
-
-        BaseCancelResponse cancelResponse = gatewayResponse.getBaseResponse().get();
-        assertThat(cancelResponse.getTransactionId(), is(notNullValue()));
-        assertThat(cancelResponse.getErrorCode(), is(nullValue()));
-        assertThat(cancelResponse.getErrorMessage(), is(nullValue()));
-    }
-
-    @Test
     public void refund_shouldSucceedWhenRefundingAnyCharge() {
 
         GatewayResponse<BaseRefundResponse> gatewayResponse = provider.refund(RefundGatewayRequest.valueOf(RefundEntityFixture.aValidRefundEntity().build()));
@@ -207,5 +168,21 @@ public class SandboxPaymentProviderTest {
         assertThat(refundResponse.getReference(), is(notNullValue()));
         assertThat(refundResponse.getErrorCode(), is(nullValue()));
         assertThat(refundResponse.getErrorMessage(), is(nullValue()));
+    }
+
+    @Test
+    public void cancel_shouldSucceedWhenCancellingAnyCharge() {
+
+        GatewayResponse<BaseCancelResponse> gatewayResponse = provider.cancel(CancelGatewayRequest.valueOf(ChargeEntityFixture.aValidChargeEntity().build()));
+
+        assertThat(gatewayResponse.isSuccessful(), is(true));
+        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+
+        BaseCancelResponse cancelResponse = gatewayResponse.getBaseResponse().get();
+        assertThat(cancelResponse.getTransactionId(), is(notNullValue()));
+        assertThat(cancelResponse.getErrorCode(), is(nullValue()));
+        assertThat(cancelResponse.getErrorMessage(), is(nullValue()));
     }
 }

@@ -6,6 +6,6 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 
 public interface CaptureHandler<T extends BaseCaptureResponse> {
 
-    public GatewayResponse<T> capture(CaptureGatewayRequest request);
+    GatewayResponse<T> capture(CaptureGatewayRequest request);
 
 }
