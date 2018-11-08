@@ -33,6 +33,7 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
@@ -45,6 +46,7 @@ import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +59,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
@@ -249,8 +252,24 @@ public class ChargeService {
             
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
+    }
 
-        
+    public ChargeEntity updateChargePostCapture(String chargeId, ChargeStatus nextStatus) {
+        return chargeDao.findByExternalId(chargeId)
+                .map(chargeEntity -> {
+
+                    chargeEntity.setStatus(nextStatus);
+                    chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
+
+                    //for sandbox, immediately move from CAPTURE_SUBMITTED to CAPTURED, as there will be no external notification
+                    if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX) {
+                        chargeEntity.setStatus(CAPTURED);
+                        ZonedDateTime gatewayEventTime = ZonedDateTime.now();
+                        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.of(gatewayEventTime));
+                    }
+                    return chargeEntity;
+                })
+                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
     private void setTransactionId(ChargeEntity chargeEntity, Optional<String> transactionId) {
