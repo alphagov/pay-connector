@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
+import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
@@ -53,21 +55,36 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 
 public class ChargeService {
     private static final Logger logger = LoggerFactory.getLogger(ChargeService.class);
 
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
+
+    private static final List<ChargeStatus> IGNORABLE_CAPTURE_STATES = ImmutableList.of(
+            CAPTURE_APPROVED,
+            CAPTURE_APPROVED_RETRY,
+            CAPTURE_READY,
+            CAPTURE_SUBMITTED,
+            CAPTURED
+    );
 
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
@@ -118,7 +135,7 @@ public class ChargeService {
             return Optional.of(populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
         }).orElseGet(Optional::empty);
     }
-    
+
     @Transactional
     public void abortCharge(ChargeEntity charge) {
         charge.setStatus(AUTHORISATION_ABORTED);
@@ -244,12 +261,12 @@ public class ChargeService {
     }
 
     public ChargeEntity updateChargePost3dsAuthorisation(String chargeExternalId, ChargeStatus status,
-                                                 Optional<String> transactionId) {
+                                                         Optional<String> transactionId) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             charge.setStatus(status);
             setTransactionId(charge, transactionId);
             chargeEventDao.persistChargeEventOf(charge, Optional.empty());
-            
+
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
     }
@@ -258,8 +275,7 @@ public class ChargeService {
         return chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
 
-                    chargeEntity.setStatus(nextStatus);
-                    chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
+                    updateChargeStatus(chargeEntity, nextStatus);
 
                     //for sandbox, immediately move from CAPTURE_SUBMITTED to CAPTURED, as there will be no external notification
                     if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX) {
@@ -285,11 +301,6 @@ public class ChargeService {
             try {
                 chargeEntity.setStatus(operationType.getLockingStatus());
             } catch (InvalidStateTransitionException e) {
-                logger.warn("Could not transition charge {} from status {} to status {} - exception is {}",
-                        chargeEntity.getId(),
-                        chargeEntity.getStatus(),
-                        operationType.getLockingStatus(),
-                        e.getMessage());
                 if (chargeEntity.hasStatus(operationType.getLockingStatus())) {
                     throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), chargeEntity.getExternalId());
                 }
@@ -298,6 +309,54 @@ public class ChargeService {
             return chargeEntity;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
+
+    private ChargeEntity updateChargeStatus(ChargeEntity chargeEntity, ChargeStatus chargeStatus) {
+        chargeEntity.setStatus(chargeStatus);
+        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
+        return chargeEntity;
+    }
+
+    public ChargeEntity updateChargeStatus(String chargeId, ChargeStatus chargeStatus) {
+        return chargeDao.findByExternalId(chargeId).map(chargeEntity ->
+                updateChargeStatus(chargeEntity, chargeStatus)
+        ).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+    }
+
+    public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
+        return chargeDao.findByExternalId(externalId).map(charge -> {
+            ChargeStatus targetStatus = charge.isDelayedCapture() ? AWAITING_CAPTURE_REQUEST : CAPTURE_APPROVED;
+
+            try {
+                updateChargeStatus(charge, targetStatus);
+            } catch (InvalidStateTransitionException e) {
+                throw new IllegalStateRuntimeException(charge.getExternalId());
+            }
+
+            return charge;
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
+    }
+
+    public ChargeEntity markChargeAsCaptureApproved(String externalId) {
+        return chargeDao.findByExternalId(externalId).map(charge -> {
+
+            ChargeStatus currentStatus = fromString(charge.getStatus());
+
+            if (charge.hasStatus(IGNORABLE_CAPTURE_STATES)) {
+                logger.info("Skipping charge [charge_external_id={}] with status [{}] from marking as CAPTURE APPROVED", currentStatus, externalId);
+                return charge;
+            }
+
+            try {
+                updateChargeStatus(charge, CAPTURE_APPROVED);
+            } catch (InvalidStateTransitionException e) {
+                throw new ConflictRuntimeException(charge.getExternalId(),
+                        format("attempt to perform delayed capture on charge not in %s state.", AWAITING_CAPTURE_REQUEST));
+            }
+
+            return charge;
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
+    }
+
 
     private CardDetailsEntity buildCardDetailsEntity(AuthCardDetails authCardDetails) {
         CardDetailsEntity detailsEntity = new CardDetailsEntity();

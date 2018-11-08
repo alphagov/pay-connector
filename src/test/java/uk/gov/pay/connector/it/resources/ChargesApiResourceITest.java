@@ -76,7 +76,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("settlement_summary.capture_submit_time", isWithin(10, SECONDS))
                 .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture))
         ;
-        
+
     }
 
     @Test

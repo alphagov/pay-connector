@@ -105,12 +105,15 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 null, null, mockConfiguration, null);
 
         when(mockedPaymentProvider.getCaptureHandler()).thenReturn(mockCaptureHandler);
-        cardCaptureService = new CardCaptureService(chargeService, mockedChargeDao, mockedChargeEventDao, mockedProviders, mockUserNotificationService,
+        cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService,
                 mockEnvironment);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
+        Logger loggerChargeEntity = (Logger) LoggerFactory.getLogger(ChargeEntity.class);
+        loggerChargeEntity.setLevel(Level.INFO);
+        loggerChargeEntity.addAppender(mockAppender);
     }
 
     private void worldpayWillRespondWithSuccess(String transactionId, String worldpayErrorCode) {
@@ -319,7 +322,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao, never()).persistChargeEventOf(any(), any());
     }
 
-    @Test
+    @Test(expected = IllegalStateRuntimeException.class)
     public void markChargeAsCaptureApproved_shouldThrowAnIllegalStateRuntimeException_whenChargeIsNotInAuthorisationSuccess() {
         ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, CAPTURE_READY, "gatewayTxId"));
 
@@ -327,16 +330,13 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         try {
             cardCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
-            fail("expecting IllegalStateRuntimeException");
         } catch (IllegalStateRuntimeException e) {
-            // ignore
+            verify(mockedChargeDao).findByExternalId(chargeEntity.getExternalId());
+            verifyNoMoreInteractions(mockedChargeDao);
+            verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+            throw e;
         }
 
-        verify(mockedChargeDao).findByExternalId(chargeEntity.getExternalId());
-        verify(chargeEntity, never()).setStatus(any());
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-
-        verifyNoMoreInteractions(mockedChargeDao);
     }
 
     @Test
@@ -380,7 +380,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(CAPTURE_ERROR)), eq(Optional.empty()));
 
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
         String expectedLogMessage = String.format("CAPTURE_ERROR for charge [charge_external_id=%s] - reached maximum number of capture attempts", charge.getExternalId());
@@ -388,15 +388,16 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void markChargeAsCaptureError_shouldIgnore_whenChargeDoesNotExist() {
-
-        String externalId = "external-id";
+    public void markChargeAsCaptureError_shouldThrowChargeNotFoundException_whenChargeDoesNotExist() {
+        String externalId = "external-id1";
         when(mockedChargeDao.findByExternalId(externalId)).thenReturn(Optional.empty());
 
+        exception.expect(ChargeNotFoundRuntimeException.class);
         cardCaptureService.markChargeAsCaptureError(externalId);
 
         verify(mockedChargeDao).findByExternalId(externalId);
         verifyNoMoreInteractions(mockedChargeDao);
+        verify(mockedChargeEventDao, never()).persistChargeEventOf(any(), any());
     }
 
     @Test
