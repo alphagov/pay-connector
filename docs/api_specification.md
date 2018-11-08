@@ -455,7 +455,12 @@ Content-Type: application/json
         "amount": 5000,
         "gateway_account_id": "10",
         "gateway_transaction_id": "DFG98-FG8J-R78HJ-8JUG9",
-        "status": "CAPTURED",
+        "delayed_capture": true,
+        "language": "en",
+        "state": {
+                "finished": false,
+                "status": "submitted"
+        },
         "card_brand": "Visa",
         "card_details": {
             "billing_address": {
@@ -483,6 +488,11 @@ Content-Type: application/json
                 "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds",
                 "method": "GET",
                 "rel": "refunds"
+            },
+            {
+                "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/capture",
+                "method": "POST",
+                "rel": "capture"
             }
         ],
         "refund_summary": {
@@ -527,6 +537,7 @@ Content-Type: application/json
 | `return_url`             | X | The url to return the user to after the payment process has completed                                                             |
 | `refund_summary`         | X | Provides a refund summary of the total refund amount still available and how much has already been refunded, plus a refund status |
 | `settlement_summary`     | X | Provides a settlement summary of the charge containing date and time of capture, if present.                                      |
+| `links.rel.capture`      |   | Present when a charge is available for capture. Otherwise                                       |
 
 -----------------------------------------------------------------------------------------------------------
 
