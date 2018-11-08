@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.BaseAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
@@ -87,7 +88,7 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
     }
 
     @Override
-    public GatewayResponse authorise(AuthorisationGatewayRequest request) {
+    public GatewayResponse authorise(BaseAuthorisationGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrder(request));
         return GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
     }
