@@ -67,6 +67,7 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
         configOverride.add(config("smartpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/pal/servlet/soap/Payment"));
         configOverride.add(config("epdq.urls.test", "http://localhost:" + WIREMOCK_PORT + "/epdq"));
         configOverride.add(config("smartpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/pal/servlet/soap/Payment"));
+        configOverride.add(config("stripe.url", "http://localhost:" + WIREMOCK_PORT));
         Optional<DropwizardTestSupport> createdApp = createIfNotRunning(dropwizardConfigAnnotation.app(), dropwizardConfigAnnotation.config(), configOverride.toArray(new ConfigOverride[0]));
         if (dropwizardConfigAnnotation.withDockerPostgres() && createdApp.isPresent()) {
             try {

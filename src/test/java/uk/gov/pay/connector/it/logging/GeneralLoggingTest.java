@@ -22,7 +22,7 @@ public class GeneralLoggingTest {
   DropwizardTestSupport<ConnectorConfiguration> app;
 
   @Test
-  public void shouldLogRequestIdForAnyLoggingInvocation() throws Exception {
+  public void shouldLogRequestIdForAnyLoggingInvocation() {
 
     app = new DropwizardTestSupport<>(ConnectorApp.class,
         ResourceHelpers.resourceFilePath("config/config.yaml"));

@@ -93,6 +93,7 @@ public class ClientFactory {
     }
 
     private OperationOverrides getOverridesFor(GatewayOperation operation, PaymentGatewayName gateway) {
+        if (gateway.equals(PaymentGatewayName.STRIPE)) return null;
         return conf.getGatewayConfigFor(gateway)
                 .getJerseyClientOverrides()
                 .map(jerseyClientOverrides -> jerseyClientOverrides.getOverridesFor(operation))

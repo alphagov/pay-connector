@@ -1,15 +1,11 @@
 package uk.gov.pay.connector.common.exception;
 
-import java.util.Collections;
 import java.util.List;
 
 public class ValidationException extends RuntimeException {
     
     private List<String> errors;
-    
-    public ValidationException(String error) {
-        this(Collections.singletonList(error));
-    }
+
     public ValidationException(List<String> errors) {
         this.errors = errors;
     }

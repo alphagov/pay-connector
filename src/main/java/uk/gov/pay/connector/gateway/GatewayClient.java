@@ -5,10 +5,10 @@ import com.google.common.base.Stopwatch;
 import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshallerException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
@@ -27,8 +27,6 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.Response.Status.OK;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gateway.model.GatewayError.baseError;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionSocketException;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionTimeoutException;
@@ -36,6 +34,8 @@ import static uk.gov.pay.connector.gateway.model.GatewayError.malformedResponseR
 import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCodeFromGateway;
 import static uk.gov.pay.connector.gateway.model.GatewayError.unknownHostException;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.encode;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 
 public class GatewayClient {
     private final Logger logger = LoggerFactory.getLogger(GatewayClient.class);
@@ -45,8 +45,10 @@ public class GatewayClient {
     private final MetricRegistry metricRegistry;
     private final BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier;
 
-    public GatewayClient(Client client, Map<String, String> gatewayUrlMap,
-        BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier, MetricRegistry metricRegistry) {
+    public GatewayClient(Client client, 
+                         Map<String, String> gatewayUrlMap,
+                         BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier, 
+                         MetricRegistry metricRegistry) {
         this.gatewayUrlMap = gatewayUrlMap;
         this.client = client;
         this.metricRegistry = metricRegistry;
@@ -113,10 +115,10 @@ public class GatewayClient {
             }
         }
     }
-
+    
     public <T> Either<GatewayError, T> unmarshallResponse(GatewayClient.Response response, Class<T> clazz) {
         String payload = response.getEntity();
-        logger.debug("response payload=" + payload);
+        logger.debug("response payload={}", payload);
         try {
             return right(XMLUnmarshaller.unmarshall(payload, clazz));
         } catch (XMLUnmarshallerException e) {
@@ -129,8 +131,8 @@ public class GatewayClient {
     private void incrementFailureCounter(MetricRegistry metricRegistry, String metricsPrefix) {
         metricRegistry.counter(metricsPrefix + ".failures").inc();
     }
-
-    static public class Response {
+    
+    public static class Response {
         private final int status;
         private final String entity;
         private final Map<String, String> responseCookies = new HashMap<>();

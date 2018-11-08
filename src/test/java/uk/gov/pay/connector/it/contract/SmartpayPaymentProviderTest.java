@@ -37,7 +37,6 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.TestClientFactory;
-import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.client.Client;
 import java.io.IOException;
@@ -62,9 +61,6 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.AuthUtils.buildAuthCardDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_NOTIFICATION_CAPTURE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS;
 
 @Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
 @RunWith(MockitoJUnitRunner.class)
@@ -219,20 +215,6 @@ public class SmartpayPaymentProviderTest {
         GatewayConfig gatewayConfig = mock(GatewayConfig.class);
         when(configuration.getGatewayConfigFor(PaymentGatewayName.SMARTPAY)).thenReturn(gatewayConfig);
         return new SmartpayPaymentProvider(configuration, gatewayClientFactory, mock(Environment.class), new ObjectMapper());
-    }
-
-    private String notificationPayloadForTransaction(String transactionId) throws IOException {
-        return TestTemplateResourceLoader.load(SMARTPAY_NOTIFICATION_CAPTURE).replace("{{transactionId}}", transactionId);
-    }
-
-    private String notificationPayloadForTransactionWithUnknownStatus(String transactionId) throws IOException {
-        return TestTemplateResourceLoader.load(SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS).replace("{{transactionId}}", transactionId);
-    }
-
-    private String multipleNotificationPayloadForTransactions(String transactionId, String transactionId2) throws IOException {
-        return TestTemplateResourceLoader.load(SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES)
-                .replace("{{transactionId}}", transactionId)
-                .replace("{{transactionId2}}", transactionId2);
     }
 
     public static AuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
