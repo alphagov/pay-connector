@@ -27,24 +27,21 @@
                     <ns1:expiryYear>20${authCardDetails.endDate?split('/')?last}</ns1:expiryYear>
                     <ns1:holderName>${authCardDetails.cardHolder?xml}</ns1:holderName>
                     <ns1:number>${authCardDetails.cardNo}</ns1:number>
+                    <#if authCardDetails.address??>
                     <ns1:billingAddress>
                         <ns2:houseNumberOrName>${authCardDetails.address.line1?xml}</ns2:houseNumberOrName>
-                        <ns2:street><#if authCardDetails.address.line2?has_content>${authCardDetails.address.line2?xml}<
-                            #else>N/A
-                        </#if>
-                    </ns2:street>
-                    <ns2:postalCode>${authCardDetails.address.postcode?xml}</ns2:postalCode>
-                    <ns2:stateOrProvince><#if authCardDetails.address.county??>${authCardDetails.address.county?xml}
+                        <ns2:street><#if authCardDetails.address.line2?has_content>${authCardDetails.address.line2?xml}<#else>N/A</#if></ns2:street>
+                        <ns2:postalCode>${authCardDetails.address.postcode?xml}</ns2:postalCode>
+                        <ns2:stateOrProvince><#if authCardDetails.address.county??>${authCardDetails.address.county?xml}</#if></ns2:stateOrProvince>
+                        <ns2:city>${authCardDetails.address.city?xml}</ns2:city>
+                        <ns2:country>${authCardDetails.address.country?xml}</ns2:country>
+                    </ns1:billingAddress>
                     </#if>
-                </ns2:stateOrProvince>
-                <ns2:city>${authCardDetails.address.city?xml}</ns2:city>
-                <ns2:country>${authCardDetails.address.country?xml}</ns2:country>
-            </ns1:billingAddress>
-        </ns1:card>
-        <ns1:merchantAccount>${merchantCode}</ns1:merchantAccount>
-        <ns1:reference>${paymentPlatformReference?xml}</ns1:reference>
-        <ns1:shopperReference>${description?xml}</ns1:shopperReference>
-    </ns1:paymentRequest>
-</ns1:authorise>
-        </soap:Body>
-        </soap:Envelope>
+                </ns1:card>
+                <ns1:merchantAccount>${merchantCode}</ns1:merchantAccount>
+                <ns1:reference>${paymentPlatformReference?xml}</ns1:reference>
+                <ns1:shopperReference>${description?xml}</ns1:shopperReference>
+            </ns1:paymentRequest>
+        </ns1:authorise>
+    </soap:Body>
+</soap:Envelope>
