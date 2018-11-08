@@ -3,8 +3,8 @@ package uk.gov.pay.connector.gateway.epdq;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 
 import static java.lang.String.format;
@@ -25,7 +25,7 @@ public class EpdqPaymentProvider3dsTest extends BaseEpdqPaymentProviderTest {
     @Test
     public void shouldRequire3dsAuthoriseRequest() {
         mockPaymentProviderResponse(200, successAuth3dResponse());
-        GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise(buildTestAuthorisationRequest());
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
         verifyPaymentProviderRequest(successAuthRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
@@ -34,7 +34,7 @@ public class EpdqPaymentProvider3dsTest extends BaseEpdqPaymentProviderTest {
     @Test
     public void shouldAuthorise3dsResponseIfMatchesWithEpdqStatus() {
         mockPaymentProviderResponse(200, successAuthorisedQueryResponse());
-        GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise3dsResponse(buildTestAuthorisation3dsVerifyRequest("AUTHORISED"));
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise3dsResponse(buildTestAuthorisation3dsVerifyRequest("AUTHORISED"));
         verifyPaymentProviderRequest(successAuthQueryRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(AUTHORISED));
@@ -44,7 +44,7 @@ public class EpdqPaymentProvider3dsTest extends BaseEpdqPaymentProviderTest {
     public void shouldRejectOnRejectedEpdqStatusResponse_evenIfFrontendStatusIsSuccess() {
         mockPaymentProviderResponse(200, declinedAuthorisedQueryResponse());
         Auth3dsResponseGatewayRequest request = buildTestAuthorisation3dsVerifyRequest("AUTHORISED");
-        GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise3dsResponse(request);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise3dsResponse(request);
         verifyPaymentProviderRequest(successAuthQueryRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(REJECTED));
@@ -56,7 +56,7 @@ public class EpdqPaymentProvider3dsTest extends BaseEpdqPaymentProviderTest {
     public void shouldErrorOnErrorEpdqStatusResponse_evenIfFrontendStatusIsSuccess() {
         mockPaymentProviderResponse(200, errorAuthorisedQueryResponse());
         Auth3dsResponseGatewayRequest request = buildTestAuthorisation3dsVerifyRequest("AUTHORISED");
-        GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise3dsResponse(request);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise3dsResponse(request);
         verifyPaymentProviderRequest(successAuthQueryRequest());
         assertTrue(response.isFailed());
         assertThat(response.getGatewayError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
@@ -68,7 +68,7 @@ public class EpdqPaymentProvider3dsTest extends BaseEpdqPaymentProviderTest {
     public void shouldErrorAuthorisationWhenFrontendStatusIsError_evenIfEpdqStatusIsSuccess() {
         mockPaymentProviderResponse(200, successAuthResponse());
         Auth3dsResponseGatewayRequest request = buildTestAuthorisation3dsVerifyRequest("ERROR");
-        GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise3dsResponse(request);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise3dsResponse(request);
         verifyPaymentProviderRequest(successAuthQueryRequest());
         assertTrue(response.isFailed());
         assertThat(response.getGatewayError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
@@ -80,7 +80,7 @@ public class EpdqPaymentProvider3dsTest extends BaseEpdqPaymentProviderTest {
     public void shouldRejectAuthorisationWhenFrontendStatusIsDeclined_evenIfEpdqStatusIsSuccess() {
         mockPaymentProviderResponse(200, successAuthResponse());
         Auth3dsResponseGatewayRequest request = buildTestAuthorisation3dsVerifyRequest("DECLINED");
-        GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise3dsResponse(request);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise3dsResponse(request);
         verifyPaymentProviderRequest(successAuthQueryRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(REJECTED));
@@ -92,7 +92,7 @@ public class EpdqPaymentProvider3dsTest extends BaseEpdqPaymentProviderTest {
     public void shouldRejectAuthorisationWhenFrontendStatusIsDeclined_evenIfEpdqStatusIsError() {
         mockPaymentProviderResponse(200, errorAuthResponse());
         Auth3dsResponseGatewayRequest request = buildTestAuthorisation3dsVerifyRequest("DECLINED");
-        GatewayResponse<EpdqAuthorisationResponse> response = provider.authorise3dsResponse(request);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise3dsResponse(request);
         verifyPaymentProviderRequest(successAuthQueryRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(REJECTED));

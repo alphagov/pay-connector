@@ -24,6 +24,7 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -259,7 +260,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
 
     @Test
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
-        GatewayResponse<WorldpayOrderStatusResponse> response = provider.authorise(getCardAuthorisationRequest());
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(getCardAuthorisationRequest());
         assertTrue(response.isSuccessful());
         assertTrue(response.getSessionIdentifier().isPresent());
     }
@@ -267,7 +268,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     @Test
     public void shouldErrorIfAuthorisationIsUnsuccessful() {
         mockWorldpayErrorResponse(401);
-        GatewayResponse<WorldpayOrderStatusResponse> response = provider.authorise(getCardAuthorisationRequest());
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(getCardAuthorisationRequest());
 
         assertThat(response.isFailed(), is(true));
         assertFalse(response.getSessionIdentifier().isPresent());

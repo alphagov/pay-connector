@@ -31,7 +31,7 @@ import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
-public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, String> {
+public class SandboxPaymentProvider implements PaymentProvider<String> {
 
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
@@ -43,7 +43,7 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, Str
     }
 
     @Override
-    public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) {
         String cardNumber = request.getAuthCardDetails().getCardNo();
         GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
 
@@ -64,7 +64,7 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, Str
     }
 
     @Override
-    public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
         return gatewayResponseBuilder
                 .withGatewayError(new GatewayError("3D Secure not implemented for Sandbox", GENERIC_GATEWAY_ERROR))
@@ -87,7 +87,7 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, Str
     }
 
     @Override
-    public GatewayResponse cancel(CancelGatewayRequest request) {
+    public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
         return createGatewayBaseCancelResponse();
     }
 
@@ -107,7 +107,7 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, Str
     }
 
     @Override
-    public GatewayResponse refund(RefundGatewayRequest request) {
+    public GatewayResponse<BaseRefundResponse> refund(RefundGatewayRequest request) {
         return createGatewayBaseRefundResponse(request);
     }
 

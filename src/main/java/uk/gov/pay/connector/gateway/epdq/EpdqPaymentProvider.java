@@ -26,7 +26,8 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
@@ -63,7 +64,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 
-public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String> {
+public class EpdqPaymentProvider implements PaymentProvider<String> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EpdqPaymentProvider.class);
 
@@ -120,27 +121,27 @@ public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String
     }
 
     @Override
-    public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(ROUTE_FOR_NEW_ORDER, request.getGatewayAccount(), buildAuthoriseOrder(request, frontendUrl));
         return GatewayResponseGenerator.getEpdqGatewayResponse(authoriseClient, response, EpdqAuthorisationResponse.class);
     }
 
     @Override
-    public GatewayResponse refund(RefundGatewayRequest request) {
+    public GatewayResponse<BaseRefundResponse> refund(RefundGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = refundClient.postRequestFor(ROUTE_FOR_MAINTENANCE_ORDER, request.getGatewayAccount(), buildRefundOrder(request));
         return GatewayResponseGenerator.getEpdqGatewayResponse(refundClient, response, EpdqRefundResponse.class);
     }
 
     @Override
-    public GatewayResponse cancel(CancelGatewayRequest request) {
+    public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = cancelClient.postRequestFor(ROUTE_FOR_MAINTENANCE_ORDER, request.getGatewayAccount(), buildCancelOrder(request));
         return GatewayResponseGenerator.getEpdqGatewayResponse(cancelClient, response, EpdqCancelResponse.class);
     }
 
     @Override
-    public GatewayResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, request.getGatewayAccount(), buildQueryOrderRequestFor(request));
-        GatewayResponse<BaseResponse> gatewayResponse = GatewayResponseGenerator.getEpdqGatewayResponse(authoriseClient, response, EpdqAuthorisationResponse.class);
+        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = GatewayResponseGenerator.getEpdqGatewayResponse(authoriseClient, response, EpdqAuthorisationResponse.class);
 
         BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse().map(epdqStatus -> ((EpdqAuthorisationResponse) epdqStatus).authoriseStatus()).orElse(BaseAuthoriseResponse.AuthoriseStatus.ERROR);
         final Auth3dsDetails.Auth3dsResult auth3DResult = request.getAuth3DsDetails().getAuth3DsResult() == null ?
@@ -224,7 +225,7 @@ public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String
      * The outgoing response is error biased. Meaning, we have to make sure that the authorisation success can only happen if both frontend as well as epdq confirms its a success.
      * In all other combinations it is not authorised and the frontend error state take precedence followed by gateway error state for the resulting status.
      */
-    private GatewayResponse reconstructErrorBiasedGatewayResponse(GatewayResponse<BaseResponse> gatewayResponse, BaseAuthoriseResponse.AuthoriseStatus authoriseStatus, Auth3dsDetails.Auth3dsResult auth3DResult) {
+    private GatewayResponse reconstructErrorBiasedGatewayResponse(GatewayResponse<BaseAuthoriseResponse> gatewayResponse, BaseAuthoriseResponse.AuthoriseStatus authoriseStatus, Auth3dsDetails.Auth3dsResult auth3DResult) {
         GatewayResponse.GatewayResponseBuilder<EpdqAuthorisationResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         if (auth3DResult.equals(Auth3dsDetails.Auth3dsResult.ERROR)) {
             return responseBuilder.withGatewayError(GatewayError.genericGatewayError(format("epdq.authorise-3ds.result.mismatch expected=%s, actual=%s", Auth3dsDetails.Auth3dsResult.ERROR, authoriseStatus.name())))

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -8,16 +7,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-
-import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -42,7 +39,7 @@ public class WorldpayCaptureHandlerTest extends WorldpayBasePaymentProviderTest 
     @Test
     public void shouldErrorIfOrderReferenceNotKnownInCapture() {
         mockWorldpayErrorResponse(200);
-        GatewayResponse<WorldpayCaptureResponse> response = worldpayCaptureHandler.capture(getCaptureRequest());
+        GatewayResponse<BaseCaptureResponse> response = worldpayCaptureHandler.capture(getCaptureRequest());
 
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
@@ -52,7 +49,7 @@ public class WorldpayCaptureHandlerTest extends WorldpayBasePaymentProviderTest 
     @Test
     public void shouldErrorIfWorldpayResponseIsNot200() {
         mockWorldpayErrorResponse(400);
-        GatewayResponse<WorldpayCaptureResponse> response = worldpayCaptureHandler.capture(getCaptureRequest());
+        GatewayResponse<BaseCaptureResponse> response = worldpayCaptureHandler.capture(getCaptureRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
         assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",

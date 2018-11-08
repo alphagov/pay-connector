@@ -17,15 +17,17 @@ import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureHandler;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -120,8 +122,7 @@ public class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
-        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
-
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
     }
 
@@ -134,7 +135,7 @@ public class WorldpayPaymentProviderTest {
                 .build();
 
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
-        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
 
         assertTrue(response.isSuccessful());
     }
@@ -147,7 +148,7 @@ public class WorldpayPaymentProviderTest {
                 .build();
 
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequestWithRequired3ds(authCardDetails);
-        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
 
         assertTrue(response.isSuccessful());
         assertTrue(response.getBaseResponse().isPresent());
@@ -169,7 +170,7 @@ public class WorldpayPaymentProviderTest {
 
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequestWithRequired3ds(authCardDetails);
 
-        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
         assertTrue(response.getBaseResponse().isPresent());
         assertTrue(response.getSessionIdentifier().isPresent());
@@ -200,7 +201,7 @@ public class WorldpayPaymentProviderTest {
         WorldpayCaptureHandler worldpayCaptureHandler = (WorldpayCaptureHandler) paymentProvider.getCaptureHandler();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
-        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         String transactionId = response.getBaseResponse().get().getTransactionId();
 
         assertThat(response.getBaseResponse().isPresent(), is(true));
@@ -209,7 +210,7 @@ public class WorldpayPaymentProviderTest {
         assertThat(transactionId, is(not(nullValue())));
 
         chargeEntity.setGatewayTransactionId(transactionId);
-        GatewayResponse<WorldpayCaptureResponse> captureResponse = worldpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        GatewayResponse<BaseCaptureResponse> captureResponse = worldpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
 
         assertThat(captureResponse.isSuccessful(), is(true));
 
@@ -225,7 +226,7 @@ public class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
-        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
 
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().isPresent(), is(true));
@@ -263,7 +264,7 @@ public class WorldpayPaymentProviderTest {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
 
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
-        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
 
         assertFalse(response.isSuccessful());
     }

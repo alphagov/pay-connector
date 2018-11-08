@@ -5,11 +5,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
-import uk.gov.pay.connector.gateway.stripe.response.StripeCaptureResponse;
 
-import javax.ws.rs.WebApplicationException;
 import java.io.IOException;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -34,7 +33,7 @@ public class StripeCaptureHandlerTest extends BaseStripePaymentProviderTest {
     public void shouldCapture() throws IOException {
         mockPaymentProviderCaptureResponse(200, successCaptureResponse());
 
-        GatewayResponse<StripeCaptureResponse> response = stripeCaptureHandler.capture(buildTestCaptureRequest());
+        GatewayResponse<BaseCaptureResponse> response = stripeCaptureHandler.capture(buildTestCaptureRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().getTransactionId(), is("ch_123456"));
     }
@@ -42,7 +41,7 @@ public class StripeCaptureHandlerTest extends BaseStripePaymentProviderTest {
     @Test
     public void shouldNotCaptureIfPaymentProviderReturns4xxHttpStatusCode() throws IOException {
         mockPaymentProviderErrorResponse(400, errorCaptureResponse());
-        GatewayResponse<StripeCaptureResponse> response = stripeCaptureHandler.capture(buildTestCaptureRequest());
+        GatewayResponse<BaseCaptureResponse> response = stripeCaptureHandler.capture(buildTestCaptureRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
         assertEquals(response.getGatewayError().get(), new GatewayError("No such charge: ch_123456 or something similar",
@@ -52,7 +51,7 @@ public class StripeCaptureHandlerTest extends BaseStripePaymentProviderTest {
     @Test
     public void shouldNotCaptureIfPaymentProviderReturns5xxHttpStatusCode() throws IOException {
         mockPaymentProviderErrorResponse(500, stripeInternalServerError());
-        GatewayResponse<StripeCaptureResponse> response = stripeCaptureHandler.capture(buildTestCaptureRequest());
+        GatewayResponse<BaseCaptureResponse> response = stripeCaptureHandler.capture(buildTestCaptureRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
         assertThat(response.getGatewayError().get().getMessage(), containsString("An internal server error occurred. ErrorId:"));

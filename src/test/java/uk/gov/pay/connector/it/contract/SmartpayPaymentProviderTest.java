@@ -24,10 +24,10 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayCaptureHandler;
-import uk.gov.pay.connector.gateway.smartpay.SmartpayCaptureResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -192,7 +192,7 @@ public class SmartpayPaymentProviderTest {
 
         chargeEntity.setGatewayTransactionId(transactionId);
 
-        GatewayResponse<SmartpayCaptureResponse> captureGatewayResponse = smartpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        GatewayResponse<BaseCaptureResponse> captureGatewayResponse = smartpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(captureGatewayResponse.isSuccessful());
     }
 
@@ -224,7 +224,7 @@ public class SmartpayPaymentProviderTest {
 
         chargeEntity.setGatewayTransactionId(authoriseResponse.getBaseResponse().get().getPspReference());
 
-        GatewayResponse<SmartpayCaptureResponse> captureGatewayResponse = smartpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        GatewayResponse<BaseCaptureResponse> captureGatewayResponse = smartpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(captureGatewayResponse.isSuccessful());
 
         RefundEntity refundEntity = new RefundEntity(chargeEntity, 1L, userExternalId);

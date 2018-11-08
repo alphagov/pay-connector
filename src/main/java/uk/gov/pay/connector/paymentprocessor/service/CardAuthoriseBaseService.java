@@ -87,7 +87,7 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
                         .orElse(ChargeStatus.AUTHORISATION_ERROR));
     }
 
-    PaymentProvider<BaseAuthoriseResponse, ?> getPaymentProviderFor(ChargeEntity chargeEntity) {
+    PaymentProvider<?> getPaymentProviderFor(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName());
     }
 
