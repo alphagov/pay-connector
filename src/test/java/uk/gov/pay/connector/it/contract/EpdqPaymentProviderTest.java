@@ -21,7 +21,6 @@ import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
-import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCaptureResponse;
@@ -74,6 +73,7 @@ public class EpdqPaymentProviderTest {
     private MetricRegistry mockMetricRegistry;
     private Histogram mockHistogram;
     private Counter mockCounter;
+    
     @Mock
     private Environment environment;
 
@@ -82,6 +82,17 @@ public class EpdqPaymentProviderTest {
         setUpAndCheckThatEpdqIsUp();
         PaymentProvider paymentProvider = getEpdqPaymentProvider();
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
+        assertThat(response.isSuccessful(), is(true));
+    }
+
+    @Test
+    public void shouldAuthoriseSuccessfullyWithNoAddressInRequest() {
+        setUpAndCheckThatEpdqIsUp();
+        PaymentProvider paymentProvider = getEpdqPaymentProvider();
+        AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
+        request.getAuthCardDetails().setAddress(null);
+        
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
     }
@@ -128,9 +139,7 @@ public class EpdqPaymentProviderTest {
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
 
-        GatewayResponse<EpdqAuthorisationResponse> authorisationResponse = response;
-
-        String transactionId = authorisationResponse.getBaseResponse().get().getTransactionId();
+        String transactionId = response.getBaseResponse().get().getTransactionId();
         assertThat(transactionId, is(not(nullValue())));
         CaptureGatewayRequest captureRequest = buildCaptureRequest(chargeEntity, transactionId);
         GatewayResponse<EpdqCaptureResponse> captureResponse = paymentProvider.capture(captureRequest);
@@ -145,9 +154,7 @@ public class EpdqPaymentProviderTest {
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
 
-        GatewayResponse<EpdqAuthorisationResponse> authorisationResponse = response;
-
-        String transactionId = authorisationResponse.getBaseResponse().get().getTransactionId();
+        String transactionId = response.getBaseResponse().get().getTransactionId();
         assertThat(transactionId, is(not(nullValue())));
         CancelGatewayRequest cancelRequest = buildCancelRequest(chargeEntity, transactionId);
         GatewayResponse<EpdqCaptureResponse> cancelResponse = paymentProvider.cancel(cancelRequest);
@@ -162,9 +169,7 @@ public class EpdqPaymentProviderTest {
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
 
-        GatewayResponse<EpdqAuthorisationResponse> authorisationResponse = response;
-
-        String transactionId = authorisationResponse.getBaseResponse().get().getTransactionId();
+        String transactionId = response.getBaseResponse().get().getTransactionId();
         assertThat(transactionId, is(not(nullValue())));
         CaptureGatewayRequest captureRequest = buildCaptureRequest(chargeEntity, transactionId);
         GatewayResponse<EpdqCaptureResponse> captureResponse = paymentProvider.capture(captureRequest);
@@ -183,12 +188,12 @@ public class EpdqPaymentProviderTest {
         LinksConfig linksConfig = mock(LinksConfig.class);
         when(configuration.getLinks()).thenReturn(linksConfig);
         when(linksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
-        
+
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
         when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any(Map.class), any(BiFunction.class), any())).thenReturn(gatewayClient);
-        
+
         when(environment.metrics()).thenReturn(mockMetricRegistry);
-        
+
         return new EpdqPaymentProvider(configuration, gatewayClientFactory, environment, mock(SignatureGenerator.class));
     }
 
