@@ -14,19 +14,16 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,7 +39,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBM
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions.isValidTransition;
 
-public class CardCaptureService implements TransactionalGatewayOperation<BaseCaptureResponse> {
+public class CardCaptureService {
 
     private static final Logger LOG = LoggerFactory.getLogger(CardCaptureService.class);
     private static final List<ChargeStatus> IGNORABLE_CAPTURE_STATES = ImmutableList.of(
@@ -76,18 +73,18 @@ public class CardCaptureService implements TransactionalGatewayOperation<BaseCap
     public GatewayResponse<BaseCaptureResponse> doCapture(String externalId) {
         ChargeEntity charge;
         try {
-            charge = preOperation(externalId);
+            charge = prepareChargeForCapture(externalId);
         } catch (OptimisticLockException e) {
             LOG.info("OptimisticLockException in doCapture for charge external_id={}", externalId);
             throw new ConflictRuntimeException(externalId);
         }
-        GatewayResponse<BaseCaptureResponse> operationResponse = operation(charge);
-        return postOperation(externalId, operationResponse);
+        GatewayResponse<BaseCaptureResponse> operationResponse = capture(charge);
+        processGatewayCaptureResponse(externalId, charge.getStatus(), operationResponse);
+        return operationResponse;
     }
 
     @Transactional
-    @Override
-    public ChargeEntity preOperation(String chargeId) {
+    public ChargeEntity prepareChargeForCapture(String chargeId) {
         return chargeService.lockChargeForProcessing(chargeId, OperationType.CAPTURE);
     }
 
@@ -141,55 +138,41 @@ public class CardCaptureService implements TransactionalGatewayOperation<BaseCap
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
 
-    @Override
-    public GatewayResponse<BaseCaptureResponse> operation(ChargeEntity chargeEntity) {
+    public GatewayResponse<BaseCaptureResponse> capture(ChargeEntity chargeEntity) {
         return getPaymentProviderFor(chargeEntity)
                 .getCaptureHandler()
                 .capture(CaptureGatewayRequest.valueOf(chargeEntity));
     }
 
     @Transactional
-    @Override
-    public GatewayResponse<BaseCaptureResponse> postOperation(String chargeId, GatewayResponse<BaseCaptureResponse> operationResponse) {
-        return chargeDao.findByExternalId(chargeId)
-                .map(chargeEntity -> {
+    public void processGatewayCaptureResponse(String chargeId, String oldStatus, GatewayResponse<BaseCaptureResponse> operationResponse) {
 
-                    ChargeStatus nextStatus = determineNextStatus(operationResponse);
+        ChargeStatus nextStatus = determineNextStatus(operationResponse);
+        checkTransactionId(chargeId, operationResponse);
 
-                    String transactionId = operationResponse.getBaseResponse()
-                            .map(BaseCaptureResponse::getTransactionId).orElse("");
+        ChargeEntity charge = chargeService.updateChargePostCapture(chargeId, nextStatus);
 
-                    LOG.info("Capture for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
-                            chargeEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), chargeEntity.getGatewayTransactionId(),
-                            chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
-                            operationResponse, chargeEntity.getStatus(), nextStatus);
+        LOG.info("Capture for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
+                charge.getExternalId(), charge.getPaymentGatewayName().getName(), charge.getGatewayTransactionId(),
+                charge.getGatewayAccount().getAnalyticsId(), charge.getGatewayAccount().getId(),
+                operationResponse, oldStatus, nextStatus);
 
-                    chargeEntity.setStatus(nextStatus);
+        metricRegistry.counter(format("gateway-operations.%s.%s.%s.capture.result.%s",
+                charge.getGatewayAccount().getGatewayName(),
+                charge.getGatewayAccount().getType(),
+                charge.getGatewayAccount().getId(), nextStatus.toString())).inc();
 
-                    if (isBlank(transactionId)) {
-                        LOG.warn("Card capture response received with no transaction id. - charge_external_id={}", chargeId);
-                    }
+        if (operationResponse.isSuccessful()) {
+            userNotificationService.sendPaymentConfirmedEmail(charge);
+        }
+    }
 
-                    GatewayAccountEntity account = chargeEntity.getGatewayAccount();
-
-                    metricRegistry.counter(format("gateway-operations.%s.%s.%s.capture.result.%s", account.getGatewayName(), account.getType(), account.getId(), nextStatus.toString())).inc();
-
-                    chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
-
-                    if (operationResponse.isSuccessful()) {
-                        userNotificationService.sendPaymentConfirmedEmail(chargeEntity);
-                    }
-
-                    //for sandbox, immediately move from CAPTURE_SUBMITTED to CAPTURED, as there will be no external notification
-                    if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX) {
-                        chargeEntity.setStatus(CAPTURED);
-                        ZonedDateTime gatewayEventTime = ZonedDateTime.now();
-                        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.of(gatewayEventTime));
-                    }
-
-                    return operationResponse;
-                })
-                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+    private void checkTransactionId(String chargeId, GatewayResponse<BaseCaptureResponse> operationResponse) {
+        String transactionId = operationResponse.getBaseResponse()
+                .map(BaseCaptureResponse::getTransactionId).orElse("");
+        if (isBlank(transactionId)) {
+            LOG.warn("Card capture response received with no transaction id. - charge_external_id={}", chargeId);
+        }
     }
 
     private ChargeStatus determineNextStatus(GatewayResponse<BaseCaptureResponse> operationResponse) {
