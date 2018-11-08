@@ -361,11 +361,14 @@ public class ChargeService {
     private CardDetailsEntity buildCardDetailsEntity(AuthCardDetails authCardDetails) {
         CardDetailsEntity detailsEntity = new CardDetailsEntity();
         detailsEntity.setCardBrand(sanitize(authCardDetails.getCardBrand()));
-        detailsEntity.setBillingAddress(new AddressEntity(authCardDetails.getAddress()));
         detailsEntity.setCardHolderName(sanitize(authCardDetails.getCardHolder()));
         detailsEntity.setExpiryDate(authCardDetails.getEndDate());
         detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
         detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
+
+        if (authCardDetails.getAddress() != null)
+            detailsEntity.setBillingAddress(new AddressEntity(authCardDetails.getAddress()));
+
         return detailsEntity;
     }
 

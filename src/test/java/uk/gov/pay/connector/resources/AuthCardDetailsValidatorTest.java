@@ -224,6 +224,13 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
+    public void validationSucceedIfAddressIsNull() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.setAddress(null);
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
     public void validationFailsIfPostCodeContainsMoreThanElevenDigits() {
         AuthCardDetails authCardDetails = aValidAuthorisationDetails();
         authCardDetails.getAddress().setPostcode(sneakyCardNumber);
