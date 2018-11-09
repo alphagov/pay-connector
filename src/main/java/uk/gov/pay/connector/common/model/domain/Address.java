@@ -9,14 +9,6 @@ public class Address {
     private String county;
     private String country;
 
-    public static Address anAddress() {
-        return new Address();
-    }
-
-    public static Address aValidAddress() {
-        return new Address("line1", "line2", "EC2A 1AE", "London", null, "GB");
-    }
-
     public Address() {
     }
 
@@ -32,23 +24,23 @@ public class Address {
     public String getLine1() {
         return line1;
     }
-    
+
     public String getLine2() {
         return line2;
     }
-    
+
     public String getPostcode() {
         return postcode;
     }
-    
+
     public String getCity() {
         return city;
     }
-    
+
     public String getCounty() {
         return county;
     }
-    
+
     public String getCountry() {
         return country;
     }
