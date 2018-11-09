@@ -215,15 +215,15 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.externalId = externalId;
     }
 
-    public void setStatus(ChargeStatus targetStatus) throws InvalidStateTransitionException {
+    public void setStatus(ChargeStatus targetStatus)  {
         if (isValidTransition(fromString(this.status), targetStatus)) {
-            logger.info(String.format("Changing charge status for externalId [%s] [%s]->[%s]",
-                    externalId,
-                    this.status,
-                    targetStatus.getValue())
-            );
+            logger.info("Changing charge status for externalId {} {}->{}",
+                    externalId, this.status, targetStatus.getValue());
+            
             this.status = targetStatus.getValue();
         } else {
+            logger.warn("Charge with state {} cannot proceed to {} [charge_external_id={}, charge_status={}]", 
+                    this.status, targetStatus, this.externalId, targetStatus);
             throw new InvalidStateTransitionException(this.status, targetStatus.getValue());
         }
     }

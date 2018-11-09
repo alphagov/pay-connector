@@ -205,7 +205,6 @@ public class NotificationService {
             try {
                 chargeEntity.setStatus(newStatus);
             } catch (InvalidStateTransitionException e) {
-                logger.error("{} notification {} could not be used to update charge: {}", paymentProvider.getPaymentGatewayName().getName(), notification, e.getMessage());
                 return;
             }
 
