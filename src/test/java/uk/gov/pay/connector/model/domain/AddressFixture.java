@@ -8,7 +8,7 @@ public class AddressFixture {
     private String postcode = "WC2B 6NH";
     private String city = "London";
     private String county = "London";
-    private String country = "United Kingdom";
+    private String country = "GB";
 
     public static AddressFixture anAddress() {
         return new AddressFixture();

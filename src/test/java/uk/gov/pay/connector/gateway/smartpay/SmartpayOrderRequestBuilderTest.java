@@ -8,7 +8,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
-import uk.gov.pay.connector.util.AuthUtils;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
@@ -237,6 +237,13 @@ public class SmartpayOrderRequestBuilderTest {
     }
 
     private AuthCardDetails getValidTestCard(Address address) {
-        return AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
+        return AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("Mr. Payment")
+                .withCardNo("5555444433331111")
+                .withCvc("737")
+                .withEndDate("08/18")
+                .withCardBrand("visa")
+                .withAddress(address)
+                .build();
     }
 }

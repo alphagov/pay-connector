@@ -18,6 +18,7 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
 import uk.gov.pay.connector.util.AuthUtils;
@@ -194,7 +195,14 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
     private AuthCardDetails getValidTestCard() {
         Address address = new Address("123 My Street", "This road", "SW8URR", "London", "London state", "GB");
 
-        return AuthUtils.buildAuthCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
+        return AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("Mr. Payment")
+                .withCardNo("4111111111111111")
+                .withCvc("123")
+                .withEndDate("12/15")
+                .withCardBrand("visa")
+                .withAddress(address)
+                .build();
     }
 
     private String notificationPayloadForTransaction(String originalReference, String pspReference, String merchantReference, String fileName) throws IOException {

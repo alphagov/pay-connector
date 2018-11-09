@@ -25,9 +25,9 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
-import uk.gov.pay.connector.util.AuthUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.client.Client;
@@ -317,7 +317,14 @@ public abstract class BaseEpdqPaymentProviderTest {
 
     private AuthCardDetails buildTestAuthCardDetails() {
         Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", null, "GB");
-        return AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
+        return AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("Mr. Payment")
+                .withCardNo("5555444433331111")
+                .withCvc("737")
+                .withEndDate("08/18")
+                .withCardBrand("visa")
+                .withAddress(address)
+                .build();
     }
 
     void assertEquals(GatewayError actual, GatewayError expected) {

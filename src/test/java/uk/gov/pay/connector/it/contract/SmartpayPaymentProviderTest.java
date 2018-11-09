@@ -15,7 +15,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -31,6 +30,7 @@ import uk.gov.pay.connector.gateway.smartpay.SmartpayCaptureHandler;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayCaptureResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.TestClientFactory;
 
@@ -56,13 +56,11 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
-import static uk.gov.pay.connector.util.AuthUtils.buildAuthCardDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
 @Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
 @RunWith(MockitoJUnitRunner.class)
 public class SmartpayPaymentProviderTest {
-
     private String url = "https://pal-test.barclaycardsmartpay.com/pal/servlet/soap/Payment";
     private String username;
     private String password;
@@ -70,6 +68,9 @@ public class SmartpayPaymentProviderTest {
     private GatewayAccountEntity gatewayAccountEntity;
     private MetricRegistry mockMetricRegistry;
     private Environment mockEnvironment;
+
+    private static final String VALID_SMARTPAY_3DS_CARD_NUMBER = "5212345678901234";
+    private static final String VALID_SMARTPAY_CARD_NUMBER = "5555444433331111";
 
     @Before
     public void setUpAndCheckThatSmartpayIsUp() throws IOException {
@@ -114,8 +115,12 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldSendSuccessfullyAnOrderForMerchantWithNoAddressInRequest() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
-        request.getAuthCardDetails().setAddress(null);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo(VALID_SMARTPAY_CARD_NUMBER)
+                .withAddress(null)
+                .build();
+
+        AuthorisationGatewayRequest request = new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
 
         GatewayResponse response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
@@ -231,31 +236,20 @@ public class SmartpayPaymentProviderTest {
     }
 
     public static AuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
-        Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", "London", "GB");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo(VALID_SMARTPAY_CARD_NUMBER)
+                .build();
 
-        AuthCardDetails authCardDetails = aValidSmartpayCard();
-        authCardDetails.setAddress(address);
         return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
 
     public static AuthorisationGatewayRequest getCard3dsAuthorisationRequest(ChargeEntity chargeEntity) {
-        Address address = new Address("6-60", "Simon Carmiggeltstraat", "1011DJ", "Amsterdam", "NH", "NL");
-
-        AuthCardDetails authCardDetails = aValidSmartpay3dsCard();
-        authCardDetails.setAddress(address);
-        authCardDetails.setAcceptHeader("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-        authCardDetails.setUserAgentHeader("Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008052912 Firefox/3.0");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo(VALID_SMARTPAY_3DS_CARD_NUMBER)
+                .withAcceptHeader("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                .withUserAgentHeader("Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008052912 Firefox/3.0")
+                .build();
 
         return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
-    }
-
-    public static AuthCardDetails aValidSmartpayCard() {
-        String validSandboxCard = "5555444433331111";
-        return buildAuthCardDetails(validSandboxCard, "737", "08/18", "visa");
-    }
-
-    public static AuthCardDetails aValidSmartpay3dsCard() {
-        String validSandboxCard = "5212345678901234";
-        return buildAuthCardDetails(validSandboxCard, "737", "08/18", "master");
     }
 }

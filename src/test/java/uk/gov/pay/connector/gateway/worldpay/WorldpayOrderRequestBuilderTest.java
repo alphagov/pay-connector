@@ -6,7 +6,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
-import uk.gov.pay.connector.util.AuthUtils;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
@@ -215,6 +215,13 @@ public class WorldpayOrderRequestBuilderTest {
     }
 
     private AuthCardDetails getValidTestCard(Address address) {
-        return AuthUtils.buildAuthCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
+        return AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("Mr. Payment")
+                .withCardNo("4111111111111111")
+                .withCvc("123")
+                .withEndDate("12/15")
+                .withCardBrand("visa")
+                .withAddress(address)
+                .build();
     }
 }
