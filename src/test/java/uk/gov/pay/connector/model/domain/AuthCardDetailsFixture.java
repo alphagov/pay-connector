@@ -4,71 +4,71 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 
-public final class AuthCardDetailsBuilder {
+public final class AuthCardDetailsFixture {
     private String cardNo = "4242424242424242";
     private String cardHolder = "Mr Test";
     private String cvc = "123";
     private String endDate = "12/99";
-    private Address address = Address.anAddress();
+    private Address address = AddressFixture.anAddress().build();
     private String cardBrand = "VISA";
     private String userAgentHeader = "Mozilla/5.0";
     private String acceptHeader = "text/html";
     private PayersCardType payersCardType = PayersCardType.DEBIT;
     private Boolean corporateCard = Boolean.FALSE;
 
-    private AuthCardDetailsBuilder() {
+    private AuthCardDetailsFixture() {
     }
 
-    public static AuthCardDetailsBuilder anAuthCardDetails() {
-        return new AuthCardDetailsBuilder();
+    public static AuthCardDetailsFixture anAuthCardDetails() {
+        return new AuthCardDetailsFixture();
     }
 
-    public AuthCardDetailsBuilder withCardNo(String cardNo) {
+    public AuthCardDetailsFixture withCardNo(String cardNo) {
         this.cardNo = cardNo;
         return this;
     }
 
-    public AuthCardDetailsBuilder withCardHolder(String cardHolder) {
+    public AuthCardDetailsFixture withCardHolder(String cardHolder) {
         this.cardHolder = cardHolder;
         return this;
     }
 
-    public AuthCardDetailsBuilder withCvc(String cvc) {
+    public AuthCardDetailsFixture withCvc(String cvc) {
         this.cvc = cvc;
         return this;
     }
 
-    public AuthCardDetailsBuilder withEndDate(String endDate) {
+    public AuthCardDetailsFixture withEndDate(String endDate) {
         this.endDate = endDate;
         return this;
     }
 
-    public AuthCardDetailsBuilder withAddress(Address address) {
+    public AuthCardDetailsFixture withAddress(Address address) {
         this.address = address;
         return this;
     }
 
-    public AuthCardDetailsBuilder withCardBrand(String cardBrand) {
+    public AuthCardDetailsFixture withCardBrand(String cardBrand) {
         this.cardBrand = cardBrand;
         return this;
     }
 
-    public AuthCardDetailsBuilder withUserAgentHeader(String userAgentHeader) {
+    public AuthCardDetailsFixture withUserAgentHeader(String userAgentHeader) {
         this.userAgentHeader = userAgentHeader;
         return this;
     }
 
-    public AuthCardDetailsBuilder withAcceptHeader(String acceptHeader) {
+    public AuthCardDetailsFixture withAcceptHeader(String acceptHeader) {
         this.acceptHeader = acceptHeader;
         return this;
     }
 
-    public AuthCardDetailsBuilder withCardType(PayersCardType payersCardType) {
+    public AuthCardDetailsFixture withCardType(PayersCardType payersCardType) {
         this.payersCardType = payersCardType;
         return this;
     }
 
-    public AuthCardDetailsBuilder withCorporateCard(Boolean corporateCard) {
+    public AuthCardDetailsFixture withCorporateCard(Boolean corporateCard) {
         this.corporateCard = corporateCard;
         return this;
     }
