@@ -111,6 +111,12 @@ public class DatabaseTestHelper {
                 ServicePaymentReference.of("Test reference"), now(), 1, "email@fake.test", SupportedLanguage.ENGLISH, false);
     }
 
+    public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl,
+                          String transactionId, String description) {
+        addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, description,
+                ServicePaymentReference.of("Test reference"), now(), 1, "email@fake.test", SupportedLanguage.ENGLISH, false);
+    }
+
     public void addCharge(String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
         addCharge((long) RandomUtils.nextInt(1, 9999999), externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId,
                 "Test description", ServicePaymentReference.of("Test reference"), now(), 1, null, SupportedLanguage.ENGLISH, false);

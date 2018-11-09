@@ -92,12 +92,12 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                 stripeUrlEncodedSourcePayload(request),
                 getAuthHeaderValue(),
                 APPLICATION_FORM_URLENCODED_TYPE);
-        String sourceId = sourceResponse.readEntity(Map.class).get("id").toString();
+        String token = sourceResponse.readEntity(Map.class).get("id").toString();
         Response authorisationResponse = client.postRequest(
                 request.getGatewayAccount(),
                 AUTHORISE,
                 URI.create(stripeGatewayConfig.getUrl() + "/v1/charges"),
-                stripeAuthoriseJsonPayload(request, sourceId),
+                stripeAuthoriseJsonPayload(request, token),
                 getAuthHeaderValue(),
                 APPLICATION_JSON_TYPE);
 
@@ -154,12 +154,12 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         throw new UnsupportedOperationException();
     }
 
-    private String stripeAuthoriseJsonPayload(AuthorisationGatewayRequest request, String sourceId) {
+    private String stripeAuthoriseJsonPayload(AuthorisationGatewayRequest request, String token) {
         Map<String, Object> params = new HashMap<>();
         params.put("amount", request.getAmount());
         params.put("currency", "GBP");
         params.put("description", request.getDescription());
-        params.put("source", sourceId);
+        params.put("source", token);
         params.put("capture", false);
         Map<String, Object> destinationParams = new HashMap<>();
         String stripeAccountId = request.getGatewayAccount().getCredentials().get("stripe_account_id");
