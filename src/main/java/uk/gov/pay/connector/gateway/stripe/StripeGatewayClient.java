@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 
 /**
  * This class, while named StripeGatewayClient, is meant to be payment provider agnostic. It will be used by all
@@ -55,11 +56,9 @@ public class StripeGatewayClient {
                     .post(Entity.entity(payload, mediaType));
 
             if (response.getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
-                logger.error("Stripe gateway returned server error: {}, for gateway url={} with type {}", response.getStatus(), url.toString(), account.getType());
                 incrementFailureCounter(metricRegistry, metricsPrefix);
                 throw new WebApplicationException("Unexpected HTTP status code " + response.getStatus() + " from gateway");
             }
-
             return response;
         } catch (ProcessingException pe) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
@@ -79,6 +78,10 @@ public class StripeGatewayClient {
             }
             logger.error(format("Exception for gateway url=%s", url.toString()), pe);
             throw new WebApplicationException(pe.getMessage());
+        } catch (Exception e) {
+            incrementFailureCounter(metricRegistry, metricsPrefix);
+            logger.error(format("Exception for gateway url=%s", url.toString()), e);
+            throw new WebApplicationException(e.getMessage());
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram(metricsPrefix + ".response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
