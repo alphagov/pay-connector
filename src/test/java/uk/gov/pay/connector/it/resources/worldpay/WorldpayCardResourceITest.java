@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,7 +28,6 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 public class WorldpayCardResourceITest extends ChargingITestBase {
 
     private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
-    private ObjectMapper objectMapper = new ObjectMapper();
 
     public WorldpayCardResourceITest() {
         super("worldpay");

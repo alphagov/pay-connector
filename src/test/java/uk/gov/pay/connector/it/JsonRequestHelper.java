@@ -103,7 +103,7 @@ public class JsonRequestHelper {
                 EXPIRY_DATE,
                 CARD_BRAND,
                 Boolean.TRUE,
-                null);
+                PayersCardType.CREDIT);
 
         return toJson(authorisationDetails);
     }
