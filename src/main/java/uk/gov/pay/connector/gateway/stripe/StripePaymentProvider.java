@@ -22,6 +22,7 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeError;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
@@ -37,6 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
@@ -57,11 +59,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                                  Environment environment,
                                  ConnectorConfiguration configuration) {
         this.stripeGatewayConfig = configuration.getStripeConfig();
-        this.client = gatewayClientFactory.createStripeGatewayClient(
-                PaymentGatewayName.STRIPE,
-                GatewayOperation.AUTHORISE,
-                environment.metrics()
-        );
+        this.client = gatewayClientFactory.createStripeGatewayClient(STRIPE, GatewayOperation.AUTHORISE, environment.metrics());
     }
 
     @Override
@@ -90,6 +88,14 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                 sourcePayload(request),
                 getAuthHeaderValue(),
                 APPLICATION_FORM_URLENCODED_TYPE);
+
+        if (sourceResponse.getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR) {
+            String reason = sourceResponse.readEntity(StripeError.class).getError().getMessage();
+            String errorId = UUID.randomUUID().toString();
+            logger.error("There was error calling /v1/tokens. Reason: {}, ErrorId: {}", reason, errorId);
+            throw new WebApplicationException("There was an internal server error. ErrorId: " + errorId);
+        }
+        
         String token = sourceResponse.readEntity(Map.class).get("id").toString();
         Response authorisationResponse = client.postRequest(
                 request.getGatewayAccount(),

@@ -22,6 +22,10 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 
+/**
+ * This class, while named StripeGatewayClient, is meant to be payment provider agnostic. It will be used by all
+ * payment provider implementations after some refactoring.
+ */
 public class StripeGatewayClient {
 
     private final Logger logger = LoggerFactory.getLogger(StripeGatewayClient.class);
