@@ -28,7 +28,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.AuthCardDetailsBuilder;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
 import java.util.Map;
@@ -157,7 +157,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     public void doAuthoriseWithoutBillingAddress_shouldRespondAuthorisationSuccess() {
 
         providerWillAuthorise();
-        AuthCardDetails authCardDetails = AuthCardDetailsBuilder.anAuthCardDetails()
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withAddress(null)
                 .build();
 

@@ -6,12 +6,10 @@ import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.model.domain.AuthCardDetailsBuilder;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -24,6 +22,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildCorporateJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
+import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -76,12 +75,10 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         worldpayMockClient.mockAuthorisationSuccess();
 
-        AuthCardDetails authCardDetails = AuthCardDetailsBuilder.anAuthCardDetails()
-                .withAddress(null)
-                .build();
+        String authDetails = buildJsonAuthorisationDetailsWithoutAddress();
 
         givenSetup()
-                .body(objectMapper.writeValueAsString(authCardDetails))
+                .body(authDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
                 .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
