@@ -3,10 +3,9 @@ package uk.gov.pay.connector.charge.util;
 
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
-import uk.gov.pay.connector.model.domain.AuthCardDetailsBuilder;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
 import java.util.Optional;
@@ -19,14 +18,14 @@ import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.
 public class CorporateCardSurchargeCalculatorTest {
     @Test
     public void shouldGetCorporateSurchargeForCreditCard() {
-        AuthCardDetails corporateCreditCard = AuthCardDetailsBuilder.anAuthCardDetails()
+        AuthCardDetails corporateCreditCard = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardType(PayersCardType.CREDIT)
                 .withCorporateCard(Boolean.TRUE)
                 .build();
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
-        
+
         assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
         chargeEntity.setCorporateSurcharge(250L);
         Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(corporateCreditCard, chargeEntity);
@@ -38,7 +37,7 @@ public class CorporateCardSurchargeCalculatorTest {
 
     @Test
     public void shouldGetCorporateSurchargeForDebitCard() {
-        AuthCardDetails corporateDebitCard = AuthCardDetailsBuilder.anAuthCardDetails()
+        AuthCardDetails corporateDebitCard = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardType(PayersCardType.DEBIT)
                 .withCorporateCard(Boolean.TRUE)
                 .build();
@@ -57,7 +56,7 @@ public class CorporateCardSurchargeCalculatorTest {
 
     @Test
     public void shouldNotGetCorporateSurchargeForConsumerCreditCardCard() {
-        AuthCardDetails creditNoCorporateCard = AuthCardDetailsBuilder.anAuthCardDetails()
+        AuthCardDetails creditNoCorporateCard = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardType(PayersCardType.CREDIT)
                 .withCorporateCard(Boolean.FALSE)
                 .build();
@@ -75,7 +74,7 @@ public class CorporateCardSurchargeCalculatorTest {
 
     @Test
     public void shouldNotGetCorporateSurchargeForConsumerDebitCard() {
-        AuthCardDetails debitNoCorporateCard = AuthCardDetailsBuilder.anAuthCardDetails()
+        AuthCardDetails debitNoCorporateCard = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardType(PayersCardType.DEBIT)
                 .withCorporateCard(Boolean.FALSE)
                 .build();
@@ -93,7 +92,7 @@ public class CorporateCardSurchargeCalculatorTest {
 
     @Test
     public void shouldNotGetCorporateSurchargeForCreditOrDebitCardType() {
-        AuthCardDetails creditOrDebit = AuthCardDetailsBuilder.anAuthCardDetails()
+        AuthCardDetails creditOrDebit = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardType(PayersCardType.CREDIT_OR_DEBIT)
                 .withCorporateCard(Boolean.TRUE)
                 .build();
@@ -111,7 +110,7 @@ public class CorporateCardSurchargeCalculatorTest {
 
     @Test
     public void shouldNotGetCorporateSurchargeForConsumerCreditOrDebitCardType() {
-        AuthCardDetails creditOrDebit = AuthCardDetailsBuilder.anAuthCardDetails()
+        AuthCardDetails creditOrDebit = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardType(PayersCardType.CREDIT_OR_DEBIT)
                 .withCorporateCard(Boolean.FALSE)
                 .build();
@@ -129,7 +128,7 @@ public class CorporateCardSurchargeCalculatorTest {
 
     @Test
     public void shouldNotGetCorporateSurcharge_whenCorporateSurchargeIsNull() {
-        AuthCardDetails creditOrDebit = AuthCardDetailsBuilder.anAuthCardDetails()
+        AuthCardDetails creditOrDebit = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardType(PayersCardType.CREDIT)
                 .withCorporateCard(Boolean.TRUE)
                 .build();

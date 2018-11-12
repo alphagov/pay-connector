@@ -10,7 +10,7 @@ public class AddressFixture {
     private String county = "London";
     private String country = "United Kingdom";
 
-    public static AddressFixture aValidAddress() {
+    public static AddressFixture anAddress() {
         return new AddressFixture();
     }
 

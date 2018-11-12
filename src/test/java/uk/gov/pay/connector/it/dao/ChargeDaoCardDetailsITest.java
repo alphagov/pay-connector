@@ -12,6 +12,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.AddressFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
 import java.util.HashMap;
@@ -118,7 +119,7 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
         GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), GatewayAccountEntity.Type.TEST);
         gatewayAccountDao.persist(testAccount);
 
-        Address billingAddress = Address.anAddress();
+        Address billingAddress = AddressFixture.anAddress().build();
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"), "Mr. Pay Mc Payment", "03/09", "VISA", new AddressEntity(billingAddress));
         chargeEntity.setCardDetails(cardDetailsEntity);
