@@ -20,6 +20,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
+import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildCorporateJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
@@ -29,7 +30,8 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 public class WorldpayCardResourceITest extends ChargingITestBase {
 
     private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
-
+    private String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
+    
     public WorldpayCardResourceITest() {
         super("worldpay");
     }
@@ -49,7 +51,40 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
     }
+    
+    @Test
+    public void shouldAuthoriseChargeWithApplePay_ForValidAuthorisationDetails() {
 
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        worldpayMockClient.mockAuthorisationSuccess();
+
+        givenSetup()
+                .body(validApplePayAuthorisationDetails)
+                .post(authoriseChargeUrlForWallet(chargeId))
+                .then()
+                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString()); 
+    }
+
+    @Test
+    public void shouldNotAuthoriseChargeWithApplePay_ForAWorldpayErrorCard() {
+
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        worldpayMockClient.mockAuthorisationFailure();
+
+        givenSetup()
+                .body(validApplePayAuthorisationDetails)
+                .post(authoriseChargeUrlForWallet(chargeId))
+                .then()
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .body("message", is("This transaction was declined."));
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
+    }
+    
     @Test
     public void shouldAuthoriseChargeWithCorporateCard_ForValidAuthorisationDetails() {
 

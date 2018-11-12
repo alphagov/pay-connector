@@ -3,6 +3,8 @@ package uk.gov.pay.connector.paymentprocessor.resource;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.applepay.ApplePayService;
+import uk.gov.pay.connector.applepay.api.ApplePayToken;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -39,14 +41,25 @@ public class CardResource {
     private final Card3dsResponseAuthService card3dsResponseAuthService;
     private final CardCaptureService cardCaptureService;
     private final ChargeCancelService chargeCancelService;
-
+    private final ApplePayService applePayService;
+    
     @Inject
     public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
-                        CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService) {
+                        CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService, ApplePayService applePayService) {
         this.cardAuthoriseService = cardAuthoriseService;
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.cardCaptureService = cardCaptureService;
         this.chargeCancelService = chargeCancelService;
+        this.applePayService = applePayService;
+    }
+
+    @POST
+    @Path("/v1/frontend/charges/{chargeId}/wallets")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    public Response authoriseCharge(@PathParam("chargeId") String chargeId, ApplePayToken applePayToken) {
+        logger.info("Received encrypted payload for charge with id {} ", chargeId);
+        return applePayService.authorise(chargeId, applePayToken);
     }
 
     @POST
@@ -54,7 +67,6 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authoriseCharge(@PathParam("chargeId") String chargeId, AuthCardDetails authCardDetails) {
-
         if (!isWellFormatted(authCardDetails)) {
             return badRequestResponse("Values do not match expected format/length.");
         }
@@ -66,7 +78,7 @@ public class CardResource {
 
         return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
     }
-
+    
     @POST
     @Path("/v1/frontend/charges/{chargeId}/3ds")
     @Consumes(APPLICATION_JSON)

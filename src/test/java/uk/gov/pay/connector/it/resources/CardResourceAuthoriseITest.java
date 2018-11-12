@@ -35,6 +35,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildCorporateJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildDetailedJsonAuthorisationDetailsFor;
+import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithFullAddress;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
@@ -68,6 +69,16 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         }
     }
 
+    @Test
+    public void shouldAuthoriseCharge_ForApplePay() {
+        shouldAuthoriseChargeForApplePay(buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test"));
+    }
+
+    @Test
+    public void shouldAuthoriseCharge_ForApplePay_withMinData() {
+        shouldAuthoriseChargeForApplePay(buildJsonApplePayAuthorisationDetails(null, null));
+    }
+    
     @Test
     public void shouldAuthoriseCharge_ForAValidAmericanExpress() {
         shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("371449635398431", "1234", "11/99", "american-express"));
@@ -239,7 +250,18 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
         return chargeId;
     }
+    private String shouldAuthoriseChargeForApplePay(String cardDetails) {
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
 
+        givenSetup()
+                .body(cardDetails)
+                .post(authoriseChargeUrlForWallet(chargeId))
+                .then()
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+        return chargeId;
+    }
     @Test
     public void shouldPersistCorporateSurcharge() {
         String accountId = String.valueOf(RandomUtils.nextInt());

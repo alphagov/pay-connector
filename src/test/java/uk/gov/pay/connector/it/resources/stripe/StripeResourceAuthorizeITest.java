@@ -49,7 +49,10 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
+import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlFor;
+import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForWallet;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -66,6 +69,7 @@ public class StripeResourceAuthorizeITest {
 
     private String stripeAccountId;
     private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", CVC, EXP_MONTH + "/" + EXP_YEAR, "visa");
+    private String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
     private String paymentProvider = PaymentGatewayName.STRIPE.getName();
     private String accountId;
     private StripeMockClient stripeMockClient = new StripeMockClient();
@@ -196,6 +200,21 @@ public class StripeResourceAuthorizeITest {
     }
 
     @Test
+    public void shouldReturnBadRequestResponseWhenTryingToAuthoriseAnApplePayPayment() {
+        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+
+        String externalChargeId = addCharge();
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validApplePayAuthorisationDetails)
+                .post(authoriseChargeUrlForWallet(externalChargeId))
+                .then()
+                .statusCode(400)
+                .body("message", containsString("Apple Pay is not supported for Stripe"));
+    }
+
+    @Test
     public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
 
         addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
@@ -231,10 +250,6 @@ public class StripeResourceAuthorizeITest {
 
     private void addGatewayAccount(Map credentials) {
         databaseTestHelper.addGatewayAccount(accountId, paymentProvider, credentials);
-    }
-
-    private String authoriseChargeUrlFor(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeId);
     }
 
     private String constructExpectedSourcesRequestBody() {

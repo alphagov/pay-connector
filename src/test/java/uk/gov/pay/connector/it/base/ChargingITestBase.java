@@ -224,7 +224,7 @@ public class ChargingITestBase {
                 .contentType(JSON);
     }
 
-    protected void shouldReturnErrorForAuthorisationDetailsWithMessage(String authorisationDetails, String errorMessage, String status) throws Exception {
+    protected void shouldReturnErrorForAuthorisationDetailsWithMessage(String authorisationDetails, String errorMessage, String status) {
 
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
 
@@ -239,7 +239,11 @@ public class ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, status);
     }
 
-    protected static String authoriseChargeUrlFor(String chargeId) {
+    public static String authoriseChargeUrlForWallet(String chargeId) {
+        return "/v1/frontend/charges/{chargeId}/wallets".replace("{chargeId}", chargeId);
+    }
+    
+    public static String authoriseChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeId);
     }
 
