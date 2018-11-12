@@ -18,48 +18,48 @@ public class JsonRequestHelper {
     private static final String CARD_BRAND = "cardBrand";
     private static final String ADDRESS_LINE_2 = "Moneybags Avenue";
     private static final String ADDRESS_COUNTY = "Greater London";
-    
+
     public static String buildJsonAuthorisationDetailsFor(String cardNumber, String cardBrand) {
         return buildJsonAuthorisationDetailsFor(cardNumber, CVC, EXPIRY_DATE, cardBrand);
     }
 
     public static String buildJsonAuthorisationDetailsFor(String cardHolderName, String cardNumber, String cardBrand) {
-        return buildJsonAuthorisationDetailsFor(cardHolderName, cardNumber, CVC, EXPIRY_DATE, cardBrand, ADDRESS_LINE_1, 
+        return buildJsonAuthorisationDetailsFor(cardHolderName, cardNumber, CVC, EXPIRY_DATE, cardBrand, ADDRESS_LINE_1,
                 null, ADDRESS_CITY, null, ADDRESS_POSTCODE, ADDRESS_COUNTRY_GB);
     }
 
     public static String buildJsonAuthorisationDetailsFor(String cardNumber, String cvc, String expiryDate, String cardBrand) {
-        return buildJsonAuthorisationDetailsFor(CARD_HOLDER_NAME, cardNumber, cvc, expiryDate, cardBrand, ADDRESS_LINE_1, 
+        return buildJsonAuthorisationDetailsFor(CARD_HOLDER_NAME, cardNumber, cvc, expiryDate, cardBrand, ADDRESS_LINE_1,
                 null, ADDRESS_CITY, null, ADDRESS_POSTCODE, ADDRESS_COUNTRY_GB);
     }
 
-    public static String buildDetailedJsonAuthorisationDetailsFor(String cardNumber, 
-                                                                  String cvc, 
-                                                                  String expiryDate, 
-                                                                  String cardBrand, 
-                                                                  String cardHolderName, 
-                                                                  String addressLine1, 
-                                                                  String addressLine2, 
-                                                                  String city, 
-                                                                  String county, 
-                                                                  String postcode, 
+    public static String buildDetailedJsonAuthorisationDetailsFor(String cardNumber,
+                                                                  String cvc,
+                                                                  String expiryDate,
+                                                                  String cardBrand,
+                                                                  String cardHolderName,
+                                                                  String addressLine1,
+                                                                  String addressLine2,
+                                                                  String city,
+                                                                  String county,
+                                                                  String postcode,
                                                                   String country) {
         return buildJsonAuthorisationDetailsFor(cardHolderName, cardNumber, cvc, expiryDate, cardBrand, addressLine1, addressLine2, city, county, postcode, country);
     }
 
-    public static String buildJsonAuthorisationDetailsFor(String cardHolderName, 
-                                                          String cardNumber, 
-                                                          String cvc, 
-                                                          String expiryDate, 
+    public static String buildJsonAuthorisationDetailsFor(String cardHolderName,
+                                                          String cardNumber,
+                                                          String cvc,
+                                                          String expiryDate,
                                                           String cardBrand,
-                                                          String line1, 
-                                                          String line2, 
-                                                          String city, 
-                                                          String county, 
-                                                          String postCode, 
+                                                          String line1,
+                                                          String line2,
+                                                          String city,
+                                                          String county,
+                                                          String postCode,
                                                           String countryCode) {
-        return buildCorporateJsonAuthorisationDetailsFor(cardHolderName, cardNumber, cvc, expiryDate, cardBrand, line1, 
-                line2, city, county, postCode, countryCode,null, null);
+        return buildCorporateJsonAuthorisationDetailsFor(cardHolderName, cardNumber, cvc, expiryDate, cardBrand, line1,
+                line2, city, county, postCode, countryCode, null, null);
     }
 
     public static String buildCorporateJsonAuthorisationDetailsFor(PayersCardType payersCardType) {
@@ -67,7 +67,7 @@ public class JsonRequestHelper {
                 CARD_HOLDER_NAME,
                 CARD_NUMBER,
                 CVC,
-                EXPIRY_DATE, 
+                EXPIRY_DATE,
                 CARD_BRAND,
                 ADDRESS_LINE_1,
                 null,
@@ -95,27 +95,50 @@ public class JsonRequestHelper {
         );
     }
 
-    private static String buildCorporateJsonAuthorisationDetailsFor(String cardHolderName, 
-                                                                    String cardNumber, 
-                                                                    String cvc, 
-                                                                    String expiryDate, 
-                                                                    String cardBrand,
-                                                                    String line1, 
-                                                                    String line2, 
-                                                                    String city, 
-                                                                    String county, 
-                                                                    String postCode, 
-                                                                    String countryCode,
-                                                                    Boolean isCorporateCard, 
-                                                                    PayersCardType payersCardType) {
-        JsonObject addressObject = new JsonObject();
+    public static String buildJsonAuthorisationDetailsWithoutAddress() {
+        JsonObject authorisationDetails = buildJsonAuthorisationDetailsWithoutAddress(
+                CARD_HOLDER_NAME,
+                CARD_NUMBER,
+                CVC,
+                EXPIRY_DATE,
+                CARD_BRAND,
+                Boolean.TRUE,
+                PayersCardType.CREDIT);
 
-        addressObject.addProperty("line1", line1);
-        addressObject.addProperty("line2", line2);
-        addressObject.addProperty("city", city);
-        addressObject.addProperty("county", county);
-        addressObject.addProperty("postcode", postCode);
-        addressObject.addProperty("country", countryCode);
+        return toJson(authorisationDetails);
+    }
+
+    private static String buildCorporateJsonAuthorisationDetailsFor(String cardHolderName,
+                                                                    String cardNumber,
+                                                                    String cvc,
+                                                                    String expiryDate,
+                                                                    String cardBrand,
+                                                                    String line1,
+                                                                    String line2,
+                                                                    String city,
+                                                                    String county,
+                                                                    String postCode,
+                                                                    String countryCode,
+                                                                    Boolean isCorporateCard,
+                                                                    PayersCardType payersCardType) {
+
+        JsonObject addressObject = buildAddressObject(line1, line2, city, county, postCode, countryCode);
+
+        JsonObject authorisationDetails = buildJsonAuthorisationDetailsWithoutAddress(cardHolderName,
+                cardNumber, cvc, expiryDate, cardBrand, isCorporateCard, payersCardType);
+
+        authorisationDetails.add("address", addressObject);
+
+        return toJson(authorisationDetails);
+    }
+
+    private static JsonObject buildJsonAuthorisationDetailsWithoutAddress(String cardHolderName,
+                                                                          String cardNumber,
+                                                                          String cvc,
+                                                                          String expiryDate,
+                                                                          String cardBrand,
+                                                                          Boolean isCorporateCard,
+                                                                          PayersCardType payersCardType) {
 
         JsonObject authorisationDetails = new JsonObject();
         authorisationDetails.addProperty("card_number", cardNumber);
@@ -123,7 +146,6 @@ public class JsonRequestHelper {
         authorisationDetails.addProperty("expiry_date", expiryDate);
         authorisationDetails.addProperty("card_brand", cardBrand);
         authorisationDetails.addProperty("cardholder_name", cardHolderName);
-        authorisationDetails.add("address", addressObject);
         authorisationDetails.addProperty("accept_header", "text/html");
         authorisationDetails.addProperty("user_agent_header", "Mozilla/5.0");
 
@@ -133,7 +155,19 @@ public class JsonRequestHelper {
         if (payersCardType != null) {
             authorisationDetails.addProperty("card_type", payersCardType.toString());
         }
+        return authorisationDetails;
+    }
 
-        return toJson(authorisationDetails);
+    private static JsonObject buildAddressObject(String line1, String line2, String city, String county, String postCode, String countryCode) {
+
+        JsonObject addressObject = new JsonObject();
+
+        addressObject.addProperty("line1", line1);
+        addressObject.addProperty("line2", line2);
+        addressObject.addProperty("city", city);
+        addressObject.addProperty("county", county);
+        addressObject.addProperty("postcode", postCode);
+        addressObject.addProperty("country", countryCode);
+        return addressObject;
     }
 }

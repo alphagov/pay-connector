@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,6 +21,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildCorporateJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
+import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -57,6 +59,24 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
 
         givenSetup()
                 .body(corporateCreditAuthDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
+    }
+
+    @Test
+    public void shouldAuthoriseChargeWithoutBillingAddress() throws JsonProcessingException {
+
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        worldpayMockClient.mockAuthorisationSuccess();
+
+        String authDetails = buildJsonAuthorisationDetailsWithoutAddress();
+
+        givenSetup()
+                .body(authDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
                 .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))

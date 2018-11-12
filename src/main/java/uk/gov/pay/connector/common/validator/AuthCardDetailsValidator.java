@@ -21,25 +21,20 @@ public class AuthCardDetailsValidator {
         return isValidCardNumberLength(authCardDetails.getCardNo()) &&
                 isBetween3To4Digits(authCardDetails.getCvc()) &&
                 hasExpiryDateFormat(authCardDetails.getEndDate()) &&
-                hasAddress(authCardDetails.getAddress()) &&
+                isValidAddress(authCardDetails.getAddress()) &&
                 hasCardBrand(authCardDetails.getCardBrand()) &&
                 unlikelyToBeCvc(authCardDetails.getCardHolder()) &&
                 unlikelyToContainACardNumber(authCardDetails.getCardHolder()) &&
                 unlikelyToContainACardNumber(authCardDetails.getCardBrand()) &&
-                unlikelyToContainACardNumber(authCardDetails.getAddress().getLine1()) &&
-                unlikelyToContainACardNumber(authCardDetails.getAddress().getLine2()) &&
-                unlikelyToContainACardNumber(authCardDetails.getAddress().getCity()) &&
-                unlikelyToContainACardNumber(authCardDetails.getAddress().getCounty()) &&
-                unlikelyToContainACardNumber(authCardDetails.getAddress().getPostcode()) &&
-                unlikelyToContainACardNumber(authCardDetails.getAddress().getCountry());
+                addressUnlikelyToContainACardNumber(authCardDetails.getAddress());
     }
 
-    private static boolean hasAddress(Address address) {
-        return address != null &&
-                isNotBlank(address.getCity()) &&
-                isNotBlank(address.getLine1()) &&
-                isNotBlank(address.getPostcode()) &&
-                isNotBlank(address.getCountry());
+    private static boolean isValidAddress(Address address) {
+        return address == null ||
+                (isNotBlank(address.getCity()) &&
+                        isNotBlank(address.getLine1()) &&
+                        isNotBlank(address.getPostcode()) &&
+                        isNotBlank(address.getCountry()));
     }
 
     private static boolean hasCardBrand(String cardBrand) {
@@ -56,6 +51,16 @@ public class AuthCardDetailsValidator {
 
     private static boolean hasExpiryDateFormat(String date) {
         return notNullAndMatches(EXPIRY_DATE, date);
+    }
+
+    private static boolean addressUnlikelyToContainACardNumber(Address address) {
+        return address == null ||
+                (unlikelyToContainACardNumber(address.getLine1()) &&
+                        unlikelyToContainACardNumber(address.getLine2()) &&
+                        unlikelyToContainACardNumber(address.getCity()) &&
+                        unlikelyToContainACardNumber(address.getCounty()) &&
+                        unlikelyToContainACardNumber(address.getPostcode()) &&
+                        unlikelyToContainACardNumber(address.getCountry()));
     }
 
     private static boolean unlikelyToContainACardNumber(String field) {

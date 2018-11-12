@@ -74,19 +74,19 @@ public class AuthCardDetailsValidatorTest {
         AuthCardDetails authCardDetails = buildAuthCardDetailsFor("12345678901", validCVC, validExpiryDate, cardBrand);
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
-	
+
     @Test
     public void validationSucceedsFor12digitsCardNumber() {
         AuthCardDetails authCardDetails = buildAuthCardDetailsFor("123456789012", validCVC, validExpiryDate, cardBrand);
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
-	
+
     @Test
     public void validationSucceedsFor19digitsCardNumber() {
         AuthCardDetails authCardDetails = buildAuthCardDetailsFor("1234567890123456789", validCVC, validExpiryDate, cardBrand);
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
-	
+
     @Test
     public void validationFailsFor20digitsCardNumber() {
         AuthCardDetails authCardDetails = buildAuthCardDetailsFor("12345678901234567890", validCVC, validExpiryDate, cardBrand);
@@ -122,33 +122,25 @@ public class AuthCardDetailsValidatorTest {
         AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, "1290", cardBrand);
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
-
-
-    @Test
-    public void validationFailsForMissingAddress() {
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, "1290", cardBrand, null);
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
-    }
-
-
+    
     @Test
     public void validationFailsForMissingCityAddress() {
         Address address = addressFor("L1", null, "WJWHE", "GB");
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, "1290", cardBrand, address);
+        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, validExpiryDate, cardBrand, address);
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsForMissingLine1Address() {
         Address address = addressFor(null, "London", "WJWHE", "GB");
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, "1290", cardBrand, address);
+        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, validExpiryDate, cardBrand, address);
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsForMissingCountryAddress() {
         Address address = addressFor("L1", "London", "WJWHE", null);
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, "1290", cardBrand, address);
+        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, validExpiryDate, cardBrand, address);
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
@@ -156,7 +148,7 @@ public class AuthCardDetailsValidatorTest {
     public void validationFailsForMissingPostcodeAddress() {
         Address address = addressFor("L1", "London", null, "GB");
         cardBrand = "card-brand";
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCVC, "1290", cardBrand, cardBrand, address);
+        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, validExpiryDate, cardBrand, address);
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
@@ -187,7 +179,7 @@ public class AuthCardDetailsValidatorTest {
         authCardDetails.setCardBrand("12345678901");
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
-    
+
     @Test
     public void validationFailsIfAddressLine1ContainsMoreThanElevenDigits() {
         AuthCardDetails authCardDetails = aValidAuthorisationDetails();
@@ -220,6 +212,13 @@ public class AuthCardDetailsValidatorTest {
     public void validationSucceedIfAddressLine2IsNull() {
         AuthCardDetails authCardDetails = aValidAuthorisationDetails();
         authCardDetails.getAddress().setLine2(null);
+        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationSucceedIfAddressIsNull() {
+        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+        authCardDetails.setAddress(null);
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
