@@ -217,7 +217,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public void setStatus(ChargeStatus targetStatus)  {
         if (isValidTransition(fromString(this.status), targetStatus)) {
-            logger.info("Changing charge status for externalId {} {}->{}",
+            logger.info("Changing charge status for externalId [{}] [{}]->[{}]",
                     externalId, this.status, targetStatus.getValue());
             
             this.status = targetStatus.getValue();
