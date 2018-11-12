@@ -3,6 +3,9 @@ package uk.gov.pay.connector.gateway.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.connector.common.model.domain.Address;
 
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+
 import static uk.gov.pay.connector.gateway.model.PayersCardType.CREDIT_OR_DEBIT;
 
 public class AuthCardDetails implements AuthorisationDetails {
@@ -86,6 +89,16 @@ public class AuthCardDetails implements AuthorisationDetails {
 
     public String getEndDate() {
         return endDate;
+    }
+    
+    public String expiryMonth() {
+        YearMonth yearMonth = YearMonth.parse(endDate, DateTimeFormatter.ofPattern("MM/yy"));
+        return String.valueOf(yearMonth.getMonthValue());
+    }
+    
+    public String expiryYear() {
+        YearMonth yearMonth = YearMonth.parse(endDate, DateTimeFormatter.ofPattern("MM/yy"));
+        return String.valueOf(yearMonth.getYear());
     }
 
     public Address getAddress() {

@@ -6,7 +6,6 @@ public enum GatewayOperation {
     REFUND("refund"),
     CANCEL("cancel");
 
-
     private final String description;
 
     GatewayOperation(String auth) {
