@@ -9,10 +9,13 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.common.validator.RequestValidator;
+import uk.gov.pay.connector.gateway.GatewayClientFactory;
+import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
+import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
@@ -22,6 +25,8 @@ import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.util.XrayUtils;
 
 import java.util.Properties;
+
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 
 public class ConnectorModule extends AbstractModule {
     final ConnectorConfiguration configuration;
@@ -95,5 +100,10 @@ public class ConnectorModule extends AbstractModule {
     @Provides
     public SandboxPaymentProvider sandboxPaymentProvider() {
         return new SandboxPaymentProvider();
+    }
+    
+    @Provides
+    public StripeGatewayClient stripeGatewayClient(GatewayClientFactory gatewayClientFactory) {
+        return gatewayClientFactory.createStripeGatewayClient(STRIPE, environment.metrics());
     }
 }

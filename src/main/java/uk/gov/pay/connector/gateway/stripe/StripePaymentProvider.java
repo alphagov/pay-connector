@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gateway.stripe;
 
 import com.google.common.collect.ImmutableMap;
 import fj.data.Either;
-import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,8 +10,6 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureHandler;
-import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
@@ -55,11 +52,10 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     private final StripeGatewayConfig stripeGatewayConfig;
 
     @Inject
-    public StripePaymentProvider(GatewayClientFactory gatewayClientFactory,
-                                 Environment environment,
+    public StripePaymentProvider(StripeGatewayClient stripeGatewayClient,
                                  ConnectorConfiguration configuration) {
         this.stripeGatewayConfig = configuration.getStripeConfig();
-        this.client = gatewayClientFactory.createStripeGatewayClient(STRIPE, GatewayOperation.AUTHORISE, environment.metrics());
+        this.client = stripeGatewayClient;
     }
 
     @Override

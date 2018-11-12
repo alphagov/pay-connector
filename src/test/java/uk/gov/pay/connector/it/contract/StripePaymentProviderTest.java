@@ -1,23 +1,20 @@
 package uk.gov.pay.connector.it.contract;
 
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
-import io.dropwizard.setup.Environment;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.gateway.ClientFactory;
-import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -26,6 +23,7 @@ import uk.gov.pay.connector.util.TestClientFactory;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
@@ -42,22 +40,18 @@ public class StripePaymentProviderTest {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-    
-    @Mock
-    private ClientFactory clientFactory;
-    
+
     private StripePaymentProvider stripePaymentProvider;
     
     private String stripeAccountId = "<replace me>";
 
     @Before
     public void setup() {
-        GatewayClientFactory gatewayClientFactory = new GatewayClientFactory(clientFactory);
-        when(clientFactory.createWithDropwizardClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any(MetricRegistry.class)))
-                .thenReturn(TestClientFactory.createJerseyClient());
-        Environment environment = app.getInstanceFromGuiceContainer(Environment.class);
         ConnectorConfiguration connectorConfig = app.getInstanceFromGuiceContainer(ConnectorConfiguration.class);
-        stripePaymentProvider = new StripePaymentProvider(gatewayClientFactory, environment, connectorConfig);
+        MetricRegistry metricRegistry = mock(MetricRegistry.class);
+        when(metricRegistry.histogram(any(String.class))).thenReturn(mock(Histogram.class));
+        StripeGatewayClient stripeGatewayClient = new StripeGatewayClient(TestClientFactory.createJerseyClient(), metricRegistry);
+        stripePaymentProvider = new StripePaymentProvider(stripeGatewayClient, connectorConfig);
     }
     
     @Test
