@@ -29,6 +29,8 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextInt;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -167,6 +169,27 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("card_details.card_brand", is(""));
+    }
+
+    @Test
+    public void shouldNotReturnBillingAddress_whenNoAddressDetailsPresentInDB() {
+
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
+                ServicePaymentReference.of("ref"), null, EMAIL);
+        databaseTestHelper.updateChargeCardDetails(chargeId, "Visa", "1234", "123456", "Mr. McPayment",
+                "03/18", null, null, null, null, null, null);
+        databaseTestHelper.addToken(chargeId, "tokenId");
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("$card_details", not(hasKey("billing_address")));
     }
 
     @Test
