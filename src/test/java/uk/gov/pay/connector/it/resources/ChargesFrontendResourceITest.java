@@ -37,8 +37,10 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -89,7 +91,7 @@ public class ChargesFrontendResourceITest {
         databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), visaCredit.getId());
         connectorRestApi = new RestAssuredClient(testContext.getPort(), accountId);
     }
-    
+
     @Test
     public void getChargeShouldIncludeExpectedLinksAndGatewayAccount() {
 
@@ -180,6 +182,24 @@ public class ChargesFrontendResourceITest {
                 .contentType(JSON)
                 .body("auth_3ds_data.paRequest", is(paRequest))
                 .body("auth_3ds_data.issuerUrl", is(issuerUrl));
+    }
+
+    @Test
+    public void shouldNotIncludeBillingAddress_whenNoAddressDetailsPresentInDB() {
+        String externalChargeId = RandomIdGenerator.newId();
+        Long chargeId = nextLong();
+
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, expectedAmount, AUTHORISATION_SUCCESS, returnUrl, null,
+                ServicePaymentReference.of("ref"), null, email);
+        databaseTestHelper.updateChargeCardDetails(chargeId, "unknown", "1234", "123456", "Mr. McPayment",
+                "03/18", null, null, null, null, null, null);
+
+        connectorRestApi
+                .withChargeId(externalChargeId)
+                .getFrontendCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("$card_details", not(hasKey("billing_address")));
     }
 
     @Test
