@@ -30,14 +30,11 @@ public class AuthCardDetailsValidator {
     }
 
     private static boolean isValidAddress(Address address) {
-        return address == null || isAddressComplete(address);
-    }
-
-    private static boolean isAddressComplete(Address address) {
-        return isNotBlank(address.getCity()) &&
-                isNotBlank(address.getLine1()) &&
-                isNotBlank(address.getPostcode()) &&
-                isNotBlank(address.getCountry());
+        return address == null ||
+                (isNotBlank(address.getCity()) &&
+                        isNotBlank(address.getLine1()) &&
+                        isNotBlank(address.getPostcode()) &&
+                        isNotBlank(address.getCountry()));
     }
 
     private static boolean hasCardBrand(String cardBrand) {
@@ -55,7 +52,7 @@ public class AuthCardDetailsValidator {
     private static boolean hasExpiryDateFormat(String date) {
         return notNullAndMatches(EXPIRY_DATE, date);
     }
-    
+
     private static boolean addressUnlikelyToContainACardNumber(Address address) {
         return address == null ||
                 (unlikelyToContainACardNumber(address.getLine1()) &&
@@ -65,7 +62,7 @@ public class AuthCardDetailsValidator {
                         unlikelyToContainACardNumber(address.getPostcode()) &&
                         unlikelyToContainACardNumber(address.getCountry()));
     }
-    
+
     private static boolean unlikelyToContainACardNumber(String field) {
         return nullOrDoesNotMatch(CONTAINS_MORE_THAN_11_NOT_NECESSARILY_CONTIGUOUS_DIGITS, field);
     }
