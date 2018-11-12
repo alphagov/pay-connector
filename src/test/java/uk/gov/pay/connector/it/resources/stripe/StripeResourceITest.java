@@ -5,7 +5,6 @@ import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.Matchers;
-import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,6 +18,9 @@ import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +36,8 @@ import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
+import static java.util.stream.Collectors.joining;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -95,7 +97,7 @@ public class StripeResourceITest {
                 .withRequestBody(matching(constructExpectedRequestBody())));
 
         verify(postRequestedFor(urlEqualTo("/v1/charges"))
-                .withHeader("Content-Type", equalTo(APPLICATION_JSON)));
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
         List<LoggedRequest> requests = findAll(postRequestedFor(urlMatching("/v1/charges")));
         assertThat(requests).hasSize(1);
@@ -139,15 +141,24 @@ public class StripeResourceITest {
         return "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeId);
     }
     private String stripeAuthoriseJsonPayload() {
-        Map<String, Object> params = new HashMap<>();
+        Map<String, String> params = new HashMap<>();
         params.put("amount", AMOUNT);
         params.put("currency", "GBP");
         params.put("description", DESCRIPTION);
         params.put("source", "src_1DT9bn2eZvKYlo2Cg5okt8WC");
-        params.put("capture", false);
-        Map<String, Object> destinationParams = new HashMap<>();
-        destinationParams.put("account", STRIPE_ACCOUNT_ID);
-        params.put("destination", destinationParams);
-        return new JSONObject(params).toString();
+        params.put("capture", "false");
+        params.put("destination[account]", STRIPE_ACCOUNT_ID);
+
+        return params.keySet().stream()
+                .map(key -> encode(key) + "=" + encode(params.get(key)))
+                .collect(joining("&"));
+    }
+
+    private String encode(String value) {
+        try {
+            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(format("Exception thrown when encoding %s", value));
+        }
     }
 }

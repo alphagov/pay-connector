@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -42,7 +41,6 @@ import java.util.Optional;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.model.OrderRequestType.AUTHORISE;
 
@@ -89,7 +87,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                 request.getGatewayAccount(),
                 AUTHORISE,
                 URI.create(stripeGatewayConfig.getUrl() + "/v1/tokens"),
-                stripeUrlEncodedSourcePayload(request),
+                sourcePayload(request),
                 getAuthHeaderValue(),
                 APPLICATION_FORM_URLENCODED_TYPE);
         String token = sourceResponse.readEntity(Map.class).get("id").toString();
@@ -97,9 +95,9 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                 request.getGatewayAccount(),
                 AUTHORISE,
                 URI.create(stripeGatewayConfig.getUrl() + "/v1/charges"),
-                stripeAuthoriseJsonPayload(request, token),
+                authorisePayload(request, token),
                 getAuthHeaderValue(),
-                APPLICATION_JSON_TYPE);
+                APPLICATION_FORM_URLENCODED_TYPE);
 
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         return responseBuilder.withResponse(StripeAuthorisationResponse.of(authorisationResponse)).build();
@@ -154,26 +152,27 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         throw new UnsupportedOperationException();
     }
 
-    private String stripeAuthoriseJsonPayload(AuthorisationGatewayRequest request, String token) {
-        Map<String, Object> params = new HashMap<>();
+    private String authorisePayload(AuthorisationGatewayRequest request, String token) {
+        Map<String, String> params = new HashMap<>();
         params.put("amount", request.getAmount());
         params.put("currency", "GBP");
         params.put("description", request.getDescription());
         params.put("source", token);
-        params.put("capture", false);
-        Map<String, Object> destinationParams = new HashMap<>();
+        params.put("capture", "false");
         String stripeAccountId = request.getGatewayAccount().getCredentials().get("stripe_account_id");
 
         if (StringUtils.isBlank(stripeAccountId)) {
             throw new WebApplicationException(format("There is no stripe_account_id for gateway account with id %s", request.getGatewayAccount().getId()));
         }
 
-        destinationParams.put("account", stripeAccountId);
-        params.put("destination", destinationParams);
-        return new JSONObject(params).toString();
+        params.put("destination[account]", stripeAccountId);
+        
+        return params.keySet().stream()
+                .map(key -> encode(key) + "=" + encode(params.get(key)))
+                .collect(joining("&"));
     }
 
-    private String stripeUrlEncodedSourcePayload(AuthorisationGatewayRequest request) {
+    private String sourcePayload(AuthorisationGatewayRequest request) {
         Map<String, String> sourceParams = ImmutableMap.of(
                 "card[cvc]", request.getAuthCardDetails().getCvc(),
                 "card[exp_month]", request.getAuthCardDetails().expiryMonth(),

@@ -26,6 +26,6 @@ public class StripeMockClient {
 
     public void mockCreateCharge() {
         String payload = TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_SUCCESS_RESPONSE);
-        paymentServiceResponse(payload, "/v1/charges", APPLICATION_JSON);
+        paymentServiceResponse(payload, "/v1/charges", APPLICATION_FORM_URLENCODED);
     }
 }
