@@ -3,7 +3,6 @@ package uk.gov.pay.connector.applepay;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import org.apache.commons.codec.binary.Hex;
-import org.glassfish.jersey.internal.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ApplePayConfig;
@@ -30,6 +29,7 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -45,7 +45,7 @@ public class ApplePayDecrypter {
     private final byte[] publicCertificate;
 
     private final ObjectMapper objectMapper;
-
+    private final static Base64.Decoder BASE64_DECODER = Base64.getDecoder();
     @Inject
     public ApplePayDecrypter(ConnectorConfiguration configuration, ObjectMapper objectMapper) {
         ApplePayConfig applePayConfig = configuration.getWorldpayConfig().getApplePayConfig();
@@ -56,8 +56,8 @@ public class ApplePayDecrypter {
 
     public AppleDecryptedPaymentData performDecryptOperation(ApplePayToken applePayToken)  {
         try {
-            byte[] data = Base64.decode(applePayToken.getEncryptedPaymentData().getData().getBytes(UTF_8));
-            byte[] ephemeralPublicKey = Base64.decode(applePayToken.getEncryptedPaymentData().getHeader().getEphemeralPublicKey().getBytes(UTF_8));
+            byte[] data = BASE64_DECODER.decode(applePayToken.getEncryptedPaymentData().getData().getBytes(UTF_8));
+            byte[] ephemeralPublicKey = BASE64_DECODER.decode(applePayToken.getEncryptedPaymentData().getHeader().getEphemeralPublicKey().getBytes(UTF_8));
             PrivateKey privateKey = generatePrivateKey();
             Certificate certificate = generateCertificate();
 
@@ -68,8 +68,8 @@ public class ApplePayDecrypter {
             byte[] rawData = decrypt(certificate, privateKey, ephemeralPublicKey, data);
             return objectMapper.readValue(new String(rawData, UTF_8), AppleDecryptedPaymentData.class);
         } catch (Exception e) {
-            LOGGER.error("Error while trying to decrypt apple pay payload");
-            throw new InvalidKeyException("Error while trying to decrypt apple pay payload");
+            LOGGER.error("Error while trying to decrypt apple pay payload: " + e.getMessage());
+            throw new InvalidKeyException("Error while trying to decrypt apple pay payload: " + e.getMessage());
         }
     }
 

@@ -1,16 +1,14 @@
 package uk.gov.pay.connector.applepay;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import uk.gov.pay.connector.applepay.api.AppleCardExpiryDate;
-import uk.gov.pay.connector.applepay.api.AppleCardExpiryDateDeserialiser;
-import uk.gov.pay.connector.applepay.api.PaymentInfo;
+import uk.gov.pay.connector.applepay.api.ApplePaymentInfo;
 import uk.gov.pay.connector.gateway.model.AuthorisationDetails;
 
 public class AppleDecryptedPaymentData implements AuthorisationDetails {
-    private PaymentInfo paymentInfo;
+    private ApplePaymentInfo paymentInfo;
     private String applicationPrimaryAccountNumber;
     private String currencyCode;
-    private String transactionAmount;
+    private long transactionAmount;
     private String deviceManufacturerIdentifier;
     private String paymentDataType;
     private PaymentData paymentData;
@@ -19,8 +17,8 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails {
     public AppleDecryptedPaymentData() {
     }
 
-    public AppleDecryptedPaymentData(PaymentInfo paymentInfo, String applicationPrimaryAccountNumber, AppleCardExpiryDate applicationExpirationDate, String currencyCode, String transactionAmount, String deviceManufacturerIdentifier, String paymentDataType, PaymentData paymentData) {
-        this.paymentInfo = paymentInfo;
+    public AppleDecryptedPaymentData(ApplePaymentInfo applePaymentInfo, String applicationPrimaryAccountNumber, AppleCardExpiryDate applicationExpirationDate, String currencyCode, long transactionAmount, String deviceManufacturerIdentifier, String paymentDataType, PaymentData paymentData) {
+        this.paymentInfo = applePaymentInfo;
         this.applicationPrimaryAccountNumber = applicationPrimaryAccountNumber;
         this.applicationExpirationDate = applicationExpirationDate;
         this.currencyCode = currencyCode;
@@ -34,7 +32,6 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails {
         return applicationPrimaryAccountNumber;
     }
 
-    @JsonDeserialize(using = AppleCardExpiryDateDeserialiser.class)
     public AppleCardExpiryDate getApplicationExpirationDate() {
         return applicationExpirationDate;
     }
@@ -43,7 +40,7 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails {
         return currencyCode;
     }
 
-    public String getTransactionAmount() {
+    public long getTransactionAmount() {
         return transactionAmount;
     }
 
@@ -59,11 +56,11 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails {
         return paymentData;
     }
 
-    public void setPaymentInfo(PaymentInfo paymentInfo) {
-        this.paymentInfo = paymentInfo;
+    public void setPaymentInfo(ApplePaymentInfo applePaymentInfo) {
+        this.paymentInfo = applePaymentInfo;
     }
 
-    public PaymentInfo getPaymentInfo() {
+    public ApplePaymentInfo getPaymentInfo() {
         return paymentInfo;
     }
 

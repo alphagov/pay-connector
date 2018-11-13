@@ -2,17 +2,15 @@ package uk.gov.pay.connector.applepay.api;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 public class AppleCardExpiryDate {
-    private LocalDate date;
+    private final LocalDate date;
     private final static DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyMMdd");
 
-    private static LocalDate from(String applicationExpirationDate){
-        return LocalDate.parse(applicationExpirationDate, FORMAT);
-    }
-
     public AppleCardExpiryDate(String date) {
-        this.date = from(date);
+        Objects.requireNonNull(date);
+        this.date = LocalDate.parse(date, FORMAT);
     }
 
     public LocalDate getDate() {
@@ -31,11 +29,11 @@ public class AppleCardExpiryDate {
 
         AppleCardExpiryDate that = (AppleCardExpiryDate) o;
 
-        return date != null ? date.equals(that.date) : that.date == null;
+        return date.equals(that.date);
     }
 
     @Override
     public int hashCode() {
-        return date != null ? date.hashCode() : 0;
+        return date.hashCode();
     }
 }

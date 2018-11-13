@@ -12,15 +12,14 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.applepay.api.AppleCardExpiryDate;
 import uk.gov.pay.connector.applepay.api.ApplePayToken;
-import uk.gov.pay.connector.applepay.api.PaymentInfo;
 
 import java.io.IOException;
 
-import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.applepay.ApplePayTokenBuilder.anApplePayToken;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApplePayDecrypterTest {
@@ -42,11 +41,7 @@ public class ApplePayDecrypterTest {
 
     @Before
     public void setUp() throws IOException {
-        ApplePayToken.EncryptedPaymentData encryptedPaymentData = objectMapper.readValue(fixture("applepay/token.json"), ApplePayToken.EncryptedPaymentData.class);
-        applePayToken = new ApplePayToken(
-                new PaymentInfo(),
-                encryptedPaymentData
-        );
+        applePayToken = anApplePayToken().build();
         when(mockConfig.getWorldpayConfig()).thenReturn(mockWorldpayConfig);
         when(mockWorldpayConfig.getApplePayConfig()).thenReturn(mockApplePayConfig);
         when(mockApplePayConfig.getPrivateKey()).thenReturn(Base64.decode(ENCODED_PRIVATE_KEY));
@@ -61,7 +56,7 @@ public class ApplePayDecrypterTest {
         assertThat(appleDecryptedPaymentData.getApplicationPrimaryAccountNumber(), is("4109370251004320"));
         assertThat(appleDecryptedPaymentData.getCurrencyCode(), is("840"));
         assertThat(appleDecryptedPaymentData.getDeviceManufacturerIdentifier(), is("040010030273"));
-        assertThat(appleDecryptedPaymentData.getTransactionAmount(), is("100"));
+        assertThat(appleDecryptedPaymentData.getTransactionAmount(), is(100L));
         assertThat(appleDecryptedPaymentData.getPaymentDataType(), is("3DSecure"));
         assertThat(appleDecryptedPaymentData.getPaymentData().getOnlinePaymentCryptogram(), is("Af9x/QwAA/DjmU65oyc1MAABAAA="));
         assertThat(appleDecryptedPaymentData.getPaymentData().getEciIndicator(), is("5"));
@@ -77,6 +72,20 @@ public class ApplePayDecrypterTest {
     @Test(expected = InvalidKeyException.class)
     public void shouldThrowException_whenPrivateKeyIsInvalid() {
         when(mockApplePayConfig.getPrivateKey()).thenReturn("nope".getBytes(UTF_8));
+        applePayDecrypter = new ApplePayDecrypter(mockConfig, objectMapper);
+        applePayDecrypter.performDecryptOperation(applePayToken);
+    }
+
+    @Test(expected = InvalidKeyException.class)
+    public void shouldThrowException_whenEphemeralKeyIsInvalid() throws IOException {
+        ApplePayToken applePayToken = anApplePayToken().withEphemeralPublicKey("nope").build();
+        applePayDecrypter = new ApplePayDecrypter(mockConfig, objectMapper);
+        applePayDecrypter.performDecryptOperation(applePayToken);
+    }
+
+    @Test(expected = InvalidKeyException.class)
+    public void shouldThrowException_whenDataIsInvalid() throws IOException {
+        ApplePayToken applePayToken = anApplePayToken().withData("nope").build();
         applePayDecrypter = new ApplePayDecrypter(mockConfig, objectMapper);
         applePayDecrypter.performDecryptOperation(applePayToken);
     }

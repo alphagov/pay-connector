@@ -5,17 +5,17 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
-public class PaymentInfo {
+public class ApplePaymentInfo {
     private String lastDigitsCardNumber;
     private String brand;
     private PayersCardType cardType;
     private String cardholderName;
     private String email;
 
-    public PaymentInfo() {
+    public ApplePaymentInfo() {
     }
 
-    public PaymentInfo(String lastDigitsCardNumber, String brand, PayersCardType cardType, String cardholderName, String email) {
+    public ApplePaymentInfo(String lastDigitsCardNumber, String brand, PayersCardType cardType, String cardholderName, String email) {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
         this.brand = brand;
         this.cardType = cardType;
@@ -44,7 +44,7 @@ public class PaymentInfo {
     }
 
     @Override
-    public String toString() {
+    public String toString() { //this might be logged, so we serialise without PII
         return "PaymentInfo{" +
                 "lastDigitsCardNumber='" + lastDigitsCardNumber + '\'' +
                 ", brand='" + brand + '\'' +

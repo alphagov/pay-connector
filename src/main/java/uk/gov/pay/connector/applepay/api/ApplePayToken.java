@@ -5,11 +5,11 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class ApplePayToken  {
-    private PaymentInfo paymentInfo;
+    private ApplePaymentInfo applePaymentInfo;
     private EncryptedPaymentData encryptedPaymentData;
 
-    public PaymentInfo getPaymentInfo() {
-        return paymentInfo;
+    public ApplePaymentInfo getApplePaymentInfo() {
+        return applePaymentInfo;
     }
 
     public EncryptedPaymentData getEncryptedPaymentData() {
@@ -19,8 +19,8 @@ public class ApplePayToken  {
     public ApplePayToken() {
     }
 
-    public ApplePayToken(PaymentInfo paymentInfo, EncryptedPaymentData encryptedPaymentData) {
-        this.paymentInfo = paymentInfo;
+    public ApplePayToken(ApplePaymentInfo applePaymentInfo, EncryptedPaymentData encryptedPaymentData) {
+        this.applePaymentInfo = applePaymentInfo;
         this.encryptedPaymentData = encryptedPaymentData;
     }
 
