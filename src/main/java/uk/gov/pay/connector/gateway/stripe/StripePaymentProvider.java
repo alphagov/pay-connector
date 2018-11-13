@@ -20,6 +20,8 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeError;
+import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
@@ -50,12 +52,14 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
 
     private final StripeGatewayClient client;
     private final StripeGatewayConfig stripeGatewayConfig;
+    private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
     @Inject
     public StripePaymentProvider(StripeGatewayClient stripeGatewayClient,
                                  ConnectorConfiguration configuration) {
         this.stripeGatewayConfig = configuration.getStripeConfig();
         this.client = stripeGatewayClient;
+        this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
     }
 
     @Override
@@ -151,7 +155,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
 
     @Override
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
-        throw new UnsupportedOperationException();
+        return externalRefundAvailabilityCalculator.calculate(chargeEntity);
     }
 
     private String authorisePayload(AuthorisationGatewayRequest request, String token) {
