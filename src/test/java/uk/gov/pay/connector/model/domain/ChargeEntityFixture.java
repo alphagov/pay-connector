@@ -50,10 +50,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntity build() {
         ChargeEntity chargeEntity = new ChargeEntity(amount, status, returnUrl, description, reference,
-                gatewayAccountEntity, email, createdDate, language, delayedCapture, corporateSurcharge);
+                gatewayAccountEntity, email, createdDate, language, delayedCapture);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
         chargeEntity.setGatewayTransactionId(transactionId);
+        chargeEntity.setCorporateSurcharge(corporateSurcharge);
         chargeEntity.getEvents().addAll(events);
         chargeEntity.getRefunds().addAll(refunds);
         chargeEntity.setProviderSessionId(providerSessionId);
