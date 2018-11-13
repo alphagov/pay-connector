@@ -10,10 +10,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ApplePayConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.WorldpayConfig;
-import uk.gov.pay.connector.applepay.api.AppleCardExpiryDate;
 import uk.gov.pay.connector.applepay.api.ApplePayToken;
 
 import java.io.IOException;
+import java.time.LocalDate;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.Matchers.is;
@@ -52,7 +52,7 @@ public class ApplePayDecrypterTest {
     @Test
     public void shouldDecryptData_whenPrivateKeyAndPublicCertificateAreValid() {
         AppleDecryptedPaymentData appleDecryptedPaymentData = applePayDecrypter.performDecryptOperation(applePayToken);
-        assertThat(appleDecryptedPaymentData.getApplicationExpirationDate(), is(new AppleCardExpiryDate("200731")));
+        assertThat(appleDecryptedPaymentData.getApplicationExpirationDate(), is(LocalDate.of(2020, 7, 31)));
         assertThat(appleDecryptedPaymentData.getApplicationPrimaryAccountNumber(), is("4109370251004320"));
         assertThat(appleDecryptedPaymentData.getCurrencyCode(), is("840"));
         assertThat(appleDecryptedPaymentData.getDeviceManufacturerIdentifier(), is("040010030273"));

@@ -1,8 +1,12 @@
 package uk.gov.pay.connector.applepay;
 
-import uk.gov.pay.connector.applepay.api.AppleCardExpiryDate;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import uk.gov.pay.connector.applepay.api.ApplePaymentInfo;
 import uk.gov.pay.connector.gateway.model.AuthorisationDetails;
+
+import java.time.LocalDate;
 
 public class AppleDecryptedPaymentData implements AuthorisationDetails {
     private ApplePaymentInfo paymentInfo;
@@ -12,12 +16,14 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails {
     private String deviceManufacturerIdentifier;
     private String paymentDataType;
     private PaymentData paymentData;
-    private AppleCardExpiryDate applicationExpirationDate; 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyMMdd")
+    @JsonDeserialize(using = LocalDateDeserializer.class)
+    private LocalDate applicationExpirationDate; 
     
     public AppleDecryptedPaymentData() {
     }
 
-    public AppleDecryptedPaymentData(ApplePaymentInfo applePaymentInfo, String applicationPrimaryAccountNumber, AppleCardExpiryDate applicationExpirationDate, String currencyCode, long transactionAmount, String deviceManufacturerIdentifier, String paymentDataType, PaymentData paymentData) {
+    public AppleDecryptedPaymentData(ApplePaymentInfo applePaymentInfo, String applicationPrimaryAccountNumber, LocalDate applicationExpirationDate, String currencyCode, long transactionAmount, String deviceManufacturerIdentifier, String paymentDataType, PaymentData paymentData) {
         this.paymentInfo = applePaymentInfo;
         this.applicationPrimaryAccountNumber = applicationPrimaryAccountNumber;
         this.applicationExpirationDate = applicationExpirationDate;
@@ -32,7 +38,7 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails {
         return applicationPrimaryAccountNumber;
     }
 
-    public AppleCardExpiryDate getApplicationExpirationDate() {
+    public LocalDate getApplicationExpirationDate() {
         return applicationExpirationDate;
     }
 
