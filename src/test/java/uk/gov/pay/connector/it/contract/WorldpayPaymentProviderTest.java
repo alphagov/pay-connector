@@ -81,7 +81,7 @@ public class WorldpayPaymentProviderTest {
                     "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"));
 
             validCredentials3ds = ImmutableMap.of(
-                    "merchant_id", envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID"),
+                    "merchant_id", envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID_3DS"),
                     "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER_3DS"),
                     "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD_3DS"));
         } catch (IllegalStateException ex) {
