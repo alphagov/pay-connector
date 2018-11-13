@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gateway.stripe;
 
 import com.google.common.collect.ImmutableMap;
 import fj.data.Either;
-import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,8 +10,6 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureHandler;
-import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
@@ -22,6 +19,7 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeError;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
@@ -37,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
@@ -53,15 +52,10 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     private final StripeGatewayConfig stripeGatewayConfig;
 
     @Inject
-    public StripePaymentProvider(GatewayClientFactory gatewayClientFactory,
-                                 Environment environment,
+    public StripePaymentProvider(StripeGatewayClient stripeGatewayClient,
                                  ConnectorConfiguration configuration) {
         this.stripeGatewayConfig = configuration.getStripeConfig();
-        this.client = gatewayClientFactory.createStripeGatewayClient(
-                PaymentGatewayName.STRIPE,
-                GatewayOperation.AUTHORISE,
-                environment.metrics()
-        );
+        this.client = stripeGatewayClient;
     }
 
     @Override
@@ -90,6 +84,14 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                 sourcePayload(request),
                 getAuthHeaderValue(),
                 APPLICATION_FORM_URLENCODED_TYPE);
+
+        if (sourceResponse.getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR) {
+            String reason = sourceResponse.readEntity(StripeError.class).getError().getMessage();
+            String errorId = UUID.randomUUID().toString();
+            logger.error("There was error calling /v1/tokens. Reason: {}, ErrorId: {}", reason, errorId);
+            throw new WebApplicationException("There was an internal server error. ErrorId: " + errorId);
+        }
+        
         String token = sourceResponse.readEntity(Map.class).get("id").toString();
         Response authorisationResponse = client.postRequest(
                 request.getGatewayAccount(),

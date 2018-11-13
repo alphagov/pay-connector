@@ -98,7 +98,7 @@ public class AuthCardDetails implements AuthorisationDetails {
     
     public String expiryYear() {
         YearMonth yearMonth = YearMonth.parse(endDate, DateTimeFormatter.ofPattern("MM/yy"));
-        return String.valueOf(yearMonth.getYear());
+        return String.valueOf(yearMonth.getYear()).substring(2,4);
     }
 
     public Address getAddress() {

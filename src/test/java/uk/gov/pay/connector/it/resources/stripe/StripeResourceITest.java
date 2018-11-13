@@ -4,7 +4,6 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.math.RandomUtils;
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,6 +39,7 @@ import static java.util.stream.Collectors.joining;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
@@ -55,8 +55,8 @@ public class StripeResourceITest {
     private static final String CARD_NUMBER = "4444333322221111";
     private static final String AMOUNT = "6234";
     private static final String DESCRIPTION = "Test description";
-    private static final String STRIPE_ACCOUNT_ID = "123";
 
+    private String stripeAccountId;
     private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", CVC, EXP_MONTH + "/" + EXP_YEAR, "visa");
     private String paymentProvider = PaymentGatewayName.STRIPE.getName();
     private String accountId;
@@ -71,6 +71,7 @@ public class StripeResourceITest {
 
     @Before
     public void setup() {
+        stripeAccountId = String.valueOf(RandomUtils.nextInt());
         databaseTestHelper = testContext.getDatabaseTestHelper();
         accountId = String.valueOf(RandomUtils.nextInt());
 
@@ -80,7 +81,7 @@ public class StripeResourceITest {
 
     @Test
     public void authoriseCharge() {
-        addGatewayAccount(ImmutableMap.of("stripe_account_id", STRIPE_ACCOUNT_ID));
+        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
 
         String externalChargeId = addCharge();
 
@@ -89,26 +90,36 @@ public class StripeResourceITest {
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(externalChargeId))
                 .then()
-                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(200);
 
         verify(postRequestedFor(urlEqualTo("/v1/tokens"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
-                .withRequestBody(matching(constructExpectedRequestBody())));
+                .withRequestBody(matching(constructExpectedTokensRequestBody())));
 
         verify(postRequestedFor(urlEqualTo("/v1/charges"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
         List<LoggedRequest> requests = findAll(postRequestedFor(urlMatching("/v1/charges")));
         assertThat(requests).hasSize(1);
-        assertThat(requests.get(0).getBodyAsString()).isEqualTo(stripeAuthoriseJsonPayload());
+        assertThat(requests.get(0).getBodyAsString()).isEqualTo(constructExpectedAuthoriseRequestBody());
     }
+    
+    @Test
+    public void invalidAuthCredentialsShouldReturnAnInternalServerError() {
+        stripeMockClient.mockUnauthorizedResponse();
 
-    private String constructExpectedRequestBody() {
-        return format("card[cvc]=123&card[exp_month]=11&card[exp_year]=2099&card[number]=4444333322221111",
-                CVC, EXP_MONTH, EXP_YEAR, CARD_NUMBER)
-                .replace("[", "%5B")
-                .replace("]", "%5D");
+        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+
+        String externalChargeId = addCharge();
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(externalChargeId))
+                .then()
+                .statusCode(500)
+                .body("message", containsString("There was an internal server error. ErrorId:"));
     }
 
     @Test
@@ -126,6 +137,13 @@ public class StripeResourceITest {
                 .body("message", containsString("There is no stripe_account_id for gateway account with id"));
     }
 
+    private String constructExpectedTokensRequestBody() {
+        return format("card[cvc]=%s&card[exp_month]=%s&card[exp_year]=%s&card[number]=%s",
+                CVC, EXP_MONTH, EXP_YEAR, CARD_NUMBER)
+                .replace("[", "%5B")
+                .replace("]", "%5D");
+    }
+    
     private String addCharge() {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
@@ -140,14 +158,15 @@ public class StripeResourceITest {
     private String authoriseChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeId);
     }
-    private String stripeAuthoriseJsonPayload() {
+    
+    private String constructExpectedAuthoriseRequestBody() {
         Map<String, String> params = new HashMap<>();
         params.put("amount", AMOUNT);
         params.put("currency", "GBP");
         params.put("description", DESCRIPTION);
         params.put("source", "src_1DT9bn2eZvKYlo2Cg5okt8WC");
         params.put("capture", "false");
-        params.put("destination[account]", STRIPE_ACCOUNT_ID);
+        params.put("destination[account]", stripeAccountId);
 
         return params.keySet().stream()
                 .map(key -> encode(key) + "=" + encode(params.get(key)))
