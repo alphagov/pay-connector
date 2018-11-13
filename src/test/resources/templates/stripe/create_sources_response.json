@@ -9,9 +9,9 @@
     "swift_code": "TSTEZ122"
   },
   "amount": null,
-  "client_secret": "src_client_secret_DuzaXmh4NTvdIMUbTNEBPARx",
-  "created": 1541430199,
-  "currency": "usd",
+  "client_secret": "src_client_secret_DxuWZClP9tqqDxbKSYNAs2FW",
+  "created": 1542103251,
+  "currency": "gbp",
   "flow": "receiver",
   "livemode": false,
   "metadata": {

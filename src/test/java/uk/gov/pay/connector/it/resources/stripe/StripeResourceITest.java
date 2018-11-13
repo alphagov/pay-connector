@@ -76,6 +76,7 @@ public class StripeResourceITest {
         accountId = String.valueOf(RandomUtils.nextInt());
 
         stripeMockClient.mockCreateToken();
+        stripeMockClient.mockCreateSource();
         stripeMockClient.mockCreateCharge();
     }
 
@@ -96,6 +97,10 @@ public class StripeResourceITest {
         verify(postRequestedFor(urlEqualTo("/v1/tokens"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
                 .withRequestBody(matching(constructExpectedTokensRequestBody())));
+
+        verify(postRequestedFor(urlEqualTo("/v1/sources"))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
+                .withRequestBody(matching(constructExpectedSourcesRequestBody())));
 
         verify(postRequestedFor(urlEqualTo("/v1/charges"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
@@ -137,13 +142,6 @@ public class StripeResourceITest {
                 .body("message", containsString("There is no stripe_account_id for gateway account with id"));
     }
 
-    private String constructExpectedTokensRequestBody() {
-        return format("card[cvc]=%s&card[exp_month]=%s&card[exp_year]=%s&card[number]=%s",
-                CVC, EXP_MONTH, EXP_YEAR, CARD_NUMBER)
-                .replace("[", "%5B")
-                .replace("]", "%5D");
-    }
-    
     private String addCharge() {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
@@ -158,21 +156,41 @@ public class StripeResourceITest {
     private String authoriseChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeId);
     }
+
+    private String constructExpectedSourcesRequestBody() {
+        Map<String, String> params = new HashMap<>();
+        params.put("type", "card");
+        params.put("token", "tok_1DJfnpHj08j2jFuBPMcHN1F8"); //This comes from resources/stripe/create_token_response.json
+        params.put("usage", "single_use");
+        return encode(params);
+    }
     
     private String constructExpectedAuthoriseRequestBody() {
         Map<String, String> params = new HashMap<>();
         params.put("amount", AMOUNT);
         params.put("currency", "GBP");
         params.put("description", DESCRIPTION);
-        params.put("source", "src_1DT9bn2eZvKYlo2Cg5okt8WC");
+        params.put("source", "src_1DT9bn2eZvKYlo2Cg5okt8WC"); //This comes from resources/stripe/create_sources_response.json
         params.put("capture", "false");
         params.put("destination[account]", stripeAccountId);
+        return encode(params);
+    }
 
+    private String constructExpectedTokensRequestBody() {
+        Map<String, String> params = new HashMap<>();
+        params.put("card[cvc]", CVC);
+        params.put("card[exp_month]", EXP_MONTH);
+        params.put("card[exp_year]", EXP_YEAR);
+        params.put("card[number]", CARD_NUMBER);
+        return encode(params);
+    }
+
+    private String encode(Map<String, String> params) {
         return params.keySet().stream()
                 .map(key -> encode(key) + "=" + encode(params.get(key)))
                 .collect(joining("&"));
     }
-
+    
     private String encode(String value) {
         try {
             return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());

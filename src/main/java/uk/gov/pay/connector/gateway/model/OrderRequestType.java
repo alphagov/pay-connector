@@ -9,7 +9,7 @@ public enum OrderRequestType {
 
     private final String name;
 
-    private OrderRequestType(String s) {
+    OrderRequestType(String s) {
         name = s;
     }
 
