@@ -3,10 +3,12 @@ package uk.gov.pay.connector.applepay;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import org.apache.commons.codec.binary.Hex;
+import org.glassfish.jersey.internal.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ApplePayConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.applepay.api.ApplePayToken;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
@@ -52,9 +54,10 @@ public class ApplePayDecrypter {
         this.objectMapper = objectMapper;
     }
 
-    public ApplePaymentData performDecryptOperation(byte[] data, byte[] ephemeralKey)  {
+    public AppleDecryptedPaymentData performDecryptOperation(ApplePayToken applePayToken)  {
         try {
-
+            byte[] data = Base64.decode(applePayToken.getEncryptedPaymentData().getData().getBytes(UTF_8));
+            byte[] ephemeralPublicKey = Base64.decode(applePayToken.getEncryptedPaymentData().getHeader().getEphemeralPublicKey().getBytes(UTF_8));
             PrivateKey privateKey = generatePrivateKey();
             Certificate certificate = generateCertificate();
 
@@ -62,8 +65,8 @@ public class ApplePayDecrypter {
             if (!verifier.verify()) {
                 throw new InvalidKeyException("Asymmetric keys do not match!");
             }
-            byte[] rawData = decrypt(certificate, privateKey, ephemeralKey, data);
-            return objectMapper.readValue(new String(rawData, UTF_8), ApplePaymentData.class);
+            byte[] rawData = decrypt(certificate, privateKey, ephemeralPublicKey, data);
+            return objectMapper.readValue(new String(rawData, UTF_8), AppleDecryptedPaymentData.class);
         } catch (Exception e) {
             LOGGER.error("Error while trying to decrypt apple pay payload");
             throw new InvalidKeyException("Error while trying to decrypt apple pay payload");

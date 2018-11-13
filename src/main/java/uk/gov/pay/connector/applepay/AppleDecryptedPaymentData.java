@@ -6,7 +6,7 @@ import uk.gov.pay.connector.applepay.api.AppleCardExpiryDateDeserialiser;
 import uk.gov.pay.connector.applepay.api.PaymentInfo;
 import uk.gov.pay.connector.gateway.model.AuthorisationDetails;
 
-public class ApplePaymentData implements AuthorisationDetails {
+public class AppleDecryptedPaymentData implements AuthorisationDetails {
     private PaymentInfo paymentInfo;
     private String applicationPrimaryAccountNumber;
     private String currencyCode;
@@ -16,10 +16,10 @@ public class ApplePaymentData implements AuthorisationDetails {
     private PaymentData paymentData;
     private AppleCardExpiryDate applicationExpirationDate; 
     
-    public ApplePaymentData() {
+    public AppleDecryptedPaymentData() {
     }
 
-    public ApplePaymentData(PaymentInfo paymentInfo, String applicationPrimaryAccountNumber, AppleCardExpiryDate applicationExpirationDate, String currencyCode, String transactionAmount, String deviceManufacturerIdentifier, String paymentDataType, PaymentData paymentData) {
+    public AppleDecryptedPaymentData(PaymentInfo paymentInfo, String applicationPrimaryAccountNumber, AppleCardExpiryDate applicationExpirationDate, String currencyCode, String transactionAmount, String deviceManufacturerIdentifier, String paymentDataType, PaymentData paymentData) {
         this.paymentInfo = paymentInfo;
         this.applicationPrimaryAccountNumber = applicationPrimaryAccountNumber;
         this.applicationExpirationDate = applicationExpirationDate;
