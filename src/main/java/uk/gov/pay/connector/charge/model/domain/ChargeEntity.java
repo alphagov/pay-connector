@@ -129,14 +129,14 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public ChargeEntity(Long amount, String returnUrl, String description, ServicePaymentReference reference,
                         GatewayAccountEntity gatewayAccount, String email, SupportedLanguage language,
-                        boolean delayedCapture, Long corporateSurcharge) {
-        this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture, corporateSurcharge);
+                        boolean delayedCapture) {
+        this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture);
     }
 
-    //for fixture
+    // Only the ChargeEntityFixture should directly call this constructor
     public ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, ServicePaymentReference reference,
                         GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate, SupportedLanguage language,
-                        boolean delayedCapture, Long corporateSurcharge) {
+                        boolean delayedCapture) {
         this.amount = amount;
         this.status = status.getValue();
         this.returnUrl = returnUrl;
@@ -148,7 +148,6 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.email = email;
         this.language = language;
         this.delayedCapture = delayedCapture;
-        this.corporateSurcharge = corporateSurcharge;
     }
 
     public Long getId() {
