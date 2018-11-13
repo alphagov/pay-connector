@@ -15,11 +15,12 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_SUCCESS_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_SOURCE_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_SOURCES_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE;
 
 public class StripeMockClient {
     public void mockCreateToken() {
-        String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_SOURCE_SUCCESS_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE);
         setupResponse(payload, "/v1/tokens", 200);
     }
 
@@ -38,5 +39,10 @@ public class StripeMockClient {
                 "message", "Invalid API Key provided: sk_test_****", 
                 "type", "invalid_request_error"));
         setupResponse(new JSONObject(unauthorizedResponse).toString(), "/v1/tokens", 401);
+    }
+
+    public void mockCreateSource() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_SOURCES_SUCCESS_RESPONSE);
+        setupResponse(payload, "/v1/sources", 200);
     }
 }

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe;
 
-import com.google.common.collect.ImmutableMap;
 import fj.data.Either;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -20,6 +19,8 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeError;
+import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeTokenResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -81,27 +82,38 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
         logger.info("Calling Stripe for authorisation of charge [{}]", request.getChargeExternalId());
 
-        Response sourceResponse = client.postRequest(
+        Response tokenResponse = client.postRequest(
                 request.getGatewayAccount(),
                 AUTHORISE,
                 URI.create(stripeGatewayConfig.getUrl() + "/v1/tokens"),
-                sourcePayload(request),
+                tokenPayload(request),
                 getAuthHeaderValue(),
                 APPLICATION_FORM_URLENCODED_TYPE);
 
-        if (sourceResponse.getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR) {
-            String reason = sourceResponse.readEntity(StripeError.class).getError().getMessage();
+        if (tokenResponse.getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR) {
+            String reason = tokenResponse.readEntity(StripeError.class).getError().getMessage();
             String errorId = UUID.randomUUID().toString();
             logger.error("There was error calling /v1/tokens. Reason: {}, ErrorId: {}", reason, errorId);
             throw new WebApplicationException("There was an internal server error. ErrorId: " + errorId);
         }
+
+        String token = tokenResponse.readEntity(StripeTokenResponse.class).getId();
         
-        String token = sourceResponse.readEntity(Map.class).get("id").toString();
+        Response sourcesResponse = client.postRequest(
+                request.getGatewayAccount(),
+                AUTHORISE,
+                URI.create(stripeGatewayConfig.getUrl() + "/v1/sources"),
+                sourcesPayload(token),
+                getAuthHeaderValue(),
+                APPLICATION_FORM_URLENCODED_TYPE);
+        
+        String sourceId = sourcesResponse.readEntity(StripeSourcesResponse.class).getId();
+
         Response authorisationResponse = client.postRequest(
                 request.getGatewayAccount(),
                 AUTHORISE,
                 URI.create(stripeGatewayConfig.getUrl() + "/v1/charges"),
-                authorisePayload(request, token),
+                authorisePayload(request, sourceId),
                 getAuthHeaderValue(),
                 APPLICATION_FORM_URLENCODED_TYPE);
 
@@ -158,35 +170,42 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         return externalRefundAvailabilityCalculator.calculate(chargeEntity);
     }
 
-    private String authorisePayload(AuthorisationGatewayRequest request, String token) {
+    private String sourcesPayload(String token) {
+        Map<String, String> params = new HashMap<>();
+        params.put("type", "card");
+        params.put("token", token);
+        params.put("usage", "single_use");
+        return encode(params);
+    }
+    
+    private String authorisePayload(AuthorisationGatewayRequest request, String sourceId) {
         Map<String, String> params = new HashMap<>();
         params.put("amount", request.getAmount());
         params.put("currency", "GBP");
         params.put("description", request.getDescription());
-        params.put("source", token);
+        params.put("source", sourceId);
         params.put("capture", "false");
         String stripeAccountId = request.getGatewayAccount().getCredentials().get("stripe_account_id");
 
-        if (StringUtils.isBlank(stripeAccountId)) {
+        if (StringUtils.isBlank(stripeAccountId))
             throw new WebApplicationException(format("There is no stripe_account_id for gateway account with id %s", request.getGatewayAccount().getId()));
-        }
 
         params.put("destination[account]", stripeAccountId);
-        
-        return params.keySet().stream()
-                .map(key -> encode(key) + "=" + encode(params.get(key)))
-                .collect(joining("&"));
+        return encode(params);
     }
 
-    private String sourcePayload(AuthorisationGatewayRequest request) {
-        Map<String, String> sourceParams = ImmutableMap.of(
-                "card[cvc]", request.getAuthCardDetails().getCvc(),
-                "card[exp_month]", request.getAuthCardDetails().expiryMonth(),
-                "card[exp_year]", request.getAuthCardDetails().expiryYear(),
-                "card[number]", request.getAuthCardDetails().getCardNo());
-        
-        return sourceParams.keySet().stream()
-                .map(key -> encode(key) + "=" + encode(sourceParams.get(key)))
+    private String tokenPayload(AuthorisationGatewayRequest request) {
+        Map<String, String> params = new HashMap<>();
+        params.put("card[cvc]", request.getAuthCardDetails().getCvc());
+        params.put("card[exp_month]", request.getAuthCardDetails().expiryMonth());
+        params.put("card[exp_year]", request.getAuthCardDetails().expiryYear());
+        params.put("card[number]", request.getAuthCardDetails().getCardNo());
+        return encode(params);
+    }
+
+    private String encode(Map<String, String> params) {
+        return params.keySet().stream()
+                .map(key -> encode(key) + "=" + encode(params.get(key)))
                 .collect(joining("&"));
     }
 
