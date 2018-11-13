@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
+import uk.gov.pay.connector.gateway.stripe.StripeException;
 import uk.gov.pay.connector.util.XrayUtils;
 
 import javax.ws.rs.WebApplicationException;
@@ -103,8 +104,12 @@ public class CardExecutorService<T> {
         try {
             return Pair.of(COMPLETED, futureObject.get(config.getTimeoutInSeconds(), TimeUnit.SECONDS));
         } catch (ExecutionException | InterruptedException exception) {
-            if (exception.getCause() instanceof WebApplicationException) {
-                throw (WebApplicationException) exception.getCause();
+            Throwable cause = exception.getCause();
+            if (cause instanceof WebApplicationException) {
+                throw (WebApplicationException) cause;
+            }
+            if (cause instanceof StripeException) {
+                throw (StripeException) cause;
             }
             return Pair.of(FAILED, null);
         } catch (TimeoutException timeoutException) {

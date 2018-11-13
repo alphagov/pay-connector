@@ -49,18 +49,11 @@ public class StripeGatewayClient {
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
             logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
-            Response response = client.target(url.toString())
+            return client.target(url.toString())
                     .request()
                     .header(AUTHORIZATION, authHeaderValue)
                     .post(Entity.entity(payload, mediaType));
 
-            if (response.getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
-                logger.error("Stripe gateway returned server error: {}, for gateway url={} with type {}", response.getStatus(), url.toString(), account.getType());
-                incrementFailureCounter(metricRegistry, metricsPrefix);
-                throw new WebApplicationException("Unexpected HTTP status code " + response.getStatus() + " from gateway");
-            }
-
-            return response;
         } catch (ProcessingException pe) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
             if (pe.getCause() != null) {

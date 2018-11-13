@@ -45,4 +45,18 @@ public class StripeMockClient {
         String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_SOURCES_SUCCESS_RESPONSE);
         setupResponse(payload, "/v1/sources", 200);
     }
+
+    public void mockStripeError(String stripePath, String stripeErrorType, int responseStatusCodeFromStripe) {
+        Map<String, Object> errorResponse = ImmutableMap.of("error", ImmutableMap.of(
+                "message", "some error message",
+                "type", stripeErrorType));
+        setupResponse(new JSONObject(errorResponse).toString(), stripePath, responseStatusCodeFromStripe);
+    }
+
+    public void mockCardError(String errorMessageFromStripe) {
+        Map<String, Object> errorResponse = ImmutableMap.of("error", ImmutableMap.of(
+                "message", errorMessageFromStripe,
+                "type", "card_error"));
+        setupResponse(new JSONObject(errorResponse).toString(), "/v1/charges", 400);
+    }
 }

@@ -27,8 +27,15 @@ public class StripeError {
         @JsonProperty("message")
         private String message;
 
+        @JsonProperty("type")
+        private String type;
+
         public String getMessage() {
             return message;
+        }
+
+        public String getType() {
+            return type;
         }
     }
 }

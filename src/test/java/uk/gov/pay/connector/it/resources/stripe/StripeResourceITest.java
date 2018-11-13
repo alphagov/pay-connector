@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources.stripe;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.google.common.collect.ImmutableMap;
+import junitparams.Parameters;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
@@ -79,6 +80,49 @@ public class StripeResourceITest {
         stripeMockClient.mockCreateSource();
         stripeMockClient.mockCreateCharge();
     }
+    
+    // All known Stripe errors: https://stripe.com/docs/api/errors
+    @Test
+    @Parameters({
+            "/v1/sources, api_connection_error, 500, 500",
+            "/v1/sources, api_error, 500, 500",
+            "/v1/tokens, authentication_error, 401, 500",
+            "/v1/charges, idempotency_error, 400, 500",
+            "/v1/charges, invalid_request_error, 400, 500",
+            "/v1/tokens, rate_limit_error, 429, 500"
+    })
+    public void testExceptionsResultingInInternalServerErrors(String stripePath, String stripeErrorType, int responseStatusCodeFromStripe, int expectedStatusCode) {
+        stripeMockClient.mockStripeError(stripePath, stripeErrorType, responseStatusCodeFromStripe);
+
+        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+
+        String externalChargeId = addCharge();
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(externalChargeId))
+                .then()
+                .statusCode(expectedStatusCode)
+                .body("message", containsString("There was an internal server error. ErrorId:"));
+    }
+    
+    @Test
+    public void testCardError() {
+        stripeMockClient.mockCardError("The card has expired");
+
+        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+
+        String externalChargeId = addCharge();
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(externalChargeId))
+                .then()
+                .statusCode(400)
+                .body("message", containsString("The card has expired"));
+    }
 
     @Test
     public void authoriseCharge() {
@@ -149,7 +193,7 @@ public class StripeResourceITest {
         return externalChargeId;
     }
 
-    private void addGatewayAccount(Map credentials) {
+    private void addGatewayAccount(Map<String, String> credentials) {
         databaseTestHelper.addGatewayAccount(accountId, paymentProvider, credentials);
     }
 

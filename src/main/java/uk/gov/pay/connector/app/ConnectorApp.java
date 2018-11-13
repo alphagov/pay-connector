@@ -34,6 +34,7 @@ import uk.gov.pay.connector.filters.LoggingFilter;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
 import uk.gov.pay.connector.gateway.smartpay.auth.BasicAuthUser;
 import uk.gov.pay.connector.gateway.smartpay.auth.SmartpayAccountSpecificAuthenticator;
+import uk.gov.pay.connector.gateway.stripe.StripeExceptionMapper;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountResource;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
@@ -100,6 +101,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new LoggingExceptionMapper<Throwable>() {});
         environment.jersey().register(new JsonProcessingExceptionMapper());
         environment.jersey().register(new EarlyEofExceptionMapper());
+        environment.jersey().register(new StripeExceptionMapper());
         
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(ChargeEventsResource.class));

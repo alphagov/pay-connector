@@ -26,11 +26,6 @@ public class ResponseUtil {
         return badRequestResponse(message);
     }
 
-    public static Response fieldsInvalidResponse(List<String> invalidFields) {
-        String message = format("Field(s) are invalid: [%s]", COMMA_JOINER.join(invalidFields));
-        return badRequestResponse(message);
-    }
-
     public static Response responseWithChargeNotFound(String chargeId) {
         String message = format("Charge with id [%s] not found.", chargeId);
         return notFoundResponse(message);
@@ -57,7 +52,7 @@ public class ResponseUtil {
     }
 
     public static Response preconditionFailedResponse(String message) {
-        logger.info(message.toString());
+        logger.info(message);
         return responseWithMessageMap(PRECONDITION_FAILED, message);
     }
 

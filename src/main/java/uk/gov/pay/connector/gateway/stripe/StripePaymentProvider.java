@@ -38,11 +38,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.joining;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
+import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
+import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.model.OrderRequestType.AUTHORISE;
 
@@ -82,43 +84,49 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
         logger.info("Calling Stripe for authorisation of charge [{}]", request.getChargeExternalId());
 
+        URI tokenUrl = URI.create(stripeGatewayConfig.getUrl() + "/v1/tokens");
         Response tokenResponse = client.postRequest(
                 request.getGatewayAccount(),
                 AUTHORISE,
-                URI.create(stripeGatewayConfig.getUrl() + "/v1/tokens"),
+                tokenUrl,
                 tokenPayload(request),
                 getAuthHeaderValue(),
                 APPLICATION_FORM_URLENCODED_TYPE);
 
-        if (tokenResponse.getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR) {
-            String reason = tokenResponse.readEntity(StripeError.class).getError().getMessage();
-            String errorId = UUID.randomUUID().toString();
-            logger.error("There was error calling /v1/tokens. Reason: {}, ErrorId: {}", reason, errorId);
-            throw new WebApplicationException("There was an internal server error. ErrorId: " + errorId);
-        }
+        throwIf4xxOr5xxStatus(tokenResponse, tokenUrl);
 
         String token = tokenResponse.readEntity(StripeTokenResponse.class).getId();
-        
+        URI sourcesUrl = URI.create(stripeGatewayConfig.getUrl() + "/v1/sources");
         Response sourcesResponse = client.postRequest(
                 request.getGatewayAccount(),
                 AUTHORISE,
-                URI.create(stripeGatewayConfig.getUrl() + "/v1/sources"),
+                sourcesUrl,
                 sourcesPayload(token),
                 getAuthHeaderValue(),
                 APPLICATION_FORM_URLENCODED_TYPE);
+
+        throwIf4xxOr5xxStatus(sourcesResponse, sourcesUrl);
         
         String sourceId = sourcesResponse.readEntity(StripeSourcesResponse.class).getId();
-
+        URI chargesUrl = URI.create(stripeGatewayConfig.getUrl() + "/v1/charges");
         Response authorisationResponse = client.postRequest(
                 request.getGatewayAccount(),
                 AUTHORISE,
-                URI.create(stripeGatewayConfig.getUrl() + "/v1/charges"),
+                chargesUrl,
                 authorisePayload(request, sourceId),
                 getAuthHeaderValue(),
                 APPLICATION_FORM_URLENCODED_TYPE);
 
+        throwIf4xxOr5xxStatus(authorisationResponse, chargesUrl);
+
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         return responseBuilder.withResponse(StripeAuthorisationResponse.of(authorisationResponse)).build();
+    }
+
+    private void throwIf4xxOr5xxStatus(Response response, URI url) {
+        if (asList(CLIENT_ERROR, SERVER_ERROR).contains(response.getStatusInfo().getFamily())) {
+            throw new StripeException(response.readEntity(StripeError.class), url, response.getStatus());
+        }
     }
 
     private String getAuthHeaderValue() {
