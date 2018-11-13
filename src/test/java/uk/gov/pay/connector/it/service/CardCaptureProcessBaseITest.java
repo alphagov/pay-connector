@@ -37,6 +37,7 @@ abstract public class CardCaptureProcessBaseITest {
     public GuiceAppWithPostgresRule app = new GuiceAppWithPostgresRule(
             config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
             config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"),
+            config("stripe.url", "http://localhost:" + port ),
             config("epdq.urls.test", "http://localhost:" + port + "/epdq"),
             config("captureProcessConfig.maximumRetries", Integer.toString(CAPTURE_MAX_RETRIES)),
             config("captureProcessConfig.retryFailuresEvery", "0 minutes"));

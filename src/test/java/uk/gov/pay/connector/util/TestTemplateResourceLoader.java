@@ -112,6 +112,8 @@ public class TestTemplateResourceLoader {
 
     public static final String STRIPE_AUTHORISATION_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/authorisation_success_response.json";
     public static final String STRIPE_CREATE_SOURCE_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_source_response.json";
+    public static final String STRIPE_CAPTURE_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/capture_success_response.json";
+    public static final String STRIPE_ERROR_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/error_response.json";
 
     public static String load(String location) {
         return fixture(location);

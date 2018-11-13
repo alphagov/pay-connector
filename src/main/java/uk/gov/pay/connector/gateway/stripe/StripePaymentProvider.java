@@ -20,7 +20,7 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
-import uk.gov.pay.connector.gateway.stripe.json.StripeError;
+import uk.gov.pay.connector.gateway.stripe.response.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
@@ -94,7 +94,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                 APPLICATION_FORM_URLENCODED_TYPE);
 
         if (sourceResponse.getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR) {
-            String reason = sourceResponse.readEntity(StripeError.class).getError().getMessage();
+            String reason = sourceResponse.readEntity(StripeErrorResponse.class).getError().getMessage();
             String errorId = UUID.randomUUID().toString();
             logger.error("There was error calling /v1/tokens. Reason: {}, ErrorId: {}", reason, errorId);
             throw new WebApplicationException("There was an internal server error. ErrorId: " + errorId);
