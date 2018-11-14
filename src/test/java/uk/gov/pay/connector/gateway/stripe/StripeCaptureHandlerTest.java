@@ -47,10 +47,14 @@ public class StripeCaptureHandlerTest extends BaseStripePaymentProviderTest {
                 UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
-    @Test(expected = WebApplicationException.class)
-    public void shouldThrowException_whenPaymentProviderReturns5xxHttpStatusCode() throws IOException {
+    @Test
+    public void shouldNotCaptureIfPaymentProviderReturns5xxHttpStatusCode() throws IOException {
         mockPaymentProviderErrorResponse(500, errorCaptureResponse());
         GatewayResponse<StripeCaptureResponse> response = stripeCaptureHandler.capture(buildTestCaptureRequest());
+        assertThat(response.isFailed(), is(true));
+        assertThat(response.getGatewayError().isPresent(), is(true));
+        assertEquals(response.getGatewayError().get(), new GatewayError("No such charge: ch_123456 or something similar",
+                UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
 }
