@@ -365,8 +365,8 @@ public class ChargeService {
         detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
         detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
 
-        if (authCardDetails.getAddress() != null)
-            detailsEntity.setBillingAddress(new AddressEntity(authCardDetails.getAddress()));
+        if (authCardDetails.getAddress().isPresent())
+            detailsEntity.setBillingAddress(new AddressEntity(authCardDetails.getAddress().get()));
 
         return detailsEntity;
     }

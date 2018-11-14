@@ -21,20 +21,26 @@ public class AuthCardDetailsValidator {
         return isValidCardNumberLength(authCardDetails.getCardNo()) &&
                 isBetween3To4Digits(authCardDetails.getCvc()) &&
                 hasExpiryDateFormat(authCardDetails.getEndDate()) &&
-                isValidAddress(authCardDetails.getAddress()) &&
                 hasCardBrand(authCardDetails.getCardBrand()) &&
                 unlikelyToBeCvc(authCardDetails.getCardHolder()) &&
                 unlikelyToContainACardNumber(authCardDetails.getCardHolder()) &&
                 unlikelyToContainACardNumber(authCardDetails.getCardBrand()) &&
-                addressUnlikelyToContainACardNumber(authCardDetails.getAddress());
+                isAddressValid(authCardDetails);
     }
 
-    private static boolean isValidAddress(Address address) {
-        return address == null ||
-                (isNotBlank(address.getCity()) &&
-                        isNotBlank(address.getLine1()) &&
-                        isNotBlank(address.getPostcode()) &&
-                        isNotBlank(address.getCountry()));
+    private static boolean isAddressValid(AuthCardDetails authCardDetails) {
+        if (!authCardDetails.getAddress().isPresent())
+            return true;
+
+        return isAddressComplete(authCardDetails.getAddress().get()) &&
+                addressUnlikelyToContainACardNumber(authCardDetails.getAddress().get());
+    }
+
+    private static boolean isAddressComplete(Address address) {
+        return isNotBlank(address.getCity()) &&
+                isNotBlank(address.getLine1()) &&
+                isNotBlank(address.getPostcode()) &&
+                isNotBlank(address.getCountry());
     }
 
     private static boolean hasCardBrand(String cardBrand) {
@@ -54,13 +60,12 @@ public class AuthCardDetailsValidator {
     }
 
     private static boolean addressUnlikelyToContainACardNumber(Address address) {
-        return address == null ||
-                (unlikelyToContainACardNumber(address.getLine1()) &&
-                        unlikelyToContainACardNumber(address.getLine2()) &&
-                        unlikelyToContainACardNumber(address.getCity()) &&
-                        unlikelyToContainACardNumber(address.getCounty()) &&
-                        unlikelyToContainACardNumber(address.getPostcode()) &&
-                        unlikelyToContainACardNumber(address.getCountry()));
+        return unlikelyToContainACardNumber(address.getLine1()) &&
+                unlikelyToContainACardNumber(address.getLine2()) &&
+                unlikelyToContainACardNumber(address.getCity()) &&
+                unlikelyToContainACardNumber(address.getCounty()) &&
+                unlikelyToContainACardNumber(address.getPostcode()) &&
+                unlikelyToContainACardNumber(address.getCountry());
     }
 
     private static boolean unlikelyToContainACardNumber(String field) {

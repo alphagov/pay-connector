@@ -5,6 +5,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
 import static uk.gov.pay.connector.gateway.model.PayersCardType.CREDIT_OR_DEBIT;
 
@@ -90,19 +91,19 @@ public class AuthCardDetails implements AuthorisationDetails {
     public String getEndDate() {
         return endDate;
     }
-    
+
     public String expiryMonth() {
         YearMonth yearMonth = YearMonth.parse(endDate, DateTimeFormatter.ofPattern("MM/yy"));
         return String.valueOf(yearMonth.getMonthValue());
     }
-    
+
     public String expiryYear() {
         YearMonth yearMonth = YearMonth.parse(endDate, DateTimeFormatter.ofPattern("MM/yy"));
-        return String.valueOf(yearMonth.getYear()).substring(2,4);
+        return String.valueOf(yearMonth.getYear()).substring(2, 4);
     }
 
-    public Address getAddress() {
-        return address;
+    public Optional<Address> getAddress() {
+        return Optional.ofNullable(address);
     }
 
     public String getCardBrand() {
