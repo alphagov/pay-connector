@@ -9,6 +9,7 @@ import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Embeddable;
 import javax.persistence.Embedded;
+import java.util.Optional;
 
 @Embeddable
 public class CardDetailsEntity {
@@ -18,7 +19,7 @@ public class CardDetailsEntity {
     @Convert(converter = FirstDigitsCardNumberConverter.class)
     @JsonSerialize(using = ToStringSerializer.class)
     private FirstDigitsCardNumber firstDigitsCardNumber;
-    
+
     @Column(name = "last_digits_card_number")
     @JsonProperty("last_digits_card_number")
     @Convert(converter = LastDigitsCardNumberConverter.class)
@@ -66,7 +67,7 @@ public class CardDetailsEntity {
     public LastDigitsCardNumber getLastDigitsCardNumber() {
         return lastDigitsCardNumber;
     }
-    
+
     public FirstDigitsCardNumber getFirstDigitsCardNumber() {
         return firstDigitsCardNumber;
     }
@@ -95,8 +96,8 @@ public class CardDetailsEntity {
         this.expiryDate = expiryDate;
     }
 
-    public AddressEntity getBillingAddress() {
-        return billingAddress;
+    public Optional<AddressEntity> getBillingAddress() {
+        return Optional.ofNullable(billingAddress);
     }
 
     public void setBillingAddress(AddressEntity billingAddress) {

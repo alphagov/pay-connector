@@ -24,7 +24,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertNotNull;
 
 
 public class ChargeDaoCardDetailsITest extends DaoITestBase {
@@ -77,13 +76,13 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
         assertThat(cardDetailsEntity.getLastDigitsCardNumber(), is(testCardDetails.getLastDigitsCardNumber()));
         assertThat(cardDetailsEntity.getFirstDigitsCardNumber(), is(testCardDetails.getFirstDigitsCardNumber()));
         assertThat(cardDetailsEntity.getExpiryDate(), is(testCardDetails.getExpiryDate()));
-        assertNotNull(cardDetailsEntity.getBillingAddress());
-        assertThat(cardDetailsEntity.getBillingAddress().getLine1(), is(testCardDetails.getBillingAddress().getLine1()));
-        assertThat(cardDetailsEntity.getBillingAddress().getLine2(), is(testCardDetails.getBillingAddress().getLine2()));
-        assertThat(cardDetailsEntity.getBillingAddress().getPostcode(), is(testCardDetails.getBillingAddress().getPostcode()));
-        assertThat(cardDetailsEntity.getBillingAddress().getCity(), is(testCardDetails.getBillingAddress().getCity()));
-        assertThat(cardDetailsEntity.getBillingAddress().getCounty(), is(testCardDetails.getBillingAddress().getCounty()));
-        assertThat(cardDetailsEntity.getBillingAddress().getCountry(), is(testCardDetails.getBillingAddress().getCountry()));
+        assertThat(cardDetailsEntity.getBillingAddress().isPresent(), is(true));
+        assertThat(cardDetailsEntity.getBillingAddress().get().getLine1(), is(testCardDetails.getBillingAddress().getLine1()));
+        assertThat(cardDetailsEntity.getBillingAddress().get().getLine2(), is(testCardDetails.getBillingAddress().getLine2()));
+        assertThat(cardDetailsEntity.getBillingAddress().get().getPostcode(), is(testCardDetails.getBillingAddress().getPostcode()));
+        assertThat(cardDetailsEntity.getBillingAddress().get().getCity(), is(testCardDetails.getBillingAddress().getCity()));
+        assertThat(cardDetailsEntity.getBillingAddress().get().getCounty(), is(testCardDetails.getBillingAddress().getCounty()));
+        assertThat(cardDetailsEntity.getBillingAddress().get().getCountry(), is(testCardDetails.getBillingAddress().getCountry()));
     }
 
     @Test
@@ -105,13 +104,13 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
         assertThat(cardDetailsEntity.getLastDigitsCardNumber(), is(nullValue()));
         assertThat(cardDetailsEntity.getFirstDigitsCardNumber(), is(nullValue()));
         assertThat(cardDetailsEntity.getExpiryDate(), is(testCardDetails.getExpiryDate()));
-        assertNotNull(cardDetailsEntity.getBillingAddress());
-        assertThat(cardDetailsEntity.getBillingAddress().getLine1(), is(testCardDetails.getBillingAddress().getLine1()));
-        assertThat(cardDetailsEntity.getBillingAddress().getLine2(), is(testCardDetails.getBillingAddress().getLine2()));
-        assertThat(cardDetailsEntity.getBillingAddress().getPostcode(), is(testCardDetails.getBillingAddress().getPostcode()));
-        assertThat(cardDetailsEntity.getBillingAddress().getCity(), is(testCardDetails.getBillingAddress().getCity()));
-        assertThat(cardDetailsEntity.getBillingAddress().getCounty(), is(testCardDetails.getBillingAddress().getCounty()));
-        assertThat(cardDetailsEntity.getBillingAddress().getCountry(), is(testCardDetails.getBillingAddress().getCountry()));
+        assertThat(cardDetailsEntity.getBillingAddress().isPresent(), is(true));
+        assertThat(cardDetailsEntity.getBillingAddress().get().getLine1(), is(testCardDetails.getBillingAddress().getLine1()));
+        assertThat(cardDetailsEntity.getBillingAddress().get().getLine2(), is(testCardDetails.getBillingAddress().getLine2()));
+        assertThat(cardDetailsEntity.getBillingAddress().get().getPostcode(), is(testCardDetails.getBillingAddress().getPostcode()));
+        assertThat(cardDetailsEntity.getBillingAddress().get().getCity(), is(testCardDetails.getBillingAddress().getCity()));
+        assertThat(cardDetailsEntity.getBillingAddress().get().getCounty(), is(testCardDetails.getBillingAddress().getCounty()));
+        assertThat(cardDetailsEntity.getBillingAddress().get().getCountry(), is(testCardDetails.getBillingAddress().getCountry()));
     }
 
     @Test
@@ -130,11 +129,11 @@ public class ChargeDaoCardDetailsITest extends DaoITestBase {
         assertThat(cardDetailsSaved, hasEntry("first_digits_card_number", "123456"));
         assertThat(cardDetailsSaved, hasEntry("cardholder_name", cardDetailsEntity.getCardHolderName()));
         assertThat(cardDetailsSaved, hasEntry("expiry_date", cardDetailsEntity.getExpiryDate()));
-        assertThat(cardDetailsSaved, hasEntry("address_line1", cardDetailsEntity.getBillingAddress().getLine1()));
-        assertThat(cardDetailsSaved, hasEntry("address_line2", cardDetailsEntity.getBillingAddress().getLine2()));
-        assertThat(cardDetailsSaved, hasEntry("address_postcode", cardDetailsEntity.getBillingAddress().getPostcode()));
-        assertThat(cardDetailsSaved, hasEntry("address_city", cardDetailsEntity.getBillingAddress().getCity()));
-        assertThat(cardDetailsSaved, hasEntry("address_county", cardDetailsEntity.getBillingAddress().getCounty()));
-        assertThat(cardDetailsSaved, hasEntry("address_country", cardDetailsEntity.getBillingAddress().getCountry()));
+        assertThat(cardDetailsSaved, hasEntry("address_line1", cardDetailsEntity.getBillingAddress().get().getLine1()));
+        assertThat(cardDetailsSaved, hasEntry("address_line2", cardDetailsEntity.getBillingAddress().get().getLine2()));
+        assertThat(cardDetailsSaved, hasEntry("address_postcode", cardDetailsEntity.getBillingAddress().get().getPostcode()));
+        assertThat(cardDetailsSaved, hasEntry("address_city", cardDetailsEntity.getBillingAddress().get().getCity()));
+        assertThat(cardDetailsSaved, hasEntry("address_county", cardDetailsEntity.getBillingAddress().get().getCounty()));
+        assertThat(cardDetailsSaved, hasEntry("address_country", cardDetailsEntity.getBillingAddress().get().getCountry()));
     }
 }
