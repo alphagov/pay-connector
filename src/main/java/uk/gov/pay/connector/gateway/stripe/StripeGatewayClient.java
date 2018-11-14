@@ -73,7 +73,7 @@ public class StripeGatewayClient {
             }
             logger.error(format("Exception for gateway url=%s", url.toString()), pe);
             throw new WebApplicationException(pe.getMessage());
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             metricRegistry.counter(metricsPrefix + ".failures").inc();
             logger.error(format("Exception for gateway url=%s", url.toString()), e);
             throw new WebApplicationException(e.getMessage());
