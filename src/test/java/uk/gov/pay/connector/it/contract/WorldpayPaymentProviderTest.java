@@ -29,8 +29,8 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
-import uk.gov.pay.connector.util.AuthUtils;
 
 import javax.ws.rs.client.ClientBuilder;
 import java.io.IOException;
@@ -53,7 +53,6 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
-import static uk.gov.pay.connector.util.AuthUtils.aValidAuthorisationDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
 @Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
@@ -119,7 +118,8 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldBeAbleToSendAuthorisationRequestForMerchant() throws Exception {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest();
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+        AuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
 
         assertTrue(response.isSuccessful());
@@ -128,8 +128,12 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldBeAbleToSendAuthorisationRequestForMerchantWithoutAddress() throws Exception {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest();
-        request.getAuthCardDetails().setAddress(null);
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(null)
+                .build();
+
+        AuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
 
         assertTrue(response.isSuccessful());
@@ -138,7 +142,11 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3ds() throws Exception {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        AuthorisationGatewayRequest request = getCardAuthorisationRequestWithRequired3ds();
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS)
+                .build();
+
+        AuthorisationGatewayRequest request = getCardAuthorisationRequestWithRequired3ds(authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
 
         assertTrue(response.isSuccessful());
@@ -154,8 +162,12 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithoutAddress() throws Exception {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        AuthorisationGatewayRequest request = getCardAuthorisationRequestWithRequired3ds();
-        request.getAuthCardDetails().setAddress(null);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS)
+                .withAddress(null)
+                .build();
+
+        AuthorisationGatewayRequest request = getCardAuthorisationRequestWithRequired3ds(authCardDetails);
 
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
@@ -186,7 +198,8 @@ public class WorldpayPaymentProviderTest {
     public void shouldBeAbleToSubmitAPartialRefundAfterACaptureHasBeenSubmitted() throws InterruptedException {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         WorldpayCaptureHandler worldpayCaptureHandler = (WorldpayCaptureHandler) paymentProvider.getCaptureHandler();
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest();
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+        AuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
         String transactionId = response.getBaseResponse().get().getTransactionId();
 
@@ -210,7 +223,8 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldBeAbleToSendCancelRequestForMerchant() throws Exception {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest();
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+        AuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
 
         assertTrue(response.isSuccessful());
@@ -246,14 +260,15 @@ public class WorldpayPaymentProviderTest {
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
 
-        AuthorisationGatewayRequest request = new AuthorisationGatewayRequest(charge, aValidAuthorisationDetails());
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+
+        AuthorisationGatewayRequest request = new AuthorisationGatewayRequest(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request);
 
         assertFalse(response.isSuccessful());
     }
 
-    private AuthorisationGatewayRequest getCardAuthorisationRequest() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
+    private AuthorisationGatewayRequest getCardAuthorisationRequest(AuthCardDetails authCardDetails) {
         ChargeEntity charge = aValidChargeEntity()
                 .withTransactionId(randomUUID().toString())
                 .withGatewayAccountEntity(validGatewayAccount)
@@ -261,8 +276,7 @@ public class WorldpayPaymentProviderTest {
         return new AuthorisationGatewayRequest(charge, authCardDetails);
     }
 
-    private AuthorisationGatewayRequest getCardAuthorisationRequestWithRequired3ds() {
-        AuthCardDetails authCardDetails = AuthUtils.buildAuthCardDetails(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS);
+    private AuthorisationGatewayRequest getCardAuthorisationRequestWithRequired3ds(AuthCardDetails authCardDetails) {
         ChargeEntity charge = aValidChargeEntity()
                 .withTransactionId(randomUUID().toString())
                 .withGatewayAccountEntity(validGatewayAccountFor3ds)

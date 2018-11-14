@@ -4,348 +4,520 @@ import org.junit.Test;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.common.validator.AuthCardDetailsValidator;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.model.domain.AddressFixture;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.util.AuthUtils.aValidAuthorisationDetails;
-import static uk.gov.pay.connector.util.AuthUtils.addressFor;
-import static uk.gov.pay.connector.util.AuthUtils.buildAuthCardDetails;
-import static uk.gov.pay.connector.util.AuthUtils.goodAddress;
 
 public class AuthCardDetailsValidatorTest {
-
-    private String validCVC = "999";
-    private String validCardNumber = "4242424242424242";
-    private String validExpiryDate = "12/99";
-    private String cardBrand = "card-brand";
 
     private String sneakyCardNumber = "this12card3number4is5hidden6;7 89-0(1+2.";
 
     @Test
     public void validationSucceedForCorrectAuthorisationCardDetails() {
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, validExpiryDate, cardBrand);
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+
+        assertThat(AuthCardDetailsValidator.isWellFormatted(authCardDetails), is(true));
     }
 
     @Test
     public void validationSucceedForCVCwith4Digits() {
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor("12345678901234", "1234", validExpiryDate, cardBrand);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCvc("1234")
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
-    public void validationSucceedFor4digitsCardNumber() {
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor("12345678901234", validCVC, validExpiryDate, cardBrand);
+    public void validationSucceedFor14digitsCardNumber() {
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo("12345678901234")
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsForMissingCVC() {
-        AuthCardDetails wrongauthorisationDetails = buildAuthCardDetailsFor(validCardNumber, null, validExpiryDate, cardBrand);
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(wrongauthorisationDetails));
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCvc(null)
+                .build();
+
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsForMissingCardNumber() {
-        AuthCardDetails wrongauthorisationDetails = buildAuthCardDetailsFor(null, validCVC, validExpiryDate, cardBrand);
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(wrongauthorisationDetails));
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo(null)
+                .build();
+
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsForMissingExpiryDate() {
-        AuthCardDetails wrongauthorisationDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, null, cardBrand);
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(wrongauthorisationDetails));
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withEndDate(null)
+                .build();
+
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
-    public void validationFailsForMissingCardTypeId() {
-        AuthCardDetails wrongauthorisationDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, validExpiryDate, null);
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(wrongauthorisationDetails));
+    public void validationFailsForMissingCardBrand() {
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardBrand(null)
+                .build();
+
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsForEmptyFields() {
-        AuthCardDetails wrongauthorisationDetails = buildAuthCardDetailsFor("", "", "", "");
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(wrongauthorisationDetails));
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo("")
+                .withCvc("")
+                .withEndDate("")
+                .withCardBrand("")
+                .build();
+
+        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsFor11digitsCardNumber() {
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor("12345678901", validCVC, validExpiryDate, cardBrand);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo("12345678901")
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedsFor12digitsCardNumber() {
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor("123456789012", validCVC, validExpiryDate, cardBrand);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo("123456789012")
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedsFor19digitsCardNumber() {
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor("1234567890123456789", validCVC, validExpiryDate, cardBrand);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo("1234567890123456789")
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsFor20digitsCardNumber() {
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor("12345678901234567890", validCVC, validExpiryDate, cardBrand);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo("12345678901234567890")
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsForCardNumberWithNonDigits() {
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor("123456789012345A", validCVC, validExpiryDate, cardBrand);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo("123456789012345A")
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsForCVCwithNonDigits() {
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, "45A", validExpiryDate, cardBrand);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCvc("45A")
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsForCVCwithMoreThan4Digits() {
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, "12345", validExpiryDate, cardBrand);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCvc("12345")
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsForCVCwithLessThan3Digits() {
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, "12", validExpiryDate, cardBrand);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCvc("12")
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsForExpiryDateWithWrongFormat() {
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, "1290", cardBrand);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withEndDate("1290")
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
-    
+
     @Test
     public void validationFailsForMissingCityAddress() {
-        Address address = addressFor("L1", null, "WJWHE", "GB");
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, validExpiryDate, cardBrand, address);
+        Address address = AddressFixture.anAddress()
+                .withCity(null)
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsForMissingLine1Address() {
-        Address address = addressFor(null, "London", "WJWHE", "GB");
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, validExpiryDate, cardBrand, address);
+        Address address = AddressFixture.anAddress()
+                .withLine1(null)
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsForMissingCountryAddress() {
-        Address address = addressFor("L1", "London", "WJWHE", null);
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, validExpiryDate, cardBrand, address);
+        Address address = AddressFixture.anAddress()
+                .withCountry(null)
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsForMissingPostcodeAddress() {
-        Address address = addressFor("L1", "London", null, "GB");
-        cardBrand = "card-brand";
-        AuthCardDetails authCardDetails = buildAuthCardDetailsFor(validCardNumber, validCVC, validExpiryDate, cardBrand, address);
+        Address address = AddressFixture.anAddress()
+                .withPostcode(null)
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsIfCardHolderContainsMoreThanElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setCardHolder(sneakyCardNumber);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder(sneakyCardNumber)
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedsIfCardHolderContainsExactlyElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setCardHolder("1 Mr John 123456789 Smith 0");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("1 Mr John 123456789 Smith 0")
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsIfCardBrandContainsMoreThanElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setCardBrand(sneakyCardNumber);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardBrand(sneakyCardNumber)
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedsIfCardBrandContainsExactlyElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setCardBrand("12345678901");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardBrand("12345678901")
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsIfAddressLine1ContainsMoreThanElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.getAddress().setLine1(sneakyCardNumber);
+        Address address = AddressFixture.anAddress()
+                .withLine1(sneakyCardNumber)
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedIfAddressLine1ContainsExactlyElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.getAddress().setLine2("01234/5678 90th Street");
+        Address address = AddressFixture.anAddress()
+                .withLine1("01234/5678 90th Street")
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsIfAddressLine2ContainsMoreThanElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.getAddress().setLine2(sneakyCardNumber);
+        Address address = AddressFixture.anAddress()
+                .withLine2(sneakyCardNumber)
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedIfAddressLine2ContainsExactlyElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.getAddress().setLine2("01234/5678 90th Street");
+        Address address = AddressFixture.anAddress()
+                .withLine2("01234/5678 90th Street")
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedIfAddressLine2IsNull() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.getAddress().setLine2(null);
+        Address address = AddressFixture.anAddress()
+                .withLine2(null)
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedIfAddressIsNull() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setAddress(null);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(null)
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsIfPostCodeContainsMoreThanElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.getAddress().setPostcode(sneakyCardNumber);
+        Address address = AddressFixture.anAddress()
+                .withPostcode(sneakyCardNumber)
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedsIfPostCodeContainsExactlyElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.getAddress().setPostcode("12N3446789M01");
+        Address address = AddressFixture.anAddress()
+                .withPostcode("12N3446789M01")
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsIfCityContainsMoreThanElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.getAddress().setCity(sneakyCardNumber);
+        Address address = AddressFixture.anAddress()
+                .withCity(sneakyCardNumber)
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedsIfCityContainsExactlyElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.getAddress().setCity("12N3446789M01");
+        Address address = AddressFixture.anAddress()
+                .withCity("12N3446789M01")
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsIfCountyMoreThanElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.getAddress().setCounty(sneakyCardNumber);
+        Address address = AddressFixture.anAddress()
+                .withCounty(sneakyCardNumber)
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedsIfCountyContainsExactlyElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.getAddress().setCounty("12N3446789M01");
+        Address address = AddressFixture.anAddress()
+                .withCounty("12N3446789M01")
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedsIfCountyIsNull() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.getAddress().setCounty(null);
+        Address address = AddressFixture.anAddress()
+                .withCounty(null)
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsIfCountryMoreThanElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.getAddress().setCountry(sneakyCardNumber);
+        Address address = AddressFixture.anAddress()
+                .withCountry(sneakyCardNumber)
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedsIfCountryContainsExactlyElevenDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.getAddress().setCountry("12N3446789M01");
+        Address address = AddressFixture.anAddress()
+                .withCountry("12N3446789M01")
+                .build();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(address)
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsIfCardHolderIsThreeDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setCardHolder("555");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("555")
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsIfCardHolderIsFourDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setCardHolder("5678");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("5678")
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsIfCardHolderIsThreeDigitsSurroundedByWhitespace() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setCardHolder(" \t 321 ");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder(" \t 321 ")
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationFailsIfCardHolderIsFourDigitsSurroundedByWhitespace() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setCardHolder(" 1234 \t");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder(" 1234 \t")
+                .build();
+
         assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedsIfCardHolderContainsThreeDigitsSurroundedByNonWhitespace() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setCardHolder("Ms 333");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("Ms 333")
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedsIfCardHolderContainsFourDigitsSurroundedByNonWhitespace() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setCardHolder("1234 Jr.");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("1234 Jr.")
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedsIfCardHolderContainsTwoDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setCardHolder("22");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("22")
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
     }
 
     @Test
     public void validationSucceedsIfCardHolderContainsFiveDigits() {
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setCardHolder("12345");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("12345")
+                .build();
+
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
-    }
-
-    private AuthCardDetails buildAuthCardDetailsFor(String cardNo, String cvc, String expiry, String cardBrand) {
-        return buildAuthCardDetailsFor(cardNo, cvc, expiry, cardBrand, goodAddress());
-    }
-
-    private AuthCardDetails buildAuthCardDetailsFor(String cardNo, String cvc, String expiry, String cardBrand, Address address) {
-        return buildAuthCardDetails("Mr. Payment", cardNo, cvc, expiry, cardBrand, address);
     }
 }

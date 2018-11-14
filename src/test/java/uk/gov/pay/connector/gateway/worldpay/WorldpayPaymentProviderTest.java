@@ -26,12 +26,12 @@ import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
-import uk.gov.pay.connector.util.AuthUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.io.IOException;
@@ -391,6 +391,13 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     private AuthCardDetails getValidTestCard() {
         Address address = new Address("123 My Street", "This road", "SW8URR", "London", "London state", "GB");
 
-        return AuthUtils.buildAuthCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
+        return AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("Mr. Payment")
+                .withCardNo("4111111111111111")
+                .withCvc("123")
+                .withEndDate("12/15")
+                .withCardBrand("visa")
+                .withAddress(address)
+                .build();
     }
 }

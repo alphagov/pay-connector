@@ -15,7 +15,6 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
@@ -37,6 +36,7 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.TestClientFactory;
 
@@ -60,7 +60,6 @@ import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
-import static uk.gov.pay.connector.util.AuthUtils.aValidAuthorisationDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
 @Ignore("Ignoring as this test is failing in Jenkins because it's failing to locate the certificates - PP-1707")
@@ -132,8 +131,11 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldAuthoriseSuccessfullyWithNoAddressInRequest() {
         setUpAndCheckThatEpdqIsUp();
-        AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
-        request.getAuthCardDetails().setAddress(null);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(null)
+                .build();
+
+        AuthorisationGatewayRequest request = new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
 
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
@@ -165,7 +167,12 @@ public class EpdqPaymentProviderTest {
     public void shouldAuthoriseSuccessfullyWhenCardholderNameContainsRightSingleQuotationMark() {
         setUpAndCheckThatEpdqIsUp();
         String cardholderName = "John O’Connor"; // That’s a U+2019 RIGHT SINGLE QUOTATION MARK, not a U+0027 APOSTROPHE
-        AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity, cardholderName);
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder(cardholderName)
+                .build();
+
+        AuthorisationGatewayRequest request = new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
         GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
     }
@@ -223,23 +230,14 @@ public class EpdqPaymentProviderTest {
     }
 
     private static AuthorisationGatewayRequest buildAuthorisationRequest(ChargeEntity chargeEntity) {
-        return buildAuthorisationRequest(chargeEntity, "Mr. Payment");
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+        return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
 
     private static Auth3dsResponseGatewayRequest buildQueryRequest(ChargeEntity chargeEntity, String auth3DResult) {
         Auth3dsDetails auth3DsDetails = new Auth3dsDetails();
         auth3DsDetails.setAuth3dsResult(auth3DResult);
         return new Auth3dsResponseGatewayRequest(chargeEntity, auth3DsDetails);
-    }
-
-    private static AuthorisationGatewayRequest buildAuthorisationRequest(ChargeEntity chargeEntity, String cardholderName) {
-        Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", null, "GB");
-
-        AuthCardDetails authCardDetails = aValidAuthorisationDetails();
-        authCardDetails.setCardHolder(cardholderName);
-        authCardDetails.setAddress(address);
-
-        return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
 
     private void setUpFor3dsAndCheckThatEpdqIsUp() {

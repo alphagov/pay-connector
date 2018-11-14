@@ -5,7 +5,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
-import uk.gov.pay.connector.util.AuthUtils;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static org.junit.Assert.assertEquals;
@@ -24,8 +24,7 @@ public class EpdqOrderRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithAllFields() {
-        Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", "London", "GB");
-        AuthCardDetails authCardDetails = AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
+        AuthCardDetails authCardDetails = aValidEpdqAuthCardDetails();
 
         GatewayOrder actualRequest = anEpdqAuthoriseOrderRequestBuilder()
                 .withOrderId("mq4ht90j2oir6am585afk58kml")
@@ -45,8 +44,7 @@ public class EpdqOrderRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidAuthorise3dsOrderRequestForAddressWithAllFields() {
-        Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", "London", "GB");
-        AuthCardDetails authCardDetails = AuthUtils.buildAuthCardDetails("Mr. Payment", "5555444433331111", "737", "08/18", "visa", address);
+        AuthCardDetails authCardDetails = aValidEpdqAuthCardDetails();
 
         GatewayOrder actualRequest = anEpdq3DsAuthoriseOrderRequestBuilder("http://www.frontend.example.com")
                 .withOrderId("mq4ht90j2oir6am585afk58kml")
@@ -106,5 +104,18 @@ public class EpdqOrderRequestBuilderTest {
 
         assertEquals(TestTemplateResourceLoader.load(EPDQ_REFUND_REQUEST), gatewayOrder.getPayload());
         assertEquals(OrderRequestType.REFUND, gatewayOrder.getOrderRequestType());
+    }
+
+    private AuthCardDetails aValidEpdqAuthCardDetails() {
+        Address address = new Address("41", "Scala Street", "EC2A 1AE", "London", "London", "GB");
+
+        return AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("Mr. Payment")
+                .withCardNo("5555444433331111")
+                .withCvc("737")
+                .withEndDate("08/18")
+                .withCardBrand("visa")
+                .withAddress(address)
+                .build();
     }
 }

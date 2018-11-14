@@ -11,13 +11,13 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
 import uk.gov.pay.connector.util.AuthUtils;
@@ -76,7 +76,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
 
-        AuthCardDetails authCardDetails = getValidTestCard();
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
 
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(aServiceAccount())
@@ -92,7 +92,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
 
     @Test
     public void shouldRequire3dsFor3dsRequiredMerchant() throws Exception {
-        AuthCardDetails authCardDetails = getValidTestCard();
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         GatewayAccountEntity gatewayAccountEntity = aServiceAccount();
         gatewayAccountEntity.setRequires3ds(true);
         ChargeEntity chargeEntity = aValidChargeEntity()
@@ -189,12 +189,6 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
 
     private String successCaptureResponse() {
         return TestTemplateResourceLoader.load(SMARTPAY_CAPTURE_SUCCESS_RESPONSE).replace("{{pspReference}}", "8614440510830227");
-    }
-
-    private AuthCardDetails getValidTestCard() {
-        Address address = new Address("123 My Street", "This road", "SW8URR", "London", "London state", "GB");
-
-        return AuthUtils.buildAuthCardDetails("Mr. Payment", "4111111111111111", "123", "12/15", "visa", address);
     }
 
     private String notificationPayloadForTransaction(String originalReference, String pspReference, String merchantReference, String fileName) throws IOException {

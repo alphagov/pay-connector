@@ -20,11 +20,13 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.GatewayClient;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.List;
@@ -40,7 +42,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
-import static uk.gov.pay.connector.util.AuthUtils.aValidAuthorisationDetails;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -67,7 +68,7 @@ public class GatewayAuthFailuresITest {
         gatewayStub = new GatewayStub(TRANSACTION_ID);
 
         databaseTestHelper = testContext.getDatabaseTestHelper();
-        
+
         DatabaseFixtures.TestAccount testAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
@@ -100,12 +101,13 @@ public class GatewayAuthFailuresITest {
 
         String errorMessage = "Unexpected HTTP status code 999 from gateway";
         String cardAuthUrl = "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeTestRecord.getExternalChargeId());
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
 
         given().config(RestAssured.config().connectionConfig(connectionConfig().closeIdleConnectionsAfterEachResponse()))
                 .port(testContext.getPort())
                 .contentType(JSON)
                 .when()
-                .body(aValidAuthorisationDetails())
+                .body(authCardDetails)
                 .post(cardAuthUrl)
                 .then()
                 .statusCode(500)
