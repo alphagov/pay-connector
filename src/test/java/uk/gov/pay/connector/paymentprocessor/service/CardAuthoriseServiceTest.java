@@ -173,7 +173,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(charge, Optional.empty());
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
-        assertThat(charge.getCardDetails().getBillingAddress(), is(nullValue()));
+        assertThat(charge.getCardDetails().getBillingAddress().isPresent(), is(false));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
     }
 
@@ -458,12 +458,13 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(cardDetails.getExpiryDate(), is(expiryDate));
         assertThat(cardDetails.getLastDigitsCardNumber().toString(), is("4242"));
         assertThat(cardDetails.getFirstDigitsCardNumber().toString(), is("424242"));
-        assertThat(cardDetails.getBillingAddress().getLine1(), is(addressLine1));
-        assertThat(cardDetails.getBillingAddress().getLine2(), is(addressLine2));
-        assertThat(cardDetails.getBillingAddress().getPostcode(), is(postcode));
-        assertThat(cardDetails.getBillingAddress().getCity(), is(city));
-        assertThat(cardDetails.getBillingAddress().getCountry(), is(country));
-        assertThat(cardDetails.getBillingAddress().getCounty(), is(county));
+        assertThat(cardDetails.getBillingAddress().isPresent(), is(true));
+        assertThat(cardDetails.getBillingAddress().get().getLine1(), is(addressLine1));
+        assertThat(cardDetails.getBillingAddress().get().getLine2(), is(addressLine2));
+        assertThat(cardDetails.getBillingAddress().get().getPostcode(), is(postcode));
+        assertThat(cardDetails.getBillingAddress().get().getCity(), is(city));
+        assertThat(cardDetails.getBillingAddress().get().getCountry(), is(country));
+        assertThat(cardDetails.getBillingAddress().get().getCounty(), is(county));
     }
 
     @Test
