@@ -18,9 +18,11 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.stripe.json.StripeError;
+import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTokenResponse;
+import uk.gov.pay.connector.gateway.stripe.response.StripeErrorResponse;
+import uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -54,6 +56,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     private final StripeGatewayClient client;
     private final StripeGatewayConfig stripeGatewayConfig;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
+    private final StripeCaptureHandler stripeCaptureHandler;
 
     @Inject
     public StripePaymentProvider(StripeGatewayClient stripeGatewayClient,
@@ -61,6 +64,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         this.stripeGatewayConfig = configuration.getStripeConfig();
         this.client = stripeGatewayClient;
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+        stripeCaptureHandler = new StripeCaptureHandler(client, stripeGatewayConfig);
     }
 
     @Override
@@ -87,11 +91,11 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                 AUTHORISE,
                 URI.create(stripeGatewayConfig.getUrl() + "/v1/tokens"),
                 tokenPayload(request),
-                getAuthHeaderValue(),
+                StripeAuthUtil.getAuthHeaderValue(stripeGatewayConfig),
                 APPLICATION_FORM_URLENCODED_TYPE);
 
         if (tokenResponse.getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR) {
-            String reason = tokenResponse.readEntity(StripeError.class).getError().getMessage();
+            String reason = tokenResponse.readEntity(StripeErrorResponse.class).getError().getMessage();
             String errorId = UUID.randomUUID().toString();
             logger.error("There was error calling /v1/tokens. Reason: {}, ErrorId: {}", reason, errorId);
             throw new WebApplicationException("There was an internal server error. ErrorId: " + errorId);
@@ -104,7 +108,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                 AUTHORISE,
                 URI.create(stripeGatewayConfig.getUrl() + "/v1/sources"),
                 sourcesPayload(token),
-                getAuthHeaderValue(),
+                StripeAuthUtil.getAuthHeaderValue(stripeGatewayConfig),
                 APPLICATION_FORM_URLENCODED_TYPE);
         
         String sourceId = sourcesResponse.readEntity(StripeSourcesResponse.class).getId();
@@ -114,15 +118,11 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                 AUTHORISE,
                 URI.create(stripeGatewayConfig.getUrl() + "/v1/charges"),
                 authorisePayload(request, sourceId),
-                getAuthHeaderValue(),
+                StripeAuthUtil.getAuthHeaderValue(stripeGatewayConfig),
                 APPLICATION_FORM_URLENCODED_TYPE);
 
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         return responseBuilder.withResponse(StripeAuthorisationResponse.of(authorisationResponse)).build();
-    }
-
-    private String getAuthHeaderValue() {
-        return "Bearer " + stripeGatewayConfig.getAuthToken();
     }
 
     @Override
@@ -132,7 +132,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
 
     @Override
     public CaptureHandler getCaptureHandler() {
-        throw new UnsupportedOperationException();
+        return stripeCaptureHandler;
     }
 
     @Override

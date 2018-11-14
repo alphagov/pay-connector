@@ -59,7 +59,6 @@ public class StripeGatewayClient {
                 incrementFailureCounter(metricRegistry, metricsPrefix);
                 throw new WebApplicationException("Unexpected HTTP status code " + response.getStatus() + " from gateway");
             }
-
             return response;
         } catch (ProcessingException pe) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
@@ -79,6 +78,10 @@ public class StripeGatewayClient {
             }
             logger.error(format("Exception for gateway url=%s", url.toString()), pe);
             throw new WebApplicationException(pe.getMessage());
+        } catch (Exception e) {
+            incrementFailureCounter(metricRegistry, metricsPrefix);
+            logger.error(format("Exception for gateway url=%s", url.toString()), e);
+            throw new WebApplicationException(e.getMessage());
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram(metricsPrefix + ".response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.stripe.json;
+package uk.gov.pay.connector.gateway.stripe.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 }
  **/
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class StripeError {
+public class StripeErrorResponse {
 
     @JsonProperty("error")
     private Error error;
@@ -24,8 +24,14 @@ public class StripeError {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public class Error {
 
+        @JsonProperty("code")
+        private String code;
         @JsonProperty("message")
         private String message;
+
+        public String getCode() {
+            return code;
+        }
 
         public String getMessage() {
             return message;

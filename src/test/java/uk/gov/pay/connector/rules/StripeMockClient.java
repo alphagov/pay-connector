@@ -15,8 +15,10 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CAPTURE_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_SOURCES_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 
 public class StripeMockClient {
     public void mockCreateToken() {
@@ -34,9 +36,19 @@ public class StripeMockClient {
         setupResponse(payload, "/v1/charges", 200);
     }
 
+    public void mockCaptureSuccess(String gatewayTransactionId) {
+        String payload = TestTemplateResourceLoader.load(STRIPE_CAPTURE_SUCCESS_RESPONSE);
+        setupResponse(payload, "/v1/charges/" + gatewayTransactionId + "/capture", 200);
+    }
+
+    public void mockCaptureError(String gatewayTransactionId) {
+        String payload = TestTemplateResourceLoader.load(STRIPE_ERROR_RESPONSE);
+        setupResponse(payload, "/v1/charges/" + gatewayTransactionId + "/capture", 401);
+    }
+
     public void mockUnauthorizedResponse() {
         Map<String, Object> unauthorizedResponse = ImmutableMap.of("error", ImmutableMap.of(
-                "message", "Invalid API Key provided: sk_test_****", 
+                "message", "Invalid API Key provided: sk_test_****",
                 "type", "invalid_request_error"));
         setupResponse(new JSONObject(unauthorizedResponse).toString(), "/v1/tokens", 401);
     }

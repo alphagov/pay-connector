@@ -3,12 +3,14 @@ package uk.gov.pay.connector.it.resources.stripe;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -16,6 +18,7 @@ import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -41,6 +44,7 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
@@ -56,6 +60,8 @@ public class StripeResourceITest {
     private static final String AMOUNT = "6234";
     private static final String DESCRIPTION = "Test description";
 
+    protected RestAssuredClient connectorRestApiClient;
+
     private String stripeAccountId;
     private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", CVC, EXP_MONTH + "/" + EXP_YEAR, "visa");
     private String paymentProvider = PaymentGatewayName.STRIPE.getName();
@@ -65,7 +71,7 @@ public class StripeResourceITest {
 
     @DropwizardTestContext
     private TestContext testContext;
-    
+
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
 
@@ -78,6 +84,8 @@ public class StripeResourceITest {
         stripeMockClient.mockCreateToken();
         stripeMockClient.mockCreateSource();
         stripeMockClient.mockCreateCharge();
+
+        connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
     }
 
     @Test
@@ -109,7 +117,7 @@ public class StripeResourceITest {
         assertThat(requests).hasSize(1);
         assertThat(requests.get(0).getBodyAsString()).isEqualTo(constructExpectedAuthoriseRequestBody());
     }
-    
+
     @Test
     public void invalidAuthCredentialsShouldReturnAnInternalServerError() {
         stripeMockClient.mockUnauthorizedResponse();
@@ -142,11 +150,38 @@ public class StripeResourceITest {
                 .body("message", containsString("There is no stripe_account_id for gateway account with id"));
     }
 
-    private String addCharge() {
+    @Test
+    public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
+
+        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+
+        String externalChargeId = addChargeWithStatus(AUTHORISATION_SUCCESS);
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(StringUtils.EMPTY)
+                .post(captureChargeUrlFor(externalChargeId))
+                .then().statusCode(204);
+
+        assertFrontendChargeStatusIs(externalChargeId, CAPTURE_APPROVED.getValue());
+    }
+
+    private String addChargeWithStatus(ChargeStatus chargeStatus) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, Long.valueOf(AMOUNT), ENTERING_CARD_DETAILS, "RETURN_URL", null, DESCRIPTION);
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, Long.valueOf(AMOUNT), chargeStatus, "RETURN_URL", null, DESCRIPTION);
         return externalChargeId;
+    }
+
+    protected void assertFrontendChargeStatusIs(String chargeId, String status) {
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .body("status", is(status));
+    }
+
+    private String addCharge() {
+        return addChargeWithStatus(ENTERING_CARD_DETAILS);
     }
 
     private void addGatewayAccount(Map credentials) {
@@ -165,6 +200,10 @@ public class StripeResourceITest {
         return encode(params);
     }
     
+    private String captureChargeUrlFor(String chargeId) {
+        return "/v1/frontend/charges/{chargeId}/capture".replace("{chargeId}", chargeId);
+    }
+
     private String constructExpectedAuthoriseRequestBody() {
         Map<String, String> params = new HashMap<>();
         params.put("amount", AMOUNT);

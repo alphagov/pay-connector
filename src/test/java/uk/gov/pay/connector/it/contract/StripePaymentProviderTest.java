@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.contract;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
@@ -8,11 +9,15 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
@@ -41,24 +46,49 @@ public class StripePaymentProviderTest {
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
+    @Mock
+    private ClientFactory clientFactory;
+
     private StripePaymentProvider stripePaymentProvider;
-    
+
     private String stripeAccountId = "<replace me>";
 
     @Before
     public void setup() {
         ConnectorConfiguration connectorConfig = app.getInstanceFromGuiceContainer(ConnectorConfiguration.class);
         MetricRegistry metricRegistry = mock(MetricRegistry.class);
+        Counter counter = mock(Counter.class);
         when(metricRegistry.histogram(any(String.class))).thenReturn(mock(Histogram.class));
+        when(metricRegistry.counter(any())).thenReturn(counter);
         StripeGatewayClient stripeGatewayClient = new StripeGatewayClient(TestClientFactory.createJerseyClient(), metricRegistry);
         stripePaymentProvider = new StripePaymentProvider(stripeGatewayClient, connectorConfig);
     }
-    
+
     @Test
     public void createChargeInStripe() {
-        AuthorisationGatewayRequest request = AuthorisationGatewayRequest.valueOf(getCharge(), anAuthCardDetails().withEndDate("01/21").build());
-        GatewayResponse gatewayResponse = stripePaymentProvider.authorise(request);
+        GatewayResponse gatewayResponse = authorise();
         assertThat(gatewayResponse.isSuccessful()).isTrue();
+    }
+
+    @Test
+    public void captureStripeCharge() {
+        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
+
+        CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(getChargeWithTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId()));
+        GatewayResponse captureGatewayResponse = stripePaymentProvider.getCaptureHandler().capture(request);
+
+        assertThat(captureGatewayResponse.isSuccessful()).isTrue();
+    }
+
+    private GatewayResponse authorise() {
+        AuthorisationGatewayRequest request = AuthorisationGatewayRequest.valueOf(getCharge(), anAuthCardDetails().withEndDate("01/21").build());
+        return stripePaymentProvider.authorise(request);
+    }
+
+    private ChargeEntity getChargeWithTransactionId(String transactionId) {
+        ChargeEntity chargeEntity = getCharge();
+        chargeEntity.setGatewayTransactionId(transactionId);
+        return chargeEntity;
     }
 
     private ChargeEntity getCharge() {
