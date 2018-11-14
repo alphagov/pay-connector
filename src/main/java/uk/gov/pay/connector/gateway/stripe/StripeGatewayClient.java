@@ -4,23 +4,25 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.gateway.model.OrderRequestType;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.Response;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
-import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static java.util.Arrays.asList;
+import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
+import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 
 /**
  * This class, while named StripeGatewayClient, is meant to be payment provider agnostic. It will be used by all
@@ -38,30 +40,23 @@ public class StripeGatewayClient {
         this.metricRegistry = metricRegistry;
     }
 
-    public Response postRequest(GatewayAccountEntity account,
-                                OrderRequestType requestType,
-                                URI url,
+    public Response postRequest(URI url,
                                 String payload,
-                                String authHeaderValue,
-                                MediaType mediaType) {
-        String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), requestType);
-
+                                Map<String, String> headers,
+                                MediaType mediaType,
+                                String metricsPrefix) throws GatewayClientException {
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
-            logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
             Response response = client.target(url.toString())
                     .request()
-                    .header(AUTHORIZATION, authHeaderValue)
+                    .headers(new MultivaluedHashMap<>(headers))
                     .post(Entity.entity(payload, mediaType));
-
-            if (response.getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
-                logger.error("Stripe gateway returned server error: {}, for gateway url={} with type {}", response.getStatus(), url.toString(), account.getType());
-                incrementFailureCounter(metricRegistry, metricsPrefix);
-                throw new WebApplicationException("Unexpected HTTP status code " + response.getStatus() + " from gateway");
-            }
+            
+            throwIfErrorResponse(response, metricsPrefix);
+            
             return response;
         } catch (ProcessingException pe) {
-            incrementFailureCounter(metricRegistry, metricsPrefix);
+            metricRegistry.counter(metricsPrefix + ".failures").inc();
             if (pe.getCause() != null) {
                 if (pe.getCause() instanceof UnknownHostException) {
                     logger.error(format("DNS resolution error for gateway url=%s", url.toString()), pe);
@@ -79,7 +74,7 @@ public class StripeGatewayClient {
             logger.error(format("Exception for gateway url=%s", url.toString()), pe);
             throw new WebApplicationException(pe.getMessage());
         } catch (Exception e) {
-            incrementFailureCounter(metricRegistry, metricsPrefix);
+            metricRegistry.counter(metricsPrefix + ".failures").inc();
             logger.error(format("Exception for gateway url=%s", url.toString()), e);
             throw new WebApplicationException(e.getMessage());
         } finally {
@@ -88,7 +83,12 @@ public class StripeGatewayClient {
         }
     }
 
-    private void incrementFailureCounter(MetricRegistry metricRegistry, String metricsPrefix) {
-        metricRegistry.counter(metricsPrefix + ".failures").inc();
+    private void throwIfErrorResponse(Response response, String metricsPrefix) throws GatewayClientException {
+        if (asList(CLIENT_ERROR, SERVER_ERROR).contains(response.getStatusInfo().getFamily())) {
+            metricRegistry.counter(metricsPrefix + ".failures").inc();
+            throw new GatewayClientException(
+                    "Unexpected HTTP status code " + response.getStatus() + " from gateway",
+                    response);
+        }
     }
 }

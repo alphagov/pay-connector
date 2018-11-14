@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe;
 
+import com.google.common.collect.ImmutableMap;
 import fj.data.Either;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -12,6 +13,8 @@ import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
+import uk.gov.pay.connector.gateway.model.ErrorType;
+import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -29,7 +32,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -40,13 +42,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
+import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
-import static uk.gov.pay.connector.gateway.model.OrderRequestType.AUTHORISE;
+
 
 @Singleton
 public class StripePaymentProvider implements PaymentProvider<BaseResponse, String> {
@@ -58,7 +60,6 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final StripeCaptureHandler stripeCaptureHandler;
 
-    @Inject
     public StripePaymentProvider(StripeGatewayClient stripeGatewayClient,
                                  ConnectorConfiguration configuration) {
         this.stripeGatewayConfig = configuration.getStripeConfig();
@@ -86,43 +87,77 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     public GatewayResponse authorise(AuthorisationGatewayRequest request) {
         logger.info("Calling Stripe for authorisation of charge [{}]", request.getChargeExternalId());
 
-        Response tokenResponse = client.postRequest(
-                request.getGatewayAccount(),
-                AUTHORISE,
-                URI.create(stripeGatewayConfig.getUrl() + "/v1/tokens"),
-                tokenPayload(request),
-                StripeAuthUtil.getAuthHeaderValue(stripeGatewayConfig),
-                APPLICATION_FORM_URLENCODED_TYPE);
-
-        if (tokenResponse.getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR) {
-            String reason = tokenResponse.readEntity(StripeErrorResponse.class).getError().getMessage();
-            String errorId = UUID.randomUUID().toString();
-            logger.error("There was error calling /v1/tokens. Reason: {}, ErrorId: {}", reason, errorId);
-            throw new WebApplicationException("There was an internal server error. ErrorId: " + errorId);
+        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
+                .GatewayResponseBuilder
+                .responseBuilder();
+        
+        try {
+            Response tokenResponse = createToken(request);
+            Response sourceResponse = createSource(
+                    request,
+                    tokenResponse.readEntity(StripeTokenResponse.class).getId()
+            );
+            Response authorisationResponse = createCharge(
+                    request,
+                    sourceResponse.readEntity(StripeSourcesResponse.class).getId()
+            );
+            
+            return responseBuilder.withResponse(StripeAuthorisationResponse.of(authorisationResponse)).build();
+        } catch(GatewayClientException e) {
+            logger.error(
+                    "There was error calling Stripe. Reason: {}",
+                    e.getResponse().readEntity(StripeErrorResponse.class).getError().getMessage()
+            );
+            
+            return responseBuilder.withGatewayError(
+                    new GatewayError(
+                            "Stripe returned unexpected response",
+                            ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY)
+            ).build();
         }
+    }
 
-        String token = tokenResponse.readEntity(StripeTokenResponse.class).getId();
-        
-        Response sourcesResponse = client.postRequest(
-                request.getGatewayAccount(),
-                AUTHORISE,
-                URI.create(stripeGatewayConfig.getUrl() + "/v1/sources"),
-                sourcesPayload(token),
-                StripeAuthUtil.getAuthHeaderValue(stripeGatewayConfig),
-                APPLICATION_FORM_URLENCODED_TYPE);
-        
-        String sourceId = sourcesResponse.readEntity(StripeSourcesResponse.class).getId();
-
-        Response authorisationResponse = client.postRequest(
-                request.getGatewayAccount(),
-                AUTHORISE,
-                URI.create(stripeGatewayConfig.getUrl() + "/v1/charges"),
+    private Response createCharge(AuthorisationGatewayRequest request, String sourceId) throws GatewayClientException{
+        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
+        return postToStripe(
+                "/v1/charges",
                 authorisePayload(request, sourceId),
-                StripeAuthUtil.getAuthHeaderValue(stripeGatewayConfig),
-                APPLICATION_FORM_URLENCODED_TYPE);
+                format("gateway-operations.%s.%s.authorise.create_source",
+                        gatewayAccount.getGatewayName(),
+                        gatewayAccount.getType())
+        );
+    }
 
-        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
-        return responseBuilder.withResponse(StripeAuthorisationResponse.of(authorisationResponse)).build();
+    private Response createSource(AuthorisationGatewayRequest request, String tokenId) throws GatewayClientException{
+        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
+        return postToStripe(
+                "/v1/sources",
+                sourcesPayload(tokenId),
+                format("gateway-operations.%s.%s.authorise.create_source",
+                        gatewayAccount.getGatewayName(),
+                        gatewayAccount.getType())
+        );
+    }
+    
+    private Response createToken(AuthorisationGatewayRequest request) throws GatewayClientException{
+        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
+        return postToStripe(
+                "/v1/tokens", 
+                tokenPayload(request), 
+                format("gateway-operations.%s.%s.authorise.create_token",
+                gatewayAccount.getGatewayName(),
+                gatewayAccount.getType())
+        );
+    }
+
+    private Response postToStripe(String path, String payload, String metricsPrefix) throws GatewayClientException {
+        return client.postRequest(
+                URI.create(stripeGatewayConfig.getUrl() + path),
+                payload,
+                ImmutableMap.of(AUTHORIZATION, StripeAuthUtil.getAuthHeaderValue(stripeGatewayConfig)),
+                APPLICATION_FORM_URLENCODED_TYPE,
+                metricsPrefix
+        );
     }
 
     @Override
@@ -177,7 +212,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         params.put("usage", "single_use");
         return encode(params);
     }
-    
+
     private String authorisePayload(AuthorisationGatewayRequest request, String sourceId) {
         Map<String, String> params = new HashMap<>();
         params.put("amount", request.getAmount());
