@@ -46,7 +46,7 @@ public class StripeCaptureHandler implements CaptureHandler {
                     StringUtils.EMPTY,
                     ImmutableMap.of(AUTHORIZATION, StripeAuthUtil.getAuthHeaderValue(stripeGatewayConfig)),
                     APPLICATION_FORM_URLENCODED_TYPE,
-                    format("gateway-operations.%s.%s.authorise.create_source",
+                    format("gateway-operations.%s.%s.capture",
                             gatewayAccount.getGatewayName(),
                             gatewayAccount.getType()));
 

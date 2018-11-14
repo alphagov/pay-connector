@@ -9,6 +9,7 @@ import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.Response;
@@ -47,9 +48,12 @@ public class StripeGatewayClient {
                                 String metricsPrefix) throws GatewayClientException {
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
-            Response response = client.target(url.toString())
-                    .request()
-                    .headers(new MultivaluedHashMap<>(headers))
+
+            Invocation.Builder clientBuilder = client.target(url.toString())
+                    .request();
+            headers.keySet().forEach(headerKey -> clientBuilder.header(headerKey, headers.get(headerKey)));
+            
+            Response response = clientBuilder
                     .post(Entity.entity(payload, mediaType));
             
             throwIfErrorResponse(response, metricsPrefix);
