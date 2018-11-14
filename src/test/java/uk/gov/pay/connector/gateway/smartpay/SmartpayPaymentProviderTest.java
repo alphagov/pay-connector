@@ -11,7 +11,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
@@ -77,7 +76,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
 
-        AuthCardDetails authCardDetails = getValidTestCard();
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
 
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(aServiceAccount())
@@ -93,7 +92,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
 
     @Test
     public void shouldRequire3dsFor3dsRequiredMerchant() throws Exception {
-        AuthCardDetails authCardDetails = getValidTestCard();
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         GatewayAccountEntity gatewayAccountEntity = aServiceAccount();
         gatewayAccountEntity.setRequires3ds(true);
         ChargeEntity chargeEntity = aValidChargeEntity()
@@ -190,19 +189,6 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
 
     private String successCaptureResponse() {
         return TestTemplateResourceLoader.load(SMARTPAY_CAPTURE_SUCCESS_RESPONSE).replace("{{pspReference}}", "8614440510830227");
-    }
-
-    private AuthCardDetails getValidTestCard() {
-        Address address = new Address("123 My Street", "This road", "SW8URR", "London", "London state", "GB");
-
-        return AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardHolder("Mr. Payment")
-                .withCardNo("4111111111111111")
-                .withCvc("123")
-                .withEndDate("12/15")
-                .withCardBrand("visa")
-                .withAddress(address)
-                .build();
     }
 
     private String notificationPayloadForTransaction(String originalReference, String pspReference, String merchantReference, String fileName) throws IOException {
