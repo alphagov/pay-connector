@@ -43,6 +43,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
@@ -113,7 +114,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
             
             return responseBuilder.withGatewayError(
                     new GatewayError(
-                            "Stripe returned unexpected response",
+                            "There was an internal server error. ErrorId:" + UUID.randomUUID(),
                             ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY)
             ).build();
         }
