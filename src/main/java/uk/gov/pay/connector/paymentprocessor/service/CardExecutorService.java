@@ -17,7 +17,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
@@ -34,7 +36,7 @@ public class CardExecutorService<T> {
     private final MetricRegistry metricRegistry;
 
     private ExecutorServiceConfig config;
-    private ExecutorService executor;
+    private ThreadPoolExecutor executor;
     private XrayUtils xrayUtils;
 
     public enum ExecutionStatus {
@@ -51,7 +53,9 @@ public class CardExecutorService<T> {
         this.metricRegistry = environment.metrics();
         this.config = configuration.getExecutorServiceConfig();
         int numberOfThreads = config.getThreadsPerCpu() * getRuntime().availableProcessors();
-        this.executor = Executors.newFixedThreadPool(numberOfThreads, threadFactory);
+        logger.info("Initializing CardExecutorService with [{}] threads", numberOfThreads);
+        this.executor = new ThreadPoolExecutor(numberOfThreads, numberOfThreads, 0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(), threadFactory); 
         this.xrayUtils = xrayUtils;
         addShutdownHook();
     }
@@ -100,6 +104,8 @@ public class CardExecutorService<T> {
             }
         });
 
+        logger.info("Number of active threads in CardExecutorService: [{}]", executor.getActiveCount());
+        
         try {
             return Pair.of(COMPLETED, futureObject.get(config.getTimeoutInSeconds(), TimeUnit.SECONDS));
         } catch (ExecutionException | InterruptedException exception) {
