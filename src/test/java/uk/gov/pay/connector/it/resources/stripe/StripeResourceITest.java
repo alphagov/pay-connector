@@ -199,7 +199,7 @@ public class StripeResourceITest {
         params.put("usage", "single_use");
         return encode(params);
     }
-    
+
     private String captureChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/capture".replace("{chargeId}", chargeId);
     }
@@ -229,7 +229,7 @@ public class StripeResourceITest {
                 .map(key -> encode(key) + "=" + encode(params.get(key)))
                 .collect(joining("&"));
     }
-    
+
     private String encode(String value) {
         try {
             return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());

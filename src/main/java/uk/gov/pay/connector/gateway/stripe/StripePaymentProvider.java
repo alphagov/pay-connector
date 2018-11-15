@@ -93,7 +93,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
                 .GatewayResponseBuilder
                 .responseBuilder();
-        
+
         try {
             Response tokenResponse = createToken(request);
             Response sourceResponse = createSource(
@@ -104,23 +104,25 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                     request,
                     sourceResponse.readEntity(StripeSourcesResponse.class).getId()
             );
-            
+
             return responseBuilder.withResponse(StripeAuthorisationResponse.of(authorisationResponse)).build();
-        } catch(GatewayClientException e) {
+        } catch (GatewayClientException e) {
             logger.error(
                     "There was error calling Stripe. Reason: {}",
                     e.getResponse().readEntity(StripeErrorResponse.class).getError().getMessage()
             );
-            
+
             return responseBuilder.withGatewayError(
                     new GatewayError(
                             "There was an internal server error. ErrorId:" + UUID.randomUUID(),
                             ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY)
             ).build();
+        } catch (GatewayClientRuntimeException e) {
+            return responseBuilder.withGatewayError(GatewayError.of(e)).build();
         }
     }
 
-    private Response createCharge(AuthorisationGatewayRequest request, String sourceId) throws GatewayClientException{
+    private Response createCharge(AuthorisationGatewayRequest request, String sourceId) throws GatewayClientException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/charges",
@@ -131,7 +133,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         );
     }
 
-    private Response createSource(AuthorisationGatewayRequest request, String tokenId) throws GatewayClientException{
+    private Response createSource(AuthorisationGatewayRequest request, String tokenId) throws GatewayClientException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/sources",
@@ -141,15 +143,15 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                         gatewayAccount.getType())
         );
     }
-    
-    private Response createToken(AuthorisationGatewayRequest request) throws GatewayClientException{
+
+    private Response createToken(AuthorisationGatewayRequest request) throws GatewayClientException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
-                "/v1/tokens", 
-                tokenPayload(request), 
+                "/v1/tokens",
+                tokenPayload(request),
                 format("gateway-operations.%s.%s.authorise.create_token",
-                gatewayAccount.getGatewayName(),
-                gatewayAccount.getType())
+                        gatewayAccount.getGatewayName(),
+                        gatewayAccount.getType())
         );
     }
 
