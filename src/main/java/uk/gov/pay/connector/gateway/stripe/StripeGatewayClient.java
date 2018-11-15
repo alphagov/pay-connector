@@ -45,8 +45,7 @@ public class StripeGatewayClient {
         Response response;
         try {
 
-            Invocation.Builder clientBuilder = client.target(url.toString())
-                    .request();
+            Invocation.Builder clientBuilder = client.target(url.toString()).request();
             headers.keySet().forEach(headerKey -> clientBuilder.header(headerKey, headers.get(headerKey)));
 
             response = clientBuilder

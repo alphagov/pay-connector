@@ -12,7 +12,7 @@ import uk.gov.pay.connector.gateway.stripe.GatewayClientException;
 import uk.gov.pay.connector.gateway.stripe.GatewayException;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.response.StripeCaptureResponse;
-import uk.gov.pay.connector.gateway.stripe.response.StripeErrorResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 

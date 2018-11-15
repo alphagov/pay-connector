@@ -90,6 +90,23 @@ public class StripeResourceITest {
     }
 
     @Test
+    public void cardAuthorisationFailureShouldReturnBadRequest() {
+        stripeMockClient.mockAuthorisationFailed();
+        
+        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+
+        String externalChargeId = addCharge();
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(externalChargeId))
+                .then()
+                .statusCode(400)
+                .body("message", is("Your card has expired."));
+    }
+    
+    @Test
     public void authoriseCharge() {
         addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
 

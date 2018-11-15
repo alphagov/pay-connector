@@ -1,20 +1,18 @@
 package uk.gov.pay.connector.gateway.stripe;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeCreateChargeResponse;
 
-import javax.ws.rs.core.Response;
 import java.util.Optional;
 
 import static java.lang.String.format;
 
 public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
 
-    private StripeJsonResponse jsonResponse;
+    private StripeCreateChargeResponse jsonResponse;
 
-    private StripeAuthorisationResponse(StripeJsonResponse jsonResponse) {
+    public StripeAuthorisationResponse(StripeCreateChargeResponse jsonResponse) {
         this.jsonResponse = jsonResponse;
     }
 
@@ -27,7 +25,8 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
     public AuthoriseStatus authoriseStatus() {
         String stripeStatus = jsonResponse.getStatus();
         switch (stripeStatus) {
-            case "succeeded": return AuthoriseStatus.AUTHORISED;
+            case "succeeded": 
+                return AuthoriseStatus.AUTHORISED;
             default: throw new IllegalArgumentException(format("Cannot map stripe status of %s to an %s", stripeStatus, AuthoriseStatus.class.getName()));
         }
     }
@@ -45,25 +44,5 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
     @Override
     public String getErrorMessage() {
         return null;
-    }
-
-    public static StripeAuthorisationResponse of(Response response) {
-        return new StripeAuthorisationResponse(response.readEntity(StripeJsonResponse.class));
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class StripeJsonResponse {
-        @JsonProperty("id")
-        private String id;
-        @JsonProperty("status")
-        private String status;
-
-        public String getTransactionId() {
-            return id;
-        }
-
-        public String getStatus() {
-            return status;
-        }
     }
 }
