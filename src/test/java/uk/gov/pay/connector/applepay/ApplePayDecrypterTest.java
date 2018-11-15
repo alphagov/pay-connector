@@ -44,8 +44,8 @@ public class ApplePayDecrypterTest {
         applePayToken = anApplePayToken().build();
         when(mockConfig.getWorldpayConfig()).thenReturn(mockWorldpayConfig);
         when(mockWorldpayConfig.getApplePayConfig()).thenReturn(mockApplePayConfig);
-        when(mockApplePayConfig.getPrivateKey()).thenReturn(Base64.decode(ENCODED_PRIVATE_KEY));
-        when(mockApplePayConfig.getPublicCertificate()).thenReturn(Base64.decode(ENCODED_PUBLIC_CERTIFICATE));
+        when(mockApplePayConfig.getPrivateKey()).thenReturn(ENCODED_PRIVATE_KEY);
+        when(mockApplePayConfig.getPublicCertificate()).thenReturn(ENCODED_PUBLIC_CERTIFICATE);
         applePayDecrypter = new ApplePayDecrypter(mockConfig, objectMapper);
     }
 
@@ -64,14 +64,14 @@ public class ApplePayDecrypterTest {
 
     @Test(expected = InvalidKeyException.class)
     public void shouldThrowException_whenPublicCertificateIsInvalid() {
-        when(mockApplePayConfig.getPublicCertificate()).thenReturn("nope".getBytes(UTF_8));
+        when(mockApplePayConfig.getPublicCertificate()).thenReturn("nope");
         applePayDecrypter = new ApplePayDecrypter(mockConfig, objectMapper);
         applePayDecrypter.performDecryptOperation(applePayToken);
     }
 
     @Test(expected = InvalidKeyException.class)
     public void shouldThrowException_whenPrivateKeyIsInvalid() {
-        when(mockApplePayConfig.getPrivateKey()).thenReturn("nope".getBytes(UTF_8));
+        when(mockApplePayConfig.getPrivateKey()).thenReturn("nope");
         applePayDecrypter = new ApplePayDecrypter(mockConfig, objectMapper);
         applePayDecrypter.performDecryptOperation(applePayToken);
     }

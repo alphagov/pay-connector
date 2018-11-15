@@ -46,11 +46,12 @@ public class ApplePayDecrypter {
 
     private final ObjectMapper objectMapper;
     private final static Base64.Decoder BASE64_DECODER = Base64.getDecoder();
+    
     @Inject
     public ApplePayDecrypter(ConnectorConfiguration configuration, ObjectMapper objectMapper) {
         ApplePayConfig applePayConfig = configuration.getWorldpayConfig().getApplePayConfig();
-        this.privateKeyBytes = applePayConfig.getPrivateKey();
-        this.publicCertificate = applePayConfig.getPublicCertificate();
+        this.privateKeyBytes = BASE64_DECODER.decode(applePayConfig.getPrivateKey());
+        this.publicCertificate = BASE64_DECODER.decode(applePayConfig.getPublicCertificate());
         this.objectMapper = objectMapper;
     }
 
