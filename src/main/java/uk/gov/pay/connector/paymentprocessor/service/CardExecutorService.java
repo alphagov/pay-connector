@@ -27,6 +27,13 @@ import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.FAILED;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
 
+/**
+ * CardExecutorService executes tasks passed to it in a separate thread. The point of running tasks in a separate thread 
+ * is that it can keep running after the originating thread has returned to the user. That is the purpose of the 
+ * .get(config.getTimeoutInSeconds(), TimeUnit.SECONDS). If you look how that is used in the authorise service, it 
+ * catches the timeout exception and returns to frontend as 'in progress'. Frontend then polls connector until the 
+ * charge is authorised (by the CES thread), and continues on its merry way.
+ */
 public class CardExecutorService<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(CardExecutorService.class);
