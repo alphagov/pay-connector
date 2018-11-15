@@ -12,6 +12,8 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
+import java.util.Optional;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.when;
@@ -96,7 +98,7 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
         when(mockAuthCardDetails.getAcceptHeader()).thenReturn(ACCEPT_HEADER);
         when(mockAuthCardDetails.getUserAgentHeader()).thenReturn(USER_AGENT_HEADER);
 
-        when(mockAuthCardDetails.getAddress()).thenReturn(mockAddress);
+        when(mockAuthCardDetails.getAddress()).thenReturn(Optional.of(mockAddress));
         when(mockAddress.getCity()).thenReturn(CITY);
         when(mockAddress.getPostcode()).thenReturn(POSTCODE);
         when(mockAddress.getCountry()).thenReturn(COUNTRY_CODE);
@@ -174,8 +176,8 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
     }
 
     @Test
-    public void shouldOmitAddressWhenInputAddressIsNull() {
-        when(mockAuthCardDetails.getAddress()).thenReturn(null);
+    public void shouldOmitAddressWhenInputAddressIsNotPresent() {
+        when(mockAuthCardDetails.getAddress()).thenReturn(Optional.empty());
 
         ImmutableList<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract(mockTemplateData);
 

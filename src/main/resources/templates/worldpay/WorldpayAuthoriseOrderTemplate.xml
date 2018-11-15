@@ -14,19 +14,19 @@
                     </expiryDate>
                     <cardHolderName>${authCardDetails.cardHolder?xml}</cardHolderName>
                     <cvc>${authCardDetails.cvc}</cvc>
-                    <#if authCardDetails.address??>
+                    <#if authCardDetails.address.isPresent()>
                     <cardAddress>
                         <address>
-                            <address1>${authCardDetails.address.line1?xml}</address1>
-                            <#if authCardDetails.address.line2??>
-                            <address2>${authCardDetails.address.line2?xml}</address2>
+                            <address1>${authCardDetails.address.get().line1?xml}</address1>
+                            <#if authCardDetails.address.get().line2??>
+                            <address2>${authCardDetails.address.get().line2?xml}</address2>
                             </#if>
-                            <postalCode>${authCardDetails.address.postcode?xml}</postalCode>
-                            <city>${authCardDetails.address.city?xml}</city>
-                            <#if authCardDetails.address.county??>
-                            <state>${authCardDetails.address.county?xml}</state>
+                            <postalCode>${authCardDetails.address.get().postcode?xml}</postalCode>
+                            <city>${authCardDetails.address.get().city?xml}</city>
+                            <#if authCardDetails.address.get().county??>
+                            <state>${authCardDetails.address.get().county?xml}</state>
                             </#if>
-                            <countryCode>${authCardDetails.address.country?xml}</countryCode>
+                            <countryCode>${authCardDetails.address.get().country?xml}</countryCode>
                         </address>
                     </cardAddress>
                     </#if>

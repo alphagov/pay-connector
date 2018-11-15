@@ -10,6 +10,7 @@ import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -98,7 +99,7 @@ public class DatabaseTestHelper {
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider, String description, String analyticsId, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount, long corporatePrepaidCreditCardSurchargeAmount, long corporatePrepaidDebitCardSurchargeAmount) {
-        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId,  EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, corporatePrepaidCreditCardSurchargeAmount, corporatePrepaidDebitCardSurchargeAmount);
+        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId, EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, corporatePrepaidCreditCardSurchargeAmount, corporatePrepaidDebitCardSurchargeAmount);
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials, String serviceName, GatewayAccountEntity.Type type, String description, String analyticsId, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount, long corporatePrepaidCreditCardSurchargeAmount, long corporatePrepaidDebitCardSurchargeAmount) {
@@ -406,9 +407,19 @@ public class DatabaseTestHelper {
     }
 
     public void updateChargeCardDetails(Long chargeId, AuthCardDetails authCardDetails) {
-        updateChargeCardDetails(chargeId, authCardDetails.getCardBrand(), StringUtils.right(authCardDetails.getCardNo(), 4), StringUtils.left(authCardDetails.getCardNo(), 6), authCardDetails.getCardHolder(), authCardDetails.getEndDate(),
-                authCardDetails.getAddress().getLine1(), authCardDetails.getAddress().getLine2(), authCardDetails.getAddress().getPostcode(),
-                authCardDetails.getAddress().getCity(), authCardDetails.getAddress().getCounty(), authCardDetails.getAddress().getCountry());
+
+        updateChargeCardDetails(chargeId,
+                authCardDetails.getCardBrand(),
+                StringUtils.right(authCardDetails.getCardNo(), 4),
+                StringUtils.left(authCardDetails.getCardNo(), 6),
+                authCardDetails.getCardHolder(),
+                authCardDetails.getEndDate(),
+                authCardDetails.getAddress().map(Address::getLine1).orElse(null),
+                authCardDetails.getAddress().map(Address::getLine2).orElse(null),
+                authCardDetails.getAddress().map(Address::getPostcode).orElse(null),
+                authCardDetails.getAddress().map(Address::getCity).orElse(null),
+                authCardDetails.getAddress().map(Address::getCounty).orElse(null),
+                authCardDetails.getAddress().map(Address::getCountry).orElse(null));
     }
 
     public Map<String, Object> getChargeCardDetails(long chargeId) {

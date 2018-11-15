@@ -12,6 +12,8 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
+import java.util.Optional;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.when;
@@ -81,7 +83,7 @@ public class EpdqPayloadDefinitionForNewOrderTest {
         when(mockAuthCardDetails.getEndDate()).thenReturn(END_DATE);
         when(mockAuthCardDetails.getCardHolder()).thenReturn(CARDHOLDER_NAME);
 
-        when(mockAuthCardDetails.getAddress()).thenReturn(mockAddress);
+        when(mockAuthCardDetails.getAddress()).thenReturn(Optional.of(mockAddress));
         when(mockAddress.getCity()).thenReturn(CITY);
         when(mockAddress.getPostcode()).thenReturn(POSTCODE);
         when(mockAddress.getCountry()).thenReturn(COUNTRY_CODE);
@@ -139,8 +141,8 @@ public class EpdqPayloadDefinitionForNewOrderTest {
     }
 
     @Test
-    public void shouldOmitAddressWhenInputAddressIsNull() {
-        when(mockAuthCardDetails.getAddress()).thenReturn(null);
+    public void shouldOmitAddressWhenInputAddressIsNotPresent() {
+        when(mockAuthCardDetails.getAddress()).thenReturn(Optional.empty());
 
         ImmutableList<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(mockTemplateData);
 

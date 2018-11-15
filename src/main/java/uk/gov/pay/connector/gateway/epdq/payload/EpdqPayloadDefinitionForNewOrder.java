@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.epdq.payload;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
+import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder;
 import uk.gov.pay.connector.gateway.templates.PayloadDefinition;
 
@@ -41,14 +42,14 @@ public class EpdqPayloadDefinitionForNewOrder implements PayloadDefinition<EpdqT
                 .add(OPERATION_KEY, templateData.getOperationType())
                 .add(ORDER_ID_KEY, templateData.getOrderId());
 
-        if (templateData.getAuthCardDetails().getAddress() != null) {
-            String addressLines = concatAddressLines(templateData.getAuthCardDetails().getAddress().getLine1(),
-                    templateData.getAuthCardDetails().getAddress().getLine2());
+        if (templateData.getAuthCardDetails().getAddress().isPresent()) {
+            Address address = templateData.getAuthCardDetails().getAddress().get();
+            String addressLines = concatAddressLines(address.getLine1(), address.getLine2());
 
             parameterBuilder.add(OWNER_ADDRESS_KEY, addressLines)
-                    .add(OWNER_COUNTRY_CODE_KEY, templateData.getAuthCardDetails().getAddress().getCountry())
-                    .add(OWNER_TOWN_KEY, templateData.getAuthCardDetails().getAddress().getCity())
-                    .add(OWNER_ZIP_KEY, templateData.getAuthCardDetails().getAddress().getPostcode());
+                    .add(OWNER_COUNTRY_CODE_KEY, address.getCountry())
+                    .add(OWNER_TOWN_KEY, address.getCity())
+                    .add(OWNER_ZIP_KEY, address.getPostcode());
         }
 
         parameterBuilder.add(PSPID_KEY, templateData.getMerchantCode())
