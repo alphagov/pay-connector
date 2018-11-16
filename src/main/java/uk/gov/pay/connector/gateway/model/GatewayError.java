@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.model;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.gateway.stripe.GatewayClientRuntimeException;
+import uk.gov.pay.connector.gateway.stripe.GatewayException;
 
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
@@ -51,7 +51,7 @@ public class GatewayError {
         return new GatewayError(msg, GATEWAY_CONNECTION_SOCKET_ERROR);
     }
 
-    public static GatewayError of(GatewayClientRuntimeException e) {
+    public static GatewayError of(GatewayException e) {
 
         GatewayError gatewayError;
 

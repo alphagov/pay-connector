@@ -125,12 +125,12 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                             "There was an internal server error. ErrorId:" + UUID.randomUUID(),
                             ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY)
             ).build();
-        } catch (GatewayClientRuntimeException e) {
+        } catch (GatewayException e) {
             return responseBuilder.withGatewayError(GatewayError.of(e)).build();
         }
     }
 
-    private Response create3dsSource(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException {
+    private Response create3dsSource(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException, GatewayException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/sources",
@@ -141,7 +141,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         );
     }
 
-    private Response createCharge(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException {
+    private Response createCharge(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException, GatewayException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/charges",
@@ -152,7 +152,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         );
     }
 
-    private Response createSource(CardAuthorisationGatewayRequest request, String tokenId) throws GatewayClientException {
+    private Response createSource(CardAuthorisationGatewayRequest request, String tokenId) throws GatewayClientException, GatewayException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/sources",
@@ -163,7 +163,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         );
     }
 
-    private Response createToken(CardAuthorisationGatewayRequest request) throws GatewayClientException {
+    private Response createToken(CardAuthorisationGatewayRequest request) throws GatewayClientException, GatewayException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/tokens",
@@ -174,7 +174,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         );
     }
 
-    private Response postToStripe(String path, String payload, String metricsPrefix) throws GatewayClientException {
+    private Response postToStripe(String path, String payload, String metricsPrefix) throws GatewayClientException, GatewayException {
         return client.postRequest(
                 URI.create(stripeGatewayConfig.getUrl() + path),
                 payload,
