@@ -58,6 +58,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     private static final Logger logger = LoggerFactory.getLogger(StripePaymentProvider.class);
 
     private final StripeGatewayClient client;
+    private final String frontendUrl;
     private final StripeGatewayConfig stripeGatewayConfig;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final StripeCaptureHandler stripeCaptureHandler;
@@ -67,6 +68,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                                  ConnectorConfiguration configuration) {
         this.stripeGatewayConfig = configuration.getStripeConfig();
         this.client = stripeGatewayClient;
+        this.frontendUrl = configuration.getLinks().getFrontendUrl();
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         stripeCaptureHandler = new StripeCaptureHandler(client, stripeGatewayConfig);
     }
@@ -100,12 +102,18 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                     request,
                     tokenResponse.readEntity(StripeTokenResponse.class).getId()
             );
-            Response authorisationResponse = createCharge(
-                    request,
-                    sourceResponse.readEntity(StripeSourcesResponse.class).getId()
-            );
 
-            return responseBuilder.withResponse(StripeAuthorisationResponse.of(authorisationResponse)).build();
+            StripeSourcesResponse stripeSourcesResponse = sourceResponse.readEntity(StripeSourcesResponse.class);
+
+            if (stripeSourcesResponse.require3ds()) {
+                Response source3dsResponse = create3dsSource(request, stripeSourcesResponse.getId());
+
+                return responseBuilder.withResponse(Stripe3dsSourceAuthorisationResponse.of(source3dsResponse)).build();
+            } else {
+                Response authorisationResponse = createCharge(request, stripeSourcesResponse.getId());
+
+                return responseBuilder.withResponse(StripeAuthorisationResponse.of(authorisationResponse)).build();
+            }
         } catch (GatewayClientException e) {
             logger.error(
                     "There was error calling Stripe. Reason: {}",
@@ -120,6 +128,17 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         } catch (GatewayClientRuntimeException e) {
             return responseBuilder.withGatewayError(GatewayError.of(e)).build();
         }
+    }
+
+    private Response create3dsSource(AuthorisationGatewayRequest request, String sourceId) throws GatewayClientException {
+        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
+        return postToStripe(
+                "/v1/sources",
+                threeDSecurePayload(request, sourceId),
+                format("gateway-operations.%s.%s.authorise.create_3ds_source",
+                        gatewayAccount.getGatewayName(),
+                        gatewayAccount.getType())
+        );
     }
 
     private Response createCharge(AuthorisationGatewayRequest request, String sourceId) throws GatewayClientException {
@@ -215,6 +234,18 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         params.put("type", "card");
         params.put("token", token);
         params.put("usage", "single_use");
+        return encode(params);
+    }
+
+    private String threeDSecurePayload(AuthorisationGatewayRequest request, String sourceId) {
+        //todo: revisit for frontendUrl format
+        String frontend3dsIncomingUrl = String.format("%s/card_details/%s/3ds_required_in/stripe", frontendUrl, request.getChargeExternalId());
+        Map<String, String> params = new HashMap<>();
+        params.put("type", "three_d_secure");
+        params.put("amount", request.getAmount());
+        params.put("currency", "GBP");
+        params.put("redirect[return_url]", frontend3dsIncomingUrl);
+        params.put("three_d_secure[card]", sourceId);
         return encode(params);
     }
 

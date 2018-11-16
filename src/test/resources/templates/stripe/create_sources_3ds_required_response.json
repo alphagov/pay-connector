@@ -1,0 +1,15 @@
+{
+  "id": "src_1DXAwDC6H5MjhE5YtbPXsoBL",
+  "object": "source",
+  "amount": null,
+  "card": {
+    "three_d_secure": "required"
+  },
+  "client_secret": "src_client_secret_Dz9E1oktM2D04med4z8Il4Df",
+  "currency": null,
+  "flow": "none",
+  "livemode": false,
+  "status": "chargeable",
+  "type": "card",
+  "usage": "reusable"
+}

@@ -1,0 +1,9 @@
+{
+  "error": {
+    "charge": "ch_1DX3j5C6H5MjhE5YhPcLhENF",
+    "code": "processing_error",
+    "doc_url": "https://stripe.com/docs/error-codes/processing-error",
+    "message": "An error occurred while processing your card. Try again in a little bit.",
+    "type": "card_error"
+  }
+}
