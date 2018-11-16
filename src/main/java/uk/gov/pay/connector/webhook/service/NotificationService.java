@@ -55,7 +55,7 @@ public class NotificationService {
 
     @Transactional
     public boolean handleNotificationFor(String ipAddress, PaymentGatewayName paymentGatewayName, String payload) {
-        PaymentProvider paymentProvider = paymentProviders.byName(paymentGatewayName);
+        PaymentProvider paymentProvider = paymentProviders.getPaymentProviderFor(paymentGatewayName);
         Handler handler = new Handler(paymentProvider);
         if (handler.hasSecuredEndpoint() && !handler.matchesIpWithDomain(ipAddress)) {
             logger.error("{} notification received from domain not {}", paymentProvider.getPaymentGatewayName().getName(), paymentProvider.getNotificationDomain());

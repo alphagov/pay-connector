@@ -22,6 +22,9 @@ worldpay:
     live: http://localhost:10107/not/used
   secureNotificationEnabled: true
   notificationDomain: ""
+  applePay:
+    privateKey: skdfsdklfkdhjfghdjgdfhgdfjhbfdhjgbdkljfdjbfsdhkbfkkjshdbfsdkhjbksdhj
+    publicCertificate: skdfsdklfkdhjfghdjgdfhgdfjhbfdhjgbdkljfdjbfsdhkbfkkjshdbfsdkhjbksdhj
   credentials: ['username','password','merchant_id']
 
   jerseyClientOverrides:

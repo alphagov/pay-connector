@@ -9,6 +9,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.xml.sax.SAXException;
+import uk.gov.pay.connector.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.applepay.AuthorisationApplePayGatewayRequest;
+import uk.gov.pay.connector.applepay.api.ApplePaymentInfo;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -21,9 +25,11 @@ import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
+import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationCardGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -35,6 +41,7 @@ import uk.gov.pay.connector.usernotification.model.Notifications;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.EnumMap;
 import java.util.Map;
@@ -62,6 +69,7 @@ import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCo
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS;
 
@@ -132,7 +140,34 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     }
 
     @Test
-    public void shouldNotInclude3dsElementsWhen3dsToggleDisabled() throws Exception {
+    public void shouldSendApplePayRequestWhenApplePayDetailsArePresent() throws IOException, SAXException {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withDescription("This is the description").build();
+        chargeEntity.setGatewayTransactionId("MyUniqueTransactionId!");
+        chargeEntity.setGatewayAccount(mockGatewayAccountEntity);
+
+        Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
+        when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
+        when(mockGatewayAccountEntity.isRequires3ds()).thenReturn(false);
+        when(mockGatewayClient.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+                .thenReturn(left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code 400 from gateway")));
+
+        GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
+        when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any(Map.class), any(BiFunction.class), any())).thenReturn(mockGatewayClient);
+
+        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
+
+        worldpayPaymentProvider.authorise(getApplePayAuthorisationRequest(chargeEntity));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+
+        verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
+
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
+    }
+
+    @Test
+    public void shouldNotInclude3dsElementsWhen3dsToggleDisabled() throws IOException, SAXException {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         chargeEntity.setGatewayTransactionId("transaction-id");
         chargeEntity.setGatewayAccount(mockGatewayAccountEntity);
@@ -158,7 +193,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     }
 
     @Test
-    public void shouldInclude3dsElementsWhen3dsToggleEnabled() throws Exception {
+    public void shouldInclude3dsElementsWhen3dsToggleEnabled() throws IOException, SAXException {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         chargeEntity.setGatewayTransactionId("transaction-id");
 
@@ -193,7 +228,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
 
 
     @Test
-    public void shouldIncludePaResponseIn3dsSecondOrder() throws Exception {
+    public void shouldIncludePaResponseIn3dsSecondOrder() throws IOException, SAXException {
         ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
 
         when(mockChargeEntity.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
@@ -258,8 +293,8 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     }
 
     @Test
-    public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
-        GatewayResponse<WorldpayOrderStatusResponse> response = provider.authorise(getCardAuthorisationRequest());
+    public void shouldSendSuccessfullyAnOrderForMerchant() {
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(getCardAuthorisationRequest());
         assertTrue(response.isSuccessful());
         assertTrue(response.getSessionIdentifier().isPresent());
     }
@@ -267,7 +302,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     @Test
     public void shouldErrorIfAuthorisationIsUnsuccessful() {
         mockWorldpayErrorResponse(401);
-        GatewayResponse<WorldpayOrderStatusResponse> response = provider.authorise(getCardAuthorisationRequest());
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(getCardAuthorisationRequest());
 
         assertThat(response.isFailed(), is(true));
         assertFalse(response.getSessionIdentifier().isPresent());
@@ -317,7 +352,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
             String status,
             String bookingDateDay,
             String bookingDateMonth,
-            String bookingDateYear) throws IOException {
+            String bookingDateYear) {
         return TestTemplateResourceLoader.load(WORLDPAY_NOTIFICATION)
                 .replace("{{transactionId}}", transactionId)
                 .replace("{{refund-ref}}", referenceId)
@@ -327,13 +362,37 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
                 .replace("{{bookingDateYear}}", bookingDateYear);
     }
 
-    private AuthorisationGatewayRequest getCardAuthorisationRequest() {
+    private AuthorisationCardGatewayRequest getCardAuthorisationRequest() {
         return getCardAuthorisationRequest(aServiceAccount());
     }
 
-    private AuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
+    private AuthorisationCardGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
         AuthCardDetails authCardDetails = getValidTestCard();
-        return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        return new AuthorisationCardGatewayRequest(chargeEntity, authCardDetails);
+    }
+
+
+    private AuthorisationApplePayGatewayRequest getApplePayAuthorisationRequest(ChargeEntity chargeEntity) {
+        AppleDecryptedPaymentData data = new AppleDecryptedPaymentData(
+                new ApplePaymentInfo(
+                        "4242",
+                        "visa",
+                        PayersCardType.DEBIT,
+                        "Mr. Payment",
+                        "aaa@bbb.test"
+                ),
+                "4818528840010767",
+                LocalDate.of(2023, 12, 31),
+                "643",
+                10L,
+                "040010030273",
+                "3DSecure",
+                new AppleDecryptedPaymentData.PaymentData(
+                        "Ao/fzpIAFvp1eB9y8WVDMAACAAA=",
+                        "7"
+                )
+        );
+        return new AuthorisationApplePayGatewayRequest(chargeEntity, data);
     }
 
     private Auth3dsResponseGatewayRequest get3dsResponseGatewayRequest(ChargeEntity chargeEntity) {
@@ -342,7 +401,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         return new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsDetails);
     }
 
-    private AuthorisationGatewayRequest getCardAuthorisationRequest(GatewayAccountEntity accountEntity) {
+    private AuthorisationCardGatewayRequest getCardAuthorisationRequest(GatewayAccountEntity accountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(accountEntity)
                 .build();

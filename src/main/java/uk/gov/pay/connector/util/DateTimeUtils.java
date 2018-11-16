@@ -1,6 +1,10 @@
 package uk.gov.pay.connector.util;
 
-import java.time.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
@@ -73,5 +77,13 @@ public class DateTimeUtils {
         LocalDateTime localDateTime = zonedDateTime.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime();
 
         return localDateTime.format(dateTimeFormatter);
+    }
+    
+    public static String toExpiryDateMonth(LocalDate localDate) {
+        return localDate.format(DateTimeFormatter.ofPattern("MM"));
+    }
+
+    public static String toExpiryDateYear(LocalDate localDate) {
+        return localDate.format(DateTimeFormatter.ofPattern("yy"));
     }
 }

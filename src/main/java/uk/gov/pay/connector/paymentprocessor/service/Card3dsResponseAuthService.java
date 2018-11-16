@@ -32,7 +32,7 @@ public class Card3dsResponseAuthService extends CardAuthoriseBaseService<Auth3ds
 
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, Auth3dsDetails auth3DsDetails) {
-        return getPaymentProviderFor(chargeEntity)
+        return providers.getPaymentProviderFor(chargeEntity.getPaymentGatewayName())
                 .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(chargeEntity, auth3DsDetails));
     }
     

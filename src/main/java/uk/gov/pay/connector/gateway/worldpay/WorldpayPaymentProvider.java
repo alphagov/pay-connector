@@ -3,6 +3,8 @@ package uk.gov.pay.connector.gateway.worldpay;
 import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.applepay.ApplePayAuthoriser;
+import uk.gov.pay.connector.applepay.AuthorisationApplePayGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureHandler;
@@ -14,15 +16,17 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationCardGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
+import uk.gov.pay.connector.gateway.worldpay.applepay.ApplePayTemplateData;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
@@ -42,12 +46,13 @@ import static uk.gov.pay.connector.gateway.GatewayOperation.CAPTURE;
 import static uk.gov.pay.connector.gateway.GatewayOperation.REFUND;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseApplePayOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
-public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, String> {
+public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, String>, ApplePayAuthoriser {
 
     public static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
 
@@ -87,13 +92,19 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
     }
 
     @Override
-    public GatewayResponse authorise(AuthorisationGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise(AuthorisationCardGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrder(request));
         return GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
     }
 
     @Override
-    public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise(AuthorisationApplePayGatewayRequest request) {
+        Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildApplePayAuthoriseOrder(request));
+        return GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
+    }
+
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), build3dsResponseAuthOrder(request));
         return GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
     }
@@ -166,7 +177,19 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
                         .orElse(builder);
     }
 
-    private GatewayOrder buildAuthoriseOrder(AuthorisationGatewayRequest request) {
+    private GatewayOrder buildApplePayAuthoriseOrder(AuthorisationApplePayGatewayRequest request) {
+        return aWorldpayAuthoriseApplePayOrderRequestBuilder()
+                .withApplePayTemplateData(ApplePayTemplateData.from(request.getAppleDecryptedPaymentData()))
+                .withSessionId(request.getChargeExternalId())
+                .with3dsRequired(request.getGatewayAccount().isRequires3ds())
+                .withTransactionId(request.getTransactionId().orElse(""))
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withDescription(request.getDescription())
+                .withAmount(request.getAmount())
+                .build();
+    }
+
+    private GatewayOrder buildAuthoriseOrder(AuthorisationCardGatewayRequest request) {
         return aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId(request.getChargeExternalId())
                 .with3dsRequired(request.getGatewayAccount().isRequires3ds())
@@ -174,7 +197,7 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
-                .withAuthorisationDetails(request.getAuthCardDetails())
+                .withAuthCardDetails(request.getAuthCardDetails())
                 .build();
     }
 

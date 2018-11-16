@@ -91,7 +91,7 @@ class CancelServiceFunctions {
     static NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayCancel(PaymentProviders providers) {
         return context -> {
             ChargeEntity chargeEntity = context.get(ChargeEntity.class);
-            return providers.byName(chargeEntity.getPaymentGatewayName())
+            return providers.getPaymentProviderFor(chargeEntity.getPaymentGatewayName())
                     .cancel(CancelGatewayRequest.valueOf(chargeEntity));
         };
     }

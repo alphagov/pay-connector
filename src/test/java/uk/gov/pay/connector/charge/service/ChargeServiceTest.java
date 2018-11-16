@@ -135,7 +135,7 @@ public class ChargeServiceTest {
                 .when(this.mockedUriInfo)
                 .getBaseUriBuilder();
 
-        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.getPaymentProviderFor(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,

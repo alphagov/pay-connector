@@ -15,7 +15,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationCardGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -81,7 +81,7 @@ public class StripePaymentProviderTest {
     }
 
     private GatewayResponse authorise() {
-        AuthorisationGatewayRequest request = AuthorisationGatewayRequest.valueOf(getCharge(), anAuthCardDetails().withEndDate("01/21").build());
+        AuthorisationCardGatewayRequest request = AuthorisationCardGatewayRequest.valueOf(getCharge(), anAuthCardDetails().withEndDate("01/21").build());
         return stripePaymentProvider.authorise(request);
     }
 

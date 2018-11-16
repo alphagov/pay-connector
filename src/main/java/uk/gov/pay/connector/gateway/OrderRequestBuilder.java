@@ -1,9 +1,10 @@
 package uk.gov.pay.connector.gateway;
 
 
-import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
+import uk.gov.pay.connector.gateway.worldpay.applepay.ApplePayTemplateData;
 
 import javax.ws.rs.core.MediaType;
 
@@ -15,6 +16,7 @@ public abstract class OrderRequestBuilder {
         private String merchantCode;
         private String description;
         private AuthCardDetails authCardDetails;
+        private ApplePayTemplateData applePayTemplateData;
         private String amount;
         private String paymentPlatformReference;
 
@@ -65,6 +67,14 @@ public abstract class OrderRequestBuilder {
         public void setPaymentPlatformReference(String paymentPlatformReference) {
             this.paymentPlatformReference = paymentPlatformReference;
         }
+
+        public ApplePayTemplateData getApplePayTemplateData() {
+            return applePayTemplateData;
+        }
+
+        public void setApplePayTemplateData(ApplePayTemplateData applePayTemplateData) {
+            this.applePayTemplateData = applePayTemplateData;
+        }
     }
 
     private final TemplateData templateData;
@@ -102,10 +112,11 @@ public abstract class OrderRequestBuilder {
         return this;
     }
 
-    public OrderRequestBuilder withAuthorisationDetails(AuthCardDetails authCardDetails) {
+    public OrderRequestBuilder withAuthCardDetails(AuthCardDetails authCardDetails) {
         templateData.setAuthCardDetails(authCardDetails);
         return this;
     }
+
 
     public OrderRequestBuilder withAmount(String amount) {
         templateData.setAmount(amount);

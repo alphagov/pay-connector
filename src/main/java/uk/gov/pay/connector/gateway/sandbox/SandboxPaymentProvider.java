@@ -1,6 +1,10 @@
 package uk.gov.pay.connector.gateway.sandbox;
 
 import fj.data.Either;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.applepay.ApplePayAuthoriser;
+import uk.gov.pay.connector.applepay.AuthorisationApplePayGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureHandler;
@@ -10,9 +14,8 @@ import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationCardGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -32,11 +35,12 @@ import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
-public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, String> {
+public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, String>, ApplePayAuthoriser {
+    private final static Logger LOGGER = LoggerFactory.getLogger(SandboxPaymentProvider.class);
 
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
-    SandboxCaptureHandler sandboxCaptureHandler;
+    private SandboxCaptureHandler sandboxCaptureHandler;
 
     public SandboxPaymentProvider() {
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
@@ -44,9 +48,11 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, Str
     }
 
     @Override
-    public GatewayResponse authorise(AuthorisationGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise(AuthorisationCardGatewayRequest request) {
+        LOGGER.info("sandbox auth");
         String cardNumber = request.getAuthCardDetails().getCardNo();
-        GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
+        LOGGER.info("sandbox auth for " + cardNumber);
+        GatewayResponseBuilder<BaseAuthoriseResponse> gatewayResponseBuilder = responseBuilder();
 
         if (SandboxCardNumbers.isErrorCard(cardNumber)) {
             CardError errorInfo = SandboxCardNumbers.cardErrorFor(cardNumber);
@@ -63,10 +69,31 @@ public class SandboxPaymentProvider implements PaymentProvider<BaseResponse, Str
                 .withGatewayError(new GatewayError("Unsupported card details.", GENERIC_GATEWAY_ERROR))
                 .build();
     }
-
     @Override
-    public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
-        GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
+    public GatewayResponse<BaseAuthoriseResponse> authorise(AuthorisationApplePayGatewayRequest request) {
+        LOGGER.info("sandbox apple pay auth");
+        String cardNumber = request.getAppleDecryptedPaymentData().getApplicationPrimaryAccountNumber();
+        LOGGER.info("sandbox auth for " + cardNumber);
+        GatewayResponseBuilder<BaseAuthoriseResponse> gatewayResponseBuilder = responseBuilder();
+
+        if (SandboxCardNumbers.isErrorCard(cardNumber)) {
+            CardError errorInfo = SandboxCardNumbers.cardErrorFor(cardNumber);
+            return gatewayResponseBuilder
+                    .withGatewayError(new GatewayError(errorInfo.getErrorMessage(), GENERIC_GATEWAY_ERROR))
+                    .build();
+        } else if (SandboxCardNumbers.isRejectedCard(cardNumber)) {
+            return createGatewayBaseAuthoriseResponse(false);
+        } else if (SandboxCardNumbers.isValidCard(cardNumber)) {
+            return createGatewayBaseAuthoriseResponse(true);
+        }
+
+        return gatewayResponseBuilder
+                .withGatewayError(new GatewayError("Unsupported card details.", GENERIC_GATEWAY_ERROR))
+                .build();
+    }
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+        GatewayResponseBuilder<BaseAuthoriseResponse> gatewayResponseBuilder = responseBuilder();
         return gatewayResponseBuilder
                 .withGatewayError(new GatewayError("3D Secure not implemented for Sandbox", GENERIC_GATEWAY_ERROR))
                 .build();

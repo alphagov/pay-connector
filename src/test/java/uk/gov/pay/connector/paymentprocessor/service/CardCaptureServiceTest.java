@@ -142,7 +142,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         mockChargeDaoOperations(chargeSpy);
 
         worldpayWillRespondWithSuccess(gatewayTxId, null);
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.getPaymentProviderFor(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
 
         assertThat(response.isSuccessful(), is(true));
@@ -173,7 +173,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         mockChargeDaoOperations(chargeSpy);
 
         worldpayWillRespondWithSuccess(gatewayTxId, null);
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.getPaymentProviderFor(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
 
         assertThat(response.isSuccessful(), is(true));
@@ -276,7 +276,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         mockChargeDaoOperations(chargeSpy);
 
         worldpayWillRespondWithError();
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.getPaymentProviderFor(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
         GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
         assertThat(response.isFailed(), is(true));
@@ -459,7 +459,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity chargeSpy = spy(charge);
         mockChargeDaoOperations(chargeSpy);
         worldpayWillRespondWithSuccess(gatewayTxId, null);
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.getPaymentProviderFor(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
         GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
         assertThat(response.isSuccessful(), is(true));

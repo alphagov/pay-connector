@@ -19,7 +19,6 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -52,25 +51,25 @@ public class PaymentProvidersTest {
 
     @Test
     public void shouldResolveSandboxPaymentProvider() {
-        PaymentProvider sandbox = providers.byName(PaymentGatewayName.SANDBOX);
+        PaymentProvider sandbox = providers.getPaymentProviderFor(PaymentGatewayName.SANDBOX);
         assertThat(sandbox, is(instanceOf(SandboxPaymentProvider.class)));
     }
 
     @Test
     public void shouldResolveWorldpayPaymentProvider() {
-        PaymentProvider worldpay = providers.byName(PaymentGatewayName.WORLDPAY);
+        PaymentProvider worldpay = providers.getPaymentProviderFor(PaymentGatewayName.WORLDPAY);
         assertThat(worldpay, is(instanceOf(WorldpayPaymentProvider.class)));
     }
 
     @Test
     public void shouldResolveSmartpayPaymentProvider() {
-        PaymentProvider smartpay = providers.byName(PaymentGatewayName.SMARTPAY);
+        PaymentProvider smartpay = providers.getPaymentProviderFor(PaymentGatewayName.SMARTPAY);
         assertThat(smartpay, is(instanceOf(SmartpayPaymentProvider.class)));
     }
 
     @Test
     public void shouldResolveEpdqPaymentProvider() {
-        PaymentProvider epdq = providers.byName(EPDQ);
+        PaymentProvider epdq = providers.getPaymentProviderFor(EPDQ);
         assertThat(epdq, is(instanceOf(EpdqPaymentProvider.class)));
     }
 }

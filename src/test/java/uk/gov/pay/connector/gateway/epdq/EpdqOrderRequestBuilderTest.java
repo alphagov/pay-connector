@@ -35,7 +35,7 @@ public class EpdqOrderRequestBuilderTest {
                 .withDescription("MyDescription")
                 .withPaymentPlatformReference("MyPlatformReference")
                 .withAmount("500")
-                .withAuthorisationDetails(authCardDetails)
+                .withAuthCardDetails(authCardDetails)
                 .build();
 
         assertEquals(TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_REQUEST), actualRequest.getPayload());
@@ -55,7 +55,7 @@ public class EpdqOrderRequestBuilderTest {
                 .withDescription("MyDescription")
                 .withPaymentPlatformReference("MyPlatformReference")
                 .withAmount("500")
-                .withAuthorisationDetails(authCardDetails)
+                .withAuthCardDetails(authCardDetails)
                 .build();
 
         assertEquals(TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_3DS_REQUEST), actualRequest.getPayload());

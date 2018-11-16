@@ -20,7 +20,7 @@ import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationCardGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
@@ -225,8 +225,8 @@ public abstract class BaseEpdqPaymentProviderTest {
                 .replace("{{shaSign}}", shaSign);
     }
 
-    AuthorisationGatewayRequest buildTestAuthorisationRequest(ChargeEntity chargeEntity) {
-        return new AuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
+    AuthorisationCardGatewayRequest buildTestAuthorisationRequest(ChargeEntity chargeEntity) {
+        return new AuthorisationCardGatewayRequest(chargeEntity, buildTestAuthCardDetails());
     }
 
     CaptureGatewayRequest buildTestCaptureRequest(ChargeEntity chargeEntity) {
@@ -256,7 +256,7 @@ public abstract class BaseEpdqPaymentProviderTest {
         return gatewayAccount;
     }
 
-    AuthorisationGatewayRequest buildTestAuthorisationRequest() {
+    AuthorisationCardGatewayRequest buildTestAuthorisationRequest() {
         return buildTestAuthorisationRequest(buildTestGatewayAccountEntity());
     }
 
@@ -283,7 +283,7 @@ public abstract class BaseEpdqPaymentProviderTest {
         return buildTestRefundRequest(buildTestGatewayAccountEntity());
     }
 
-    private AuthorisationGatewayRequest buildTestAuthorisationRequest(GatewayAccountEntity accountEntity) {
+    private AuthorisationCardGatewayRequest buildTestAuthorisationRequest(GatewayAccountEntity accountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)

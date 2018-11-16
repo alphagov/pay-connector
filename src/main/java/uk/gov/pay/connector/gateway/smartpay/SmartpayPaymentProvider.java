@@ -16,7 +16,7 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationCardGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
@@ -71,11 +71,11 @@ public class SmartpayPaymentProvider implements PaymentProvider<BaseResponse, Pa
     }
 
     @Override
-    public GatewayResponse authorise(AuthorisationGatewayRequest request) {
+    public GatewayResponse authorise(AuthorisationCardGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = client.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrderFor(request));
         return GatewayResponseGenerator.getSmartpayGatewayResponse(client, response, SmartpayAuthorisationResponse.class);
     }
-
+    
     @Override
     public GatewayResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = client.postRequestFor(null, request.getGatewayAccount(), build3dsResponseAuthOrderFor(request));
@@ -151,7 +151,7 @@ public class SmartpayPaymentProvider implements PaymentProvider<BaseResponse, Pa
         return externalRefundAvailabilityCalculator.calculate(chargeEntity);
     }
 
-    private GatewayOrder buildAuthoriseOrderFor(AuthorisationGatewayRequest request) {
+    private GatewayOrder buildAuthoriseOrderFor(AuthorisationCardGatewayRequest request) {
         SmartpayOrderRequestBuilder smartpayOrderRequestBuilder = request.getGatewayAccount().isRequires3ds() ?
                 SmartpayOrderRequestBuilder.aSmartpay3dsRequiredOrderRequestBuilder() : SmartpayOrderRequestBuilder.aSmartpayAuthoriseOrderRequestBuilder();
 
@@ -160,7 +160,7 @@ public class SmartpayPaymentProvider implements PaymentProvider<BaseResponse, Pa
                 .withPaymentPlatformReference(request.getChargeExternalId())
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
-                .withAuthorisationDetails(request.getAuthCardDetails())
+                .withAuthCardDetails(request.getAuthCardDetails())
                 .build();
     }
 

@@ -78,7 +78,7 @@ public class ChargeRefundServiceTest {
 
     @Before
     public void setUp() {
-        when(mockProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockProvider);
+        when(mockProviders.getPaymentProviderFor(any(PaymentGatewayName.class))).thenReturn(mockProvider);
         when(mockProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
         chargeRefundService = new ChargeRefundService(
                 mockChargeDao, mockRefundDao, mockProviders, TransactionFlow::new, mockUserNotificationService
@@ -130,7 +130,7 @@ public class ChargeRefundServiceTest {
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId))
                 .thenReturn(Optional.of(charge));
 
-        when(mockProviders.byName(WORLDPAY)).thenReturn(mockProvider);
+        when(mockProviders.getPaymentProviderFor(WORLDPAY)).thenReturn(mockProvider);
         setupWorldpayMock(spiedRefundEntity.getExternalId(), null);
 
         Long refundId = 12345L;
@@ -181,7 +181,7 @@ public class ChargeRefundServiceTest {
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId))
                 .thenReturn(Optional.of(charge));
 
-        when(mockProviders.byName(SMARTPAY)).thenReturn(mockProvider);
+        when(mockProviders.getPaymentProviderFor(SMARTPAY)).thenReturn(mockProvider);
         String reference = "refund-pspReference";
         setupSmartpayMock(reference, null);
 
@@ -233,7 +233,7 @@ public class ChargeRefundServiceTest {
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId))
                 .thenReturn(Optional.of(charge));
-        when(mockProviders.byName(WORLDPAY)).thenReturn(mockProvider);
+        when(mockProviders.getPaymentProviderFor(WORLDPAY)).thenReturn(mockProvider);
         setupWorldpayMock(providerReference, null);
 
         Long refundId = 12345L;
@@ -275,7 +275,7 @@ public class ChargeRefundServiceTest {
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId))
                 .thenReturn(Optional.of(charge));
 
-        when(mockProviders.byName(WORLDPAY)).thenReturn(mockProvider);
+        when(mockProviders.getPaymentProviderFor(WORLDPAY)).thenReturn(mockProvider);
         setupWorldpayMock(null, "error-code");
 
         Long refundId = 12345L;
@@ -345,7 +345,7 @@ public class ChargeRefundServiceTest {
         when(mockChargeDao.findByExternalIdAndGatewayAccount(charge.getExternalId(), accountId))
                 .thenReturn(Optional.of(charge));
 
-        when(mockProviders.byName(SANDBOX)).thenReturn(mockProvider);
+        when(mockProviders.getPaymentProviderFor(SANDBOX)).thenReturn(mockProvider);
 
         setupWorldpayMock(charge.getGatewayTransactionId(), null);
 
@@ -494,7 +494,7 @@ public class ChargeRefundServiceTest {
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId))
                 .thenReturn(Optional.of(capturedCharge));
-        when(mockProviders.byName(WORLDPAY)).thenReturn(mockProvider);
+        when(mockProviders.getPaymentProviderFor(WORLDPAY)).thenReturn(mockProvider);
 
         setupWorldpayMock(null, "error-code");
 

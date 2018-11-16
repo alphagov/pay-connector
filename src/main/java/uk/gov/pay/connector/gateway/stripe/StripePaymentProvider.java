@@ -15,10 +15,13 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationCardGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
@@ -87,7 +90,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     }
 
     @Override
-    public GatewayResponse authorise(AuthorisationGatewayRequest request) {
+    public GatewayResponse authorise(AuthorisationCardGatewayRequest request) {
         logger.info("Calling Stripe for authorisation of charge [{}]", request.getChargeExternalId());
 
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
@@ -144,7 +147,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         );
     }
 
-    private Response createToken(AuthorisationGatewayRequest request) throws GatewayClientException {
+    private Response createToken(AuthorisationCardGatewayRequest request) throws GatewayClientException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/tokens",
@@ -166,7 +169,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     }
 
     @Override
-    public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         return null;
     }
 
@@ -234,12 +237,13 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         return encode(params);
     }
 
-    private String tokenPayload(AuthorisationGatewayRequest request) {
+    private String tokenPayload(AuthorisationCardGatewayRequest request) {
         Map<String, String> params = new HashMap<>();
-        params.put("card[cvc]", request.getAuthCardDetails().getCvc());
-        params.put("card[exp_month]", request.getAuthCardDetails().expiryMonth());
-        params.put("card[exp_year]", request.getAuthCardDetails().expiryYear());
-        params.put("card[number]", request.getAuthCardDetails().getCardNo());
+        AuthCardDetails authCardDetails = request.getAuthCardDetails();
+        params.put("card[cvc]", authCardDetails.getCvc());
+        params.put("card[exp_month]", authCardDetails.expiryMonth());
+        params.put("card[exp_year]", authCardDetails.expiryYear());
+        params.put("card[number]", authCardDetails.getCardNo());
         return encode(params);
     }
 

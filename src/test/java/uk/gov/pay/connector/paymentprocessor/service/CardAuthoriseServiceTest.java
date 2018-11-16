@@ -260,7 +260,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         String generatedTransactionId = "this-will-be-override-to-TRANSACTION-ID-from-provider";
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.getPaymentProviderFor(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(generatedTransactionId));
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -326,7 +326,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     public void doAuthorise_shouldRetainGeneratedTransactionId_WhenProviderAuthorisationFails() {
 
         String generatedTransactionId = "generated-transaction-id";
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.getPaymentProviderFor(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(generatedTransactionId));
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         when(mockedPaymentProvider.authorise(any())).thenThrow(RuntimeException.class);
@@ -596,7 +596,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private void providerWillRespondToAuthoriseWith(GatewayResponse value) {
         when(mockedPaymentProvider.authorise(any())).thenReturn(value);
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.getPaymentProviderFor(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
     }
 
@@ -618,7 +618,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .build();
         when(mockedPaymentProvider.authorise(any())).thenReturn(worldpay3dsResponse);
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.getPaymentProviderFor(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
     }
 
@@ -634,7 +634,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .build();
         when(mockedPaymentProvider.authorise(any())).thenReturn(epdq3dsResponse);
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.getPaymentProviderFor(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
     }
 
@@ -654,7 +654,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         setupPaymentProviderMock(gatewayError);
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.getPaymentProviderFor(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
     }
 }

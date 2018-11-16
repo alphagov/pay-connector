@@ -259,6 +259,7 @@ public class ChargeService {
 
     }
 
+    //todo check with dom
     public ChargeEntity updateChargePost3dsAuthorisation(String chargeExternalId, ChargeStatus status,
                                                          Optional<String> transactionId) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
@@ -362,7 +363,9 @@ public class ChargeService {
         detailsEntity.setCardBrand(sanitize(authCardDetails.getCardBrand()));
         detailsEntity.setCardHolderName(sanitize(authCardDetails.getCardHolder()));
         detailsEntity.setExpiryDate(authCardDetails.getEndDate());
-        detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
+        if (authCardDetails.getCardNo().length() > 6) {
+            detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
+        }
         detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
 
         if (authCardDetails.getAddress().isPresent())
@@ -390,7 +393,7 @@ public class ChargeService {
 
     private ChargeResponse.RefundSummary buildRefundSummary(ChargeEntity charge) {
         ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
-        refund.setStatus(providers.byName(charge.getPaymentGatewayName()).getExternalChargeRefundAvailability(charge).getStatus());
+        refund.setStatus(providers.getPaymentProviderFor(charge.getPaymentGatewayName()).getExternalChargeRefundAvailability(charge).getStatus());
         refund.setAmountSubmitted(RefundCalculator.getRefundedAmount(charge));
         refund.setAmountAvailable(RefundCalculator.getTotalAmountAvailableToBeRefunded(charge));
         return refund;

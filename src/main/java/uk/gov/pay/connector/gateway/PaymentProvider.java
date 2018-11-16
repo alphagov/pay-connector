@@ -4,9 +4,10 @@ import fj.data.Either;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationCardGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -23,15 +24,15 @@ public interface PaymentProvider<T extends BaseResponse, R> {
 
     Optional<String> generateTransactionId();
 
-    GatewayResponse<T> authorise(AuthorisationGatewayRequest request);
+    GatewayResponse<BaseAuthoriseResponse> authorise(AuthorisationCardGatewayRequest request);
 
-    GatewayResponse<T> authorise3dsResponse(Auth3dsResponseGatewayRequest request);
+    GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request);
     
-    CaptureHandler getCaptureHandler();
-
     GatewayResponse<T> refund(RefundGatewayRequest request);
 
     GatewayResponse<T> cancel(CancelGatewayRequest request);
+
+    CaptureHandler getCaptureHandler();
 
     Either<String, Notifications<R>> parseNotification(String payload);
 

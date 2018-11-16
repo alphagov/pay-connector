@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.templates.PayloadDefinition;
 
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.EpdqTemplateData;
@@ -30,20 +31,20 @@ public class EpdqPayloadDefinitionForNewOrder implements PayloadDefinition<EpdqT
 
     @Override
     public ImmutableList<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData) {
-
+        AuthCardDetails authCardDetails = (AuthCardDetails) templateData.getAuthCardDetails();
         // Keep this list in alphabetical order
         EpdqPayloadDefinition.ParameterBuilder parameterBuilder = newParameterBuilder()
                 .add(AMOUNT_KEY, templateData.getAmount())
-                .add(CARD_NO_KEY, templateData.getAuthCardDetails().getCardNo())
-                .add(CARDHOLDER_NAME_KEY, templateData.getAuthCardDetails().getCardHolder())
+                .add(CARD_NO_KEY, authCardDetails.getCardNo())
+                .add(CARDHOLDER_NAME_KEY, authCardDetails.getCardHolder())
                 .add(CURRENCY_KEY, "GBP")
-                .add(CVC_KEY, templateData.getAuthCardDetails().getCvc())
-                .add(EXPIRY_DATE_KEY, templateData.getAuthCardDetails().getEndDate())
+                .add(CVC_KEY, authCardDetails.getCvc())
+                .add(EXPIRY_DATE_KEY, authCardDetails.getEndDate())
                 .add(OPERATION_KEY, templateData.getOperationType())
                 .add(ORDER_ID_KEY, templateData.getOrderId());
 
-        if (templateData.getAuthCardDetails().getAddress().isPresent()) {
-            Address address = templateData.getAuthCardDetails().getAddress().get();
+        if (authCardDetails.getAddress().isPresent()) {
+            Address address = authCardDetails.getAddress().get();
             String addressLines = concatAddressLines(address.getLine1(), address.getLine2());
 
             parameterBuilder.add(OWNER_ADDRESS_KEY, addressLines)

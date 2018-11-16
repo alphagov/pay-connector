@@ -57,7 +57,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withDescription("MyDescription")
                 .withPaymentPlatformReference("MyPlatformReference")
                 .withAmount("2000")
-                .withAuthorisationDetails(authCardDetails)
+                .withAuthCardDetails(authCardDetails)
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST), actualRequest.getPayload());
@@ -73,7 +73,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withDescription("MyDescription")
                 .withPaymentPlatformReference("MyPlatformReference")
                 .withAmount("2000")
-                .withAuthorisationDetails(authCardDetails)
+                .withAuthCardDetails(authCardDetails)
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_WITHOUT_ADDRESS), actualRequest.getPayload());
@@ -91,7 +91,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withDescription("MyDescription <? ")
                 .withPaymentPlatformReference("MyPlatformReference &>? <")
                 .withAmount("2000")
-                .withAuthorisationDetails(authCardDetails)
+                .withAuthCardDetails(authCardDetails)
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_SPECIAL_CHAR_VALID_AUTHORISE_SMARTPAY_REQUEST), actualRequest.getPayload());
@@ -110,7 +110,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withDescription("MyDescription")
                 .withPaymentPlatformReference("MyPlatformReference")
                 .withAmount("2000")
-                .withAuthorisationDetails(authCardDetails)
+                .withAuthCardDetails(authCardDetails)
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_AUTHORISE_SMARTPAY_REQUEST_MINIMAL), actualRequest.getPayload());
@@ -128,7 +128,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withDescription("MyDescription")
                 .withPaymentPlatformReference("MyPlatformReference")
                 .withAmount("2000")
-                .withAuthorisationDetails(authCardDetails)
+                .withAuthCardDetails(authCardDetails)
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST), actualRequest.getPayload());
@@ -144,7 +144,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withDescription("MyDescription")
                 .withPaymentPlatformReference("MyPlatformReference")
                 .withAmount("2000")
-                .withAuthorisationDetails(authCardDetails)
+                .withAuthCardDetails(authCardDetails)
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST_WITHOUT_ADDRESS), actualRequest.getPayload());
@@ -162,7 +162,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withDescription("MyDescription <? ")
                 .withPaymentPlatformReference("MyPlatformReference &>? <")
                 .withAmount("2000")
-                .withAuthorisationDetails(authCardDetails)
+                .withAuthCardDetails(authCardDetails)
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_SPECIAL_CHAR_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST), actualRequest.getPayload());
@@ -181,7 +181,7 @@ public class SmartpayOrderRequestBuilderTest {
                 .withDescription("MyDescription")
                 .withPaymentPlatformReference("MyPlatformReference")
                 .withAmount("2000")
-                .withAuthorisationDetails(authCardDetails)
+                .withAuthCardDetails(authCardDetails)
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(SMARTPAY_VALID_AUTHORISE_SMARTPAY_3DS_REQUEST_MINIMAL), actualRequest.getPayload());

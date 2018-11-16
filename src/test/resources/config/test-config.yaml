@@ -26,6 +26,9 @@ worldpay:
   secureNotificationEnabled: true
   notificationDomain: "amazonaws.com"
   credentials: ['username','password','merchant_id']
+  applePay:
+    privateKey: skdfsdklfkdhjfghdjgdfhgdfjhbfdhjgbdkljfdjbfsdhkbfkkjshdbfsdkhjbksdhj
+    publicCertificate: skdfsdklfkdhjfghdjgdfhgdfjhbfdhjgbdkljfdjbfsdhkbfkkjshdbfsdkhjbksdhj
   jerseyClientOverrides:
     auth:
       readTimeout: 222ms

@@ -54,7 +54,6 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authoriseCharge(@PathParam("chargeId") String chargeId, AuthCardDetails authCardDetails) {
-
         if (!isWellFormatted(authCardDetails)) {
             return badRequestResponse("Values do not match expected format/length.");
         }

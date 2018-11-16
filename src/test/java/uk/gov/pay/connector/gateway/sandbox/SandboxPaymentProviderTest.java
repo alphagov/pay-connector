@@ -6,11 +6,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.applepay.AuthorisationApplePayGatewayRequest;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationCardGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -18,10 +19,10 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.Authori
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
+import uk.gov.pay.connector.util.AuthUtils;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -36,9 +37,6 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR
 public class SandboxPaymentProviderTest {
 
     private SandboxPaymentProvider provider;
-
-    @Mock
-    private ExternalRefundAvailabilityCalculator mockExternalRefundAvailabilityCalculator;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -70,7 +68,7 @@ public class SandboxPaymentProviderTest {
     }
 
     @Test
-    public void parseNotification_shouldFailParsingNotification() throws Exception {
+    public void parseNotification_shouldFailParsingNotification() {
 
         String notification = "{\"transaction_id\":\"1\",\"status\":\"BOOM\", \"reference\":\"abc\"}";
 
@@ -79,13 +77,49 @@ public class SandboxPaymentProviderTest {
 
         provider.parseNotification(notification);
     }
+    
+    @Test
+    public void authorise_shouldBeAuthorisedWhenApplePayTokenNumberIsExpectedToSucceedForAuthorisation() {
+        AppleDecryptedPaymentData applePaymentData = AuthUtils.ApplePay.buildDecryptedPaymentData("Mr. Payment", "mr@payment.test", "4242424242424242");
+
+        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationApplePayGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePaymentData));
+
+        assertThat(gatewayResponse.isSuccessful(), is(true));
+        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
+
+        BaseAuthoriseResponse authoriseResponse = (BaseAuthoriseResponse) gatewayResponse.getBaseResponse().get();
+        assertThat(authoriseResponse.authoriseStatus(), is(AuthoriseStatus.AUTHORISED));
+        assertThat(authoriseResponse.getTransactionId(), is(notNullValue()));
+        assertThat(authoriseResponse.getErrorCode(), is(nullValue()));
+        assertThat(authoriseResponse.getErrorMessage(), is(nullValue()));
+    }
+
+    @Test
+    public void authorise_shouldBeAuthorisedWhenApplePayTokenNumberIsExpectedToBeRejectedForAuthorisation() {
+        AppleDecryptedPaymentData applePaymentData = AuthUtils.ApplePay.buildDecryptedPaymentData("Mr. Payment", "mr@payment.test", "4000000000000002");
+        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationApplePayGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePaymentData));
+
+        assertThat(gatewayResponse.isSuccessful(), is(true));
+        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
+
+        BaseAuthoriseResponse authoriseResponse = (BaseAuthoriseResponse) gatewayResponse.getBaseResponse().get();
+        assertThat(authoriseResponse.authoriseStatus(), is(AuthoriseStatus.REJECTED));
+        assertThat(authoriseResponse.getTransactionId(), is(notNullValue()));
+        assertThat(authoriseResponse.getErrorCode(), is(nullValue()));
+        assertThat(authoriseResponse.getErrorMessage(), is(nullValue()));
+    }
 
     @Test
     public void authorise_shouldBeAuthorisedWhenCardNumIsExpectedToSucceedForAuthorisation() {
-
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo("4242424242424242");
-        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
+        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationCardGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -105,7 +139,7 @@ public class SandboxPaymentProviderTest {
 
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo("4000000000000069");
-        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
+        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationCardGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -125,7 +159,7 @@ public class SandboxPaymentProviderTest {
 
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo("4000000000000119");
-        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
+        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationCardGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.isFailed(), is(true));
@@ -142,7 +176,7 @@ public class SandboxPaymentProviderTest {
 
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo("3456789987654567");
-        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
+        GatewayResponse gatewayResponse = provider.authorise(new AuthorisationCardGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.isFailed(), is(true));
