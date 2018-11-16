@@ -151,6 +151,21 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
+    public void shouldAuthoriseWith3dsOnAndNoAddressInRequestSuccessfully() {
+        setUpFor3dsAndCheckThatEpdqIsUp();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(null)
+                .build();
+
+        AuthorisationGatewayRequest request = new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
+
+        GatewayResponse<EpdqAuthorisationResponse> response = paymentProvider.authorise(request);
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
+    }
+
+    @Test
     public void shouldCheckAuthorisationStatusSuccessfully() {
         setUpAndCheckThatEpdqIsUp();
         AuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
