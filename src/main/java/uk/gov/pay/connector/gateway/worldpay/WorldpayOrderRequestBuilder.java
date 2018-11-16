@@ -2,10 +2,11 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
+import uk.gov.pay.connector.gateway.OrderRequestBuilder;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
 import uk.gov.pay.connector.gateway.templates.TemplateBuilder;
-import uk.gov.pay.connector.gateway.OrderRequestBuilder;
+import uk.gov.pay.connector.gateway.worldpay.applepay.ApplePayTemplateData;
 
 import javax.ws.rs.core.MediaType;
 
@@ -90,6 +91,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     }
 
     public static final TemplateBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseOrderTemplate.xml");
+    public static final TemplateBuilder AUTHORISE_APPLE_PAY_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseApplePayOrderTemplate.xml");
     public static final TemplateBuilder AUTH_3DS_RESPONSE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/Worldpay3dsResponseAuthOrderTemplate.xml");
     public static final TemplateBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayCaptureOrderTemplate.xml");
     public static final TemplateBuilder CANCEL_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayCancelOrderTemplate.xml");
@@ -99,6 +101,10 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public static WorldpayOrderRequestBuilder aWorldpayAuthoriseOrderRequestBuilder() {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE);
+    }
+    
+    public static WorldpayOrderRequestBuilder aWorldpayAuthoriseApplePayOrderRequestBuilder() {
+        return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_APPLE_PAY_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE_APPLE_PAY);
     }
 
     public static WorldpayOrderRequestBuilder aWorldpay3dsResponseAuthOrderRequestBuilder() {
@@ -142,6 +148,11 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         return this;
     }
 
+    public WorldpayOrderRequestBuilder withApplePayTemplateData(ApplePayTemplateData applePayTemplateData) {
+        worldpayTemplateData.setApplePayTemplateData(applePayTemplateData);
+        return this;
+    }
+    
     public WorldpayOrderRequestBuilder withAcceptHeader(String acceptHeader) {
         worldpayTemplateData.setAcceptHeader(acceptHeader);
         return this;
