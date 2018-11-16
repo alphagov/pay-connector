@@ -1,17 +1,17 @@
 package uk.gov.pay.connector.app;
 
 
-import java.nio.charset.StandardCharsets;
+import io.dropwizard.Configuration;
 
-public class ApplePayConfig {
+public class ApplePayConfig extends Configuration {
     private String publicCertificate;
     private String privateKey;
 
-    public byte[] getPublicCertificate() {
-        return publicCertificate.getBytes(StandardCharsets.UTF_8);
+    public String getPublicCertificate() {
+        return publicCertificate;
     }
 
-    public byte[] getPrivateKey() {
-        return privateKey.getBytes(StandardCharsets.UTF_8);
+    public String getPrivateKey() {
+        return privateKey;
     }
 }
