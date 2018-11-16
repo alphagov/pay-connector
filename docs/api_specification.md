@@ -307,6 +307,7 @@ Content-Type: application/json
 | `card_details.expiry_date`     |           | The expiry date of this card                            |
 | `card_details.last_digits_card_number`  |  | The last 4 digits of this card                          |
 | `card_details.first_digits_card_number`  |  | The first 6 digits of this card                          |
+| `card_details.billing_address`    | | Not present when no billing address is collected |
 | `card_details.billing_address.line1`    |  | The line 1 of the billing address                       |
 | `card_details.billing_address.line2`    |  | The line 2 of the billing address                       |
 | `card_details.billing_address.postcode` |  | The postcode of the billing address                     |
@@ -528,6 +529,7 @@ Content-Type: application/json
 | `card_details.expiry_date`     |           | The expiry date of this card                                                                                        |
 | `card_details.last_digits_card_number`  |  | The last 4 digits of this card                                                                                      |
 | `card_details.first_digits_card_number`  |  | The first 6 digits of this card                                                                                      |
+| `card_details.billing_address` | | Not present when no billing address is collected |
 | `card_details.billing_address.line1`    |  | The line 1 of the billing address                                                                                   |
 | `card_details.billing_address.line2`    |  | The line 2 of the billing address                                                                                   |
 | `card_details.billing_address.postcode` |  | The postcode of the billing address                                                                                 |
