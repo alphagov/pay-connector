@@ -361,7 +361,9 @@ public class ChargeService {
         detailsEntity.setCardBrand(sanitize(authCardDetails.getCardBrand()));
         detailsEntity.setCardHolderName(sanitize(authCardDetails.getCardHolder()));
         detailsEntity.setExpiryDate(authCardDetails.getEndDate());
-        detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
+        if (authCardDetails.getCardNo().length() > 6) {
+            detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
+        }
         detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
 
         if (authCardDetails.getAddress().isPresent())

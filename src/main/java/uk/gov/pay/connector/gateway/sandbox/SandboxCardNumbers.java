@@ -9,26 +9,39 @@ import java.util.Map;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 
-public class SandboxCardNumbers {
+class SandboxCardNumbers {
 
-    public static boolean isValidCard(String cardNumber) {
+    static boolean isValidCard(String cardNumber) {
         return GOOD_CARDS.contains(cardNumber) ||
                 GOOD_CORPORATE_CARDS.contains(cardNumber);
     }
 
-    public static boolean isRejectedCard(String cardNumber) {
-        return REJECTED_CARDS.containsKey(cardNumber);
+    static boolean isRejectedCard(String cardNumber) {
+        return REJECTED_CARDS
+                .keySet()
+                .stream()
+                .anyMatch(a -> a.contains(cardNumber));
     }
 
-    public static boolean isErrorCard(String cardNumber) {
-        return ERROR_CARDS.containsKey(cardNumber);
+    static boolean isErrorCard(String cardNumber) {
+        return ERROR_CARDS
+                .keySet()
+                .stream()
+                .anyMatch(a -> a.contains(cardNumber));
     }
 
-    public static CardError cardErrorFor(String cardNumber) {
-        return ERROR_CARDS.get(cardNumber);
+    static CardError cardErrorFor(String cardNumber) {
+        return ERROR_CARDS
+                .entrySet()
+                .stream()
+                .filter(a -> a.getKey().contains(cardNumber))
+                .findFirst()
+                .map(Map.Entry::getValue)
+                .orElse(null);
     }
 
     private static final List<String> GOOD_CARDS = ImmutableList.of(
+            "4242",
             "4444333322221111",
             "4242424242424242",
             "4917610000000000003",
@@ -42,19 +55,26 @@ public class SandboxCardNumbers {
 
     private static final List<String> GOOD_CORPORATE_CARDS = ImmutableList.of(
             "4000180000000002",
-            "5101180000000007"
-    );
-    private static final String DECLINED_CARD_NUMBER = "4000000000000002";
-    private static final String CVC_ERROR_CARD_NUMBER = "4000000000000127";
-    private static final String EXPIRED_CARD_NUMBER = "4000000000000069";
-    private static final String PROCESSING_ERROR_CARD_NUMBER = "4000000000000119";
+            "5101180000000007");
+    private static final List<String> DECLINED_CARD_NUMBERS = ImmutableList.of(
+            "4000000000000002",
+            "0002");
+    private static final List<String> CVC_ERROR_CARD_NUMBERS = ImmutableList.of(
+            "4000000000000127",
+            "0127");
+    private static final List<String> EXPIRED_CARD_NUMBERS = ImmutableList.of(
+            "4000000000000069",
+            "0069");
+    private static final List<String> PROCESSING_ERROR_CARD_NUMBERS = ImmutableList.of(
+            "4000000000000119",
+            "0119");
 
-    private static final Map<String, CardError> ERROR_CARDS = ImmutableMap.of(
-            PROCESSING_ERROR_CARD_NUMBER, new CardError(AUTHORISATION_ERROR, "This transaction could be not be processed."));
+    private static final Map<List<String>, CardError> ERROR_CARDS = ImmutableMap.of(
+            PROCESSING_ERROR_CARD_NUMBERS, new CardError(AUTHORISATION_ERROR, "This transaction could be not be processed."));
 
-    private static final Map<String, CardError> REJECTED_CARDS = ImmutableMap.of(
-            DECLINED_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "This transaction was declined."),
-            EXPIRED_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "The card is expired."),
-            CVC_ERROR_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "The CVC code is incorrect."));
+    private static final Map<List<String>, CardError> REJECTED_CARDS = ImmutableMap.of(
+            DECLINED_CARD_NUMBERS, new CardError(AUTHORISATION_REJECTED, "This transaction was declined."),
+            EXPIRED_CARD_NUMBERS, new CardError(AUTHORISATION_REJECTED, "The card is expired."),
+            CVC_ERROR_CARD_NUMBERS, new CardError(AUTHORISATION_REJECTED, "The CVC code is incorrect."));
     
 }

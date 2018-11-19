@@ -36,7 +36,6 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -202,8 +201,7 @@ public abstract class BaseEpdqPaymentProviderTest {
         return TestTemplateResourceLoader.load(EPDQ_DELETE_SUCCESS_RESPONSE);
     }
 
-    String notificationPayloadForTransaction(String status, String payId, String payIdSub, String shaSign)
-            throws IOException {
+    String notificationPayloadForTransaction(String status, String payId, String payIdSub, String shaSign) {
         return TestTemplateResourceLoader.load(EPDQ_NOTIFICATION_TEMPLATE)
                 .replace("{{status}}", status)
                 .replace("{{payId}}", payId)

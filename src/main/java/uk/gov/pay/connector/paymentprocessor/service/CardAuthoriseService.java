@@ -10,6 +10,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
@@ -108,18 +109,6 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                 updatedCharge.getGatewayAccount().getType(),
                 updatedCharge.getGatewayAccount().getId(),
                 status.toString())).inc();
-    }
-
-    private Optional<String> extractTransactionId(String chargeExternalId, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
-        Optional<String> transactionId = operationResponse.getBaseResponse()
-                .map(BaseAuthoriseResponse::getTransactionId);
-
-        if (!transactionId.isPresent() || StringUtils.isBlank(transactionId.get())) {
-            logger.warn("AuthCardDetails authorisation response received with no transaction id. -  charge_external_id={}",
-                    chargeExternalId);
-        }
-        
-        return transactionId;
     }
 
     private Optional<Auth3dsDetailsEntity> extractAuth3dsDetails(GatewayResponse<BaseAuthoriseResponse> operationResponse) {

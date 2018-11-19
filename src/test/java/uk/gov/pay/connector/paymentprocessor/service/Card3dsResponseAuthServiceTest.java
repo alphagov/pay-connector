@@ -5,13 +5,10 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
-import org.hamcrest.Description;
-import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
@@ -93,7 +90,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondAuthorisationSuccess() throws Exception {
+    public void doAuthorise_shouldRespondAuthorisationSuccess() {
 
         Auth3dsDetails auth3dsDetails = AuthUtils.buildAuth3dsDetails();
         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
@@ -117,7 +114,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRetainGeneratedTransactionId_evenIfAuthorisationAborted() throws Exception {
+    public void doAuthorise_shouldRetainGeneratedTransactionId_evenIfAuthorisationAborted()  {
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
@@ -157,7 +154,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldRespondAuthorisationRejected() throws Exception {
+    public void shouldRespondAuthorisationRejected()  {
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);
         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
 
@@ -172,7 +169,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldRespondAuthorisationCancelled() throws Exception {
+    public void shouldRespondAuthorisationCancelled()  {
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);
         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
 
@@ -186,17 +183,15 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldRespondAuthorisationError() throws Exception {
+    public void shouldRespondAuthorisationError()  {
         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
         GatewayResponse response = anAuthorisationErrorResponse(charge, argumentCaptor);
 
         assertThat(response.isFailed(), is(true));
-        //  assertThat(reloadedCharge.getStatus(), is(AUTHORISATION_ERROR.toString()));
-        //  assertThat(reloadedCharge.getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
     }
 
     @Test
-    public void authoriseShouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenTimeout() throws Exception {
+    public void authoriseShouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenTimeout()  {
         when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
 
         try {
@@ -233,7 +228,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     }
 
     @Test(expected = IllegalStateRuntimeException.class)
-    public void shouldThrowAnIllegalStateRuntimeExceptionWhenInvalidStatus() throws Exception {
+    public void shouldThrowAnIllegalStateRuntimeExceptionWhenInvalidStatus()  {
 
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.AUTHORISATION_READY);
 
@@ -292,19 +287,5 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
         return card3dsResponseAuthService.doAuthorise(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
-    }
-
-
-    private HamcrestArgumentMatcher<ChargeEntity> chargeWithStatus(String externalId, ChargeStatus status) {
-        return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<ChargeEntity>() {
-            @Override
-            protected boolean matchesSafely(ChargeEntity chargeEntity) {
-                return chargeEntity.getExternalId().equals(externalId) && ChargeStatus.fromString(chargeEntity.getStatus()) == status;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-            }
-        });
     }
 }

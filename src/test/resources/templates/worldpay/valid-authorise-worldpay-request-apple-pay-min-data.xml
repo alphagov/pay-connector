@@ -8,7 +8,7 @@
             <amount currencyCode="GBP" exponent="2" value="500"/>
             <paymentDetails>
                 <EMVCO_TOKEN-SSL type="APPLEPAY">
-                    <tokenNumber>4242424242424242</tokenNumber>
+                    <tokenNumber>4818528840010767</tokenNumber>
                     <expiryDate><date month="12" year="2023"/></expiryDate>
                     <cryptogram>Ao/fzpIAFvp1eB9y8WVDMAACAAA=</cryptogram>
                 </EMVCO_TOKEN-SSL>

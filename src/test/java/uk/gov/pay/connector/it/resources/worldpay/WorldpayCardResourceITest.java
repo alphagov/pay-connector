@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,7 +67,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldAuthoriseChargeWithoutBillingAddress() throws JsonProcessingException {
+    public void shouldAuthoriseChargeWithoutBillingAddress()  {
 
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         worldpayMockClient.mockAuthorisationSuccess();

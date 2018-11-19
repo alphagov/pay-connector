@@ -36,7 +36,7 @@ public class SandboxPaymentProvider implements PaymentProvider<String> {
 
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
-    SandboxCaptureHandler sandboxCaptureHandler;
+    private SandboxCaptureHandler sandboxCaptureHandler;
 
     public SandboxPaymentProvider() {
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
