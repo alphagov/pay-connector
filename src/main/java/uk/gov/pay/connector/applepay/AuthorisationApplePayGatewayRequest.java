@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.applepay;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.gateway.model.request.BaseAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 
-public class AuthorisationApplePayGatewayRequest extends BaseAuthorisationGatewayRequest {
+public class AuthorisationApplePayGatewayRequest extends AuthorisationGatewayRequest {
     private AppleDecryptedPaymentData applePaymentData;
 
     public AuthorisationApplePayGatewayRequest(ChargeEntity charge, AppleDecryptedPaymentData applePaymentData) {

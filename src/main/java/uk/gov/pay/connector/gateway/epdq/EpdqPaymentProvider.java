@@ -22,9 +22,8 @@ import uk.gov.pay.connector.gateway.epdq.model.response.EpdqRefundResponse;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
@@ -121,7 +120,7 @@ public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String
     }
 
     @Override
-    public GatewayResponse authorise(AuthorisationGatewayRequest request) {
+    public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(ROUTE_FOR_NEW_ORDER, request.getGatewayAccount(), buildAuthoriseOrder(request, frontendUrl));
         return GatewayResponseGenerator.getEpdqGatewayResponse(authoriseClient, response, EpdqAuthorisationResponse.class);
     }
@@ -259,7 +258,7 @@ public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String
                 .build();
     }
 
-    private GatewayOrder buildAuthoriseOrder(AuthorisationGatewayRequest request, String frontendUrl) {
+    private GatewayOrder buildAuthoriseOrder(CardAuthorisationGatewayRequest request, String frontendUrl) {
         EpdqOrderRequestBuilder epdqOrderRequestBuilder =
                 request.getGatewayAccount().isRequires3ds() ?
                         anEpdq3DsAuthoriseOrderRequestBuilder(frontendUrl) :

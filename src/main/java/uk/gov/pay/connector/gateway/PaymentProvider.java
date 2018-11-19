@@ -4,7 +4,7 @@ import fj.data.Either;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
@@ -23,7 +23,7 @@ public interface PaymentProvider<T extends BaseResponse, R> {
 
     Optional<String> generateTransactionId();
 
-    GatewayResponse<T> authorise(AuthorisationGatewayRequest request);
+    GatewayResponse<T> authorise(CardAuthorisationGatewayRequest request);
 
     GatewayResponse<T> authorise3dsResponse(Auth3dsResponseGatewayRequest request);
     

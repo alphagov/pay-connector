@@ -16,8 +16,8 @@ import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -89,7 +89,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     }
 
     @Override
-    public GatewayResponse authorise(AuthorisationGatewayRequest request) {
+    public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
         logger.info("Calling Stripe for authorisation of charge [{}]", request.getChargeExternalId());
 
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
@@ -130,7 +130,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         }
     }
 
-    private Response create3dsSource(AuthorisationGatewayRequest request, String sourceId) throws GatewayClientException {
+    private Response create3dsSource(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/sources",
@@ -141,7 +141,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         );
     }
 
-    private Response createCharge(AuthorisationGatewayRequest request, String sourceId) throws GatewayClientException {
+    private Response createCharge(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/charges",
@@ -152,7 +152,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         );
     }
 
-    private Response createSource(AuthorisationGatewayRequest request, String tokenId) throws GatewayClientException {
+    private Response createSource(CardAuthorisationGatewayRequest request, String tokenId) throws GatewayClientException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/sources",
@@ -163,7 +163,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         );
     }
 
-    private Response createToken(AuthorisationGatewayRequest request) throws GatewayClientException {
+    private Response createToken(CardAuthorisationGatewayRequest request) throws GatewayClientException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/tokens",
@@ -237,7 +237,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         return encode(params);
     }
 
-    private String threeDSecurePayload(AuthorisationGatewayRequest request, String sourceId) {
+    private String threeDSecurePayload(CardAuthorisationGatewayRequest request, String sourceId) {
         //todo: revisit for frontendUrl format
         String frontend3dsIncomingUrl = String.format("%s/card_details/%s/3ds_required_in/stripe", frontendUrl, request.getChargeExternalId());
         Map<String, String> params = new HashMap<>();
@@ -249,7 +249,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         return encode(params);
     }
 
-    private String authorisePayload(AuthorisationGatewayRequest request, String sourceId) {
+    private String authorisePayload(CardAuthorisationGatewayRequest request, String sourceId) {
         Map<String, String> params = new HashMap<>();
         params.put("amount", request.getAmount());
         params.put("currency", "GBP");
@@ -265,7 +265,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         return encode(params);
     }
 
-    private String tokenPayload(AuthorisationGatewayRequest request) {
+    private String tokenPayload(CardAuthorisationGatewayRequest request) {
         Map<String, String> params = new HashMap<>();
         params.put("card[cvc]", request.getAuthCardDetails().getCvc());
         params.put("card[exp_month]", request.getAuthCardDetails().expiryMonth());

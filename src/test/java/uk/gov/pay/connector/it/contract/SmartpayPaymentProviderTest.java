@@ -20,7 +20,7 @@ import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
@@ -107,7 +107,7 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
+        CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
     }
@@ -120,7 +120,7 @@ public class SmartpayPaymentProviderTest {
                 .withAddress(null)
                 .build();
 
-        AuthorisationGatewayRequest request = new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
 
         GatewayResponse response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
@@ -130,7 +130,7 @@ public class SmartpayPaymentProviderTest {
     public void shouldSendA3dsOrderForMerchantSuccessfully() throws Exception {
         gatewayAccountEntity.setRequires3ds(true);
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationGatewayRequest request = getCard3dsAuthorisationRequest(chargeEntity);
+        CardAuthorisationGatewayRequest request = getCard3dsAuthorisationRequest(chargeEntity);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().getIssuerUrl(), is(notNullValue()));
@@ -170,7 +170,7 @@ public class SmartpayPaymentProviderTest {
         accountWithInvalidCredentials.setType(TEST);
 
         chargeEntity.setGatewayAccount(accountWithInvalidCredentials);
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
+        CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
 
         assertFalse(response.isSuccessful());
@@ -182,7 +182,7 @@ public class SmartpayPaymentProviderTest {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         SmartpayCaptureHandler smartpayCaptureHandler = (SmartpayCaptureHandler) paymentProvider.getCaptureHandler();
 
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
+        CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
 
         assertTrue(response.isSuccessful());
@@ -199,7 +199,7 @@ public class SmartpayPaymentProviderTest {
     @Test
     public void shouldSuccessfullySendACancelRequest() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
+        CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
 
@@ -216,7 +216,7 @@ public class SmartpayPaymentProviderTest {
 
     @Test
     public void shouldRefundToAnExistingPaymentSuccessfully() throws Exception {
-        AuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
+        CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
         PaymentProvider smartpay = getSmartpayPaymentProvider();
         SmartpayCaptureHandler smartpayCaptureHandler = (SmartpayCaptureHandler) smartpay.getCaptureHandler();
         GatewayResponse<SmartpayAuthorisationResponse> authoriseResponse = smartpay.authorise(request);
@@ -253,19 +253,19 @@ public class SmartpayPaymentProviderTest {
         return new SmartpayPaymentProvider(configuration, gatewayClientFactory, mockEnvironment, new ObjectMapper());
     }
 
-    public static AuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
+    public static CardAuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo(VALID_SMARTPAY_CARD_NUMBER)
                 .build();
 
-        return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
 
-    public static AuthorisationGatewayRequest getCard3dsAuthorisationRequest(ChargeEntity chargeEntity) {
+    public static CardAuthorisationGatewayRequest getCard3dsAuthorisationRequest(ChargeEntity chargeEntity) {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo(VALID_SMARTPAY_3DS_CARD_NUMBER)
                 .build();
 
-        return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
 }
