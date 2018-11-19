@@ -139,6 +139,24 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
+    public void shouldSendA3dsOrderForMerchantWithNoBillingAddressSuccessfully() throws Exception {
+        gatewayAccountEntity.setRequires3ds(true);
+        PaymentProvider paymentProvider = getSmartpayPaymentProvider();
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardNo(VALID_SMARTPAY_3DS_CARD_NUMBER)
+                .withAddress(null)
+                .build();
+
+        AuthorisationGatewayRequest request = new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().get().getIssuerUrl(), is(notNullValue()));
+        assertThat(response.getBaseResponse().get().getMd(), is(notNullValue()));
+        assertThat(response.getBaseResponse().get().getPaRequest(), is(notNullValue()));
+    }
+
+    @Test
     public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         GatewayAccountEntity accountWithInvalidCredentials = new GatewayAccountEntity();
@@ -246,8 +264,6 @@ public class SmartpayPaymentProviderTest {
     public static AuthorisationGatewayRequest getCard3dsAuthorisationRequest(ChargeEntity chargeEntity) {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo(VALID_SMARTPAY_3DS_CARD_NUMBER)
-                .withAcceptHeader("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-                .withUserAgentHeader("Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008052912 Firefox/3.0")
                 .build();
 
         return new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
