@@ -16,6 +16,8 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CAPTURE_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_3DS_SOURCES_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_SOURCES_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
@@ -28,6 +30,13 @@ public class StripeMockClient {
 
     private void setupResponse(String responseBody, String path, int status) {
         stubFor(post(urlPathEqualTo(path)).withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
+                .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON).withStatus(status).withBody(responseBody)));
+    }
+
+    private void setupResponse(String requestBodyPattern, String responseBody, String path, int status) {
+        stubFor(post(urlPathEqualTo(path))
+                .withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
+                .withRequestBody(matching(".*" + requestBodyPattern + ".*"))
                 .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON).withStatus(status).withBody(responseBody)));
     }
 
@@ -56,5 +65,15 @@ public class StripeMockClient {
     public void mockCreateSource() {
         String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_SOURCES_SUCCESS_RESPONSE);
         setupResponse(payload, "/v1/sources", 200);
+    }
+
+    public void mockCreateSourceWithThreeDSecureRequired() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE);
+        setupResponse(payload, "/v1/sources", 200);
+    }
+
+    public void mockCreate3dsSource() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_3DS_SOURCES_RESPONSE);
+        setupResponse("three_d_secure", payload, "/v1/sources", 200);
     }
 }

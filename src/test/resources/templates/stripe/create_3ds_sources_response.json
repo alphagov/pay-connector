@@ -1,0 +1,22 @@
+{
+  "id": "src_1DXAxYC6H5MjhE5Y4jZVJwNV",
+  "object": "source",
+  "amount": 1099,
+  "client_secret": "src_client_secret_Dz9Gdfev1r48Lq5Ayox6qOD6",
+  "currency": "gbp",
+  "flow": "redirect",
+  "livemode": false,
+  "redirect": {
+    "failure_reason": null,
+    "return_url": "https://example.com",
+    "status": "pending",
+    "url": "https://hooks.stripe.com/redirect/authenticate/src_1DXAxYC6H5MjhE5Y4jZVJwNV?client_secret=src_client_secret_Dz9Gdfev1r48Lq5Ayox6qOD6"
+  },
+  "status": "pending",
+  "three_d_secure": {
+    "card": "src_1DXAwDC6H5MjhE5YtbPXsoBL",
+    "three_d_secure": "required"
+  },
+  "type": "three_d_secure",
+  "usage": "single_use"
+}

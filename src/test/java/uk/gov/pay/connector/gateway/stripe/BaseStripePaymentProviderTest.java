@@ -9,14 +9,19 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.mockito.Mock;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.stripe.response.StripeErrorResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.client.Client;
@@ -37,6 +42,9 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CAPTURE_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_3DS_SOURCES_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 
 public abstract class BaseStripePaymentProviderTest {
@@ -58,6 +66,8 @@ public abstract class BaseStripePaymentProviderTest {
     ConnectorConfiguration configuration;
     @Mock
     StripeGatewayConfig stripeGatewayConfig;
+    @Mock
+    LinksConfig linksConfig;
 
     @Mock
     Invocation.Builder mockClientInvocationBuilder;
@@ -72,6 +82,9 @@ public abstract class BaseStripePaymentProviderTest {
         when(stripeGatewayConfig.getUrl()).thenReturn("http://stripe.url");
         when(configuration.getStripeConfig()).thenReturn(stripeGatewayConfig);
 
+        when(configuration.getLinks()).thenReturn(linksConfig);
+        when(linksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
+
         StripeGatewayClient stripeGatewayClient = new StripeGatewayClient(mockClient, mockMetricRegistry);
         provider = new StripePaymentProvider(stripeGatewayClient, configuration);
     }
@@ -80,12 +93,28 @@ public abstract class BaseStripePaymentProviderTest {
         return TestTemplateResourceLoader.load(STRIPE_CAPTURE_SUCCESS_RESPONSE);
     }
 
+    String successTokenResponse() {
+        return TestTemplateResourceLoader.load(STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE);
+    }
+
+    String successSourceResponseWith3dsRequired() {
+        return TestTemplateResourceLoader.load(STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE);
+    }
+
+    String success3dsSourceResponse() {
+        return TestTemplateResourceLoader.load(STRIPE_CREATE_3DS_SOURCES_RESPONSE);
+    }
+
     String errorCaptureResponse() {
         return TestTemplateResourceLoader.load(STRIPE_ERROR_RESPONSE);
     }
 
     CaptureGatewayRequest buildTestCaptureRequest() {
         return buildTestCaptureRequest(buildTestGatewayAccountEntity());
+    }
+
+    AuthorisationGatewayRequest buildTestAuthorisationRequest() {
+        return buildTestAuthorisationRequest(buildTestGatewayAccountEntity());
     }
 
     void assertEquals(GatewayError actual, GatewayError expected) {
@@ -101,7 +130,7 @@ public abstract class BaseStripePaymentProviderTest {
     }
 
     @NotNull
-    private Response mockResponseWithPayload(int responseHttpStatus) {
+    protected Response mockResponseWithPayload(int responseHttpStatus) {
         Response response = mockInvocationBuilder();
 
         Response.StatusType statusType = mock(Response.StatusType.class);
@@ -112,7 +141,7 @@ public abstract class BaseStripePaymentProviderTest {
         return response;
     }
 
-    private Response mockInvocationBuilder() {
+    protected Response mockInvocationBuilder() {
         when(mockClientInvocationBuilder.header(anyString(), any(Object.class))).thenReturn(mockClientInvocationBuilder);
 
         WebTarget mockTarget = mock(WebTarget.class);
@@ -128,6 +157,30 @@ public abstract class BaseStripePaymentProviderTest {
         Response response = mockResponseWithPayload(responseHttpStatus);
         StripeErrorResponse stripeErrorResponse = new ObjectMapper().readValue(responsePayload, StripeErrorResponse.class);
         when(response.readEntity(StripeErrorResponse.class)).thenReturn(stripeErrorResponse);
+    }
+
+    private AuthorisationGatewayRequest buildTestAuthorisationRequest(GatewayAccountEntity accountEntity) {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalId("mq4ht90j2oir6am585afk58kml")
+                .withGatewayAccountEntity(accountEntity)
+                .build();
+        return buildTestAuthorisationRequest(chargeEntity);
+    }
+
+    AuthorisationGatewayRequest buildTestAuthorisationRequest(ChargeEntity chargeEntity) {
+        return new AuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
+    }
+
+    private AuthCardDetails buildTestAuthCardDetails() {
+        Address address = new Address("10", "Wxx", "E1 8xx", "London", null, "GB");
+        return AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardHolder("Mr. Payment")
+                .withCardNo("4242424242424242")
+                .withCvc("111")
+                .withEndDate("08/99")
+                .withCardBrand("visa")
+                .withAddress(address)
+                .build();
     }
 
     private CaptureGatewayRequest buildTestCaptureRequest(GatewayAccountEntity accountEntity) {

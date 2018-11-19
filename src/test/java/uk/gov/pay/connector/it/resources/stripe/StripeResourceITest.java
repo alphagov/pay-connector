@@ -43,6 +43,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
@@ -116,6 +117,32 @@ public class StripeResourceITest {
         List<LoggedRequest> requests = findAll(postRequestedFor(urlMatching("/v1/charges")));
         assertThat(requests).hasSize(1);
         assertThat(requests.get(0).getBodyAsString()).isEqualTo(constructExpectedAuthoriseRequestBody());
+    }
+
+    @Test
+    public void shouldRespondAs3dsRequired_whenAuthorisationRequires3ds() {
+        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+
+        stripeMockClient.mockCreateSourceWithThreeDSecureRequired();
+        stripeMockClient.mockCreate3dsSource();
+
+        String externalChargeId = addCharge();
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(externalChargeId))
+                .then()
+                .body("status", is(AUTHORISATION_3DS_REQUIRED.toString()))
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_3DS_REQUIRED.toString());
+
+        List<LoggedRequest> requests = findAll(postRequestedFor(urlMatching("/v1/tokens")));
+        assertThat(requests).hasSize(1);
+        requests = findAll(postRequestedFor(urlMatching("/v1/sources")));
+        assertThat(requests).hasSize(2);
+        requests = findAll(postRequestedFor(urlMatching("/v1/charges")));
+        assertThat(requests).hasSize(0);
     }
 
     @Test
