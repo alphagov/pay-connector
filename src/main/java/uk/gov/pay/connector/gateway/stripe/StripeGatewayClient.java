@@ -39,7 +39,7 @@ public class StripeGatewayClient {
                                 String payload,
                                 Map<String, String> headers,
                                 MediaType mediaType,
-                                String metricsPrefix) throws GatewayClientException, GatewayClientRuntimeException {
+                                String metricsPrefix) throws GatewayClientException, GatewayException {
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
 
         Response response;
@@ -55,7 +55,7 @@ public class StripeGatewayClient {
         } catch (Exception e) {
             metricRegistry.counter(metricsPrefix + ".failures").inc();
             logger.error(format("Exception for gateway url=%s", url.toString()), e);
-            throw new GatewayClientRuntimeException(url.toString(), e);
+            throw new GatewayException(url.toString(), e);
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram(metricsPrefix + ".response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));

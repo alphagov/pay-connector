@@ -2,8 +2,6 @@ package uk.gov.pay.connector.gateway.stripe.handler;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -11,7 +9,7 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.GatewayClientException;
-import uk.gov.pay.connector.gateway.stripe.GatewayClientRuntimeException;
+import uk.gov.pay.connector.gateway.stripe.GatewayException;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.response.StripeCaptureResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeErrorResponse;
@@ -63,7 +61,7 @@ public class StripeCaptureHandler implements CaptureHandler {
                     .getMessage());
 
             return responseBuilder.withGatewayError(gatewayError).build();
-        } catch (GatewayClientRuntimeException e) {
+        } catch (GatewayException e) {
             return responseBuilder.withGatewayError(GatewayError.of(e)).build();
         }
 
