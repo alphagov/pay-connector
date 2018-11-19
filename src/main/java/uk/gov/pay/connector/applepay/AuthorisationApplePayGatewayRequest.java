@@ -18,11 +18,4 @@ public class AuthorisationApplePayGatewayRequest extends BaseAuthorisationGatewa
     public static AuthorisationApplePayGatewayRequest valueOf(ChargeEntity charge, AppleDecryptedPaymentData applePaymentData) {
         return new AuthorisationApplePayGatewayRequest(charge, applePaymentData);
     }
-
-    @Override
-    public String toString() {
-        return "AuthorisationApplePayGatewayRequest{" +
-                ", charge=" + charge +
-                '}';
-    }
 }
