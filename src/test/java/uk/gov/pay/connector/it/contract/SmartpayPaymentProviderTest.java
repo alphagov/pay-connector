@@ -105,7 +105,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
+    public void shouldSendSuccessfullyAnOrderForMerchant() {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
@@ -113,7 +113,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldSendSuccessfullyAnOrderForMerchantWithNoAddressInRequest() throws Exception {
+    public void shouldSendSuccessfullyAnOrderForMerchantWithNoAddressInRequest() {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo(VALID_SMARTPAY_CARD_NUMBER)
@@ -127,7 +127,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldSendA3dsOrderForMerchantSuccessfully() throws Exception {
+    public void shouldSendA3dsOrderForMerchantSuccessfully() {
         gatewayAccountEntity.setRequires3ds(true);
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         CardAuthorisationGatewayRequest request = getCard3dsAuthorisationRequest(chargeEntity);
@@ -139,7 +139,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldSendA3dsOrderForMerchantWithNoBillingAddressSuccessfully() throws Exception {
+    public void shouldSendA3dsOrderForMerchantWithNoBillingAddressSuccessfully() {
         gatewayAccountEntity.setRequires3ds(true);
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
 
@@ -148,7 +148,7 @@ public class SmartpayPaymentProviderTest {
                 .withAddress(null)
                 .build();
 
-        AuthorisationGatewayRequest request = new AuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().getIssuerUrl(), is(notNullValue()));
@@ -157,7 +157,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() throws Exception {
+    public void shouldFailRequestAuthorisationIfCredentialsAreNotCorrect() {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         GatewayAccountEntity accountWithInvalidCredentials = new GatewayAccountEntity();
         accountWithInvalidCredentials.setId(11L);
@@ -178,7 +178,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldSuccessfullySendACaptureRequest() throws Exception {
+    public void shouldSuccessfullySendACaptureRequest() {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         SmartpayCaptureHandler smartpayCaptureHandler = (SmartpayCaptureHandler) paymentProvider.getCaptureHandler();
 
@@ -197,7 +197,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldSuccessfullySendACancelRequest() throws Exception {
+    public void shouldSuccessfullySendACancelRequest() {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
         GatewayResponse<SmartpayAuthorisationResponse> response = paymentProvider.authorise(request);
@@ -215,7 +215,7 @@ public class SmartpayPaymentProviderTest {
     }
 
     @Test
-    public void shouldRefundToAnExistingPaymentSuccessfully() throws Exception {
+    public void shouldRefundToAnExistingPaymentSuccessfully() {
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
         PaymentProvider smartpay = getSmartpayPaymentProvider();
         SmartpayCaptureHandler smartpayCaptureHandler = (SmartpayCaptureHandler) smartpay.getCaptureHandler();

@@ -17,8 +17,8 @@ import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.stripe.response.StripeErrorResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -113,7 +113,7 @@ public abstract class BaseStripePaymentProviderTest {
         return buildTestCaptureRequest(buildTestGatewayAccountEntity());
     }
 
-    AuthorisationGatewayRequest buildTestAuthorisationRequest() {
+    CardAuthorisationGatewayRequest buildTestAuthorisationRequest() {
         return buildTestAuthorisationRequest(buildTestGatewayAccountEntity());
     }
 
@@ -159,7 +159,7 @@ public abstract class BaseStripePaymentProviderTest {
         when(response.readEntity(StripeErrorResponse.class)).thenReturn(stripeErrorResponse);
     }
 
-    private AuthorisationGatewayRequest buildTestAuthorisationRequest(GatewayAccountEntity accountEntity) {
+    private CardAuthorisationGatewayRequest buildTestAuthorisationRequest(GatewayAccountEntity accountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
@@ -167,8 +167,8 @@ public abstract class BaseStripePaymentProviderTest {
         return buildTestAuthorisationRequest(chargeEntity);
     }
 
-    AuthorisationGatewayRequest buildTestAuthorisationRequest(ChargeEntity chargeEntity) {
-        return new AuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
+    CardAuthorisationGatewayRequest buildTestAuthorisationRequest(ChargeEntity chargeEntity) {
+        return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
     }
 
     private AuthCardDetails buildTestAuthCardDetails() {
