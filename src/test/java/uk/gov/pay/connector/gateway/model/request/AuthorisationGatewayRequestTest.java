@@ -16,7 +16,7 @@ public class AuthorisationGatewayRequestTest {
                 .withAmount(2000L)
                 .withCorporateSurcharge(250L)
                 .build();
-        AuthorisationGatewayRequest gatewayRequest = new AuthorisationGatewayRequest(chargeEntity, null);
+        BaseAuthorisationGatewayRequest gatewayRequest = new AuthorisationGatewayRequest(chargeEntity, null);
         assertThat(gatewayRequest.getAmount(), is("2250"));
     }
     
@@ -25,7 +25,7 @@ public class AuthorisationGatewayRequestTest {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(2000L)
                 .build();
-        AuthorisationGatewayRequest gatewayRequest = new AuthorisationGatewayRequest(chargeEntity, null);
+        BaseAuthorisationGatewayRequest gatewayRequest = new AuthorisationGatewayRequest(chargeEntity, null);
         assertThat(gatewayRequest.getAmount(), is("2000"));
     }
 }
