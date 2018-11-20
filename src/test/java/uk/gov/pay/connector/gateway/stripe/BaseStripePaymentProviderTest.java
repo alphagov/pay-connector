@@ -46,6 +46,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE_GENERAL;
 
 public abstract class BaseStripePaymentProviderTest {
 
@@ -107,6 +108,10 @@ public abstract class BaseStripePaymentProviderTest {
 
     String errorCaptureResponse() {
         return TestTemplateResourceLoader.load(STRIPE_ERROR_RESPONSE);
+    }
+
+    String stripeInternalServerError() {
+        return TestTemplateResourceLoader.load(STRIPE_ERROR_RESPONSE_GENERAL);
     }
 
     CaptureGatewayRequest buildTestCaptureRequest() {

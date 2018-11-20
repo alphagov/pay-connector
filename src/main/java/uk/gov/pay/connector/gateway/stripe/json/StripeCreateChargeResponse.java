@@ -9,10 +9,6 @@ public class StripeCreateChargeResponse {
     private String id;
     @JsonProperty("status")
     private String status;
-    @JsonProperty("failure_code")
-    private String failureCode;
-    @JsonProperty("failure_message")
-    private String failureMessage;
 
     public String getTransactionId() {
         return id;
@@ -22,11 +18,4 @@ public class StripeCreateChargeResponse {
         return status;
     }
 
-    public String getFailureCode() {
-        return failureCode;
-    }
-
-    public String getFailureMessage() {
-        return failureMessage;
-    }
 }

@@ -27,7 +27,7 @@ public class GatewayError {
         this.errorType = errorType;
     }
 
-    public static GatewayError baseError(String msg) {
+    public static GatewayError genericGatewayError(String msg) {
         return new GatewayError(msg, GENERIC_GATEWAY_ERROR);
     }
 
@@ -66,10 +66,10 @@ public class GatewayError {
                 logger.error(format("Socket Exception for gateway url=%s", e.getUrl()), e);
                 gatewayError = GatewayError.gatewayConnectionSocketException("Gateway connection socket error");
             } else {
-                gatewayError = GatewayError.baseError(e.getMessage());
+                gatewayError = GatewayError.genericGatewayError(e.getMessage());
             }
         } else {
-            gatewayError = GatewayError.baseError(e.getMessage());
+            gatewayError = GatewayError.genericGatewayError(e.getMessage());
         }
 
         return gatewayError;

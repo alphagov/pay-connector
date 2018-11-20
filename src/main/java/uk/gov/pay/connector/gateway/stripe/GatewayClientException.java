@@ -2,6 +2,9 @@ package uk.gov.pay.connector.gateway.stripe;
 
 import javax.ws.rs.core.Response;
 
+/**
+ * This class represents 4xx exceptions
+ */
 public class GatewayClientException extends Exception{
     private final transient Response response;
     

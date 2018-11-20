@@ -32,7 +32,7 @@ import static uk.gov.pay.connector.charge.service.CancelServiceFunctions.doGatew
 import static uk.gov.pay.connector.charge.service.CancelServiceFunctions.prepareForTerminate;
 import static uk.gov.pay.connector.charge.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.charge.service.StatusFlow.USER_CANCELLATION_FLOW;
-import static uk.gov.pay.connector.gateway.model.GatewayError.baseError;
+import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
 public class ChargeCancelService {
@@ -139,7 +139,7 @@ public class ChargeCancelService {
             logger.error("Could not update charge - charge_external-id={}, status={}, to_status={}",
                     processedCharge.getExternalId(), processedCharge.getStatus(), completeStatus);
             return gatewayResponseBuilder
-                    .withGatewayError(baseError(errorMsg))
+                    .withGatewayError(genericGatewayError(errorMsg))
                     .build();
         }
     }

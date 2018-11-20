@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.stripe;
 import com.google.common.collect.ImmutableMap;
 import fj.data.Either;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -50,8 +51,8 @@ import static java.util.stream.Collectors.joining;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
-import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
+import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
+import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCodeFromGateway;
 
 
 @Singleton
@@ -121,32 +122,35 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
             Response response = e.getResponse();
             int status = response.getStatus();
 
-            if (status == 401) {
-                return unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage());
+            if (status == HttpStatus.SC_UNAUTHORIZED) {
+                return unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage(), HttpStatus.SC_UNAUTHORIZED);
             }
 
             StripeErrorResponse stripeErrorResponse = response.readEntity(StripeErrorResponse.class);
             String errorId = UUID.randomUUID().toString();
             logger.error("Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. ErrorId: {}. Response code from Stripe: {}",
                     request.getChargeExternalId(), stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), errorId, response.getStatus());
-            GatewayError gatewayError = new GatewayError(stripeErrorResponse.getError().getMessage(), GENERIC_GATEWAY_ERROR);
+            GatewayError gatewayError = genericGatewayError(stripeErrorResponse.getError().getMessage());
 
             return responseBuilder.withGatewayError(gatewayError).build();
 
         } catch (DownstreamException e) {
 
-            return unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage());
+            return unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage(), e.getStatusCode());
 
         } catch (GatewayException e) {
             return responseBuilder.withGatewayError(GatewayError.of(e)).build();
         }
     }
 
-    private GatewayResponse unexpectedGatewayResponse(String chargeExternalId, GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder, String errorMessage) {
+    private GatewayResponse unexpectedGatewayResponse(String chargeExternalId, 
+                                                      GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder, 
+                                                      String errorMessage, 
+                                                      int statusCode) {
         String errorId = UUID.randomUUID().toString();
-        logger.error("Authorisation failed for charge {}. Reason: {}. ErrorId: {}",
-                chargeExternalId, errorMessage, errorId);
-        GatewayError gatewayError = new GatewayError("There was an internal server error. ErrorId: " + errorId, UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY);
+        logger.error("Authorisation failed for charge {}. Reason: {}. Status code from Stripe: {}. ErrorId: {}",
+                chargeExternalId, errorMessage, statusCode, errorId);
+        GatewayError gatewayError = unexpectedStatusCodeFromGateway("There was an internal server error. ErrorId: " + errorId);
         return responseBuilder.withGatewayError(gatewayError).build();
     }
 

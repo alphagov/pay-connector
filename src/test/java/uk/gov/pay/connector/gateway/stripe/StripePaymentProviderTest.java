@@ -71,8 +71,8 @@ public class StripePaymentProviderTest extends BaseStripePaymentProviderTest {
     }
 
     @Test
-    public void shouldNotAuthorise_whenPaymentProviderReturnsUnexpectedStatusCode() throws IOException {
-        mockPaymentProviderErrorResponse(500, generalErrorResponse());
+    public void shouldNotAuthorise_whenPaymentProviderReturnsUnexpectedStatusCode() {
+        mockResponseWithPayload(500);
 
         GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
 

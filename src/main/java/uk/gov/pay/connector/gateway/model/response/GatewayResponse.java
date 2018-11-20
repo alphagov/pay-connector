@@ -7,7 +7,7 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 
 import java.util.Optional;
 
-import static uk.gov.pay.connector.gateway.model.GatewayError.baseError;
+import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 
 public class GatewayResponse<T extends BaseResponse> {
 
@@ -94,7 +94,7 @@ public class GatewayResponse<T extends BaseResponse> {
             }
             if (StringUtils.isNotBlank(response.getErrorCode()) ||
                     StringUtils.isNotBlank(response.getErrorMessage())) {
-                return new GatewayResponse<>(baseError(response.toString()));
+                return new GatewayResponse<>(genericGatewayError(response.toString()));
             }
             return new GatewayResponse<>(response, sessionIdentifier);
         }
