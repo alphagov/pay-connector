@@ -164,6 +164,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
         assertThat(createdChargeEntity.isDelayedCapture(), is(false));
         assertThat(createdChargeEntity.getCorporateSurcharge().isPresent(), is(false));
+        assertThat(createdChargeEntity.getWalletType(), is(nullValue()));
 
         verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity);
     }

@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.applepay;
 
-import org.apache.commons.lang3.RandomUtils;
-
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
