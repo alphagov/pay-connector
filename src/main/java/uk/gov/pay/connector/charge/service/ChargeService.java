@@ -130,7 +130,7 @@ public class ChargeService {
                     chargeRequest.isDelayedCapture());
             chargeDao.persist(chargeEntity);
 
-            chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
+            chargeEventDao.persistChargeEventOf(chargeEntity);
             return Optional.of(populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
         }).orElseGet(Optional::empty);
     }
@@ -138,7 +138,7 @@ public class ChargeService {
     @Transactional
     public void abortCharge(ChargeEntity charge) {
         charge.setStatus(AUTHORISATION_ABORTED);
-        chargeEventDao.persistChargeEventOf(charge, Optional.empty());
+        chargeEventDao.persistChargeEventOf(charge);
     }
 
     @Transactional
@@ -167,7 +167,7 @@ public class ChargeService {
                     final ChargeStatus oldChargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
                     if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(oldChargeStatus)) {
                         chargeEntity.setStatus(newChargeStatus);
-                        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
+                        chargeEventDao.persistChargeEventOf(chargeEntity);
                         return Optional.of(chargeEntity);
                     }
                     return Optional.<ChargeEntity>empty();
@@ -248,7 +248,7 @@ public class ChargeService {
             CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
             charge.setCardDetails(detailsEntity);
 
-            chargeEventDao.persistChargeEventOf(charge, Optional.empty());
+            chargeEventDao.persistChargeEventOf(charge);
 
             logger.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeExternalId);
@@ -264,7 +264,7 @@ public class ChargeService {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             charge.setStatus(status);
             setTransactionId(charge, transactionId);
-            chargeEventDao.persistChargeEventOf(charge, Optional.empty());
+            chargeEventDao.persistChargeEventOf(charge);
 
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
@@ -279,8 +279,7 @@ public class ChargeService {
                     //for sandbox, immediately move from CAPTURE_SUBMITTED to CAPTURED, as there will be no external notification
                     if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX) {
                         chargeEntity.setStatus(CAPTURED);
-                        ZonedDateTime gatewayEventTime = ZonedDateTime.now();
-                        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.of(gatewayEventTime));
+                        chargeEventDao.persistChargeEventOf(chargeEntity, ZonedDateTime.now());
                     }
                     return chargeEntity;
                 })
@@ -311,7 +310,7 @@ public class ChargeService {
 
     private ChargeEntity updateChargeStatus(ChargeEntity chargeEntity, ChargeStatus chargeStatus) {
         chargeEntity.setStatus(chargeStatus);
-        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
+        chargeEventDao.persistChargeEventOf(chargeEntity);
         return chargeEntity;
     }
 

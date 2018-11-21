@@ -101,7 +101,7 @@ public class ChargeServiceTest {
     private PaymentProvider mockedPaymentProvider;
 
     private ChargeService service;
-    
+
     private GatewayAccountEntity gatewayAccount;
 
     @Before
@@ -165,7 +165,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.isDelayedCapture(), is(false));
         assertThat(createdChargeEntity.getCorporateSurcharge().isPresent(), is(false));
 
-        verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity, Optional.empty());
+        verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity);
     }
 
     @Test
@@ -398,9 +398,9 @@ public class ChargeServiceTest {
         service.updateFromInitialStatus(createdChargeEntity.getExternalId(), ENTERING_CARD_DETAILS);
 
     }
-    
+
     @Test
-    public void shouldFindChargeWithCaptureUrlAndNoNextUrl_whenChargeInAwaitingCaptureRequest() throws Exception{
+    public void shouldFindChargeWithCaptureUrlAndNoNextUrl_whenChargeInAwaitingCaptureRequest() throws Exception {
         Long chargeId = 101L;
 
         ChargeEntity newCharge = aValidChargeEntity()

@@ -219,7 +219,7 @@ public class NotificationService {
                     gatewayAccount.getGatewayName(),
                     gatewayAccount.getType());
 
-            chargeEventDao.persistChargeEventOf(chargeEntity, Optional.ofNullable(notification.getGatewayEventDate()));
+            chargeEventDao.persistChargeEventOf(chargeEntity, notification.getGatewayEventDate());
         }
 
         private <T> void updateRefundStatus(EvaluatedRefundStatusNotification<T> notification) {
@@ -241,7 +241,7 @@ public class NotificationService {
             RefundStatus newStatus = notification.getRefundStatus();
 
             refundEntity.setStatus(newStatus);
-            
+
             if (newStatus.equals(RefundStatus.REFUNDED)) {
                 userNotificationService.sendRefundIssuedEmail(refundEntity);
             }

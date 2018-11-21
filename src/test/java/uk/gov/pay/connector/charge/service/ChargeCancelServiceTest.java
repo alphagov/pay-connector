@@ -33,7 +33,6 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -79,7 +78,7 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doSystemCancel_shouldCancel_withStatusThatDoesNotNeedCancellationInGatewayProvider() throws Exception {
+    public void doSystemCancel_shouldCancel_withStatusThatDoesNotNeedCancellationInGatewayProvider() {
 
         String externalChargeId = "external-charge-id";
         Long gatewayAccountId = nextLong();
@@ -97,11 +96,11 @@ public class ChargeCancelServiceTest {
         assertThat(response.get().isSuccessful(), is(true));
         assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
 
-        verify(mockChargeEventDao).persistChargeEventOf(chargeEntity, Optional.empty());
+        verify(mockChargeEventDao).persistChargeEventOf(chargeEntity);
     }
 
     @Test
-    public void doSystemCancel_shouldCancel_havingChargeStatusThatNeedsCancellationInGatewayProvider_withCancelledGatewayResponse() throws Exception {
+    public void doSystemCancel_shouldCancel_havingChargeStatusThatNeedsCancellationInGatewayProvider_withCancelledGatewayResponse() {
 
         String externalChargeId = "external-charge-id";
         Long gatewayAccountId = nextLong();
@@ -118,7 +117,7 @@ public class ChargeCancelServiceTest {
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
-        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class), eq(Optional.empty()));
+        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class));
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
@@ -130,13 +129,13 @@ public class ChargeCancelServiceTest {
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId);
         verify(mockChargeDao, times(2)).findByExternalId(externalChargeId);
-        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)), eq(Optional.empty()));
+        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)));
 
         verifyNoMoreInteractions(mockChargeDao);
     }
 
     @Test(expected = ChargeNotFoundRuntimeException.class)
-    public void doSystemCancel_shouldFail_whenChargeNotFound() throws Exception {
+    public void doSystemCancel_shouldFail_whenChargeNotFound() {
 
         String externalChargeId = "external-charge-id";
         Long gatewayAccountId = nextLong();
@@ -147,7 +146,7 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doUserCancel_shouldCancel_withStatusThatDoesNotNeedCancellationInGatewayProvider() throws Exception {
+    public void doUserCancel_shouldCancel_withStatusThatDoesNotNeedCancellationInGatewayProvider() {
 
         String externalChargeId = "external-charge-id";
         ChargeEntity chargeEntity = aValidChargeEntity()
@@ -163,11 +162,11 @@ public class ChargeCancelServiceTest {
         assertThat(response.get().isSuccessful(), is(true));
         assertThat(chargeEntity.getStatus(), is(USER_CANCELLED.getValue()));
 
-        verify(mockChargeEventDao).persistChargeEventOf(chargeEntity, Optional.empty());
+        verify(mockChargeEventDao).persistChargeEventOf(chargeEntity);
     }
 
     @Test
-    public void doUserCancel_shouldCancel_havingChargeStatusThatNeedsCancellationInGatewayProvider_withCancelledGatewayResponse() throws Exception {
+    public void doUserCancel_shouldCancel_havingChargeStatusThatNeedsCancellationInGatewayProvider_withCancelledGatewayResponse() {
 
         String externalChargeId = "external-charge-id";
         ChargeEntity chargeEntity = aValidChargeEntity()
@@ -182,7 +181,7 @@ public class ChargeCancelServiceTest {
         GatewayResponse cancelResponse = gatewayResponseBuilder.withResponse(worldpayResponse).build();
 
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
-        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class), eq(Optional.empty()));
+        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class));
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
@@ -193,13 +192,13 @@ public class ChargeCancelServiceTest {
         assertThat(chargeEntity.getStatus(), is(USER_CANCELLED.getValue()));
 
         verify(mockChargeDao, times(3)).findByExternalId(externalChargeId);
-        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(USER_CANCELLED)), eq(Optional.empty()));
+        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(USER_CANCELLED)));
 
         verifyNoMoreInteractions(mockChargeDao);
     }
 
     @Test(expected = ChargeNotFoundRuntimeException.class)
-    public void doUserCancel_shouldFail_whenChargeNotFound() throws Exception {
+    public void doUserCancel_shouldFail_whenChargeNotFound() {
 
         String externalChargeId = "external-charge-id";
 
@@ -226,7 +225,7 @@ public class ChargeCancelServiceTest {
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
-        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class), eq(Optional.empty()));
+        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class));
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
@@ -238,7 +237,7 @@ public class ChargeCancelServiceTest {
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId);
         verify(mockChargeDao, times(2)).findByExternalId(externalChargeId);
-        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)), eq(Optional.empty()));
+        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)));
 
         verifyNoMoreInteractions(mockChargeDao);
     }
@@ -261,7 +260,7 @@ public class ChargeCancelServiceTest {
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
-        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class), eq(Optional.empty()));
+        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class));
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
@@ -273,7 +272,7 @@ public class ChargeCancelServiceTest {
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId);
         verify(mockChargeDao, times(2)).findByExternalId(externalChargeId);
-        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)), eq(Optional.empty()));
+        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)));
 
         verifyNoMoreInteractions(mockChargeDao);
     }
@@ -296,7 +295,7 @@ public class ChargeCancelServiceTest {
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
-        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class), eq(Optional.empty()));
+        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class));
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
@@ -308,7 +307,7 @@ public class ChargeCancelServiceTest {
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId);
         verify(mockChargeDao, times(2)).findByExternalId(externalChargeId);
-        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)), eq(Optional.empty()));
+        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)));
 
         verifyNoMoreInteractions(mockChargeDao);
     }

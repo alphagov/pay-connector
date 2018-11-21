@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -96,11 +95,11 @@ public class ChargeExpiryService {
 
     public Map<String, Integer> sweepAndExpireCharges() {
         List<ChargeEntity> chargesToExpire = new ArrayList<>();
-        chargesToExpire.addAll(chargeDao.findBeforeDateWithStatusIn(getExpiryDateForRegularCharges(), 
+        chargesToExpire.addAll(chargeDao.findBeforeDateWithStatusIn(getExpiryDateForRegularCharges(),
                 EXPIRABLE_REGULAR_STATUSES));
-        chargesToExpire.addAll(chargeDao.findBeforeDateWithStatusIn(getExpiryDateForAwaitingCaptureRequest(), 
+        chargesToExpire.addAll(chargeDao.findBeforeDateWithStatusIn(getExpiryDateForAwaitingCaptureRequest(),
                 EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS));
-        logger.info("Charges found for expiry - number_of_charges={}, since_date={}, awaiting_capture_date{}", 
+        logger.info("Charges found for expiry - number_of_charges={}, since_date={}, awaiting_capture_date{}",
                 chargesToExpire.size(), getExpiryDateForRegularCharges(), getExpiryDateForAwaitingCaptureRequest());
         return expire(chargesToExpire);
     }
@@ -108,7 +107,7 @@ public class ChargeExpiryService {
     private int expireChargesWithCancellationNotRequired(List<ChargeEntity> nonAuthSuccessCharges) {
         List<ChargeEntity> processedEntities = nonAuthSuccessCharges
                 .stream().map(chargeEntity -> transactionFlowProvider.get()
-                        .executeNext(changeStatusTo(chargeDao, chargeEventDao, chargeEntity.getExternalId(), EXPIRED, Optional.empty()))
+                        .executeNext(changeStatusTo(chargeDao, chargeEventDao, chargeEntity.getExternalId(), EXPIRED))
                         .complete()
                         .get(ChargeEntity.class))
                 .collect(Collectors.toList());
@@ -181,7 +180,7 @@ public class ChargeExpiryService {
                 logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                         chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
                 chargeEntity.setStatus(status);
-                chargeEventDao.persistChargeEventOf(chargeEntity, Optional.empty());
+                chargeEventDao.persistChargeEventOf(chargeEntity);
                 return chargeEntity;
             }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
         };
@@ -195,13 +194,13 @@ public class ChargeExpiryService {
 
     private ZonedDateTime getExpiryDateForRegularCharges() {
         int chargeExpiryWindowSeconds = chargeSweepConfig.getDefaultChargeExpiryThreshold();
-        logger.debug("Charge expiry window size in seconds: " + chargeExpiryWindowSeconds);
+        logger.debug("Charge expiry window size in seconds: [{}]", chargeExpiryWindowSeconds);
         return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
     }
 
     private ZonedDateTime getExpiryDateForAwaitingCaptureRequest() {
         int chargeExpiryWindowSeconds = chargeSweepConfig.getAwaitingCaptureExpiryThreshold();
-        logger.debug("Charge expiry window size for awaiting_delay_capture in seconds: " + chargeExpiryWindowSeconds);
+        logger.debug("Charge expiry window size for awaiting_delay_capture in seconds: [{}]", chargeExpiryWindowSeconds);
         return ZonedDateTime.now().minusSeconds(chargeExpiryWindowSeconds);
     }
 }

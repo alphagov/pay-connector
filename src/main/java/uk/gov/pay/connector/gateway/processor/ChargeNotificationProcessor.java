@@ -10,7 +10,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.inject.Inject;
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 public class ChargeNotificationProcessor {
 
@@ -50,6 +49,6 @@ public class ChargeNotificationProcessor {
                 gatewayAccount.getGatewayName(),
                 gatewayAccount.getType());
 
-        chargeEventDao.persistChargeEventOf(chargeEntity, Optional.ofNullable(gatewayEventDate));
+        chargeEventDao.persistChargeEventOf(chargeEntity, gatewayEventDate);
     }
 }

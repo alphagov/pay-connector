@@ -82,7 +82,7 @@ public class NotificationServiceTest {
 
     @Mock
     private UserNotificationService mockedUserNotificationService;
-    
+
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private ChargeEntity mockedChargeEntity;
 
@@ -329,11 +329,11 @@ public class NotificationServiceTest {
 
         verify(mockedChargeEntity).setStatus(CAPTURED);
 
-        ArgumentCaptor<Optional> generatedTimeCaptor = ArgumentCaptor.forClass(Optional.class);
+        ArgumentCaptor<ZonedDateTime> generatedTimeCaptor = ArgumentCaptor.forClass(ZonedDateTime.class);
         verify(mockedChargeEventDao).persistChargeEventOf(argThat(obj -> mockedChargeEntity.equals(obj)), generatedTimeCaptor.capture());
 
-        assertTrue(ChronoUnit.SECONDS.between((ZonedDateTime) generatedTimeCaptor.getValue().get(), ZonedDateTime.now()) < 10);
-       
+        assertTrue(ChronoUnit.SECONDS.between(generatedTimeCaptor.getValue(), ZonedDateTime.now()) < 10);
+
         verifyNoMoreInteractions(ignoreStubs(mockedChargeDao));
         verifyZeroInteractions(mockedUserNotificationService);
     }
@@ -367,7 +367,7 @@ public class NotificationServiceTest {
     }
 
     @Test
-    public void whenSecureNotificationEndpointIsEnabled_shouldRejectNotificationIfIpIsNotValid() throws Exception {
+    public void whenSecureNotificationEndpointIsEnabled_shouldRejectNotificationIfIpIsNotValid() {
         when(mockedPaymentProviders.byName(WORLDPAY)).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.isNotificationEndpointSecured()).thenReturn(true);
         when(mockedPaymentProvider.getNotificationDomain()).thenReturn("something.com");
@@ -377,7 +377,7 @@ public class NotificationServiceTest {
     }
 
     @Test
-    public void whenSecureNotificationEndpointIsEnabled_shouldHandleNotificationIfIpBelongsToDomain() throws Exception {
+    public void whenSecureNotificationEndpointIsEnabled_shouldHandleNotificationIfIpBelongsToDomain() {
         String ipAddress = "ip-address";
         String domain = "worldpay.com";
         Notifications<Pair<String, Boolean>> notifications = createNotificationFor("", null, Pair.of("CAPTURE", true));
