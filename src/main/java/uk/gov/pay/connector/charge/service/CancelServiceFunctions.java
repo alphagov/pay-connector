@@ -60,7 +60,7 @@ class CancelServiceFunctions {
     ) {
         return context -> chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
             ChargeStatus newStatus = statusFlow.getLockState();
-            if (!statusFlow.getTerminatableStatuses().contains(ChargeStatus.fromString(chargeEntity.getStatus()))) {
+            if (!chargeIsInTerminatableStatus(statusFlow, chargeEntity)) {
                 if (newStatus.equals(ChargeStatus.fromString(chargeEntity.getStatus()))) {
                     throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), chargeId);
                 } else if (Arrays.asList(AUTHORISATION_READY, AUTHORISATION_3DS_READY).contains(ChargeStatus.fromString(chargeEntity.getStatus()))) {
@@ -101,7 +101,12 @@ class CancelServiceFunctions {
         };
     }
 
-    static String getLegalStatusNames(List<ChargeStatus> legalStatuses) {
+    private static String getLegalStatusNames(List<ChargeStatus> legalStatuses) {
         return legalStatuses.stream().map(ChargeStatus::toString).collect(Collectors.joining(", "));
     }
+
+    private static boolean chargeIsInTerminatableStatus(StatusFlow statusFlow, ChargeEntity chargeEntity) {
+        return statusFlow.getTerminatableStatuses().contains(ChargeStatus.fromString(chargeEntity.getStatus()));
+    }
+
 }

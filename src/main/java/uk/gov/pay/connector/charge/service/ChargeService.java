@@ -300,7 +300,7 @@ public class ChargeService {
             try {
                 chargeEntity.setStatus(operationType.getLockingStatus());
             } catch (InvalidStateTransitionException e) {
-                if (operationType.getLockingStatus().equals(ChargeStatus.fromString(chargeEntity.getStatus()))) {
+                if (chargeIsInLockedStatus(operationType, chargeEntity)) {
                     throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), chargeEntity.getExternalId());
                 }
                 throw new IllegalStateRuntimeException(chargeEntity.getExternalId());
@@ -340,7 +340,7 @@ public class ChargeService {
 
             ChargeStatus currentStatus = fromString(charge.getStatus());
 
-            if (IGNORABLE_CAPTURE_STATES.contains(ChargeStatus.fromString(charge.getStatus()))) {
+            if (chargeCanBeSkipped(charge)) {
                 logger.info("Skipping charge [charge_external_id={}] with status [{}] from marking as CAPTURE APPROVED", currentStatus, externalId);
                 return charge;
             }
@@ -434,5 +434,13 @@ public class ChargeService {
         return UriBuilder.fromUri(linksConfig.getFrontendUrl())
                 .path("secure")
                 .build();
+    }
+
+    private boolean chargeIsInLockedStatus(OperationType operationType, ChargeEntity chargeEntity) {
+        return operationType.getLockingStatus().equals(ChargeStatus.fromString(chargeEntity.getStatus()));
+    }
+
+    private boolean chargeCanBeSkipped(ChargeEntity charge) {
+        return IGNORABLE_CAPTURE_STATES.contains(ChargeStatus.fromString(charge.getStatus()));
     }
 }

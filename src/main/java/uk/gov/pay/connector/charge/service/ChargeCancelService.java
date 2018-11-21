@@ -73,7 +73,7 @@ public class ChargeCancelService {
 
     private Function<ChargeEntity, Optional<GatewayResponse<BaseCancelResponse>>> doCancel(String chargeId, StatusFlow statusFlow) {
         return chargeEntity -> {
-            if (nonGatewayStatuses.contains(ChargeStatus.fromString(chargeEntity.getStatus()))) {
+            if (gatewayIsNotAwareOfCharge(chargeEntity)) {
                 return Optional.of(nonGatewayCancel(chargeId, statusFlow));
             } else {
                 return cancelChargeWithGatewayCleanup(chargeId, statusFlow);
@@ -144,4 +144,7 @@ public class ChargeCancelService {
         }
     }
 
+    private boolean gatewayIsNotAwareOfCharge(ChargeEntity chargeEntity) {
+        return nonGatewayStatuses.contains(ChargeStatus.fromString(chargeEntity.getStatus()));
+    }
 }
