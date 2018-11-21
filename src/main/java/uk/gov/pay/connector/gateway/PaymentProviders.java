@@ -38,7 +38,7 @@ public class PaymentProviders {
         return cardPaymentProviders.get(gateway);
     }
     
-    public ApplePayAuthoriser getAppleAuthoriserFor(ChargeEntity chargeEntity) {
+    public ApplePayAuthoriser getApplePayAuthoriserFor(ChargeEntity chargeEntity) {
         return applePayPaymentProviders.get(chargeEntity.getPaymentGatewayName());
     }
 

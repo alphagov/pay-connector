@@ -355,13 +355,12 @@ public class ChargeService {
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
 
-
     private CardDetailsEntity buildCardDetailsEntity(AuthCardDetails authCardDetails) {
         CardDetailsEntity detailsEntity = new CardDetailsEntity();
         detailsEntity.setCardBrand(sanitize(authCardDetails.getCardBrand()));
         detailsEntity.setCardHolderName(sanitize(authCardDetails.getCardHolder()));
         detailsEntity.setExpiryDate(authCardDetails.getEndDate());
-        if (authCardDetails.getCardNo().length() > 6) {
+        if (hasFullCardNumber(authCardDetails)) {
             detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
         }
         detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
@@ -372,6 +371,10 @@ public class ChargeService {
         return detailsEntity;
     }
 
+    private boolean hasFullCardNumber(AuthCardDetails authCardDetails) {
+        return authCardDetails.getCardNo().length() > 6;
+    }
+    
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {
         TokenEntity token = TokenEntity.generateNewTokenFor(chargeEntity);
         tokenDao.persist(token);
