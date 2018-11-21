@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 
 /**
  * Bunch of reusable functions and possibly sharable between Cancel/Expire
@@ -38,7 +37,6 @@ class CancelServiceFunctions {
     private static final Logger logger = LoggerFactory.getLogger(CancelServiceFunctions.class);
 
     private CancelServiceFunctions() {
-        // prevent people to instantiate this class, as it has only static methods
     }
 
     static TransactionalOperation<TransactionContext, ChargeEntity> changeStatusTo(ChargeDao chargeDao, ChargeEventDao chargeEventDao, String chargeId, ChargeStatus targetStatus, Optional<ZonedDateTime> generationTimeOptional) {
@@ -60,10 +58,11 @@ class CancelServiceFunctions {
     ) {
         return context -> chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
             ChargeStatus newStatus = statusFlow.getLockState();
-            if (!chargeIsInTerminatableStatus(statusFlow, chargeEntity)) {
-                if (newStatus.equals(ChargeStatus.fromString(chargeEntity.getStatus()))) {
+            final ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
+            if (!chargeIsInTerminatableStatus(statusFlow, chargeStatus)) {
+                if (newStatus.equals(chargeStatus)) {
                     throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), chargeId);
-                } else if (Arrays.asList(AUTHORISATION_READY, AUTHORISATION_3DS_READY).contains(ChargeStatus.fromString(chargeEntity.getStatus()))) {
+                } else if (Arrays.asList(AUTHORISATION_READY, AUTHORISATION_3DS_READY).contains(chargeStatus)) {
                     throw new ConflictRuntimeException(chargeEntity.getExternalId());
                 }
 
@@ -78,7 +77,7 @@ class CancelServiceFunctions {
 
             logger.info("Card cancel request sent - charge_external_id={}, charge_status={}, account_id={}, transaction_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
                     chargeEntity.getExternalId(),
-                    fromString(chargeEntity.getStatus()),
+                    chargeStatus,
                     gatewayAccount.getId(),
                     chargeEntity.getGatewayTransactionId(),
                     chargeEntity.getAmount(),
@@ -105,8 +104,8 @@ class CancelServiceFunctions {
         return legalStatuses.stream().map(ChargeStatus::toString).collect(Collectors.joining(", "));
     }
 
-    private static boolean chargeIsInTerminatableStatus(StatusFlow statusFlow, ChargeEntity chargeEntity) {
-        return statusFlow.getTerminatableStatuses().contains(ChargeStatus.fromString(chargeEntity.getStatus()));
+    private static boolean chargeIsInTerminatableStatus(StatusFlow statusFlow, ChargeStatus chargeStatus) {
+        return statusFlow.getTerminatableStatuses().contains(chargeStatus);
     }
 
 }
