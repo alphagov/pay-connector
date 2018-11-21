@@ -106,4 +106,9 @@ public class ConnectorModule extends AbstractModule {
     public StripeGatewayClient stripeGatewayClient(GatewayClientFactory gatewayClientFactory) {
         return gatewayClientFactory.createStripeGatewayClient(STRIPE, environment.metrics());
     }
+    
+    @Provides
+    public StripeGatewayConfig stripeGatewayConfig(ConnectorConfiguration connectorConfiguration) {
+        return connectorConfiguration.getStripeConfig();
+    }
 }

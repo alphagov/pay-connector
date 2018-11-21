@@ -53,7 +53,7 @@ public class StripeMockClient {
 
     public void mockCaptureError(String gatewayTransactionId) {
         String payload = TestTemplateResourceLoader.load(STRIPE_ERROR_RESPONSE);
-        setupResponse(payload, "/v1/charges/" + gatewayTransactionId + "/capture", 401);
+        setupResponse(payload, "/v1/charges/" + gatewayTransactionId + "/capture", 402);
     }
 
     public void mockUnauthorizedResponse() {

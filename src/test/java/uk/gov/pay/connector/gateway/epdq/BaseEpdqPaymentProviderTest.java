@@ -20,9 +20,9 @@ import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -62,8 +62,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_AUTHORIS
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_SUCCESS_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CAPTURE_ERROR_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CAPTURE_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_DELETE_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_NOTIFICATION_TEMPLATE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_ERROR_RESPONSE;
@@ -76,7 +74,7 @@ public abstract class BaseEpdqPaymentProviderTest {
     static final String NOTIFICATION_PAY_ID_SUB = "2";
     static final String NOTIFICATION_SHA_SIGN = "9537B9639F108CDF004459D8A690C598D97506CDF072C3926A60E39759A6402C5089161F6D7A8EA12BBC0FD6F899CE72D5A0C4ACC2913C56ACF6D01B034protected";
 
-    protected GatewayClientFactory gatewayClientFactory;
+    protected GatewayClientFactory gatewayClientFactory;    
     protected EpdqPaymentProvider provider;
 
 
@@ -176,18 +174,6 @@ public abstract class BaseEpdqPaymentProviderTest {
         return TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_ERROR_RESPONSE);
     }
 
-    String successCaptureResponse() {
-        return TestTemplateResourceLoader.load(EPDQ_CAPTURE_SUCCESS_RESPONSE);
-    }
-
-    String errorCaptureResponse() {
-        return TestTemplateResourceLoader.load(EPDQ_CAPTURE_ERROR_RESPONSE);
-    }
-
-    String successCaptureRequest() {
-        return TestTemplateResourceLoader.load(TestTemplateResourceLoader.EPDQ_CAPTURE_REQUEST);
-    }
-
     String successCancelResponse() {
         return TestTemplateResourceLoader.load(EPDQ_CANCEL_SUCCESS_RESPONSE);
     }
@@ -229,10 +215,6 @@ public abstract class BaseEpdqPaymentProviderTest {
         return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
     }
 
-    CaptureGatewayRequest buildTestCaptureRequest(ChargeEntity chargeEntity) {
-        return CaptureGatewayRequest.valueOf(chargeEntity);
-    }
-
     CancelGatewayRequest buildTestCancelRequest(ChargeEntity chargeEntity) {
         return CancelGatewayRequest.valueOf(chargeEntity);
     }
@@ -271,10 +253,6 @@ public abstract class BaseEpdqPaymentProviderTest {
         return new Auth3dsResponseGatewayRequest(chargeEntity, auth3DsDetails);
     }
 
-    CaptureGatewayRequest buildTestCaptureRequest() {
-        return buildTestCaptureRequest(buildTestGatewayAccountEntity());
-    }
-
     CancelGatewayRequest buildTestCancelRequest() {
         return buildTestCancelRequest(buildTestGatewayAccountEntity());
     }
@@ -289,14 +267,6 @@ public abstract class BaseEpdqPaymentProviderTest {
                 .withGatewayAccountEntity(accountEntity)
                 .build();
         return buildTestAuthorisationRequest(chargeEntity);
-    }
-
-    private CaptureGatewayRequest buildTestCaptureRequest(GatewayAccountEntity accountEntity) {
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withGatewayAccountEntity(accountEntity)
-                .withTransactionId("payId")
-                .build();
-        return buildTestCaptureRequest(chargeEntity);
     }
 
     private CancelGatewayRequest buildTestCancelRequest(GatewayAccountEntity accountEntity) {
