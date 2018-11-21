@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.stripe;
 import com.google.common.collect.ImmutableMap;
 import fj.data.Either;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -13,7 +14,6 @@ import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
-import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -22,9 +22,10 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
+import uk.gov.pay.connector.gateway.stripe.json.StripeCreateChargeResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTokenResponse;
-import uk.gov.pay.connector.gateway.stripe.response.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
@@ -50,6 +51,8 @@ import static java.util.stream.Collectors.joining;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
+import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCodeFromGateway;
 
 
 @Singleton
@@ -111,26 +114,47 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
                 return responseBuilder.withResponse(Stripe3dsSourceAuthorisationResponse.of(source3dsResponse)).build();
             } else {
                 Response authorisationResponse = createCharge(request, stripeSourcesResponse.getId());
-
-                return responseBuilder.withResponse(StripeAuthorisationResponse.of(authorisationResponse)).build();
+                StripeAuthorisationResponse stripeAuthResponse = new StripeAuthorisationResponse(authorisationResponse.readEntity(StripeCreateChargeResponse.class));
+                return responseBuilder.withResponse(stripeAuthResponse).build();
             }
         } catch (GatewayClientException e) {
-            logger.error(
-                    "There was error calling Stripe. Reason: {}",
-                    e.getResponse().readEntity(StripeErrorResponse.class).getError().getMessage()
-            );
 
-            return responseBuilder.withGatewayError(
-                    new GatewayError(
-                            "There was an internal server error. ErrorId:" + UUID.randomUUID(),
-                            ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY)
-            ).build();
+            Response response = e.getResponse();
+            int status = response.getStatus();
+
+            if (status == HttpStatus.SC_UNAUTHORIZED) {
+                return unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage(), HttpStatus.SC_UNAUTHORIZED);
+            }
+
+            StripeErrorResponse stripeErrorResponse = response.readEntity(StripeErrorResponse.class);
+            String errorId = UUID.randomUUID().toString();
+            logger.error("Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. ErrorId: {}. Response code from Stripe: {}",
+                    request.getChargeExternalId(), stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), errorId, response.getStatus());
+            GatewayError gatewayError = genericGatewayError(stripeErrorResponse.getError().getMessage());
+
+            return responseBuilder.withGatewayError(gatewayError).build();
+
+        } catch (DownstreamException e) {
+
+            return unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage(), e.getStatusCode());
+
         } catch (GatewayException e) {
             return responseBuilder.withGatewayError(GatewayError.of(e)).build();
         }
     }
 
-    private Response create3dsSource(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException, GatewayException {
+    private GatewayResponse unexpectedGatewayResponse(String chargeExternalId, 
+                                                      GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder, 
+                                                      String errorMessage, 
+                                                      int statusCode) {
+        String errorId = UUID.randomUUID().toString();
+        logger.error("Authorisation failed for charge {}. Reason: {}. Status code from Stripe: {}. ErrorId: {}",
+                chargeExternalId, errorMessage, statusCode, errorId);
+        GatewayError gatewayError = unexpectedStatusCodeFromGateway("There was an internal server error. ErrorId: " + errorId);
+        return responseBuilder.withGatewayError(gatewayError).build();
+    }
+
+    private Response create3dsSource(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException, GatewayException, DownstreamException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/sources",
@@ -141,7 +165,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         );
     }
 
-    private Response createCharge(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException, GatewayException {
+    private Response createCharge(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException, GatewayException, DownstreamException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/charges",
@@ -152,7 +176,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         );
     }
 
-    private Response createSource(CardAuthorisationGatewayRequest request, String tokenId) throws GatewayClientException, GatewayException {
+    private Response createSource(CardAuthorisationGatewayRequest request, String tokenId) throws GatewayClientException, GatewayException, DownstreamException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/sources",
@@ -163,7 +187,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         );
     }
 
-    private Response createToken(CardAuthorisationGatewayRequest request) throws GatewayClientException, GatewayException {
+    private Response createToken(CardAuthorisationGatewayRequest request) throws GatewayClientException, GatewayException, DownstreamException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/tokens",
@@ -174,7 +198,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
         );
     }
 
-    private Response postToStripe(String path, String payload, String metricsPrefix) throws GatewayClientException, GatewayException {
+    private Response postToStripe(String path, String payload, String metricsPrefix) throws GatewayClientException, GatewayException, DownstreamException {
         return client.postRequest(
                 URI.create(stripeGatewayConfig.getUrl() + path),
                 payload,

@@ -12,9 +12,11 @@ import uk.gov.pay.connector.gateway.stripe.response.StripeCaptureResponse;
 import javax.ws.rs.WebApplicationException;
 import java.io.IOException;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
+import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -44,17 +46,17 @@ public class StripeCaptureHandlerTest extends BaseStripePaymentProviderTest {
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
         assertEquals(response.getGatewayError().get(), new GatewayError("No such charge: ch_123456 or something similar",
-                UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+                GENERIC_GATEWAY_ERROR));
     }
 
     @Test
     public void shouldNotCaptureIfPaymentProviderReturns5xxHttpStatusCode() throws IOException {
-        mockPaymentProviderErrorResponse(500, errorCaptureResponse());
+        mockPaymentProviderErrorResponse(500, stripeInternalServerError());
         GatewayResponse<StripeCaptureResponse> response = stripeCaptureHandler.capture(buildTestCaptureRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("No such charge: ch_123456 or something similar",
-                UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        assertThat(response.getGatewayError().get().getMessage(), containsString("An internal server error occurred. ErrorId:"));
+        assertThat(response.getGatewayError().get().getErrorType(), is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
 }

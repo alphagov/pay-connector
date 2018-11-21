@@ -39,14 +39,13 @@ public class StripeGatewayClient {
                                 String payload,
                                 Map<String, String> headers,
                                 MediaType mediaType,
-                                String metricsPrefix) throws GatewayClientException, GatewayException {
+                                String metricsPrefix) throws GatewayClientException, GatewayException, DownstreamException {
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
 
         Response response;
         try {
 
-            Invocation.Builder clientBuilder = client.target(url.toString())
-                    .request();
+            Invocation.Builder clientBuilder = client.target(url.toString()).request();
             headers.keySet().forEach(headerKey -> clientBuilder.header(headerKey, headers.get(headerKey)));
 
             response = clientBuilder
@@ -65,12 +64,16 @@ public class StripeGatewayClient {
         return response;
     }
 
-    private void throwIfErrorResponse(Response response, String metricsPrefix) throws GatewayClientException {
-        if (asList(CLIENT_ERROR, SERVER_ERROR).contains(response.getStatusInfo().getFamily())) {
+    private void throwIfErrorResponse(Response response, String metricsPrefix) throws GatewayClientException, DownstreamException {
+        if (CLIENT_ERROR == response.getStatusInfo().getFamily()) {
             metricRegistry.counter(metricsPrefix + ".failures").inc();
             throw new GatewayClientException(
                     "Unexpected HTTP status code " + response.getStatus() + " from gateway",
                     response);
+        }
+        if (SERVER_ERROR == response.getStatusInfo().getFamily()) {
+            metricRegistry.counter(metricsPrefix + ".failures").inc();
+            throw new DownstreamException(response.getStatus(), response.readEntity(String.class));
         }
     }
 }

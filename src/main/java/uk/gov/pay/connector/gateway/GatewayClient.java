@@ -27,7 +27,7 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.Response.Status.OK;
-import static uk.gov.pay.connector.gateway.model.GatewayError.baseError;
+import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionSocketException;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionTimeoutException;
 import static uk.gov.pay.connector.gateway.model.GatewayError.malformedResponseReceivedFromGateway;
@@ -102,11 +102,11 @@ public class GatewayClient {
                 }
             }
             logger.error(format("Exception for gateway url=%s", gatewayUrl), pe);
-            return left(baseError(pe.getMessage()));
+            return left(genericGatewayError(pe.getMessage()));
         } catch (Exception e) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
             logger.error(format("Exception for gateway url=%s", gatewayUrl), e);
-            return left(baseError(e.getMessage()));
+            return left(genericGatewayError(e.getMessage()));
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram(metricsPrefix + ".response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));

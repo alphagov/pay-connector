@@ -227,7 +227,7 @@ public class EpdqPaymentProvider implements PaymentProvider<BaseResponse, String
     private GatewayResponse reconstructErrorBiasedGatewayResponse(GatewayResponse<BaseResponse> gatewayResponse, BaseAuthoriseResponse.AuthoriseStatus authoriseStatus, Auth3dsDetails.Auth3dsResult auth3DResult) {
         GatewayResponse.GatewayResponseBuilder<EpdqAuthorisationResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         if (auth3DResult.equals(Auth3dsDetails.Auth3dsResult.ERROR)) {
-            return responseBuilder.withGatewayError(GatewayError.baseError(format("epdq.authorise-3ds.result.mismatch expected=%s, actual=%s", Auth3dsDetails.Auth3dsResult.ERROR, authoriseStatus.name())))
+            return responseBuilder.withGatewayError(GatewayError.genericGatewayError(format("epdq.authorise-3ds.result.mismatch expected=%s, actual=%s", Auth3dsDetails.Auth3dsResult.ERROR, authoriseStatus.name())))
                     .build();
         } else if (auth3DResult.equals(Auth3dsDetails.Auth3dsResult.DECLINED)) {
             EpdqAuthorisationResponse epdqAuthorisationResponse = new EpdqAuthorisationResponse();

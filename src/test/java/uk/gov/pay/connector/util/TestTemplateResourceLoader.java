@@ -113,6 +113,7 @@ public class TestTemplateResourceLoader {
     public static final String EPDQ_NOTIFICATION_TEMPLATE = EPDQ_BASE_NAME + "/notification-template.txt";
 
     public static final String STRIPE_AUTHORISATION_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/authorisation_success_response.json";
+    public static final String STRIPE_AUTHORISATION_FAILED_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/authorisation_failed_response.json";
     public static final String STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_token_response.json";
     public static final String STRIPE_CREATE_SOURCES_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_sources_response.json";
     public static final String STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_sources_3ds_required_response.json";

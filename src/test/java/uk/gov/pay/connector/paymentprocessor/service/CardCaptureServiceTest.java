@@ -128,7 +128,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private void worldpayWillRespondWithError() {
         GatewayResponseBuilder<WorldpayCaptureResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse captureResponse = gatewayResponseBuilder
-                .withGatewayError(GatewayError.baseError("something went wrong")).build();
+                .withGatewayError(GatewayError.genericGatewayError("something went wrong")).build();
         when(mockCaptureHandler.capture(any())).thenReturn(captureResponse);
     }
 
