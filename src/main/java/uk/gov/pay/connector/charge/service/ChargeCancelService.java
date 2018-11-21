@@ -73,7 +73,7 @@ public class ChargeCancelService {
 
     private Function<ChargeEntity, Optional<GatewayResponse<BaseCancelResponse>>> doCancel(String chargeId, StatusFlow statusFlow) {
         return chargeEntity -> {
-            if (chargeEntity.hasStatus(nonGatewayStatuses)) {
+            if (nonGatewayStatuses.contains(ChargeStatus.fromString(chargeEntity.getStatus()))) {
                 return Optional.of(nonGatewayCancel(chargeId, statusFlow));
             } else {
                 return cancelChargeWithGatewayCleanup(chargeId, statusFlow);

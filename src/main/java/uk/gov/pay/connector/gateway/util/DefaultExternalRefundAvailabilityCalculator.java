@@ -49,9 +49,9 @@ public class DefaultExternalRefundAvailabilityCalculator implements ExternalRefu
 
     protected ExternalChargeRefundAvailability calculate(ChargeEntity chargeEntity, List<ChargeStatus> statusesThatMapToExternalPending,
                                                          List<ChargeStatus> statusesThatMapToExternalAvailableOrExternalFull) {
-        if (chargeEntity.hasStatus(statusesThatMapToExternalPending)) {
+        if (statusesThatMapToExternalPending.contains(ChargeStatus.fromString(chargeEntity.getStatus()))) {
             return EXTERNAL_PENDING;
-        } else if (chargeEntity.hasStatus(statusesThatMapToExternalAvailableOrExternalFull)) {
+        } else if (statusesThatMapToExternalAvailableOrExternalFull.contains(ChargeStatus.fromString(chargeEntity.getStatus()))) {
             if (RefundCalculator.getTotalAmountAvailableToBeRefunded(chargeEntity) > 0) {
                 return EXTERNAL_AVAILABLE;
             } else {
