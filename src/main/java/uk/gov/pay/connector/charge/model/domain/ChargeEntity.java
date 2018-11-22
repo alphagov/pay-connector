@@ -42,7 +42,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -55,7 +54,7 @@ import static uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransi
 @SequenceGenerator(name = "charges_charge_id_seq",
         sequenceName = "charges_charge_id_seq", allocationSize = 1)
 public class ChargeEntity extends AbstractVersionedEntity {
-    private final static Logger logger = LoggerFactory.getLogger(ChargeEntity.class);
+    private static final Logger logger = LoggerFactory.getLogger(ChargeEntity.class);
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "charges_charge_id_seq")
@@ -214,14 +213,14 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.externalId = externalId;
     }
 
-    public void setStatus(ChargeStatus targetStatus)  {
+    public void setStatus(ChargeStatus targetStatus) {
         if (isValidTransition(fromString(this.status), targetStatus)) {
             logger.info("Changing charge status for externalId [{}] [{}]->[{}]",
                     externalId, this.status, targetStatus.getValue());
-            
+
             this.status = targetStatus.getValue();
         } else {
-            logger.warn("Charge with state {} cannot proceed to {} [charge_external_id={}, charge_status={}]", 
+            logger.warn("Charge with state {} cannot proceed to {} [charge_external_id={}, charge_status={}]",
                     this.status, targetStatus, this.externalId, targetStatus);
             throw new InvalidStateTransitionException(this.status, targetStatus.getValue());
         }
@@ -245,14 +244,6 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public void setProviderSessionId(String providerSessionId) {
         this.providerSessionId = providerSessionId;
-    }
-
-    public boolean hasStatus(ChargeStatus... status) {
-        return Arrays.stream(status).anyMatch(s -> equalsIgnoreCase(s.getValue(), getStatus()));
-    }
-
-    public boolean hasStatus(List<ChargeStatus> status) {
-        return hasStatus(status.toArray(new ChargeStatus[0]));
     }
 
     public boolean hasExternalStatus(ExternalChargeState... state) {

@@ -5,6 +5,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -21,15 +22,15 @@ public class ChargeEntityTest {
 
     @Test
     public void shouldHaveTheGivenStatus() {
-        assertTrue(aValidChargeEntity().withStatus(CREATED).build().hasStatus(CREATED));
-        assertTrue(aValidChargeEntity().withStatus(ENTERING_CARD_DETAILS).build().hasStatus(ENTERING_CARD_DETAILS));
+        assertEquals(aValidChargeEntity().withStatus(CREATED).build().getStatus(), CREATED.toString());
+        assertEquals(aValidChargeEntity().withStatus(ENTERING_CARD_DETAILS).build().getStatus(), ENTERING_CARD_DETAILS.toString());
     }
 
 
     @Test
     public void shouldHaveAtLeastOneOfTheGivenStatuses() {
-        assertTrue(aValidChargeEntity().withStatus(CREATED).build().hasStatus(CREATED, ENTERING_CARD_DETAILS));
-        assertTrue(aValidChargeEntity().withStatus(ENTERING_CARD_DETAILS).build().hasStatus(CAPTURED, ENTERING_CARD_DETAILS));
+        assertEquals(aValidChargeEntity().withStatus(CREATED).build().getStatus(), CREATED.toString());
+        assertEquals(aValidChargeEntity().withStatus(ENTERING_CARD_DETAILS).build().getStatus(), ENTERING_CARD_DETAILS.toString());
     }
 
 
@@ -53,17 +54,15 @@ public class ChargeEntityTest {
     }
 
     @Test
-    public void shouldAllowAValidStatusTransition() throws Exception {
-        ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
-                .withStatus(CREATED).build();
+    public void shouldAllowAValidStatusTransition() {
+        ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity().withStatus(CREATED).build();
         chargeCreated.setStatus(ENTERING_CARD_DETAILS);
-        assertThat(chargeCreated.getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
+        assertThat(chargeCreated.getStatus(), is(ENTERING_CARD_DETAILS.toString()));
     }
 
     @Test(expected = InvalidStateTransitionException.class)
-    public void shouldRejectAnInvalidStatusTransition() throws Exception {
-        ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
-                .withStatus(CREATED).build();
+    public void shouldRejectAnInvalidStatusTransition() {
+        ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity().withStatus(CREATED).build();
         chargeCreated.setStatus(CAPTURED);
     }
 }
