@@ -8,6 +8,7 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
 
@@ -23,7 +24,7 @@ public class WorldpayCaptureHandler implements CaptureHandler {
     }
 
     @Override
-    public GatewayResponse<WorldpayCaptureResponse> capture(CaptureGatewayRequest request) {
+    public GatewayResponse<BaseCaptureResponse> capture(CaptureGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = client.postRequestFor(null, request.getGatewayAccount(), buildCaptureOrder(request));
         return GatewayResponseGenerator.getWorldpayGatewayResponse(client, response, WorldpayCaptureResponse.class);
      }

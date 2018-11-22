@@ -14,7 +14,9 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -82,11 +84,11 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
                 .withGatewayAccountEntity(aServiceAccount())
                 .build();
 
-        GatewayResponse<SmartpayAuthorisationResponse> response = provider.authorise(new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails));
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails));
 
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
-        String transactionId = response.getBaseResponse().get().getPspReference();
+        String transactionId = response.getBaseResponse().get().getTransactionId();
         assertThat(transactionId, is(not(nullValue())));
     }
 
@@ -100,11 +102,11 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
                 .build();
         mockSmartpay3dsRequiredOrderSubmitResponse();
 
-        GatewayResponse<SmartpayAuthorisationResponse> response = provider.authorise(new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails));
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails));
 
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().isPresent(), is(true));
-        SmartpayAuthorisationResponse smartpayAuthorisationResponse = response.getBaseResponse().get();
+        SmartpayAuthorisationResponse smartpayAuthorisationResponse = (SmartpayAuthorisationResponse) response.getBaseResponse().get();
         assertThat(smartpayAuthorisationResponse.authoriseStatus(), is(REQUIRES_3DS));
         assertThat(smartpayAuthorisationResponse.getMd(), is(not(nullValue())));
         assertThat(smartpayAuthorisationResponse.getIssuerUrl(), is(not(nullValue())));
@@ -122,11 +124,11 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
         Auth3dsDetails auth3dsDetails = AuthUtils.buildAuth3dsDetails();
         auth3dsDetails.setMd("Some smart text here");
 
-        GatewayResponse<SmartpayAuthorisationResponse> response = provider.authorise3dsResponse(new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsDetails));
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise3dsResponse(new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsDetails));
 
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().isPresent(), is(true));
-        SmartpayAuthorisationResponse smartpayAuthorisationResponse = response.getBaseResponse().get();
+        SmartpayAuthorisationResponse smartpayAuthorisationResponse = (SmartpayAuthorisationResponse) response.getBaseResponse().get();
         assertThat(smartpayAuthorisationResponse.authoriseStatus(), is(AUTHORISED));
         assertThat(smartpayAuthorisationResponse.getPspReference(), is(not(nullValue())));
     }

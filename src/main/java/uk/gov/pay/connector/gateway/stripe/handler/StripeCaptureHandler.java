@@ -8,6 +8,7 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.DownstreamException;
@@ -43,7 +44,7 @@ public class StripeCaptureHandler implements CaptureHandler {
     }
 
     @Override
-    public GatewayResponse capture(CaptureGatewayRequest request) {
+    public GatewayResponse<BaseCaptureResponse> capture(CaptureGatewayRequest request) {
 
         String url = stripeGatewayConfig.getUrl() + "/v1/charges/" + request.getTransactionId() + "/capture";
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();

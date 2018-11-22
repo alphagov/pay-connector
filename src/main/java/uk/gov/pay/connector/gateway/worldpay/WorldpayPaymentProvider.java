@@ -14,10 +14,12 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
@@ -47,7 +49,7 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
-public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, String> {
+public class WorldpayPaymentProvider implements PaymentProvider<String> {
 
     public static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
 
@@ -87,13 +89,13 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
     }
 
     @Override
-    public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrder(request));
         return GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
     }
 
     @Override
-    public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), build3dsResponseAuthOrder(request));
         return GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
     }
@@ -104,13 +106,13 @@ public class WorldpayPaymentProvider implements PaymentProvider<BaseResponse, St
     }
 
     @Override
-    public GatewayResponse refund(RefundGatewayRequest request) {
+    public GatewayResponse<BaseRefundResponse> refund(RefundGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = refundClient.postRequestFor(null, request.getGatewayAccount(), buildRefundOrder(request));
         return GatewayResponseGenerator.getWorldpayGatewayResponse(refundClient, response, WorldpayRefundResponse.class);
     }
 
     @Override
-    public GatewayResponse cancel(CancelGatewayRequest request) {
+    public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = cancelClient.postRequestFor(null, request.getGatewayAccount(), buildCancelOrder(request));
         return GatewayResponseGenerator.getWorldpayGatewayResponse(cancelClient, response, WorldpayCancelResponse.class);
     }

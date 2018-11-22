@@ -19,6 +19,9 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
@@ -54,9 +57,8 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCodeFromGateway;
 
-
 @Singleton
-public class StripePaymentProvider implements PaymentProvider<BaseResponse, String> {
+public class StripePaymentProvider implements PaymentProvider<String> {
 
     private static final Logger logger = LoggerFactory.getLogger(StripePaymentProvider.class);
 
@@ -209,7 +211,7 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     }
 
     @Override
-    public GatewayResponse<BaseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         return null;
     }
 
@@ -219,12 +221,12 @@ public class StripePaymentProvider implements PaymentProvider<BaseResponse, Stri
     }
 
     @Override
-    public GatewayResponse<BaseResponse> refund(RefundGatewayRequest request) {
+    public GatewayResponse<BaseRefundResponse> refund(RefundGatewayRequest request) {
         return null;
     }
 
     @Override
-    public GatewayResponse<BaseResponse> cancel(CancelGatewayRequest request) {
+    public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
         return null;
     }
 

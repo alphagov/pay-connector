@@ -56,9 +56,9 @@ public class GatewayResponse<T extends BaseResponse> {
         }
     }
 
-    public static <T extends BaseResponse> GatewayResponse<T> with(GatewayError gatewayError) {
+    public static GatewayResponse with(GatewayError gatewayError) {
         logger.error("Error received from gateway: {}", gatewayError);
-        return new GatewayResponse<>(gatewayError);
+        return new GatewayResponse(gatewayError);
     }
 
     public static class GatewayResponseBuilder<T extends BaseResponse> {
@@ -69,34 +69,34 @@ public class GatewayResponse<T extends BaseResponse> {
         private GatewayResponseBuilder() {
         }
 
-        public static <T extends BaseResponse> GatewayResponseBuilder<T> responseBuilder() {
-            return new GatewayResponseBuilder<>();
+        public static GatewayResponseBuilder responseBuilder() {
+            return new GatewayResponseBuilder();
         }
 
-        public GatewayResponseBuilder<T> withResponse(T response) {
+        public GatewayResponseBuilder withResponse(T response) {
             this.response = response;
             return this;
         }
 
-        public GatewayResponseBuilder<T> withSessionIdentifier(String responseIdentifier) {
+        public GatewayResponseBuilder withSessionIdentifier(String responseIdentifier) {
             this.sessionIdentifier = responseIdentifier;
             return this;
         }
 
-        public GatewayResponseBuilder<T> withGatewayError(GatewayError gatewayError) {
+        public GatewayResponseBuilder withGatewayError(GatewayError gatewayError) {
             this.gatewayError = gatewayError;
             return this;
         }
 
-        public GatewayResponse<T> build() {
+        public GatewayResponse build() {
             if (gatewayError != null) {
-                return new GatewayResponse<>(gatewayError);
+                return new GatewayResponse(gatewayError);
             }
             if (StringUtils.isNotBlank(response.getErrorCode()) ||
                     StringUtils.isNotBlank(response.getErrorMessage())) {
                 return new GatewayResponse<>(genericGatewayError(response.toString()));
             }
-            return new GatewayResponse<>(response, sessionIdentifier);
+            return new GatewayResponse(response, sessionIdentifier);
         }
     }
 }

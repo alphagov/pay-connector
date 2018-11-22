@@ -4,8 +4,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCaptureResponse;
 import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,7 +27,7 @@ public class EpdqCaptureHandlerTest extends BaseEpdqPaymentProviderTest {
     @Test
     public void shouldCapture() {
         mockPaymentProviderResponse(200, successCaptureResponse());
-        GatewayResponse<EpdqCaptureResponse> response = epdqCaptureHandler.capture(buildTestCaptureRequest());
+        GatewayResponse<BaseCaptureResponse> response = epdqCaptureHandler.capture(buildTestCaptureRequest());
         verifyPaymentProviderRequest(successCaptureRequest());
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().getTransactionId(), is("3014644340"));
@@ -36,7 +36,7 @@ public class EpdqCaptureHandlerTest extends BaseEpdqPaymentProviderTest {
     @Test
     public void shouldNotCaptureIfPaymentProviderReturnsUnexpectedStatusCode() {
         mockPaymentProviderResponse(200, errorCaptureResponse());
-        GatewayResponse<EpdqCaptureResponse> response = epdqCaptureHandler.capture(buildTestCaptureRequest());
+        GatewayResponse<BaseCaptureResponse> response = epdqCaptureHandler.capture(buildTestCaptureRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
     }
@@ -44,7 +44,7 @@ public class EpdqCaptureHandlerTest extends BaseEpdqPaymentProviderTest {
     @Test
     public void shouldNotCaptureIfPaymentProviderReturnsNon200HttpStatusCode() {
         mockPaymentProviderResponse(400, errorCaptureResponse());
-        GatewayResponse<EpdqCaptureResponse> response = epdqCaptureHandler.capture(buildTestCaptureRequest());
+        GatewayResponse<BaseCaptureResponse> response = epdqCaptureHandler.capture(buildTestCaptureRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
         assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",
