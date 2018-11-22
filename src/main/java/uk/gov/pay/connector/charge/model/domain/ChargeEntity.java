@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.SupportedLanguageJpaConverter;
+import uk.gov.pay.connector.applepay.WalletType;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
@@ -25,6 +26,8 @@ import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -122,6 +125,10 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Column(name = "delayed_capture")
     private boolean delayedCapture;
 
+    @Column(name = "wallet")
+    @Enumerated(EnumType.STRING)
+    private WalletType walletType;
+    
     public ChargeEntity() {
         //for jpa
     }
@@ -244,6 +251,14 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public void setProviderSessionId(String providerSessionId) {
         this.providerSessionId = providerSessionId;
+    }
+
+    public WalletType getWalletType() {
+        return walletType;
+    }
+
+    public void setWalletType(WalletType walletType) {
+        this.walletType = walletType;
     }
 
     public boolean hasExternalStatus(ExternalChargeState... state) {
