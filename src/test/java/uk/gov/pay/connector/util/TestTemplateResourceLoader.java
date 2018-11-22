@@ -69,11 +69,11 @@ public class TestTemplateResourceLoader {
     public static final String SMARTPAY_VALID_CAPTURE_SMARTPAY_REQUEST = SMARTPAY_BASE_NAME + "/valid-capture-smartpay-request.xml";
 
     public static final String SMARTPAY_MULTIPLE_NOTIFICATIONS = SMARTPAY_BASE_NAME + "/multiple-notifications.json";
-    public static final String SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES = SMARTPAY_BASE_NAME + "/multiple-notifications-different-dates.xml";
-    public static final String SMARTPAY_NOTIFICATION_AUTHORISATION = SMARTPAY_BASE_NAME + "/notification-authorisation.xml";
-    public static final String SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS = SMARTPAY_BASE_NAME + "/notification-capture-with-unknown-status.xml";
-    public static final String SMARTPAY_NOTIFICATION_CAPTURE = SMARTPAY_BASE_NAME + "/notification-capture.xml";
-    public static final String SMARTPAY_NOTIFICATION_REFUND = SMARTPAY_BASE_NAME + "/notification-refund.xml";
+    public static final String SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES = SMARTPAY_BASE_NAME + "/multiple-notifications-different-dates.json";
+    public static final String SMARTPAY_NOTIFICATION_AUTHORISATION = SMARTPAY_BASE_NAME + "/notification-authorisation.json";
+    public static final String SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS = SMARTPAY_BASE_NAME + "/notification-capture-with-unknown-status.json";
+    public static final String SMARTPAY_NOTIFICATION_CAPTURE = SMARTPAY_BASE_NAME + "/notification-capture.json";
+    public static final String SMARTPAY_NOTIFICATION_REFUND = SMARTPAY_BASE_NAME + "/notification-refund.json";
 
     public static final String SMARTPAY_REFUND_ERROR_RESPONSE = SMARTPAY_BASE_NAME + "/refund-error-response.xml";
     public static final String SMARTPAY_REFUND_SUCCESS_RESPONSE = SMARTPAY_BASE_NAME + "/refund-success-response.xml";
