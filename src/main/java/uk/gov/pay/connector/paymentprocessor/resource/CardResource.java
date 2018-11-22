@@ -100,16 +100,18 @@ public class CardResource {
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/cancel")
     @Produces(APPLICATION_JSON)
     public Response cancelCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
-        chargeCancelService.doSystemCancel(chargeId, accountId);
-        return Response.noContent().build();
+        return chargeCancelService.doSystemCancel(chargeId, accountId)
+                .map(chargeEntity -> Response.noContent().build())
+                .orElse(ResponseUtil.responseWithChargeNotFound(chargeId));
     }
 
     @POST
     @Path("/v1/frontend/charges/{chargeId}/cancel")
     @Produces(APPLICATION_JSON)
     public Response userCancelCharge(@PathParam("chargeId") String chargeId) {
-        chargeCancelService.doUserCancel(chargeId);
-        return Response.noContent().build();
+        return chargeCancelService.doUserCancel(chargeId)
+                .map(chargeEntity -> Response.noContent().build())
+                .orElse(ResponseUtil.responseWithChargeNotFound(chargeId));
     }
 
     private Response handleError(GatewayError error) {
