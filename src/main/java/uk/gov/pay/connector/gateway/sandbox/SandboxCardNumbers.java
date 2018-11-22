@@ -1,34 +1,35 @@
 package uk.gov.pay.connector.gateway.sandbox;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 
-public class SandboxCardNumbers {
+class SandboxCardNumbers {
 
-    public static boolean isValidCard(String cardNumber) {
+    static boolean isValidCard(String cardNumber) {
         return GOOD_CARDS.contains(cardNumber) ||
-                GOOD_CORPORATE_CARDS.contains(cardNumber);
+                GOOD_CORPORATE_CARDS.contains(cardNumber) ||
+                GOOD_CORPORATE_PREPAID_CARDS.contains(cardNumber);
     }
 
-    public static boolean isRejectedCard(String cardNumber) {
+    static boolean isRejectedCard(String cardNumber) {
         return REJECTED_CARDS.containsKey(cardNumber);
     }
 
-    public static boolean isErrorCard(String cardNumber) {
+    static boolean isErrorCard(String cardNumber) {
         return ERROR_CARDS.containsKey(cardNumber);
     }
 
-    public static CardError cardErrorFor(String cardNumber) {
+    static CardError cardErrorFor(String cardNumber) {
         return ERROR_CARDS.get(cardNumber);
     }
 
-    private static final List<String> GOOD_CARDS = ImmutableList.of(
+    private static final Set<String> GOOD_CARDS = ImmutableSet.of(
             "4444333322221111",
             "4242424242424242",
             "4917610000000000003",
@@ -40,10 +41,15 @@ public class SandboxCardNumbers {
             "6011000990139424",
             "36148900647913");
 
-    private static final List<String> GOOD_CORPORATE_CARDS = ImmutableList.of(
+    private static final Set<String> GOOD_CORPORATE_CARDS = ImmutableSet.of(
             "4000180000000002",
             "5101180000000007"
     );
+
+    private static final Set<String> GOOD_CORPORATE_PREPAID_CARDS = ImmutableSet.of(
+            "4435571490000004"
+    );
+
     private static final String DECLINED_CARD_NUMBER = "4000000000000002";
     private static final String CVC_ERROR_CARD_NUMBER = "4000000000000127";
     private static final String EXPIRED_CARD_NUMBER = "4000000000000069";
@@ -56,5 +62,5 @@ public class SandboxCardNumbers {
             DECLINED_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "This transaction was declined."),
             EXPIRED_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "The card is expired."),
             CVC_ERROR_CARD_NUMBER, new CardError(AUTHORISATION_REJECTED, "The CVC code is incorrect."));
-    
+
 }

@@ -16,6 +16,24 @@ import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getTotalAmountFor;
 
 public class CorporateCardSurchargeCalculatorTest {
+
+    private static final long CREDIT_CARD_SURCHARGE_AMOUNT = 250L;
+    private static final long DEBIT_CARD_SURCHARGE_AMOUNT = 50L;
+
+    @Test
+    public void shouldNotApplySurchargeWhenNotEnabledOnGatewayAccount() {
+        AuthCardDetails corporateCreditCard = AuthCardDetailsFixture.anAuthCardDetails()
+                .withCardType(PayersCardType.CREDIT)
+                .withCorporateCard(Boolean.TRUE)
+                .build();
+
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(0L);
+
+        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
+        assertThat(getCorporateCardSurchargeFor(corporateCreditCard, chargeEntity).isPresent(), is(false));
+    }
+
     @Test
     public void shouldGetCorporateSurchargeForCreditCard() {
         AuthCardDetails corporateCreditCard = AuthCardDetailsFixture.anAuthCardDetails()
@@ -24,15 +42,14 @@ public class CorporateCardSurchargeCalculatorTest {
                 .build();
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
+        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
 
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-        chargeEntity.setCorporateSurcharge(250L);
         Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(corporateCreditCard, chargeEntity);
-
         assertThat(optionalSurcharge.isPresent(), is(true));
-        assertThat(optionalSurcharge.get(), is(250L));
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount() + 250L));
+        assertThat(optionalSurcharge.get(), is(CREDIT_CARD_SURCHARGE_AMOUNT));
+
+        chargeEntity.setCorporateSurcharge(optionalSurcharge.get());
+        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount() + CREDIT_CARD_SURCHARGE_AMOUNT));
     }
 
     @Test
@@ -43,19 +60,15 @@ public class CorporateCardSurchargeCalculatorTest {
                 .build();
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
-
-        assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
+        chargeEntity.getGatewayAccount().setCorporateDebitCardSurchargeAmount(DEBIT_CARD_SURCHARGE_AMOUNT);
 
         Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(corporateDebitCard, chargeEntity);
-
         assertThat(optionalSurcharge.isPresent(), is(true));
         assertThat(optionalSurcharge.get(), is(50L));
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForConsumerCreditCardCard() {
+    public void shouldNotGetCorporateSurchargeForConsumerCreditCard() {
         AuthCardDetails creditNoCorporateCard = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardType(PayersCardType.CREDIT)
                 .withCorporateCard(Boolean.FALSE)
@@ -63,6 +76,7 @@ public class CorporateCardSurchargeCalculatorTest {
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
+        chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(250L);
 
         assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
         assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
@@ -80,7 +94,8 @@ public class CorporateCardSurchargeCalculatorTest {
                 .build();
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
+        chargeEntity.getGatewayAccount().setCorporateDebitCardSurchargeAmount(250L);
+        chargeEntity.getGatewayAccount().setCorporatePrepaidDebitCardSurchargeAmount(250L);
 
         assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
         assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
@@ -166,4 +181,5 @@ public class CorporateCardSurchargeCalculatorTest {
         final Long expectedAmount = chargeEntity.getAmount();
         assertThat(actualAmount, is(expectedAmount));
     }
+
 }
