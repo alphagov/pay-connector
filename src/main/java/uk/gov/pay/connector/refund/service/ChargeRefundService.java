@@ -15,7 +15,6 @@ import uk.gov.pay.connector.charge.service.transaction.TransactionalOperation;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
@@ -136,7 +135,7 @@ public class ChargeRefundService {
     private NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayRefund(PaymentProviders providers) {
         return context -> {
             RefundEntity refundEntity = context.get(RefundEntity.class);
-            return getPaymentProviderFor(providers, refundEntity.getChargeEntity()).refund(RefundGatewayRequest.valueOf(refundEntity));
+            return providers.byName(refundEntity.getChargeEntity().getPaymentGatewayName()).refund(RefundGatewayRequest.valueOf(refundEntity));
         };
     }
 
@@ -231,10 +230,5 @@ public class ChargeRefundService {
          * no refund has not gone through and no reference returned(or needed) to be stored.
          */
         return "";
-    }
-
-    public PaymentProvider<?> getPaymentProviderFor(PaymentProviders providers, ChargeEntity chargeEntity) {
-        PaymentProvider<?> paymentProvider = providers.byName(chargeEntity.getPaymentGatewayName());
-        return paymentProvider;
     }
 }

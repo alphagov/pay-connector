@@ -259,7 +259,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     }
 
     @Test
-    public void shouldSendSuccessfullyAnOrderForMerchant() throws Exception {
+    public void shouldSendSuccessfullyAnOrderForMerchant() {
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(getCardAuthorisationRequest());
         assertTrue(response.isSuccessful());
         assertTrue(response.getSessionIdentifier().isPresent());
@@ -318,7 +318,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
             String status,
             String bookingDateDay,
             String bookingDateMonth,
-            String bookingDateYear) throws IOException {
+            String bookingDateYear) {
         return TestTemplateResourceLoader.load(WORLDPAY_NOTIFICATION)
                 .replace("{{transactionId}}", transactionId)
                 .replace("{{refund-ref}}", referenceId)

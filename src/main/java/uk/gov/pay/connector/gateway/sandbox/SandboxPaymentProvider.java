@@ -1,13 +1,14 @@
 package uk.gov.pay.connector.gateway.sandbox;
 
 import fj.data.Either;
+import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.applepay.ApplePayAuthorisationHandler;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -20,8 +21,10 @@ import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
+import uk.gov.pay.connector.gateway.sandbox.applepay.SandboxApplePayAuthorisationHandler;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
@@ -37,10 +40,12 @@ public class SandboxPaymentProvider implements PaymentProvider<String> {
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
     private SandboxCaptureHandler sandboxCaptureHandler;
+    private SandboxApplePayAuthorisationHandler sandboxApplePayAuthorisationHandler;
 
     public SandboxPaymentProvider() {
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         this.sandboxCaptureHandler = new SandboxCaptureHandler();
+        this.sandboxApplePayAuthorisationHandler = new SandboxApplePayAuthorisationHandler();
     }
 
     @Override
@@ -54,9 +59,9 @@ public class SandboxPaymentProvider implements PaymentProvider<String> {
                     .withGatewayError(new GatewayError(errorInfo.getErrorMessage(), GENERIC_GATEWAY_ERROR))
                     .build();
         } else if (SandboxCardNumbers.isRejectedCard(cardNumber)) {
-            return createGatewayBaseAuthoriseResponse(false);
+            return GatewayResponseGenerator.getSandboxGatewayResponse(false);
         } else if (SandboxCardNumbers.isValidCard(cardNumber)) {
-            return createGatewayBaseAuthoriseResponse(true);
+            return GatewayResponseGenerator.getSandboxGatewayResponse(true);
         }
 
         return gatewayResponseBuilder
@@ -72,6 +77,11 @@ public class SandboxPaymentProvider implements PaymentProvider<String> {
                 .build();
     }
 
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest request) {
+        return sandboxApplePayAuthorisationHandler.authorise(request);
+    }
+    
     @Override
     public GatewayResponse<BaseCaptureResponse> capture(CaptureGatewayRequest request) {
         return sandboxCaptureHandler.capture(request);
@@ -91,7 +101,7 @@ public class SandboxPaymentProvider implements PaymentProvider<String> {
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
         return createGatewayBaseCancelResponse();
     }
-
+    
     @Override
     public Boolean isNotificationEndpointSecured() {
         return false;
@@ -125,45 +135,6 @@ public class SandboxPaymentProvider implements PaymentProvider<String> {
     @Override
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
         return externalRefundAvailabilityCalculator.calculate(chargeEntity);
-    }
-
-    private GatewayResponse<BaseAuthoriseResponse> createGatewayBaseAuthoriseResponse(boolean isAuthorised) {
-        GatewayResponseBuilder<BaseAuthoriseResponse> gatewayResponseBuilder = responseBuilder();
-        return gatewayResponseBuilder.withResponse(new BaseAuthoriseResponse() {
-
-            private final String transactionId = randomUUID().toString();
-
-            @Override
-            public AuthoriseStatus authoriseStatus() {
-                return isAuthorised ? AuthoriseStatus.AUTHORISED : AuthoriseStatus.REJECTED;
-            }
-
-            @Override
-            public String getTransactionId() {
-                return transactionId;
-            }
-
-            @Override
-            public String getErrorCode() {
-                return null;
-            }
-
-            @Override
-            public String getErrorMessage() {
-                return null;
-            }
-
-            @Override
-            public Optional<GatewayParamsFor3ds> getGatewayParamsFor3ds() {
-                return Optional.empty();
-            }
-
-            @Override
-            public String toString() {
-                return "Sandbox authorisation response (transactionId: " + getTransactionId()
-                        + ", isAuthorised: " + isAuthorised + ')';
-            }
-        }).build();
     }
 
     private GatewayResponse<BaseCancelResponse> createGatewayBaseCancelResponse() {

@@ -3,6 +3,8 @@ package uk.gov.pay.connector.gateway.worldpay;
 import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.applepay.ApplePayAuthorisationHandler;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -26,6 +28,7 @@ import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalcul
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
+import uk.gov.pay.connector.gateway.worldpay.applepay.WorldpayApplePayAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.usernotification.model.Notifications;
@@ -63,6 +66,7 @@ public class WorldpayPaymentProvider implements PaymentProvider<String> {
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
     private final WorldpayCaptureHandler worldpayCaptureHandler;
+    private final WorldpayApplePayAuthorisationHandler worldpayApplePayAuthorisationHandler;
 
     @Inject
     public WorldpayPaymentProvider(ConnectorConfiguration configuration,
@@ -75,8 +79,8 @@ public class WorldpayPaymentProvider implements PaymentProvider<String> {
         isNotificationEndpointSecured = configuration.getWorldpayConfig().isSecureNotificationEnabled();
         notificationDomain = configuration.getWorldpayConfig().getNotificationDomain();
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
-
         worldpayCaptureHandler = new WorldpayCaptureHandler(captureClient);
+        worldpayApplePayAuthorisationHandler = new WorldpayApplePayAuthorisationHandler(authoriseClient);
     }
 
     @Override
@@ -94,7 +98,7 @@ public class WorldpayPaymentProvider implements PaymentProvider<String> {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrder(request));
         return GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
     }
-
+    
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), build3dsResponseAuthOrder(request));
@@ -104,6 +108,11 @@ public class WorldpayPaymentProvider implements PaymentProvider<String> {
     @Override
     public GatewayResponse<BaseCaptureResponse> capture(CaptureGatewayRequest request) {
         return worldpayCaptureHandler.capture(request);
+    }
+
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest request) {
+        return worldpayApplePayAuthorisationHandler.authorise(request);
     }
 
     @Override
@@ -178,17 +187,6 @@ public class WorldpayPaymentProvider implements PaymentProvider<String> {
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .withAuthorisationDetails(request.getAuthCardDetails())
-                .build();
-    }
-
-    private GatewayOrder buildApplePayAuthoriseOrder(ApplePayAuthorisationGatewayRequest request) {
-        return aWorldpayAuthoriseApplePayOrderRequestBuilder()
-                .withApplePayTemplateData(ApplePayTemplateData.from(request.getAppleDecryptedPaymentData()))
-                .withSessionId(request.getChargeExternalId())
-                .withTransactionId(request.getTransactionId().orElse(""))
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .withDescription(request.getDescription())
-                .withAmount(request.getAmount())
                 .build();
     }
 

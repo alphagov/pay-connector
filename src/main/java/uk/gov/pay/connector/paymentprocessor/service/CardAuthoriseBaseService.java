@@ -10,7 +10,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.exception.GenericGatewayRuntimeException;
 import uk.gov.pay.connector.gateway.model.AuthorisationDetails;
@@ -86,10 +85,6 @@ public abstract class CardAuthoriseBaseService<T extends AuthorisationDetails> {
                 .orElseGet(() -> gatewayError
                         .map(this::mapError)
                         .orElse(ChargeStatus.AUTHORISATION_ERROR));
-    }
-
-    PaymentProvider<?> getPaymentProviderFor(ChargeEntity chargeEntity) {
-        return providers.byName(chargeEntity.getPaymentGatewayName());
     }
     
     protected Optional<String> extractTransactionId(String chargeExternalId, GatewayResponse<BaseAuthoriseResponse> operationResponse) {

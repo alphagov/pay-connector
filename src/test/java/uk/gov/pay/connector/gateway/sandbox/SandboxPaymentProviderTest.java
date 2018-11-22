@@ -7,8 +7,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.applepay.AppleDecryptedPaymentData;
-import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -22,7 +20,6 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
-import uk.gov.pay.connector.util.AuthUtils;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -41,9 +38,6 @@ public class SandboxPaymentProviderTest {
     private static final String AUTH_SUCCESS_CARD_NUMBER = "4242424242424242";
     private static final String AUTH_REJECTED_CARD_NUMBER = "4000000000000069";
     private static final String AUTH_ERROR_CARD_NUMBER = "4000000000000119";
-    private static final String AUTH_SUCCESS_APPLE_PAY_LAST_DIGITS_CARD_NUMBER = "4242";
-    private static final String AUTH_REJECTED_APPLE_PAY_LAST_DIGITS_CARD_NUMBER = "0002";
-    private static final String AUTH_ERROR_APPLE_PAY_LAST_DIGITS_CARD_NUMBER = "0119";
     
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -85,57 +79,8 @@ public class SandboxPaymentProviderTest {
         provider.parseNotification(notification);
     }
     
-    @Test
-    public void authorise_shouldBeAuthorisedWhenLastDigitsCardNumbersAreExpectedToSucceedForAuthorisation_forApplePay() {
-        AppleDecryptedPaymentData applePaymentData = AuthUtils.ApplePay.buildDecryptedPaymentData("Mr. Payment", "mr@payment.test", AUTH_SUCCESS_APPLE_PAY_LAST_DIGITS_CARD_NUMBER);
 
-        GatewayResponse gatewayResponse = provider.authorise(new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePaymentData));
-
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
-        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
-        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
-        assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
-
-        BaseAuthoriseResponse authoriseResponse = (BaseAuthoriseResponse) gatewayResponse.getBaseResponse().get();
-        assertThat(authoriseResponse.authoriseStatus(), is(AuthoriseStatus.AUTHORISED));
-        assertThat(authoriseResponse.getTransactionId(), is(notNullValue()));
-        assertThat(authoriseResponse.getErrorCode(), is(nullValue()));
-        assertThat(authoriseResponse.getErrorMessage(), is(nullValue()));
-    }
-
-    @Test
-    public void authorise_shouldNotBeAuthorisedWhenLastDigitsCardNumbersAreExpectedToBeRejectedForAuthorisation_forApplePay() {
-        AppleDecryptedPaymentData applePaymentData = AuthUtils.ApplePay.buildDecryptedPaymentData("Mr. Payment", "mr@payment.test", AUTH_REJECTED_APPLE_PAY_LAST_DIGITS_CARD_NUMBER);
-        GatewayResponse gatewayResponse = provider.authorise(new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePaymentData));
-
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
-        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
-        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
-        assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
-
-        BaseAuthoriseResponse authoriseResponse = (BaseAuthoriseResponse) gatewayResponse.getBaseResponse().get();
-        assertThat(authoriseResponse.authoriseStatus(), is(AuthoriseStatus.REJECTED));
-        assertThat(authoriseResponse.getTransactionId(), is(notNullValue()));
-        assertThat(authoriseResponse.getErrorCode(), is(nullValue()));
-        assertThat(authoriseResponse.getErrorMessage(), is(nullValue()));
-    }
-
-    @Test
-    public void authorise_shouldGetGatewayErrorWhenLastDigitsCardNumbersAreExpectedToFailForAuthorisation_forApplePay() {
-        AppleDecryptedPaymentData applePaymentData = AuthUtils.ApplePay.buildDecryptedPaymentData("Mr. Payment", "mr@payment.test", AUTH_ERROR_APPLE_PAY_LAST_DIGITS_CARD_NUMBER);
-        GatewayResponse gatewayResponse = provider.authorise(new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePaymentData));
-
-        assertThat(gatewayResponse.isSuccessful(), is(false));
-        assertThat(gatewayResponse.isFailed(), is(true));
-        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
-        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
-
-        GatewayError gatewayError = (GatewayError) gatewayResponse.getGatewayError().get();
-        assertThat(gatewayError.getErrorType(), is(GENERIC_GATEWAY_ERROR));
-        assertThat(gatewayError.getMessage(), is("This transaction could be not be processed."));
-    }
+ 
     
     @Test
     public void authorise_shouldBeAuthorisedWhenCardNumIsExpectedToSucceedForAuthorisation() {

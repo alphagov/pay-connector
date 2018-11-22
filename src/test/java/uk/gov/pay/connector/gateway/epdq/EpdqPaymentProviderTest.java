@@ -50,6 +50,11 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
         assertThat(response.getBaseResponse().get().getTransactionId(), is("3014644340"));
     }
 
+    @Test(expected = UnsupportedOperationException.class)
+    public void shouldThrow_IfTryingToAuthoriseAnApplePayPayment() {
+        provider.authoriseApplePay(null);
+    }
+    
     @Test
     public void shouldNotAuthoriseIfPaymentProviderReturnsUnexpectedStatusCode() {
         mockPaymentProviderResponse(200, errorAuthResponse());

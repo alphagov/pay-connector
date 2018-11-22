@@ -1,8 +1,7 @@
 package uk.gov.pay.connector.gateway;
 
-import uk.gov.pay.connector.applepay.ApplePayAuthoriser;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
+import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
@@ -15,8 +14,7 @@ import static jersey.repackaged.com.google.common.collect.Maps.newHashMap;
 
 public class PaymentProviders {
 
-    private final Map<PaymentGatewayName, PaymentProvider> cardPaymentProviders = newHashMap();
-    private final Map<PaymentGatewayName, ApplePayAuthoriser> applePayPaymentProviders = newHashMap();
+    private final Map<PaymentGatewayName, PaymentProvider> paymentProviders = newHashMap();
     
     @Inject
     public PaymentProviders(WorldpayPaymentProvider worldpayPaymentProvider,
@@ -24,22 +22,15 @@ public class PaymentProviders {
                             SmartpayPaymentProvider smartpayPaymentProvider,
                             SandboxPaymentProvider sandboxPaymentProvider,
                             StripePaymentProvider stripePaymentProvider) {
-        cardPaymentProviders.put(PaymentGatewayName.WORLDPAY, worldpayPaymentProvider);
-        cardPaymentProviders.put(PaymentGatewayName.SANDBOX, sandboxPaymentProvider);
-        cardPaymentProviders.put(PaymentGatewayName.SMARTPAY, smartpayPaymentProvider);
-        cardPaymentProviders.put(PaymentGatewayName.EPDQ, epdqPaymentProvider);
-        cardPaymentProviders.put(PaymentGatewayName.STRIPE, stripePaymentProvider);
+        paymentProviders.put(PaymentGatewayName.WORLDPAY, worldpayPaymentProvider);
+        paymentProviders.put(PaymentGatewayName.SANDBOX, sandboxPaymentProvider);
+        paymentProviders.put(PaymentGatewayName.SMARTPAY, smartpayPaymentProvider);
+        paymentProviders.put(PaymentGatewayName.EPDQ, epdqPaymentProvider);
+        paymentProviders.put(PaymentGatewayName.STRIPE, stripePaymentProvider);
 
-        applePayPaymentProviders.put(PaymentGatewayName.WORLDPAY, worldpayPaymentProvider);
-        applePayPaymentProviders.put(PaymentGatewayName.SANDBOX, sandboxPaymentProvider);
     }
 
-    public PaymentProvider byName(PaymentGatewayName gateway) {
-        return cardPaymentProviders.get(gateway);
+    public PaymentProvider<BaseResponse> byName(PaymentGatewayName gateway) {
+        return paymentProviders.get(gateway);
     }
-    
-    public ApplePayAuthoriser getApplePayAuthoriserFor(ChargeEntity chargeEntity) {
-        return applePayPaymentProviders.get(chargeEntity.getPaymentGatewayName());
-    }
-
 }

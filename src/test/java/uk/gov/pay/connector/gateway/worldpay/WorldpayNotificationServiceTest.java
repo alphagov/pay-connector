@@ -19,8 +19,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -50,7 +50,7 @@ public class WorldpayNotificationServiceTest {
     private final String transactionId = "transaction-reference";
 
     @Before
-    public void setup() throws Exception {
+    public void setup() {
         notificationService = new WorldpayNotificationService(
                 mockChargeDao,
                 mockWorldpayConfiguration,

@@ -9,28 +9,28 @@ import java.util.Map;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 
-class SandboxCardNumbers {
+public class SandboxCardNumbers {
 
-    static boolean isValidCard(String cardNumber) {
+    public static boolean isValidCard(String cardNumber) {
         return GOOD_CARDS.contains(cardNumber) ||
                 GOOD_CORPORATE_CARDS.contains(cardNumber) || GOOD_APPLE_PAY_LAST_DIGITS_CARD_NUMBER.equals(cardNumber);
     }
 
-    static boolean isRejectedCard(String cardNumber) {
+    public static boolean isRejectedCard(String cardNumber) {
         return REJECTED_CARDS
                 .keySet()
                 .stream()
                 .anyMatch(rejectedCards -> rejectedCards.contains(cardNumber));
     }
 
-    static boolean isErrorCard(String cardNumber) {
+    public static boolean isErrorCard(String cardNumber) {
         return ERROR_CARDS
                 .keySet()
                 .stream()
                 .anyMatch(errorCards -> errorCards.contains(cardNumber));
     }
 
-    static CardError cardErrorFor(String cardNumber) {
+    public static CardError cardErrorFor(String cardNumber) {
         return ERROR_CARDS
                 .entrySet()
                 .stream()
