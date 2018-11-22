@@ -9,7 +9,6 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
-import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
@@ -101,23 +100,16 @@ public class CardResource {
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/cancel")
     @Produces(APPLICATION_JSON)
     public Response cancelCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
-        return chargeCancelService.doSystemCancel(chargeId, accountId)
-                .map(this::handleGatewayCancelResponse)
-                .orElseGet(() -> handleMissingGatewayResponse(chargeId));
+        chargeCancelService.doSystemCancel(chargeId, accountId);
+        return Response.noContent().build();
     }
 
     @POST
     @Path("/v1/frontend/charges/{chargeId}/cancel")
     @Produces(APPLICATION_JSON)
     public Response userCancelCharge(@PathParam("chargeId") String chargeId) {
-        return chargeCancelService.doUserCancel(chargeId)
-                .map(this::handleGatewayCancelResponse)
-                .orElseGet(() -> handleMissingGatewayResponse(chargeId));
-    }
-
-    private Response handleMissingGatewayResponse(String chargeId) {
-        logger.error("Error during cancellation of charge {} - CancelService did not return a GatewayResponse", chargeId);
-        return ResponseUtil.noContentResponse();
+        chargeCancelService.doUserCancel(chargeId);
+        return Response.noContent().build();
     }
 
     private Response handleError(GatewayError error) {
@@ -131,11 +123,6 @@ public class CardResource {
             default:
                 return badRequestResponse(error.getMessage());
         }
-    }
-
-    private Response handleGatewayCancelResponse(GatewayResponse<BaseCancelResponse> responseMaybe) {
-        responseMaybe.getGatewayError().ifPresent(gatewayError -> logger.error(gatewayError.getMessage()));
-        return ResponseUtil.noContentResponse();
     }
 
     private Response handleGatewayAuthoriseResponse(GatewayResponse<? extends BaseAuthoriseResponse> response) {
