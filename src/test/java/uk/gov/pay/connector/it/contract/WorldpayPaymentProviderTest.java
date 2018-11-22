@@ -17,18 +17,14 @@ import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureHandler;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -186,10 +182,9 @@ public class WorldpayPaymentProviderTest {
      * It simply accepts anything as long as the request is well formed. (And ignores it silently)
      */
     @Test
-    public void shouldBeAbleToSendCaptureRequestForMerchant() throws Exception {
+    public void shouldBeAbleToSendCaptureRequestForMerchant() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        WorldpayCaptureHandler worldpayCaptureHandler = (WorldpayCaptureHandler) paymentProvider.getCaptureHandler();
-        GatewayResponse response = worldpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        GatewayResponse response = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
 
         assertTrue(response.isSuccessful());
         assertTrue(response.getSessionIdentifier().isPresent());
@@ -198,7 +193,6 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldBeAbleToSubmitAPartialRefundAfterACaptureHasBeenSubmitted() throws InterruptedException {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        WorldpayCaptureHandler worldpayCaptureHandler = (WorldpayCaptureHandler) paymentProvider.getCaptureHandler();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
@@ -210,7 +204,7 @@ public class WorldpayPaymentProviderTest {
         assertThat(transactionId, is(not(nullValue())));
 
         chargeEntity.setGatewayTransactionId(transactionId);
-        GatewayResponse<BaseCaptureResponse> captureResponse = worldpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        GatewayResponse captureResponse = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
 
         assertThat(captureResponse.isSuccessful(), is(true));
 

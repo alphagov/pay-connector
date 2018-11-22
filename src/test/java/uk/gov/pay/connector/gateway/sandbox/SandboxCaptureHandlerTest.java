@@ -18,12 +18,10 @@ import static org.hamcrest.core.Is.is;
 public class SandboxCaptureHandlerTest {
 
     private SandboxCaptureHandler sandboxCaptureHandler;
-    private SandboxPaymentProvider sandboxPaymentProvider;
 
     @Before
     public void setup() {
-        SandboxPaymentProvider sandboxPaymentProvider = new SandboxPaymentProvider();
-        sandboxCaptureHandler = (SandboxCaptureHandler) sandboxPaymentProvider.getCaptureHandler();
+        sandboxCaptureHandler = new SandboxCaptureHandler();
     }
 
     @Test

@@ -37,7 +37,8 @@ public class CardCaptureService {
     protected MetricRegistry metricRegistry;
 
     @Inject
-    public CardCaptureService(ChargeService chargeService, PaymentProviders providers,
+    public CardCaptureService(ChargeService chargeService, 
+                              PaymentProviders providers, 
                               UserNotificationService userNotificationService,
                               Environment environment) {
         this.chargeService = chargeService;
@@ -82,9 +83,7 @@ public class CardCaptureService {
     }
 
     private GatewayResponse<BaseCaptureResponse> capture(ChargeEntity chargeEntity) {
-        return getPaymentProviderFor(chargeEntity)
-                .getCaptureHandler()
-                .capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        return getPaymentProviderFor(chargeEntity).capture(CaptureGatewayRequest.valueOf(chargeEntity));
     }
 
     @Transactional

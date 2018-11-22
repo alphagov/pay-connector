@@ -29,8 +29,6 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -41,7 +39,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CAPTURE_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_3DS_SOURCES_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE;
@@ -90,10 +87,6 @@ public abstract class BaseStripePaymentProviderTest {
         provider = new StripePaymentProvider(stripeGatewayClient, configuration);
     }
 
-    String successCaptureResponse() {
-        return TestTemplateResourceLoader.load(STRIPE_CAPTURE_SUCCESS_RESPONSE);
-    }
-
     String successTokenResponse() {
         return TestTemplateResourceLoader.load(STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE);
     }
@@ -106,18 +99,6 @@ public abstract class BaseStripePaymentProviderTest {
         return TestTemplateResourceLoader.load(STRIPE_CREATE_3DS_SOURCES_RESPONSE);
     }
 
-    String errorCaptureResponse() {
-        return TestTemplateResourceLoader.load(STRIPE_ERROR_RESPONSE);
-    }
-
-    String stripeInternalServerError() {
-        return TestTemplateResourceLoader.load(STRIPE_ERROR_RESPONSE_GENERAL);
-    }
-
-    CaptureGatewayRequest buildTestCaptureRequest() {
-        return buildTestCaptureRequest(buildTestGatewayAccountEntity());
-    }
-
     CardAuthorisationGatewayRequest buildTestAuthorisationRequest() {
         return buildTestAuthorisationRequest(buildTestGatewayAccountEntity());
     }
@@ -126,12 +107,6 @@ public abstract class BaseStripePaymentProviderTest {
         assertNotNull(actual);
         assertThat(actual.getMessage(), is(expected.getMessage()));
         assertThat(actual.getErrorType(), is(expected.getErrorType()));
-    }
-
-    void mockPaymentProviderCaptureResponse(int responseHttpStatus, String responsePayload) throws IOException {
-        Response response = mockResponseWithPayload(responseHttpStatus);
-        Map<String, Object> responsePayloadMap = new ObjectMapper().readValue(responsePayload, HashMap.class);
-        when(response.readEntity(Map.class)).thenReturn(responsePayloadMap);
     }
 
     @NotNull

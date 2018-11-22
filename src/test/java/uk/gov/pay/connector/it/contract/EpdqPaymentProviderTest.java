@@ -19,15 +19,11 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.epdq.EpdqCaptureHandler;
 import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
 import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
-import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
@@ -196,7 +192,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldCaptureSuccessfully() {
         setUpAndCheckThatEpdqIsUp();
-        EpdqCaptureHandler epdqCaptureHandler = getCaptureHandler(paymentProvider);
+        
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
@@ -204,12 +200,8 @@ public class EpdqPaymentProviderTest {
         String transactionId = response.getBaseResponse().get().getTransactionId();
         assertThat(transactionId, is(not(nullValue())));
         CaptureGatewayRequest captureRequest = buildCaptureRequest(chargeEntity, transactionId);
-        GatewayResponse<BaseCaptureResponse> captureResponse = epdqCaptureHandler.capture(captureRequest);
+        GatewayResponse<BaseCaptureResponse> captureResponse = paymentProvider.capture(captureRequest);
         assertThat(captureResponse.isSuccessful(), is(true));
-    }
-
-    private EpdqCaptureHandler getCaptureHandler(PaymentProvider paymentProvider) {
-        return (EpdqCaptureHandler) paymentProvider.getCaptureHandler();
     }
 
     @Test
@@ -229,7 +221,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldRefundSuccessfully() {
         setUpAndCheckThatEpdqIsUp();
-        EpdqCaptureHandler epdqCaptureHandler = getCaptureHandler(paymentProvider);
+        
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
@@ -237,7 +229,7 @@ public class EpdqPaymentProviderTest {
         String transactionId = response.getBaseResponse().get().getTransactionId();
         assertThat(transactionId, is(not(nullValue())));
         CaptureGatewayRequest captureRequest = buildCaptureRequest(chargeEntity, transactionId);
-        GatewayResponse<BaseCaptureResponse> captureResponse = epdqCaptureHandler.capture(captureRequest);
+        GatewayResponse captureResponse = paymentProvider.capture(captureRequest);
         assertThat(captureResponse.isSuccessful(), is(true));
 
         RefundGatewayRequest refundGatewayRequest = buildRefundRequest(chargeEntity, (chargeEntity.getAmount() - 100));
