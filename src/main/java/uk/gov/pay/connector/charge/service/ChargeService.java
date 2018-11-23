@@ -238,15 +238,13 @@ public class ChargeService {
                                                       Optional<String> transactionId,
                                                       Optional<Auth3dsDetailsEntity> auth3dsDetails,
                                                       Optional<String> sessionIdentifier,
-                                                      AuthCardDetails authCardDetails,
-                                                      Optional<WalletType> walletType) {
+                                                      AuthCardDetails authCardDetails) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             charge.setStatus(status);
             
             setTransactionId(charge, transactionId);
             sessionIdentifier.ifPresent(charge::setProviderSessionId);
             auth3dsDetails.ifPresent(charge::set3dsDetails);
-            walletType.ifPresent(charge::setWalletType);
             CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
             charge.setCardDetails(detailsEntity);
 
@@ -257,10 +255,19 @@ public class ChargeService {
 
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
-
-
     }
 
+    public ChargeEntity updateChargePostApplePayAuthorisation(String chargeExternalId,
+                                                      ChargeStatus status,
+                                                      Optional<String> transactionId,
+                                                      Optional<Auth3dsDetailsEntity> auth3dsDetails,
+                                                      Optional<String> sessionIdentifier,
+                                                      AuthCardDetails authCardDetails) {
+        ChargeEntity charge = updateChargePostAuthorisation(chargeExternalId, status, transactionId, auth3dsDetails, sessionIdentifier, authCardDetails);
+        charge.setWalletType(WalletType.APPLE_PAY);
+        return charge;
+    }
+    
     public ChargeEntity updateChargePost3dsAuthorisation(String chargeExternalId, ChargeStatus status,
                                                          Optional<String> transactionId) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {

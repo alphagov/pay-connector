@@ -47,21 +47,14 @@ public class AppleAuthoriseService extends CardAuthoriseBaseService<AppleDecrypt
         Optional<String> transactionId = extractTransactionId(chargeExternalId, operationResponse);
         ChargeStatus status = extractChargeStatus(operationResponse.getBaseResponse(), operationResponse.getGatewayError());
 
-        AuthCardDetails authCardDetailsToBePersisted = new AuthCardDetails();
-        authCardDetailsToBePersisted.setCardHolder(applePaymentData.getPaymentInfo().getCardholderName());
-        authCardDetailsToBePersisted.setCardNo(applePaymentData.getPaymentInfo().getLastDigitsCardNumber());
-        authCardDetailsToBePersisted.setPayersCardType(applePaymentData.getPaymentInfo().getCardType());
-        authCardDetailsToBePersisted.setCardBrand(applePaymentData.getPaymentInfo().getBrand());
-        authCardDetailsToBePersisted.setEndDate(applePaymentData.getApplicationExpirationDate().format(EXPIRY_DATE_FORMAT));
-        authCardDetailsToBePersisted.setCorporateCard(false);
-        ChargeEntity updatedCharge = chargeService.updateChargePostAuthorisation(
+        AuthCardDetails authCardDetailsToBePersisted = authCardDetailsFor(applePaymentData);
+        ChargeEntity updatedCharge = chargeService.updateChargePostApplePayAuthorisation(
                 chargeExternalId,
                 status,
                 transactionId,
                 Optional.empty(),
                 operationResponse.getSessionIdentifier(),
-                authCardDetailsToBePersisted,
-                Optional.of(WalletType.APPLE_PAY));
+                authCardDetailsToBePersisted);
 
         logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                 updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
@@ -83,6 +76,17 @@ public class AppleAuthoriseService extends CardAuthoriseBaseService<AppleDecrypt
         ApplePayAuthorisationGatewayRequest authorisationGatewayRequest = ApplePayAuthorisationGatewayRequest.valueOf(chargeEntity, applePaymentData);
         return providers.byName(chargeEntity.getPaymentGatewayName())
                 .authoriseApplePay(authorisationGatewayRequest);
+    }
+    
+    private AuthCardDetails authCardDetailsFor(AppleDecryptedPaymentData applePaymentData) {
+        AuthCardDetails authCardDetails = new AuthCardDetails();
+        authCardDetails.setCardHolder(applePaymentData.getPaymentInfo().getCardholderName());
+        authCardDetails.setCardNo(applePaymentData.getPaymentInfo().getLastDigitsCardNumber());
+        authCardDetails.setPayersCardType(applePaymentData.getPaymentInfo().getCardType());
+        authCardDetails.setCardBrand(applePaymentData.getPaymentInfo().getBrand());
+        authCardDetails.setEndDate(applePaymentData.getApplicationExpirationDate().format(EXPIRY_DATE_FORMAT));
+        authCardDetails.setCorporateCard(false);
+        return authCardDetails;
     }
 
 }

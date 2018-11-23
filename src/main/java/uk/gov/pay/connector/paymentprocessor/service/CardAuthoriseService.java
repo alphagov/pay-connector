@@ -93,8 +93,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                 transactionId,
                 extractAuth3dsDetails(operationResponse), 
                 operationResponse.getSessionIdentifier(),
-                authCardDetails,
-                Optional.empty());
+                authCardDetails);
         
         logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                 updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
