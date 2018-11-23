@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
+import uk.gov.pay.connector.applepay.WalletType;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -237,14 +238,15 @@ public class ChargeService {
                                                       Optional<String> transactionId,
                                                       Optional<Auth3dsDetailsEntity> auth3dsDetails,
                                                       Optional<String> sessionIdentifier,
-                                                      AuthCardDetails authCardDetails) {
+                                                      AuthCardDetails authCardDetails,
+                                                      Optional<WalletType> walletType) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             charge.setStatus(status);
-
+            
             setTransactionId(charge, transactionId);
             sessionIdentifier.ifPresent(charge::setProviderSessionId);
             auth3dsDetails.ifPresent(charge::set3dsDetails);
-
+            walletType.ifPresent(charge::setWalletType);
             CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
             charge.setCardDetails(detailsEntity);
 
@@ -360,7 +362,7 @@ public class ChargeService {
         detailsEntity.setCardBrand(sanitize(authCardDetails.getCardBrand()));
         detailsEntity.setCardHolderName(sanitize(authCardDetails.getCardHolder()));
         detailsEntity.setExpiryDate(authCardDetails.getEndDate());
-        if (hasFullCardNumber(authCardDetails)) {
+        if (hasFullCardNumber(authCardDetails)) { // Apple Pay etc. don’t give us a full card number, just the last four digits here
             detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
         }
         detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));
