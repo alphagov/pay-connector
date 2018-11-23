@@ -233,6 +233,7 @@ public class ChargeService {
         return builderOfResponse;
     }
 
+    @Transactional
     public ChargeEntity updateChargePostAuthorisation(String chargeExternalId,
                                                       ChargeStatus status,
                                                       Optional<String> transactionId,
@@ -257,6 +258,7 @@ public class ChargeService {
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
     }
 
+    @Transactional
     public ChargeEntity updateChargePostApplePayAuthorisation(String chargeExternalId,
                                                       ChargeStatus status,
                                                       Optional<String> transactionId,
@@ -268,6 +270,7 @@ public class ChargeService {
         return charge;
     }
     
+    @Transactional
     public ChargeEntity updateChargePost3dsAuthorisation(String chargeExternalId, ChargeStatus status,
                                                          Optional<String> transactionId) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
@@ -303,6 +306,7 @@ public class ChargeService {
         });
     }
 
+    @Transactional
     public ChargeEntity lockChargeForProcessing(String chargeId, OperationType operationType) {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
             try {

@@ -1,7 +1,9 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
-import com.google.inject.persist.Transactional;
+import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
@@ -9,6 +11,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
@@ -24,27 +27,48 @@ import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 
-public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetails> {
+public class CardAuthoriseService {
 
     private final CardTypeDao cardTypeDao;
-
+    private final CardAuthoriseBaseService cardAuthoriseBaseService;
+    private final ChargeService chargeService;
+    private final PaymentProviders providers;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private MetricRegistry metricRegistry;
+    
     @Inject
     public CardAuthoriseService(CardTypeDao cardTypeDao,
                                 PaymentProviders providers,
-                                CardExecutorService cardExecutorService,
+                                CardAuthoriseBaseService cardAuthoriseBaseService,
                                 ChargeService chargeService,
                                 Environment environment) {
-        super(providers, cardExecutorService, chargeService, environment);
+        this.providers = providers;
+        this.cardAuthoriseBaseService = cardAuthoriseBaseService;
+        this.chargeService = chargeService;
+        this.metricRegistry = environment.metrics();        
         this.cardTypeDao = cardTypeDao;
     }
 
-    @Override
-    @Transactional
-    public ChargeEntity prepareChargeForAuthorisation(String chargeId, AuthCardDetails authCardDetails) {
+    public GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
+        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
+            final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
+            GatewayResponse<BaseAuthoriseResponse> operationResponse = authorise(charge, authCardDetails);
+            processGatewayAuthorisationResponse(
+                    charge.getExternalId(),
+                    ChargeStatus.fromString(charge.getStatus()),
+                    authCardDetails,
+                    operationResponse);
+
+            return operationResponse;
+        });
+    }
+
+    private ChargeEntity prepareChargeForAuthorisation(String chargeId, AuthCardDetails authCardDetails) {
         ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
         ensureCardBrandGateway3DSCompatibility(charge, authCardDetails.getCardBrand());
         getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
-        providers.byName(charge.getPaymentGatewayName()).generateTransactionId().ifPresent(charge::setGatewayTransactionId);
+        getPaymentProviderFor(charge)
+                .generateTransactionId().ifPresent(charge::setGatewayTransactionId);
         
         return charge;
     }
@@ -70,22 +94,19 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         return cardTypes.stream().anyMatch(CardTypeEntity::isRequires3ds);
     }
 
-    @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
-        return providers.byName(chargeEntity.getPaymentGatewayName())
-                .authorise(CardAuthorisationGatewayRequest.valueOf(chargeEntity, authCardDetails));
+    public GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) {
+        return getPaymentProviderFor(charge)
+                .authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
     }
 
-    @Override
-    @Transactional
-    public void processGatewayAuthorisationResponse(
+    private void processGatewayAuthorisationResponse(
             String chargeExternalId,
             ChargeStatus oldChargeStatus,
             AuthCardDetails authCardDetails,
             GatewayResponse<BaseAuthoriseResponse> operationResponse) {
 
-        Optional<String> transactionId = extractTransactionId(chargeExternalId, operationResponse);
-        ChargeStatus status = extractChargeStatus(operationResponse.getBaseResponse(), operationResponse.getGatewayError());
+        Optional<String> transactionId = cardAuthoriseBaseService.extractTransactionId(chargeExternalId, operationResponse);
+        ChargeStatus status = cardAuthoriseBaseService.extractChargeStatus(operationResponse.getBaseResponse(), operationResponse.getGatewayError());
 
         ChargeEntity updatedCharge = chargeService.updateChargePostAuthorisation(
                 chargeExternalId, 
@@ -113,5 +134,9 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         return operationResponse.getBaseResponse()
                 .flatMap(BaseAuthoriseResponse::getGatewayParamsFor3ds)
                 .map(GatewayParamsFor3ds::toAuth3dsDetailsEntity);
+    }
+
+    private PaymentProvider<BaseAuthoriseResponse> getPaymentProviderFor(ChargeEntity chargeEntity) {
+        return providers.byName(chargeEntity.getPaymentGatewayName());
     }
 }
