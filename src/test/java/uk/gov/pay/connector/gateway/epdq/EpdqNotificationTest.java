@@ -13,14 +13,14 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_NOTIFICA
 
 public class EpdqNotificationTest {
 
-    private static final String CARDHOLDER_NAME = "mr payment"; 
+    private static final String CARDHOLDER_NAME = "mr payment";
     private static final String STATUS = "9";
     private static final String PAY_ID = "3020450409";
     private static final String PAY_ID_SUB = "2";
     private static final String SHA_SIGN = "9537B9639F108CDF004459D8A690C598D97506CDF072C3926A60E39759A6402C5089161F6D7A8EA12BBC0FD6F899CE72D5A0C4ACC2913C56ACF6D01B034EEC32";
 
     @Test
-    public void shouldParsePayload() {
+    public void shouldParsePayload() throws EpdqParseException {
         String payload = notificationPayloadForTransaction(CARDHOLDER_NAME, STATUS, PAY_ID, PAY_ID_SUB, SHA_SIGN);
 
         EpdqNotification epdqNotification = new EpdqNotification(payload);
@@ -32,7 +32,7 @@ public class EpdqNotificationTest {
     }
 
     @Test
-    public void shouldHaveReferenceIfPayIdAndPaySubId() {
+    public void shouldHaveReferenceIfPayIdAndPaySubId() throws EpdqParseException {
         String payload = notificationPayloadForTransaction(CARDHOLDER_NAME, STATUS, PAY_ID, PAY_ID_SUB, SHA_SIGN);
 
         EpdqNotification epdqNotification = new EpdqNotification(payload);
@@ -41,7 +41,7 @@ public class EpdqNotificationTest {
     }
 
     @Test
-    public void shouldHaveNoReferenceIfNoPayId() {
+    public void shouldHaveNoReferenceIfNoPayId() throws EpdqParseException {
         String payload = notificationPayloadForTransaction(CARDHOLDER_NAME, STATUS, "", PAY_ID_SUB, SHA_SIGN);
 
         EpdqNotification epdqNotification = new EpdqNotification(payload);
@@ -50,7 +50,7 @@ public class EpdqNotificationTest {
     }
 
     @Test
-    public void shouldHaveNoReferenceIfNoPayIdSub() {
+    public void shouldHaveNoReferenceIfNoPayIdSub() throws EpdqParseException {
         String payload = notificationPayloadForTransaction(CARDHOLDER_NAME, STATUS, PAY_ID, "", SHA_SIGN);
 
         EpdqNotification epdqNotification = new EpdqNotification(payload);
@@ -58,13 +58,13 @@ public class EpdqNotificationTest {
         assertThat(epdqNotification.getReference(), is(""));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldFailToParseMalformedPayload() {
+    @Test(expected = EpdqParseException.class)
+    public void shouldFailToParseMalformedPayload() throws EpdqParseException {
         new EpdqNotification("malformed");
     }
 
     @Test
-    public void shouldReturnParams() {
+    public void shouldReturnParams() throws EpdqParseException {
         String payload = notificationPayloadForTransaction(CARDHOLDER_NAME, STATUS, PAY_ID, PAY_ID_SUB, SHA_SIGN);
 
         EpdqNotification epdqNotification = new EpdqNotification(payload);
@@ -90,7 +90,7 @@ public class EpdqNotificationTest {
     }
 
     @Test
-    public void shouldDecodeNotificationsAccordingToTheRightEpdqCharset() {
+    public void shouldDecodeNotificationsAccordingToTheRightEpdqCharset() throws EpdqParseException {
         String cardHolderName = "Mr O%92Payment"; // %92 is encoded value for ’ (right single quotation mark)
         String payload = notificationPayloadForTransaction(cardHolderName, STATUS, PAY_ID, PAY_ID_SUB, SHA_SIGN);
 
@@ -99,9 +99,8 @@ public class EpdqNotificationTest {
         assertThat(epdqNotification.getParams(), hasItem(
                 new BasicNameValuePair("CN", "Mr O’Payment")));
     }
-    
-    private String notificationPayloadForTransaction(String cardHolderName, String status, String payId, String payIdSub, String shaSign)
-    {
+
+    private String notificationPayloadForTransaction(String cardHolderName, String status, String payId, String payIdSub, String shaSign) {
         return TestTemplateResourceLoader.load(EPDQ_NOTIFICATION_TEMPLATE)
                 .replace("{{cardHolderName}}", cardHolderName)
                 .replace("{{status}}", status)
@@ -109,5 +108,4 @@ public class EpdqNotificationTest {
                 .replace("{{payIdSub}}", payIdSub)
                 .replace("{{shaSign}}", shaSign);
     }
-
 }
