@@ -9,8 +9,16 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 import static java.lang.String.format;
-import static javax.ws.rs.core.Response.*;
-import static javax.ws.rs.core.Response.Status.*;
+import static javax.ws.rs.core.Response.Status;
+import static javax.ws.rs.core.Response.Status.ACCEPTED;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.status;
 
 public class ResponseUtil {
     protected static final Logger logger = LoggerFactory.getLogger(ResponseUtil.class);
@@ -57,7 +65,7 @@ public class ResponseUtil {
     }
 
     public static Response preconditionFailedResponse(String message) {
-        logger.info(message.toString());
+        logger.info(message);
         return responseWithMessageMap(PRECONDITION_FAILED, message);
     }
 

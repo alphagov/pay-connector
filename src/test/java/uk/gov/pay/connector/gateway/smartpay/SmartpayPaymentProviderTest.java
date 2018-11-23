@@ -14,7 +14,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -113,7 +112,12 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
         assertThat(smartpayAuthorisationResponse.getPaRequest(), is(not(nullValue())));
 
     }
-
+    
+    @Test(expected = UnsupportedOperationException.class)
+    public void shouldThrow_IfTryingToAuthoriseAnApplePayPayment() {
+        provider.authoriseApplePay(null);
+    }
+    
     @Test
     public void shouldSuccess3DSAuthorisation() {
         GatewayAccountEntity gatewayAccountEntity = aServiceAccount();

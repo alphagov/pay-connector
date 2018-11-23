@@ -16,16 +16,16 @@ public class AuthUtils {
 
 
     public static class ApplePay {
-        private static AppleDecryptedPaymentData buildDecryptedPaymentData(String cardHolderName, String email, String tokenNumber, AppleDecryptedPaymentData.PaymentData paymentData) {
+        private static AppleDecryptedPaymentData buildDecryptedPaymentData(String cardHolderName, String email, String lastFourDigitsCardNumber, AppleDecryptedPaymentData.PaymentData paymentData) {
             return new AppleDecryptedPaymentData(
                     new ApplePaymentInfo(
-                            "4242",
+                            lastFourDigitsCardNumber,
                             "visa",
                             PayersCardType.DEBIT,
                             cardHolderName,
                             email
                     ),
-                    tokenNumber,
+                    "4818528840010767",
                     LocalDate.of(2023, 12, 31),
                     "643",
                     10L,
@@ -35,14 +35,14 @@ public class AuthUtils {
             );
         }
 
-        public static AppleDecryptedPaymentData buildDecryptedPaymentData(String cardHolderName, String email, String tokenNumber) {
-            return buildDecryptedPaymentData(cardHolderName, email, tokenNumber, new AppleDecryptedPaymentData.PaymentData(
+        public static AppleDecryptedPaymentData buildDecryptedPaymentData(String cardHolderName, String email, String lastFourDigitsCardNumber) {
+            return buildDecryptedPaymentData(cardHolderName, email, lastFourDigitsCardNumber, new AppleDecryptedPaymentData.PaymentData(
                     "Ao/fzpIAFvp1eB9y8WVDMAACAAA=",
                     "7"
             ));
         }
-        public static AppleDecryptedPaymentData buildDecryptedMinimalPaymentData(String tokenNumber) {
-            return buildDecryptedPaymentData(null, null, tokenNumber, new AppleDecryptedPaymentData.PaymentData(
+        public static AppleDecryptedPaymentData buildDecryptedMinimalPaymentData(String lastFourDigitsCardNumber) {
+            return buildDecryptedPaymentData(null, null, lastFourDigitsCardNumber, new AppleDecryptedPaymentData.PaymentData(
                     "Ao/fzpIAFvp1eB9y8WVDMAACAAA=",
                     null
             ));

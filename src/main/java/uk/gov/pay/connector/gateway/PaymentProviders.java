@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway;
 
 import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
+import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
@@ -14,7 +15,7 @@ import static jersey.repackaged.com.google.common.collect.Maps.newHashMap;
 public class PaymentProviders {
 
     private final Map<PaymentGatewayName, PaymentProvider> paymentProviders = newHashMap();
-
+    
     @Inject
     public PaymentProviders(WorldpayPaymentProvider worldpayPaymentProvider,
                             EpdqPaymentProvider epdqPaymentProvider,
@@ -22,13 +23,14 @@ public class PaymentProviders {
                             SandboxPaymentProvider sandboxPaymentProvider,
                             StripePaymentProvider stripePaymentProvider) {
         paymentProviders.put(PaymentGatewayName.WORLDPAY, worldpayPaymentProvider);
-        paymentProviders.put(PaymentGatewayName.SMARTPAY, smartpayPaymentProvider);
         paymentProviders.put(PaymentGatewayName.SANDBOX, sandboxPaymentProvider);
+        paymentProviders.put(PaymentGatewayName.SMARTPAY, smartpayPaymentProvider);
         paymentProviders.put(PaymentGatewayName.EPDQ, epdqPaymentProvider);
         paymentProviders.put(PaymentGatewayName.STRIPE, stripePaymentProvider);
+
     }
 
-    public PaymentProvider byName(PaymentGatewayName gateway) {
+    public PaymentProvider<BaseResponse> byName(PaymentGatewayName gateway) {
         return paymentProviders.get(gateway);
     }
 }

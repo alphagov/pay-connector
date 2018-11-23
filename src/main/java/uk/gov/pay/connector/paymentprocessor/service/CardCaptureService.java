@@ -9,7 +9,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
-import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
@@ -83,7 +82,8 @@ public class CardCaptureService {
     }
 
     private GatewayResponse<BaseCaptureResponse> capture(ChargeEntity chargeEntity) {
-        return getPaymentProviderFor(chargeEntity).capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        return providers.byName(chargeEntity.getPaymentGatewayName())
+                .capture(CaptureGatewayRequest.valueOf(chargeEntity));
     }
 
     @Transactional
@@ -125,9 +125,5 @@ public class CardCaptureService {
                     .map(timeoutError -> CAPTURE_APPROVED_RETRY)
                     .orElse(CAPTURE_ERROR);
         }
-    }
-
-    PaymentProvider<?> getPaymentProviderFor(ChargeEntity chargeEntity) {
-        return providers.byName(chargeEntity.getPaymentGatewayName());
     }
 }

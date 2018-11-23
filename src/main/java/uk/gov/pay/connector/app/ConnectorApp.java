@@ -29,6 +29,7 @@ import uk.gov.pay.connector.charge.resource.ChargesFrontendResource;
 import uk.gov.pay.connector.chargeevent.resource.ChargeEventsResource;
 import uk.gov.pay.connector.command.RenderStateTransitionGraphCommand;
 import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
+import uk.gov.pay.connector.common.exception.UnsupportedOperationExceptionMapper;
 import uk.gov.pay.connector.common.exception.ValidationExceptionMapper;
 import uk.gov.pay.connector.filters.LoggingFilter;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
@@ -97,6 +98,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         
         environment.jersey().register(new ConstraintViolationExceptionMapper());
         environment.jersey().register(new ValidationExceptionMapper());
+        environment.jersey().register(new UnsupportedOperationExceptionMapper());
         environment.jersey().register(new LoggingExceptionMapper<Throwable>() {});
         environment.jersey().register(new JsonProcessingExceptionMapper());
         environment.jersey().register(new EarlyEofExceptionMapper());

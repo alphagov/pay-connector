@@ -164,7 +164,7 @@ public class WorldpayOrderRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidAuthoriseApplePayOrderRequest() throws Exception {
-        AppleDecryptedPaymentData data = AuthUtils.ApplePay.buildDecryptedPaymentData("Mr. Payment", "mr@payment.test", "4818528840010767");
+        AppleDecryptedPaymentData data = AuthUtils.ApplePay.buildDecryptedPaymentData("Mr. Payment", "mr@payment.test", "4242");
         
         GatewayOrder actualRequest = aWorldpayAuthoriseApplePayOrderRequestBuilder()
                 .withApplePayTemplateData(ApplePayTemplateData.from(data))
@@ -183,7 +183,7 @@ public class WorldpayOrderRequestBuilderTest {
     
     @Test
     public void shouldGenerateValidAuthoriseApplePayOrderRequest_withMinData() throws Exception {
-        AppleDecryptedPaymentData data = AuthUtils.ApplePay.buildDecryptedMinimalPaymentData("4242424242424242");
+        AppleDecryptedPaymentData data = AuthUtils.ApplePay.buildDecryptedMinimalPaymentData("4242");
 
         GatewayOrder actualRequest = aWorldpayAuthoriseApplePayOrderRequestBuilder()
                 .withApplePayTemplateData(ApplePayTemplateData.from(data))

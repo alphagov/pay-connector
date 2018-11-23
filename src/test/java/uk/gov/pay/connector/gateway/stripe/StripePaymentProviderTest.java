@@ -51,7 +51,7 @@ public class StripePaymentProviderTest extends BaseStripePaymentProviderTest {
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().getTransactionId(), is("src_1DXAxYC6H5MjhE5Y4jZVJwNV")); // id from templates/stripe/create_3ds_sources_response.json
-        
+
         Optional<StripeParamsFor3ds> stripeParamsFor3ds = (Optional<StripeParamsFor3ds>) response.getBaseResponse().get().getGatewayParamsFor3ds();
         assertThat(stripeParamsFor3ds.isPresent(), is(true));
         assertThat(stripeParamsFor3ds.get().toAuth3dsDetailsEntity().getIssuerUrl(), containsString("https://hooks.stripe.com")); //from templates/stripe/create_3ds_sources_response.json
@@ -68,6 +68,11 @@ public class StripePaymentProviderTest extends BaseStripePaymentProviderTest {
         assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
         assertEquals(authoriseResponse.getGatewayError().get(), new GatewayError("javax.ws.rs.ProcessingException",
                 GENERIC_GATEWAY_ERROR));
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void shouldThrow_IfTryingToAuthoriseAnApplePayPayment() {
+        provider.authoriseApplePay(null);
     }
 
     @Test

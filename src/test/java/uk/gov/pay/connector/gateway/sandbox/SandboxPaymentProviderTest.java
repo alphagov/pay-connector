@@ -6,19 +6,17 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
@@ -37,9 +35,10 @@ public class SandboxPaymentProviderTest {
 
     private SandboxPaymentProvider provider;
 
-    @Mock
-    private ExternalRefundAvailabilityCalculator mockExternalRefundAvailabilityCalculator;
-
+    private static final String AUTH_SUCCESS_CARD_NUMBER = "4242424242424242";
+    private static final String AUTH_REJECTED_CARD_NUMBER = "4000000000000069";
+    private static final String AUTH_ERROR_CARD_NUMBER = "4000000000000119";
+    
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
@@ -70,7 +69,7 @@ public class SandboxPaymentProviderTest {
     }
 
     @Test
-    public void parseNotification_shouldFailParsingNotification() throws Exception {
+    public void parseNotification_shouldFailParsingNotification() {
 
         String notification = "{\"transaction_id\":\"1\",\"status\":\"BOOM\", \"reference\":\"abc\"}";
 
@@ -79,12 +78,14 @@ public class SandboxPaymentProviderTest {
 
         provider.parseNotification(notification);
     }
+    
 
+ 
+    
     @Test
     public void authorise_shouldBeAuthorisedWhenCardNumIsExpectedToSucceedForAuthorisation() {
-
         AuthCardDetails authCardDetails = new AuthCardDetails();
-        authCardDetails.setCardNo("4242424242424242");
+        authCardDetails.setCardNo(AUTH_SUCCESS_CARD_NUMBER);
         GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
@@ -104,7 +105,7 @@ public class SandboxPaymentProviderTest {
     public void authorise_shouldNotBeAuthorisedWhenCardNumIsExpectedToBeRejectedForAuthorisation() {
 
         AuthCardDetails authCardDetails = new AuthCardDetails();
-        authCardDetails.setCardNo("4000000000000069");
+        authCardDetails.setCardNo(AUTH_REJECTED_CARD_NUMBER);
         GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
@@ -124,7 +125,7 @@ public class SandboxPaymentProviderTest {
     public void authorise_shouldGetGatewayErrorWhenCardNumIsExpectedToFailForAuthorisation() {
 
         AuthCardDetails authCardDetails = new AuthCardDetails();
-        authCardDetails.setCardNo("4000000000000119");
+        authCardDetails.setCardNo(AUTH_ERROR_CARD_NUMBER);
         GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), authCardDetails));
 
         assertThat(gatewayResponse.isSuccessful(), is(false));

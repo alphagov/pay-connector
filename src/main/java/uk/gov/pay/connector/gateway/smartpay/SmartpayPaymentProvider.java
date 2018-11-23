@@ -5,6 +5,8 @@ import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.applepay.ApplePayAuthorisationHandler;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureHandler;
@@ -102,7 +104,12 @@ public class SmartpayPaymentProvider implements PaymentProvider<Pair<String, Boo
         Either<GatewayError, GatewayClient.Response> response = client.postRequestFor(null, request.getGatewayAccount(), buildCancelOrderFor(request));
         return GatewayResponseGenerator.getSmartpayGatewayResponse(client, response, SmartpayCancelResponse.class);
     }
-
+    
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest request) {
+        throw new UnsupportedOperationException("Apple Pay is not supported for Smartpay");
+    }
+    
     @Override
     public Boolean isNotificationEndpointSecured() {
         return false;

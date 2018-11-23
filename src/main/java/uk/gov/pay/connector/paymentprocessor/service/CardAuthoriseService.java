@@ -2,7 +2,6 @@ package uk.gov.pay.connector.paymentprocessor.service;
 
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
-import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
@@ -45,7 +44,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
         ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
         ensureCardBrandGateway3DSCompatibility(charge, authCardDetails.getCardBrand());
         getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
-        getPaymentProviderFor(charge).generateTransactionId().ifPresent(charge::setGatewayTransactionId);
+        providers.byName(charge.getPaymentGatewayName()).generateTransactionId().ifPresent(charge::setGatewayTransactionId);
         
         return charge;
     }
@@ -73,7 +72,7 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
 
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
-        return getPaymentProviderFor(chargeEntity)
+        return providers.byName(chargeEntity.getPaymentGatewayName())
                 .authorise(CardAuthorisationGatewayRequest.valueOf(chargeEntity, authCardDetails));
     }
 
@@ -108,18 +107,6 @@ public class CardAuthoriseService extends CardAuthoriseBaseService<AuthCardDetai
                 updatedCharge.getGatewayAccount().getType(),
                 updatedCharge.getGatewayAccount().getId(),
                 status.toString())).inc();
-    }
-
-    private Optional<String> extractTransactionId(String chargeExternalId, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
-        Optional<String> transactionId = operationResponse.getBaseResponse()
-                .map(BaseAuthoriseResponse::getTransactionId);
-
-        if (!transactionId.isPresent() || StringUtils.isBlank(transactionId.get())) {
-            logger.warn("AuthCardDetails authorisation response received with no transaction id. -  charge_external_id={}",
-                    chargeExternalId);
-        }
-        
-        return transactionId;
     }
 
     private Optional<Auth3dsDetailsEntity> extractAuth3dsDetails(GatewayResponse<BaseAuthoriseResponse> operationResponse) {
