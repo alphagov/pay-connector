@@ -143,7 +143,7 @@ public class EpdqPaymentProvider implements PaymentProvider<String> {
 
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest request) {
-        throw new UnsupportedOperationException("Apple Pay is not supported for EPDQ");
+        throw new UnsupportedOperationException("Apple Pay is not supported for ePDQ");
     }
     
     @Override

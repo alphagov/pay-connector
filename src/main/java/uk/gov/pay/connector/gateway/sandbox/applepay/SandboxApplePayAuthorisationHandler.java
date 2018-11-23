@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.gateway.sandbox.applepay;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.applepay.ApplePayAuthorisationHandler;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -15,11 +13,8 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
 public class SandboxApplePayAuthorisationHandler implements ApplePayAuthorisationHandler {
-    private final static Logger LOGGER = LoggerFactory.getLogger(SandboxApplePayAuthorisationHandler.class);
-
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(ApplePayAuthorisationGatewayRequest request) {
-        LOGGER.info("sandbox apple pay auth");
         String lastDigitsCardNumber = request.getAppleDecryptedPaymentData().getPaymentInfo().getLastDigitsCardNumber();        
         GatewayResponse.GatewayResponseBuilder<BaseAuthoriseResponse> gatewayResponseBuilder = responseBuilder();
 

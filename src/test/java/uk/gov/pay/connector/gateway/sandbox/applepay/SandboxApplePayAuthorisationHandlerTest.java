@@ -8,13 +8,14 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
-import uk.gov.pay.connector.util.AuthUtils;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
+import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
+import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
 
 public class SandboxApplePayAuthorisationHandlerTest {
 
@@ -31,8 +32,13 @@ public class SandboxApplePayAuthorisationHandlerTest {
 
     @Test
     public void authorise_shouldBeAuthorisedWhenLastDigitsCardNumbersAreExpectedToSucceedForAuthorisation_forApplePay() {
-        AppleDecryptedPaymentData applePaymentData = AuthUtils.ApplePay.buildDecryptedPaymentData("Mr. Payment", "mr@payment.test", AUTH_SUCCESS_APPLE_PAY_LAST_DIGITS_CARD_NUMBER);
-
+        AppleDecryptedPaymentData applePaymentData =
+                anApplePayDecryptedPaymentData()
+                        .withApplePaymentInfo(
+                                anApplePayPaymentInfo()
+                                        .withLastDigitsCardNumber(AUTH_SUCCESS_APPLE_PAY_LAST_DIGITS_CARD_NUMBER)
+                                        .build())
+                        .build();
         GatewayResponse gatewayResponse = sandboxApplePayAuthorisationHandler.authorise(new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePaymentData));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
@@ -50,7 +56,13 @@ public class SandboxApplePayAuthorisationHandlerTest {
 
     @Test
     public void authorise_shouldNotBeAuthorisedWhenLastDigitsCardNumbersAreExpectedToBeRejectedForAuthorisation_forApplePay() {
-        AppleDecryptedPaymentData applePaymentData = AuthUtils.ApplePay.buildDecryptedPaymentData("Mr. Payment", "mr@payment.test", AUTH_REJECTED_APPLE_PAY_LAST_DIGITS_CARD_NUMBER);
+        AppleDecryptedPaymentData applePaymentData =
+                anApplePayDecryptedPaymentData()
+                        .withApplePaymentInfo(
+                                anApplePayPaymentInfo()
+                                        .withLastDigitsCardNumber(AUTH_REJECTED_APPLE_PAY_LAST_DIGITS_CARD_NUMBER)
+                                        .build())
+                        .build();
         GatewayResponse gatewayResponse = sandboxApplePayAuthorisationHandler.authorise(new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePaymentData));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
@@ -68,7 +80,13 @@ public class SandboxApplePayAuthorisationHandlerTest {
 
     @Test
     public void authorise_shouldGetGatewayErrorWhenLastDigitsCardNumbersAreExpectedToFailForAuthorisation_forApplePay() {
-        AppleDecryptedPaymentData applePaymentData = AuthUtils.ApplePay.buildDecryptedPaymentData("Mr. Payment", "mr@payment.test", AUTH_ERROR_APPLE_PAY_LAST_DIGITS_CARD_NUMBER);
+        AppleDecryptedPaymentData applePaymentData =
+                anApplePayDecryptedPaymentData()
+                        .withApplePaymentInfo(
+                                anApplePayPaymentInfo()
+                                        .withLastDigitsCardNumber(AUTH_ERROR_APPLE_PAY_LAST_DIGITS_CARD_NUMBER)
+                                        .build())
+                        .build();
         GatewayResponse gatewayResponse = sandboxApplePayAuthorisationHandler.authorise(new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePaymentData));
 
         assertThat(gatewayResponse.isSuccessful(), is(false));
