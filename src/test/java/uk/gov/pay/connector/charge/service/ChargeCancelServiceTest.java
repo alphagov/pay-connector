@@ -27,10 +27,10 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
 import java.util.Optional;
 
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.argThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -88,12 +88,9 @@ public class ChargeCancelServiceTest {
                 .build();
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
-        when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
 
-        Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
+        chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
 
-        assertThat(response.isPresent(), is(true));
-        assertThat(response.get().isSuccessful(), is(true));
         assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
 
         verify(mockChargeEventDao).persistChargeEventOf(chargeEntity);
@@ -121,10 +118,8 @@ public class ChargeCancelServiceTest {
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
-        Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
+        chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
 
-        assertThat(response.isPresent(), is(true));
-        assertThat(response.get().isSuccessful(), is(true));
         assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId);
@@ -156,12 +151,9 @@ public class ChargeCancelServiceTest {
 
         when(mockChargeDao.findByExternalId(externalChargeId)).thenReturn(Optional.of(chargeEntity));
 
-        Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doUserCancel(externalChargeId);
+        chargeCancelService.doUserCancel(externalChargeId);
 
-        assertThat(response.isPresent(), is(true));
-        assertThat(response.get().isSuccessful(), is(true));
         assertThat(chargeEntity.getStatus(), is(USER_CANCELLED.getValue()));
-
         verify(mockChargeEventDao).persistChargeEventOf(chargeEntity);
     }
 
@@ -185,10 +177,8 @@ public class ChargeCancelServiceTest {
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
-        Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doUserCancel(externalChargeId);
+        chargeCancelService.doUserCancel(externalChargeId);
 
-        assertThat(response.isPresent(), is(true));
-        assertThat(response.get().isSuccessful(), is(true));
         assertThat(chargeEntity.getStatus(), is(USER_CANCELLED.getValue()));
 
         verify(mockChargeDao, times(3)).findByExternalId(externalChargeId);
@@ -229,10 +219,8 @@ public class ChargeCancelServiceTest {
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
-        Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
+        chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
 
-        assertThat(response.isPresent(), is(true));
-        assertThat(response.get().isSuccessful(), is(true));
         assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId);
@@ -264,10 +252,8 @@ public class ChargeCancelServiceTest {
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
-        Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
+        chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
 
-        assertThat(response.isPresent(), is(true));
-        assertThat(response.get().isSuccessful(), is(true));
         assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId);
@@ -299,10 +285,8 @@ public class ChargeCancelServiceTest {
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
 
-        Optional<GatewayResponse<BaseCancelResponse>> response = chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
+        chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
 
-        assertThat(response.isPresent(), is(true));
-        assertThat(response.get().isSuccessful(), is(true));
         assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
 
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId);

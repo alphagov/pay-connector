@@ -2,6 +2,7 @@ package uk.gov.pay.connector.charge.service;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Provider;
+import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -15,25 +16,18 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
-import static java.lang.String.format;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.charge.service.CancelServiceFunctions.changeStatusTo;
 import static uk.gov.pay.connector.charge.service.CancelServiceFunctions.doGatewayCancel;
 import static uk.gov.pay.connector.charge.service.CancelServiceFunctions.prepareForTerminate;
 import static uk.gov.pay.connector.charge.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.charge.service.StatusFlow.USER_CANCELLATION_FLOW;
-import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
-import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
 public class ChargeCancelService {
 
@@ -59,26 +53,33 @@ public class ChargeCancelService {
         this.transactionFlowProvider = transactionFlowProvider;
     }
 
-    public Optional<GatewayResponse<BaseCancelResponse>> doSystemCancel(String chargeId, Long accountId) {
-        return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(doCancel(chargeId, SYSTEM_CANCELLATION_FLOW))
-                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+    @Transactional
+    public void doSystemCancel(String chargeId, Long accountId) {
+        final Optional<ChargeEntity> maybeCharge = chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId);
+        if (maybeCharge.isPresent()) {
+            doCancel(maybeCharge.get(), SYSTEM_CANCELLATION_FLOW);
+        } else {
+            throw new ChargeNotFoundRuntimeException(chargeId);
+        }
     }
 
-    public Optional<GatewayResponse<BaseCancelResponse>> doUserCancel(String chargeId) {
-        return chargeDao.findByExternalId(chargeId)
-                .map(doCancel(chargeId, USER_CANCELLATION_FLOW))
-                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+    @Transactional
+    public void doUserCancel(String chargeId) {
+        final Optional<ChargeEntity> maybeCharge = chargeDao.findByExternalId(chargeId);
+        if (maybeCharge.isPresent()) {
+            doCancel(maybeCharge.get(), USER_CANCELLATION_FLOW);
+        } else {
+            throw new ChargeNotFoundRuntimeException(chargeId);
+        }
     }
 
-    private Function<ChargeEntity, Optional<GatewayResponse<BaseCancelResponse>>> doCancel(String chargeId, StatusFlow statusFlow) {
-        return chargeEntity -> {
-            if (gatewayIsNotAwareOfCharge(chargeEntity)) {
-                return Optional.of(nonGatewayCancel(chargeId, statusFlow));
-            } else {
-                return cancelChargeWithGatewayCleanup(chargeId, statusFlow);
-            }
-        };
+    private void doCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
+        if (gatewayIsNotAwareOfCharge(chargeEntity)) {
+            nonGatewayCancel(chargeEntity, statusFlow);
+        } else {
+            final Optional<GatewayResponse<BaseCancelResponse>> gatewayResponse = cancelChargeWithGatewayCleanup(chargeEntity.getExternalId(), statusFlow);
+            gatewayResponse.ifPresent(r -> r.getGatewayError().ifPresent(gatewayError -> logger.error(gatewayError.getMessage())));
+        }
     }
 
     private Optional<GatewayResponse<BaseCancelResponse>> cancelChargeWithGatewayCleanup(String chargeId, StatusFlow statusFlow) {
@@ -119,29 +120,13 @@ public class ChargeCancelService {
         }).orElse(statusFlow.getFailureTerminalState());
     }
 
-    private GatewayResponse<BaseCancelResponse> nonGatewayCancel(String chargeId, StatusFlow statusFlow) {
+    private void nonGatewayCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
         ChargeStatus completeStatus = statusFlow.getSuccessTerminalState();
-        ChargeEntity processedCharge = transactionFlowProvider.get()
-                .executeNext(changeStatusTo(chargeDao, chargeEventDao, chargeId, completeStatus))
-                .complete()
-                .get(ChargeEntity.class);
-        GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
 
-        if (completeStatus.getValue().equals(processedCharge.getStatus())) {
-            return gatewayResponseBuilder
-                    .withResponse(new WorldpayCancelResponse())
-                    .build();
-        } else {
-            String errorMsg = format("Could not update chargeId [%s] to status [%s]. Current state [%s]",
-                    processedCharge.getExternalId(),
-                    completeStatus,
-                    processedCharge.getStatus());
-            logger.error("Could not update charge - charge_external-id={}, status={}, to_status={}",
-                    processedCharge.getExternalId(), processedCharge.getStatus(), completeStatus);
-            return gatewayResponseBuilder
-                    .withGatewayError(genericGatewayError(errorMsg))
-                    .build();
-        }
+        logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
+                chargeEntity.getExternalId(), chargeEntity.getStatus(), completeStatus);
+        chargeEntity.setStatus(completeStatus);
+        chargeEventDao.persistChargeEventOf(chargeEntity);
     }
 
     private boolean gatewayIsNotAwareOfCharge(ChargeEntity chargeEntity) {
