@@ -12,7 +12,6 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTokenResponse;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsSourceResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeParamsFor3ds;
-import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.Response;
@@ -27,7 +26,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE_GENERAL;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripePaymentProviderTest extends BaseStripePaymentProviderTest {
@@ -87,10 +85,6 @@ public class StripePaymentProviderTest extends BaseStripePaymentProviderTest {
                 containsString("There was an internal server error"));
         assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
 
-    }
-
-    String generalErrorResponse() {
-        return TestTemplateResourceLoader.load(STRIPE_ERROR_RESPONSE_GENERAL);
     }
 
     private void mockProcessingException() {
