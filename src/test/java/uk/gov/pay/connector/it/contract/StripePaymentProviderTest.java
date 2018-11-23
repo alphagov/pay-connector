@@ -14,9 +14,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
@@ -58,13 +60,22 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void createChargeInStripe() {
+    public void createCharge() {
         GatewayResponse gatewayResponse = authorise();
         assertThat(gatewayResponse.isSuccessful()).isTrue();
     }
+    
+    @Test
+    public void cancelCharge() {
+        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
+        ChargeEntity chargeEntity = getCharge();
+        chargeEntity.setGatewayTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId());
+        GatewayResponse<BaseCancelResponse> cancelResponse = stripePaymentProvider.cancel(CancelGatewayRequest.valueOf(chargeEntity));
+        assertThat(cancelResponse.isSuccessful()).isTrue();
+    }
 
     @Test
-    public void captureStripeCharge() {
+    public void captureCharge() {
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
 
         CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(getChargeWithTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId()));
