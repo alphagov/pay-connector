@@ -13,7 +13,9 @@ public class SandboxCardNumbers {
 
     public static boolean isValidCard(String cardNumber) {
         return GOOD_CARDS.contains(cardNumber) ||
-                GOOD_CORPORATE_CARDS.contains(cardNumber) || GOOD_APPLE_PAY_LAST_DIGITS_CARD_NUMBER.equals(cardNumber);
+                GOOD_CORPORATE_CARDS.contains(cardNumber) ||
+                GOOD_APPLE_PAY_LAST_DIGITS_CARD_NUMBER.equals(cardNumber) ||
+                GOOD_CORPORATE_PREPAID_DEBIT_CARD.equals(cardNumber);
     }
 
     public static boolean isRejectedCard(String cardNumber) {
@@ -55,6 +57,7 @@ public class SandboxCardNumbers {
     private static final List<String> GOOD_CORPORATE_CARDS = ImmutableList.of(
             "4000180000000002",
             "5101180000000007");
+    private static final String GOOD_CORPORATE_PREPAID_DEBIT_CARD = "4131840000000003";
     private static final String DECLINED_APPLE_PAY_LAST_DIGITS_CARD_NUMBER = "0002";
     private static final String DECLINED_CARD_NUMBER = "4000000000000002";
     private static final String CVC_ERROR_APPLE_PAY_LAST_DIGITS_CARD_NUMBER = "0127";
