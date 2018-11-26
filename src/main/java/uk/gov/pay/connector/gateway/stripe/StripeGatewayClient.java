@@ -48,8 +48,7 @@ public class StripeGatewayClient {
             Invocation.Builder clientBuilder = client.target(url.toString()).request();
             headers.keySet().forEach(headerKey -> clientBuilder.header(headerKey, headers.get(headerKey)));
 
-            response = clientBuilder
-                    .post(Entity.entity(payload, mediaType));
+            response = clientBuilder.post(Entity.entity(payload, mediaType));
 
         } catch (Exception e) {
             metricRegistry.counter(metricsPrefix + ".failures").inc();
