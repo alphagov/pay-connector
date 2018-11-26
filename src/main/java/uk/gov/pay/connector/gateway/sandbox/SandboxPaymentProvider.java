@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gateway.sandbox;
 
 import fj.data.Either;
 import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
-import uk.gov.pay.connector.applepay.ApplePayAuthorisationHandler;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -129,7 +128,7 @@ public class SandboxPaymentProvider implements PaymentProvider<String> {
 
     @Override
     public StatusMapper<String> getStatusMapper() {
-        return SandboxStatusMapper.get();
+        return null;
     }
 
     @Override

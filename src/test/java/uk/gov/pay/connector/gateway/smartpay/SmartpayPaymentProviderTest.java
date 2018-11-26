@@ -31,7 +31,6 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -57,11 +56,6 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
     @Test
     public void shouldGetPaymentProviderName() {
         assertThat(provider.getPaymentGatewayName().getName(), is("smartpay"));
-    }
-
-    @Test
-    public void shouldGetStatusMapper() {
-        assertThat(provider.getStatusMapper(), sameInstance(SmartpayStatusMapper.get()));
     }
 
     @Test

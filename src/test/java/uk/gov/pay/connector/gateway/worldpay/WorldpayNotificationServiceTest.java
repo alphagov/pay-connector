@@ -15,13 +15,13 @@ import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
@@ -88,20 +88,38 @@ public class WorldpayNotificationServiceTest {
 
     @Test
     public void givenARefundNotification_refundNotificationProcessorInvokedWithNotificationAndCharge() {
-        final String payload = sampleWorldpayNotification(
-                transactionId,
-                referenceId,
+        final List<String> refundSuccessStatuses = Arrays.asList(
                 "REFUNDED",
-                "10",
-                "03",
-                "2017");
+                "REFUNDED_BY_MERCHANT"
+        );
+
+        for (String status : refundSuccessStatuses) {
+            final String payload = sampleWorldpayNotification(
+                    transactionId, referenceId, status,
+                    "10", "03", "2017");
+
+            final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
+            assertEquals(true, result);
+        }
+
+
+        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verify(mockRefundNotificationProcessor, times(2)).invoke(WORLDPAY, RefundStatus.REFUNDED, referenceId, transactionId);
+    }
+
+    @Test
+    public void givenARefundFailedNotification_refundNotificationProcessorInvokedWithNotificationAndCharge() {
+        final String payload = sampleWorldpayNotification(
+                transactionId, referenceId, "REFUND_FAILED",
+                "10", "03", "2017");
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
         assertEquals(true, result);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor).invoke(WORLDPAY, RefundStatus.REFUNDED, referenceId, transactionId);
+        verify(mockRefundNotificationProcessor).invoke(WORLDPAY, RefundStatus.REFUND_ERROR, referenceId, transactionId);
     }
+
 
     @Test
     public void ifChargeNotFound_shouldNotInvokeChargeNotificationProcessor() {
@@ -215,13 +233,5 @@ public class WorldpayNotificationServiceTest {
             String referenceId,
             String status) {
         return sampleWorldpayNotification(transactionId, referenceId, status, "2017", "10", "22");
-    }
-
-    private static String load(String location, Map<String, String> substitutions) {
-        String template = TestTemplateResourceLoader.load(location);
-        for (Map.Entry<String, String> entry : substitutions.entrySet()) {
-            template = template.replace("{{" + entry.getKey() + "}}", entry.getValue());
-        }
-        return template;
     }
 }

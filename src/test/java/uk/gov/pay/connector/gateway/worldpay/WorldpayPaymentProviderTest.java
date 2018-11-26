@@ -81,11 +81,6 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     }
 
     @Test
-    public void shouldGetStatusMapper() {
-        Assert.assertThat(provider.getStatusMapper(), sameInstance(WorldpayStatusMapper.get()));
-    }
-
-    @Test
     public void shouldGenerateTransactionId() {
         Assert.assertThat(provider.generateTransactionId().isPresent(), is(true));
         Assert.assertThat(provider.generateTransactionId().get(), is(instanceOf(String.class)));
