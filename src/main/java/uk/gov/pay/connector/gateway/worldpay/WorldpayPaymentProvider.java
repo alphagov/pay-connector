@@ -4,7 +4,6 @@ import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
-import uk.gov.pay.connector.applepay.ApplePayAuthorisationHandler;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -168,7 +167,7 @@ public class WorldpayPaymentProvider implements PaymentProvider<String> {
 
     @Override
     public StatusMapper<String> getStatusMapper() {
-        return WorldpayStatusMapper.get();
+        return null;
     }
 
     public static BiFunction<GatewayOrder, Builder, Builder> includeSessionIdentifier() {

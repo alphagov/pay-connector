@@ -53,11 +53,6 @@ public class SandboxPaymentProviderTest {
     }
 
     @Test
-    public void GetStatusMapper_shouldGetExpectedInstance() {
-        Assert.assertThat(provider.getStatusMapper(), sameInstance(SandboxStatusMapper.get()));
-    }
-
-    @Test
     public void shouldGenerateTransactionId() {
         Assert.assertThat(provider.generateTransactionId().isPresent(), is(true));
         Assert.assertThat(provider.generateTransactionId().get(), is(instanceOf(String.class)));

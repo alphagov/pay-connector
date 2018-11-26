@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
-import uk.gov.pay.connector.applepay.ApplePayAuthorisationHandler;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -226,7 +225,7 @@ public class EpdqPaymentProvider implements PaymentProvider<String> {
 
     @Override
     public StatusMapper<String> getStatusMapper() {
-        return EpdqStatusMapper.get();
+        return null;
     }
 
     /**
