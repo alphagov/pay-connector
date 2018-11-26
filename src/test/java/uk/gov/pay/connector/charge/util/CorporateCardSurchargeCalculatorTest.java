@@ -1,10 +1,12 @@
 package uk.gov.pay.connector.charge.util;
 
+import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.PayersPrepaidCardType;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
@@ -13,463 +15,239 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
-import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getTotalAmountFor;
 
 public class CorporateCardSurchargeCalculatorTest {
 
-    private static long CREDIT_CARD_SURCHARGE_AMOUNT = 250L;
-    private static long DEBIT_CARD_SURCHARGE_AMOUNT = 50L;
+    private static final long CREDIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT = 50L;
+    private static final long CREDIT_CARD_PREPAID_SURCHARGE_AMOUNT = 150L;
+    private static final long DEBIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT = 75L;
+    private static final long DEBIT_CARD_PREPAID_SURCHARGE_AMOUNT = 175L;
 
-    @Test
-    public void shouldNotGetSurchargeWhenNotEnabledOnGatewayAccount() {
-        AuthCardDetails corporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.TRUE)
+    private static ChargeEntity chargeEntity;
+
+    @Before
+    public void setUp() {
+        GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
+        gatewayAccountEntity.setCorporateCreditCardSurchargeAmount(CREDIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT);
+        gatewayAccountEntity.setCorporatePrepaidCreditCardSurchargeAmount(CREDIT_CARD_PREPAID_SURCHARGE_AMOUNT);
+        gatewayAccountEntity.setCorporateDebitCardSurchargeAmount(DEBIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT);
+        gatewayAccountEntity.setCorporatePrepaidDebitCardSurchargeAmount(DEBIT_CARD_PREPAID_SURCHARGE_AMOUNT);
+
+        chargeEntity = ChargeEntityFixture
+                .aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(0L);
-
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-        assertThat(getCorporateCardSurchargeFor(corporateCard, chargeEntity).isPresent(), is(false));
     }
 
-    @Test
-    public void shouldNotGetSurchargeWhenNotCorporateCard() {
-        AuthCardDetails nonCorporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.FALSE)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporateDebitCardSurchargeAmount(DEBIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporatePrepaidDebitCardSurchargeAmount(DEBIT_CARD_SURCHARGE_AMOUNT);
-
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-        assertThat(getCorporateCardSurchargeFor(nonCorporateCard, chargeEntity).isPresent(), is(false));
-    }
-
-    @Test
-    public void shouldNotGetSurchargeWhenCorporateCardWithUnknownPrepaid() {
-        AuthCardDetails nonCorporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.TRUE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.UNKNOWN)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporateDebitCardSurchargeAmount(DEBIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporatePrepaidDebitCardSurchargeAmount(DEBIT_CARD_SURCHARGE_AMOUNT);
-
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-        assertThat(getCorporateCardSurchargeFor(nonCorporateCard, chargeEntity).isPresent(), is(false));
-    }
-
-    @Test
-    public void shouldNotGetSurchargeWhenCorporateCardWithNullPrepaid() {
-        AuthCardDetails nonCorporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.TRUE)
-                .withPayersPrepaidCardType(null)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporateDebitCardSurchargeAmount(DEBIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporatePrepaidDebitCardSurchargeAmount(DEBIT_CARD_SURCHARGE_AMOUNT);
-
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-        assertThat(getCorporateCardSurchargeFor(nonCorporateCard, chargeEntity).isPresent(), is(false));
-    }
+    //region Corporate Prepaid
 
     @Test
     public void shouldGetCorporateSurchargeForPrepaidCorporateCreditCard() {
-        AuthCardDetails corporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.TRUE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.PREPAID)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-
-        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(corporateCard, chargeEntity);
-        assertThat(optionalSurcharge.isPresent(), is(true));
-        assertThat(optionalSurcharge.get(), is(CREDIT_CARD_SURCHARGE_AMOUNT));
-
-        chargeEntity.setCorporateSurcharge(optionalSurcharge.get());
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount() + CREDIT_CARD_SURCHARGE_AMOUNT));
+        shouldApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersPrepaidCardType.PREPAID, CREDIT_CARD_PREPAID_SURCHARGE_AMOUNT);
     }
 
     @Test
     public void shouldGetCorporateSurchargeForPrepaidCorporateDebitCard() {
-        AuthCardDetails corporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.DEBIT)
-                .withCorporateCard(Boolean.TRUE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.PREPAID)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporatePrepaidDebitCardSurchargeAmount(DEBIT_CARD_SURCHARGE_AMOUNT);
-
-        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(corporateCard, chargeEntity);
-        assertThat(optionalSurcharge.isPresent(), is(true));
-        assertThat(optionalSurcharge.get(), is(DEBIT_CARD_SURCHARGE_AMOUNT));
-
-        chargeEntity.setCorporateSurcharge(optionalSurcharge.get());
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount() + DEBIT_CARD_SURCHARGE_AMOUNT));
+        shouldApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersPrepaidCardType.PREPAID, DEBIT_CARD_PREPAID_SURCHARGE_AMOUNT);
     }
 
     @Test
-    public void shouldNotGetSurchargeWhenPrepaidCreditCorporateCardAndCreditCardSurchargeAmount() {
-        AuthCardDetails corporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.TRUE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.PREPAID)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
+    public void shouldNotGetCorporateSurchargeForPrepaidCorporateCreditCardWhenNoCorporatePrepaidCreditSurcharge() {
         chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(0L);
-
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-        assertThat(getCorporateCardSurchargeFor(corporateCard, chargeEntity).isPresent(), is(false));
+        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersPrepaidCardType.PREPAID);
     }
 
     @Test
-    public void shouldNotGetSurchargeWhenPrepaidDebitCorporateCardAndDebitCardSurchargeAmount() {
-        AuthCardDetails corporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.DEBIT)
-                .withCorporateCard(Boolean.TRUE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.PREPAID)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateDebitCardSurchargeAmount(DEBIT_CARD_SURCHARGE_AMOUNT);
+    public void shouldNotGetCorporateSurchargeForPrepaidCorporateDebitCardWhenNoCorporatePrepaidDebitSurcharge() {
         chargeEntity.getGatewayAccount().setCorporatePrepaidDebitCardSurchargeAmount(0L);
-
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-        assertThat(getCorporateCardSurchargeFor(corporateCard, chargeEntity).isPresent(), is(false));
+        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersPrepaidCardType.PREPAID);
     }
 
     @Test
-    public void shouldNotGetSurchargeWhenNotPrepaidCreditCorporateCardAndNoCreditCardSurchargeAmount() {
-        AuthCardDetails corporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.TRUE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.NOT_PREPAID)
-                .build();
+    public void shouldNotGetCorporateSurchargeForPrepaidCorporateCreditOrDebitCard() {
+        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.TRUE, PayersPrepaidCardType.PREPAID);
+    }
 
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+    //endregion
+
+    //region Corporate Not Prepaid
+
+    @Test
+    public void shouldGetCorporateSurchargeForNotPrepaidCorporateCreditCard() {
+        shouldApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersPrepaidCardType.NOT_PREPAID, CREDIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT);
+    }
+
+    @Test
+    public void shouldGetCorporateSurchargeForNotPrepaidCorporateDebitCard() {
+        shouldApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersPrepaidCardType.NOT_PREPAID, DEBIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT);
+    }
+
+    @Test
+    public void shouldNotGetCorporateSurchargeForNotPrepaidCorporateCreditCardWhenNoCorporateCreditSurcharge() {
         chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(0L);
-        chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-        assertThat(getCorporateCardSurchargeFor(corporateCard, chargeEntity).isPresent(), is(false));
+        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersPrepaidCardType.NOT_PREPAID);
     }
 
     @Test
-    public void shouldGetSurchargeWhenNotPrepaidCreditCorporateCardAndCreditCardSurchargeAmount() {
-        AuthCardDetails corporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.TRUE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.NOT_PREPAID)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(0L);
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-
-        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(corporateCard, chargeEntity);
-        assertThat(optionalSurcharge.isPresent(), is(true));
-        assertThat(optionalSurcharge.get(), is(CREDIT_CARD_SURCHARGE_AMOUNT));
-
-        chargeEntity.setCorporateSurcharge(optionalSurcharge.get());
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount() + CREDIT_CARD_SURCHARGE_AMOUNT));
-    }
-
-    @Test
-    public void shouldNotGetSurchargeWhenNotPrepaidDebitCorporateCardAndNoDebitCardSurchargeAmount() {
-        AuthCardDetails corporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.TRUE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.NOT_PREPAID)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+    public void shouldNotGetCorporateSurchargeForNotPrepaidCorporateDebitCardWhenNoCorporateDebitSurcharge() {
         chargeEntity.getGatewayAccount().setCorporateDebitCardSurchargeAmount(0L);
-        chargeEntity.getGatewayAccount().setCorporatePrepaidDebitCardSurchargeAmount(DEBIT_CARD_SURCHARGE_AMOUNT);
-
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-        assertThat(getCorporateCardSurchargeFor(corporateCard, chargeEntity).isPresent(), is(false));
+        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersPrepaidCardType.NOT_PREPAID);
     }
 
     @Test
-    public void shouldGetSurchargeWhenNotPrepaidDebitCorporateCardAndDebitCardSurchargeAmount() {
-        AuthCardDetails corporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.DEBIT)
-                .withCorporateCard(Boolean.TRUE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.NOT_PREPAID)
-                .build();
+    public void shouldNotGetCorporateSurchargeForNotPrepaidCorporateCreditOrDebitCard() {
+        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.TRUE, PayersPrepaidCardType.NOT_PREPAID);
+    }
 
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporatePrepaidDebitCardSurchargeAmount(0L);
-        chargeEntity.getGatewayAccount().setCorporateDebitCardSurchargeAmount(DEBIT_CARD_SURCHARGE_AMOUNT);
+    //endregion
 
-        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(corporateCard, chargeEntity);
-        assertThat(optionalSurcharge.isPresent(), is(true));
-        assertThat(optionalSurcharge.get(), is(DEBIT_CARD_SURCHARGE_AMOUNT));
+    //region Corporate Unknown Prepaid
 
-        chargeEntity.setCorporateSurcharge(optionalSurcharge.get());
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount() + DEBIT_CARD_SURCHARGE_AMOUNT));
+    @Test
+    public void shouldNotGetCorporateSurchargeForCorporateCreditCardWithUnknownPrepaid() {
+        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersPrepaidCardType.UNKNOWN);
     }
 
     @Test
-    public void shouldNotGetSurchargeWhenUnknownPrepaidCreditCorporateCardAndNoCreditCardSurchargeAmount() {
-        AuthCardDetails corporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.TRUE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.UNKNOWN)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(0L);
-        chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-        assertThat(getCorporateCardSurchargeFor(corporateCard, chargeEntity).isPresent(), is(false));
+    public void shouldNotGetCorporateSurchargeForCorporateDebitCardWithUnknownPrepaid() {
+        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersPrepaidCardType.UNKNOWN);
     }
 
     @Test
-    public void shouldNotGetSurchargeWhenUnknownPrepaidCreditCorporateCardAndCreditCardSurchargeAmount() {
-        AuthCardDetails corporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.TRUE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.UNKNOWN)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporateDebitCardSurchargeAmount(DEBIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporatePrepaidDebitCardSurchargeAmount(DEBIT_CARD_SURCHARGE_AMOUNT);
-
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-        assertThat(getCorporateCardSurchargeFor(corporateCard, chargeEntity).isPresent(), is(false));
+    public void shouldNotGetCorporateSurchargeForCorporateCreditOrDebitCardWithUnknownPrepaid() {
+        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.TRUE, PayersPrepaidCardType.UNKNOWN);
     }
 
     @Test
-    public void shouldGetCorporateSurchargeForCorporateNotPrepaidCreditCard() {
-        AuthCardDetails corporateCreditCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.TRUE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.NOT_PREPAID)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
-
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-        chargeEntity.setCorporateSurcharge(250L);
-        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(corporateCreditCard, chargeEntity);
-
-        assertThat(optionalSurcharge.isPresent(), is(true));
-        assertThat(optionalSurcharge.get(), is(250L));
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount() + 250L));
+    public void shouldNotGetCorporateSurchargeForCorporateCreditCardWithNullPrepaid() {
+        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, null);
     }
 
     @Test
-    public void shouldGetCorporateSurchargeForCorporateNotPrepaidDebitCard() {
-        AuthCardDetails corporateDebitCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.DEBIT)
-                .withCorporateCard(Boolean.TRUE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.NOT_PREPAID)
-                .build();
+    public void shouldNotGetCorporateSurchargeForCorporateDebitCardWithNullPrepaid() {
+        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, null);
+    }
 
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
+    //endregion
 
-        assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
+    //region Consumer Prepaid
 
-        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(corporateDebitCard, chargeEntity);
-
-        assertThat(optionalSurcharge.isPresent(), is(true));
-        assertThat(optionalSurcharge.get(), is(50L));
+    @Test
+    public void shouldNotGetCorporateSurchargeForPrepaidConsumerCreditCard() {
+        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.FALSE, PayersPrepaidCardType.PREPAID);
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForConsumerCreditCardCard() {
-        AuthCardDetails creditNoCorporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.FALSE)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
-
-        assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-
-        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(creditNoCorporateCard, chargeEntity);
-
-        assertThat(optionalSurcharge.isPresent(), is(false));
+    public void shouldNotGetCorporateSurchargeForPrepaidConsumerDebitCard() {
+        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.FALSE, PayersPrepaidCardType.PREPAID);
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForConsumerDebitCard() {
-        AuthCardDetails debitNoCorporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.DEBIT)
-                .withCorporateCard(Boolean.FALSE)
-                .build();
+    public void shouldNotGetCorporateSurchargeForPrepaidConsumerCreditOrDebitCard() {
+        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.FALSE, PayersPrepaidCardType.PREPAID);
+    }
 
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
+    //endregion
 
-        assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
+    //region Consumer Not Prepaid
 
-        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(debitNoCorporateCard, chargeEntity);
-
-        assertThat(optionalSurcharge.isPresent(), is(false));
+    @Test
+    public void shouldNotGetCorporateSurchargeForNotPrepaidConsumerCreditCard() {
+        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.FALSE, PayersPrepaidCardType.NOT_PREPAID);
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForCreditOrDebitCardType() {
-        AuthCardDetails creditOrDebit = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT_OR_DEBIT)
-                .withCorporateCard(Boolean.TRUE)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
-
-        assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-
-        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(creditOrDebit, chargeEntity);
-
-        assertThat(optionalSurcharge.isPresent(), is(false));
+    public void shouldNotGetCorporateSurchargeForNotPrepaidConsumerDebitCard() {
+        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.FALSE, PayersPrepaidCardType.NOT_PREPAID);
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForConsumerCreditOrDebitCardType() {
-        AuthCardDetails creditOrDebit = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT_OR_DEBIT)
-                .withCorporateCard(Boolean.FALSE)
-                .build();
+    public void shouldNotGetCorporateSurchargeForNotPrepaidConsumerCreditOrDebitCard() {
+        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.FALSE, PayersPrepaidCardType.NOT_PREPAID);
+    }
 
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
+    //endregion
 
-        assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
+    //region Consumer Unknown Prepaid
 
-        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(creditOrDebit, chargeEntity);
-
-        assertThat(optionalSurcharge.isPresent(), is(false));
+    @Test
+    public void shouldNotGetCorporateSurchargeForConsumerCreditCardWithUnknownPrepaid() {
+        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.FALSE, PayersPrepaidCardType.UNKNOWN);
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForConsumerCreditCardAndPrepaidCardType() {
-        AuthCardDetails nonCorporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.FALSE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.PREPAID)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-
-        assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-
-        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(nonCorporateCard, chargeEntity);
-        assertThat(optionalSurcharge.isPresent(), is(false));
+    public void shouldNotGetCorporateSurchargeForConsumerDebitCardWithUnknownPrepaid() {
+        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.FALSE, PayersPrepaidCardType.UNKNOWN);
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForConsumerCreditCardAndNotPrepaidCardType() {
-        AuthCardDetails nonCorporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.FALSE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.NOT_PREPAID)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-
-        assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-
-        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(nonCorporateCard, chargeEntity);
-        assertThat(optionalSurcharge.isPresent(), is(false));
+    public void shouldNotGetCorporateSurchargeForConsumerCreditOrDebitCardWithUnknownPrepaid() {
+        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.FALSE, PayersPrepaidCardType.UNKNOWN);
     }
 
     @Test
-    public void shouldNotGetCorporateSurchargeForConsumerCreditCardAndUnknownCardType() {
-        AuthCardDetails nonCorporateCard = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.FALSE)
-                .withPayersPrepaidCardType(PayersPrepaidCardType.UNKNOWN)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-        chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(CREDIT_CARD_SURCHARGE_AMOUNT);
-
-        assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-
-        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(nonCorporateCard, chargeEntity);
-        assertThat(optionalSurcharge.isPresent(), is(false));
+    public void shouldNotGetCorporateSurchargeForConsumerCreditCardWithNullPrepaid() {
+        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.FALSE, null);
     }
 
     @Test
-    public void shouldNotGetCorporateSurcharge_whenCorporateSurchargeIsNull() {
-        AuthCardDetails creditOrDebit = AuthCardDetailsFixture.anAuthCardDetails()
-                .withCardType(PayersCardType.CREDIT)
-                .withCorporateCard(Boolean.TRUE)
-                .build();
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-
-        assertThat(chargeEntity.getCorporateSurcharge().isPresent(), is(false));
-        assertThat(getTotalAmountFor(chargeEntity), is(chargeEntity.getAmount()));
-
-        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(creditOrDebit, chargeEntity);
-
-        assertThat(optionalSurcharge.isPresent(), is(false));
+    public void shouldNotGetCorporateSurchargeForConsumerDebitCardWithNullPrepaid() {
+        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.FALSE, null);
     }
+
+    //endregion
+
+    //region getAmount tests
 
     @Test
     public void shouldCalculateTotalAmountForCorporateSurchargeGreaterThanZero() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withCorporateSurcharge(250L).build();
-        final Long actualAmount = CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity);
-        final Long expectedAmount = chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().get();
+        Long actualAmount = CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity);
+        Long expectedAmount = chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().get();
+
         assertThat(actualAmount, is(expectedAmount));
     }
 
     @Test
     public void shouldCalculateTotalAmountForCorporateSurchargeIsNull() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        final Long actualAmount = CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity);
-        final Long expectedAmount = chargeEntity.getAmount();
+        Long actualAmount = CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity);
+        Long expectedAmount = chargeEntity.getAmount();
+
         assertThat(actualAmount, is(expectedAmount));
     }
 
     @Test
     public void shouldCalculateTotalAmountForCorporateSurchargeIsZero() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withCorporateSurcharge(0L).build();
-        final Long actualAmount = CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity);
-        final Long expectedAmount = chargeEntity.getAmount();
+        Long actualAmount = CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity);
+        Long expectedAmount = chargeEntity.getAmount();
+
         assertThat(actualAmount, is(expectedAmount));
+    }
+
+    //endregion
+
+    private void shouldApplySurcharge(PayersCardType payersCardType, Boolean corporateCard, PayersPrepaidCardType payersPrepaidCardType, long expectedSurchargeAmount) {
+        AuthCardDetails authCardDetails = getAuthCardDetails(payersCardType, corporateCard, payersPrepaidCardType);
+        Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(authCardDetails, chargeEntity);
+
+        assertThat(optionalSurcharge.isPresent(), is(true));
+        assertThat(optionalSurcharge.get(), is(expectedSurchargeAmount));
+    }
+
+    private void shouldNotApplySurcharge(PayersCardType payersCardType, Boolean corporateCard, PayersPrepaidCardType payersPrepaidCardType) {
+        AuthCardDetails authCardDetails = getAuthCardDetails(payersCardType, corporateCard, payersPrepaidCardType);
+
+        assertThat(getCorporateCardSurchargeFor(authCardDetails, chargeEntity).isPresent(), is(false));
+    }
+
+    private AuthCardDetails getAuthCardDetails(PayersCardType payersCardType, Boolean corporateCard, PayersPrepaidCardType payersPrepaidCardType) {
+        return AuthCardDetailsFixture
+                .anAuthCardDetails()
+                .withCardType(payersCardType)
+                .withCorporateCard(corporateCard)
+                .withPayersPrepaidCardType(payersPrepaidCardType)
+                .build();
     }
 }

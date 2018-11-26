@@ -40,27 +40,23 @@ public class CorporateCardSurchargeCalculator {
     }
 
     public static Optional<Long> getCorporateCardSurchargeFor(AuthCardDetails authCardDetails, ChargeEntity chargeEntity) {
-        if (!authCardDetails.isCorporateCard() ||
-                PayersPrepaidCardType.UNKNOWN.equals(authCardDetails.getPayersPrepaidCardType())) {
-            return Optional.empty();
-        }
+        if (authCardDetails.isCorporateCard()) {
+            if (isCreditSurcharge(authCardDetails, chargeEntity)) {
+                return Optional.of(chargeEntity.getGatewayAccount().getCorporateCreditCardSurchargeAmount());
+            }
 
-        if (isCreditSurcharge(authCardDetails, chargeEntity)) {
-            return Optional.of(chargeEntity.getGatewayAccount().getCorporateCreditCardSurchargeAmount());
-        }
+            if (isDebitSurcharge(authCardDetails, chargeEntity)) {
+                return Optional.of(chargeEntity.getGatewayAccount().getCorporateDebitCardSurchargeAmount());
+            }
 
-        if (isDebitSurcharge(authCardDetails, chargeEntity)) {
-            return Optional.of(chargeEntity.getGatewayAccount().getCorporateDebitCardSurchargeAmount());
-        }
+            if (isPrepaidCreditSurcharge(authCardDetails, chargeEntity)) {
+                return Optional.of(chargeEntity.getGatewayAccount().getCorporatePrepaidCreditCardSurchargeAmount());
+            }
 
-        if (isPrepaidCreditSurcharge(authCardDetails, chargeEntity)) {
-            return Optional.of(chargeEntity.getGatewayAccount().getCorporatePrepaidCreditCardSurchargeAmount());
+            if (isPrepaidDebitSurcharge(authCardDetails, chargeEntity)) {
+                return Optional.of(chargeEntity.getGatewayAccount().getCorporatePrepaidDebitCardSurchargeAmount());
+            }
         }
-
-        if (isPrepaidDebitSurcharge(authCardDetails, chargeEntity)) {
-            return Optional.of(chargeEntity.getGatewayAccount().getCorporatePrepaidDebitCardSurchargeAmount());
-        }
-
         return Optional.empty();
     }
 

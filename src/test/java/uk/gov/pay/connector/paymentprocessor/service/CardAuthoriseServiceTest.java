@@ -24,6 +24,7 @@ import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationRespons
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
+import uk.gov.pay.connector.gateway.model.PayersPrepaidCardType;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
@@ -214,6 +215,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCorporateCard(Boolean.TRUE)
                 .withCardType(PayersCardType.CREDIT)
+                .withPayersPrepaidCardType(PayersPrepaidCardType.NOT_PREPAID)
                 .build();
 
         charge.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
@@ -239,6 +241,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCorporateCard(Boolean.TRUE)
                 .withCardType(PayersCardType.DEBIT)
+                .withPayersPrepaidCardType(PayersPrepaidCardType.NOT_PREPAID)
                 .build();
 
         charge.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
