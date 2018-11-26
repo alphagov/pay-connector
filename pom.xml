@@ -10,7 +10,7 @@
         <eclipselink.version>2.7.3</eclipselink.version>
         <guice.version>4.1.0</guice.version>
         <docker-client.version>8.9.2</docker-client.version>
-        <jackson.version>2.9.6</jackson.version>
+        <jackson.version>2.9.7</jackson.version>
         <pay-java-commons.version>1.0.0-c1f7dc45bc457bd1209cde4513003f5bf4679c6a</pay-java-commons.version>
     </properties>
     <repositories>
@@ -545,10 +545,8 @@
                         </goals>
                         <configuration>
                             <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>uk.gov.pay.connector.app.ConnectorApp</mainClass>
                                 </transformer>
                             </transformers>
