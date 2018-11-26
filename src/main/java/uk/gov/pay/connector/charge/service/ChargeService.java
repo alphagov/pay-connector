@@ -269,9 +269,10 @@ public class ChargeService {
         charge.setWalletType(WalletType.APPLE_PAY);
         return charge;
     }
-    
+
     @Transactional
     public ChargeEntity updateChargePost3dsAuthorisation(String chargeExternalId, ChargeStatus status,
+                                                         OperationType operationType,
                                                          Optional<String> transactionId) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             charge.setStatus(status);

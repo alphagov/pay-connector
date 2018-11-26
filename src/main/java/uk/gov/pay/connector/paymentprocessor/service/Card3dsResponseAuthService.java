@@ -7,11 +7,15 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
+import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
+import javax.ws.rs.HEAD;
 import java.util.Optional;
+
+import static uk.gov.pay.connector.paymentprocessor.model.OperationType.AUTHORISATION_3DS;
 
 public class Card3dsResponseAuthService {
     private final ChargeService chargeService;
@@ -28,25 +32,37 @@ public class Card3dsResponseAuthService {
         this.cardAuthoriseBaseService = cardAuthoriseBaseService;
     }
 
-    public GatewayResponse<BaseAuthoriseResponse> process3DSecureAuthorisation(String chargeId, Auth3dsDetails auth3DsDetails) {
+    public Gateway3DSAuthorisationResponse process3DSecureAuthorisation(String chargeId, Auth3dsDetails auth3DsDetails) {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
-            final ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION_3DS);
-            GatewayResponse<BaseAuthoriseResponse> operationResponse = providers
+
+            final ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, AUTHORISATION_3DS);
+            Gateway3DSAuthorisationResponse gateway3DSAuthorisationResponse =  providers
                     .byName(charge.getPaymentGatewayName())
                     .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(charge, auth3DsDetails));
-            processGateway3DSecureResponse(charge.getExternalId(), ChargeStatus.fromString(charge.getStatus()), operationResponse);
+            processGateway3DSecureResponse(
+                    charge.getExternalId(),
+                    ChargeStatus.fromString(charge.getStatus()),
+                    gateway3DSAuthorisationResponse
+            );
 
-            return operationResponse;
+            return gateway3DSAuthorisationResponse;
         });
     }
-    
-    private void processGateway3DSecureResponse(String chargeExternalId, ChargeStatus oldChargeStatus, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
-            Optional<String> transactionId = operationResponse.getBaseResponse().map(BaseAuthoriseResponse::getTransactionId);
-            ChargeStatus status = cardAuthoriseBaseService.extractChargeStatus(operationResponse.getBaseResponse(), Optional.empty());
-            
-            ChargeEntity updatedCharge = chargeService.updateChargePost3dsAuthorisation(chargeExternalId, status, transactionId);
 
-            cardAuthoriseBaseService.logAuthorisation("3DS response authorisation", updatedCharge, oldChargeStatus, operationResponse);
-            cardAuthoriseBaseService.emitAuthorisationMetric(updatedCharge, "authorise-3ds");
+    private void processGateway3DSecureResponse(
+            String chargeExternalId,
+            ChargeStatus oldChargeStatus,
+            Gateway3DSAuthorisationResponse operationResponse
+    ) {
+        Optional<String> transactionId = operationResponse.getTransactionId();
+
+        ChargeEntity updatedCharge = chargeService.updateChargePost3dsAuthorisation(
+                chargeExternalId,
+                operationResponse.getMappedChargeStatus(),
+                AUTHORISATION_3DS,
+                transactionId
+        );
+        cardAuthoriseBaseService.logAuthorisation("3DS response authorisation", updatedCharge, oldChargeStatus);
+        cardAuthoriseBaseService.emitAuthorisationMetric(updatedCharge, "authorise-3ds");
     }
 }

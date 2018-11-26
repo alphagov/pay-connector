@@ -9,6 +9,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
+import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
@@ -71,8 +72,19 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsDetails auth3DsDetails) {
-        GatewayResponse<BaseAuthoriseResponse> response = card3dsResponseAuthService.process3DSecureAuthorisation(chargeId, auth3DsDetails);
-        return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
+        Gateway3DSAuthorisationResponse response = card3dsResponseAuthService.process3DSecureAuthorisation(chargeId, auth3DsDetails);
+        return response.isDeclined() ? badRequestResponse("This transaction was declined.") : handleGateway3DSAuthoriseResponse(response);
+    }
+
+    private Response handleGateway3DSAuthoriseResponse(Gateway3DSAuthorisationResponse response) {
+        if (response.isSuccessful()) {
+            return ResponseUtil.successResponseWithEntity(
+                    ImmutableMap.of(
+                            "status", response.getMappedChargeStatus().toString()
+                    ));
+        } else {
+            return serviceErrorResponse("Failed");
+        }
     }
 
     @POST

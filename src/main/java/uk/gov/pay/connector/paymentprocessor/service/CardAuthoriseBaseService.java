@@ -37,8 +37,8 @@ public class CardAuthoriseBaseService {
     }
 
  
-    public GatewayResponse<BaseAuthoriseResponse> executeAuthorise(String chargeId, Supplier<GatewayResponse<BaseAuthoriseResponse>> authorisationSupplier) {
-        Pair<ExecutionStatus, GatewayResponse<BaseAuthoriseResponse>> executeResult = cardExecutorService.execute(authorisationSupplier);
+    public <T> T executeAuthorise(String chargeId, Supplier<T> authorisationSupplier) {
+        Pair<ExecutionStatus, T> executeResult = (Pair<ExecutionStatus, T>) cardExecutorService.execute(authorisationSupplier);
 
         switch (executeResult.getLeft()) {
             case COMPLETED:
@@ -87,17 +87,15 @@ public class CardAuthoriseBaseService {
     public void logAuthorisation(
             String operationDescription,
             ChargeEntity updatedCharge,
-            ChargeStatus oldChargeStatus,
-            GatewayResponse<BaseAuthoriseResponse> operationResponse
+            ChargeStatus oldChargeStatus
     ) {
-        logger.info("{} for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
+        logger.info("{} for {} ({} {}) for {} ({}) .'. {} -> {}",
                 operationDescription,
                 updatedCharge.getExternalId(),
                 updatedCharge.getPaymentGatewayName().getName(),
                 updatedCharge.getGatewayTransactionId(),
                 updatedCharge.getGatewayAccount().getAnalyticsId(),
                 updatedCharge.getGatewayAccount().getId(),
-                operationResponse, 
                 oldChargeStatus,
                 updatedCharge.getStatus()
         );
