@@ -16,7 +16,11 @@ public class SandboxCardNumbers {
         return GOOD_CARDS.contains(cardNumber) ||
                 GOOD_CORPORATE_CARDS.contains(cardNumber) ||
                 GOOD_APPLE_PAY_LAST_DIGITS_CARD_NUMBER.equals(cardNumber) ||
-                GOOD_CORPORATE_PREPAID_DEBIT_CARD.equals(cardNumber);
+                GOOD_CORPORATE_PREPAID_DEBIT_CARD.contains(cardNumber) ||
+                GOOD_CORPORATE_PREPAID_UNKNOWN_CREDIT_CARD.equals(cardNumber) ||
+                GOOD_CARD_PREPAID_NON_CORPORATE.equals(cardNumber) ||
+                GOOD_CORPORATE_PREPAID_UNKNOWN_DEBIT_CARD.equals(cardNumber) ||
+                GOOD_NON_COPORATE_NON_PREPAID.equals(cardNumber);
     }
 
     public static boolean isRejectedCard(String cardNumber) {
@@ -37,16 +41,22 @@ public class SandboxCardNumbers {
             "4917610000000000003",
             "4000056655665556",
             "5105105105105100",
-            "5200828282828210",
             "371449635398431",
             "3566002020360505",
             "6011000990139424",
             "36148900647913");
+    private static final String GOOD_CARD_PREPAID_NON_CORPORATE = "4000160000000004";
     private static final String GOOD_APPLE_PAY_LAST_DIGITS_CARD_NUMBER = "4242";
     private static final List<String> GOOD_CORPORATE_CARDS = ImmutableList.of(
-            "4000180000000002",
-            "5101180000000007");
-    private static final String GOOD_CORPORATE_PREPAID_DEBIT_CARD = "4131840000000003";
+            "4988080000000000",
+            "4000620000000007",
+            "4293189100000008");
+    private static final List<String> GOOD_CORPORATE_PREPAID_DEBIT_CARD = ImmutableList.of(
+            "4131840000000003",
+            "4000180000000002");
+    private static final String GOOD_CORPORATE_PREPAID_UNKNOWN_CREDIT_CARD = "5101180000000007";
+    private static final String GOOD_CORPORATE_PREPAID_UNKNOWN_DEBIT_CARD = "5200828282828210";
+    private static final String GOOD_NON_COPORATE_NON_PREPAID = "4000020000000000";
     private static final String DECLINED_APPLE_PAY_LAST_DIGITS_CARD_NUMBER = "0002";
     private static final String DECLINED_CARD_NUMBER = "4000000000000002";
     private static final String CVC_ERROR_APPLE_PAY_LAST_DIGITS_CARD_NUMBER = "0127";
