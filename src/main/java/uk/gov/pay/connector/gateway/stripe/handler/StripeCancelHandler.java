@@ -25,6 +25,7 @@ import java.util.UUID;
 import static java.lang.String.format;
 import static java.nio.charset.Charset.defaultCharset;
 import static java.util.Collections.singletonList;
+import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
@@ -57,7 +58,10 @@ public class StripeCancelHandler {
                     APPLICATION_FORM_URLENCODED_TYPE,
                     format("gateway-operations.%s.%s.capture", gatewayAccount.getGatewayName(), gatewayAccount.getType()));
             
-            return responseBuilder.withResponse(new BaseResponse() {
+            return responseBuilder.withResponse(new BaseCancelResponse() {
+
+                private final String transactionId = randomUUID().toString();
+                
                 @Override
                 public String getErrorCode() {
                     return null;
@@ -66,6 +70,16 @@ public class StripeCancelHandler {
                 @Override
                 public String getErrorMessage() {
                     return null;
+                }
+
+                @Override
+                public String getTransactionId() {
+                    return transactionId;
+                }
+
+                @Override
+                public CancelStatus cancelStatus() {
+                    return CancelStatus.CANCELLED;
                 }
             }).build();
             
