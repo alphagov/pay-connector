@@ -4,7 +4,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.Transaction;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
-import uk.gov.pay.connector.gateway.model.PayersPrepaidCardType;
+import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 
 import java.util.Optional;
 
@@ -42,11 +42,11 @@ public class CorporateCardSurchargeCalculator {
     public static Optional<Long> getCorporateCardSurchargeFor(AuthCardDetails authCardDetails, ChargeEntity chargeEntity) {
         if (authCardDetails.isCorporateCard()) {
             if (isCreditSurcharge(authCardDetails, chargeEntity)) {
-                return Optional.of(chargeEntity.getGatewayAccount().getCorporateCreditCardSurchargeAmount());
+                return Optional.of(chargeEntity.getGatewayAccount().getCorporateNonPrepaidCreditCardSurchargeAmount());
             }
 
             if (isDebitSurcharge(authCardDetails, chargeEntity)) {
-                return Optional.of(chargeEntity.getGatewayAccount().getCorporateDebitCardSurchargeAmount());
+                return Optional.of(chargeEntity.getGatewayAccount().getCorporateNonPrepaidDebitCardSurchargeAmount());
             }
 
             if (isPrepaidCreditSurcharge(authCardDetails, chargeEntity)) {
@@ -62,25 +62,25 @@ public class CorporateCardSurchargeCalculator {
 
     private static boolean isCreditSurcharge(AuthCardDetails authCardDetails, ChargeEntity chargeEntity) {
         return PayersCardType.CREDIT.equals(authCardDetails.getPayersCardType()) &&
-                PayersPrepaidCardType.NOT_PREPAID.equals(authCardDetails.getPayersPrepaidCardType()) &&
-                chargeEntity.getGatewayAccount().getCorporateCreditCardSurchargeAmount() > 0;
+                PayersCardPrepaidStatus.NOT_PREPAID.equals(authCardDetails.getPayersCardPrepaidStatus()) &&
+                chargeEntity.getGatewayAccount().getCorporateNonPrepaidCreditCardSurchargeAmount() > 0;
     }
 
     private static boolean isDebitSurcharge(AuthCardDetails authCardDetails, ChargeEntity chargeEntity) {
         return PayersCardType.DEBIT.equals(authCardDetails.getPayersCardType()) &&
-                PayersPrepaidCardType.NOT_PREPAID.equals(authCardDetails.getPayersPrepaidCardType()) &&
-                chargeEntity.getGatewayAccount().getCorporateDebitCardSurchargeAmount() > 0;
+                PayersCardPrepaidStatus.NOT_PREPAID.equals(authCardDetails.getPayersCardPrepaidStatus()) &&
+                chargeEntity.getGatewayAccount().getCorporateNonPrepaidDebitCardSurchargeAmount() > 0;
     }
 
     private static boolean isPrepaidCreditSurcharge(AuthCardDetails authCardDetails, ChargeEntity chargeEntity) {
         return PayersCardType.CREDIT.equals(authCardDetails.getPayersCardType()) &&
-                PayersPrepaidCardType.PREPAID.equals(authCardDetails.getPayersPrepaidCardType()) &&
+                PayersCardPrepaidStatus.PREPAID.equals(authCardDetails.getPayersCardPrepaidStatus()) &&
                 chargeEntity.getGatewayAccount().getCorporatePrepaidCreditCardSurchargeAmount() > 0;
     }
 
     private static boolean isPrepaidDebitSurcharge(AuthCardDetails authCardDetails, ChargeEntity chargeEntity) {
         return PayersCardType.DEBIT.equals(authCardDetails.getPayersCardType()) &&
-                PayersPrepaidCardType.PREPAID.equals(authCardDetails.getPayersPrepaidCardType()) &&
+                PayersCardPrepaidStatus.PREPAID.equals(authCardDetails.getPayersCardPrepaidStatus()) &&
                 chargeEntity.getGatewayAccount().getCorporatePrepaidDebitCardSurchargeAmount() > 0;
     }
 

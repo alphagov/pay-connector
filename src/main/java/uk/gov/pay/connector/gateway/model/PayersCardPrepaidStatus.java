@@ -6,7 +6,7 @@ package uk.gov.pay.connector.gateway.model;
  * used to make a payment. This is also used to calculate corporate
  * surcharges, based on other rules.
  */
-public enum PayersPrepaidCardType {
+public enum PayersCardPrepaidStatus {
     PREPAID,
     NOT_PREPAID,
     UNKNOWN

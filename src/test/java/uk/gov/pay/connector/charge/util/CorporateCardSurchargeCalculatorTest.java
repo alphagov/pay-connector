@@ -5,7 +5,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
-import uk.gov.pay.connector.gateway.model.PayersPrepaidCardType;
+import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
@@ -43,29 +43,29 @@ public class CorporateCardSurchargeCalculatorTest {
 
     @Test
     public void shouldGetCorporateSurchargeForPrepaidCorporateCreditCard() {
-        shouldApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersPrepaidCardType.PREPAID, CREDIT_CARD_PREPAID_SURCHARGE_AMOUNT);
+        shouldApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersCardPrepaidStatus.PREPAID, CREDIT_CARD_PREPAID_SURCHARGE_AMOUNT);
     }
 
     @Test
     public void shouldGetCorporateSurchargeForPrepaidCorporateDebitCard() {
-        shouldApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersPrepaidCardType.PREPAID, DEBIT_CARD_PREPAID_SURCHARGE_AMOUNT);
+        shouldApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.PREPAID, DEBIT_CARD_PREPAID_SURCHARGE_AMOUNT);
     }
 
     @Test
     public void shouldNotGetCorporateSurchargeForPrepaidCorporateCreditCardWhenNoCorporatePrepaidCreditSurcharge() {
         chargeEntity.getGatewayAccount().setCorporatePrepaidCreditCardSurchargeAmount(0L);
-        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersPrepaidCardType.PREPAID);
+        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersCardPrepaidStatus.PREPAID);
     }
 
     @Test
     public void shouldNotGetCorporateSurchargeForPrepaidCorporateDebitCardWhenNoCorporatePrepaidDebitSurcharge() {
         chargeEntity.getGatewayAccount().setCorporatePrepaidDebitCardSurchargeAmount(0L);
-        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersPrepaidCardType.PREPAID);
+        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.PREPAID);
     }
 
     @Test
     public void shouldNotGetCorporateSurchargeForPrepaidCorporateCreditOrDebitCard() {
-        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.TRUE, PayersPrepaidCardType.PREPAID);
+        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.PREPAID);
     }
 
     //endregion
@@ -74,29 +74,29 @@ public class CorporateCardSurchargeCalculatorTest {
 
     @Test
     public void shouldGetCorporateSurchargeForNotPrepaidCorporateCreditCard() {
-        shouldApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersPrepaidCardType.NOT_PREPAID, CREDIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT);
+        shouldApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersCardPrepaidStatus.NOT_PREPAID, CREDIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT);
     }
 
     @Test
     public void shouldGetCorporateSurchargeForNotPrepaidCorporateDebitCard() {
-        shouldApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersPrepaidCardType.NOT_PREPAID, DEBIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT);
+        shouldApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.NOT_PREPAID, DEBIT_CARD_NON_PREPAID_SURCHARGE_AMOUNT);
     }
 
     @Test
     public void shouldNotGetCorporateSurchargeForNotPrepaidCorporateCreditCardWhenNoCorporateCreditSurcharge() {
         chargeEntity.getGatewayAccount().setCorporateCreditCardSurchargeAmount(0L);
-        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersPrepaidCardType.NOT_PREPAID);
+        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersCardPrepaidStatus.NOT_PREPAID);
     }
 
     @Test
     public void shouldNotGetCorporateSurchargeForNotPrepaidCorporateDebitCardWhenNoCorporateDebitSurcharge() {
         chargeEntity.getGatewayAccount().setCorporateDebitCardSurchargeAmount(0L);
-        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersPrepaidCardType.NOT_PREPAID);
+        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.NOT_PREPAID);
     }
 
     @Test
     public void shouldNotGetCorporateSurchargeForNotPrepaidCorporateCreditOrDebitCard() {
-        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.TRUE, PayersPrepaidCardType.NOT_PREPAID);
+        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.NOT_PREPAID);
     }
 
     //endregion
@@ -105,17 +105,17 @@ public class CorporateCardSurchargeCalculatorTest {
 
     @Test
     public void shouldNotGetCorporateSurchargeForCorporateCreditCardWithUnknownPrepaid() {
-        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersPrepaidCardType.UNKNOWN);
+        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.TRUE, PayersCardPrepaidStatus.UNKNOWN);
     }
 
     @Test
     public void shouldNotGetCorporateSurchargeForCorporateDebitCardWithUnknownPrepaid() {
-        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersPrepaidCardType.UNKNOWN);
+        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.UNKNOWN);
     }
 
     @Test
     public void shouldNotGetCorporateSurchargeForCorporateCreditOrDebitCardWithUnknownPrepaid() {
-        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.TRUE, PayersPrepaidCardType.UNKNOWN);
+        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.TRUE, PayersCardPrepaidStatus.UNKNOWN);
     }
 
     @Test
@@ -134,17 +134,17 @@ public class CorporateCardSurchargeCalculatorTest {
 
     @Test
     public void shouldNotGetCorporateSurchargeForPrepaidConsumerCreditCard() {
-        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.FALSE, PayersPrepaidCardType.PREPAID);
+        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.FALSE, PayersCardPrepaidStatus.PREPAID);
     }
 
     @Test
     public void shouldNotGetCorporateSurchargeForPrepaidConsumerDebitCard() {
-        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.FALSE, PayersPrepaidCardType.PREPAID);
+        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.FALSE, PayersCardPrepaidStatus.PREPAID);
     }
 
     @Test
     public void shouldNotGetCorporateSurchargeForPrepaidConsumerCreditOrDebitCard() {
-        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.FALSE, PayersPrepaidCardType.PREPAID);
+        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.FALSE, PayersCardPrepaidStatus.PREPAID);
     }
 
     //endregion
@@ -153,17 +153,17 @@ public class CorporateCardSurchargeCalculatorTest {
 
     @Test
     public void shouldNotGetCorporateSurchargeForNotPrepaidConsumerCreditCard() {
-        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.FALSE, PayersPrepaidCardType.NOT_PREPAID);
+        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.FALSE, PayersCardPrepaidStatus.NOT_PREPAID);
     }
 
     @Test
     public void shouldNotGetCorporateSurchargeForNotPrepaidConsumerDebitCard() {
-        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.FALSE, PayersPrepaidCardType.NOT_PREPAID);
+        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.FALSE, PayersCardPrepaidStatus.NOT_PREPAID);
     }
 
     @Test
     public void shouldNotGetCorporateSurchargeForNotPrepaidConsumerCreditOrDebitCard() {
-        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.FALSE, PayersPrepaidCardType.NOT_PREPAID);
+        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.FALSE, PayersCardPrepaidStatus.NOT_PREPAID);
     }
 
     //endregion
@@ -172,17 +172,17 @@ public class CorporateCardSurchargeCalculatorTest {
 
     @Test
     public void shouldNotGetCorporateSurchargeForConsumerCreditCardWithUnknownPrepaid() {
-        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.FALSE, PayersPrepaidCardType.UNKNOWN);
+        shouldNotApplySurcharge(PayersCardType.CREDIT, Boolean.FALSE, PayersCardPrepaidStatus.UNKNOWN);
     }
 
     @Test
     public void shouldNotGetCorporateSurchargeForConsumerDebitCardWithUnknownPrepaid() {
-        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.FALSE, PayersPrepaidCardType.UNKNOWN);
+        shouldNotApplySurcharge(PayersCardType.DEBIT, Boolean.FALSE, PayersCardPrepaidStatus.UNKNOWN);
     }
 
     @Test
     public void shouldNotGetCorporateSurchargeForConsumerCreditOrDebitCardWithUnknownPrepaid() {
-        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.FALSE, PayersPrepaidCardType.UNKNOWN);
+        shouldNotApplySurcharge(PayersCardType.CREDIT_OR_DEBIT, Boolean.FALSE, PayersCardPrepaidStatus.UNKNOWN);
     }
 
     @Test
@@ -228,26 +228,26 @@ public class CorporateCardSurchargeCalculatorTest {
 
     //endregion
 
-    private void shouldApplySurcharge(PayersCardType payersCardType, Boolean corporateCard, PayersPrepaidCardType payersPrepaidCardType, long expectedSurchargeAmount) {
-        AuthCardDetails authCardDetails = getAuthCardDetails(payersCardType, corporateCard, payersPrepaidCardType);
+    private void shouldApplySurcharge(PayersCardType payersCardType, Boolean corporateCard, PayersCardPrepaidStatus payersCardPrepaidStatus, long expectedSurchargeAmount) {
+        AuthCardDetails authCardDetails = getAuthCardDetails(payersCardType, corporateCard, payersCardPrepaidStatus);
         Optional<Long> optionalSurcharge = getCorporateCardSurchargeFor(authCardDetails, chargeEntity);
 
         assertThat(optionalSurcharge.isPresent(), is(true));
         assertThat(optionalSurcharge.get(), is(expectedSurchargeAmount));
     }
 
-    private void shouldNotApplySurcharge(PayersCardType payersCardType, Boolean corporateCard, PayersPrepaidCardType payersPrepaidCardType) {
-        AuthCardDetails authCardDetails = getAuthCardDetails(payersCardType, corporateCard, payersPrepaidCardType);
+    private void shouldNotApplySurcharge(PayersCardType payersCardType, Boolean corporateCard, PayersCardPrepaidStatus payersCardPrepaidStatus) {
+        AuthCardDetails authCardDetails = getAuthCardDetails(payersCardType, corporateCard, payersCardPrepaidStatus);
 
         assertThat(getCorporateCardSurchargeFor(authCardDetails, chargeEntity).isPresent(), is(false));
     }
 
-    private AuthCardDetails getAuthCardDetails(PayersCardType payersCardType, Boolean corporateCard, PayersPrepaidCardType payersPrepaidCardType) {
+    private AuthCardDetails getAuthCardDetails(PayersCardType payersCardType, Boolean corporateCard, PayersCardPrepaidStatus payersCardPrepaidStatus) {
         return AuthCardDetailsFixture
                 .anAuthCardDetails()
                 .withCardType(payersCardType)
                 .withCorporateCard(corporateCard)
-                .withPayersPrepaidCardType(payersPrepaidCardType)
+                .withPayersCardPrepaidStatus(payersCardPrepaidStatus)
                 .build();
     }
 }
