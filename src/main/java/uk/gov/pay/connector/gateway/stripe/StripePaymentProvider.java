@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe;
 
 import com.google.common.collect.ImmutableMap;
-import fj.data.Either;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
@@ -13,7 +12,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -35,8 +33,6 @@ import uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.usernotification.model.Notification;
-import uk.gov.pay.connector.usernotification.model.Notifications;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -60,7 +56,7 @@ import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayErro
 import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCodeFromGateway;
 
 @Singleton
-public class StripePaymentProvider implements PaymentProvider<String> {
+public class StripePaymentProvider implements PaymentProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(StripePaymentProvider.class);
 
@@ -83,11 +79,6 @@ public class StripePaymentProvider implements PaymentProvider<String> {
     @Override
     public PaymentGatewayName getPaymentGatewayName() {
         return STRIPE;
-    }
-
-    @Override
-    public StatusMapper getStatusMapper() {
-        return null;
     }
 
     @Override
@@ -147,9 +138,9 @@ public class StripePaymentProvider implements PaymentProvider<String> {
         }
     }
 
-    private GatewayResponse unexpectedGatewayResponse(String chargeExternalId, 
-                                                      GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder, 
-                                                      String errorMessage, 
+    private GatewayResponse unexpectedGatewayResponse(String chargeExternalId,
+                                                      GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder,
+                                                      String errorMessage,
                                                       int statusCode) {
         String errorId = UUID.randomUUID().toString();
         logger.error("Authorisation failed for charge {}. Reason: {}. Status code from Stripe: {}. ErrorId: {}",
@@ -235,26 +226,6 @@ public class StripePaymentProvider implements PaymentProvider<String> {
     @Override
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
         return null;
-    }
-
-    @Override
-    public Either<String, Notifications<String>> parseNotification(String payload) {
-        return null;
-    }
-
-    @Override
-    public Boolean isNotificationEndpointSecured() {
-        return null;
-    }
-
-    @Override
-    public String getNotificationDomain() {
-        return null;
-    }
-
-    @Override
-    public boolean verifyNotification(Notification<String> notification, GatewayAccountEntity gatewayAccountEntity) {
-        return false;
     }
 
     @Override

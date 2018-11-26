@@ -25,7 +25,7 @@ public class Card3dsResponseAuthService {
     private final PaymentProviders providers;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final MetricRegistry metricRegistry;
-    
+
     @Inject
     public Card3dsResponseAuthService(PaymentProviders providers,
                                       ChargeService chargeService,
@@ -60,30 +60,30 @@ public class Card3dsResponseAuthService {
 
     private void processGateway3DSecureResponse(
             String chargeExternalId,
-            ChargeStatus oldChargeStatus, 
+            ChargeStatus oldChargeStatus,
             GatewayResponse<BaseAuthoriseResponse> operationResponse) {
-        
-            Optional<String> transactionId = operationResponse.getBaseResponse().map(BaseAuthoriseResponse::getTransactionId);
-            ChargeStatus status = cardAuthoriseBaseService.extractChargeStatus(operationResponse.getBaseResponse(), Optional.empty());
-            ChargeEntity updatedCharge = chargeService.updateChargePost3dsAuthorisation(chargeExternalId, status, transactionId);
 
-            logger.info("3DS response authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
-                    updatedCharge.getExternalId(), 
-                    updatedCharge.getPaymentGatewayName().getName(), 
-                    updatedCharge.getGatewayTransactionId(),
-                    updatedCharge.getGatewayAccount().getAnalyticsId(), 
-                    updatedCharge.getGatewayAccount().getId(),
-                    operationResponse, oldChargeStatus, 
-                    status);
+        Optional<String> transactionId = operationResponse.getBaseResponse().map(BaseAuthoriseResponse::getTransactionId);
+        ChargeStatus status = cardAuthoriseBaseService.extractChargeStatus(operationResponse.getBaseResponse(), Optional.empty());
+        ChargeEntity updatedCharge = chargeService.updateChargePost3dsAuthorisation(chargeExternalId, status, transactionId);
 
-            metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise-3ds.result.%s",
-                    updatedCharge.getGatewayAccount().getGatewayName(),
-                    updatedCharge.getGatewayAccount().getType(),
-                    updatedCharge.getGatewayAccount().getId(),
-                    status.toString())).inc();
+        logger.info("3DS response authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
+                updatedCharge.getExternalId(),
+                updatedCharge.getPaymentGatewayName().getName(),
+                updatedCharge.getGatewayTransactionId(),
+                updatedCharge.getGatewayAccount().getAnalyticsId(),
+                updatedCharge.getGatewayAccount().getId(),
+                operationResponse, oldChargeStatus,
+                status);
+
+        metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.authorise-3ds.result.%s",
+                updatedCharge.getGatewayAccount().getGatewayName(),
+                updatedCharge.getGatewayAccount().getType(),
+                updatedCharge.getGatewayAccount().getId(),
+                status.toString())).inc();
     }
 
-    private PaymentProvider<BaseAuthoriseResponse> getPaymentProviderFor(ChargeEntity chargeEntity) {
+    private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName());
     }
 }

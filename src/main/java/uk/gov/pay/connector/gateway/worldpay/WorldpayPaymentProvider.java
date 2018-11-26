@@ -11,7 +11,6 @@ import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -26,20 +25,13 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
-import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.worldpay.applepay.WorldpayApplePayAuthorisationHandler;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.usernotification.model.Notification;
-import uk.gov.pay.connector.usernotification.model.Notifications;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Invocation.Builder;
-import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-import static fj.data.Either.left;
-import static fj.data.Either.right;
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CANCEL;
@@ -52,7 +44,7 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
-public class WorldpayPaymentProvider implements PaymentProvider<String> {
+public class WorldpayPaymentProvider implements PaymentProvider {
 
     public static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
 
@@ -60,8 +52,6 @@ public class WorldpayPaymentProvider implements PaymentProvider<String> {
     private final GatewayClient cancelClient;
     private final GatewayClient captureClient;
     private final GatewayClient refundClient;
-    private final boolean isNotificationEndpointSecured;
-    private final String notificationDomain;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
     private final WorldpayCaptureHandler worldpayCaptureHandler;
@@ -75,8 +65,6 @@ public class WorldpayPaymentProvider implements PaymentProvider<String> {
         cancelClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CANCEL, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
         captureClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CAPTURE, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
         refundClient = gatewayClientFactory.createGatewayClient(WORLDPAY, REFUND, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
-        isNotificationEndpointSecured = configuration.getWorldpayConfig().isSecureNotificationEnabled();
-        notificationDomain = configuration.getWorldpayConfig().getNotificationDomain();
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         worldpayCaptureHandler = new WorldpayCaptureHandler(captureClient);
         worldpayApplePayAuthorisationHandler = new WorldpayApplePayAuthorisationHandler(authoriseClient);
@@ -97,7 +85,7 @@ public class WorldpayPaymentProvider implements PaymentProvider<String> {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrder(request));
         return GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
     }
-    
+
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), build3dsResponseAuthOrder(request));
@@ -127,47 +115,8 @@ public class WorldpayPaymentProvider implements PaymentProvider<String> {
     }
 
     @Override
-    public Boolean isNotificationEndpointSecured() {
-        return this.isNotificationEndpointSecured;
-    }
-
-    @Override
-    public String getNotificationDomain() {
-        return this.notificationDomain;
-    }
-
-    @Override
-    public boolean verifyNotification(Notification<String> notification, GatewayAccountEntity gatewayAccountEntity) {
-        return true;
-    }
-
-    @Override
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
         return externalRefundAvailabilityCalculator.calculate(chargeEntity);
-    }
-
-    @Override
-    public Either<String, Notifications<String>> parseNotification(String payload) {
-        try {
-            Notifications.Builder<String> builder = Notifications.builder();
-            WorldpayNotification worldpayNotification = XMLUnmarshaller.unmarshall(payload, WorldpayNotification.class);
-            builder.addNotificationFor(
-                    worldpayNotification.getTransactionId(),
-                    worldpayNotification.getReference(),
-                    worldpayNotification.getStatus(),
-                    worldpayNotification.getBookingDate().atStartOfDay(ZoneOffset.UTC),
-                    null
-            );
-
-            return right(builder.build());
-        } catch (Exception e) {
-            return left(e.getMessage());
-        }
-    }
-
-    @Override
-    public StatusMapper<String> getStatusMapper() {
-        return null;
     }
 
     public static BiFunction<GatewayOrder, Builder, Builder> includeSessionIdentifier() {

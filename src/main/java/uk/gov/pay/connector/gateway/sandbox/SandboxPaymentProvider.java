@@ -1,12 +1,10 @@
 package uk.gov.pay.connector.gateway.sandbox;
 
-import fj.data.Either;
 import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -24,9 +22,6 @@ import uk.gov.pay.connector.gateway.sandbox.applepay.SandboxApplePayAuthorisatio
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.usernotification.model.Notification;
-import uk.gov.pay.connector.usernotification.model.Notifications;
 
 import java.util.Optional;
 
@@ -34,7 +29,7 @@ import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
-public class SandboxPaymentProvider implements PaymentProvider<String> {
+public class SandboxPaymentProvider implements PaymentProvider {
 
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
@@ -80,7 +75,7 @@ public class SandboxPaymentProvider implements PaymentProvider<String> {
     public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest request) {
         return sandboxApplePayAuthorisationHandler.authorise(request);
     }
-    
+
     @Override
     public GatewayResponse<BaseCaptureResponse> capture(CaptureGatewayRequest request) {
         return sandboxCaptureHandler.capture(request);
@@ -100,35 +95,10 @@ public class SandboxPaymentProvider implements PaymentProvider<String> {
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
         return createGatewayBaseCancelResponse();
     }
-    
-    @Override
-    public Boolean isNotificationEndpointSecured() {
-        return false;
-    }
-
-    @Override
-    public String getNotificationDomain() {
-        return null;
-    }
-
-    @Override
-    public boolean verifyNotification(Notification notification, GatewayAccountEntity gatewayAccountEntity) {
-        return true;
-    }
 
     @Override
     public GatewayResponse<BaseRefundResponse> refund(RefundGatewayRequest request) {
         return createGatewayBaseRefundResponse(request);
-    }
-
-    @Override
-    public Either<String, Notifications<String>> parseNotification(String payload) {
-        throw new UnsupportedOperationException("Sandbox account does not support notifications");
-    }
-
-    @Override
-    public StatusMapper<String> getStatusMapper() {
-        return null;
     }
 
     @Override
