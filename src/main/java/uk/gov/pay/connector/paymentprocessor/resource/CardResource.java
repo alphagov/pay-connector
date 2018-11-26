@@ -71,7 +71,7 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsDetails auth3DsDetails) {
-        GatewayResponse<BaseAuthoriseResponse> response = card3dsResponseAuthService.process3DSecure(chargeId, auth3DsDetails);
+        GatewayResponse<BaseAuthoriseResponse> response = card3dsResponseAuthService.process3DSecureAuthorisation(chargeId, auth3DsDetails);
         return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
     }
 
