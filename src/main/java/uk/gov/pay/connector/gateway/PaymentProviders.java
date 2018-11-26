@@ -30,7 +30,7 @@ public class PaymentProviders {
 
     }
 
-    public PaymentProvider<BaseResponse> byName(PaymentGatewayName gateway) {
+    public PaymentProvider byName(PaymentGatewayName gateway) {
         return paymentProviders.get(gateway);
     }
 }

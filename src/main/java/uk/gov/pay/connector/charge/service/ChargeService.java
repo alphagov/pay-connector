@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
+import uk.gov.pay.connector.applepay.WalletType;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -232,6 +233,7 @@ public class ChargeService {
         return builderOfResponse;
     }
 
+    @Transactional
     public ChargeEntity updateChargePostAuthorisation(String chargeExternalId,
                                                       ChargeStatus status,
                                                       Optional<String> transactionId,
@@ -240,11 +242,10 @@ public class ChargeService {
                                                       AuthCardDetails authCardDetails) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             charge.setStatus(status);
-
+            
             setTransactionId(charge, transactionId);
             sessionIdentifier.ifPresent(charge::setProviderSessionId);
             auth3dsDetails.ifPresent(charge::set3dsDetails);
-
             CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
             charge.setCardDetails(detailsEntity);
 
@@ -255,10 +256,21 @@ public class ChargeService {
 
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
-
-
     }
 
+    @Transactional
+    public ChargeEntity updateChargePostApplePayAuthorisation(String chargeExternalId,
+                                                      ChargeStatus status,
+                                                      Optional<String> transactionId,
+                                                      Optional<Auth3dsDetailsEntity> auth3dsDetails,
+                                                      Optional<String> sessionIdentifier,
+                                                      AuthCardDetails authCardDetails) {
+        ChargeEntity charge = updateChargePostAuthorisation(chargeExternalId, status, transactionId, auth3dsDetails, sessionIdentifier, authCardDetails);
+        charge.setWalletType(WalletType.APPLE_PAY);
+        return charge;
+    }
+    
+    @Transactional
     public ChargeEntity updateChargePost3dsAuthorisation(String chargeExternalId, ChargeStatus status,
                                                          Optional<String> transactionId) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
@@ -294,6 +306,7 @@ public class ChargeService {
         });
     }
 
+    @Transactional
     public ChargeEntity lockChargeForProcessing(String chargeId, OperationType operationType) {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
             try {
@@ -360,7 +373,7 @@ public class ChargeService {
         detailsEntity.setCardBrand(sanitize(authCardDetails.getCardBrand()));
         detailsEntity.setCardHolderName(sanitize(authCardDetails.getCardHolder()));
         detailsEntity.setExpiryDate(authCardDetails.getEndDate());
-        if (hasFullCardNumber(authCardDetails)) {
+        if (hasFullCardNumber(authCardDetails)) { // Apple Pay etc. don’t give us a full card number, just the last four digits here
             detailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(authCardDetails.getCardNo(), 6)));
         }
         detailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(authCardDetails.getCardNo(), 4)));

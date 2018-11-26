@@ -55,7 +55,7 @@ stripe:
   authToken: ${GDS_CONNECTOR_STRIPE_AUTH_TOKEN:-sk_test}
 
 executorServiceConfig:
-  timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
+  timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-2}
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
 
 captureProcessConfig:

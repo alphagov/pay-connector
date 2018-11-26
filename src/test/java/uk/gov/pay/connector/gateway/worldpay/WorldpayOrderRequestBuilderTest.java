@@ -9,7 +9,6 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.worldpay.applepay.ApplePayTemplateData;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
-import uk.gov.pay.connector.util.AuthUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
@@ -22,6 +21,8 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCaptureOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
+import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
+import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPECIAL_CHAR_VALID_CAPTURE_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
@@ -37,6 +38,12 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 
 public class WorldpayOrderRequestBuilderTest {
 
+    private AppleDecryptedPaymentData validData =
+            anApplePayDecryptedPaymentData()
+                    .withApplePaymentInfo(
+                            anApplePayPaymentInfo()
+                                    .withLastDigitsCardNumber("4242").build())
+                    .build();
     @Test
     public void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFields() throws Exception {
 
@@ -164,10 +171,8 @@ public class WorldpayOrderRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidAuthoriseApplePayOrderRequest() throws Exception {
-        AppleDecryptedPaymentData data = AuthUtils.ApplePay.buildDecryptedPaymentData("Mr. Payment", "mr@payment.test", "4242");
-        
         GatewayOrder actualRequest = aWorldpayAuthoriseApplePayOrderRequestBuilder()
-                .withApplePayTemplateData(ApplePayTemplateData.from(data))
+                .withApplePayTemplateData(ApplePayTemplateData.from(validData))
                 .withSessionId("uniqueSessionId")
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
@@ -180,13 +185,19 @@ public class WorldpayOrderRequestBuilderTest {
         assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE_APPLE_PAY, actualRequest.getOrderRequestType());
     }
-    
+
     @Test
     public void shouldGenerateValidAuthoriseApplePayOrderRequest_withMinData() throws Exception {
-        AppleDecryptedPaymentData data = AuthUtils.ApplePay.buildDecryptedMinimalPaymentData("4242");
-
+        AppleDecryptedPaymentData validData =
+                anApplePayDecryptedPaymentData()
+                        .withEciIndicator(null)
+                        .withApplePaymentInfo(
+                                anApplePayPaymentInfo()
+                                        .withCardholderName(null)
+                                        .withLastDigitsCardNumber("4242").build())
+                        .build();
         GatewayOrder actualRequest = aWorldpayAuthoriseApplePayOrderRequestBuilder()
-                .withApplePayTemplateData(ApplePayTemplateData.from(data))
+                .withApplePayTemplateData(ApplePayTemplateData.from(validData))
                 .withSessionId("uniqueSessionId")
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
@@ -199,7 +210,7 @@ public class WorldpayOrderRequestBuilderTest {
         assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_MIN_DATA), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE_APPLE_PAY, actualRequest.getOrderRequestType());
     }
-    
+
     @Test
     public void shouldGenerateValidCaptureOrderRequest() throws Exception {
 
