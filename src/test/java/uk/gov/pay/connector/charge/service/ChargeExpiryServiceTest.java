@@ -166,7 +166,7 @@ public class ChargeExpiryServiceTest {
 
         GatewayError mockGatewayError = mock(GatewayError.class);
         GatewayResponseBuilder<WorldpayBaseResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse<WorldpayBaseResponse> gatewayErrorResponse = gatewayResponseBuilder
+        GatewayResponse<BaseCancelResponse> gatewayErrorResponse = gatewayResponseBuilder
                 .withGatewayError(mockGatewayError)
                 .build();
 

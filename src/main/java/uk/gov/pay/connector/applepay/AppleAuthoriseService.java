@@ -2,11 +2,9 @@ package uk.gov.pay.connector.applepay;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;
-import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -17,7 +15,6 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
-import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
@@ -29,7 +26,7 @@ public class AppleAuthoriseService {
     private final PaymentProviders paymentProviders;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private MetricRegistry metricRegistry;
-    
+
     @Inject
     AppleAuthoriseService(PaymentProviders paymentProviders,
                           ChargeService chargeService,
@@ -104,7 +101,7 @@ public class AppleAuthoriseService {
         return getPaymentProviderFor(chargeEntity)
                 .authoriseApplePay(authorisationGatewayRequest);
     }
-    
+
     private AuthCardDetails authCardDetailsFor(AppleDecryptedPaymentData applePaymentData) {
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardHolder(applePaymentData.getPaymentInfo().getCardholderName());
@@ -116,7 +113,7 @@ public class AppleAuthoriseService {
         return authCardDetails;
     }
 
-    private PaymentProvider<BaseAuthoriseResponse> getPaymentProviderFor(ChargeEntity chargeEntity) {
+    private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
         return paymentProviders.byName(chargeEntity.getPaymentGatewayName());
     }
 

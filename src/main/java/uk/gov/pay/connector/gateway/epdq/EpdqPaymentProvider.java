@@ -3,7 +3,6 @@ package uk.gov.pay.connector.gateway.epdq;
 import com.codahale.metrics.MetricRegistry;
 import fj.data.Either;
 import io.dropwizard.setup.Environment;
-import org.apache.http.NameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -15,7 +14,6 @@ import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqRefundResponse;
@@ -34,27 +32,19 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.usernotification.model.Notification;
-import uk.gov.pay.connector.usernotification.model.Notifications;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Invocation;
 import java.nio.charset.Charset;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-import static fj.data.Either.left;
-import static fj.data.Either.right;
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CANCEL;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CAPTURE;
 import static uk.gov.pay.connector.gateway.GatewayOperation.REFUND;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
-import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.SHASIGN_KEY;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdq3DsAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
@@ -63,10 +53,9 @@ import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqRe
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 
-public class EpdqPaymentProvider implements PaymentProvider<String> {
+public class EpdqPaymentProvider implements PaymentProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EpdqPaymentProvider.class);
 
@@ -84,7 +73,6 @@ public class EpdqPaymentProvider implements PaymentProvider<String> {
      */
     static final Charset EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET = Charset.forName("windows-1252");
 
-    private final SignatureGenerator signatureGenerator;
     private final String frontendUrl;
     private final MetricRegistry metricRegistry;
     private final GatewayClient authoriseClient;
@@ -98,13 +86,11 @@ public class EpdqPaymentProvider implements PaymentProvider<String> {
     @Inject
     public EpdqPaymentProvider(ConnectorConfiguration configuration,
                                GatewayClientFactory gatewayClientFactory,
-                               Environment environment,
-                               SignatureGenerator signatureGenerator) {
+                               Environment environment) {
         authoriseClient = gatewayClientFactory.createGatewayClient(EPDQ, AUTHORISE, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
         cancelClient = gatewayClientFactory.createGatewayClient(EPDQ, CANCEL, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
         captureClient = gatewayClientFactory.createGatewayClient(EPDQ, CAPTURE, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
         refundClient = gatewayClientFactory.createGatewayClient(EPDQ, REFUND, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
-        this.signatureGenerator = signatureGenerator;
         this.frontendUrl = configuration.getLinks().getFrontendUrl();
         this.metricRegistry = environment.metrics();
         this.externalRefundAvailabilityCalculator = new EpdqExternalRefundAvailabilityCalculator();
@@ -144,7 +130,7 @@ public class EpdqPaymentProvider implements PaymentProvider<String> {
     public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest request) {
         throw new UnsupportedOperationException("Apple Pay is not supported for ePDQ");
     }
-    
+
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, request.getGatewayAccount(), buildQueryOrderRequestFor(request));
@@ -175,57 +161,8 @@ public class EpdqPaymentProvider implements PaymentProvider<String> {
     }
 
     @Override
-    public Boolean isNotificationEndpointSecured() {
-        return false;
-    }
-
-    @Override
-    public String getNotificationDomain() {
-        return null;
-    }
-
-    @Override
-    public boolean verifyNotification(Notification<String> notification, GatewayAccountEntity gatewayAccountEntity) {
-        if (!notification.getPayload().isPresent()) return false;
-
-        List<NameValuePair> notificationParams = notification.getPayload().get();
-
-        List<NameValuePair> notificationParamsWithoutShaSign = notificationParams.stream()
-                .filter(param -> !param.getName().equalsIgnoreCase(SHASIGN_KEY)).collect(toList());
-
-        String signature = signatureGenerator.sign(notificationParamsWithoutShaSign, gatewayAccountEntity.getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE));
-
-        return getShaSignFromNotificationParams(notificationParams).equalsIgnoreCase(signature);
-    }
-
-    @Override
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
         return externalRefundAvailabilityCalculator.calculate(chargeEntity);
-    }
-
-    @Override
-    public Either<String, Notifications<String>> parseNotification(String payload) {
-        try {
-            Notifications.Builder<String> builder = Notifications.builder();
-
-            EpdqNotification epdqNotification = new EpdqNotification(payload);
-
-            builder.addNotificationFor(
-                    epdqNotification.getTransactionId(),
-                    epdqNotification.getReference(),
-                    epdqNotification.getStatus(),
-                    null,
-                    epdqNotification.getParams()
-            );
-            return right(builder.build());
-        } catch (Exception e) {
-            return left(e.getMessage());
-        }
-    }
-
-    @Override
-    public StatusMapper<String> getStatusMapper() {
-        return null;
     }
 
     /**
@@ -310,13 +247,5 @@ public class EpdqPaymentProvider implements PaymentProvider<String> {
 
     public static BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> includeSessionIdentifier() {
         return (order, builder) -> builder;
-    }
-
-    private String getShaSignFromNotificationParams(List<NameValuePair> notificationParams) {
-        return notificationParams.stream()
-                .filter(param -> param.getName().equalsIgnoreCase(SHASIGN_KEY))
-                .findFirst()
-                .map(NameValuePair::getValue)
-                .orElse("");
     }
 }

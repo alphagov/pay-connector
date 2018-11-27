@@ -21,7 +21,6 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -73,7 +72,7 @@ public abstract class BaseEpdqPaymentProviderTest {
     static final String NOTIFICATION_PAY_ID_SUB = "2";
     static final String NOTIFICATION_SHA_SIGN = "9537B9639F108CDF004459D8A690C598D97506CDF072C3926A60E39759A6402C5089161F6D7A8EA12BBC0FD6F899CE72D5A0C4ACC2913C56ACF6D01B034protected";
 
-    protected GatewayClientFactory gatewayClientFactory;    
+    protected GatewayClientFactory gatewayClientFactory;
     protected EpdqPaymentProvider provider;
 
 
@@ -122,7 +121,7 @@ public abstract class BaseEpdqPaymentProviderTest {
         when(configuration.getLinks()).thenReturn(linksConfig);
         when(linksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
 
-        provider = new EpdqPaymentProvider(configuration, gatewayClientFactory, environment, mockSignatureGenerator);
+        provider = new EpdqPaymentProvider(configuration, gatewayClientFactory, environment);
     }
 
     private Invocation.Builder mockClientInvocationBuilder() {

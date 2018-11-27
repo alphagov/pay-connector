@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gateway.smartpay;
 
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.junit.Before;
@@ -56,7 +55,7 @@ public abstract class BaseSmartpayPaymentProviderTest {
         when(environment.metrics()).thenReturn(metricRegistry);
         when(metricRegistry.histogram(anyString())).thenReturn(mock(Histogram.class));
 
-        provider = new SmartpayPaymentProvider(configuration, gatewayClientFactory, environment, new ObjectMapper());
+        provider = new SmartpayPaymentProvider(configuration, gatewayClientFactory, environment);
     }
 
     protected GatewayAccountEntity aServiceAccount() {

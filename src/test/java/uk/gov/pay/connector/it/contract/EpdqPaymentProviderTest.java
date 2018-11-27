@@ -20,7 +20,6 @@ import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
-import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
@@ -93,9 +92,6 @@ public class EpdqPaymentProviderTest {
     @Mock
     private GatewayClientFactory mockGatewayClientFactory;
 
-    @Mock
-    private SignatureGenerator mockSignatureGenerator;
-
     @Before
     public void setUp() {
         when(mockConnectorConfiguration.getLinks()).thenReturn(mockLinksConfig);
@@ -115,7 +111,7 @@ public class EpdqPaymentProviderTest {
                 any(BiFunction.class),
                 any())).thenReturn(gatewayClient);
 
-        paymentProvider = new EpdqPaymentProvider(mockConnectorConfiguration, mockGatewayClientFactory, mockEnvironment, mockSignatureGenerator);
+        paymentProvider = new EpdqPaymentProvider(mockConnectorConfiguration, mockGatewayClientFactory, mockEnvironment);
     }
 
     @Test
@@ -192,7 +188,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldCaptureSuccessfully() {
         setUpAndCheckThatEpdqIsUp();
-        
+
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));
@@ -221,7 +217,7 @@ public class EpdqPaymentProviderTest {
     @Test
     public void shouldRefundSuccessfully() {
         setUpAndCheckThatEpdqIsUp();
-        
+
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertThat(response.isSuccessful(), is(true));

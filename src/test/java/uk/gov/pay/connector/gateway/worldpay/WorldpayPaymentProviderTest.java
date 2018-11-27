@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import fj.data.Either;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,24 +29,17 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
-import uk.gov.pay.connector.usernotification.model.Notification;
-import uk.gov.pay.connector.usernotification.model.Notifications;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import java.io.IOException;
-import java.time.ZonedDateTime;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 
 import static fj.data.Either.left;
-import static java.lang.String.format;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -61,7 +52,6 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCodeFromGateway;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS;
@@ -84,11 +74,6 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     public void shouldGenerateTransactionId() {
         Assert.assertThat(provider.generateTransactionId().isPresent(), is(true));
         Assert.assertThat(provider.generateTransactionId().get(), is(instanceOf(String.class)));
-    }
-
-    @Test
-    public void shouldAlwaysVerifyNotification() {
-        Assert.assertThat(provider.verifyNotification(null, mock(GatewayAccountEntity.class)), is(true));
     }
 
     @Test
@@ -270,57 +255,6 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         assertThat(response.getGatewayError().isPresent(), is(true));
         assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 401 from gateway",
                 UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
-    }
-
-    @Test
-    public void parseNotification_shouldReturnErrorIfUnparseableXml() {
-        Either<String, Notifications<String>> response = provider.parseNotification("not valid xml");
-        assertThat(response.isLeft(), is(true));
-        assertThat(response.left().value(), startsWith("javax.xml.bind.UnmarshalException"));
-    }
-
-    @Test
-    public void parseNotification_shouldReturnNotificationsIfValidXml() throws IOException {
-        String transactionId = "transaction-id";
-        String referenceId = "reference-id";
-        String status = "CHARGED";
-        String bookingDateDay = "10";
-        String bookingDateMonth = "03";
-        String bookingDateYear = "2017";
-        Either<String, Notifications<String>> response = provider.parseNotification(notificationPayloadForTransaction(transactionId, referenceId, status, bookingDateDay, bookingDateMonth, bookingDateYear));
-        assertThat(response.isRight(), is(true));
-
-        ImmutableList<Notification<String>> notifications = response.right().value().get();
-
-        assertThat(notifications.size(), is(1));
-
-        Notification<String> worldpayNotification = notifications.get(0);
-
-        assertThat(worldpayNotification.getTransactionId(), is(transactionId));
-        assertThat(worldpayNotification.getReference(), is(referenceId));
-        assertThat(worldpayNotification.getStatus(), is(status));
-        assertThat(worldpayNotification.getGatewayEventDate(), is(ZonedDateTime.parse(format("%s-%s-%sT00:00Z", bookingDateYear, bookingDateMonth, bookingDateDay))));
-    }
-
-    @Test
-    public void shouldTreatAllNotificationsAsVerified() {
-        assertThat(provider.verifyNotification(mock(Notification.class), mockGatewayAccountEntity), is(true));
-    }
-
-    private String notificationPayloadForTransaction(
-            String transactionId,
-            String referenceId,
-            String status,
-            String bookingDateDay,
-            String bookingDateMonth,
-            String bookingDateYear) {
-        return TestTemplateResourceLoader.load(WORLDPAY_NOTIFICATION)
-                .replace("{{transactionId}}", transactionId)
-                .replace("{{refund-ref}}", referenceId)
-                .replace("{{status}}", status)
-                .replace("{{bookingDateDay}}", bookingDateDay)
-                .replace("{{bookingDateMonth}}", bookingDateMonth)
-                .replace("{{bookingDateYear}}", bookingDateYear);
     }
 
     private CardAuthorisationGatewayRequest getCardAuthorisationRequest() {

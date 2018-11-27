@@ -9,7 +9,6 @@ import org.junit.Before;
 import org.mockito.Mock;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
-import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
@@ -80,7 +79,6 @@ public abstract class WorldpayBasePaymentProviderTest {
 
         when(configuration.getGatewayConfigFor(PaymentGatewayName.WORLDPAY)).thenReturn(gatewayConfig);
         when(gatewayConfig.getUrls()).thenReturn(urlMap);
-        when(configuration.getWorldpayConfig()).thenReturn(mock(WorldpayConfig.class));
         when(environment.metrics()).thenReturn(mockMetricRegistry);
 
         provider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);

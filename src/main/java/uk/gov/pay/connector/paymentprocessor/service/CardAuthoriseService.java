@@ -35,7 +35,7 @@ public class CardAuthoriseService {
     private final PaymentProviders providers;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private MetricRegistry metricRegistry;
-    
+
     @Inject
     public CardAuthoriseService(CardTypeDao cardTypeDao,
                                 PaymentProviders providers,
@@ -45,7 +45,7 @@ public class CardAuthoriseService {
         this.providers = providers;
         this.cardAuthoriseBaseService = cardAuthoriseBaseService;
         this.chargeService = chargeService;
-        this.metricRegistry = environment.metrics();        
+        this.metricRegistry = environment.metrics();
         this.cardTypeDao = cardTypeDao;
     }
 
@@ -69,7 +69,7 @@ public class CardAuthoriseService {
         getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
         getPaymentProviderFor(charge)
                 .generateTransactionId().ifPresent(charge::setGatewayTransactionId);
-        
+
         return charge;
     }
 
@@ -90,7 +90,7 @@ public class CardAuthoriseService {
         List<CardTypeEntity> cardTypes = cardTypeDao.findByBrand(cardBrand).stream()
                 .filter(cardTypeEntity -> cardTypeEntity.getBrand().equals(cardBrand))
                 .collect(Collectors.toList());
-        
+
         return cardTypes.stream().anyMatch(CardTypeEntity::isRequires3ds);
     }
 
@@ -109,19 +109,19 @@ public class CardAuthoriseService {
         ChargeStatus status = cardAuthoriseBaseService.extractChargeStatus(operationResponse.getBaseResponse(), operationResponse.getGatewayError());
 
         ChargeEntity updatedCharge = chargeService.updateChargePostAuthorisation(
-                chargeExternalId, 
-                status, 
+                chargeExternalId,
+                status,
                 transactionId,
-                extractAuth3dsDetails(operationResponse), 
+                extractAuth3dsDetails(operationResponse),
                 operationResponse.getSessionIdentifier(),
                 authCardDetails);
-        
+
         logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                 updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
                 transactionId.orElse("missing transaction ID"),
                 updatedCharge.getGatewayAccount().getAnalyticsId(), updatedCharge.getGatewayAccount().getId(),
                 operationResponse, oldChargeStatus, status);
-        
+
         metricRegistry.counter(String.format(
                 "gateway-operations.%s.%s.%s.authorise.result.%s",
                 updatedCharge.getGatewayAccount().getGatewayName(),
@@ -136,7 +136,7 @@ public class CardAuthoriseService {
                 .map(GatewayParamsFor3ds::toAuth3dsDetailsEntity);
     }
 
-    private PaymentProvider<BaseAuthoriseResponse> getPaymentProviderFor(ChargeEntity chargeEntity) {
+    private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName());
     }
 }

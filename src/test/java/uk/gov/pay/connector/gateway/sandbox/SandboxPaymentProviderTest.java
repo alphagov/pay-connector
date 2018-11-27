@@ -17,7 +17,6 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.Authori
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 
@@ -26,8 +25,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsSame.sameInstance;
-import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -38,7 +35,7 @@ public class SandboxPaymentProviderTest {
     private static final String AUTH_SUCCESS_CARD_NUMBER = "4242424242424242";
     private static final String AUTH_REJECTED_CARD_NUMBER = "4000000000000069";
     private static final String AUTH_ERROR_CARD_NUMBER = "4000000000000119";
-    
+
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
@@ -58,25 +55,6 @@ public class SandboxPaymentProviderTest {
         Assert.assertThat(provider.generateTransactionId().get(), is(instanceOf(String.class)));
     }
 
-    @Test
-    public void shouldAlwaysVerifyNotification() {
-        Assert.assertThat(provider.verifyNotification(null, mock(GatewayAccountEntity.class)), is(true));
-    }
-
-    @Test
-    public void parseNotification_shouldFailParsingNotification() {
-
-        String notification = "{\"transaction_id\":\"1\",\"status\":\"BOOM\", \"reference\":\"abc\"}";
-
-        expectedException.expect(UnsupportedOperationException.class);
-        expectedException.expectMessage(is("Sandbox account does not support notifications"));
-
-        provider.parseNotification(notification);
-    }
-    
-
- 
-    
     @Test
     public void authorise_shouldBeAuthorisedWhenCardNumIsExpectedToSucceedForAuthorisation() {
         AuthCardDetails authCardDetails = new AuthCardDetails();
