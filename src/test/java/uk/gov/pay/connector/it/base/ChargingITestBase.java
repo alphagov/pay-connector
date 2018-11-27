@@ -38,6 +38,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
@@ -147,6 +148,22 @@ public class ChargingITestBase {
                 .body("status", is(status));
     }
 
+    protected void assertFrontendChargeCorporateSurchargeAmount(String chargeId, String status, Long corporateSurcharge) {
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .body("status", is(status))
+                .body("corporate_card_surcharge", is(corporateSurcharge.intValue()));
+    }
+
+    protected void assertFrontendChargeStatusAndTransactionId(String chargeId, String status) {
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .body("status", is(status))
+                .body("gateway_transaction_id", is(notNullValue()));
+    }
+
     protected void assertRefundStatus(String chargeId, String refundId, String status, Integer amount) {
         connectorRestApiClient.withChargeId(chargeId)
                 .withRefundId(refundId)
@@ -187,6 +204,10 @@ public class ChargingITestBase {
     }
 
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
+        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId);
+    }
+
+    protected String createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
         databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, 6234L, status, "RETURN_URL", gatewayTransactionId);

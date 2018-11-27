@@ -2,10 +2,12 @@ package uk.gov.pay.connector.it.resources;
 
 import com.jayway.restassured.response.ValidatableResponse;
 import com.jayway.restassured.specification.RequestSpecification;
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -31,15 +33,17 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.it.JsonRequestHelper.buildCorporateJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildDetailedJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithFullAddress;
+import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class CardAuthoriseResourceITest extends ChargingITestBase {
+public class CardResourceAuthoriseITest extends ChargingITestBase {
 
-    public CardAuthoriseResourceITest() {
+    public CardResourceAuthoriseITest() {
         super("sandbox");
     }
 
@@ -234,6 +238,25 @@ public class CardAuthoriseResourceITest extends ChargingITestBase {
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
         return chargeId;
+    }
+
+    @Test
+    public void shouldPersistCorporateSurcharge() {
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        long corporateCreditCardSurchargeAmount = 2222L;
+        databaseTestHelper.addGatewayAccount(accountId, "sandbox", "description", "",
+                corporateCreditCardSurchargeAmount, 0, 0, 0);
+        
+        String chargeId = createNewChargeWithAccountId(ENTERING_CARD_DETAILS, randomId(), accountId);
+        String cardDetails = buildCorporateJsonAuthorisationDetailsFor(PayersCardType.CREDIT);
+
+        givenSetup()
+                .body(cardDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .statusCode(200);
+
+        assertFrontendChargeCorporateSurchargeAmount(chargeId, AUTHORISATION_SUCCESS.getValue(), corporateCreditCardSurchargeAmount);
     }
 
     @Test

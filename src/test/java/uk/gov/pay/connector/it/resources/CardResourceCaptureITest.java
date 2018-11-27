@@ -24,9 +24,9 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class CardCaptureResourceITest extends ChargingITestBase {
+public class CardResourceCaptureITest extends ChargingITestBase {
 
-    public CardCaptureResourceITest() {
+    public CardResourceCaptureITest() {
         super("sandbox");
     }
 
