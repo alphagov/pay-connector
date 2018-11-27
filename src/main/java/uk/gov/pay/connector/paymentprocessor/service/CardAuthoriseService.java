@@ -10,6 +10,7 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -25,7 +26,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 
 public class CardAuthoriseService {
 
@@ -35,18 +35,21 @@ public class CardAuthoriseService {
     private final PaymentProviders providers;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private MetricRegistry metricRegistry;
+    private CorporateCardSurchargeCalculator corporateCardSurchargeCalculator;
 
     @Inject
     public CardAuthoriseService(CardTypeDao cardTypeDao,
                                 PaymentProviders providers,
                                 CardAuthoriseBaseService cardAuthoriseBaseService,
                                 ChargeService chargeService,
-                                Environment environment) {
+                                Environment environment,
+                                CorporateCardSurchargeCalculator corporateCardSurchargeCalculator) {
         this.providers = providers;
         this.cardAuthoriseBaseService = cardAuthoriseBaseService;
         this.chargeService = chargeService;
         this.metricRegistry = environment.metrics();
         this.cardTypeDao = cardTypeDao;
+        this.corporateCardSurchargeCalculator = corporateCardSurchargeCalculator;
     }
 
     public GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
@@ -66,7 +69,7 @@ public class CardAuthoriseService {
     private ChargeEntity prepareChargeForAuthorisation(String chargeId, AuthCardDetails authCardDetails) {
         ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
         ensureCardBrandGateway3DSCompatibility(charge, authCardDetails.getCardBrand());
-        getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
+        corporateCardSurchargeCalculator.getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(charge::setCorporateSurcharge);
         getPaymentProviderFor(charge)
                 .generateTransactionId().ifPresent(charge::setGatewayTransactionId);
 

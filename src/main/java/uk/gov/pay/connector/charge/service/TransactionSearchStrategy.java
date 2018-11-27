@@ -29,10 +29,12 @@ import static uk.gov.pay.connector.charge.model.TransactionResponse.aTransaction
 public class TransactionSearchStrategy extends AbstractSearchStrategy<Transaction, ChargeResponse> implements SearchStrategy {
 
     private TransactionDao transactionDao;
+    private CorporateCardSurchargeCalculator corporateCardSurchargeCalculator;
 
     @Inject
-    public TransactionSearchStrategy(TransactionDao transactionDao) {
+    public TransactionSearchStrategy(TransactionDao transactionDao, CorporateCardSurchargeCalculator corporateCardSurchargeCalculator) {
         this.transactionDao = transactionDao;
+        this.corporateCardSurchargeCalculator = corporateCardSurchargeCalculator;
     }
 
     @Override
@@ -99,7 +101,7 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
             if (surcharge > 0) {
                 transactionResponseBuilder
                         .withCorporateCardSurcharge(surcharge)
-                        .withTotalAmount(CorporateCardSurchargeCalculator.getTotalAmountFor(transaction));
+                        .withTotalAmount(corporateCardSurchargeCalculator.getTotalAmountFor(transaction));
             }
         });
 
