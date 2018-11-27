@@ -8,6 +8,9 @@ import org.junit.Test;
 import uk.gov.pay.connector.common.exception.ValidationException;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.core.Is.is;
@@ -154,6 +157,98 @@ public class GatewayAccountRequestValidatorTest {
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(1));
             assertThat(validationException.getErrors(), hasItems("Value [unfalse] is not valid for [allow_web_payments]"));
+        }
+    }
+    
+    @Test
+    public void shouldThrow_whenCorporateCreditSurchargeAmountIsInvalid() {
+        JsonNode jsonNode = new ObjectMapper()
+                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
+                        FIELD_OPERATION_PATH, "corporate_credit_card_surcharge_amount",
+                        FIELD_VALUE, -100));
+        try {
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException validationException) {
+            assertThat(validationException.getErrors().size(), is(1));
+            assertThat(validationException.getErrors(), hasItems("Value [-100] is not valid for path [corporate_credit_card_surcharge_amount]"));
+        }
+    }
+
+    @Test
+    public void shouldThrow_whenIncorrectOperationForCorporateDebitSurchargeAmount() {
+        JsonNode jsonNode = new ObjectMapper()
+                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "remove",
+                        FIELD_OPERATION_PATH, "corporate_debit_card_surcharge_amount",
+                        FIELD_VALUE, 250));
+        try {
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException validationException) {
+            assertThat(validationException.getErrors().size(), is(1));
+            assertThat(validationException.getErrors(), hasItems(
+                    "Operation [remove] is not valid for path [corporate_debit_card_surcharge_amount]"));
+        }
+    }
+    
+    @Test
+    public void shouldThrow_whenInvalidValueForCorporatePrepaidCreditSurchargeAmount() {
+        JsonNode jsonNode = new ObjectMapper()
+                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
+                        FIELD_OPERATION_PATH, "corporate_prepaid_credit_card_surcharge_amount",
+                        FIELD_VALUE, "not zero or a positive number that can be represented as a long"));
+        try {
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException validationException) {
+            assertThat(validationException.getErrors().size(), is(1));
+            assertThat(validationException.getErrors(), hasItems(
+                    "Value [not zero or a positive number that can be represented as a long] is not valid for path [corporate_prepaid_credit_card_surcharge_amount]"));
+        }
+    }
+    
+    @Test
+    public void shouldThrow_whenMissingValueForCorporatePrepaidDebitSurchargeAmount() {
+        JsonNode jsonNode = new ObjectMapper()
+                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
+                        FIELD_OPERATION_PATH, "corporate_prepaid_debit_card_surcharge_amount"));
+        try {
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException validationException) {
+            assertThat(validationException.getErrors().size(), is(1));
+            assertThat(validationException.getErrors(), hasItems("Field [value] is required"));
+        }
+    }
+    
+    @Test
+    public void shouldThrow_whenNullValueForCorporatePrepaidDebitSurchargeAmount() {
+        Map<String, Object> valueMap = new HashMap<>();
+        valueMap.put("op", "replace");
+        valueMap.put("path", "corporate_prepaid_debit_card_surcharge_amount");
+        valueMap.put("value", null);
+        JsonNode jsonNode = new ObjectMapper().valueToTree(valueMap);
+        try {
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException validationException) {
+            assertThat(validationException.getErrors().size(), is(1));
+            assertThat(validationException.getErrors(), hasItems("Field [value] is required"));
+        }
+    }
+
+    @Test
+    public void shouldThrow_whenEmptyValueForCorporatePrepaidDebitSurchargeAmount() {
+        JsonNode jsonNode = new ObjectMapper()
+                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
+                        FIELD_OPERATION_PATH, "corporate_prepaid_debit_card_surcharge_amount",
+                        FIELD_VALUE, ""));
+        try {
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException validationException) {
+            assertThat(validationException.getErrors().size(), is(1));
+            assertThat(validationException.getErrors(), hasItems("Value [] is not valid for path [corporate_prepaid_debit_card_surcharge_amount]"));
         }
     }
 }
