@@ -11,10 +11,12 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
@@ -67,7 +69,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldAuthoriseChargeWithoutBillingAddress()  {
+    public void shouldAuthoriseChargeWithoutBillingAddress() {
 
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         worldpayMockClient.mockAuthorisationSuccess();
@@ -108,6 +110,20 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
         String expectedErrorMessage = "This transaction was declined.";
         String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
         shouldReturnErrorForAuthorisationDetailsWithMessage(cardDetailsRejectedByWorldpay, expectedErrorMessage, expectedChargeStatus);
+    }
+
+    @Test
+    public void shouldPersistTransactionIdWhenAuthorisationException() {
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        worldpayMockClient.mockAuthorisationGatewayError();
+
+        givenSetup()
+                .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
+
+        assertFrontendChargeStatusAndTransactionId(chargeId, AUTHORISATION_UNEXPECTED_ERROR.toString());
     }
 
     @Test
