@@ -27,7 +27,7 @@ public class StripeGatewayClient {
 
     private final Logger logger = LoggerFactory.getLogger(StripeGatewayClient.class);
 
-    private final Client client;
+    private Client client;
     private final MetricRegistry metricRegistry;
 
     public StripeGatewayClient(Client client, MetricRegistry metricRegistry) {
@@ -45,6 +45,7 @@ public class StripeGatewayClient {
         Response response;
         try {
 
+//            client = TestClientFactory.createJerseyClient();
             Invocation.Builder clientBuilder = client.target(url.toString()).request();
             headers.keySet().forEach(headerKey -> clientBuilder.header(headerKey, headers.get(headerKey)));
 

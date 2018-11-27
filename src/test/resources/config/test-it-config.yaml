@@ -8,7 +8,7 @@ server:
   registerDefaultExceptionMappers: false
 
 logging:
-    level: WARN
+    level: TRACE
     appenders:
       - type: console
         threshold: ALL
@@ -77,7 +77,7 @@ jerseyClient:
   maxConnections: 1024
   maxConnectionsPerRoute: 1024
   keepAlive: 0ms
-  retries: 0
+  retries: 2
   userAgent: connector
   gzipEnabledForRequests: false
   proxy:

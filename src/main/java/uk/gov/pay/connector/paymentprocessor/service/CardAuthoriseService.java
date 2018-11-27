@@ -50,7 +50,7 @@ public class CardAuthoriseService {
     }
 
     public GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
-        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
+//        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
             GatewayResponse<BaseAuthoriseResponse> operationResponse = authorise(charge, authCardDetails);
             processGatewayAuthorisationResponse(
@@ -60,7 +60,7 @@ public class CardAuthoriseService {
                     operationResponse);
 
             return operationResponse;
-        });
+//        });
     }
 
     private ChargeEntity prepareChargeForAuthorisation(String chargeId, AuthCardDetails authCardDetails) {

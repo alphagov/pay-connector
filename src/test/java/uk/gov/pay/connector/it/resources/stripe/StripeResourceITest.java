@@ -1,23 +1,21 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
+import org.apache.http.client.fluent.Executor;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.pay.connector.util.PortFactory;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.io.UnsupportedEncodingException;
@@ -34,8 +32,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
+import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.joining;
@@ -47,50 +47,64 @@ import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
 import static org.eclipse.jetty.http.HttpStatus.OK_200;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
-import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class StripeResourceAuthorizeITest {
+//@RunWith(DropwizardJUnitRunner.class)
+//@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+public class StripeResourceITest {
     private static final String CVC = "123";
     private static final String EXP_MONTH = "11";
     private static final String EXP_YEAR = "99";
-    private static final String CARD_NUMBER = "4444333322221111";
     private static final String AMOUNT = "6234";
     private static final String DESCRIPTION = "Test description";
-
-    private RestAssuredClient connectorRestApiClient;
+    private static final String CARD_NUMBER = "4444333322221111";
 
     private String stripeAccountId;
-    private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", CVC, EXP_MONTH + "/" + EXP_YEAR, "visa");
-    private String paymentProvider = PaymentGatewayName.STRIPE.getName();
     private String accountId;
     private StripeMockClient stripeMockClient = new StripeMockClient();
+    private String paymentProvider = PaymentGatewayName.STRIPE.getName();
+    private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", CVC, EXP_MONTH + "/" + EXP_YEAR, "visa");
+
     private DatabaseTestHelper databaseTestHelper;
+    private RestAssuredClient connectorRestApiClient;
 
-    @DropwizardTestContext
-    private TestContext testContext;
+    private static int port = PortFactory.findFreePort();
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
+    @ClassRule
+    public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
+            config("stripe.url", "http://localhost:" + port)
+    );
+
+    @ClassRule
+    public static WireMockClassRule wireMockRule = new WireMockClassRule(options().port(port));
 
     @Before
     public void setup() {
+        wireMockRule.resetAll();
+        wireMockRule.resetRequests();
+        
         stripeAccountId = String.valueOf(RandomUtils.nextInt());
-        databaseTestHelper = testContext.getDatabaseTestHelper();
+        databaseTestHelper = app.getDatabaseTestHelper();
         accountId = String.valueOf(RandomUtils.nextInt());
+        stripeMockClient.mockCancelCharge();
+
+        connectorRestApiClient = new RestAssuredClient(app.getLocalPort(), accountId);
 
         stripeMockClient.mockCreateToken();
         stripeMockClient.mockCreateSource();
         stripeMockClient.mockCreateCharge();
-
-        connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
+        
     }
+
+//    @After
+//    public void teardown() {
+//        Executor.closeIdleConnections();
+//    }
 
     @Test
     public void cardAuthorisationFailureShouldReturnBadRequest() {
@@ -100,7 +114,7 @@ public class StripeResourceAuthorizeITest {
 
         String externalChargeId = addCharge();
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(externalChargeId))
@@ -115,7 +129,7 @@ public class StripeResourceAuthorizeITest {
 
         String externalChargeId = addCharge();
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(externalChargeId))
@@ -147,7 +161,7 @@ public class StripeResourceAuthorizeITest {
         stripeMockClient.mockCreate3dsSource();
 
         String externalChargeId = addCharge();
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(externalChargeId))
@@ -173,7 +187,7 @@ public class StripeResourceAuthorizeITest {
 
         String externalChargeId = addCharge();
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(externalChargeId))
@@ -188,7 +202,7 @@ public class StripeResourceAuthorizeITest {
 
         String externalChargeId = addCharge();
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(externalChargeId))
@@ -204,13 +218,84 @@ public class StripeResourceAuthorizeITest {
 
         String externalChargeId = addChargeWithStatus(AUTHORISATION_SUCCESS);
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(StringUtils.EMPTY)
                 .post(captureChargeUrlFor(externalChargeId))
                 .then().statusCode(NO_CONTENT_204);
 
         assertFrontendChargeStatusIs(externalChargeId, CAPTURE_APPROVED.getValue());
+    }
+
+    @Test
+    public void userCancelCharge() {
+
+        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+        
+        String transactionId = "stripe-" + RandomUtils.nextInt();
+        String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
+        
+        given().port(app.getLocalPort())
+                .contentType(JSON)
+                .post("/v1/frontend/charges/{chargeId}/cancel".replace("{chargeId}", externalChargeId))
+                .then()
+                .statusCode(NO_CONTENT_204);
+
+        verify(postRequestedFor(urlEqualTo("/v1/refunds"))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
+                .withRequestBody(matching(constructExpectedCancelRequestBody(transactionId))));
+
+        Long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
+        assertEquals(databaseTestHelper.getChargeStatus(chargeId), ChargeStatus.USER_CANCELLED.getValue());
+    }
+
+    @Test
+    public void systemCancelCharge() {
+
+        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+
+        String transactionId = "stripe-" + RandomUtils.nextInt();
+        String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
+
+        given().port(app.getLocalPort())
+                .contentType(JSON)
+                .post("/v1/api/accounts/" + accountId + "/charges/" + externalChargeId + "/cancel")
+                .then()
+                .statusCode(NO_CONTENT_204);
+
+        verify(postRequestedFor(urlEqualTo("/v1/refunds"))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
+                .withRequestBody(matching(constructExpectedCancelRequestBody(transactionId))));
+
+        Long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
+        assertEquals(databaseTestHelper.getChargeStatus(chargeId), ChargeStatus.SYSTEM_CANCELLED.getValue());
+    }
+
+    private String addChargeWithStatusAndTransactionId(ChargeStatus chargeStatus, String transactionId) {
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge-" + chargeId;
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, Long.valueOf(AMOUNT), chargeStatus, "RETURN_URL", transactionId, DESCRIPTION);
+        return externalChargeId;
+    }
+
+    private String constructExpectedCancelRequestBody(String paymentId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("charge", paymentId);
+        return encode(params);
+    }
+
+    private String encode(Map<String, String> params) {
+        return params.keySet().stream()
+                .map(key -> encode(key) + "=" + encode(params.get(key)))
+                .collect(joining("&"));
+    }
+
+    private String encode(String value) {
+        try {
+            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(format("Exception thrown when encoding %s", value));
+        }
     }
 
     private String addChargeWithStatus(ChargeStatus chargeStatus) {
@@ -269,19 +354,5 @@ public class StripeResourceAuthorizeITest {
         params.put("card[exp_year]", EXP_YEAR);
         params.put("card[number]", CARD_NUMBER);
         return encode(params);
-    }
-
-    private String encode(Map<String, String> params) {
-        return params.keySet().stream()
-                .map(key -> encode(key) + "=" + encode(params.get(key)))
-                .collect(joining("&"));
-    }
-
-    private String encode(String value) {
-        try {
-            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(format("Exception thrown when encoding %s", value));
-        }
     }
 }
