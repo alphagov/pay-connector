@@ -23,7 +23,7 @@ import java.net.URI;
 import java.util.UUID;
 
 import static java.lang.String.format;
-import static java.nio.charset.Charset.defaultCharset;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
@@ -51,12 +51,13 @@ public class StripeCancelHandler {
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         
         try {
+            String payload = URLEncodedUtils.format(singletonList(new BasicNameValuePair("charge", request.getTransactionId())), UTF_8);
             client.postRequest(
                     URI.create(url),
-                    URLEncodedUtils.format(singletonList(new BasicNameValuePair("charge", request.getTransactionId())), defaultCharset()),
+                    payload,
                     ImmutableMap.of(AUTHORIZATION, getAuthHeaderValue(stripeGatewayConfig)),
                     APPLICATION_FORM_URLENCODED_TYPE,
-                    format("gateway-operations.%s.%s.capture", gatewayAccount.getGatewayName(), gatewayAccount.getType()));
+                    format("gateway-operations.%s.%s.cancel", gatewayAccount.getGatewayName(), gatewayAccount.getType()));
             
             return responseBuilder.withResponse(new BaseCancelResponse() {
 
