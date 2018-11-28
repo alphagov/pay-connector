@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.2.xsd">
+    <suppress>
+        <notes><![CDATA[
+   file name: postgresql-9.4-1201-jdbc41.jar
+   ]]></notes>
+        <gav regex="true">^org\.postgresql:postgresql:.*$</gav>
+        <cpe>cpe:/a:postgresql:postgresql</cpe>
+    </suppress>
+</suppressions>
