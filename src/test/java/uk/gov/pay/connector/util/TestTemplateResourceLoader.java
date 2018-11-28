@@ -123,6 +123,8 @@ public class TestTemplateResourceLoader {
     public static final String STRIPE_ERROR_RESPONSE_GENERAL = TEMPLATE_BASE_NAME + "/stripe/error_response_general.json";
     public static final String STRIPE_CANCEL_CHARGE_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/cancel_charge_response.json";
 
+    public static final String STRIPE_NOTIFICATION_3DS_SOURCE = TEMPLATE_BASE_NAME + "/stripe/notification_3ds_source.json";
+
     public static String load(String location) {
         return fixture(location);
     }

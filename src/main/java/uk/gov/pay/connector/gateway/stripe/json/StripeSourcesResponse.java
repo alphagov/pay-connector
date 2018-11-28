@@ -16,6 +16,10 @@ public class StripeSourcesResponse {
         return id;
     }
 
+    public String getTransactionId() {
+        return id;
+    }
+
     public boolean require3ds() {
         return card != null && "required".equals(card.getThreeDSecure());
     }
