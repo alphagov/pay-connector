@@ -25,9 +25,9 @@ public class NotificationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationResource.class);
 
-    WorldpayNotificationService worldpayNotificationService;
-    EpdqNotificationService epdqNotificationService;
-    SmartpayNotificationService smartpayNotificationService;
+    private final WorldpayNotificationService worldpayNotificationService;
+    private final EpdqNotificationService epdqNotificationService;
+    private final SmartpayNotificationService smartpayNotificationService;
 
     @Inject
     public NotificationResource(WorldpayNotificationService worldpayNotificationService,
