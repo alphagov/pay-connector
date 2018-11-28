@@ -118,17 +118,21 @@ public class CardAuthoriseService {
                 operationResponse.getSessionIdentifier(),
                 authCardDetails);
 
-        logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
+        boolean billingAddressSubmitted = updatedCharge.getCardDetails().getBillingAddress().isPresent();
+
+        logger.info("Authorisation {} for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
+                billingAddressSubmitted ? "with billing address" : "without billing address",
                 updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
                 transactionId.orElse("missing transaction ID"),
                 updatedCharge.getGatewayAccount().getAnalyticsId(), updatedCharge.getGatewayAccount().getId(),
                 operationResponse, oldChargeStatus, status);
 
         metricRegistry.counter(String.format(
-                "gateway-operations.%s.%s.%s.authorise.result.%s",
+                "gateway-operations.%s.%s.%s.authorise.%s.result.%s",
                 updatedCharge.getGatewayAccount().getGatewayName(),
                 updatedCharge.getGatewayAccount().getType(),
                 updatedCharge.getGatewayAccount().getId(),
+                billingAddressSubmitted ? "with-billing-address" : "without-billing-address",
                 status.toString())).inc();
     }
 
