@@ -5,6 +5,8 @@ import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -20,10 +22,7 @@ import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,9 +35,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
-import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyMap;
-import static java.util.stream.Collectors.joining;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.eclipse.jetty.http.HttpStatus.BAD_REQUEST_400;
@@ -240,11 +238,11 @@ public class StripeResourceAuthorizeITest {
     }
 
     private String constructExpectedSourcesRequestBody() {
-        Map<String, String> params = new HashMap<>();
-        params.put("type", "card");
-        params.put("token", "tok_1DJfnpHj08j2jFuBPMcHN1F8"); //This comes from resources/stripe/create_token_response.json
-        params.put("usage", "single_use");
-        return encode(params);
+        List<BasicNameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("type", "card"));
+        params.add(new BasicNameValuePair("token", "tok_1DJfnpHj08j2jFuBPMcHN1F8")); //This comes from resources/stripe/create_token_response.json
+        params.add(new BasicNameValuePair("usage", "single_use"));
+        return URLEncodedUtils.format(params, UTF_8);
     }
 
     private String captureChargeUrlFor(String chargeId) {
@@ -252,36 +250,22 @@ public class StripeResourceAuthorizeITest {
     }
 
     private String constructExpectedAuthoriseRequestBody() {
-        Map<String, String> params = new HashMap<>();
-        params.put("amount", AMOUNT);
-        params.put("currency", "GBP");
-        params.put("description", DESCRIPTION);
-        params.put("source", "src_1DT9bn2eZvKYlo2Cg5okt8WC"); //This comes from resources/stripe/create_sources_response.json
-        params.put("capture", "false");
-        params.put("destination[account]", stripeAccountId);
-        return encode(params);
+        List<BasicNameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("amount", AMOUNT));
+        params.add(new BasicNameValuePair("currency", "GBP"));
+        params.add(new BasicNameValuePair("description", DESCRIPTION));
+        params.add(new BasicNameValuePair("source", "src_1DT9bn2eZvKYlo2Cg5okt8WC")); //This comes from resources/stripe/create_sources_response.json
+        params.add(new BasicNameValuePair("capture", "false"));
+        params.add(new BasicNameValuePair("destination[account]", stripeAccountId));
+        return URLEncodedUtils.format(params, UTF_8);
     }
 
     private String constructExpectedTokensRequestBody() {
-        Map<String, String> params = new HashMap<>();
-        params.put("card[cvc]", CVC);
-        params.put("card[exp_month]", EXP_MONTH);
-        params.put("card[exp_year]", EXP_YEAR);
-        params.put("card[number]", CARD_NUMBER);
-        return encode(params);
-    }
-
-    private String encode(Map<String, String> params) {
-        return params.keySet().stream()
-                .map(key -> encode(key) + "=" + encode(params.get(key)))
-                .collect(joining("&"));
-    }
-
-    private String encode(String value) {
-        try {
-            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(format("Exception thrown when encoding %s", value));
-        }
+        List<BasicNameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("card[cvc]", CVC));
+        params.add(new BasicNameValuePair("card[exp_month]", EXP_MONTH));
+        params.add(new BasicNameValuePair("card[exp_year]", EXP_YEAR));
+        params.add(new BasicNameValuePair("card[number]", CARD_NUMBER));
+        return URLEncodedUtils.format(params, UTF_8);
     }
 }
