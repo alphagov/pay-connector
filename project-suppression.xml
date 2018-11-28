@@ -7,4 +7,11 @@
         <gav regex="true">^org\.postgresql:postgresql:.*$</gav>
         <cpe>cpe:/a:postgresql:postgresql</cpe>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+   file name: guava-21.0.jar
+   ]]></notes>
+        <gav regex="true">^com\.google\.guava:guava:.*$</gav>
+        <cve>CVE-2018-10237</cve>
+    </suppress>
 </suppressions>
