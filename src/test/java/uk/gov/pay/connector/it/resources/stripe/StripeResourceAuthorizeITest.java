@@ -41,6 +41,10 @@ import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.joining;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.eclipse.jetty.http.HttpStatus.BAD_REQUEST_400;
+import static org.eclipse.jetty.http.HttpStatus.INTERNAL_SERVER_ERROR_500;
+import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
+import static org.eclipse.jetty.http.HttpStatus.OK_200;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -52,8 +56,7 @@ import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class StripeResourceITest {
-
+public class StripeResourceAuthorizeITest {
     private static final String CVC = "123";
     private static final String EXP_MONTH = "11";
     private static final String EXP_YEAR = "99";
@@ -61,7 +64,7 @@ public class StripeResourceITest {
     private static final String AMOUNT = "6234";
     private static final String DESCRIPTION = "Test description";
 
-    protected RestAssuredClient connectorRestApiClient;
+    private RestAssuredClient connectorRestApiClient;
 
     private String stripeAccountId;
     private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", CVC, EXP_MONTH + "/" + EXP_YEAR, "visa");
@@ -92,7 +95,7 @@ public class StripeResourceITest {
     @Test
     public void cardAuthorisationFailureShouldReturnBadRequest() {
         stripeMockClient.mockAuthorisationFailed();
-        
+
         addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
 
         String externalChargeId = addCharge();
@@ -102,10 +105,10 @@ public class StripeResourceITest {
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(externalChargeId))
                 .then()
-                .statusCode(400)
+                .statusCode(BAD_REQUEST_400)
                 .body("message", is("Your card has expired."));
     }
-    
+
     @Test
     public void authoriseCharge() {
         addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
@@ -118,7 +121,7 @@ public class StripeResourceITest {
                 .post(authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .body("status", is(AUTHORISATION_SUCCESS.toString()))
-                .statusCode(200);
+                .statusCode(OK_200);
 
         verify(postRequestedFor(urlEqualTo("/v1/tokens"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
@@ -150,7 +153,7 @@ public class StripeResourceITest {
                 .post(authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .body("status", is(AUTHORISATION_3DS_REQUIRED.toString()))
-                .statusCode(200);
+                .statusCode(OK_200);
 
         assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_3DS_REQUIRED.toString());
 
@@ -175,7 +178,7 @@ public class StripeResourceITest {
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(externalChargeId))
                 .then()
-                .statusCode(500)
+                .statusCode(INTERNAL_SERVER_ERROR_500)
                 .body("message", containsString("There was an internal server error. ErrorId:"));
     }
 
@@ -205,7 +208,7 @@ public class StripeResourceITest {
                 .contentType(JSON)
                 .body(StringUtils.EMPTY)
                 .post(captureChargeUrlFor(externalChargeId))
-                .then().statusCode(204);
+                .then().statusCode(NO_CONTENT_204);
 
         assertFrontendChargeStatusIs(externalChargeId, CAPTURE_APPROVED.getValue());
     }
@@ -217,7 +220,7 @@ public class StripeResourceITest {
         return externalChargeId;
     }
 
-    protected void assertFrontendChargeStatusIs(String chargeId, String status) {
+    private void assertFrontendChargeStatusIs(String chargeId, String status) {
         connectorRestApiClient
                 .withChargeId(chargeId)
                 .getFrontendCharge()
