@@ -14,4 +14,11 @@
         <gav regex="true">^com\.google\.guava:guava:.*$</gav>
         <cve>CVE-2018-10237</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+   file name: blackdoor-lib-v4r3t0.jar
+   ]]></notes>
+        <gav regex="true">^black\.door:blackdoor-lib:.*$</gav>
+        <cpe>cpe:/a:sec_project:sec</cpe>
+    </suppress>
 </suppressions>
