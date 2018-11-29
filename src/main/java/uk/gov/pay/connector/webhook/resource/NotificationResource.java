@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.epdq.EpdqNotificationService;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayNotificationService;
+import uk.gov.pay.connector.gateway.stripe.StripeNotificationService;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayNotificationService;
 
 import javax.annotation.security.PermitAll;
@@ -28,14 +29,17 @@ public class NotificationResource {
     private final WorldpayNotificationService worldpayNotificationService;
     private final EpdqNotificationService epdqNotificationService;
     private final SmartpayNotificationService smartpayNotificationService;
+    private final StripeNotificationService stripeNotificationService;
 
     @Inject
     public NotificationResource(WorldpayNotificationService worldpayNotificationService,
                                 EpdqNotificationService epdqNotificationService,
-                                SmartpayNotificationService smartpayNotificationService) {
+                                SmartpayNotificationService smartpayNotificationService,
+                                StripeNotificationService stripeNotificationService) {
         this.worldpayNotificationService = worldpayNotificationService;
         this.smartpayNotificationService = smartpayNotificationService;
         this.epdqNotificationService = epdqNotificationService;
+        this.stripeNotificationService = stripeNotificationService;
     }
 
     @POST
@@ -74,11 +78,21 @@ public class NotificationResource {
     @Consumes(APPLICATION_FORM_URLENCODED)
     @Path("/v1/api/notifications/epdq")
     @Produces({TEXT_XML, APPLICATION_JSON})
-    public Response authoriseEpdqNotifications(String notification, @HeaderParam("X-Forwarded-For") String ipAddress) {
+    public Response authoriseEpdqNotifications(String notification) {
         epdqNotificationService.handleNotificationFor(notification);
         String response = "[OK]";
         logger.info("Responding to notification from provider={} with 200 {}", "epdq", response);
         return Response.ok(response).build();
     }
 
+    @POST
+    @Consumes(APPLICATION_JSON)
+    @Path("/v1/api/notifications/stripe")
+    @Produces({TEXT_XML, APPLICATION_JSON})
+    public Response authoriseStripeNotifications(String notification) {
+        stripeNotificationService.handleNotificationFor(notification);
+        String response = "[OK]";
+        logger.info("Responding to notification from provider=Stripe with 200 {}", response);
+        return Response.ok(response).build();
+    }
 }
