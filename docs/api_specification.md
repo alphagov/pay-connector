@@ -106,8 +106,8 @@ Content-Type: application/json
     "service_name": "service name",
     "corporate_credit_card_surcharge_amount": 250,
     "corporate_debit_card_surcharge_amount": 50
-    "corporate_prepaid credit_card_surcharge_amount": 250,
-    "corporate_prepaid debit_card_surcharge_amount": 50
+    "corporate_prepaid_credit_card_surcharge_amount": 250,
+    "corporate_prepaid_debit_card_surcharge_amount": 50
 }
 ```
 
