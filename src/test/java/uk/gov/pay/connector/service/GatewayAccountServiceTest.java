@@ -86,4 +86,64 @@ public class GatewayAccountServiceTest {
         inOrder.verify(entity).setEmailCollectionMode(EmailCollectionMode.OFF);
         inOrder.verify(gatewayAccountDao).merge(entity);
     }
+    
+    @Test
+    public void shouldUpdateCorporateCreditCardSurchargeAmount() {
+        Long gatewayAccountId = 100L;
+        PatchRequest request = PatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+                "path", "corporate_credit_card_surcharge_amount",
+                "value", 100)));
+        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
+
+        when(gatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
+        Optional<GatewayAccount> optionalGatewayAcc = updater.doPatch(gatewayAccountId, request);
+        assertThat(optionalGatewayAcc.isPresent(), is(true));
+        verify(entity).setCorporateCreditCardSurchargeAmount(100L);
+        verify(gatewayAccountDao).merge(entity);
+    }
+
+    @Test
+    public void shouldUpdateCorporateDebitCardSurchargeAmount() {
+        Long gatewayAccountId = 100L;
+        PatchRequest request = PatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+                "path", "corporate_debit_card_surcharge_amount",
+                "value", 100)));
+        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
+
+        when(gatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
+        Optional<GatewayAccount> optionalGatewayAcc = updater.doPatch(gatewayAccountId, request);
+        assertThat(optionalGatewayAcc.isPresent(), is(true));
+        verify(entity).setCorporateDebitCardSurchargeAmount(100L);
+        verify(gatewayAccountDao).merge(entity);
+    }
+
+    @Test
+    public void shouldUpdateCorporatePrepaidDebitCardSurchargeAmount() {
+        Long gatewayAccountId = 100L;
+        PatchRequest request = PatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+                "path", "corporate_prepaid_debit_card_surcharge_amount",
+                "value", 100)));
+        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
+
+        when(gatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
+        Optional<GatewayAccount> optionalGatewayAcc = updater.doPatch(gatewayAccountId, request);
+        assertThat(optionalGatewayAcc.isPresent(), is(true));
+        verify(entity).setCorporatePrepaidDebitCardSurchargeAmount(100L);
+        verify(gatewayAccountDao).merge(entity);
+    }
+
+    @Test
+    public void shouldUpdateCorporatePrepaidCreditCardSurchargeAmount() {
+        Long gatewayAccountId = 100L;
+        PatchRequest request = PatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+                "path", "corporate_prepaid_credit_card_surcharge_amount",
+                "value", 100)));
+        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
+
+        when(gatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
+        Optional<GatewayAccount> optionalGatewayAcc = updater.doPatch(gatewayAccountId, request);
+        assertThat(optionalGatewayAcc.isPresent(), is(true));
+        verify(entity).setCorporatePrepaidCreditCardSurchargeAmount(100L);
+        verify(gatewayAccountDao).merge(entity);
+    }
 }

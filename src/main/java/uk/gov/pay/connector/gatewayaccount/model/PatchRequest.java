@@ -36,6 +36,13 @@ public class PatchRequest {
         }
         return null;
     }
+    
+    public Long valueAsLong() {
+        if (value != null && value.isNumber()) {
+            return new Long(value.asText());
+        }
+        return null;
+    }
 
     public List<String> valueAsList() {
         if (value != null && value.isArray()) {

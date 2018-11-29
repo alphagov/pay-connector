@@ -526,4 +526,125 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .then()
                 .body("allow_web_payments", is("true"));
     }
+    
+    @Test
+    public void patchGatewayAccount_forCorporateCreditCardSurcharge() throws JsonProcessingException {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "corporate_credit_card_surcharge_amount",
+                "value", 100));
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("corporate_credit_card_surcharge_amount", is(0))
+                .body("corporate_debit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("corporate_credit_card_surcharge_amount", is(100))
+                .body("corporate_debit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
+    }
+
+    @Test
+    public void patchGatewayAccount_forCorporateDebitCardSurcharge() throws JsonProcessingException {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "corporate_debit_card_surcharge_amount",
+                "value", 200));
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("corporate_credit_card_surcharge_amount", is(0))
+                .body("corporate_debit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("corporate_credit_card_surcharge_amount", is(0))
+                .body("corporate_debit_card_surcharge_amount", is(200))
+                .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
+    }
+
+    @Test
+    public void patchGatewayAccount_forCorporatePrepaidCreditCardSurcharge() throws JsonProcessingException {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "corporate_prepaid_credit_card_surcharge_amount",
+                "value", 300));
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("corporate_credit_card_surcharge_amount", is(0))
+                .body("corporate_debit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("corporate_credit_card_surcharge_amount", is(0))
+                .body("corporate_debit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_credit_card_surcharge_amount", is(300))
+                .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
+    }
+
+    @Test
+    public void patchGatewayAccount_forCorporatePrepaidDebitCardSurcharge() throws JsonProcessingException {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "corporate_prepaid_debit_card_surcharge_amount",
+                "value", 400));
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("corporate_credit_card_surcharge_amount", is(0))
+                .body("corporate_debit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .body("corporate_credit_card_surcharge_amount", is(0))
+                .body("corporate_debit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_debit_card_surcharge_amount", is(400));
+    }
+
+    @Test
+    public void shouldReturn404ForCorporateSurcharge_whenGatewayAccountIsNonExistent() throws Exception {
+        String gatewayAccountId = "1000023";
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "corporate_credit_card_surcharge_amount",
+                "value", 100));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(NOT_FOUND.getStatusCode());
+    }
 }
