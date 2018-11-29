@@ -89,8 +89,8 @@ public class NotificationResource {
     @Consumes(APPLICATION_JSON)
     @Path("/v1/api/notifications/stripe")
     @Produces({TEXT_XML, APPLICATION_JSON})
-    public Response authoriseStripeNotifications(String notification) {
-        stripeNotificationService.handleNotificationFor(notification);
+    public Response authoriseStripeNotifications(String notification, @HeaderParam("Stripe-Signature") String signatureHeader) {
+        stripeNotificationService.handleNotificationFor(notification, signatureHeader);
         String response = "[OK]";
         logger.info("Responding to notification from provider=Stripe with 200 {}", response);
         return Response.ok(response).build();

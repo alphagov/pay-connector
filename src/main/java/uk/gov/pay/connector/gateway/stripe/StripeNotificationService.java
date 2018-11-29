@@ -4,8 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
+import com.stripe.exception.SignatureVerificationException;
+import com.stripe.net.Webhook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -14,6 +17,7 @@ import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 
+import javax.ws.rs.WebApplicationException;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,6 +32,7 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_
 
 public class StripeNotificationService {
 
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final List<StripeNotificationType> sourceTypes = ImmutableList.of(SOURCE_CANCELED, SOURCE_CHARGEABLE, SOURCE_FAILED);
@@ -35,20 +40,28 @@ public class StripeNotificationService {
     private final ChargeDao chargeDao;
     private final ChargeNotificationProcessor chargeNotificationProcessor;
     private final ObjectMapper objectMapper;
+    private final StripeGatewayConfig stripeGatewayConfig;
 
     private static final String PAYMENT_GATEWAY_NAME = PaymentGatewayName.STRIPE.getName();
+    private static final long DEFAULT_TOLERANCE = 300L;
 
     @Inject
     public StripeNotificationService(ChargeDao chargeDao,
-                                     ChargeNotificationProcessor chargeNotificationProcessor) {
+                                     ChargeNotificationProcessor chargeNotificationProcessor,
+                                     StripeGatewayConfig stripeGatewayConfig) {
         this.chargeDao = chargeDao;
         this.chargeNotificationProcessor = chargeNotificationProcessor;
         objectMapper = new ObjectMapper();
+        this.stripeGatewayConfig = stripeGatewayConfig;
     }
 
     @Transactional
-    public void handleNotificationFor(String payload) {
+    public void handleNotificationFor(String payload, String signatureHeader) {
         logger.info("Parsing {} notification", PAYMENT_GATEWAY_NAME);
+
+        if (!isValidNotificationSignature(payload, signatureHeader)) {
+            throw new WebApplicationException(String.format("Invalid notification signature from %s [%s]", PAYMENT_GATEWAY_NAME, signatureHeader));
+        }
 
         StripeNotification notification;
         try {
@@ -131,6 +144,18 @@ public class StripeNotificationService {
             return objectMapper.readValue(payload, StripeSourcesResponse.class);
         } catch (Exception e) {
             throw new StripeParseException(e.getMessage());
+        }
+    }
+
+    private boolean isValidNotificationSignature(String payload, String signatureHeader) {
+        try {
+            return Webhook.Signature.verifyHeader(payload,
+                    signatureHeader,
+                    stripeGatewayConfig.getWebhookSigningSecret(),
+                    DEFAULT_TOLERANCE);
+        } catch (SignatureVerificationException e) {
+            logger.error("Exception [{}] for signature header - {}", e.getMessage(), e.getSigHeader());
+            return false;
         }
     }
 }

@@ -11,6 +11,7 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationType;
+import uk.gov.pay.connector.gateway.stripe.StripeNotificationUtilTest;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
@@ -132,12 +133,34 @@ public class StripeNotificationResourceITest {
                 .statusCode(415);
     }
 
-    private Response notifyConnector(String payload) {
+    @Test
+    public void shouldFailAStripeNotification_whenSignatureIsInvalid() {
+        String transactionId = "transaction-id" + nextInt();
+        String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
+
+        String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
+                transactionId, SOURCE_CANCELED);
+        String response = notifyConnectorWithHeader(payload, "invalid-header")
+                .then()
+                .statusCode(500)
+                .extract().body()
+                .asString();
+
+        assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_3DS_REQUIRED.getValue());
+    }
+
+    private Response notifyConnectorWithHeader(String payload, String header) {
         return given()
                 .port(testContext.getPort())
                 .body(payload)
+                .header("Stripe-Signature", header)
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH);
+    }
+
+    private Response notifyConnector(String payload) {
+        return notifyConnectorWithHeader(payload, StripeNotificationUtilTest.generateSigHeader(
+                "whsec", payload));
     }
 
     private static String sampleStripeNotification(String location,
