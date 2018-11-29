@@ -20,6 +20,7 @@ public class AuthCardDetails implements AuthorisationDetails {
     private String userAgentHeader;
     private String acceptHeader;
     private PayersCardType payersCardType;
+    private PayersCardPrepaidStatus payersCardPrepaidStatus;
     private Boolean corporateCard;
 
     public static AuthCardDetails anAuthCardDetails() {
@@ -76,6 +77,11 @@ public class AuthCardDetails implements AuthorisationDetails {
         this.payersCardType = payersCardType;
     }
 
+    @JsonProperty("prepaid")
+    public void setPayersCardPrepaidStatus(PayersCardPrepaidStatus payersCardPrepaidStatus) {
+        this.payersCardPrepaidStatus = payersCardPrepaidStatus;
+    }
+
     public String getCardNo() {
         return cardNo;
     }
@@ -124,5 +130,9 @@ public class AuthCardDetails implements AuthorisationDetails {
 
     public PayersCardType getPayersCardType() {
         return payersCardType == null ? CREDIT_OR_DEBIT : payersCardType;
+    }
+
+    public PayersCardPrepaidStatus getPayersCardPrepaidStatus() {
+        return payersCardPrepaidStatus == null ? PayersCardPrepaidStatus.UNKNOWN : payersCardPrepaidStatus;
     }
 }

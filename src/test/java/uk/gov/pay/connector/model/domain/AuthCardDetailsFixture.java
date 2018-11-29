@@ -3,6 +3,7 @@ package uk.gov.pay.connector.model.domain;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
+import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 
 public final class AuthCardDetailsFixture {
     private String cardNo = "4242424242424242";
@@ -14,6 +15,7 @@ public final class AuthCardDetailsFixture {
     private String userAgentHeader = "Mozilla/5.0";
     private String acceptHeader = "text/html";
     private PayersCardType payersCardType = PayersCardType.DEBIT;
+    private PayersCardPrepaidStatus payersCardPrepaidStatus = PayersCardPrepaidStatus.UNKNOWN;
     private Boolean corporateCard = Boolean.FALSE;
 
     private AuthCardDetailsFixture() {
@@ -73,6 +75,11 @@ public final class AuthCardDetailsFixture {
         return this;
     }
 
+    public AuthCardDetailsFixture withPayersCardPrepaidStatus(PayersCardPrepaidStatus payersCardPrepaidStatus) {
+        this.payersCardPrepaidStatus = payersCardPrepaidStatus;
+        return this;
+    }
+
     public AuthCardDetails build() {
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo(cardNo);
@@ -84,6 +91,7 @@ public final class AuthCardDetailsFixture {
         authCardDetails.setUserAgentHeader(userAgentHeader);
         authCardDetails.setAcceptHeader(acceptHeader);
         authCardDetails.setPayersCardType(payersCardType);
+        authCardDetails.setPayersCardPrepaidStatus(payersCardPrepaidStatus);
         authCardDetails.setCorporateCard(corporateCard);
         return authCardDetails;
     }

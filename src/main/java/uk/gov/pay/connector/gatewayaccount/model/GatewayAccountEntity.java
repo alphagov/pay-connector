@@ -228,13 +228,13 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     @JsonProperty("corporate_credit_card_surcharge_amount")
-    public long getCorporateCreditCardSurchargeAmount() {
+    public long getCorporateNonPrepaidCreditCardSurchargeAmount() {
         return corporateCreditCardSurchargeAmount;
     }
 
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     @JsonProperty("corporate_debit_card_surcharge_amount")
-    public long getCorporateDebitCardSurchargeAmount() {
+    public long getCorporateNonPrepaidDebitCardSurchargeAmount() {
         return corporateDebitCardSurchargeAmount;
     }
 
@@ -319,8 +319,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
             account.put("service_name", getServiceName());
         }
         account.put("toggle_3ds", String.valueOf(isRequires3ds()));
-        account.put("corporate_credit_card_surcharge_amount", getCorporateCreditCardSurchargeAmount());
-        account.put("corporate_debit_card_surcharge_amount", getCorporateDebitCardSurchargeAmount());
+        account.put("corporate_credit_card_surcharge_amount", getCorporateNonPrepaidCreditCardSurchargeAmount());
+        account.put("corporate_debit_card_surcharge_amount", getCorporateNonPrepaidDebitCardSurchargeAmount());
         account.put("corporate_prepaid_credit_card_surcharge_amount", getCorporatePrepaidCreditCardSurchargeAmount());
         account.put("corporate_prepaid_debit_card_surcharge_amount", getCorporatePrepaidDebitCardSurchargeAmount());
         account.put("allow_web_payments", String.valueOf(allowWebPayments));
