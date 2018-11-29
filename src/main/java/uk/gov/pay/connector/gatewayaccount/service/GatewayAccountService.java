@@ -20,6 +20,10 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_WEB_PAYMENTS;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_EMAIL_COLLECTION_MODE;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_NOTIFY_SETTINGS;
 
@@ -71,6 +75,14 @@ public class GatewayAccountService {
                         (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setNotifySettings(gatewayAccountRequest.valueAsObject()));
                 put(FIELD_EMAIL_COLLECTION_MODE,
                         (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setEmailCollectionMode(EmailCollectionMode.fromString(gatewayAccountRequest.valueAsString())));
+                put(FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT,
+                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporateCreditCardSurchargeAmount(gatewayAccountRequest.valueAsLong()));
+                put(FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT,
+                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporateDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong()));
+                put(FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT,
+                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporatePrepaidCreditCardSurchargeAmount(gatewayAccountRequest.valueAsLong()));
+                put(FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT,
+                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporatePrepaidDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong()));
             }};
 
 }
