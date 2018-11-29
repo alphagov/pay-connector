@@ -8,10 +8,12 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 public class RefundEntityFixture {
 
+    private Long id = nextLong();
     private Long amount = 500L;
     private RefundStatus status = RefundStatus.CREATED;
     private GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
@@ -28,6 +30,7 @@ public class RefundEntityFixture {
     public RefundEntity build() {
         ChargeEntity chargeEntity = charge == null ? buildChargeEntity() : charge;
         RefundEntity refundEntity = new RefundEntity(chargeEntity, amount, userExternalId);
+        refundEntity.setId(id);
         refundEntity.setStatus(status);
         refundEntity.setReference(reference);
         refundEntity.setExternalId(externalId);
@@ -45,7 +48,7 @@ public class RefundEntityFixture {
         this.createdDate = createdDate;
         return this;
     }
-    
+
     public RefundEntityFixture withAmount(Long amount) {
         this.amount = amount;
         return this;
@@ -65,7 +68,7 @@ public class RefundEntityFixture {
         this.userExternalId = userExternalId;
         return this;
     }
-    
+
     public Long getAmount() {
         return amount;
     }

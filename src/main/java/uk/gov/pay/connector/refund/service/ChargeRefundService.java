@@ -1,17 +1,11 @@
 package uk.gov.pay.connector.refund.service;
 
-import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.charge.service.transaction.NonTransactionalOperation;
-import uk.gov.pay.connector.charge.service.transaction.PreTransactionalOperation;
-import uk.gov.pay.connector.charge.service.transaction.TransactionContext;
-import uk.gov.pay.connector.charge.service.transaction.TransactionFlow;
-import uk.gov.pay.connector.charge.service.transaction.TransactionalOperation;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -28,7 +22,6 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.inject.Inject;
-import java.util.Optional;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
@@ -61,49 +54,33 @@ public class ChargeRefundService {
     private final ChargeDao chargeDao;
     private final RefundDao refundDao;
     private final PaymentProviders providers;
-    private final Provider<TransactionFlow> transactionFlowProvider;
     private final UserNotificationService userNotificationService;
 
     @Inject
     public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders providers,
-                               Provider<TransactionFlow> transactionFlowProvider,
                                UserNotificationService userNotificationService
     ) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.providers = providers;
-        this.transactionFlowProvider = transactionFlowProvider;
         this.userNotificationService = userNotificationService;
     }
 
-    public Optional<Response> doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
+    public Response doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
+        RefundEntity refundEntity = createRefund(accountId, chargeId, refundRequest);
 
-        return Optional.ofNullable(transactionFlowProvider.get()
-                .executeNext(prepareForRefund(providers, accountId, chargeId, refundRequest))
-                .executeNext(doGatewayRefund(providers))
-                .executeNext(setAsSubmitted())
-                .executeNext(setSandboxAsRefunded())
-                .complete().get(Response.class));
+        GatewayResponse<BaseRefundResponse> gatewayResponse =
+                providers.byName(refundEntity.getChargeEntity().getPaymentGatewayName()).refund(RefundGatewayRequest.valueOf(refundEntity));
+
+        updateRefundStatus(gatewayResponse, refundEntity.getId());
+        RefundEntity refund = updateSandboxStatus(refundEntity.getId());
+
+        return new Response(gatewayResponse, refund);
     }
 
-    private TransactionalOperation<TransactionContext, Response> setSandboxAsRefunded() {
-        return context -> {
-            Response response = context.get(Response.class);
-            RefundEntity refund = response.getRefundEntity();
-            if (refund.getChargeEntity().getPaymentGatewayName() == PaymentGatewayName.SANDBOX
-                    && refund.hasStatus(RefundStatus.REFUND_SUBMITTED)) {
-                RefundEntity refundEntity = refundDao.findById(refund.getId()).get();
-                refundEntity.setStatus(REFUNDED);
-                userNotificationService.sendRefundIssuedEmail(refundEntity);
-                response = new Response(response.getRefundGatewayResponse(), refundEntity);
-            }
-            return response;
-        };
-    }
-
-    private PreTransactionalOperation<TransactionContext, RefundEntity> prepareForRefund(PaymentProviders providers, Long accountId, String chargeId, RefundRequest refundRequest) {
-        return context -> chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId).map(chargeEntity -> {
-
+    @Transactional
+    private RefundEntity createRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
+        return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId).map(chargeEntity -> {
             ExternalChargeRefundAvailability refundAvailability = providers.byName(chargeEntity.getPaymentGatewayName()).getExternalChargeRefundAvailability(chargeEntity);
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
             checkIfChargeIsRefundableOrTerminate(chargeEntity, refundAvailability, gatewayAccount);
@@ -126,28 +103,16 @@ public class ChargeRefundService {
                     gatewayAccount.getGatewayName(),
                     gatewayAccount.getType(),
                     refundRequest.getUserExternalId());
-
             return refundEntity;
-
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    private NonTransactionalOperation<TransactionContext, GatewayResponse> doGatewayRefund(PaymentProviders providers) {
-        return context -> {
-            RefundEntity refundEntity = context.get(RefundEntity.class);
-            return providers.byName(refundEntity.getChargeEntity().getPaymentGatewayName()).refund(RefundGatewayRequest.valueOf(refundEntity));
-        };
-    }
-
-    private TransactionalOperation<TransactionContext, Response> setAsSubmitted() {
-        return context -> {
-            RefundEntity refundEntity = refundDao.findById(context.get(RefundEntity.class).getId()).get();
-
-            GatewayResponse<BaseRefundResponse> gatewayResponse = context.get(GatewayResponse.class);
-            ChargeEntity chargeEntity = refundEntity.getChargeEntity();
-
-            RefundStatus status = gatewayResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
+    @Transactional
+    private void updateRefundStatus(GatewayResponse gatewayResponse, Long refundEntityId) {
+        RefundStatus status = gatewayResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
+        refundDao.findById(refundEntityId).ifPresent(refundEntity -> {
             String reference = getRefundReference(refundEntity, gatewayResponse);
+            ChargeEntity chargeEntity = refundEntity.getChargeEntity();
 
             logger.info("Refund {} ({} {}) for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                     refundEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), refundEntity.getReference(),
@@ -157,9 +122,22 @@ public class ChargeRefundService {
 
             refundEntity.setStatus(status);
             refundEntity.setReference(reference);
+            refundDao.merge(refundEntity);
+        });
+    }
 
-            return new Response(gatewayResponse, refundEntity);
-        };
+    @Transactional
+    private RefundEntity updateSandboxStatus(Long refundEntityId) {
+        return refundDao.findById(refundEntityId).map(refund -> {
+            ChargeEntity chargeEntity = refund.getChargeEntity();
+            if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX
+                    && refund.hasStatus(RefundStatus.REFUND_SUBMITTED)) {
+                refund.setStatus(REFUNDED);
+                userNotificationService.sendRefundIssuedEmail(refund);
+                refundDao.merge(refund);
+            }
+            return refund;
+        }).orElse(null);
     }
 
     @Transactional
