@@ -3,6 +3,8 @@ package uk.gov.pay.connector.gateway.stripe;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -39,17 +41,14 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static java.lang.String.format;
-import static java.util.stream.Collectors.joining;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
@@ -237,61 +236,47 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     private String sourcesPayload(String token) {
-        Map<String, String> params = new HashMap<>();
-        params.put("type", "card");
-        params.put("token", token);
-        params.put("usage", "single_use");
-        return encode(params);
+        List<BasicNameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("type", "card"));
+        params.add(new BasicNameValuePair("token", token));
+        params.add(new BasicNameValuePair("usage", "single_use"));
+        return URLEncodedUtils.format(params, UTF_8);
     }
 
     private String threeDSecurePayload(CardAuthorisationGatewayRequest request, String sourceId) {
         //todo: revisit for frontendUrl format
         String frontend3dsIncomingUrl = String.format("%s/card_details/%s/3ds_required_in/stripe", frontendUrl, request.getChargeExternalId());
-        Map<String, String> params = new HashMap<>();
-        params.put("type", "three_d_secure");
-        params.put("amount", request.getAmount());
-        params.put("currency", "GBP");
-        params.put("redirect[return_url]", frontend3dsIncomingUrl);
-        params.put("three_d_secure[card]", sourceId);
-        return encode(params);
+        List<BasicNameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("type", "three_d_secure"));
+        params.add(new BasicNameValuePair("amount", request.getAmount()));
+        params.add(new BasicNameValuePair("currency", "GBP"));
+        params.add(new BasicNameValuePair("redirect[return_url]", frontend3dsIncomingUrl));
+        params.add(new BasicNameValuePair("three_d_secure[card]", sourceId));
+        return URLEncodedUtils.format(params, UTF_8);
     }
 
     private String authorisePayload(CardAuthorisationGatewayRequest request, String sourceId) {
-        Map<String, String> params = new HashMap<>();
-        params.put("amount", request.getAmount());
-        params.put("currency", "GBP");
-        params.put("description", request.getDescription());
-        params.put("source", sourceId);
-        params.put("capture", "false");
+        List<BasicNameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("amount", request.getAmount()));
+        params.add(new BasicNameValuePair("currency", "GBP"));
+        params.add(new BasicNameValuePair("description", request.getDescription()));
+        params.add(new BasicNameValuePair("source", sourceId));
+        params.add(new BasicNameValuePair("capture", "false"));
         String stripeAccountId = request.getGatewayAccount().getCredentials().get("stripe_account_id");
 
         if (StringUtils.isBlank(stripeAccountId))
             throw new WebApplicationException(format("There is no stripe_account_id for gateway account with id %s", request.getGatewayAccount().getId()));
 
-        params.put("destination[account]", stripeAccountId);
-        return encode(params);
+        params.add(new BasicNameValuePair("destination[account]", stripeAccountId));
+        return URLEncodedUtils.format(params, UTF_8);
     }
 
     private String tokenPayload(CardAuthorisationGatewayRequest request) {
-        Map<String, String> params = new HashMap<>();
-        params.put("card[cvc]", request.getAuthCardDetails().getCvc());
-        params.put("card[exp_month]", request.getAuthCardDetails().expiryMonth());
-        params.put("card[exp_year]", request.getAuthCardDetails().expiryYear());
-        params.put("card[number]", request.getAuthCardDetails().getCardNo());
-        return encode(params);
-    }
-
-    private String encode(Map<String, String> params) {
-        return params.keySet().stream()
-                .map(key -> encode(key) + "=" + encode(params.get(key)))
-                .collect(joining("&"));
-    }
-
-    private String encode(String value) {
-        try {
-            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(format("Exception thrown when encoding %s", value));
-        }
+        List<BasicNameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("card[cvc]", request.getAuthCardDetails().getCvc()));
+        params.add(new BasicNameValuePair("card[exp_month]", request.getAuthCardDetails().expiryMonth()));
+        params.add(new BasicNameValuePair("card[exp_year]", request.getAuthCardDetails().expiryYear()));
+        params.add(new BasicNameValuePair("card[number]", request.getAuthCardDetails().getCardNo()));
+        return URLEncodedUtils.format(params, UTF_8);
     }
 }
