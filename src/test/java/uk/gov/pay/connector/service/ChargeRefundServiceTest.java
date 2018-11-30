@@ -19,6 +19,7 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayRefundResponse;
+import uk.gov.pay.connector.gateway.stripe.response.StripeRefundResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.dao.RefundDao;
@@ -48,6 +49,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
@@ -184,6 +186,55 @@ public class ChargeRefundServiceTest {
         verify(mockRefundDao, times(1)).merge(spiedRefundEntity);
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity).setReference(reference);
+
+        verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
+    }
+
+    @Test
+    public void shouldRefundSuccessfully_forStripe() {
+        String externalChargeId = "chargeId";
+        long refundAmount = 100L;
+        Long accountId = 2L;
+
+        GatewayAccountEntity account = new GatewayAccountEntity("stripe", newHashMap(), TEST);
+        account.setId(accountId);
+        ChargeEntity charge = aValidChargeEntity()
+                .withGatewayAccountEntity(account)
+                .withTransactionId("transaction-id")
+                .withExternalId(externalChargeId)
+                .withStatus(CAPTURED)
+                .build();
+
+        RefundEntity refundEntity = aValidRefundEntity().withExternalId("Stripe test refund").withCharge(charge).withAmount(refundAmount).build();
+        RefundEntity spiedRefundEntity = spy(refundEntity);
+
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, accountId)).thenReturn(Optional.of(charge));
+        when(mockProviders.byName(STRIPE)).thenReturn(mockProvider);
+
+        setupStripeMock();
+
+        Long refundId = 12345L;
+        doAnswer(invocation -> {
+            ((RefundEntity) invocation.getArgument(0)).setId(refundId);
+            return null;
+        }).when(mockRefundDao).persist(any(RefundEntity.class));
+
+        when(mockRefundDao.findById(refundId)).thenReturn(Optional.of(spiedRefundEntity));
+
+        ChargeRefundService.Response gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(refundAmount, charge.getAmount(), userExternalId));
+
+        assertThat(gatewayResponse.getRefundGatewayResponse().isSuccessful(), is(true));
+        assertThat(gatewayResponse.getRefundGatewayResponse().getGatewayError().isPresent(), is(false));
+
+        assertThat(gatewayResponse.getRefundEntity(), is(spiedRefundEntity));
+
+        verify(mockChargeDao).findByExternalIdAndGatewayAccount(externalChargeId, accountId);
+        verify(mockRefundDao).persist(argThat(aRefundEntity(refundAmount, charge)));
+        verify(mockProvider).refund(argThat(aRefundRequestWith(charge, refundAmount)));
+        verify(mockRefundDao, times(2)).findById(refundId);
+        verify(mockRefundDao, times(1)).merge(spiedRefundEntity);
+        verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
+        verify(spiedRefundEntity).setReference(refundEntity.getExternalId());
 
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
     }
@@ -544,5 +595,13 @@ public class ChargeRefundServiceTest {
                 .withResponse(smartpayRefundResponse)
                 .build();
         when(mockProvider.refund(any())).thenReturn(refundResponse);
+    }
+
+    private void setupStripeMock() {
+        StripeRefundResponse refundResponse = mock(StripeRefundResponse.class);
+        when(refundResponse.getReference()).thenReturn(Optional.of("Stripe test refund"));
+        GatewayResponseBuilder<StripeRefundResponse> responseBuilder = responseBuilder();
+        GatewayResponse gatewayResponse = responseBuilder.withResponse(refundResponse).build();
+        when(mockProvider.refund(any())).thenReturn(gatewayResponse);
     }
 }

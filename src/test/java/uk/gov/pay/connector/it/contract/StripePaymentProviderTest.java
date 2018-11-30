@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.it.contract;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
@@ -17,20 +15,21 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.TestClientFactory;
 
 import static java.util.UUID.randomUUID;
+import static junit.framework.TestCase.assertTrue;
 import static org.assertj.core.api.Java6Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -51,6 +50,8 @@ public class StripePaymentProviderTest {
 
     private String stripeAccountId = "<replace me>";
 
+    private static final Long chargeAmount = 500L;
+
     @Before
     public void setup() {
         ConnectorConfiguration connectorConfig = app.getInstanceFromGuiceContainer(ConnectorConfiguration.class);
@@ -64,7 +65,7 @@ public class StripePaymentProviderTest {
         GatewayResponse gatewayResponse = authorise();
         assertThat(gatewayResponse.isSuccessful()).isTrue();
     }
-    
+
     @Test
     public void cancelCharge() {
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
@@ -84,7 +85,39 @@ public class StripePaymentProviderTest {
         assertThat(captureGatewayResponse.isSuccessful()).isTrue();
     }
 
-    private GatewayResponse authorise() {
+    @Test
+    public void refundChargeInFull() {
+        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
+
+        ChargeEntity chargeEntity = getChargeWithTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId());
+        CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(chargeEntity);
+
+        stripePaymentProvider.capture(request);
+        final RefundEntity refundEntity = new RefundEntity(chargeEntity, chargeAmount, "some-user-external-id");
+
+        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity);
+        GatewayResponse<BaseRefundResponse> refundResponse = stripePaymentProvider.refund(refundRequest);
+
+        assertTrue(refundResponse.isSuccessful());
+    }
+
+    @Test
+    public void refundChargePartial() {
+        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
+
+        ChargeEntity chargeEntity = getChargeWithTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId());
+        CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(chargeEntity);
+
+        stripePaymentProvider.capture(request);
+        final RefundEntity refundEntity = new RefundEntity(chargeEntity, chargeAmount / 2, "some-user-external-id");
+
+        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity);
+        GatewayResponse<BaseRefundResponse> refundResponse = stripePaymentProvider.refund(refundRequest);
+
+        assertTrue(refundResponse.isSuccessful());
+    }
+
+    private GatewayResponse<BaseAuthoriseResponse> authorise() {
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(getCharge(), anAuthCardDetails().withEndDate("01/21").build());
         return stripePaymentProvider.authorise(request);
     }
@@ -103,6 +136,7 @@ public class StripePaymentProviderTest {
         validGatewayAccount.setType(TEST);
         return aValidChargeEntity()
                 .withGatewayAccountEntity(validGatewayAccount)
+                .withAmount(chargeAmount)
                 .withTransactionId(randomUUID().toString())
                 .withDescription("stripe payment provider test charge")
                 .build();

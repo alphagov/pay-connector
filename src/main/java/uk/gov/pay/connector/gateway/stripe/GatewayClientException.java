@@ -8,7 +8,7 @@ import javax.ws.rs.core.Response;
 public class GatewayClientException extends Exception{
     private final transient Response response;
     
-    GatewayClientException(String message, Response response) {
+    public GatewayClientException(String message, Response response) {
         super(message);
         this.response = response;
     }
