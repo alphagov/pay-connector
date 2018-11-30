@@ -15,11 +15,19 @@ public class StripeGatewayConfig extends Configuration {
     @NotNull
     private String authToken;
 
+    @Valid
+    @NotNull
+    private String webhookSigningSecret;
+
     public String getUrl() {
         return url;
     }
 
     public String getAuthToken() {
         return authToken;
+    }
+
+    public String getWebhookSigningSecret() {
+        return webhookSigningSecret;
     }
 }

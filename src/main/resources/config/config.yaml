@@ -8,13 +8,13 @@ server:
   registerDefaultExceptionMappers: false
 
 logging:
-    level: INFO
-    appenders:
-      - type: console
-        threshold: ALL
-        timeZone: UTC
-        target: stdout
-        logFormat: "[%d{yyyy-MM-dd HH:mm:ss.SSS}] [thread=%thread] [level=%-5level] [logger=%logger{15}] [requestID=%X{X-Request-Id}] - %msg%n"
+  level: INFO
+  appenders:
+    - type: console
+      threshold: ALL
+      timeZone: UTC
+      target: stdout
+      logFormat: "[%d{yyyy-MM-dd HH:mm:ss.SSS}] [thread=%thread] [level=%-5level] [logger=%logger{15}] [requestID=%X{X-Request-Id}] - %msg%n"
 
 links:
   frontendUrl: ${FRONTEND_URL}
@@ -27,8 +27,8 @@ worldpay:
   notificationDomain: ${SECURE_WORLDPAY_NOTIFICATION_DOMAIN:-worldpay.com}
   credentials: ['username','password','merchant_id']
   applePay:
-   privateKey: ${WORLDPAY_APPLE_PAY_PRIVATE_KEY:-}
-   publicCertificate: ${WORLDPAY_APPLE_PAY_PUBLIC_CERTIFICATE:-}
+    privateKey: ${WORLDPAY_APPLE_PAY_PRIVATE_KEY:-}
+    publicCertificate: ${WORLDPAY_APPLE_PAY_PUBLIC_CERTIFICATE:-}
   jerseyClientOverrides:
     auth:
       # Auth is run in a background thread which will release the HTTP request from frontend after 1 second
@@ -77,6 +77,7 @@ epdq:
 stripe:
   url: ${GDS_CONNECTOR_STRIPE_URL:-https://api.stripe.com}
   authToken: ${GDS_CONNECTOR_STRIPE_AUTH_TOKEN:-sk_test}
+  webhookSigningSecret: ${GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET:-whsec}
 
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
@@ -117,11 +118,11 @@ jerseyClient:
   userAgent: connector
   gzipEnabledForRequests: false
   proxy:
-      host: ${HTTP_PROXY_HOST:-0}
-      port: ${HTTP_PROXY_PORT:-0}
-      scheme : ${HTTP_PROXY_SCHEME:-https}
-      nonProxyHosts:
-        - localhost
+    host: ${HTTP_PROXY_HOST:-0}
+    port: ${HTTP_PROXY_PORT:-0}
+    scheme : ${HTTP_PROXY_SCHEME:-https}
+    nonProxyHosts:
+      - localhost
 
 customJerseyClient:
   # Sets the read timeout to a specified timeout, in

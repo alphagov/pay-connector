@@ -7,11 +7,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
+import javax.ws.rs.WebApplicationException;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,14 +43,18 @@ public class StripeNotificationServiceTest {
     private ChargeNotificationProcessor mockChargeNotificationProcessor;
     @Mock
     private ChargeEntity mockCharge;
+    @Mock
+    private StripeGatewayConfig stripeGatewayConfig;
 
     private final String sourceId = "source-id";
+    private final String webhookSigningSecret = "whsec";
 
     @Before
     public void setup() {
         notificationService = new StripeNotificationService(mockChargeDao,
-                mockChargeNotificationProcessor);
+                mockChargeNotificationProcessor, stripeGatewayConfig);
 
+        when(stripeGatewayConfig.getWebhookSigningSecret()).thenReturn(webhookSigningSecret);
         when(mockCharge.getStatus()).thenReturn(AUTHORISATION_3DS_REQUIRED.getValue());
         when(mockChargeDao.findByProviderAndTransactionId(STRIPE.getName(), sourceId)).thenReturn(Optional.of(mockCharge));
     }
@@ -57,16 +63,21 @@ public class StripeNotificationServiceTest {
     public void shouldUpdateCharge_WhenNotificationIsFor3DSSourceChargeable() {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_CHARGEABLE);
-        notificationService.handleNotificationFor(payload);
+
+        notificationService.handleNotificationFor(payload, signPayload(payload));
 
         verify(mockChargeNotificationProcessor).invoke(sourceId, mockCharge, AUTHORISATION_3DS_READY, null);
+    }
+
+    private String signPayload(String payload) {
+        return StripeNotificationUtilTest.generateSigHeader(webhookSigningSecret, payload);
     }
 
     @Test
     public void shouldUpdateCharge_WhenNotificationIsFor3DSSourceFailed() {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_FAILED);
-        notificationService.handleNotificationFor(payload);
+        notificationService.handleNotificationFor(payload, signPayload(payload));
 
         verify(mockChargeNotificationProcessor).invoke(sourceId, mockCharge, AUTHORISATION_REJECTED, null);
     }
@@ -75,7 +86,7 @@ public class StripeNotificationServiceTest {
     public void shouldUpdateCharge_WhenNotificationIsFor3DSSourceCancelled() {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_CANCELED);
-        notificationService.handleNotificationFor(payload);
+        notificationService.handleNotificationFor(payload, signPayload(payload));
 
         verify(mockChargeNotificationProcessor).invoke(sourceId, mockCharge, AUTHORISATION_CANCELLED, null);
     }
@@ -89,7 +100,7 @@ public class StripeNotificationServiceTest {
         when(mockCharge.getStatus()).thenReturn(ENTERING_CARD_DETAILS.getValue());
         for (StripeNotificationType type : sourceTypes) {
             final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE, sourceId, type);
-            notificationService.handleNotificationFor(payload);
+            notificationService.handleNotificationFor(payload, signPayload(payload));
         }
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
@@ -100,7 +111,7 @@ public class StripeNotificationServiceTest {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, UNKNOWN);
 
-        notificationService.handleNotificationFor(payload);
+        notificationService.handleNotificationFor(payload, signPayload(payload));
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
     }
@@ -110,7 +121,7 @@ public class StripeNotificationServiceTest {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 StringUtils.EMPTY, SOURCE_CHARGEABLE);
 
-        notificationService.handleNotificationFor(payload);
+        notificationService.handleNotificationFor(payload, signPayload(payload));
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
     }
@@ -120,7 +131,7 @@ public class StripeNotificationServiceTest {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 "unknown-source-id", SOURCE_CHARGEABLE);
 
-        notificationService.handleNotificationFor(payload);
+        notificationService.handleNotificationFor(payload, signPayload(payload));
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
     }
@@ -128,9 +139,15 @@ public class StripeNotificationServiceTest {
     @Test
     public void shouldNotUpdateCharge_WhenPayloadIsInvalid() {
         final String payload = "invalid-payload";
-        notificationService.handleNotificationFor(payload);
+        notificationService.handleNotificationFor(payload, signPayload(payload));
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
+    }
+
+    @Test(expected = WebApplicationException.class)
+    public void shouldThrowException_WhenSignatureIsInvalid() {
+        final String payload = "invalid-payload";
+        notificationService.handleNotificationFor(payload, "invalid-signature");
     }
 
     private static String sampleStripeNotification(String location,
