@@ -107,6 +107,7 @@ public class UserNotificationServiceTest {
         personalisation.put("serviceName", "MyService");
         personalisation.put("customParagraph", "^ template body");
         personalisation.put("amount", "5.00");
+        personalisation.put("corporateCardSurcharge", "");
         when(mockNotifyClient.sendEmail(mockNotifyConfiguration.getEmailTemplateId(),
                 charge.getEmail(),
                 personalisation,
@@ -348,6 +349,46 @@ public class UserNotificationServiceTest {
         map.put("serviceName", "MyService");
         map.put("customParagraph", "");
         map.put("amount", "5.00");
+        map.put("corporateCardSurcharge", "");
+
+        verify(mockNotifyClient).sendEmail(
+                mockNotifyConfiguration.getEmailTemplateId(),
+                charge.getEmail(),
+                map, null
+        );
+    }
+
+    @Test
+    public void shouldSendCorporateCardSurchargeWithMessage_whenSurchargePresent() throws Exception {
+        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
+        when(mockNotifyClientFactoryProvider.clientFactory()).thenReturn(mockNotifyClientFactory);
+        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
+        when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+                .withCorporateSurcharge(250L)
+                .build();
+        GatewayAccountEntity accountEntity = charge.getGatewayAccount();
+        EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(accountEntity);
+        emailNotificationEntity.setTemplateBody(null);
+        accountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, emailNotificationEntity);
+
+        userNotificationService = new UserNotificationService(mockNotifyClientFactoryProvider, mockConfig, mockEnvironment);
+        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge);
+        idF.get(1000, TimeUnit.SECONDS);
+
+        HashMap<String, String> map = new HashMap<>();
+
+        map.put("serviceReference", "This is a reference");
+        map.put("date", "1 January 2016 - 10:23:12");
+        map.put("description", "This is a description");
+        map.put("serviceName", "MyService");
+        map.put("customParagraph", "");
+        map.put("amount", "5.00");
+        map.put("corporateCardSurcharge", "Your payment includes a fee of £2.50 for using a corporate credit or debit card.");
 
         verify(mockNotifyClient).sendEmail(
                 mockNotifyConfiguration.getEmailTemplateId(),

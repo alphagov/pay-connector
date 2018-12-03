@@ -161,7 +161,14 @@ public class UserNotificationService {
         map.put("description", charge.getDescription());
         map.put("customParagraph", isBlank(customParagraph) ? "" : "^ " + customParagraph);
         map.put("serviceName", StringUtils.defaultString(gatewayAccount.getServiceName()));
-
+        
+        String corporateSurchargeMsg = charge.getCorporateSurcharge()
+                .map(corporateSurcharge -> 
+                        String.format("Your payment includes a fee of £%s for using a corporate credit or debit card.",
+                                formatToPounds(corporateSurcharge)))
+                .orElse("");
+        map.put("corporateCardSurcharge", corporateSurchargeMsg);
+        
         return map;
     }
 
