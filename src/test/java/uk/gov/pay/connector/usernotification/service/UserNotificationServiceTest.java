@@ -387,7 +387,7 @@ public class UserNotificationServiceTest {
         map.put("description", "This is a description");
         map.put("serviceName", "MyService");
         map.put("customParagraph", "");
-        map.put("amount", "5.00");
+        map.put("amount", "7.50");
         map.put("corporateCardSurcharge", "Your payment includes a fee of £2.50 for using a corporate credit or debit card.");
 
         verify(mockNotifyClient).sendEmail(

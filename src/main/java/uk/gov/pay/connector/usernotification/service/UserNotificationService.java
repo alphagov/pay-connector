@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
@@ -157,7 +158,7 @@ public class UserNotificationService {
 
         map.put("serviceReference", charge.getReference().toString());
         map.put("date", DateTimeUtils.toUserFriendlyDate(charge.getCreatedDate()));
-        map.put("amount", formatToPounds(charge.getAmount()));
+        map.put("amount", formatToPounds(CorporateCardSurchargeCalculator.getTotalAmountFor(charge)));
         map.put("description", charge.getDescription());
         map.put("customParagraph", isBlank(customParagraph) ? "" : "^ " + customParagraph);
         map.put("serviceName", StringUtils.defaultString(gatewayAccount.getServiceName()));
