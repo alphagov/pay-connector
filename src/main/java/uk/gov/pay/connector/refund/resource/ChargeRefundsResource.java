@@ -23,9 +23,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.Optional;
 
-import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MAX_AMOUNT;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MIN_AMOUNT;
@@ -53,22 +51,13 @@ public class ChargeRefundsResource {
     @Produces(APPLICATION_JSON)
     public Response submitRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, RefundRequest refundRequest, @Context UriInfo uriInfo) {
         validateRefundRequest(refundRequest.getAmount());
-        return refundService.doRefund(accountId, chargeId, refundRequest)
-                .map((refundServiceResponse) -> {
-                    GatewayResponse<BaseRefundResponse> response = refundServiceResponse.getRefundGatewayResponse();
-                    if (response.isSuccessful()) {
-                        return Response.accepted(RefundResponse.valueOf(refundServiceResponse.getRefundEntity(), uriInfo).serialize()).build();
-                    }
-                    Optional<GatewayError> errorMaybe = response.getGatewayError();
-                    String errorMessage = errorMaybe
-                            .map(error -> errorMaybe.get().getMessage())
-                            .orElse("unknown error");
-                    return serviceErrorResponse(errorMessage);
-                })
-                .orElseGet(() -> {
-                    logger.error("Error during refund of charge {} - RefundService did not return a Response", chargeId);
-                    return serviceErrorResponse(format("something went wrong during refund of charge %s", chargeId));
-                });
+        final ChargeRefundService.Response refundServiceResponse = refundService.doRefund(accountId, chargeId, refundRequest);
+        GatewayResponse<BaseRefundResponse> response = refundServiceResponse.getRefundGatewayResponse();
+        if (response.isSuccessful()) {
+            return Response.accepted(RefundResponse.valueOf(refundServiceResponse.getRefundEntity(), uriInfo).serialize()).build();
+        }
+
+        return serviceErrorResponse(response.getGatewayError().map(GatewayError::getMessage).orElse("unknown error"));
     }
 
     private void validateRefundRequest(long amount) {

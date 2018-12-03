@@ -18,6 +18,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.ACCEPTED;
@@ -30,6 +31,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
@@ -77,6 +79,10 @@ public class SmartpayRefundITest extends ChargingITestBase {
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
         assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is("8514774917520978"), defaultTestCharge.getChargeId(), refundAmount, "REFUND SUBMITTED")));
+
+        List<String> refundsHistory = databaseTestHelper.getRefundsHistoryByChargeId(defaultTestCharge.getChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
+        assertThat(refundsHistory.size(), is(2));
+        assertThat(refundsHistory, containsInAnyOrder("REFUND SUBMITTED", "CREATED"));
     }
 
     @Test
