@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockserver.integration.ClientAndProxy;
 import org.mockserver.integration.ClientAndServer;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -44,7 +43,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 public class ClientFactoryTest {
 
     DropwizardTestSupport<ConnectorConfiguration> app;
-    private ClientAndProxy proxy;
+    private ClientAndServer proxy;
     private ClientAndServer mockServer;
     private int serverPort = findFreePort();
     private int proxyPort = findFreePort();
@@ -53,7 +52,7 @@ public class ClientFactoryTest {
     MetricRegistry mockMetricRegistry;
     @Before
     public void setup() {
-        proxy = new ClientAndProxy(proxyPort, "localhost", serverPort);
+        proxy = startClientAndServer("localhost", serverPort, proxyPort);
         mockServer = startClientAndServer(serverPort);
     }
 
