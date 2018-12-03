@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.stripe.handler;
+package uk.gov.pay.connector.gateway.stripe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.http.HttpStatus;
@@ -12,10 +12,7 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.stripe.DownstreamException;
-import uk.gov.pay.connector.gateway.stripe.GatewayClientException;
-import uk.gov.pay.connector.gateway.stripe.GatewayException;
-import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
+import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -38,6 +35,8 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_REFUND_ERROR_ALREADY_REFUNDED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_REFUND_ERROR_GREATER_AMOUNT_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_REFUND_FULL_CHARGE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
@@ -71,6 +70,38 @@ public class StripeRefundHandlerTest {
         assertNotNull(refund);
         assertTrue(refund.isSuccessful());
         assertThat(refund.getBaseResponse().get().getReference().get(), is("re_1DRiccHj08j21DRiccHj08j2_test"));
+    }
+
+    @Test
+    public void shouldNotRefund_whenAmountIsMoreThanChargeAmount() throws GatewayClientException, GatewayException, DownstreamException, IOException {
+        StripeErrorResponse stripeErrorResponse = new ObjectMapper().readValue(load(STRIPE_REFUND_ERROR_GREATER_AMOUNT_RESPONSE), StripeErrorResponse.class);
+        when(response.readEntity(StripeErrorResponse.class)).thenReturn(stripeErrorResponse);
+
+        GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", response);
+        when(gatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
+
+        final GatewayResponse<BaseRefundResponse> refund = refundHandler.refund(refundRequest);
+        assertNotNull(refund);
+        assertTrue(refund.isFailed());
+        assertTrue(refund.getGatewayError().isPresent());
+        assertThat(refund.getGatewayError().get().getMessage(), is("Refund amount (£5.01) is greater than charge amount (£5.00)"));
+        assertThat(refund.getGatewayError().get().getErrorType(), Is.is(GENERIC_GATEWAY_ERROR));
+    }
+
+    @Test
+    public void shouldNotRefund_anAlreadyRefundedCharge() throws GatewayClientException, GatewayException, DownstreamException, IOException {
+        StripeErrorResponse stripeErrorResponse = new ObjectMapper().readValue(load(STRIPE_REFUND_ERROR_ALREADY_REFUNDED_RESPONSE), StripeErrorResponse.class);
+        when(response.readEntity(StripeErrorResponse.class)).thenReturn(stripeErrorResponse);
+
+        GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", response);
+        when(gatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
+
+        final GatewayResponse<BaseRefundResponse> refund = refundHandler.refund(refundRequest);
+        assertNotNull(refund);
+        assertTrue(refund.isFailed());
+        assertTrue(refund.getGatewayError().isPresent());
+        assertThat(refund.getGatewayError().get().getMessage(), is("The transfer tr_blah_blah_blah is already fully reversed."));
+        assertThat(refund.getGatewayError().get().getErrorType(), Is.is(GENERIC_GATEWAY_ERROR));
     }
 
     @Test

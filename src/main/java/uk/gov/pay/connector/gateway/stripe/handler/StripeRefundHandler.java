@@ -56,7 +56,7 @@ public class StripeRefundHandler {
                     payload,
                     ImmutableMap.of(AUTHORIZATION, getAuthHeaderValue(stripeGatewayConfig)),
                     APPLICATION_FORM_URLENCODED_TYPE,
-                    format("gateway-operations.%s.%s.cancel", gatewayAccount.getGatewayName(), gatewayAccount.getType()));
+                    format("gateway-operations.%s.%s.refund", gatewayAccount.getGatewayName(), gatewayAccount.getType()));
 
             return responseBuilder.withResponse(StripeRefundResponse.of(response)).build();
 
@@ -83,21 +83,6 @@ public class StripeRefundHandler {
         }
     }
 
-    /**
-     * If there is no <code>amount</code> specified in the payload
-     * then this is a full refund
-     * <p>
-     * Payload example <code>
-     * {
-     * "charge": "abc",
-     * "refund_application_fee": true,
-     * "reverse_transfer": true
-     * }
-     * </code>
-     *
-     * @return List<BasicNameValuePair> representing all the parameters
-     * required for this refund
-     */
     private List<BasicNameValuePair> buildPayload(String chargeGatewayId, String amount) {
         List<BasicNameValuePair> payload = new ArrayList<>();
         payload.add(new BasicNameValuePair("charge", chargeGatewayId));
