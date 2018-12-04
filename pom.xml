@@ -9,7 +9,6 @@
         <wiremock.version>2.19.0</wiremock.version>
         <eclipselink.version>2.7.3</eclipselink.version>
         <guice.version>4.1.0</guice.version>
-        <docker-client.version>8.9.2</docker-client.version>
         <jackson.version>2.9.7</jackson.version>
         <pay-java-commons.version>1.0.0-f6097986677849386f283bb84072198b57931b1b</pay-java-commons.version>
         <dependency-check.skip>true</dependency-check.skip>
@@ -385,12 +384,6 @@
             <groupId>org.hamcrest</groupId>
             <artifactId>java-hamcrest</artifactId>
             <version>2.0.0.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.spotify</groupId>
-            <artifactId>docker-client</artifactId>
-            <version>${docker-client.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

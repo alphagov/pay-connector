@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.rules;
 
 import com.google.inject.Injector;
-import com.spotify.docker.client.exceptions.DockerException;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
@@ -12,6 +11,7 @@ import org.junit.runners.model.Statement;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.commons.testing.db.PostgresDockerRule;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -37,11 +37,7 @@ abstract public class AppWithPostgresRule implements TestRule {
 
     public AppWithPostgresRule(String configPath, ConfigOverride... configOverrides) {
         configFilePath = resourceFilePath(configPath);
-        try {
-            postgres = new PostgresDockerRule();
-        } catch (DockerException e) {
-            throw new RuntimeException(e);
-        }
+        postgres = new PostgresDockerRule();
 
         appRule = newApplication(configFilePath, overrideDatabaseConfig(configOverrides, postgres));
 

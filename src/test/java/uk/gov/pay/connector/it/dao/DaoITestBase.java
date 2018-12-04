@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.dao;
 
 import com.google.inject.persist.jpa.JpaPersistModule;
-import com.spotify.docker.client.exceptions.DockerException;
 import liquibase.Liquibase;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
@@ -9,7 +8,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.skife.jdbi.v2.DBI;
-import uk.gov.pay.connector.rules.PostgresDockerRule;
+import uk.gov.pay.commons.testing.db.PostgresDockerRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.sql.Connection;
@@ -19,18 +18,10 @@ import java.util.Properties;
 abstract public class DaoITestBase {
 
     @ClassRule
-    public static PostgresDockerRule postgres;
+    public static PostgresDockerRule postgres = new PostgresDockerRule();
 
     protected static DatabaseTestHelper databaseTestHelper;
     protected static GuicedTestEnvironment env;
-
-    static {
-        try {
-            postgres = new PostgresDockerRule();
-        } catch (DockerException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @BeforeClass
     public static void setup() throws Exception {
