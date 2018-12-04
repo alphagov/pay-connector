@@ -79,7 +79,7 @@ public class ChargeRefundService {
     }
 
     @Transactional
-    private RefundEntity createRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
+    public RefundEntity createRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId).map(chargeEntity -> {
             Long availableAmount = validateRefundAndGetAvailableAmount(chargeEntity, refundRequest);
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
@@ -101,7 +101,7 @@ public class ChargeRefundService {
     }
 
     @Transactional
-    private void updateRefundStatus(GatewayResponse gatewayResponse, Long refundEntityId) {
+    public void updateRefundStatus(GatewayResponse gatewayResponse, Long refundEntityId) {
         RefundStatus status = gatewayResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
         refundDao.findById(refundEntityId).ifPresent(refundEntity -> {
             String reference = getRefundReference(refundEntity, gatewayResponse);
@@ -115,26 +115,24 @@ public class ChargeRefundService {
 
             refundEntity.setStatus(status);
             refundEntity.setReference(reference);
-            refundDao.merge(refundEntity);
         });
     }
 
     @Transactional
-    private RefundEntity updateSandboxStatus(RefundEntity refundEntity) {
+    public RefundEntity updateSandboxStatus(RefundEntity refundEntity) {
         return refundDao.findById(refundEntity.getId()).map(refund -> {
             ChargeEntity chargeEntity = refund.getChargeEntity();
             if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX
                     && refund.hasStatus(RefundStatus.REFUND_SUBMITTED)) {
                 refund.setStatus(REFUNDED);
                 userNotificationService.sendRefundIssuedEmail(refund);
-                refundDao.merge(refund);
             }
             return refund;
         }).orElse(refundEntity);
     }
 
     @Transactional
-    private RefundEntity createRefundEntity(RefundRequest refundRequest, ChargeEntity charge) {
+    public RefundEntity createRefundEntity(RefundRequest refundRequest, ChargeEntity charge) {
         RefundEntity refundEntity = new RefundEntity(charge, refundRequest.getAmount(), refundRequest.getUserExternalId());
         charge.getRefunds().add(refundEntity);
         refundDao.persist(refundEntity);
