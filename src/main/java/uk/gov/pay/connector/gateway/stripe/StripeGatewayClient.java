@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
-import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 
@@ -72,7 +71,10 @@ public class StripeGatewayClient {
         }
         if (SERVER_ERROR == response.getStatusInfo().getFamily()) {
             metricRegistry.counter(metricsPrefix + ".failures").inc();
-            throw new DownstreamException(response.getStatus(), response.readEntity(String.class));
+            String responseMessage = response.readEntity(String.class);
+            logger.error("Unexpected HTTP status code {} from gateway, error=[{}]",
+                    response.getStatus(), responseMessage);
+            throw new DownstreamException(response.getStatus(), responseMessage);
         }
     }
 }

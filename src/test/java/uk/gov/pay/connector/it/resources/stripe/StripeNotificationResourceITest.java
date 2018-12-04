@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.Response;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
@@ -16,6 +17,7 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
@@ -26,7 +28,6 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.apache.commons.lang.math.RandomUtils.nextInt;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -56,19 +57,24 @@ public class StripeNotificationResourceITest {
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
 
+    StripeMockClient stripeMockClient;
+
     @Before
     public void setup() {
         accountId = String.valueOf(RandomUtils.nextInt());
 
         databaseTestHelper = testContext.getDatabaseTestHelper();
-        databaseTestHelper.addGatewayAccount(accountId, paymentProvider, null);
+        databaseTestHelper.addGatewayAccount(accountId, "stripe", ImmutableMap.of("stripe_account_id", "stripe_account_id"));
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
+
+        stripeMockClient = new StripeMockClient();
     }
 
     @Test
     public void shouldHandleASourceChargeableNotification() {
         String transactionId = "transaction-id" + nextInt();
         String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
+        stripeMockClient.mockCreateCharge();
 
         String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 transactionId, SOURCE_CHARGEABLE);
@@ -80,7 +86,7 @@ public class StripeNotificationResourceITest {
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_STRIPE));
 
-        assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_3DS_READY.getValue());
+        assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_SUCCESS.getValue());
     }
 
     @Test

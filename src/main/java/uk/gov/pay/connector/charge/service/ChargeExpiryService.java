@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
@@ -51,6 +52,7 @@ public class ChargeExpiryService {
     public static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ImmutableList.of(
             CREATED,
             ENTERING_CARD_DETAILS,
+            AUTHORISATION_3DS_READY,
             AUTHORISATION_3DS_REQUIRED,
             AUTHORISATION_SUCCESS);
 

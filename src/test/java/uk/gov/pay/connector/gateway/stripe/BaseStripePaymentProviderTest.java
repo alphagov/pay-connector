@@ -39,11 +39,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_3DS_SOURCES_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE_GENERAL;
 
 public abstract class BaseStripePaymentProviderTest {
 
@@ -98,6 +98,12 @@ public abstract class BaseStripePaymentProviderTest {
     String success3dsSourceResponse() {
         return TestTemplateResourceLoader.load(STRIPE_CREATE_3DS_SOURCES_RESPONSE);
     }
+    String successChargeResponse() {
+        return TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_SUCCESS_RESPONSE);
+    }
+    String errorResponse() {
+        return TestTemplateResourceLoader.load(STRIPE_ERROR_RESPONSE);
+    }
 
     CardAuthorisationGatewayRequest buildTestAuthorisationRequest() {
         return buildTestAuthorisationRequest(buildTestGatewayAccountEntity());
@@ -145,6 +151,14 @@ public abstract class BaseStripePaymentProviderTest {
                 .withGatewayAccountEntity(accountEntity)
                 .build();
         return buildTestAuthorisationRequest(chargeEntity);
+    }
+
+    protected ChargeEntity buildTestCharge() {
+        return aValidChargeEntity()
+                .withExternalId("mq4ht90j2oir6am585afk58kml")
+                .withTransactionId("transaction-id")
+                .withGatewayAccountEntity(buildTestGatewayAccountEntity())
+                .build();
     }
 
     CardAuthorisationGatewayRequest buildTestAuthorisationRequest(ChargeEntity chargeEntity) {

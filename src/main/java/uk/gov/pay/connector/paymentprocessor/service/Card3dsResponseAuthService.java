@@ -6,13 +6,9 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
-import javax.ws.rs.HEAD;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.paymentprocessor.model.OperationType.AUTHORISATION_3DS;
@@ -36,17 +32,29 @@ public class Card3dsResponseAuthService {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
 
             final ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, AUTHORISATION_3DS);
-            Gateway3DSAuthorisationResponse gateway3DSAuthorisationResponse =  providers
-                    .byName(charge.getPaymentGatewayName())
-                    .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(charge, auth3DsDetails));
-            processGateway3DSecureResponse(
-                    charge.getExternalId(),
-                    ChargeStatus.fromString(charge.getStatus()),
-                    gateway3DSAuthorisationResponse
-            );
-
-            return gateway3DSAuthorisationResponse;
+            return authoriseAndProcess3DS(auth3DsDetails, charge);
         });
+    }
+
+    public Gateway3DSAuthorisationResponse process3DSecureAuthorisationWithoutLocking(String chargeId, Auth3dsDetails auth3DsDetails) {
+        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
+            final ChargeEntity charge = chargeService.findChargeById(chargeId);
+            return authoriseAndProcess3DS(auth3DsDetails, charge);
+        });
+    }
+
+    private Gateway3DSAuthorisationResponse authoriseAndProcess3DS(Auth3dsDetails auth3DsDetails, ChargeEntity charge) {
+        Gateway3DSAuthorisationResponse gateway3DSAuthorisationResponse = providers
+                .byName(charge.getPaymentGatewayName())
+                .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(charge, auth3DsDetails));
+
+        processGateway3DSecureResponse(
+                charge.getExternalId(),
+                ChargeStatus.fromString(charge.getStatus()),
+                gateway3DSAuthorisationResponse
+        );
+
+        return gateway3DSAuthorisationResponse;
     }
 
     private void processGateway3DSecureResponse(
