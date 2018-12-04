@@ -28,6 +28,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
+import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
@@ -132,7 +133,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+    public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, request.getGatewayAccount(), buildQueryOrderRequestFor(request));
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = GatewayResponseGenerator.getEpdqGatewayResponse(authoriseClient, response, EpdqAuthorisationResponse.class);
 
@@ -149,10 +150,12 @@ public class EpdqPaymentProvider implements PaymentProvider {
                     request.getAuth3DsDetails().getAuth3DsResult(),
                     authoriseStatus.name()))
                     .inc();
-            return reconstructErrorBiasedGatewayResponse(gatewayResponse, authoriseStatus, auth3DResult);
+            gatewayResponse = reconstructErrorBiasedGatewayResponse(gatewayResponse, authoriseStatus, auth3DResult);
 
         }
-        return gatewayResponse;
+
+        return gatewayResponse.getBaseResponse().map(baseResponse -> Gateway3DSAuthorisationResponse.of(baseResponse.authoriseStatus(), baseResponse.getTransactionId()))
+                .orElseGet(() -> Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION));
     }
 
     @Override
@@ -169,7 +172,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
      * The outgoing response is error biased. Meaning, we have to make sure that the authorisation success can only happen if both frontend as well as epdq confirms its a success.
      * In all other combinations it is not authorised and the frontend error state take precedence followed by gateway error state for the resulting status.
      */
-    private GatewayResponse reconstructErrorBiasedGatewayResponse(GatewayResponse<BaseAuthoriseResponse> gatewayResponse, BaseAuthoriseResponse.AuthoriseStatus authoriseStatus, Auth3dsDetails.Auth3dsResult auth3DResult) {
+    private GatewayResponse<BaseAuthoriseResponse> reconstructErrorBiasedGatewayResponse(GatewayResponse<BaseAuthoriseResponse> gatewayResponse, BaseAuthoriseResponse.AuthoriseStatus authoriseStatus, Auth3dsDetails.Auth3dsResult auth3DResult) {
         GatewayResponse.GatewayResponseBuilder<EpdqAuthorisationResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         if (auth3DResult.equals(Auth3dsDetails.Auth3dsResult.ERROR)) {
             return responseBuilder.withGatewayError(GatewayError.genericGatewayError(format("epdq.authorise-3ds.result.mismatch expected=%s, actual=%s", Auth3dsDetails.Auth3dsResult.ERROR, authoriseStatus.name())))

@@ -20,9 +20,7 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
+import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.util.AuthUtils;
 
 import java.util.Map;
@@ -44,7 +42,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
 
@@ -69,9 +66,9 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
                 null, mockConfiguration, null);
-        CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService);
+        CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
 
-        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, cardAuthoriseBaseService, mockEnvironment);
+        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, cardAuthoriseBaseService);
     }
 
     public void setupMockExecutorServiceMock() {
@@ -79,15 +76,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
                 .when(mockExecutorService).execute(any(Supplier.class));
     }
 
-    private void setupPaymentProviderMock(String transactionId, AuthoriseStatus authoriseStatus, String errorCode, ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
-        WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
-        when(worldpayResponse.getTransactionId()).thenReturn(transactionId);
-        when(worldpayResponse.authoriseStatus()).thenReturn(authoriseStatus);
-        when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
-        GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse authorisationResponse = gatewayResponseBuilder
-                .withResponse(worldpayResponse)
-                .build();
+    private void setupPaymentProviderMock(String transactionId, AuthoriseStatus authoriseStatus, ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
+        Gateway3DSAuthorisationResponse authorisationResponse = Gateway3DSAuthorisationResponse.of(authoriseStatus, transactionId);
         when(mockedPaymentProvider.authorise3dsResponse(argumentCaptor.capture())).thenReturn(authorisationResponse);
     }
 
@@ -101,11 +91,11 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
                 .thenReturn(Optional.of(charge));
 
         setupMockExecutorServiceMock();
-        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.AUTHORISED, null, argumentCaptor);
+        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.AUTHORISED, argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
-        GatewayResponse response = card3dsResponseAuthService.process3DSecure(charge.getExternalId(), auth3dsDetails);
+        Gateway3DSAuthorisationResponse response = card3dsResponseAuthService.process3DSecureAuthorisation(charge.getExternalId(), auth3dsDetails);
 
         assertThat(response.isSuccessful(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
@@ -116,7 +106,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRetainGeneratedTransactionId_evenIfAuthorisationAborted()  {
+    public void doAuthorise_shouldRetainGeneratedTransactionId_evenIfAuthorisationAborted() {
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
@@ -125,7 +115,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         setupMockExecutorServiceMock();
 
         try {
-            card3dsResponseAuthService.process3DSecure(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
+            card3dsResponseAuthService.process3DSecureAuthorisation(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
             fail("Won’t get this far");
         } catch (RuntimeException e) {
             assertThat(charge.getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
@@ -145,24 +135,24 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
                 .thenReturn(Optional.of(charge));
 
         setupMockExecutorServiceMock();
-        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.AUTHORISED, null, argumentCaptor);
+        setupPaymentProviderMock(charge.getGatewayTransactionId(), AuthoriseStatus.AUTHORISED, argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
-        card3dsResponseAuthService.process3DSecure(charge.getExternalId(), auth3dsDetails);
+        card3dsResponseAuthService.process3DSecureAuthorisation(charge.getExternalId(), auth3dsDetails);
 
         assertTrue(argumentCaptor.getValue().getProviderSessionId().isPresent());
         assertThat(argumentCaptor.getValue().getProviderSessionId().get(), is(providerSessionId));
     }
 
     @Test
-    public void shouldRespondAuthorisationRejected()  {
+    public void shouldRespondAuthorisationRejected() {
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);
         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
 
-        GatewayResponse response = anAuthorisationRejectedResponse(charge, charge.getGatewayTransactionId(), argumentCaptor);
+        Gateway3DSAuthorisationResponse response = anAuthorisationRejectedResponse(charge, charge.getGatewayTransactionId(), argumentCaptor);
 
-        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.isSuccessful(), is(false));
 
         assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
@@ -171,13 +161,13 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldRespondAuthorisationCancelled()  {
+    public void shouldRespondAuthorisationCancelled() {
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);
         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
 
-        GatewayResponse response = anAuthorisationCancelledResponse(charge, charge.getGatewayTransactionId(), argumentCaptor);
+        Gateway3DSAuthorisationResponse response = anAuthorisationCancelledResponse(charge, charge.getGatewayTransactionId(), argumentCaptor);
 
-        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.isSuccessful(), is(false));
         assertThat(charge.getStatus(), is(AUTHORISATION_CANCELLED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
@@ -185,19 +175,19 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldRespondAuthorisationError()  {
+    public void shouldRespondAuthorisationError() {
         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
-        GatewayResponse response = anAuthorisationErrorResponse(charge, argumentCaptor);
+        Gateway3DSAuthorisationResponse response = anAuthorisationErrorResponse(charge, argumentCaptor);
 
-        assertThat(response.isFailed(), is(true));
+        assertThat(response.isSuccessful(), is(false));
     }
 
     @Test
-    public void authoriseShouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenTimeout()  {
+    public void authoriseShouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenTimeout() {
         when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
 
         try {
-            card3dsResponseAuthService.process3DSecure(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
+            card3dsResponseAuthService.process3DSecureAuthorisation(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
             fail("Exception not thrown.");
         } catch (OperationAlreadyInProgressRuntimeException e) {
             Map<String, String> expectedMessage = ImmutableMap.of("message", format("Authorisation for charge already in progress, %s", charge.getExternalId()));
@@ -214,7 +204,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(chargeId))
                 .thenReturn(Optional.empty());
 
-        card3dsResponseAuthService.process3DSecure(chargeId, AuthUtils.buildAuth3dsDetails());
+        card3dsResponseAuthService.process3DSecureAuthorisation(chargeId, AuthUtils.buildAuth3dsDetails());
     }
 
     @Test(expected = OperationAlreadyInProgressRuntimeException.class)
@@ -225,12 +215,12 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
         setupMockExecutorServiceMock();
 
-        card3dsResponseAuthService.process3DSecure(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
+        card3dsResponseAuthService.process3DSecureAuthorisation(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
     @Test(expected = IllegalStateRuntimeException.class)
-    public void shouldThrowAnIllegalStateRuntimeExceptionWhenInvalidStatus()  {
+    public void shouldThrowAnIllegalStateRuntimeExceptionWhenInvalidStatus() {
 
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.AUTHORISATION_READY);
 
@@ -238,10 +228,10 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
         setupMockExecutorServiceMock();
 
-        card3dsResponseAuthService.process3DSecure(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
+        card3dsResponseAuthService.process3DSecureAuthorisation(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
-    
+
     @Test(expected = IllegalStateRuntimeException.class)
     public void shouldThrowChargeExpiredRuntimeExceptionWhenChargeExpired() {
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.EXPIRED);
@@ -250,44 +240,44 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
         setupMockExecutorServiceMock();
 
-        card3dsResponseAuthService.process3DSecure(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
+        card3dsResponseAuthService.process3DSecureAuthorisation(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
     }
 
-    private GatewayResponse anAuthorisationRejectedResponse(ChargeEntity charge,
-                                                            String transactionId,
-                                                            ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
+    private Gateway3DSAuthorisationResponse anAuthorisationRejectedResponse(ChargeEntity charge,
+                                                                            String transactionId,
+                                                                            ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
         return anAuthorisedFailedResponse(charge, transactionId, AuthoriseStatus.REJECTED, argumentCaptor);
     }
 
-    private GatewayResponse anAuthorisationCancelledResponse(ChargeEntity charge,
-                                                             String transactionId,
-                                                             ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
+    private Gateway3DSAuthorisationResponse anAuthorisationCancelledResponse(ChargeEntity charge,
+                                                                             String transactionId,
+                                                                             ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
         return anAuthorisedFailedResponse(charge, transactionId, AuthoriseStatus.CANCELLED, argumentCaptor);
     }
 
-    private GatewayResponse anAuthorisedFailedResponse(ChargeEntity charge,
-                                                       String transactionId, AuthoriseStatus authoriseStatus,
-                                                       ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
+    private Gateway3DSAuthorisationResponse anAuthorisedFailedResponse(ChargeEntity charge,
+                                                                       String transactionId, AuthoriseStatus authoriseStatus,
+                                                                       ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
         setupMockExecutorServiceMock();
-        setupPaymentProviderMock(transactionId, authoriseStatus, null, argumentCaptor);
+        setupPaymentProviderMock(transactionId, authoriseStatus, argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
-        return card3dsResponseAuthService.process3DSecure(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
+        return card3dsResponseAuthService.process3DSecureAuthorisation(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
     }
 
-    private GatewayResponse anAuthorisationErrorResponse(ChargeEntity charge,
-                                                         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
+    private Gateway3DSAuthorisationResponse anAuthorisationErrorResponse(ChargeEntity charge,
+                                                                         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
         setupMockExecutorServiceMock();
-        setupPaymentProviderMock(null, AuthoriseStatus.REJECTED, "error-code", argumentCaptor);
+        setupPaymentProviderMock(null, AuthoriseStatus.REJECTED, argumentCaptor);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
-        return card3dsResponseAuthService.process3DSecure(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
+        return card3dsResponseAuthService.process3DSecureAuthorisation(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
     }
 }

@@ -88,15 +88,15 @@ public class GatewayResponse<T extends BaseResponse> {
             return this;
         }
 
-        public GatewayResponse build() {
+        public GatewayResponse<T> build() {
             if (gatewayError != null) {
-                return new GatewayResponse(gatewayError);
+                return new GatewayResponse<>(gatewayError);
             }
             if (StringUtils.isNotBlank(response.getErrorCode()) ||
                     StringUtils.isNotBlank(response.getErrorMessage())) {
                 return new GatewayResponse<>(genericGatewayError(response.toString()));
             }
-            return new GatewayResponse(response, sessionIdentifier);
+            return new GatewayResponse<>(response, sessionIdentifier);
         }
     }
 }
