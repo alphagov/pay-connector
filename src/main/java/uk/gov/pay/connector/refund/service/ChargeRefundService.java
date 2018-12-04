@@ -32,10 +32,10 @@ public class ChargeRefundService {
 
     public class Response {
 
-        private GatewayResponse refundGatewayResponse;
+        private GatewayResponse<BaseRefundResponse> refundGatewayResponse;
         private RefundEntity refundEntity;
 
-        public Response(GatewayResponse refundGatewayResponse, RefundEntity refundEntity) {
+        public Response(GatewayResponse<BaseRefundResponse> refundGatewayResponse, RefundEntity refundEntity) {
             this.refundGatewayResponse = refundGatewayResponse;
             this.refundEntity = refundEntity;
         }
@@ -79,6 +79,7 @@ public class ChargeRefundService {
     }
 
     @Transactional
+    @SuppressWarnings("WeakerAccess")
     public RefundEntity createRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId).map(chargeEntity -> {
             Long availableAmount = validateRefundAndGetAvailableAmount(chargeEntity, refundRequest);
@@ -101,7 +102,8 @@ public class ChargeRefundService {
     }
 
     @Transactional
-    public void updateRefundStatus(GatewayResponse gatewayResponse, Long refundEntityId) {
+    @SuppressWarnings("WeakerAccess")
+    public void updateRefundStatus(GatewayResponse<BaseRefundResponse> gatewayResponse, Long refundEntityId) {
         RefundStatus status = gatewayResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
         refundDao.findById(refundEntityId).ifPresent(refundEntity -> {
             String reference = getRefundReference(refundEntity, gatewayResponse);
@@ -119,6 +121,7 @@ public class ChargeRefundService {
     }
 
     @Transactional
+    @SuppressWarnings("WeakerAccess")
     public RefundEntity updateSandboxStatus(RefundEntity refundEntity) {
         return refundDao.findById(refundEntity.getId()).map(refund -> {
             ChargeEntity chargeEntity = refund.getChargeEntity();
@@ -132,6 +135,7 @@ public class ChargeRefundService {
     }
 
     @Transactional
+    @SuppressWarnings("WeakerAccess")
     public RefundEntity createRefundEntity(RefundRequest refundRequest, ChargeEntity charge) {
         RefundEntity refundEntity = new RefundEntity(charge, refundRequest.getAmount(), refundRequest.getUserExternalId());
         charge.getRefunds().add(refundEntity);
@@ -191,10 +195,11 @@ public class ChargeRefundService {
      */
     private String getRefundReference(RefundEntity refundEntity, GatewayResponse<BaseRefundResponse> gatewayResponse) {
         if (gatewayResponse.isSuccessful()) {
-
-            return gatewayResponse.getBaseResponse().get().getReference().orElse(refundEntity.getExternalId());
+            return gatewayResponse.getBaseResponse().flatMap(BaseRefundResponse::getReference)
+                    .orElseGet(refundEntity::getExternalId);
         }
-        /**
+        /*
+         * todo: refactor this code to not return empty String
          * if not successful (and the fact that we have got a proper response from Gateway, we have to assume
          * no refund has not gone through and no reference returned(or needed) to be stored.
          */

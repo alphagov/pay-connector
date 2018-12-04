@@ -117,8 +117,8 @@ public class ChargeExpiryService {
         final List<ChargeEntity> expireCancelFailed = newArrayList();
 
         gatewayAuthorizedCharges.forEach(chargeEntity -> {
-            ChargeEntity processedEntity = prepareForTermination(chargeEntity.getExternalId(), EXPIRE_FLOW);
-            GatewayResponse gatewayResponse = doGatewayCancel(processedEntity);
+            ChargeEntity processedEntity = prepareForTermination(chargeEntity.getExternalId());
+            GatewayResponse<BaseCancelResponse> gatewayResponse = doGatewayCancel(processedEntity);
             ChargeEntity expiredCharge = finishExpireCancel(processedEntity.getExternalId(), gatewayResponse);
 
             if (EXPIRED.getValue().equals(expiredCharge.getStatus())) {
@@ -134,7 +134,7 @@ public class ChargeExpiryService {
         );
     }
 
-    private ChargeStatus determineTerminalState(ChargeEntity chargeEntity, GatewayResponse<BaseCancelResponse> cancelResponse, StatusFlow statusFlow) {
+    private ChargeStatus determineTerminalState(ChargeEntity chargeEntity, GatewayResponse<BaseCancelResponse> cancelResponse) {
         if (!cancelResponse.isSuccessful()) {
             logUnsuccessfulResponseReasons(chargeEntity, cancelResponse);
         }
@@ -142,19 +142,20 @@ public class ChargeExpiryService {
         return cancelResponse.getBaseResponse().map(response -> {
             switch (response.cancelStatus()) {
                 case CANCELLED:
-                    return statusFlow.getSuccessTerminalState();
+                    return EXPIRE_FLOW.getSuccessTerminalState();
                 case SUBMITTED:
-                    return statusFlow.getSubmittedState();
+                    return EXPIRE_FLOW.getSubmittedState();
                 default:
-                    return statusFlow.getFailureTerminalState();
+                    return EXPIRE_FLOW.getFailureTerminalState();
             }
-        }).orElse(statusFlow.getFailureTerminalState());
+        }).orElse(EXPIRE_FLOW.getFailureTerminalState());
     }
 
     @Transactional
-    public ChargeEntity finishExpireCancel(String chargeExternalId, GatewayResponse gatewayResponse) {
+    @SuppressWarnings("WeakerAccess")
+    public ChargeEntity finishExpireCancel(String chargeExternalId, GatewayResponse<BaseCancelResponse> gatewayResponse) {
         return chargeDao.findByExternalId(chargeExternalId).map(chargeEntity -> {
-            ChargeStatus status = determineTerminalState(chargeEntity, gatewayResponse, EXPIRE_FLOW);
+            ChargeStatus status = determineTerminalState(chargeEntity, gatewayResponse);
             logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                     chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
             chargeEntity.setStatus(status);
@@ -163,7 +164,7 @@ public class ChargeExpiryService {
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
     }
 
-    private void logUnsuccessfulResponseReasons(ChargeEntity chargeEntity, GatewayResponse gatewayResponse) {
+    private void logUnsuccessfulResponseReasons(ChargeEntity chargeEntity, GatewayResponse<BaseCancelResponse> gatewayResponse) {
         gatewayResponse.getGatewayError().ifPresent(error ->
                 logger.error("Gateway error while cancelling the Charge - charge_external_id={}, gateway_error={}",
                         chargeEntity.getExternalId(), error));
@@ -185,17 +186,19 @@ public class ChargeExpiryService {
         return legalStatuses.stream().map(ChargeStatus::toString).collect(Collectors.joining(", "));
     }
 
-    private static boolean chargeIsInTerminatableStatus(StatusFlow statusFlow, ChargeStatus chargeStatus) {
-        return statusFlow.getTerminatableStatuses().contains(chargeStatus);
+    private static boolean chargeIsInTerminatableStatus(ChargeStatus chargeStatus) {
+        return EXPIRE_FLOW.getTerminatableStatuses().contains(chargeStatus);
     }
 
-    private GatewayResponse doGatewayCancel(ChargeEntity chargeEntity) {
+    private GatewayResponse<BaseCancelResponse> doGatewayCancel(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName())
                 .cancel(CancelGatewayRequest.valueOf(chargeEntity));
     }
 
     // Only methods marked as public will be picked up by GuicePersist
+
     @Transactional
+    @SuppressWarnings("WeakerAccess")
     public ChargeEntity changeStatusTo(String chargeId, ChargeStatus targetStatus) {
         return chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
@@ -209,19 +212,20 @@ public class ChargeExpiryService {
     }
 
     @Transactional
-    public ChargeEntity prepareForTermination(String chargeId, StatusFlow statusFlow) {
+    @SuppressWarnings("WeakerAccess")
+    public ChargeEntity prepareForTermination(String chargeId) {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
-            ChargeStatus newStatus = statusFlow.getLockState();
+            ChargeStatus newStatus = EXPIRE_FLOW.getLockState();
             final ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
-            if (!chargeIsInTerminatableStatus(statusFlow, chargeStatus)) {
+            if (!chargeIsInTerminatableStatus(chargeStatus)) {
                 if (newStatus.equals(chargeStatus)) {
-                    throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), chargeId);
+                    throw new OperationAlreadyInProgressRuntimeException(EXPIRE_FLOW.getName(), chargeId);
                 } else if (Arrays.asList(AUTHORISATION_READY, AUTHORISATION_3DS_READY).contains(chargeStatus)) {
                     throw new ConflictRuntimeException(chargeEntity.getExternalId());
                 }
 
                 logger.error("Charge is not in one of the legal states. charge_external_id={}, status={}, legal_states={}",
-                        chargeId, chargeEntity.getStatus(), getLegalStatusNames(statusFlow.getTerminatableStatuses()));
+                        chargeId, chargeEntity.getStatus(), getLegalStatusNames(EXPIRE_FLOW.getTerminatableStatuses()));
 
                 throw new IllegalStateRuntimeException(chargeId);
             }
