@@ -17,8 +17,8 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
 import static java.util.Arrays.stream;
 import static uk.gov.pay.connector.junit.DropwizardTestApplications.createIfNotRunning;
-import static uk.gov.pay.connector.junit.PostgresTestContainer.DB_PASSWORD;
-import static uk.gov.pay.connector.junit.PostgresTestContainer.DB_USERNAME;
+import static uk.gov.pay.connector.junit.PostgresTestDocker.getDbPassword;
+import static uk.gov.pay.connector.junit.PostgresTestDocker.getDbUsername;
 import static uk.gov.pay.connector.junit.PostgresTestDocker.getDbUri;
 import static uk.gov.pay.connector.junit.PostgresTestDocker.getOrCreate;
 
@@ -58,10 +58,10 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
         DropwizardConfig dropwizardConfigAnnotation = dropwizardConfigAnnotation();
         List<ConfigOverride> configOverride = newArrayList();
         if (dropwizardConfigAnnotation.withDockerPostgres()) {
-            getOrCreate(dropwizardConfigAnnotation.postgresDockerImage());
+            getOrCreate();
             configOverride.add(config("database.url", getDbUri()));
-            configOverride.add(config("database.user", DB_USERNAME));
-            configOverride.add(config("database.password", DB_PASSWORD));
+            configOverride.add(config("database.user", getDbUsername()));
+            configOverride.add(config("database.password", getDbPassword()));
         }
         configOverride.add(config("worldpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/jsp/merchant/xml/paymentService.jsp"));
         configOverride.add(config("smartpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/pal/servlet/soap/Payment"));
