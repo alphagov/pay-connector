@@ -1,0 +1,6 @@
+{
+  "error": {
+    "message": "The transfer tr_blah_blah_blah is already fully reversed.",
+    "type": "invalid_request_error"
+  }
+}

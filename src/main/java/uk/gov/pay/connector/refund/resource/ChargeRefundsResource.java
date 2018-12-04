@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.refund.resource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -35,7 +33,6 @@ import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 @Path("/")
 public class ChargeRefundsResource {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ChargeRefundService refundService;
     private final ChargeDao chargeDao;
 

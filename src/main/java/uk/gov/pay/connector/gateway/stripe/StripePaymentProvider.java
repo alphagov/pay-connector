@@ -28,6 +28,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCancelHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
+import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCreateChargeResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
@@ -66,6 +67,7 @@ public class StripePaymentProvider implements PaymentProvider {
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final StripeCaptureHandler stripeCaptureHandler;
     private final StripeCancelHandler stripeCancelHandler;
+    private final StripeRefundHandler stripeRefundHandler;
 
     @Inject
     public StripePaymentProvider(StripeGatewayClient stripeGatewayClient,
@@ -76,6 +78,7 @@ public class StripePaymentProvider implements PaymentProvider {
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         stripeCaptureHandler = new StripeCaptureHandler(client, stripeGatewayConfig);
         stripeCancelHandler = new StripeCancelHandler(client, stripeGatewayConfig);
+        stripeRefundHandler = new StripeRefundHandler(client, stripeGatewayConfig);
     }
 
     @Override
@@ -222,7 +225,7 @@ public class StripePaymentProvider implements PaymentProvider {
 
     @Override
     public GatewayResponse<BaseRefundResponse> refund(RefundGatewayRequest request) {
-        return null;
+        return stripeRefundHandler.refund(request);
     }
 
     @Override
