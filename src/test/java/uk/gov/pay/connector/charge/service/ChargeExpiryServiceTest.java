@@ -11,7 +11,6 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.charge.service.transaction.TransactionFlow;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -76,7 +75,7 @@ public class ChargeExpiryServiceTest {
     @Before
     public void setup() {
         when(mockedConfig.getChargeSweepConfig()).thenReturn(mockedChargeSweepConfig);
-        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, TransactionFlow::new, mockedConfig);
+        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, mockedConfig);
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
         gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayCancelResponse).build();
