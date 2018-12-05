@@ -10,10 +10,10 @@ import uk.gov.pay.connector.it.service.CardCaptureProcessBaseITest;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.rules.StripeMockClient;
 
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -28,7 +28,7 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         new StripeMockClient().mockCaptureSuccess(testCharge.getTransactionId());
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
 
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_SUBMITTED.getValue()));
+        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURED.getValue()));
     }
 
     @Test

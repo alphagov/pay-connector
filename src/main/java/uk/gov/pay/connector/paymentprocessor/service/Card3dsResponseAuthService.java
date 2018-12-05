@@ -6,13 +6,9 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
-import javax.ws.rs.HEAD;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.paymentprocessor.model.OperationType.AUTHORISATION_3DS;
