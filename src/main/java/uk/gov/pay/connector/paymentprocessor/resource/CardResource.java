@@ -7,10 +7,9 @@ import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.paymentprocessor.model.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureService;
@@ -58,13 +57,21 @@ public class CardResource {
         if (!isWellFormatted(authCardDetails)) {
             return badRequestResponse("Values do not match expected format/length.");
         }
-        GatewayResponse<BaseAuthoriseResponse> response = cardAuthoriseService.doAuthorise(chargeId, authCardDetails);
+        AuthorisationResponse response = cardAuthoriseService.doAuthorise(chargeId, authCardDetails);
 
-        if (isAuthorisationSubmitted(response)) {
-            return badRequestResponse("This transaction was deferred.");
-        }
+        return response.getGatewayError().map(this::handleError)
+                .orElseGet(() -> response.getAuthoriseStatus().map(authoriseStatus -> {
+                    if (authoriseStatus.equals(AuthoriseStatus.SUBMITTED)) {
+                        return badRequestResponse("This transaction was deferred.");
+                    }
 
-        return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
+                    if (isAuthorisationDeclined(authoriseStatus)) {
+                        return badRequestResponse("This transaction was declined.");
+                    }
+
+                    return ResponseUtil.successResponseWithEntity(ImmutableMap.of("status", authoriseStatus.getMappedChargeStatus().toString()));
+
+                }).orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
     }
 
     @POST
@@ -139,24 +146,8 @@ public class CardResource {
         }
     }
 
-    private Response handleGatewayAuthoriseResponse(GatewayResponse<? extends BaseAuthoriseResponse> response) {
-        return response.getGatewayError()
-                .map(this::handleError)
-                .orElseGet(() -> response.getBaseResponse()
-                        .map(r -> ResponseUtil.successResponseWithEntity(ImmutableMap.of("status", r.authoriseStatus().getMappedChargeStatus().toString())))
-                        .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
-    }
-
-    private static boolean isAuthorisationSubmitted(GatewayResponse<BaseAuthoriseResponse> response) {
-        return response.getBaseResponse()
-                .filter(baseResponse -> baseResponse.authoriseStatus() == AuthoriseStatus.SUBMITTED)
-                .isPresent();
-    }
-
-    private static boolean isAuthorisationDeclined(GatewayResponse<BaseAuthoriseResponse> response) {
-        return response.getBaseResponse()
-                .filter(baseResponse -> baseResponse.authoriseStatus() == AuthoriseStatus.REJECTED ||
-                        baseResponse.authoriseStatus() == AuthoriseStatus.ERROR)
-                .isPresent();
+    private static boolean isAuthorisationDeclined(AuthoriseStatus authoriseStatus) {
+        return authoriseStatus.equals(AuthoriseStatus.REJECTED) ||
+                authoriseStatus.equals(AuthoriseStatus.ERROR);
     }
 }

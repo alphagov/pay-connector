@@ -19,6 +19,7 @@ import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.paymentprocessor.model.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
@@ -50,7 +51,7 @@ public class CardAuthoriseService {
         this.cardTypeDao = cardTypeDao;
     }
 
-    public GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
+    public AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
             GatewayResponse<BaseAuthoriseResponse> operationResponse = authorise(charge, authCardDetails);
@@ -60,7 +61,7 @@ public class CardAuthoriseService {
                     authCardDetails,
                     operationResponse);
 
-            return operationResponse;
+            return new AuthorisationResponse(operationResponse);
         });
     }
 
