@@ -13,14 +13,13 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
-import uk.gov.pay.connector.paymentprocessor.service.CardCaptureService;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.CaptureResponse;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
@@ -33,6 +32,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureProcessTest {
@@ -53,9 +53,6 @@ public class CardCaptureProcessTest {
     private ConnectorConfiguration mockConnectorConfiguration;
 
     @Mock
-    private GatewayResponse mockGatewayResponse;
-    
-    @Mock
     private MetricRegistry mockMetricRegistry;
     
     @Mock
@@ -72,8 +69,7 @@ public class CardCaptureProcessTest {
         when(mockCaptureConfiguration.getMaximumRetries()).thenReturn(MAXIMUM_RETRIES);
         when(mockConnectorConfiguration.getCaptureProcessConfig()).thenReturn(mockCaptureConfiguration);
         cardCaptureProcess = new CardCaptureProcess(mockEnvironment, mockChargeDao, mockCardCaptureService, mockConnectorConfiguration);
-        when(mockGatewayResponse.isSuccessful()).thenReturn(true);
-        when(mockCardCaptureService.doCapture(anyString())).thenReturn(mockGatewayResponse);
+        when(mockCardCaptureService.doCapture(anyString())).thenReturn(CaptureResponse.fromTransactionId(UUID.randomUUID().toString(), PENDING));
     }
 
     @Test

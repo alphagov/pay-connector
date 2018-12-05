@@ -9,12 +9,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
@@ -63,7 +62,7 @@ public class WorldpayCaptureHandlerTest {
         Either<GatewayError, WorldpayCaptureResponse> unmarshalledResponse = right(XMLUnmarshaller.unmarshall(successCaptureResponse(), WorldpayCaptureResponse.class));
         when(client.unmarshallResponse(any(TestResponse.class), any(Class.class))).thenReturn(unmarshalledResponse);
 
-        GatewayResponse gatewayResponse = worldpayCaptureHandler.capture(getCaptureRequest());
+        CaptureResponse gatewayResponse = worldpayCaptureHandler.capture(getCaptureRequest());
         assertTrue(gatewayResponse.isSuccessful());
     }
 
@@ -85,12 +84,12 @@ public class WorldpayCaptureHandlerTest {
         Either<GatewayError, WorldpayCaptureResponse> unmarshalledResponse = right(XMLUnmarshaller.unmarshall(errorResponse(), WorldpayCaptureResponse.class));
         when(client.unmarshallResponse(any(TestResponse.class), any(Class.class))).thenReturn(unmarshalledResponse);
 
-        GatewayResponse<BaseCaptureResponse> gatewayResponse = worldpayCaptureHandler.capture(getCaptureRequest());
+        CaptureResponse gatewayResponse = worldpayCaptureHandler.capture(getCaptureRequest());
 
-        assertThat(gatewayResponse.isFailed(), is(true));
-        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
-        assertThat(gatewayResponse.getGatewayError().get().getMessage(), is("Worldpay capture response (error code: 5, error: Order has already been paid)"));
-        assertThat(gatewayResponse.getGatewayError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
+        assertThat(gatewayResponse.isSuccessful(), is(false));
+        assertThat(gatewayResponse.getError().isPresent(), is(true));
+        assertThat(gatewayResponse.getError().get().getMessage(), is("worldpay capture response (error code: 5, error: Order has already been paid)"));
+        assertThat(gatewayResponse.getError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
     }
 
     @Test
@@ -99,11 +98,11 @@ public class WorldpayCaptureHandlerTest {
         Either<GatewayError, GatewayClient.Response> response = left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code 400 from gateway"));
         when(client.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(response);
         
-        GatewayResponse<BaseCaptureResponse> gatewayResponse = worldpayCaptureHandler.capture(getCaptureRequest());
-        assertThat(gatewayResponse.isFailed(), is(true));
-        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
-        assertThat(gatewayResponse.getGatewayError().get().getMessage(), is("Unexpected HTTP status code 400 from gateway"));
-        assertThat(gatewayResponse.getGatewayError().get().getErrorType(), is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        CaptureResponse gatewayResponse = worldpayCaptureHandler.capture(getCaptureRequest());
+        assertThat(gatewayResponse.isSuccessful(), is(false));
+        assertThat(gatewayResponse.getError().isPresent(), is(true));
+        assertThat(gatewayResponse.getError().get().getMessage(), is("Unexpected HTTP status code 400 from gateway"));
+        assertThat(gatewayResponse.getError().get().getErrorType(), is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     private CaptureGatewayRequest getCaptureRequest() {

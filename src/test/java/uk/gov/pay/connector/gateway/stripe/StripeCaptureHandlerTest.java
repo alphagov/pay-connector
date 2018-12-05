@@ -10,9 +10,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -74,9 +73,10 @@ public class StripeCaptureHandlerTest {
 
         when(stripeGatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(response);
 
-        GatewayResponse<BaseCaptureResponse> response = stripeCaptureHandler.capture(captureGatewayRequest);
+        CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
         assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().get().getTransactionId(), is("ch_123456"));
+        assertThat(response.getTransactionId().isPresent(), is(true));
+        assertThat(response.getTransactionId().get(), is("ch_123456"));
     }
 
     @Test
@@ -87,11 +87,11 @@ public class StripeCaptureHandlerTest {
         GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", response);
         when(stripeGatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
         
-        GatewayResponse<BaseCaptureResponse> response = stripeCaptureHandler.capture(captureGatewayRequest);
-        assertThat(response.isFailed(), is(true));
-        assertThat(response.getGatewayError().isPresent(), is(true));
-        assertThat(response.getGatewayError().get().getMessage(), is("No such charge: ch_123456 or something similar"));
-        assertThat(response.getGatewayError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
+        CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
+        assertThat(response.isSuccessful(), is(false));
+        assertThat(response.getError().isPresent(), is(true));
+        assertThat(response.getError().get().getMessage(), is("No such charge: ch_123456 or something similar"));
+        assertThat(response.getError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
     }
 
     @Test
@@ -99,11 +99,11 @@ public class StripeCaptureHandlerTest {
         DownstreamException downstreamException = new DownstreamException(HttpStatus.INTERNAL_SERVER_ERROR_500, "Problem with Stripe servers");
         when(stripeGatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(downstreamException);
 
-        GatewayResponse<BaseCaptureResponse> response = stripeCaptureHandler.capture(captureGatewayRequest);
-        assertThat(response.isFailed(), is(true));
-        assertThat(response.getGatewayError().isPresent(), is(true));
-        assertThat(response.getGatewayError().get().getMessage(), containsString("An internal server error occurred. ErrorId:"));
-        assertThat(response.getGatewayError().get().getErrorType(), is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
+        assertThat(response.isSuccessful(), is(false));
+        assertThat(response.getError().isPresent(), is(true));
+        assertThat(response.getError().get().getMessage(), containsString("An internal server error occurred. ErrorId:"));
+        assertThat(response.getError().get().getErrorType(), is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     private GatewayAccountEntity buildGatewayAccountEntity() {

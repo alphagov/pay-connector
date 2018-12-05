@@ -36,7 +36,6 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
@@ -286,21 +285,7 @@ public class ChargeService {
     public ChargeEntity updateChargePostCapture(String chargeId, ChargeStatus nextStatus) {
         return chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
-
                     updateChargeStatus(chargeEntity, nextStatus);
-
-                    //for sandbox, immediately move from CAPTURE_SUBMITTED to CAPTURED, as there will be no external notification
-                    if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX) {
-                        chargeEntity.setStatus(CAPTURED);
-                        chargeEventDao.persistChargeEventOf(chargeEntity, ZonedDateTime.now());
-                    }
-
-                    // for Stripe, we don't receive a notification so this charge will transition directly to CAPTURED, if successful
-                    if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.STRIPE && chargeEntity.getStatus().equals(CAPTURE_SUBMITTED.getValue())) {
-                        chargeEntity.setStatus(CAPTURED);
-                        chargeEventDao.persistChargeEventOf(chargeEntity, ZonedDateTime.now());
-                    }
-
                     return chargeEntity;
                 })
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
@@ -330,8 +315,15 @@ public class ChargeService {
     }
 
     private ChargeEntity updateChargeStatus(ChargeEntity chargeEntity, ChargeStatus chargeStatus) {
-        chargeEntity.setStatus(chargeStatus);
-        chargeEventDao.persistChargeEventOf(chargeEntity);
+        if (chargeStatus == CAPTURED) {
+            chargeEntity.setStatus(CAPTURE_SUBMITTED);
+            chargeEventDao.persistChargeEventOf(chargeEntity);
+            chargeEntity.setStatus(CAPTURED);
+            chargeEventDao.persistChargeEventOf(chargeEntity, ZonedDateTime.now());
+        } else {
+            chargeEntity.setStatus(chargeStatus);
+            chargeEventDao.persistChargeEventOf(chargeEntity);
+        }
         return chargeEntity;
     }
 

@@ -32,17 +32,16 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureResponse;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.persistence.OptimisticLockException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -69,7 +68,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERRO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
-import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
+import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
+import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
+import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureServiceTest extends CardServiceTest {
@@ -106,20 +107,12 @@ public class CardCaptureServiceTest extends CardServiceTest {
         root.addAppender(mockAppender);
     }
 
-    private void worldpayWillRespondWithSuccess(String transactionId, String worldpayErrorCode) {
-        WorldpayCaptureResponse worldpayResponse = mock(WorldpayCaptureResponse.class);
-        when(worldpayResponse.getTransactionId()).thenReturn(transactionId);
-        when(worldpayResponse.getErrorCode()).thenReturn(worldpayErrorCode);
-        GatewayResponseBuilder<WorldpayCaptureResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse captureResponse = gatewayResponseBuilder.withResponse(worldpayResponse).build();
-        when(mockedPaymentProvider.capture(any())).thenReturn(captureResponse);
+    private void worldpayWillRespondWithSuccess() {
+        when(mockedPaymentProvider.capture(any())).thenReturn(CaptureResponse.fromTransactionId(UUID.randomUUID().toString(), PENDING));
     }
 
     private void worldpayWillRespondWithError() {
-        GatewayResponseBuilder<WorldpayCaptureResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse captureResponse = gatewayResponseBuilder
-                .withGatewayError(GatewayError.genericGatewayError("something went wrong")).build();
-        when(mockedPaymentProvider.capture(any())).thenReturn(captureResponse);
+        when(mockedPaymentProvider.capture(any())).thenReturn(CaptureResponse.fromGatewayError(genericGatewayError("something went wrong")));
     }
 
     @Test
@@ -131,9 +124,9 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity chargeSpy = spy(charge);
         mockChargeDaoOperations(chargeSpy);
 
-        worldpayWillRespondWithSuccess(gatewayTxId, null);
+        worldpayWillRespondWithSuccess();
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-        GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
+        CaptureResponse response = cardCaptureService.doCapture(charge.getExternalId());
 
         assertThat(response.isSuccessful(), is(true));
         InOrder inOrder = Mockito.inOrder(chargeSpy);
@@ -155,16 +148,16 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doCapture_shouldCaptureAChargeForASandboxAccount() {
+    public void chargeIsCapturedImmediatelyFromPaymentProvider() {
         String gatewayTxId = "theTxId";
 
         ChargeEntity charge = createNewChargeWith("sandbox", 1L, CAPTURE_APPROVED, gatewayTxId);
         ChargeEntity chargeSpy = spy(charge);
         mockChargeDaoOperations(chargeSpy);
 
-        worldpayWillRespondWithSuccess(gatewayTxId, null);
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-        GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
+        when(mockedPaymentProvider.capture(any())).thenReturn(CaptureResponse.fromTransactionId(UUID.randomUUID().toString(), COMPLETE));
+        CaptureResponse response = cardCaptureService.doCapture(charge.getExternalId());
 
         assertThat(response.isSuccessful(), is(true));
         InOrder inOrder = Mockito.inOrder(chargeSpy);
@@ -175,7 +168,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
         ArgumentCaptor<ZonedDateTime> bookingDateCaptor = ArgumentCaptor.forClass(ZonedDateTime.class);
 
-        // sandbox progresses from CAPTURE_SUBMITTED to CAPTURED, so two calls
+        // charge progresses from CAPTURE_SUBMITTED to CAPTURED, so two calls
         // first invocation will add a captured date
         verify(mockedChargeEventDao, times(1)).persistChargeEventOf(chargeEntityCaptor.capture(), bookingDateCaptor.capture());
         // second invocation will NOT add a captured date
@@ -193,11 +186,11 @@ public class CardCaptureServiceTest extends CardServiceTest {
         // verify an email notification is sent for a successful capture
         verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeSpy);
     }
-
+    
     private void mockChargeDaoOperations(ChargeEntity charge) {
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
-        doNothing().when(mockedChargeEventDao).persistChargeEventOf(any(), any());
+        doNothing().when(mockedChargeEventDao).persistChargeEventOf(any(ChargeEntity.class));
     }
 
     @Test(expected = ChargeNotFoundRuntimeException.class)
@@ -271,8 +264,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         worldpayWillRespondWithError();
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
-        GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
-        assertThat(response.isFailed(), is(true));
+        CaptureResponse response = cardCaptureService.doCapture(charge.getExternalId());
+        assertThat(response.isSuccessful(), is(false));
 
         InOrder inOrder = Mockito.inOrder(chargeSpy);
         inOrder.verify(chargeSpy).setStatus(CAPTURE_READY);
@@ -312,7 +305,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
             // ignore
         }
 
-        verify(mockedChargeEventDao, never()).persistChargeEventOf(any(), any());
+        verify(mockedChargeEventDao, never()).persistChargeEventOf(any(ChargeEntity.class), any(ZonedDateTime.class));
     }
     
     @Test(expected = IllegalStateRuntimeException.class)
@@ -386,7 +379,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         verify(mockedChargeDao).findByExternalId(externalId);
         verifyNoMoreInteractions(mockedChargeDao);
-        verify(mockedChargeEventDao, never()).persistChargeEventOf(any(), any());
+        verify(mockedChargeEventDao, never()).persistChargeEventOf(any(ChargeEntity.class), any(ZonedDateTime.class));
     }
 
     @Test
@@ -423,7 +416,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         verify(mockedChargeDao).findByExternalId(externalId);
         verifyNoMoreInteractions(mockedChargeDao);
-        verify(mockedChargeEventDao, never()).persistChargeEventOf(any(), any());
+        verify(mockedChargeEventDao, never()).persistChargeEventOf(any(ChargeEntity.class), any(ZonedDateTime.class));
     }
 
     @Test
@@ -437,7 +430,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         verify(mockedChargeDao).findByExternalId(externalId);
         verifyNoMoreInteractions(mockedChargeDao);
-        verify(mockedChargeEventDao, never()).persistChargeEventOf(any(), any());
+        verify(mockedChargeEventDao, never()).persistChargeEventOf(any(ChargeEntity.class), any(ZonedDateTime.class));
     }
 
     private void doCapture_shouldCapture_whenChargeInStatus(ChargeStatus chargeStatus) {
@@ -445,10 +438,10 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, chargeStatus, gatewayTxId);
         ChargeEntity chargeSpy = spy(charge);
         mockChargeDaoOperations(chargeSpy);
-        worldpayWillRespondWithSuccess(gatewayTxId, null);
+        worldpayWillRespondWithSuccess();
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
 
-        GatewayResponse response = cardCaptureService.doCapture(charge.getExternalId());
+        CaptureResponse response = cardCaptureService.doCapture(charge.getExternalId());
         assertThat(response.isSuccessful(), is(true));
 
         ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);

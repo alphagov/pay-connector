@@ -2,17 +2,20 @@ package uk.gov.pay.connector.gateway.epdq;
 
 import fj.data.Either;
 import uk.gov.pay.connector.gateway.CaptureHandler;
+import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCaptureResponse;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
 
+import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqCaptureOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider.ROUTE_FOR_MAINTENANCE_ORDER;
+import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
@@ -27,9 +30,15 @@ public class EpdqCaptureHandler implements CaptureHandler {
     }
 
     @Override
-    public GatewayResponse<BaseCaptureResponse> capture(CaptureGatewayRequest request) {
+    public CaptureResponse capture(CaptureGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = client.postRequestFor(ROUTE_FOR_MAINTENANCE_ORDER, request.getGatewayAccount(), buildCaptureOrder(request));
-        return GatewayResponseGenerator.getEpdqGatewayResponse(client, response, EpdqCaptureResponse.class);
+
+        if (response.isLeft()) {
+            return CaptureResponse.fromGatewayError(response.left().value());
+        } else {
+            Either<GatewayError, EpdqCaptureResponse> unmarshalled = client.unmarshallResponse(response.right().value(), EpdqCaptureResponse.class);
+            return fromUnmarshalled(unmarshalled, PaymentGatewayName.EPDQ);
+        }
     }
 
     private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {

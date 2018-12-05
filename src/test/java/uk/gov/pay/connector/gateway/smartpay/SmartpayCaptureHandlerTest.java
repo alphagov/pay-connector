@@ -9,12 +9,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -61,7 +60,7 @@ public class SmartpayCaptureHandlerTest {
                 .build();
 
         CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(chargeEntity);
-        GatewayResponse gatewayResponse = smartpayCaptureHandler.capture(request);
+        CaptureResponse gatewayResponse = smartpayCaptureHandler.capture(request);
         assertTrue(gatewayResponse.isSuccessful());
     }
 

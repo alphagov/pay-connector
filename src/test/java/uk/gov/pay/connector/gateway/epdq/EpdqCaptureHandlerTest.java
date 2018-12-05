@@ -9,13 +9,12 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCaptureResponse;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
@@ -67,9 +66,10 @@ public class EpdqCaptureHandlerTest {
         Either<GatewayError, EpdqCaptureResponse> unmarshalledResponse = right(XMLUnmarshaller.unmarshall(load(EPDQ_CAPTURE_SUCCESS_RESPONSE), EpdqCaptureResponse.class));
         when(client.unmarshallResponse(any(TestResponse.class), any(Class.class))).thenReturn(unmarshalledResponse);
         
-        GatewayResponse<BaseCaptureResponse> gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
+        CaptureResponse gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
         assertTrue(gatewayResponse.isSuccessful());
-        assertThat(gatewayResponse.getBaseResponse().get().getTransactionId(), is("3014644340"));
+        assertThat(gatewayResponse.getTransactionId().isPresent(), is(true));
+        assertThat(gatewayResponse.getTransactionId().get(), is("3014644340"));
     }
 
     private class TestResponse extends GatewayClient.Response {
@@ -90,9 +90,9 @@ public class EpdqCaptureHandlerTest {
         Either<GatewayError, EpdqCaptureResponse> unmarshalledResponse = right(XMLUnmarshaller.unmarshall(load(EPDQ_CAPTURE_ERROR_RESPONSE), EpdqCaptureResponse.class));
         when(client.unmarshallResponse(any(TestResponse.class), any(Class.class))).thenReturn(unmarshalledResponse);
         
-        GatewayResponse<BaseCaptureResponse> gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
-        assertThat(gatewayResponse.isFailed(), is(true));
-        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
+        CaptureResponse gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
+        assertThat(gatewayResponse.isSuccessful(), is(false));
+        assertThat(gatewayResponse.getError().isPresent(), is(true));
     }
 
     @Test
@@ -101,11 +101,11 @@ public class EpdqCaptureHandlerTest {
         Either<GatewayError, GatewayClient.Response> response = left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code 400 from gateway"));
         when(client.postRequestFor(anyString(), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(response);
         
-        GatewayResponse<BaseCaptureResponse> gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
-        assertThat(gatewayResponse.isFailed(), is(true));
-        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
-        assertThat(gatewayResponse.getGatewayError().get().getMessage(), is("Unexpected HTTP status code 400 from gateway"));
-        assertThat(gatewayResponse.getGatewayError().get().getErrorType(), is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        CaptureResponse gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
+        assertThat(gatewayResponse.isSuccessful(), is(false));
+        assertThat(gatewayResponse.getError().isPresent(), is(true));
+        assertThat(gatewayResponse.getError().get().getMessage(), is("Unexpected HTTP status code 400 from gateway"));
+        assertThat(gatewayResponse.getError().get().getErrorType(), is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 
     private CaptureGatewayRequest buildTestCaptureRequest() {

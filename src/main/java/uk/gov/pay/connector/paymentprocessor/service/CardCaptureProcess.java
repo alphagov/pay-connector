@@ -11,13 +11,17 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
+import uk.gov.pay.connector.gateway.CaptureResponse;
+import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.filters.LoggingFilter.HEADER_REQUEST_ID;
@@ -71,12 +75,12 @@ public class CardCaptureProcess {
                 if (shouldRetry(charge)) {
                     try {
                         logger.info("Capturing [{} of {}] [chargeId={}]", total, chargesToCaptureSize, charge.getExternalId());
-                        GatewayResponse gatewayResponse = captureService.doCapture(charge.getExternalId());
+                        CaptureResponse gatewayResponse = captureService.doCapture(charge.getExternalId());
                         if (gatewayResponse.isSuccessful()) {
                             captured++;
                         } else {
-                            logger.info("Failed to capture [chargeId={}] due to: {}", charge.getExternalId(),
-                                    gatewayResponse.getGatewayError().orElse("No error message received."));
+                            logger.info("Failed to capture [chargeId={}] due to: {}", charge.getExternalId(), 
+                                    gatewayResponse.getError().get().getMessage());
                             failedCapture++;
                         }
                     } catch (ConflictRuntimeException e) {

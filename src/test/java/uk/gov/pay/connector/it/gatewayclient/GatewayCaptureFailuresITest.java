@@ -39,7 +39,7 @@ public class GatewayCaptureFailuresITest extends BaseGatewayITest {
     }
 
     @Test
-    public void shouldFailCaptureWhenMalformedResponseFromGateway() throws Exception {
+    public void shouldFailCaptureWhenMalformedResponseFromGateway() {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
         setupGatewayStub().respondWithMalformedBody_WhenCapture();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();

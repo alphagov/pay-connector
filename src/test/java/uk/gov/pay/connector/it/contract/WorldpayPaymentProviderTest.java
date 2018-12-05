@@ -12,6 +12,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
@@ -184,10 +185,9 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldBeAbleToSendCaptureRequestForMerchant() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        GatewayResponse response = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        CaptureResponse response = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
 
         assertTrue(response.isSuccessful());
-        assertTrue(response.getSessionIdentifier().isPresent());
     }
 
     @Test
@@ -204,7 +204,7 @@ public class WorldpayPaymentProviderTest {
         assertThat(transactionId, is(not(nullValue())));
 
         chargeEntity.setGatewayTransactionId(transactionId);
-        GatewayResponse captureResponse = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        CaptureResponse captureResponse = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
 
         assertThat(captureResponse.isSuccessful(), is(true));
 
