@@ -23,8 +23,9 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
+import uk.gov.pay.connector.gateway.model.PayersCardType;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
@@ -103,7 +104,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null);
 
-        CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
+        CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService);
         cardAuthorisationService = new CardAuthoriseService(
                 mockedCardTypeDao,
                 mockedProviders,
@@ -122,25 +123,26 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .when(mockExecutorService).execute(any(Supplier.class));
     }
 
-    private GatewayResponse mockAuthResponse(String TRANSACTION_ID, AuthoriseStatus authoriseStatus, String errorCode) {
+    private PaymentProviderAuthorisationResponse mockAuthResponse(String TRANSACTION_ID, AuthoriseStatus authoriseStatus, String errorCode) {
         WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
         when(worldpayResponse.getTransactionId()).thenReturn(TRANSACTION_ID);
         when(worldpayResponse.authoriseStatus()).thenReturn(authoriseStatus);
         when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
         when(worldpayResponse.getGatewayParamsFor3ds()).thenReturn(Optional.empty());
         GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
-        return gatewayResponseBuilder
+        final GatewayResponse gatewayResponse = gatewayResponseBuilder
                 .withResponse(worldpayResponse)
                 .withSessionIdentifier(SESSION_IDENTIFIER)
                 .build();
+        return PaymentProviderAuthorisationResponse.from(gatewayResponse);
     }
 
     private void setupPaymentProviderMock(GatewayError gatewayError) {
         GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse authorisationResponse = gatewayResponseBuilder
+        GatewayResponse<BaseAuthoriseResponse> authorisationResponse = gatewayResponseBuilder
                 .withGatewayError(gatewayError)
                 .build();
-        when(mockedPaymentProvider.authorise(any())).thenReturn(authorisationResponse);
+        when(mockedPaymentProvider.authorise(any())).thenReturn(PaymentProviderAuthorisationResponse.from(authorisationResponse));
     }
 
     @Test
@@ -425,7 +427,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     public void doAuthorise_shouldRespondAuthorisationCancelled_whenProviderAuthorisationIsCancelled() {
 
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-        GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.CANCELLED, null);
+        PaymentProviderAuthorisationResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.CANCELLED, null);
         providerWillRespondToAuthoriseWith(authResponse);
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -634,7 +636,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getStatus(), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
     }
 
-    private void providerWillRespondToAuthoriseWith(GatewayResponse value) {
+    private void providerWillRespondToAuthoriseWith(PaymentProviderAuthorisationResponse value) {
         when(mockedPaymentProvider.authorise(any())).thenReturn(value);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
@@ -643,7 +645,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     private void providerWillAuthorise() {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-        GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null);
+        PaymentProviderAuthorisationResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null);
         providerWillRespondToAuthoriseWith(authResponse);
     }
 
@@ -653,11 +655,11 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         worldpayResponse.set3dsPaRequest(PA_REQ_VALUE_FROM_PROVIDER);
         worldpayResponse.set3dsIssuerUrl(ISSUER_URL_FROM_PROVIDER);
         GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse worldpay3dsResponse = gatewayResponseBuilder
+        GatewayResponse<BaseAuthoriseResponse> worldpay3dsResponse = gatewayResponseBuilder
                 .withSessionIdentifier(sessionIdentifier)
                 .withResponse(worldpayResponse)
                 .build();
-        when(mockedPaymentProvider.authorise(any())).thenReturn(worldpay3dsResponse);
+        when(mockedPaymentProvider.authorise(any())).thenReturn(PaymentProviderAuthorisationResponse.from(worldpay3dsResponse));
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
@@ -673,7 +675,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         GatewayResponse epdq3dsResponse = gatewayResponseBuilder
                 .withResponse(epdqResponse)
                 .build();
-        when(mockedPaymentProvider.authorise(any())).thenReturn(epdq3dsResponse);
+        when(mockedPaymentProvider.authorise(any())).thenReturn(PaymentProviderAuthorisationResponse.from(epdq3dsResponse));
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
@@ -681,13 +683,13 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     private void providerWillReject() {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-        GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.REJECTED, null);
+        PaymentProviderAuthorisationResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.REJECTED, null);
         providerWillRespondToAuthoriseWith(authResponse);
     }
 
     private void providerWillError() {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-        GatewayResponse authResponse = mockAuthResponse(null, AuthoriseStatus.ERROR, "error-code");
+        PaymentProviderAuthorisationResponse authResponse = mockAuthResponse(null, AuthoriseStatus.ERROR, "error-code");
         providerWillRespondToAuthoriseWith(authResponse);
     }
 

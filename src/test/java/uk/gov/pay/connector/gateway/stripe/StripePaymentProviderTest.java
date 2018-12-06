@@ -5,13 +5,12 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTokenResponse;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsSourceResponse;
-import uk.gov.pay.connector.gateway.stripe.response.StripeParamsFor3ds;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.Response;
@@ -21,11 +20,13 @@ import java.util.Optional;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
+import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripePaymentProviderTest extends BaseStripePaymentProviderTest {
@@ -44,15 +45,16 @@ public class StripePaymentProviderTest extends BaseStripePaymentProviderTest {
     public void shouldAuthoriseAs3dsRequired_whenChargeRequired3ds() throws IOException {
         mockPaymentProvider3dsRequiredResponse();
 
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
+        PaymentProviderAuthorisationResponse response = provider.authorise(buildTestAuthorisationRequest());
 
-        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
-        assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().get().getTransactionId(), is("src_1DXAxYC6H5MjhE5Y4jZVJwNV")); // id from templates/stripe/create_3ds_sources_response.json
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(REQUIRES_3DS));
+        assertTrue(response.getTransactionId().isPresent());
+        assertThat(response.getTransactionId().get(), is("src_1DXAxYC6H5MjhE5Y4jZVJwNV")); // id from templates/stripe/create_3ds_sources_response.json
 
-        Optional<StripeParamsFor3ds> stripeParamsFor3ds = (Optional<StripeParamsFor3ds>) response.getBaseResponse().get().getGatewayParamsFor3ds();
-        assertThat(stripeParamsFor3ds.isPresent(), is(true));
-        assertThat(stripeParamsFor3ds.get().toAuth3dsDetailsEntity().getIssuerUrl(), containsString("https://hooks.stripe.com")); //from templates/stripe/create_3ds_sources_response.json
+        Optional<Auth3dsDetailsEntity> auth3dsDetailsEntity = response.getAuth3dsDetailsEntity();
+        assertThat(auth3dsDetailsEntity.isPresent(), is(true));
+        assertThat(auth3dsDetailsEntity.get().getIssuerUrl(), containsString("https://hooks.stripe.com")); //from templates/stripe/create_3ds_sources_response.json
 
     }
 
@@ -60,9 +62,8 @@ public class StripePaymentProviderTest extends BaseStripePaymentProviderTest {
     public void shouldNotAuthorise_whenProcessingExceptionIsThrown() {
         mockProcessingException();
 
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
+        PaymentProviderAuthorisationResponse authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
 
-        assertThat(authoriseResponse.isFailed(), is(true));
         assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
         assertEquals(authoriseResponse.getGatewayError().get(), new GatewayError("javax.ws.rs.ProcessingException",
                 GENERIC_GATEWAY_ERROR));
@@ -77,10 +78,10 @@ public class StripePaymentProviderTest extends BaseStripePaymentProviderTest {
     public void shouldNotAuthorise_whenPaymentProviderReturnsUnexpectedStatusCode() {
         mockResponseWithPayload(500);
 
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
+        PaymentProviderAuthorisationResponse authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
 
-        assertThat(authoriseResponse.isFailed(), is(true));
-        assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
+        assertFalse(authoriseResponse.getAuthoriseStatus().isPresent());
+        assertTrue(authoriseResponse.getGatewayError().isPresent());
         assertThat(authoriseResponse.getGatewayError().get().getMessage(),
                 containsString("There was an internal server error"));
         assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));

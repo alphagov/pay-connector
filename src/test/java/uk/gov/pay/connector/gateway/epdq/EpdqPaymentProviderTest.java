@@ -5,10 +5,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 
 import java.util.Optional;
 
@@ -33,10 +33,10 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     @Test
     public void shouldAuthorise() {
         mockPaymentProviderResponse(200, successAuthResponse());
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
+        PaymentProviderAuthorisationResponse response = provider.authorise(buildTestAuthorisationRequest());
         verifyPaymentProviderRequest(successAuthRequest());
-        assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().get().getTransactionId(), is("3014644340"));
+        assertTrue(response.getTransactionId().isPresent());
+        assertThat(response.getTransactionId().get(), is("3014644340"));
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -47,16 +47,14 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     @Test
     public void shouldNotAuthoriseIfPaymentProviderReturnsUnexpectedStatusCode() {
         mockPaymentProviderResponse(200, errorAuthResponse());
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
-        assertThat(response.isFailed(), is(true));
+        PaymentProviderAuthorisationResponse response = provider.authorise(buildTestAuthorisationRequest());
         assertThat(response.getGatewayError().isPresent(), is(true));
     }
 
     @Test
     public void shouldNotAuthoriseIfPaymentProviderReturnsNon200HttpStatusCode() {
         mockPaymentProviderResponse(400, errorAuthResponse());
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
-        assertThat(response.isFailed(), is(true));
+        PaymentProviderAuthorisationResponse response = provider.authorise(buildTestAuthorisationRequest());
         assertThat(response.getGatewayError().isPresent(), is(true));
         assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",
                 UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));

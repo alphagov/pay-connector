@@ -16,13 +16,13 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.TestClientFactory;
@@ -65,24 +65,26 @@ public class StripePaymentProviderTest {
 
     @Test
     public void createCharge() {
-        GatewayResponse gatewayResponse = authorise();
+        PaymentProviderAuthorisationResponse gatewayResponse = authorise();
         assertTrue(gatewayResponse.isSuccessful());
     }
 
     @Test
     public void cancelCharge() {
-        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
+        PaymentProviderAuthorisationResponse gatewayResponse = authorise();
         ChargeEntity chargeEntity = getCharge();
-        chargeEntity.setGatewayTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId());
+        assertTrue(gatewayResponse.getTransactionId().isPresent());
+        chargeEntity.setGatewayTransactionId(gatewayResponse.getTransactionId().get());
         GatewayResponse<BaseCancelResponse> cancelResponse = stripePaymentProvider.cancel(CancelGatewayRequest.valueOf(chargeEntity));
         assertTrue(cancelResponse.isSuccessful());
     }
 
     @Test
     public void captureCharge() {
-        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
+        PaymentProviderAuthorisationResponse gatewayResponse = authorise();
 
-        CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(getChargeWithTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId()));
+        assertTrue(gatewayResponse.getTransactionId().isPresent());
+        CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(getChargeWithTransactionId(gatewayResponse.getTransactionId().get()));
         GatewayResponse captureGatewayResponse = stripePaymentProvider.capture(request);
 
         assertTrue(captureGatewayResponse.isSuccessful());
@@ -90,9 +92,10 @@ public class StripePaymentProviderTest {
 
     @Test
     public void refundChargeInFull() {
-        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
+        PaymentProviderAuthorisationResponse gatewayResponse = authorise();
 
-        ChargeEntity chargeEntity = getChargeWithTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId());
+        assertTrue(gatewayResponse.getTransactionId().isPresent());
+        ChargeEntity chargeEntity = getChargeWithTransactionId(gatewayResponse.getTransactionId().get());
         CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(chargeEntity);
 
         stripePaymentProvider.capture(request);
@@ -106,9 +109,10 @@ public class StripePaymentProviderTest {
 
     @Test
     public void refundChargePartial() {
-        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
+        PaymentProviderAuthorisationResponse gatewayResponse = authorise();
 
-        ChargeEntity chargeEntity = getChargeWithTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId());
+        assertTrue(gatewayResponse.getTransactionId().isPresent());
+        ChargeEntity chargeEntity = getChargeWithTransactionId(gatewayResponse.getTransactionId().get());
         CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(chargeEntity);
 
         stripePaymentProvider.capture(request);
@@ -122,9 +126,10 @@ public class StripePaymentProviderTest {
 
     @Test
     public void refundCharge_failWhenAmountOverChargeAmount() {
-        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
+        PaymentProviderAuthorisationResponse gatewayResponse = authorise();
 
-        ChargeEntity chargeEntity = getChargeWithTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId());
+        assertTrue(gatewayResponse.getTransactionId().isPresent());
+        ChargeEntity chargeEntity = getChargeWithTransactionId(gatewayResponse.getTransactionId().get());
         CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(chargeEntity);
 
         stripePaymentProvider.capture(request);
@@ -141,9 +146,10 @@ public class StripePaymentProviderTest {
 
     @Test
     public void refundCharge_failWhenChargeAlreadyRefunded() {
-        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
+        PaymentProviderAuthorisationResponse gatewayResponse = authorise();
 
-        ChargeEntity chargeEntity = getChargeWithTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId());
+        assertTrue(gatewayResponse.getTransactionId().isPresent());
+        ChargeEntity chargeEntity = getChargeWithTransactionId(gatewayResponse.getTransactionId().get());
         CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(chargeEntity);
 
         stripePaymentProvider.capture(request);
@@ -166,7 +172,7 @@ public class StripePaymentProviderTest {
         assertThat(refundResponse.getGatewayError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
     }
 
-    private GatewayResponse<BaseAuthoriseResponse> authorise() {
+    private PaymentProviderAuthorisationResponse authorise() {
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(getCharge(), anAuthCardDetails().withEndDate("01/21").build());
         return stripePaymentProvider.authorise(request);
     }

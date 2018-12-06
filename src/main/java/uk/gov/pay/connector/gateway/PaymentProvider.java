@@ -14,6 +14,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 
 import java.util.Optional;
 
@@ -23,7 +24,7 @@ public interface PaymentProvider {
 
     Optional<String> generateTransactionId();
 
-    GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request);
+    PaymentProviderAuthorisationResponse authorise(CardAuthorisationGatewayRequest request);
 
     Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request);
 

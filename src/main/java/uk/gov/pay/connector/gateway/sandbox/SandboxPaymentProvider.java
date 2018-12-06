@@ -23,6 +23,7 @@ import uk.gov.pay.connector.gateway.sandbox.applepay.SandboxApplePayAuthorisatio
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 
 import java.util.Optional;
 
@@ -44,24 +45,28 @@ public class SandboxPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) {
+    public PaymentProviderAuthorisationResponse authorise(CardAuthorisationGatewayRequest request) {
         String cardNumber = request.getAuthCardDetails().getCardNo();
         GatewayResponseBuilder<BaseResponse> gatewayResponseBuilder = responseBuilder();
 
         if (SandboxCardNumbers.isErrorCard(cardNumber)) {
             CardError errorInfo = SandboxCardNumbers.cardErrorFor(cardNumber);
-            return gatewayResponseBuilder
+            final GatewayResponse gatewayResponse = gatewayResponseBuilder
                     .withGatewayError(new GatewayError(errorInfo.getErrorMessage(), GENERIC_GATEWAY_ERROR))
                     .build();
+            return PaymentProviderAuthorisationResponse.from(request.getChargeExternalId(), gatewayResponse);
         } else if (SandboxCardNumbers.isRejectedCard(cardNumber)) {
-            return GatewayResponseGenerator.getSandboxGatewayResponse(false);
+            final GatewayResponse gatewayResponse = GatewayResponseGenerator.getSandboxGatewayResponse(false);
+            return PaymentProviderAuthorisationResponse.from(request.getChargeExternalId(), gatewayResponse);
         } else if (SandboxCardNumbers.isValidCard(cardNumber)) {
-            return GatewayResponseGenerator.getSandboxGatewayResponse(true);
+            final GatewayResponse gatewayResponse = GatewayResponseGenerator.getSandboxGatewayResponse(true);
+            return PaymentProviderAuthorisationResponse.from(request.getChargeExternalId(), gatewayResponse);
         }
 
-        return gatewayResponseBuilder
+        final GatewayResponse gatewayResponse = gatewayResponseBuilder
                 .withGatewayError(new GatewayError("Unsupported card details.", GENERIC_GATEWAY_ERROR))
                 .build();
+        return PaymentProviderAuthorisationResponse.from(request.getChargeExternalId(), gatewayResponse);
     }
 
     @Override

@@ -22,12 +22,11 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -51,6 +50,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCodeFromGateway;
+import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS;
@@ -240,17 +240,17 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
 
     @Test
     public void shouldSendSuccessfullyAnOrderForMerchant() {
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(getCardAuthorisationRequest());
-        assertTrue(response.isSuccessful());
+        PaymentProviderAuthorisationResponse response = provider.authorise(getCardAuthorisationRequest());
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AUTHORISED));
         assertTrue(response.getSessionIdentifier().isPresent());
     }
 
     @Test
     public void shouldErrorIfAuthorisationIsUnsuccessful() {
         mockWorldpayErrorResponse(401);
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(getCardAuthorisationRequest());
+        PaymentProviderAuthorisationResponse response = provider.authorise(getCardAuthorisationRequest());
 
-        assertThat(response.isFailed(), is(true));
         assertFalse(response.getSessionIdentifier().isPresent());
         assertThat(response.getGatewayError().isPresent(), is(true));
         assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 401 from gateway",

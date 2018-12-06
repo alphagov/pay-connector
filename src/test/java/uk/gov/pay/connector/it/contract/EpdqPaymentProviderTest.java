@@ -15,6 +15,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayOperation;
@@ -27,7 +28,6 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
@@ -35,6 +35,7 @@ import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationRespon
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.TestClientFactory;
 
@@ -50,10 +51,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
+import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -119,8 +122,8 @@ public class EpdqPaymentProviderTest {
     public void shouldAuthoriseSuccessfully() {
         setUpAndCheckThatEpdqIsUp();
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertThat(response.isSuccessful(), is(true));
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
+        assertTrue(response.getTransactionId().isPresent());
     }
 
     @Test
@@ -132,17 +135,18 @@ public class EpdqPaymentProviderTest {
 
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
 
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertThat(response.isSuccessful(), is(true));
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get().getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_SUCCESS));
     }
 
     @Test
     public void shouldAuthoriseWith3dsOnSuccessfully() {
         setUpFor3dsAndCheckThatEpdqIsUp();
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertThat(response.isSuccessful(), is(true));
-        assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus(), is(REQUIRES_3DS));
     }
 
     @Test
@@ -154,22 +158,23 @@ public class EpdqPaymentProviderTest {
                 .build();
 
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertThat(response.isSuccessful(), is(true));
-        assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
+        assertThat(response.getAuthoriseStatus(), is(true));
+        assertThat(response.getAuthoriseStatus(), is(REQUIRES_3DS));
     }
 
     @Test
     public void shouldCheckAuthorisationStatusSuccessfully() {
         setUpAndCheckThatEpdqIsUp();
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertThat(response.isSuccessful(), is(true));
-        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
+        assertThat(response.getAuthoriseStatus(), is(true));
+        assertThat(response.getAuthoriseStatus(), is(AUTHORISED));
 
         Gateway3DSAuthorisationResponse queryResponse = paymentProvider.authorise3dsResponse(buildQueryRequest(chargeEntity, Auth3dsDetails.Auth3dsResult.AUTHORISED.name()));
         assertThat(queryResponse.isSuccessful(), is(true));
-        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+        assertThat(response.getAuthoriseStatus().isPresent(), is(true));
+        assertThat(response.getAuthoriseStatus().get(), is(AUTHORISED));
     }
 
     @Test
@@ -182,8 +187,9 @@ public class EpdqPaymentProviderTest {
                 .build();
 
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertThat(response.isSuccessful(), is(true));
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
+        assertThat(response.getAuthoriseStatus().isPresent(), is(true));
+        assertThat(response.getAuthoriseStatus().get(), is(AUTHORISED));
     }
 
     @Test
@@ -191,10 +197,12 @@ public class EpdqPaymentProviderTest {
         setUpAndCheckThatEpdqIsUp();
 
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertThat(response.isSuccessful(), is(true));
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
+        assertThat(response.getAuthoriseStatus().isPresent(), is(true));
+        assertThat(response.getAuthoriseStatus().get(), is(AUTHORISED));
 
-        String transactionId = response.getBaseResponse().get().getTransactionId();
+        assertTrue(response.getTransactionId().isPresent());
+        String transactionId = response.getTransactionId().get();
         assertThat(transactionId, is(not(nullValue())));
         CaptureGatewayRequest captureRequest = buildCaptureRequest(chargeEntity, transactionId);
         GatewayResponse<BaseCaptureResponse> captureResponse = paymentProvider.capture(captureRequest);
@@ -205,11 +213,10 @@ public class EpdqPaymentProviderTest {
     public void shouldCancelSuccessfully() {
         setUpAndCheckThatEpdqIsUp();
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertThat(response.isSuccessful(), is(true));
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
 
-        String transactionId = response.getBaseResponse().get().getTransactionId();
-        assertThat(transactionId, is(not(nullValue())));
+        assertTrue(response.getTransactionId().isPresent());
+        String transactionId = response.getTransactionId().get();
         CancelGatewayRequest cancelRequest = buildCancelRequest(chargeEntity, transactionId);
         GatewayResponse<BaseCancelResponse> cancelResponse = paymentProvider.cancel(cancelRequest);
         assertThat(cancelResponse.isSuccessful(), is(true));
@@ -220,11 +227,10 @@ public class EpdqPaymentProviderTest {
         setUpAndCheckThatEpdqIsUp();
 
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertThat(response.isSuccessful(), is(true));
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
 
-        String transactionId = response.getBaseResponse().get().getTransactionId();
-        assertThat(transactionId, is(not(nullValue())));
+        assertTrue(response.getTransactionId().isPresent());
+        String transactionId = response.getTransactionId().get();
         CaptureGatewayRequest captureRequest = buildCaptureRequest(chargeEntity, transactionId);
         GatewayResponse captureResponse = paymentProvider.capture(captureRequest);
         assertThat(captureResponse.isSuccessful(), is(true));

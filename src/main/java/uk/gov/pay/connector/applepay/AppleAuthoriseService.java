@@ -16,9 +16,9 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 
 public class AppleAuthoriseService {
     private static final DateTimeFormatter EXPIRY_DATE_FORMAT = DateTimeFormatter.ofPattern("MM/yy");
@@ -39,10 +39,10 @@ public class AppleAuthoriseService {
         this.metricRegistry = environment.metrics();
     }
 
-    GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, AppleDecryptedPaymentData authCardDetails) {
+    PaymentProviderAuthorisationResponse doAuthorise(String chargeId, AppleDecryptedPaymentData authCardDetails) {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId);
-            GatewayResponse<BaseAuthoriseResponse> operationResponse = authorise(charge, authCardDetails);
+            PaymentProviderAuthorisationResponse operationResponse = authorise(charge, authCardDetails);
             processGatewayAuthorisationResponse(
                     charge.getExternalId(),
                     ChargeStatus.fromString(charge.getStatus()),
@@ -66,42 +66,37 @@ public class AppleAuthoriseService {
             String chargeExternalId,
             ChargeStatus oldChargeStatus,
             AppleDecryptedPaymentData applePaymentData,
-            GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+            PaymentProviderAuthorisationResponse operationResponse) {
 
         logger.info("Processing gateway auth response for apple pay");
-        Optional<String> transactionId = cardAuthoriseBaseService.extractTransactionId(chargeExternalId, operationResponse);
-        ChargeStatus status = cardAuthoriseBaseService.extractChargeStatus(
-                operationResponse.getBaseResponse(),
-                operationResponse.getGatewayError());
 
         AuthCardDetails authCardDetailsToBePersisted = authCardDetailsFor(applePaymentData);
         ChargeEntity updatedCharge = chargeService.updateChargePostApplePayAuthorisation(
                 chargeExternalId,
-                status,
-                transactionId,
-                Optional.empty(),
-                operationResponse.getSessionIdentifier(),
+                operationResponse,
                 authCardDetailsToBePersisted);
 
         logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                 updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
-                transactionId.orElse("missing transaction ID"),
+                operationResponse.getTransactionId().orElse("missing transaction ID"),
                 updatedCharge.getGatewayAccount().getAnalyticsId(), updatedCharge.getGatewayAccount().getId(),
-                operationResponse, oldChargeStatus, status);
+                operationResponse, oldChargeStatus, operationResponse.getChargeStatus());
 
         metricRegistry.counter(String.format(
                 "gateway-operations.%s.%s.%s.authorise.result.%s",
                 updatedCharge.getGatewayAccount().getGatewayName(),
                 updatedCharge.getGatewayAccount().getType(),
                 updatedCharge.getGatewayAccount().getId(),
-                status.toString())).inc();
+                operationResponse.getChargeStatus().toString())).inc();
     }
 
-    protected GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, AppleDecryptedPaymentData applePaymentData) {
+    protected PaymentProviderAuthorisationResponse authorise(ChargeEntity chargeEntity, AppleDecryptedPaymentData applePaymentData) {
         logger.info("Authorising charge for apple pay");
         ApplePayAuthorisationGatewayRequest authorisationGatewayRequest = ApplePayAuthorisationGatewayRequest.valueOf(chargeEntity, applePaymentData);
-        return getPaymentProviderFor(chargeEntity)
+        // todo: push this gateway response to return GatewayAuthorisationResponse from the authorise
+        final GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getPaymentProviderFor(chargeEntity)
                 .authoriseApplePay(authorisationGatewayRequest);
+        return PaymentProviderAuthorisationResponse.from(gatewayResponse);
     }
 
     private AuthCardDetails authCardDetailsFor(AppleDecryptedPaymentData applePaymentData) {

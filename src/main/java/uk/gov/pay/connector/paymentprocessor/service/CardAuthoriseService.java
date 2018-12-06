@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -15,16 +14,13 @@ import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
@@ -51,15 +47,18 @@ public class CardAuthoriseService {
         this.cardTypeDao = cardTypeDao;
     }
 
-    public AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
-        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
-            final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
-            GatewayResponse<BaseAuthoriseResponse> operationResponse = authorise(charge, authCardDetails);
-            processGatewayAuthorisationResponse(
-                    charge.getExternalId(),
-                    ChargeStatus.fromString(charge.getStatus()),
-                    authCardDetails,
-                    operationResponse);
+    public AuthorisationResponse doAuthorise(String chargeExternalId, AuthCardDetails authCardDetails) {
+        return cardAuthoriseBaseService.executeAuthorise(chargeExternalId, () -> {
+            final ChargeEntity charge = prepareChargeForAuthorisation(chargeExternalId, authCardDetails);
+            PaymentProviderAuthorisationResponse operationResponse = getPaymentProviderFor(charge)
+                    .authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
+            ChargeStatus oldChargeStatus = ChargeStatus.fromString(charge.getStatus());
+            ChargeEntity updatedCharge = chargeService.updateChargePostAuthorisation(chargeExternalId, operationResponse, authCardDetails);
+
+            boolean billingAddressSubmitted = updatedCharge.getCardDetails().getBillingAddress().isPresent();
+
+            logAuthorisation(oldChargeStatus, operationResponse, updatedCharge, billingAddressSubmitted);
+            emitAuthorisationMetric(operationResponse.getChargeStatus().toString(), updatedCharge.getGatewayAccount(), billingAddressSubmitted);
 
             return new AuthorisationResponse(operationResponse);
         });
@@ -97,50 +96,24 @@ public class CardAuthoriseService {
         return cardTypes.stream().anyMatch(CardTypeEntity::isRequires3ds);
     }
 
-    public GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) {
-        return getPaymentProviderFor(charge)
-                .authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
-    }
-
-    private void processGatewayAuthorisationResponse(
-            String chargeExternalId,
-            ChargeStatus oldChargeStatus,
-            AuthCardDetails authCardDetails,
-            GatewayResponse<BaseAuthoriseResponse> operationResponse) {
-
-        Optional<String> transactionId = cardAuthoriseBaseService.extractTransactionId(chargeExternalId, operationResponse);
-        ChargeStatus status = cardAuthoriseBaseService.extractChargeStatus(operationResponse.getBaseResponse(), operationResponse.getGatewayError());
-
-        ChargeEntity updatedCharge = chargeService.updateChargePostAuthorisation(
-                chargeExternalId,
-                status,
-                transactionId,
-                extractAuth3dsDetails(operationResponse),
-                operationResponse.getSessionIdentifier(),
-                authCardDetails);
-
-        boolean billingAddressSubmitted = updatedCharge.getCardDetails().getBillingAddress().isPresent();
-
+    private void logAuthorisation(ChargeStatus oldChargeStatus, PaymentProviderAuthorisationResponse operationResponse, ChargeEntity updatedCharge, boolean billingAddressSubmitted) {
         logger.info("Authorisation {} for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                 billingAddressSubmitted ? "with billing address" : "without billing address",
                 updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
-                transactionId.orElse("missing transaction ID"),
-                updatedCharge.getGatewayAccount().getAnalyticsId(), updatedCharge.getGatewayAccount().getId(),
-                operationResponse, oldChargeStatus, status);
-
-        metricRegistry.counter(String.format(
-                "gateway-operations.%s.%s.%s.authorise.%s.result.%s",
-                updatedCharge.getGatewayAccount().getGatewayName(),
-                updatedCharge.getGatewayAccount().getType(),
+                operationResponse.getTransactionId().orElse("missing transaction ID"),
+                updatedCharge.getGatewayAccount().getAnalyticsId(),
                 updatedCharge.getGatewayAccount().getId(),
-                billingAddressSubmitted ? "with-billing-address" : "without-billing-address",
-                status.toString())).inc();
+                operationResponse, oldChargeStatus, operationResponse.getChargeStatus());
     }
 
-    private Optional<Auth3dsDetailsEntity> extractAuth3dsDetails(GatewayResponse<BaseAuthoriseResponse> operationResponse) {
-        return operationResponse.getBaseResponse()
-                .flatMap(BaseAuthoriseResponse::getGatewayParamsFor3ds)
-                .map(GatewayParamsFor3ds::toAuth3dsDetailsEntity);
+    private void emitAuthorisationMetric(String operationChargeStatus, GatewayAccountEntity gatewayAccountEntity, boolean billingAddressSubmitted) {
+        metricRegistry.counter(String.format(
+                "gateway-operations.%s.%s.%s.authorise.%s.result.%s",
+                gatewayAccountEntity.getGatewayName(),
+                gatewayAccountEntity.getType(),
+                gatewayAccountEntity.getId(),
+                billingAddressSubmitted ? "with-billing-address" : "without-billing-address",
+                operationChargeStatus)).inc();
     }
 
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {

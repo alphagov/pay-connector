@@ -27,6 +27,7 @@ import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalcul
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
 import uk.gov.pay.connector.gateway.worldpay.applepay.WorldpayApplePayAuthorisationHandler;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Invocation.Builder;
@@ -82,9 +83,10 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) {
+    public PaymentProviderAuthorisationResponse authorise(CardAuthorisationGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrder(request));
-        return GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
+        final GatewayResponse<BaseAuthoriseResponse> gatewayResponse = GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
+        return PaymentProviderAuthorisationResponse.from(request.getChargeExternalId(), gatewayResponse);
     }
 
     @Override

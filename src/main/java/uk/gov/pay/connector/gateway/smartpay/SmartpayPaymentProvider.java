@@ -27,6 +27,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Invocation;
@@ -64,9 +65,10 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) {
+    public PaymentProviderAuthorisationResponse authorise(CardAuthorisationGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = client.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrderFor(request));
-        return GatewayResponseGenerator.getSmartpayGatewayResponse(client, response, SmartpayAuthorisationResponse.class);
+        final GatewayResponse gatewayResponse = GatewayResponseGenerator.getSmartpayGatewayResponse(client, response, SmartpayAuthorisationResponse.class);
+        return PaymentProviderAuthorisationResponse.from(request.getChargeExternalId(), gatewayResponse);
     }
 
     @Override

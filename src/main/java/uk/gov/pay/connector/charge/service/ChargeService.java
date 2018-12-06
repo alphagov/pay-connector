@@ -21,7 +21,6 @@ import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
@@ -41,6 +40,7 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -175,7 +175,7 @@ public class ChargeService {
                 }).orElse(Optional.empty());
     }
 
-    public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity) {
+    <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity) {
         String chargeId = chargeEntity.getExternalId();
         PersistedCard persistedCard = null;
         if (chargeEntity.getCardDetails() != null) {
@@ -235,17 +235,14 @@ public class ChargeService {
 
     @Transactional
     public ChargeEntity updateChargePostAuthorisation(String chargeExternalId,
-                                                      ChargeStatus status,
-                                                      Optional<String> transactionId,
-                                                      Optional<Auth3dsDetailsEntity> auth3dsDetails,
-                                                      Optional<String> sessionIdentifier,
+                                                      PaymentProviderAuthorisationResponse gatewayResponse,
                                                       AuthCardDetails authCardDetails) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
-            charge.setStatus(status);
+            charge.setStatus(gatewayResponse.getChargeStatus());
 
-            setTransactionId(charge, transactionId);
-            sessionIdentifier.ifPresent(charge::setProviderSessionId);
-            auth3dsDetails.ifPresent(charge::set3dsDetails);
+            gatewayResponse.getTransactionId().ifPresent(transactionId -> setTransactionId(charge, transactionId));
+            gatewayResponse.getSessionIdentifier().ifPresent(charge::setProviderSessionId);
+            gatewayResponse.getAuth3dsDetailsEntity().ifPresent(charge::set3dsDetails);
             CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
             charge.setCardDetails(detailsEntity);
 
@@ -260,23 +257,28 @@ public class ChargeService {
 
     @Transactional
     public ChargeEntity updateChargePostApplePayAuthorisation(String chargeExternalId,
-                                                              ChargeStatus status,
-                                                              Optional<String> transactionId,
-                                                              Optional<Auth3dsDetailsEntity> auth3dsDetails,
-                                                              Optional<String> sessionIdentifier,
+                                                              PaymentProviderAuthorisationResponse gatewayAuthorisationResponse,
                                                               AuthCardDetails authCardDetails) {
-        ChargeEntity charge = updateChargePostAuthorisation(chargeExternalId, status, transactionId, auth3dsDetails, sessionIdentifier, authCardDetails);
+        ChargeEntity charge = updateChargePostAuthorisation(chargeExternalId, gatewayAuthorisationResponse, authCardDetails);
         charge.setWalletType(WalletType.APPLE_PAY);
         return charge;
     }
 
     @Transactional
-    public ChargeEntity updateChargePost3dsAuthorisation(String chargeExternalId, ChargeStatus status,
-                                                         OperationType operationType,
-                                                         Optional<String> transactionId) {
+    public ChargeEntity updateChargePost3dsAuthorisationWithTransactionId(String chargeExternalId, ChargeStatus status, String transactionId) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             charge.setStatus(status);
             setTransactionId(charge, transactionId);
+            chargeEventDao.persistChargeEventOf(charge);
+
+            return charge;
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
+    }
+
+    @Transactional
+    public ChargeEntity updateChargePost3dsAuthorisationNoTransactionId(String chargeExternalId, ChargeStatus status) {
+        return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
+            charge.setStatus(status);
             chargeEventDao.persistChargeEventOf(charge);
 
             return charge;
@@ -306,12 +308,10 @@ public class ChargeService {
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    private void setTransactionId(ChargeEntity chargeEntity, Optional<String> transactionId) {
-        transactionId.ifPresent(txId -> {
-            if (!isBlank(txId)) {
-                chargeEntity.setGatewayTransactionId(txId);
-            }
-        });
+    private void setTransactionId(ChargeEntity chargeEntity, String transactionId) {
+        if (!isBlank(transactionId)) {
+            chargeEntity.setGatewayTransactionId(transactionId);
+        }
     }
 
     @Transactional

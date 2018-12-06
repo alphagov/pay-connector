@@ -11,7 +11,7 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
-import uk.gov.pay.connector.util.AuthUtils;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -41,24 +41,26 @@ public class ApplePayServiceTest {
                     .withApplePaymentInfo(
                             anApplePayPaymentInfo().build())
                     .build();
+
     @Before
     public void setUp() {
         applePayService = new ApplePayService(mockedApplePayDecrypter, mockedApplePayAuthoriseService);
     }
-    
+
     @Test
     public void shouldDecryptAndAuthoriseAValidCharge() throws IOException {
         String externalChargeId = "external-charge-id";
         ApplePayToken applePayToken = ApplePayTokenBuilder.anApplePayToken().build();
-                
+
         WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
-        GatewayResponse gatewayResponse = responseBuilder()
+        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
                 .withSessionIdentifier("234")
                 .build();
         when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED);
         when(mockedApplePayDecrypter.performDecryptOperation(applePayToken)).thenReturn(validData);
-        when(mockedApplePayAuthoriseService.doAuthorise(externalChargeId, validData)).thenReturn(gatewayResponse);
+        PaymentProviderAuthorisationResponse mockedResponse = PaymentProviderAuthorisationResponse.from(gatewayResponse);
+        when(mockedApplePayAuthoriseService.doAuthorise(externalChargeId, validData)).thenReturn(mockedResponse);
 
         Response authorisationResponse = applePayService.authorise(externalChargeId, applePayToken);
 
@@ -72,14 +74,15 @@ public class ApplePayServiceTest {
         String externalChargeId = "external-charge-id";
         ApplePayToken applePayToken = ApplePayTokenBuilder.anApplePayToken().build();
         GatewayError gatewayError = mock(GatewayError.class);
-        GatewayResponse gatewayResponse = responseBuilder()
+        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
                 .withGatewayError(gatewayError)
                 .withSessionIdentifier("234")
                 .build();
         when(gatewayError.getErrorType()).thenReturn(GATEWAY_URL_DNS_ERROR);
         when(gatewayError.getMessage()).thenReturn("oops");
         when(mockedApplePayDecrypter.performDecryptOperation(applePayToken)).thenReturn(validData);
-        when(mockedApplePayAuthoriseService.doAuthorise(externalChargeId, validData)).thenReturn(gatewayResponse);
+        PaymentProviderAuthorisationResponse mockedResponse = PaymentProviderAuthorisationResponse.from(gatewayResponse);
+        when(mockedApplePayAuthoriseService.doAuthorise(externalChargeId, validData)).thenReturn(mockedResponse);
 
         Response authorisationResponse = applePayService.authorise(externalChargeId, applePayToken);
 

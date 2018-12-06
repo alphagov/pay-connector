@@ -24,13 +24,12 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.TestClientFactory;
 
@@ -39,14 +38,11 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -108,8 +104,8 @@ public class SmartpayPaymentProviderTest {
     public void shouldSendSuccessfullyAnOrderForMerchant() {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertTrue(response.isSuccessful());
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
+        assertTrue(response.getTransactionId().isPresent());
     }
 
     @Test
@@ -122,8 +118,8 @@ public class SmartpayPaymentProviderTest {
 
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
 
-        GatewayResponse response = paymentProvider.authorise(request);
-        assertTrue(response.isSuccessful());
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
+        assertTrue(response.getTransactionId().isPresent());
     }
 
     @Test
@@ -131,9 +127,10 @@ public class SmartpayPaymentProviderTest {
         gatewayAccountEntity.setRequires3ds(true);
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         CardAuthorisationGatewayRequest request = getCard3dsAuthorisationRequest(chargeEntity);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertTrue(response.isSuccessful());
-        Auth3dsDetailsEntity auth3dsDetailsEntity = response.getBaseResponse().get().getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity();
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
+        Optional<Auth3dsDetailsEntity> maybeAuth3dsDetails = response.getAuth3dsDetailsEntity();
+        assertTrue(maybeAuth3dsDetails.isPresent());
+        Auth3dsDetailsEntity auth3dsDetailsEntity = maybeAuth3dsDetails.get();
         assertThat(auth3dsDetailsEntity.getIssuerUrl(), is(notNullValue()));
         assertThat(auth3dsDetailsEntity.getMd(), is(notNullValue()));
         assertThat(auth3dsDetailsEntity.getPaRequest(), is(notNullValue()));
@@ -150,9 +147,10 @@ public class SmartpayPaymentProviderTest {
                 .build();
 
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertTrue(response.isSuccessful());
-        Auth3dsDetailsEntity auth3dsDetailsEntity = response.getBaseResponse().get().getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity();
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
+        Optional<Auth3dsDetailsEntity> maybeAuth3dsDetails = response.getAuth3dsDetailsEntity();
+        assertTrue(maybeAuth3dsDetails.isPresent());
+        Auth3dsDetailsEntity auth3dsDetailsEntity = maybeAuth3dsDetails.get();
         assertThat(auth3dsDetailsEntity.getIssuerUrl(), is(notNullValue()));
         assertThat(auth3dsDetailsEntity.getMd(), is(notNullValue()));
         assertThat(auth3dsDetailsEntity.getPaRequest(), is(notNullValue()));
@@ -173,10 +171,9 @@ public class SmartpayPaymentProviderTest {
 
         chargeEntity.setGatewayAccount(accountWithInvalidCredentials);
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
 
-        assertFalse(response.isSuccessful());
-        assertNotNull(response.getGatewayError());
+        assertTrue(response.getGatewayError().isPresent());
     }
 
     @Test
@@ -184,15 +181,11 @@ public class SmartpayPaymentProviderTest {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
 
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
 
-        assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().isPresent(), is(true));
-        SmartpayAuthorisationResponse smartpayAuthorisationResponse = (SmartpayAuthorisationResponse) response.getBaseResponse().get();
-        String transactionId = smartpayAuthorisationResponse.getPspReference();
-        assertThat(transactionId, is(not(nullValue())));
+        assertTrue(response.getTransactionId().isPresent());
 
-        chargeEntity.setGatewayTransactionId(transactionId);
+        chargeEntity.setGatewayTransactionId(response.getTransactionId().get());
 
         GatewayResponse<BaseCaptureResponse> captureGatewayResponse = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(captureGatewayResponse.isSuccessful());
@@ -202,30 +195,27 @@ public class SmartpayPaymentProviderTest {
     public void shouldSuccessfullySendACancelRequest() {
         PaymentProvider paymentProvider = getSmartpayPaymentProvider();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        PaymentProviderAuthorisationResponse response = paymentProvider.authorise(request);
         assertTrue(response.isSuccessful());
+        assertTrue(response.getTransactionId().isPresent());
 
-        assertThat(response.getBaseResponse().isPresent(), is(true));
-        SmartpayAuthorisationResponse smartpayAuthorisationResponse = (SmartpayAuthorisationResponse) response.getBaseResponse().get();
-        String transactionId = smartpayAuthorisationResponse.getPspReference();
-        assertThat(transactionId, is(not(nullValue())));
-
-        chargeEntity.setGatewayTransactionId(transactionId);
+        chargeEntity.setGatewayTransactionId(response.getTransactionId().get());
 
         GatewayResponse cancelResponse = paymentProvider.cancel(CancelGatewayRequest.valueOf(chargeEntity));
         assertThat(cancelResponse.isSuccessful(), is(true));
-
     }
 
     @Test
     public void shouldRefundToAnExistingPaymentSuccessfully() {
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(chargeEntity);
         PaymentProvider smartpay = getSmartpayPaymentProvider();
-        GatewayResponse<BaseAuthoriseResponse> authoriseResponse = smartpay.authorise(request);
+        PaymentProviderAuthorisationResponse authoriseResponse = smartpay.authorise(request);
         assertTrue(authoriseResponse.isSuccessful());
 
-        SmartpayAuthorisationResponse smartpayAuthorisationResponse = (SmartpayAuthorisationResponse) authoriseResponse.getBaseResponse().get();
-        chargeEntity.setGatewayTransactionId(smartpayAuthorisationResponse.getPspReference());
+//        SmartpayAuthorisationResponse smartpayAuthorisationResponse = (SmartpayAuthorisationResponse) authoriseResponse.getBaseResponse().get();
+//        chargeEntity.setGatewayTransactionId(smartpayAuthorisationResponse.getPspReference());
+        assertTrue(authoriseResponse.getTransactionId().isPresent());
+        chargeEntity.setGatewayTransactionId(authoriseResponse.getTransactionId().get());
 
         GatewayResponse<BaseCaptureResponse> captureGatewayResponse = smartpay.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(captureGatewayResponse.isSuccessful());

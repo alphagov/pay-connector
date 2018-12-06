@@ -5,8 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.applepay.api.ApplePayToken;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
@@ -35,20 +34,21 @@ public class ApplePayService {
         data.setPaymentInfo(applePayToken.getApplePaymentInfo());
 
         LOGGER.info("Authorising apple pay charge with id {} ", chargeId);
-        GatewayResponse<BaseAuthoriseResponse> response = authoriseService.doAuthorise(chargeId, data);
+        PaymentProviderAuthorisationResponse response = authoriseService.doAuthorise(chargeId, data);
         return handleGatewayAuthoriseResponse(response);
     }
 
 
     //PP-4314 This is duplicated from the CardResource. This kind of handling shouldn't be there in the first place, so will refactor to be embedded in services rather than at resource level
-    private Response handleGatewayAuthoriseResponse(GatewayResponse<? extends BaseAuthoriseResponse> response) {
+    private Response handleGatewayAuthoriseResponse(PaymentProviderAuthorisationResponse response) {
         return response.getGatewayError()
-                .map(this::handleError)
-                .orElseGet(() -> response.getBaseResponse()
-                        .map(r -> ResponseUtil.successResponseWithEntity(ImmutableMap.of("status", r.authoriseStatus().getMappedChargeStatus().toString())))
+                .map(ApplePayService::handleError)
+                .orElseGet(() -> response.getAuthoriseStatus()
+                        .map(r -> ResponseUtil.successResponseWithEntity(ImmutableMap.of("status", r.getMappedChargeStatus().toString())))
                         .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
     }
-    private Response handleError(GatewayError error) {
+
+    private static Response handleError(GatewayError error) {
         switch (error.getErrorType()) {
             case UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY:
             case MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY:

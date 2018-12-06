@@ -4,9 +4,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 
 import static java.lang.String.format;
 import static junit.framework.TestCase.assertFalse;
@@ -26,10 +25,10 @@ public class EpdqPaymentProvider3dsTest extends BaseEpdqPaymentProviderTest {
     @Test
     public void shouldRequire3dsAuthoriseRequest() {
         mockPaymentProviderResponse(200, successAuth3dResponse());
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
+        PaymentProviderAuthorisationResponse response = provider.authorise(buildTestAuthorisationRequest());
         verifyPaymentProviderRequest(successAuthRequest());
-        assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().get().authoriseStatus(), is(REQUIRES_3DS));
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(REQUIRES_3DS));
     }
 
     @Test

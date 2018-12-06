@@ -60,12 +60,14 @@ public class Card3dsResponseAuthService {
     ) {
         Optional<String> transactionId = operationResponse.getTransactionId();
 
-        ChargeEntity updatedCharge = chargeService.updateChargePost3dsAuthorisation(
+        ChargeEntity updatedCharge = transactionId.map(transaction -> chargeService.updateChargePost3dsAuthorisationWithTransactionId(
                 chargeExternalId,
                 operationResponse.getMappedChargeStatus(),
-                AUTHORISATION_3DS,
-                transactionId
-        );
+                transaction))
+                .orElseGet(() -> chargeService.updateChargePost3dsAuthorisationNoTransactionId(
+                        chargeExternalId,
+                        operationResponse.getMappedChargeStatus()));
+
         logAuthorisation(updatedCharge, oldChargeStatus);
         emitAuthorisationMetric(updatedCharge);
     }

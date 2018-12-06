@@ -38,6 +38,7 @@ import uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -93,7 +94,7 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
+    public PaymentProviderAuthorisationResponse authorise(CardAuthorisationGatewayRequest request) {
         logger.info("Calling Stripe for authorisation of charge [{}]", request.getChargeExternalId());
 
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
@@ -111,12 +112,14 @@ public class StripePaymentProvider implements PaymentProvider {
 
             if (stripeSourcesResponse.require3ds()) {
                 Response source3dsResponse = create3dsSource(request, stripeSourcesResponse.getId());
-
-                return responseBuilder.withResponse(Stripe3dsSourceAuthorisationResponse.of(source3dsResponse)).build();
+                final Stripe3dsSourceAuthorisationResponse threeDSResponse = Stripe3dsSourceAuthorisationResponse.of(source3dsResponse);
+                final GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder.withResponse(threeDSResponse).build();
+                return PaymentProviderAuthorisationResponse.from(request.getChargeExternalId(), gatewayResponse);
             } else {
                 Response authorisationResponse = createCharge(request, stripeSourcesResponse.getId());
                 StripeAuthorisationResponse stripeAuthResponse = new StripeAuthorisationResponse(authorisationResponse.readEntity(StripeCreateChargeResponse.class));
-                return responseBuilder.withResponse(stripeAuthResponse).build();
+                final GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder.withResponse(stripeAuthResponse).build();
+                return PaymentProviderAuthorisationResponse.from(request.getChargeExternalId(), gatewayResponse);
             }
         } catch (GatewayClientException e) {
 
@@ -124,7 +127,8 @@ public class StripePaymentProvider implements PaymentProvider {
             int status = response.getStatus();
 
             if (status == HttpStatus.SC_UNAUTHORIZED) {
-                return unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage(), HttpStatus.SC_UNAUTHORIZED);
+                final GatewayResponse<BaseAuthoriseResponse> gatewayResponse = unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage(), HttpStatus.SC_UNAUTHORIZED);
+                return PaymentProviderAuthorisationResponse.from(request.getChargeExternalId(), gatewayResponse);
             }
 
             StripeErrorResponse stripeErrorResponse = response.readEntity(StripeErrorResponse.class);
@@ -133,14 +137,16 @@ public class StripePaymentProvider implements PaymentProvider {
                     request.getChargeExternalId(), stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), errorId, response.getStatus());
             GatewayError gatewayError = genericGatewayError(stripeErrorResponse.getError().getMessage());
 
-            return responseBuilder.withGatewayError(gatewayError).build();
+            final GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder.withGatewayError(gatewayError).build();
+            return PaymentProviderAuthorisationResponse.from(request.getChargeExternalId(), gatewayResponse);
 
         } catch (DownstreamException e) {
-
-            return unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage(), e.getStatusCode());
+            final GatewayResponse<BaseAuthoriseResponse> gatewayResponse = unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage(), e.getStatusCode());
+            return PaymentProviderAuthorisationResponse.from(request.getChargeExternalId(), gatewayResponse);
 
         } catch (GatewayException e) {
-            return responseBuilder.withGatewayError(GatewayError.of(e)).build();
+            final GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder.withGatewayError(GatewayError.of(e)).build();
+            return PaymentProviderAuthorisationResponse.from(request.getChargeExternalId(), gatewayResponse);
         }
     }
 

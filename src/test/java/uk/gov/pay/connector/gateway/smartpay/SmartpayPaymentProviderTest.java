@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
-import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,25 +10,21 @@ import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.paymentprocessor.service.PaymentProviderAuthorisationResponse;
 import uk.gov.pay.connector.util.AuthUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_SUCCESS_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_CAPTURE_SUCCESS_RESPONSE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest {
@@ -51,7 +46,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
     }
 
     @Test
-    public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
+    public void shouldSendSuccessfullyAOrderForMerchant() {
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
 
@@ -59,16 +54,13 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
                 .withGatewayAccountEntity(aServiceAccount())
                 .build();
 
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails));
+        PaymentProviderAuthorisationResponse response = provider.authorise(new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails));
 
-        assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
-        String transactionId = response.getBaseResponse().get().getTransactionId();
-        assertThat(transactionId, is(not(nullValue())));
+        assertThat(response.getTransactionId().isPresent(), is(true));
     }
 
     @Test
-    public void shouldRequire3dsFor3dsRequiredMerchant() throws Exception {
+    public void shouldRequire3dsFor3dsRequiredMerchant() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         GatewayAccountEntity gatewayAccountEntity = aServiceAccount();
         gatewayAccountEntity.setRequires3ds(true);
@@ -77,15 +69,14 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
                 .build();
         mockSmartpay3dsRequiredOrderSubmitResponse();
 
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails));
+        PaymentProviderAuthorisationResponse response = provider.authorise(new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails));
 
-        assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().isPresent(), is(true));
-        SmartpayAuthorisationResponse smartpayAuthorisationResponse = (SmartpayAuthorisationResponse) response.getBaseResponse().get();
-        assertThat(smartpayAuthorisationResponse.authoriseStatus(), is(REQUIRES_3DS));
-        assertThat(smartpayAuthorisationResponse.getMd(), is(not(nullValue())));
-        assertThat(smartpayAuthorisationResponse.getIssuerUrl(), is(not(nullValue())));
-        assertThat(smartpayAuthorisationResponse.getPaRequest(), is(not(nullValue())));
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(REQUIRES_3DS));
+        assertTrue(response.getAuth3dsDetailsEntity().isPresent());
+        assertNotNull(response.getAuth3dsDetailsEntity().get().getMd());
+        assertNotNull(response.getAuth3dsDetailsEntity().get().getIssuerUrl());
+        assertNotNull(response.getAuth3dsDetailsEntity().get().getPaRequest());
 
     }
 
@@ -121,15 +112,8 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
         return TestTemplateResourceLoader.load(SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE).replace("{{pspReference}}", "12345678");
     }
 
-    private void mockSmartpaySuccessfulCaptureResponse() {
-        mockSmartpayResponse(200, successCaptureResponse());
-    }
-
     private String successAuthoriseResponse() {
         return TestTemplateResourceLoader.load(SMARTPAY_AUTHORISATION_SUCCESS_RESPONSE).replace("{{pspReference}}", "12345678");
     }
 
-    private String successCaptureResponse() {
-        return TestTemplateResourceLoader.load(SMARTPAY_CAPTURE_SUCCESS_RESPONSE).replace("{{pspReference}}", "8614440510830227");
-    }
 }
