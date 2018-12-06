@@ -242,7 +242,7 @@ public class ChargeService {
                                                       AuthCardDetails authCardDetails) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             charge.setStatus(status);
-            
+
             setTransactionId(charge, transactionId);
             sessionIdentifier.ifPresent(charge::setProviderSessionId);
             auth3dsDetails.ifPresent(charge::set3dsDetails);
@@ -260,11 +260,11 @@ public class ChargeService {
 
     @Transactional
     public ChargeEntity updateChargePostApplePayAuthorisation(String chargeExternalId,
-                                                      ChargeStatus status,
-                                                      Optional<String> transactionId,
-                                                      Optional<Auth3dsDetailsEntity> auth3dsDetails,
-                                                      Optional<String> sessionIdentifier,
-                                                      AuthCardDetails authCardDetails) {
+                                                              ChargeStatus status,
+                                                              Optional<String> transactionId,
+                                                              Optional<Auth3dsDetailsEntity> auth3dsDetails,
+                                                              Optional<String> sessionIdentifier,
+                                                              AuthCardDetails authCardDetails) {
         ChargeEntity charge = updateChargePostAuthorisation(chargeExternalId, status, transactionId, auth3dsDetails, sessionIdentifier, authCardDetails);
         charge.setWalletType(WalletType.APPLE_PAY);
         return charge;
@@ -294,6 +294,13 @@ public class ChargeService {
                         chargeEntity.setStatus(CAPTURED);
                         chargeEventDao.persistChargeEventOf(chargeEntity, ZonedDateTime.now());
                     }
+
+                    // for Stripe, we don't receive a notification so this charge will transition directly to CAPTURED, if successful
+                    if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.STRIPE && chargeEntity.getStatus().equals(CAPTURE_SUBMITTED.getValue())) {
+                        chargeEntity.setStatus(CAPTURED);
+                        chargeEventDao.persistChargeEventOf(chargeEntity, ZonedDateTime.now());
+                    }
+
                     return chargeEntity;
                 })
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
@@ -388,7 +395,7 @@ public class ChargeService {
     private boolean hasFullCardNumber(AuthCardDetails authCardDetails) {
         return authCardDetails.getCardNo().length() > 6;
     }
-    
+
     private TokenEntity createNewChargeEntityToken(ChargeEntity chargeEntity) {
         TokenEntity token = TokenEntity.generateNewTokenFor(chargeEntity);
         tokenDao.persist(token);
