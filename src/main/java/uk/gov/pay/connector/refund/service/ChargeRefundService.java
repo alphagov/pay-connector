@@ -22,6 +22,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.inject.Inject;
+import java.util.Optional;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
@@ -106,7 +107,6 @@ public class ChargeRefundService {
     public void updateRefundStatus(GatewayResponse<BaseRefundResponse> gatewayResponse, Long refundEntityId) {
         RefundStatus status = gatewayResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
         refundDao.findById(refundEntityId).ifPresent(refundEntity -> {
-            String reference = getRefundReference(refundEntity, gatewayResponse);
             ChargeEntity chargeEntity = refundEntity.getChargeEntity();
 
             logger.info("Refund {} ({} {}) for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
@@ -116,7 +116,7 @@ public class ChargeRefundService {
                     gatewayResponse, refundEntity.getStatus(), status);
 
             refundEntity.setStatus(status);
-            refundEntity.setReference(reference);
+            getRefundReference(refundEntity, gatewayResponse).ifPresent(refundEntity::setReference);
         });
     }
 
@@ -190,20 +190,16 @@ public class ChargeRefundService {
      * <p>Smartpay -> We get the pspReference returned by them. This will also be sent with the notification.</p>
      * <p>ePDQ -> We construct PAYID/PAYIDSUB and use that as the reference. PAYID and PAYIDSUB will be sent with the
      * notification.</p>
+     * if not successful (and the fact that we have got a proper response from Gateway, we have to assume
+     * no refund has not gone through and no reference returned(or needed) to be stored.
      *
      * @see RefundGatewayRequest valueOf()
      */
-    private String getRefundReference(RefundEntity refundEntity, GatewayResponse<BaseRefundResponse> gatewayResponse) {
+    private Optional<String> getRefundReference(RefundEntity refundEntity, GatewayResponse<BaseRefundResponse> gatewayResponse) {
+
         if (gatewayResponse.isSuccessful()) {
-            return gatewayResponse.getBaseResponse().flatMap(BaseRefundResponse::getReference)
-                    .orElseGet(refundEntity::getExternalId);
-        }
-        /*
-         * todo: refactor this code to not return empty String
-         * if not successful (and the fact that we have got a proper response from Gateway, we have to assume
-         * no refund has not gone through and no reference returned(or needed) to be stored.
-         */
-        return "";
+            return Optional.ofNullable(gatewayResponse.getBaseResponse().get().getReference().orElse(refundEntity.getExternalId()));
+        } else return Optional.empty();
     }
 
     private long validateRefundAndGetAvailableAmount(ChargeEntity chargeEntity, RefundRequest refundRequest) {

@@ -186,17 +186,12 @@ public class ChargeExpiryService {
         return legalStatuses.stream().map(ChargeStatus::toString).collect(Collectors.joining(", "));
     }
 
-    private static boolean chargeIsInTerminatableStatus(ChargeStatus chargeStatus) {
-        return EXPIRE_FLOW.getTerminatableStatuses().contains(chargeStatus);
-    }
-
     private GatewayResponse<BaseCancelResponse> doGatewayCancel(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName())
                 .cancel(CancelGatewayRequest.valueOf(chargeEntity));
     }
 
     // Only methods marked as public will be picked up by GuicePersist
-
     @Transactional
     @SuppressWarnings("WeakerAccess")
     public ChargeEntity changeStatusTo(String chargeId, ChargeStatus targetStatus) {
@@ -217,7 +212,7 @@ public class ChargeExpiryService {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
             ChargeStatus newStatus = EXPIRE_FLOW.getLockState();
             final ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
-            if (!chargeIsInTerminatableStatus(chargeStatus)) {
+            if (!EXPIRE_FLOW.getTerminatableStatuses().contains(chargeStatus)) {
                 if (newStatus.equals(chargeStatus)) {
                     throw new OperationAlreadyInProgressRuntimeException(EXPIRE_FLOW.getName(), chargeId);
                 } else if (Arrays.asList(AUTHORISATION_READY, AUTHORISATION_3DS_READY).contains(chargeStatus)) {
