@@ -1,13 +1,10 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
 
-import com.codahale.metrics.MetricRegistry;
-import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.exception.GenericGatewayRuntimeException;
@@ -28,15 +25,13 @@ import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.
 public class CardAuthoriseBaseService {
     private final CardExecutorService cardExecutorService;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
-    private final MetricRegistry metricRegistry;
 
     @Inject
-    public CardAuthoriseBaseService(CardExecutorService cardExecutorService, Environment environment) {
+    public CardAuthoriseBaseService(CardExecutorService cardExecutorService) {
         this.cardExecutorService = cardExecutorService;
-        this.metricRegistry = environment.metrics();
     }
 
- 
+
     public <T> T executeAuthorise(String chargeId, Supplier<T> authorisationSupplier) {
         Pair<ExecutionStatus, T> executeResult = (Pair<ExecutionStatus, T>) cardExecutorService.execute(authorisationSupplier);
 
@@ -50,9 +45,9 @@ public class CardAuthoriseBaseService {
         }
     }
 
-    
+
     public ChargeStatus extractChargeStatus(Optional<BaseAuthoriseResponse> baseResponse,
-                                     Optional<GatewayError> gatewayError) {
+                                            Optional<GatewayError> gatewayError) {
         return baseResponse
                 .map(BaseAuthoriseResponse::authoriseStatus)
                 .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
@@ -82,32 +77,5 @@ public class CardAuthoriseBaseService {
             default:
                 return AUTHORISATION_UNEXPECTED_ERROR;
         }
-    }
-    
-    public void logAuthorisation(
-            String operationDescription,
-            ChargeEntity updatedCharge,
-            ChargeStatus oldChargeStatus
-    ) {
-        logger.info("{} for {} ({} {}) for {} ({}) .'. {} -> {}",
-                operationDescription,
-                updatedCharge.getExternalId(),
-                updatedCharge.getPaymentGatewayName().getName(),
-                updatedCharge.getGatewayTransactionId(),
-                updatedCharge.getGatewayAccount().getAnalyticsId(),
-                updatedCharge.getGatewayAccount().getId(),
-                oldChargeStatus,
-                updatedCharge.getStatus()
-        );
-    }
-    
-    public void emitAuthorisationMetric(ChargeEntity charge, String operation) {
-        metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.%s.result.%s",
-                charge.getGatewayAccount().getGatewayName(),
-                charge.getGatewayAccount().getType(),
-                charge.getGatewayAccount().getId(),
-                operation,
-                charge.getStatus())
-        ).inc();
     }
 }
