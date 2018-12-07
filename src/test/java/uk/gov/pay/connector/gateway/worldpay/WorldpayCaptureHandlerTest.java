@@ -88,7 +88,7 @@ public class WorldpayCaptureHandlerTest {
 
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.getError().isPresent(), is(true));
-        assertThat(gatewayResponse.getError().get().getMessage(), is("worldpay capture response (error code: 5, error: Order has already been paid)"));
+        assertThat(gatewayResponse.getError().get().getMessage(), is("Worldpay capture response (error code: 5, error: Order has already been paid)"));
         assertThat(gatewayResponse.getError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
     }
 

@@ -90,8 +90,8 @@ public class StripeCaptureHandlerTest {
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
         assertThat(response.isSuccessful(), is(false));
         assertThat(response.getError().isPresent(), is(true));
-        assertThat(response.getError().get().getMessage(), is("No such charge: ch_123456 or something similar"));
-        assertThat(response.getError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
+        assertThat(response.toString(), containsString("error: No such charge: ch_123456 or something similar"));
+        assertThat(response.toString(), containsString("error code: resource_missing"));
     }
 
     @Test

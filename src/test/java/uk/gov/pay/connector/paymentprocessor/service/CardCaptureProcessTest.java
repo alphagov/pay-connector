@@ -16,6 +16,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 
 import java.time.Duration;
 import java.util.List;
@@ -33,6 +34,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureProcessTest {
@@ -69,7 +71,11 @@ public class CardCaptureProcessTest {
         when(mockCaptureConfiguration.getMaximumRetries()).thenReturn(MAXIMUM_RETRIES);
         when(mockConnectorConfiguration.getCaptureProcessConfig()).thenReturn(mockCaptureConfiguration);
         cardCaptureProcess = new CardCaptureProcess(mockEnvironment, mockChargeDao, mockCardCaptureService, mockConnectorConfiguration);
-        when(mockCardCaptureService.doCapture(anyString())).thenReturn(CaptureResponse.fromTransactionId(UUID.randomUUID().toString(), PENDING));
+        when(mockCardCaptureService.doCapture(anyString())).thenReturn(
+                CaptureResponse.fromBaseCaptureResponse(
+                        BaseCaptureResponse.fromTransactionId(UUID.randomUUID().toString(), SMARTPAY),
+                        PENDING)
+        );
     }
 
     @Test

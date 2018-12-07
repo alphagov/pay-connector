@@ -7,14 +7,10 @@ import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 
 import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
-import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCaptureOrderRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
@@ -34,7 +30,7 @@ public class WorldpayCaptureHandler implements CaptureHandler {
             return CaptureResponse.fromGatewayError(response.left().value());
         } else {
             Either<GatewayError, WorldpayCaptureResponse> unmarshalled = client.unmarshallResponse(response.right().value(), WorldpayCaptureResponse.class);
-            return fromUnmarshalled(unmarshalled, PaymentGatewayName.WORLDPAY);
+            return fromUnmarshalled(unmarshalled, CaptureResponse.ChargeState.PENDING);
         }
      }
 

@@ -14,6 +14,7 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
@@ -28,7 +29,8 @@ import java.util.Optional;
 
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
-import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
+import static uk.gov.pay.connector.gateway.CaptureResponse.fromBaseCaptureResponse;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
@@ -76,12 +78,12 @@ public class SandboxPaymentProvider implements PaymentProvider {
 
     @Override
     public CaptureResponse capture(CaptureGatewayRequest request) {
-        return CaptureResponse.fromTransactionId(randomUUID().toString(), COMPLETE);
+        return fromBaseCaptureResponse(BaseCaptureResponse.fromTransactionId(randomUUID().toString(), SANDBOX), COMPLETE);
     }
 
     @Override
     public PaymentGatewayName getPaymentGatewayName() {
-        return PaymentGatewayName.SANDBOX;
+        return SANDBOX;
     }
 
     @Override

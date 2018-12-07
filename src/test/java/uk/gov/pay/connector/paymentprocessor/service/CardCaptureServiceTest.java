@@ -34,15 +34,15 @@ import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.persistence.OptimisticLockException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
+import static java.util.UUID.randomUUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -70,6 +70,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBM
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
+import static uk.gov.pay.connector.gateway.CaptureResponse.fromBaseCaptureResponse;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -108,7 +111,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     private void worldpayWillRespondWithSuccess() {
-        when(mockedPaymentProvider.capture(any())).thenReturn(CaptureResponse.fromTransactionId(UUID.randomUUID().toString(), PENDING));
+        when(mockedPaymentProvider.capture(any())).thenReturn(
+                fromBaseCaptureResponse(BaseCaptureResponse.fromTransactionId(randomUUID().toString(), WORLDPAY), PENDING));
     }
 
     private void worldpayWillRespondWithError() {
@@ -156,9 +160,13 @@ public class CardCaptureServiceTest extends CardServiceTest {
         mockChargeDaoOperations(chargeSpy);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-        when(mockedPaymentProvider.capture(any())).thenReturn(CaptureResponse.fromTransactionId(UUID.randomUUID().toString(), COMPLETE));
+        when(mockedPaymentProvider.capture(any())).thenReturn(
+                CaptureResponse.fromBaseCaptureResponse(
+                        BaseCaptureResponse.fromTransactionId(randomUUID().toString(), SANDBOX), 
+                        COMPLETE)
+        );
         CaptureResponse response = cardCaptureService.doCapture(charge.getExternalId());
-
+        
         assertThat(response.isSuccessful(), is(true));
         InOrder inOrder = Mockito.inOrder(chargeSpy);
         inOrder.verify(chargeSpy).setStatus(CAPTURE_READY);

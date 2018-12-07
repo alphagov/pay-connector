@@ -19,6 +19,10 @@ public class CaptureGatewayRequest implements GatewayRequest {
     public String getTransactionId() {
         return charge.getGatewayTransactionId();
     }
+    
+    public String getExternalId() {
+        return charge.getExternalId();
+    }
 
     @Override
     public GatewayAccountEntity getGatewayAccount() {
