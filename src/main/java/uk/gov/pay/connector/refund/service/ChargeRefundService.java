@@ -22,6 +22,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.inject.Inject;
+import java.util.Optional;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
@@ -32,10 +33,10 @@ public class ChargeRefundService {
 
     public class Response {
 
-        private GatewayResponse refundGatewayResponse;
+        private GatewayResponse<BaseRefundResponse> refundGatewayResponse;
         private RefundEntity refundEntity;
 
-        public Response(GatewayResponse refundGatewayResponse, RefundEntity refundEntity) {
+        public Response(GatewayResponse<BaseRefundResponse> refundGatewayResponse, RefundEntity refundEntity) {
             this.refundGatewayResponse = refundGatewayResponse;
             this.refundEntity = refundEntity;
         }
@@ -79,7 +80,8 @@ public class ChargeRefundService {
     }
 
     @Transactional
-    private RefundEntity createRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
+    @SuppressWarnings("WeakerAccess")
+    public RefundEntity createRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId).map(chargeEntity -> {
             Long availableAmount = validateRefundAndGetAvailableAmount(chargeEntity, refundRequest);
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
@@ -101,10 +103,10 @@ public class ChargeRefundService {
     }
 
     @Transactional
-    private void updateRefundStatus(GatewayResponse gatewayResponse, Long refundEntityId) {
+    @SuppressWarnings("WeakerAccess")
+    public void updateRefundStatus(GatewayResponse<BaseRefundResponse> gatewayResponse, Long refundEntityId) {
         RefundStatus status = gatewayResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
         refundDao.findById(refundEntityId).ifPresent(refundEntity -> {
-            String reference = getRefundReference(refundEntity, gatewayResponse);
             ChargeEntity chargeEntity = refundEntity.getChargeEntity();
 
             logger.info("Refund {} ({} {}) for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
@@ -114,27 +116,27 @@ public class ChargeRefundService {
                     gatewayResponse, refundEntity.getStatus(), status);
 
             refundEntity.setStatus(status);
-            refundEntity.setReference(reference);
-            refundDao.merge(refundEntity);
+            getRefundReference(refundEntity, gatewayResponse).ifPresent(refundEntity::setReference);
         });
     }
 
     @Transactional
-    private RefundEntity updateSandboxStatus(RefundEntity refundEntity) {
+    @SuppressWarnings("WeakerAccess")
+    public RefundEntity updateSandboxStatus(RefundEntity refundEntity) {
         return refundDao.findById(refundEntity.getId()).map(refund -> {
             ChargeEntity chargeEntity = refund.getChargeEntity();
             if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX
                     && refund.hasStatus(RefundStatus.REFUND_SUBMITTED)) {
                 refund.setStatus(REFUNDED);
                 userNotificationService.sendRefundIssuedEmail(refund);
-                refundDao.merge(refund);
             }
             return refund;
         }).orElse(refundEntity);
     }
 
     @Transactional
-    private RefundEntity createRefundEntity(RefundRequest refundRequest, ChargeEntity charge) {
+    @SuppressWarnings("WeakerAccess")
+    public RefundEntity createRefundEntity(RefundRequest refundRequest, ChargeEntity charge) {
         RefundEntity refundEntity = new RefundEntity(charge, refundRequest.getAmount(), refundRequest.getUserExternalId());
         charge.getRefunds().add(refundEntity);
         refundDao.persist(refundEntity);
@@ -188,19 +190,16 @@ public class ChargeRefundService {
      * <p>Smartpay -> We get the pspReference returned by them. This will also be sent with the notification.</p>
      * <p>ePDQ -> We construct PAYID/PAYIDSUB and use that as the reference. PAYID and PAYIDSUB will be sent with the
      * notification.</p>
+     * if not successful (and the fact that we have got a proper response from Gateway, we have to assume
+     * no refund has not gone through and no reference returned(or needed) to be stored.
      *
      * @see RefundGatewayRequest valueOf()
      */
-    private String getRefundReference(RefundEntity refundEntity, GatewayResponse<BaseRefundResponse> gatewayResponse) {
-        if (gatewayResponse.isSuccessful()) {
+    private Optional<String> getRefundReference(RefundEntity refundEntity, GatewayResponse<BaseRefundResponse> gatewayResponse) {
 
-            return gatewayResponse.getBaseResponse().get().getReference().orElse(refundEntity.getExternalId());
-        }
-        /**
-         * if not successful (and the fact that we have got a proper response from Gateway, we have to assume
-         * no refund has not gone through and no reference returned(or needed) to be stored.
-         */
-        return "";
+        if (gatewayResponse.isSuccessful()) {
+            return Optional.ofNullable(gatewayResponse.getBaseResponse().get().getReference().orElse(refundEntity.getExternalId()));
+        } else return Optional.empty();
     }
 
     private long validateRefundAndGetAvailableAmount(ChargeEntity chargeEntity, RefundRequest refundRequest) {
