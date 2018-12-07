@@ -68,6 +68,7 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, EXPIRED, "ChargeExpiryService");
         graph.putEdgeValue(EXPIRE_CANCEL_READY, EXPIRED, "ChargeExpiryService");
         graph.putEdgeValue(EXPIRE_CANCEL_SUBMITTED, EXPIRED, "ChargeExpiryService");
+        graph.putEdgeValue(AUTHORISATION_3DS_READY, EXPIRED, "ChargeExpiryService");
 
         graph.putEdgeValue(CREATED, ENTERING_CARD_DETAILS, "frontend: POST /frontend/charges/{chargeId}/status");
         graph.putEdgeValue(CREATED, SYSTEM_CANCELLED, "");

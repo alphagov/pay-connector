@@ -32,17 +32,29 @@ public class Card3dsResponseAuthService {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
 
             final ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, AUTHORISATION_3DS);
-            Gateway3DSAuthorisationResponse gateway3DSAuthorisationResponse =  providers
-                    .byName(charge.getPaymentGatewayName())
-                    .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(charge, auth3DsDetails));
-            processGateway3DSecureResponse(
-                    charge.getExternalId(),
-                    ChargeStatus.fromString(charge.getStatus()),
-                    gateway3DSAuthorisationResponse
-            );
-
-            return gateway3DSAuthorisationResponse;
+            return authoriseAndProcess3DS(auth3DsDetails, charge);
         });
+    }
+
+    public Gateway3DSAuthorisationResponse process3DSecureAuthorisationWithoutLocking(String chargeId, Auth3dsDetails auth3DsDetails) {
+        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
+            final ChargeEntity charge = chargeService.findChargeById(chargeId);
+            return authoriseAndProcess3DS(auth3DsDetails, charge);
+        });
+    }
+
+    private Gateway3DSAuthorisationResponse authoriseAndProcess3DS(Auth3dsDetails auth3DsDetails, ChargeEntity charge) {
+        Gateway3DSAuthorisationResponse gateway3DSAuthorisationResponse = providers
+                .byName(charge.getPaymentGatewayName())
+                .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(charge, auth3DsDetails));
+
+        processGateway3DSecureResponse(
+                charge.getExternalId(),
+                ChargeStatus.fromString(charge.getStatus()),
+                gateway3DSAuthorisationResponse
+        );
+
+        return gateway3DSAuthorisationResponse;
     }
 
     private void processGateway3DSecureResponse(

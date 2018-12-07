@@ -53,6 +53,7 @@ public class ChargeExpiryService {
     static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ImmutableList.of(
             CREATED,
             ENTERING_CARD_DETAILS,
+            AUTHORISATION_3DS_READY,
             AUTHORISATION_3DS_REQUIRED,
             AUTHORISATION_SUCCESS);
 

@@ -18,6 +18,7 @@ public interface BaseAuthoriseResponse extends BaseResponse {
         AUTHORISED(ChargeStatus.AUTHORISATION_SUCCESS),
         REJECTED(ChargeStatus.AUTHORISATION_REJECTED),
         REQUIRES_3DS(ChargeStatus.AUTHORISATION_3DS_REQUIRED),
+        AUTH_3DS_READY(ChargeStatus.AUTHORISATION_3DS_READY),
         CANCELLED(ChargeStatus.AUTHORISATION_CANCELLED),
         ERROR(ChargeStatus.AUTHORISATION_ERROR),
         EXCEPTION(ChargeStatus.AUTHORISATION_ERROR);

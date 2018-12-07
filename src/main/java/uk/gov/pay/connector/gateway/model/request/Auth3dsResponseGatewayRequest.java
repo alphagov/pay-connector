@@ -1,9 +1,10 @@
 package uk.gov.pay.connector.gateway.model.request;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.GatewayOperation;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.Optional;
 
@@ -11,7 +12,6 @@ public class Auth3dsResponseGatewayRequest implements GatewayRequest {
 
     private final ChargeEntity charge;
     private final Auth3dsDetails auth3DsDetails;
-
 
     public Auth3dsResponseGatewayRequest(ChargeEntity charge, Auth3dsDetails auth3DsDetails) {
         this.charge = charge;
@@ -46,5 +46,13 @@ public class Auth3dsResponseGatewayRequest implements GatewayRequest {
 
     public static Auth3dsResponseGatewayRequest valueOf(ChargeEntity charge, Auth3dsDetails auth3DsDetails) {
         return new Auth3dsResponseGatewayRequest(charge, auth3DsDetails);
+    }
+
+    public String getAmount() {
+        return String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
+    }
+
+    public String getDescription() {
+        return charge.getDescription();
     }
 }

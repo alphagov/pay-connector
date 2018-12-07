@@ -275,10 +275,16 @@ public class ChargeService {
                                                          OperationType operationType,
                                                          Optional<String> transactionId) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
-            charge.setStatus(status);
-            setTransactionId(charge, transactionId);
-            chargeEventDao.persistChargeEventOf(charge);
-
+            try {
+                charge.setStatus(status);
+                setTransactionId(charge, transactionId);
+                chargeEventDao.persistChargeEventOf(charge);
+            } catch (InvalidStateTransitionException e) {
+                if (chargeIsInLockedStatus(operationType, charge)) {
+                    throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), charge.getExternalId());
+                }
+                throw new IllegalStateRuntimeException(charge.getExternalId());
+            }
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
     }
@@ -329,6 +335,11 @@ public class ChargeService {
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
+    public ChargeEntity findChargeById(String chargeId) {
+        return chargeDao.findByExternalId(chargeId)
+                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+    }
+
     private ChargeEntity updateChargeStatus(ChargeEntity chargeEntity, ChargeStatus chargeStatus) {
         chargeEntity.setStatus(chargeStatus);
         chargeEventDao.persistChargeEventOf(chargeEntity);
@@ -339,6 +350,10 @@ public class ChargeService {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity ->
                 updateChargeStatus(chargeEntity, chargeStatus)
         ).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+    }
+
+    public Optional<ChargeEntity> findByProviderAndTransactionId(String paymentGatewayName, String transactionId) {
+        return chargeDao.findByProviderAndTransactionId(paymentGatewayName, transactionId);
     }
 
     public ChargeEntity markChargeAsEligibleForCapture(String externalId) {

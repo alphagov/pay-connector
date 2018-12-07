@@ -121,9 +121,8 @@ public class StripePaymentProvider implements PaymentProvider {
         } catch (GatewayClientException e) {
 
             Response response = e.getResponse();
-            int status = response.getStatus();
 
-            if (status == HttpStatus.SC_UNAUTHORIZED) {
+            if (response.getStatus() == HttpStatus.SC_UNAUTHORIZED) {
                 return unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage(), HttpStatus.SC_UNAUTHORIZED);
             }
 
@@ -136,11 +135,56 @@ public class StripePaymentProvider implements PaymentProvider {
             return responseBuilder.withGatewayError(gatewayError).build();
 
         } catch (DownstreamException e) {
-
             return unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage(), e.getStatusCode());
-
         } catch (GatewayException e) {
             return responseBuilder.withGatewayError(GatewayError.of(e)).build();
+        }
+    }
+
+    @Override
+    public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
+
+        if (request.getAuth3DsDetails() != null && request.getAuth3DsDetails().getAuth3DsResult() != null) {
+
+            switch (request.getAuth3DsDetails().getAuth3DsResult()) {
+                case CANCELED:
+                    return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.CANCELLED);
+                case ERROR:
+                    return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.ERROR);
+                case DECLINED:
+                    return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.REJECTED);
+                case AUTHORISED:
+                    return authorise3DSSource(request);
+            }
+        }
+
+        // if Auth3DSResult is not available, return response as AUTH_3DS_READY
+        // (to keep the transaction in auth waiting until a notification is received from Stripe for 3DS authorisation)
+        return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.AUTH_3DS_READY);
+    }
+
+    private Gateway3DSAuthorisationResponse authorise3DSSource(Auth3dsResponseGatewayRequest request) {
+        try {
+            Response authorisationResponse = createChargeFor3DSSource(request, request.getTransactionId().get());
+            StripeAuthorisationResponse stripeAuthResponse = new StripeAuthorisationResponse(authorisationResponse.readEntity(StripeCreateChargeResponse.class));
+
+            return Gateway3DSAuthorisationResponse.of(stripeAuthResponse.authoriseStatus(), stripeAuthResponse.getTransactionId());
+        } catch (GatewayClientException e) {
+
+            Response response = e.getResponse();
+
+            if (response.getStatus() == HttpStatus.SC_UNAUTHORIZED) {
+                return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.ERROR);
+            }
+
+            StripeErrorResponse stripeErrorResponse = response.readEntity(StripeErrorResponse.class);
+            logger.error("3DS Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
+                    request.getChargeExternalId(), stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), response.getStatus());
+
+            return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.REJECTED);
+
+        } catch (DownstreamException | GatewayException e) {
+            return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION);
         }
     }
 
@@ -166,12 +210,24 @@ public class StripePaymentProvider implements PaymentProvider {
         );
     }
 
+    private Response createChargeFor3DSSource(Auth3dsResponseGatewayRequest request, String sourceId)
+            throws GatewayClientException, GatewayException, DownstreamException {
+        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
+        return postToStripe(
+                "/v1/charges",
+                authorise3DSChargePayload(request, sourceId),
+                format("gateway-operations.%s.%s.authorise.create_charge",
+                        gatewayAccount.getGatewayName(),
+                        gatewayAccount.getType())
+        );
+    }
+
     private Response createCharge(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException, GatewayException, DownstreamException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/charges",
                 authorisePayload(request, sourceId),
-                format("gateway-operations.%s.%s.authorise.create_source",
+                format("gateway-operations.%s.%s.authorise.create_charge",
                         gatewayAccount.getGatewayName(),
                         gatewayAccount.getType())
         );
@@ -210,11 +266,6 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
-        return null;
-    }
-
-    @Override
     public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest request) {
         throw new UnsupportedOperationException("Apple Pay is not supported for Stripe");
     }
@@ -248,8 +299,7 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     private String threeDSecurePayload(CardAuthorisationGatewayRequest request, String sourceId) {
-        //todo: revisit for frontendUrl format
-        String frontend3dsIncomingUrl = String.format("%s/card_details/%s/3ds_required_in/stripe", frontendUrl, request.getChargeExternalId());
+        String frontend3dsIncomingUrl = String.format("%s/card_details/%s/3ds_required_in", frontendUrl, request.getChargeExternalId());
         List<BasicNameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("type", "three_d_secure"));
         params.add(new BasicNameValuePair("amount", request.getAmount()));
@@ -260,19 +310,35 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     private String authorisePayload(CardAuthorisationGatewayRequest request, String sourceId) {
+        return buildAuthorisePayload(sourceId, request.getChargeExternalId(), request.getAmount(), request.getDescription(), request.getGatewayAccount());
+    }
+
+    private String authorise3DSChargePayload(Auth3dsResponseGatewayRequest request, String sourceId) {
+        return buildAuthorisePayload(sourceId, request.getChargeExternalId(), request.getAmount(), request.getDescription(), request.getGatewayAccount());
+    }
+
+    private String buildAuthorisePayload(String sourceId, String externalId, String amount, String description, GatewayAccountEntity gatewayAccount) {
         List<BasicNameValuePair> params = new ArrayList<>();
-        params.add(new BasicNameValuePair("amount", request.getAmount()));
+        params.add(new BasicNameValuePair("amount", amount));
         params.add(new BasicNameValuePair("currency", "GBP"));
-        params.add(new BasicNameValuePair("description", request.getDescription()));
+        params.add(new BasicNameValuePair("description", description));
         params.add(new BasicNameValuePair("source", sourceId));
         params.add(new BasicNameValuePair("capture", "false"));
-        String stripeAccountId = request.getGatewayAccount().getCredentials().get("stripe_account_id");
-
-        if (StringUtils.isBlank(stripeAccountId))
-            throw new WebApplicationException(format("There is no stripe_account_id for gateway account with id %s", request.getGatewayAccount().getId()));
+        String stripeAccountId = getStripeAccountId(externalId, gatewayAccount);
 
         params.add(new BasicNameValuePair("destination[account]", stripeAccountId));
         return URLEncodedUtils.format(params, UTF_8);
+    }
+
+    private String getStripeAccountId(String externalId, GatewayAccountEntity gatewayAccount) {
+        String stripeAccountId = gatewayAccount.getCredentials().get("stripe_account_id");
+
+        if (StringUtils.isBlank(stripeAccountId)) {
+            logger.error("Unable to process charge [{}]. There is no stripe_account_id for corresponding gateway account with id {}",
+                    externalId, gatewayAccount.getId());
+            throw new WebApplicationException(format("There is no stripe_account_id for gateway account with id %s", gatewayAccount.getId()));
+        }
+        return stripeAccountId;
     }
 
     private String tokenPayload(CardAuthorisationGatewayRequest request) {

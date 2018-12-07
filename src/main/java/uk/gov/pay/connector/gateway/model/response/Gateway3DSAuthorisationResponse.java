@@ -33,7 +33,8 @@ public class Gateway3DSAuthorisationResponse {
     }
 
     public boolean isSuccessful() {
-        return authorisationStatus == BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
+        return authorisationStatus == BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED
+                || authorisationStatus == BaseAuthoriseResponse.AuthoriseStatus.AUTH_3DS_READY;
     }
 
     public boolean isException() {
