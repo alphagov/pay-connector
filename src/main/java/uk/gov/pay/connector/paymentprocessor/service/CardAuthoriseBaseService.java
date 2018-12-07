@@ -101,12 +101,12 @@ public class CardAuthoriseBaseService {
         );
     }
     
-    public void emitAuthorisationMetric(ChargeEntity charge, String metricPrefix) {
+    public void emitAuthorisationMetric(ChargeEntity charge, String operation) {
         metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.%s.result.%s",
-                metricPrefix,
                 charge.getGatewayAccount().getGatewayName(),
                 charge.getGatewayAccount().getType(),
                 charge.getGatewayAccount().getId(),
+                operation,
                 charge.getStatus())
         ).inc();
     }
