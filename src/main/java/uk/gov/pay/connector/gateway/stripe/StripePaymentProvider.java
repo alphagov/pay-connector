@@ -311,31 +311,34 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     private String authorisePayload(CardAuthorisationGatewayRequest request, String sourceId) {
-        return buildAuthorisePayload(sourceId, request.getAmount(), request.getDescription(), request.getGatewayAccount());
+        return buildAuthorisePayload(sourceId, request.getChargeExternalId(), request.getAmount(), request.getDescription(), request.getGatewayAccount());
     }
 
     private String authorise3DSChargePayload(Auth3dsResponseGatewayRequest request, String sourceId) {
-        return buildAuthorisePayload(sourceId, request.getAmount(), request.getDescription(), request.getGatewayAccount());
+        return buildAuthorisePayload(sourceId, request.getChargeExternalId(), request.getAmount(), request.getDescription(), request.getGatewayAccount());
     }
 
-    private String buildAuthorisePayload(String sourceId, String amount, String description, GatewayAccountEntity gatewayAccount) {
+    private String buildAuthorisePayload(String sourceId, String externalId, String amount, String description, GatewayAccountEntity gatewayAccount) {
         List<BasicNameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("amount", amount));
         params.add(new BasicNameValuePair("currency", "GBP"));
         params.add(new BasicNameValuePair("description", description));
         params.add(new BasicNameValuePair("source", sourceId));
         params.add(new BasicNameValuePair("capture", "false"));
-        String stripeAccountId = getStripeAccountId(gatewayAccount);
+        String stripeAccountId = getStripeAccountId(externalId, gatewayAccount);
 
         params.add(new BasicNameValuePair("destination[account]", stripeAccountId));
         return URLEncodedUtils.format(params, UTF_8);
     }
 
-    private String getStripeAccountId(GatewayAccountEntity gatewayAccount) {
+    private String getStripeAccountId(String externalId, GatewayAccountEntity gatewayAccount) {
         String stripeAccountId = gatewayAccount.getCredentials().get("stripe_account_id");
 
-        if (StringUtils.isBlank(stripeAccountId))
+        if (StringUtils.isBlank(stripeAccountId)) {
+            logger.error("Unable to process charge [{}]. There is no stripe_account_id for corresponding gateway account with id {}",
+                    externalId, gatewayAccount.getId());
             throw new WebApplicationException(format("There is no stripe_account_id for gateway account with id %s", gatewayAccount.getId()));
+        }
         return stripeAccountId;
     }
 

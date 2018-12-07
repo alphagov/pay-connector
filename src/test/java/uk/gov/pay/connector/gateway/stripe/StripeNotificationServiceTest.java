@@ -41,8 +41,6 @@ public class StripeNotificationServiceTest {
     @Mock
     private Card3dsResponseAuthService mockCard3dsResponseAuthService;
     @Mock
-    private ChargeDao mockChargeDao;
-    @Mock
     private ChargeService mockChargeService;
     @Mock
     private ChargeEntity mockCharge;
