@@ -7,19 +7,19 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import java.util.Optional;
 
 public class AuthorisationResponse {
-    private BaseAuthoriseResponse.AuthoriseStatus authoriseStatus;
-    private GatewayError gatewayError;
+    private final Optional<BaseAuthoriseResponse.AuthoriseStatus> authoriseStatus;
+    private final Optional<GatewayError> gatewayError;
 
     public AuthorisationResponse(GatewayResponse<BaseAuthoriseResponse> gatewayResponse) {
-        gatewayResponse.getBaseResponse().ifPresent(baseAuthoriseResponse -> authoriseStatus = baseAuthoriseResponse.authoriseStatus());
-        gatewayResponse.getGatewayError().ifPresent(error -> gatewayError = error);
+        authoriseStatus = gatewayResponse.getBaseResponse().map(BaseAuthoriseResponse::authoriseStatus);
+        gatewayError = gatewayResponse.getGatewayError();
     }
 
     public Optional<GatewayError> getGatewayError() {
-        return Optional.ofNullable(gatewayError);
+        return gatewayError;
     }
 
     public Optional<BaseAuthoriseResponse.AuthoriseStatus> getAuthoriseStatus() {
-        return Optional.ofNullable(authoriseStatus);
+        return authoriseStatus;
     }
 }
