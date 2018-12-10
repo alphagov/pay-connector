@@ -68,6 +68,7 @@ public class EpdqCaptureHandlerTest {
         
         CaptureResponse gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
         assertTrue(gatewayResponse.isSuccessful());
+        assertThat(gatewayResponse.state(), is(CaptureResponse.ChargeState.PENDING));
         assertThat(gatewayResponse.getTransactionId().isPresent(), is(true));
         assertThat(gatewayResponse.getTransactionId().get(), is("3014644340"));
     }

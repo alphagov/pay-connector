@@ -4,6 +4,7 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
+import org.hamcrest.core.Is;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -199,6 +200,7 @@ public class EpdqPaymentProviderTest {
         CaptureGatewayRequest captureRequest = buildCaptureRequest(chargeEntity, transactionId);
         CaptureResponse captureResponse = paymentProvider.capture(captureRequest);
         assertThat(captureResponse.isSuccessful(), is(true));
+        assertThat(captureResponse.state(), Is.is(CaptureResponse.ChargeState.PENDING));
     }
 
     @Test

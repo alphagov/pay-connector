@@ -64,6 +64,7 @@ public class WorldpayCaptureHandlerTest {
 
         CaptureResponse gatewayResponse = worldpayCaptureHandler.capture(getCaptureRequest());
         assertTrue(gatewayResponse.isSuccessful());
+        assertThat(gatewayResponse.state(), is(CaptureResponse.ChargeState.PENDING));
     }
 
     private class TestResponse extends GatewayClient.Response {

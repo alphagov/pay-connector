@@ -75,6 +75,7 @@ public class StripeCaptureHandlerTest {
 
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
         assertTrue(response.isSuccessful());
+        assertThat(response.state(), is(CaptureResponse.ChargeState.COMPLETE));
         assertThat(response.getTransactionId().isPresent(), is(true));
         assertThat(response.getTransactionId().get(), is("ch_123456"));
     }

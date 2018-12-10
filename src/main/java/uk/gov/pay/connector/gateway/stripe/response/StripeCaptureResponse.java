@@ -3,8 +3,6 @@ package uk.gov.pay.connector.gateway.stripe.response;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 
-import javax.ws.rs.core.Response;
-import java.util.Map;
 import java.util.StringJoiner;
 
 public class StripeCaptureResponse implements BaseCaptureResponse {

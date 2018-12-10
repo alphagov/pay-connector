@@ -19,6 +19,8 @@ import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.core.Response;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static fj.data.Either.right;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -62,6 +64,7 @@ public class SmartpayCaptureHandlerTest {
         CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(chargeEntity);
         CaptureResponse gatewayResponse = smartpayCaptureHandler.capture(request);
         assertTrue(gatewayResponse.isSuccessful());
+        assertThat(gatewayResponse.state(), is(CaptureResponse.ChargeState.PENDING));
     }
 
     private String successCaptureResponse() {
