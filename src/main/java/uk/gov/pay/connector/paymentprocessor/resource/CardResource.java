@@ -60,18 +60,20 @@ public class CardResource {
         AuthorisationResponse response = cardAuthoriseService.doAuthorise(chargeId, authCardDetails);
 
         return response.getGatewayError().map(this::handleError)
-                .orElseGet(() -> response.getAuthoriseStatus().map(authoriseStatus -> {
-                    if (authoriseStatus.equals(AuthoriseStatus.SUBMITTED)) {
-                        return badRequestResponse("This transaction was deferred.");
-                    }
+                .orElseGet(() -> response.getAuthoriseStatus().map(this::handleAuthResponse)
+                        .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
+    }
 
-                    if (isAuthorisationDeclined(authoriseStatus)) {
-                        return badRequestResponse("This transaction was declined.");
-                    }
+    private Response handleAuthResponse(AuthoriseStatus authoriseStatus) {
+        if (authoriseStatus.equals(AuthoriseStatus.SUBMITTED)) {
+            return badRequestResponse("This transaction was deferred.");
+        }
 
-                    return ResponseUtil.successResponseWithEntity(ImmutableMap.of("status", authoriseStatus.getMappedChargeStatus().toString()));
+        if (isAuthorisationDeclined(authoriseStatus)) {
+            return badRequestResponse("This transaction was declined.");
+        }
 
-                }).orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
+        return ResponseUtil.successResponseWithEntity(ImmutableMap.of("status", authoriseStatus.getMappedChargeStatus().toString()));
     }
 
     @POST
