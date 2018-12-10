@@ -33,6 +33,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AddressFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 
 import java.util.Map;
 import java.util.Optional;
@@ -40,6 +41,7 @@ import java.util.function.Supplier;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
+import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -61,6 +63,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR;
+import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
+import static uk.gov.pay.connector.gateway.model.ErrorType.MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionTimeoutException;
 import static uk.gov.pay.connector.gateway.model.GatewayError.malformedResponseReceivedFromGateway;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
@@ -97,10 +102,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null);
-        
+
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         cardAuthorisationService = new CardAuthoriseService(
-                mockedCardTypeDao, 
+                mockedCardTypeDao,
                 mockedProviders,
                 cardAuthoriseBaseService,
                 chargeService,
@@ -143,11 +148,29 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         providerWillAuthorise();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        assertThat(response.isSuccessful(), is(true));
-        assertThat(response.getSessionIdentifier().isPresent(), is(true));
-        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
+
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        verify(mockedChargeEventDao).persistChargeEventOf(charge);
+        assertThat(charge.get3dsDetails(), is(nullValue()));
+        assertThat(charge.getCardDetails(), is(notNullValue()));
+        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+    }
+
+    @Test
+    public void doAuthoriseWithNonCorporateCard_shouldRespondAuthorisationSuccess_2() {
+
+        providerWillAuthorise();
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
@@ -166,11 +189,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .withAddress(null)
                 .build();
 
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        assertThat(response.isSuccessful(), is(true));
-        assertThat(response.getSessionIdentifier().isPresent(), is(true));
-        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
@@ -193,11 +215,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         charge.getGatewayAccount().setCorporateCreditCardSurchargeAmount(0L);
 
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        assertThat(response.isSuccessful(), is(true));
-        assertThat(response.getSessionIdentifier().isPresent(), is(true));
-        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
@@ -219,11 +240,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .build();
 
         charge.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        assertThat(response.isSuccessful(), is(true));
-        assertThat(response.getSessionIdentifier().isPresent(), is(true));
-        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
@@ -245,11 +265,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .build();
 
         charge.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        assertThat(response.isSuccessful(), is(true));
-        assertThat(response.getSessionIdentifier().isPresent(), is(true));
-        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
@@ -272,11 +291,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(generatedTransactionId));
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        assertThat(response.isSuccessful(), is(true));
-        assertThat(response.getSessionIdentifier().isPresent(), is(true));
-        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
@@ -292,9 +310,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         worldpayProviderWillRequire3ds(null);
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        assertThat(response.isSuccessful(), is(true));
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.REQUIRES_3DS));
 
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
         verify(mockedChargeEventDao).persistChargeEventOf(charge);
@@ -307,9 +326,11 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         epdqProviderWillRequire3ds();
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        assertThat(response.isSuccessful(), is(true));
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.REQUIRES_3DS));
+
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
         verify(mockedChargeEventDao).persistChargeEventOf(charge);
         assertThat(charge.get3dsDetails().getHtmlOut(), is(notNullValue()));
@@ -322,9 +343,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         worldpayProviderWillRequire3ds(SESSION_IDENTIFIER);
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        assertThat(response.isSuccessful(), is(true));
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.REQUIRES_3DS));
 
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
         verify(mockedChargeEventDao).persistChargeEventOf(charge);
@@ -390,9 +412,11 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillReject();
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        assertThat(response.isSuccessful(), is(true));
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.REJECTED));
+
         assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
     }
@@ -405,9 +429,11 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillRespondToAuthoriseWith(authResponse);
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        assertThat(response.isSuccessful(), is(true));
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.CANCELLED));
+
         assertThat(charge.getStatus(), is(AUTHORISATION_CANCELLED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
     }
@@ -418,9 +444,11 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillError();
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        assertThat(response.isFailed(), is(true));
+        assertTrue(response.getGatewayError().isPresent());
+        assertThat(response.getGatewayError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
+
         assertThat(charge.getStatus(), is(AUTHORISATION_ERROR.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(nullValue()));
     }
@@ -584,9 +612,11 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillRespondWithError(gatewayError);
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        assertThat(response.isFailed(), is(true));
+        assertTrue(response.getGatewayError().isPresent());
+        assertThat(response.getGatewayError().get().getErrorType(), is(GATEWAY_CONNECTION_TIMEOUT_ERROR));
+
         assertThat(charge.getStatus(), is(AUTHORISATION_TIMEOUT.getValue()));
     }
 
@@ -597,9 +627,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillRespondWithError(gatewayError);
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        GatewayResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
-        assertThat(response.isFailed(), is(true));
+        assertTrue(response.getGatewayError().isPresent());
+        assertThat(response.getGatewayError().get().getErrorType(), is(MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY));
         assertThat(charge.getStatus(), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
     }
 
