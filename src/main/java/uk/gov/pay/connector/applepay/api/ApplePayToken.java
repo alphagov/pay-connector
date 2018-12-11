@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.applepay.api;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
@@ -8,6 +9,7 @@ public class ApplePayToken  {
     private ApplePaymentInfo applePaymentInfo;
     private EncryptedPaymentData encryptedPaymentData;
 
+    @JsonProperty("payment_info")
     public ApplePaymentInfo getApplePaymentInfo() {
         return applePaymentInfo;
     }

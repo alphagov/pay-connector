@@ -112,6 +112,8 @@ public class CardExecutorService<T> {
         } catch (ExecutionException | InterruptedException exception) {
             if (exception.getCause() instanceof WebApplicationException) {
                 throw (WebApplicationException) exception.getCause();
+            } else if (exception.getCause() instanceof UnsupportedOperationException) { //ooof
+                throw (UnsupportedOperationException) exception.getCause();
             }
             return Pair.of(FAILED, null);
         } catch (TimeoutException timeoutException) {

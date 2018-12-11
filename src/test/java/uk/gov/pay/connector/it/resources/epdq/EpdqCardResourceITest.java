@@ -13,6 +13,9 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.util.Map;
 
+import static com.jayway.restassured.RestAssured.given;
+import static com.jayway.restassured.http.ContentType.JSON;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gateway.model.Auth3dsDetails.Auth3dsResult.AUTHORISED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -21,6 +24,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -28,13 +32,14 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 public class EpdqCardResourceITest extends ChargingITestBase {
 
     private String authorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
+    private String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
 
     public EpdqCardResourceITest() {
         super("epdq");
     }
 
     @Test
-    public void shouldAuthorise_whenTransactionIsSuccessful() throws Exception {
+    public void shouldAuthorise_whenTransactionIsSuccessful() {
 
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         epdqMockClient.mockAuthorisationSuccess();
@@ -85,7 +90,7 @@ public class EpdqCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotAuthorise_whenTransactionIsRefused() throws Exception {
+    public void shouldNotAuthorise_whenTransactionIsRefused() {
         epdqMockClient.mockAuthorisationFailure();
 
         String expectedErrorMessage = "This transaction was declined.";
@@ -94,7 +99,20 @@ public class EpdqCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotAuthorise_whenTransactionIsInError() throws Exception {
+    public void shouldReturnBadRequestResponseWhenTryingToAuthoriseAnApplePayPayment() {
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validApplePayAuthorisationDetails)
+                .post(authoriseChargeUrlForWallet(chargeId))
+                .then()
+                .statusCode(400)
+                .body("message", containsString("Apple Pay is not supported for ePDQ"));
+    }
+    
+    @Test
+    public void shouldNotAuthorise_whenTransactionIsInError() {
         epdqMockClient.mockAuthorisationError();
 
         String expectedErrorMessage = "ePDQ authorisation response (PAYID: 0, STATUS: 0, NCERROR: 50001111, " +
@@ -105,7 +123,7 @@ public class EpdqCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotAuthorise_aTransactionInAnyOtherNonSupportedState() throws Exception {
+    public void shouldNotAuthorise_aTransactionInAnyOtherNonSupportedState() {
         epdqMockClient.mockAuthorisationOther();
 
         String expectedErrorMessage = "ePDQ authorisation response (PAYID: 3014644340, STATUS: 52, NCERROR: 0, NCERRORPLUS: !)";
@@ -114,7 +132,7 @@ public class EpdqCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotAuthorise_aTransactionInWaitingExternalState() throws Exception {
+    public void shouldNotAuthorise_aTransactionInWaitingExternalState() {
         epdqMockClient.mockAuthorisationWaitingExternal();
 
         String expectedErrorMessage = "This transaction was deferred.";
@@ -123,7 +141,7 @@ public class EpdqCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotAuthorise_aTransactionInWaitingState() throws Exception {
+    public void shouldNotAuthorise_aTransactionInWaitingState() {
         epdqMockClient.mockAuthorisationWaiting();
 
         String expectedErrorMessage = "This transaction was deferred.";

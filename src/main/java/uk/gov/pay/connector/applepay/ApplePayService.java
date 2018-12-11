@@ -36,11 +36,15 @@ public class ApplePayService {
 
         LOGGER.info("Authorising apple pay charge with id {} ", chargeId);
         GatewayResponse<BaseAuthoriseResponse> response = authoriseService.doAuthorise(chargeId, data);
-        return handleGatewayAuthoriseResponse(response);
+        if (isAuthorisationSubmitted(response)) {
+            return badRequestResponse("This transaction was deferred.");
+        }
+
+        return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
     }
 
 
-    //PP-4314 This is duplicated from the CardResource. This kind of handling shouldn't be there in the first place, so will refactor to be embedded in services rather than at resource level
+    //PP-4314 These methods duplicated from the CardResource. This kind of handling shouldn't be there in the first place, so will refactor to be embedded in services rather than at resource level
     private Response handleGatewayAuthoriseResponse(GatewayResponse<? extends BaseAuthoriseResponse> response) {
         return response.getGatewayError()
                 .map(this::handleError)
@@ -48,6 +52,7 @@ public class ApplePayService {
                         .map(r -> ResponseUtil.successResponseWithEntity(ImmutableMap.of("status", r.authoriseStatus().getMappedChargeStatus().toString())))
                         .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
     }
+    
     private Response handleError(GatewayError error) {
         switch (error.getErrorType()) {
             case UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY:
@@ -59,5 +64,18 @@ public class ApplePayService {
             default:
                 return badRequestResponse(error.getMessage());
         }
+    }
+    
+    private static boolean isAuthorisationSubmitted(GatewayResponse<BaseAuthoriseResponse> response) {
+        return response.getBaseResponse()
+                .filter(baseResponse -> baseResponse.authoriseStatus() == BaseAuthoriseResponse.AuthoriseStatus.SUBMITTED)
+                .isPresent();
+    }
+
+    private static boolean isAuthorisationDeclined(GatewayResponse<BaseAuthoriseResponse> response) {
+        return response.getBaseResponse()
+                .filter(baseResponse -> baseResponse.authoriseStatus() == BaseAuthoriseResponse.AuthoriseStatus.REJECTED ||
+                        baseResponse.authoriseStatus() == BaseAuthoriseResponse.AuthoriseStatus.ERROR)
+                .isPresent();
     }
 }

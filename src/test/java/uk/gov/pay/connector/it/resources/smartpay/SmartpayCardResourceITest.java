@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.jayway.restassured.RestAssured.given;
+import static com.jayway.restassured.http.ContentType.JSON;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -26,6 +29,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
+import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -33,6 +37,7 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 public class SmartpayCardResourceITest extends ChargingITestBase {
 
     private String validCardDetails = buildCardDetailsWith("737");
+    private String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
 
     public SmartpayCardResourceITest() {
         super("smartpay");
@@ -55,7 +60,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotAuthorise_ASmartpayErrorCard() throws Exception {
+    public void shouldNotAuthorise_ASmartpayErrorCard() {
         String cardWithWrongCVC = buildCardDetailsWith("999");
         smartpayMockClient.mockAuthorisationFailure();
 
@@ -128,7 +133,20 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldPersistTransactionIds_duringAuthorisationAndCapture() throws Exception {
+    public void shouldReturnBadRequestResponseWhenTryingToAuthoriseAnApplePayPayment() {
+        String chargeId = createNewChargeWithNoTransactionId(ChargeStatus.ENTERING_CARD_DETAILS);
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validApplePayAuthorisationDetails)
+                .post(authoriseChargeUrlForWallet(chargeId))
+                .then()
+                .statusCode(400)
+                .body("message", containsString("Apple Pay is not supported for Smartpay"));
+    }
+    
+    @Test
+    public void shouldPersistTransactionIds_duringAuthorisationAndCapture() {
         String externalChargeId = createNewChargeWithNoTransactionId(ChargeStatus.ENTERING_CARD_DETAILS);
         String pspReference1 = "pspRef1-" + UUID.randomUUID().toString();
         smartpayMockClient.mockAuthorisationWithTransactionId(pspReference1);
