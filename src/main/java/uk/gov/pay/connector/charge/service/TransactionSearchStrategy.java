@@ -10,10 +10,10 @@ import uk.gov.pay.connector.charge.model.TransactionType;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.domain.Transaction;
+import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
-import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.common.service.search.AbstractSearchStrategy;
 import uk.gov.pay.connector.common.service.search.SearchStrategy;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
@@ -84,24 +84,26 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
                 .withLink("refunds", GET, uriInfo.getBaseUriBuilder()
                         .path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
                         .build(transaction.getGatewayAccountId(), transaction.getExternalId()));
-        
+
         if (ChargeStatus.AWAITING_CAPTURE_REQUEST.getValue().equals(transaction.getStatus())) {
             transactionResponseBuilder
                     .withLink("capture", POST, uriInfo.getBaseUriBuilder()
-                    .path("/v1/api/accounts/{accountId}/charges/{chargeId}/capture")
-                    .build(transaction.getGatewayAccountId(), transaction.getExternalId()));
+                            .path("/v1/api/accounts/{accountId}/charges/{chargeId}/capture")
+                            .build(transaction.getGatewayAccountId(), transaction.getExternalId()));
         }
         if (refundSummary != null) {
             transactionResponseBuilder.withRefunds(refundSummary);
         }
 
-        transaction.getCorporateCardSurcharge().ifPresent(surcharge -> {
-            if (surcharge > 0) {
-                transactionResponseBuilder
-                        .withCorporateCardSurcharge(surcharge)
-                        .withTotalAmount(CorporateCardSurchargeCalculator.getTotalAmountFor(transaction));
-            }
-        });
+        if ("charge".equals(transaction.getTransactionType())) {
+            transaction.getCorporateCardSurcharge().ifPresent(surcharge -> {
+                if (surcharge > 0) {
+                    transactionResponseBuilder
+                            .withCorporateCardSurcharge(surcharge)
+                            .withTotalAmount(CorporateCardSurchargeCalculator.getTotalAmountFor(transaction));
+                }
+            });
+        }
 
         return transactionResponseBuilder.build();
     }
