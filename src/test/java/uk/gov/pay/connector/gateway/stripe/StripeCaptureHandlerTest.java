@@ -24,12 +24,12 @@ import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -91,6 +91,7 @@ public class StripeCaptureHandlerTest {
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
         assertThat(response.isSuccessful(), is(false));
         assertThat(response.getError().isPresent(), is(true));
+        assertThat(response.state(), is(nullValue()));
         assertThat(response.toString(), containsString("error: No such charge: ch_123456 or something similar"));
         assertThat(response.toString(), containsString("error code: resource_missing"));
     }
@@ -103,6 +104,7 @@ public class StripeCaptureHandlerTest {
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
         assertThat(response.isSuccessful(), is(false));
         assertThat(response.getError().isPresent(), is(true));
+        assertThat(response.state(), is(nullValue()));
         assertThat(response.getError().get().getMessage(), containsString("An internal server error occurred. ErrorId:"));
         assertThat(response.getError().get().getErrorType(), is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }

@@ -73,7 +73,7 @@ public class StripeCaptureHandler implements CaptureHandler {
             logger.error("Capture failed for transaction id {}. Failure code from Stripe: {}, failure message from Stripe: {}. External Charge id: {}. Response code from Stripe: {}",
                     transactionId, errorCode, errorMessage, request.getExternalId(), response.getStatus());
 
-            return fromBaseCaptureResponse(new StripeCaptureResponse(transactionId, errorCode, errorMessage), COMPLETE);
+            return fromBaseCaptureResponse(new StripeCaptureResponse(transactionId, errorCode, errorMessage), null);
         
         } catch (GatewayException e) {
         

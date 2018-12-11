@@ -23,7 +23,7 @@ public class CaptureResponse {
     }
 
     public static CaptureResponse fromGatewayError(GatewayError gatewayError) {
-        return new CaptureResponse(null, ChargeState.PENDING, gatewayError, gatewayError.toString());
+        return new CaptureResponse(null, null, gatewayError, gatewayError.toString());
     }
 
     public static CaptureResponse fromBaseCaptureResponse(BaseCaptureResponse captureResponse, ChargeState chargeState) {
