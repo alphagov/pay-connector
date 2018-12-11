@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -11,6 +12,7 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
@@ -21,6 +23,7 @@ import java.time.ZonedDateTime;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static java.time.ZonedDateTime.now;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
@@ -28,6 +31,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextInt;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
@@ -216,7 +220,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnCorporateCardSurchargeAndTotalAmount_V2() {
+    public void shouldReturnCorporateCardSurchargeAndTotalAmountForCharges_V2() {
 
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
@@ -236,6 +240,30 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[0]." + JSON_CHARGE_KEY, is(externalChargeId))
                 .body("results[0]." + JSON_CORPORATE_CARD_SURCHARGE_KEY, is(150))
                 .body("results[0]." + JSON_TOTAL_AMOUNT_KEY, is(Long.valueOf(AMOUNT).intValue() + 150));
+    }
+
+    @Test
+    public void shouldNotReturnCorporateCardSurchargeAndTotalAmountForRefunds_V2() {
+
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
+                ServicePaymentReference.of("ref"), null, EMAIL);
+        databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
+                "03/18", "line1", null, "postcode", "city", null, "country");
+        databaseTestHelper.updateCorporateSurcharge(chargeId, 150L);
+        databaseTestHelper.addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", AMOUNT + 150L, RefundStatus.REFUNDED.getValue(), chargeId, now().minusHours(3));
+        databaseTestHelper.addToken(chargeId, "tokenId");
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .getChargesV2()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results[1]." + JSON_CHARGE_KEY, is(externalChargeId))
+                .body("results[1]", not(hasKey(JSON_CORPORATE_CARD_SURCHARGE_KEY)))
+                .body("results[1]", not(hasKey(JSON_TOTAL_AMOUNT_KEY)));
     }
 
     @Test
