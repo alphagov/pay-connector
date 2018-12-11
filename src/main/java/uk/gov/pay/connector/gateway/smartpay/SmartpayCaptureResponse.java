@@ -21,7 +21,7 @@ public class SmartpayCaptureResponse extends SmartpayBaseResponse implements Bas
     }
 
     @Override
-    public String toString() {
+    public String stringify() {
         StringJoiner joiner = new StringJoiner(", ", "SmartPay capture response (", ")");
         if (StringUtils.isNotBlank(getTransactionId())) {
             joiner.add("pspReference: " + getTransactionId());
@@ -38,4 +38,8 @@ public class SmartpayCaptureResponse extends SmartpayBaseResponse implements Bas
         return joiner.toString();
     }
 
+    @Override
+    public String toString() {
+        return stringify();
+    }
 }

@@ -1,16 +1,26 @@
 package uk.gov.pay.connector.gateway.stripe.response;
 
+import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 
-import javax.ws.rs.core.Response;
-import java.util.Map;
+import java.util.StringJoiner;
 
 public class StripeCaptureResponse implements BaseCaptureResponse {
 
-    private String transactionId;
+    private final String transactionId;
+    private final String errorCode;
+    private final String errorMessage;
 
-    private StripeCaptureResponse(String id) {
-        this.transactionId = id;
+    public StripeCaptureResponse(String transactionId, String errorCode, String errorMessage) {
+        this.transactionId = transactionId;
+        this.errorCode = errorCode;
+        this.errorMessage = errorMessage;
+    }    
+    
+    public StripeCaptureResponse(String transactionId) {
+        this.transactionId = transactionId;
+        this.errorCode = null;
+        this.errorMessage = null;
     }
 
     @Override
@@ -20,16 +30,26 @@ public class StripeCaptureResponse implements BaseCaptureResponse {
 
     @Override
     public String getErrorCode() {
-        return null;
+        return errorCode;
     }
 
     @Override
     public String getErrorMessage() {
-        return null;
+        return errorMessage;
     }
-
-    public static StripeCaptureResponse of(Response response) {
-        return new StripeCaptureResponse((String) response.readEntity(Map.class).get("id"));
+    
+    @Override
+    public String stringify() {
+        StringJoiner joiner = new StringJoiner(", ", "Stripe capture response (", ")");
+        if (StringUtils.isNotBlank(transactionId)) {
+            joiner.add("Charge gateway transaction id: " + transactionId);
+        }
+        if (StringUtils.isNotBlank(errorCode)) {
+            joiner.add("error code: " + errorCode);
+        }
+        if (StringUtils.isNotBlank(errorMessage)) {
+            joiner.add("error: " + errorMessage);
+        }
+        return joiner.toString();
     }
-
 }

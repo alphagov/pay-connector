@@ -11,6 +11,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -83,7 +84,7 @@ public class StripePaymentProviderTest {
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
 
         CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(getChargeWithTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId()));
-        GatewayResponse captureGatewayResponse = stripePaymentProvider.capture(request);
+        CaptureResponse captureGatewayResponse = stripePaymentProvider.capture(request);
 
         assertTrue(captureGatewayResponse.isSuccessful());
     }

@@ -10,6 +10,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
     "type": "invalid_request_error"
   }
 }
+ 
+ For more detail see https://stripe.com/docs/api/errors?lang=java
  **/
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StripeErrorResponse {

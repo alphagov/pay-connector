@@ -9,21 +9,22 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
+import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
+import java.util.Optional;
 
 import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.isBlank;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
 
 public class CardCaptureService {
 
@@ -36,8 +37,8 @@ public class CardCaptureService {
     protected MetricRegistry metricRegistry;
 
     @Inject
-    public CardCaptureService(ChargeService chargeService, 
-                              PaymentProviders providers, 
+    public CardCaptureService(ChargeService chargeService,
+                              PaymentProviders providers,
                               UserNotificationService userNotificationService,
                               Environment environment) {
         this.chargeService = chargeService;
@@ -46,7 +47,7 @@ public class CardCaptureService {
         this.userNotificationService = userNotificationService;
     }
 
-    public GatewayResponse<BaseCaptureResponse> doCapture(String externalId) {
+    public CaptureResponse doCapture(String externalId) {
         ChargeEntity charge;
         try {
             charge = prepareChargeForCapture(externalId);
@@ -54,7 +55,7 @@ public class CardCaptureService {
             LOG.info("OptimisticLockException in doCapture for charge external_id={}", externalId);
             throw new ConflictRuntimeException(externalId);
         }
-        GatewayResponse<BaseCaptureResponse> operationResponse = capture(charge);
+        CaptureResponse operationResponse = capture(charge);
         processGatewayCaptureResponse(externalId, charge.getStatus(), operationResponse);
         return operationResponse;
     }
@@ -81,13 +82,13 @@ public class CardCaptureService {
         return chargeService.markChargeAsCaptureApproved(externalId);
     }
 
-    private GatewayResponse<BaseCaptureResponse> capture(ChargeEntity chargeEntity) {
+    private CaptureResponse capture(ChargeEntity chargeEntity) {
         return providers.byName(chargeEntity.getPaymentGatewayName())
                 .capture(CaptureGatewayRequest.valueOf(chargeEntity));
     }
 
     @Transactional
-    public void processGatewayCaptureResponse(String chargeId, String oldStatus, GatewayResponse<BaseCaptureResponse> operationResponse) {
+    public void processGatewayCaptureResponse(String chargeId, String oldStatus, CaptureResponse operationResponse) {
 
         ChargeStatus nextStatus = determineNextStatus(operationResponse);
         checkTransactionId(chargeId, operationResponse);
@@ -109,21 +110,15 @@ public class CardCaptureService {
         }
     }
 
-    private void checkTransactionId(String chargeId, GatewayResponse<BaseCaptureResponse> operationResponse) {
-        String transactionId = operationResponse.getBaseResponse()
-                .map(BaseCaptureResponse::getTransactionId).orElse("");
-        if (isBlank(transactionId)) {
+    private void checkTransactionId(String chargeId, CaptureResponse operationResponse) {
+        Optional<String> transactionId = operationResponse.getTransactionId();
+        if (!transactionId.isPresent()) {
             LOG.warn("Card capture response received with no transaction id. - charge_external_id={}", chargeId);
         }
     }
 
-    private ChargeStatus determineNextStatus(GatewayResponse<BaseCaptureResponse> operationResponse) {
-        if (operationResponse.isSuccessful()) {
-            return CAPTURE_SUBMITTED;
-        } else {
-            return operationResponse.getGatewayError()
-                    .map(timeoutError -> CAPTURE_APPROVED_RETRY)
-                    .orElse(CAPTURE_ERROR);
-        }
+    private ChargeStatus determineNextStatus(CaptureResponse operationResponse) {
+        if (operationResponse.getError().isPresent()) return CAPTURE_APPROVED_RETRY;
+        if (operationResponse.state().equals(PENDING)) return CAPTURE_SUBMITTED; else return CAPTURED;
     }
 }

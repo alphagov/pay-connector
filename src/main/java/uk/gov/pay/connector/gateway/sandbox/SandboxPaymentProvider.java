@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.sandbox;
 import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -27,6 +28,9 @@ import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
 import java.util.Optional;
 
 import static java.util.UUID.randomUUID;
+import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
+import static uk.gov.pay.connector.gateway.CaptureResponse.fromBaseCaptureResponse;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
@@ -34,12 +38,10 @@ public class SandboxPaymentProvider implements PaymentProvider {
 
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
-    private SandboxCaptureHandler sandboxCaptureHandler;
     private SandboxApplePayAuthorisationHandler sandboxApplePayAuthorisationHandler;
 
     public SandboxPaymentProvider() {
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
-        this.sandboxCaptureHandler = new SandboxCaptureHandler();
         this.sandboxApplePayAuthorisationHandler = new SandboxApplePayAuthorisationHandler();
     }
 
@@ -75,13 +77,13 @@ public class SandboxPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseCaptureResponse> capture(CaptureGatewayRequest request) {
-        return sandboxCaptureHandler.capture(request);
+    public CaptureResponse capture(CaptureGatewayRequest request) {
+        return fromBaseCaptureResponse(BaseCaptureResponse.fromTransactionId(randomUUID().toString(), SANDBOX), COMPLETE);
     }
 
     @Override
     public PaymentGatewayName getPaymentGatewayName() {
-        return PaymentGatewayName.SANDBOX;
+        return SANDBOX;
     }
 
     @Override

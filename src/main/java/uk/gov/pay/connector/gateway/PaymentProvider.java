@@ -29,7 +29,7 @@ public interface PaymentProvider {
 
     GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest request);
 
-    GatewayResponse<BaseCaptureResponse> capture(CaptureGatewayRequest request);
+    CaptureResponse capture(CaptureGatewayRequest request);
 
     GatewayResponse<BaseRefundResponse> refund(RefundGatewayRequest request);
 

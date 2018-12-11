@@ -9,17 +9,18 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.core.Response;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static fj.data.Either.right;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -61,8 +62,9 @@ public class SmartpayCaptureHandlerTest {
                 .build();
 
         CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(chargeEntity);
-        GatewayResponse gatewayResponse = smartpayCaptureHandler.capture(request);
+        CaptureResponse gatewayResponse = smartpayCaptureHandler.capture(request);
         assertTrue(gatewayResponse.isSuccessful());
+        assertThat(gatewayResponse.state(), is(CaptureResponse.ChargeState.PENDING));
     }
 
     private String successCaptureResponse() {

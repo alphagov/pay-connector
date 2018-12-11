@@ -43,6 +43,11 @@ public class EpdqCaptureResponse extends EpdqBaseResponse implements BaseCapture
 
     @Override
     public String toString() {
+        return stringify();
+    }
+
+    @Override
+    public String stringify() {
         StringJoiner joiner = new StringJoiner(", ", "ePDQ capture response (", ")");
         if (StringUtils.isNotBlank(getTransactionId())) {
             joiner.add("PAYID: " + getTransactionId());
