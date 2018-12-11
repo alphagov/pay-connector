@@ -80,9 +80,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         getCharge(chargeId)
                 .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                 .body("settlement_summary.capture_submit_time", isWithin(10, SECONDS))
-                .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture))
-        ;
-
+                .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture));
     }
 
     @Test
@@ -132,7 +130,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnCardBrandLabel_whenChargeIsAuthorised() {
-
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -142,7 +139,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 ServicePaymentReference.of("ref"), null, EMAIL);
         databaseTestHelper.updateChargeCardDetails(chargeId, mastercardCredit.getBrand(), "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
-
         databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
@@ -156,7 +152,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnEmptyCardBrandLabel_whenChargeIsAuthorisedAndBrandUnknown() {
-
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -177,7 +172,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldNotReturnBillingAddress_whenNoAddressDetailsPresentInDB() {
-
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -198,16 +192,10 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnCorporateCardSurchargeAndTotalAmount_V1() {
-
         long chargeId = nextInt();
         String externalChargeId = "charge1";
 
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
-                ServicePaymentReference.of("ref"), null, EMAIL);
-        databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
-                "03/18", "line1", null, "postcode", "city", null, "country");
-        databaseTestHelper.updateCorporateSurcharge(chargeId, 50L);
-        databaseTestHelper.addToken(chargeId, "tokenId");
+        createCharge(externalChargeId, chargeId);
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -215,22 +203,16 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results[0]." + JSON_CHARGE_KEY, is(externalChargeId))
-                .body("results[0]." + JSON_CORPORATE_CARD_SURCHARGE_KEY, is(50))
-                .body("results[0]." + JSON_TOTAL_AMOUNT_KEY, is(Long.valueOf(AMOUNT).intValue() + 50));
+                .body("results[0]." + JSON_CORPORATE_CARD_SURCHARGE_KEY, is(150))
+                .body("results[0]." + JSON_TOTAL_AMOUNT_KEY, is(Long.valueOf(AMOUNT).intValue() + 150));
     }
 
     @Test
     public void shouldReturnCorporateCardSurchargeAndTotalAmountForCharges_V2() {
-
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
-                ServicePaymentReference.of("ref"), null, EMAIL);
-        databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
-                "03/18", "line1", null, "postcode", "city", null, "country");
-        databaseTestHelper.updateCorporateSurcharge(chargeId, 150L);
-        databaseTestHelper.addToken(chargeId, "tokenId");
+        createCharge(externalChargeId, chargeId);
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -244,17 +226,11 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldNotReturnCorporateCardSurchargeAndTotalAmountForRefunds_V2() {
-
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
-                ServicePaymentReference.of("ref"), null, EMAIL);
-        databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
-                "03/18", "line1", null, "postcode", "city", null, "country");
-        databaseTestHelper.updateCorporateSurcharge(chargeId, 150L);
+        createCharge(externalChargeId, chargeId);
         databaseTestHelper.addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", AMOUNT + 150L, RefundStatus.REFUNDED.getValue(), chargeId, now().minusHours(3));
-        databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -268,7 +244,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldGetChargeTransactionsForJSONAcceptHeader() {
-
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -305,7 +280,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldGetChargeLegacyTransactions() {
-
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -398,7 +372,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldGetSuccessForExpiryChargeTask_withStatus_awaitingCaptureRequest() {
-
         //create charge
         String extChargeId = addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
                 ServicePaymentReference.of("ref"), ZonedDateTime.now().minusHours(48L));
@@ -473,7 +446,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldGetNotFoundFor_markChargeAsCaptureApproved_whenNoChargeExists() {
-
         connectorRestApiClient
                 .withAccountId(accountId)
                 .withChargeId("i-do-not-exist")
@@ -497,5 +469,14 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .statusCode(CONFLICT.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_MESSAGE_KEY, is(expectedErrorMessage));
+    }
+
+    private void createCharge(String externalChargeId, long chargeId) {
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
+                ServicePaymentReference.of("ref"), null, EMAIL);
+        databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
+                "03/18", "line1", null, "postcode", "city", null, "country");
+        databaseTestHelper.updateCorporateSurcharge(chargeId, 150L);
+        databaseTestHelper.addToken(chargeId, "tokenId");
     }
 }
