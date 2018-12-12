@@ -86,7 +86,7 @@ public class StripeCancelHandlerTest {
         final GatewayResponse<BaseCancelResponse> gatewayResponse = stripeCancelHandler.cancel(request);
         assertThat(gatewayResponse.isFailed(), is(true));
         assertThat(gatewayResponse.getGatewayError().isPresent(), Is.is(true));
-        assertThat(gatewayResponse.getGatewayError().get().getMessage(), containsString("An internal server error occurred. ErrorId:"));
+        assertThat(gatewayResponse.getGatewayError().get().getMessage(), containsString("An internal server error occurred while cancelling external charge id: " + request.getExternalChargeId()));
         assertThat(gatewayResponse.getGatewayError().get().getErrorType(), Is.is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
     

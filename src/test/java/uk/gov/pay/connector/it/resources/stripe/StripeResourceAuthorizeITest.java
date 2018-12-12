@@ -222,7 +222,7 @@ public class StripeResourceAuthorizeITest {
                 .post(authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(INTERNAL_SERVER_ERROR_500)
-                .body("message", containsString("There was an internal server error. ErrorId:"));
+                .body("message", containsString("There was an internal server error authorising charge_external_id: " + externalChargeId));
     }
 
     @Test

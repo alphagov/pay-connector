@@ -29,4 +29,8 @@ public class CancelGatewayRequest implements GatewayRequest {
     public GatewayOperation getRequestType() {
         return GatewayOperation.CANCEL;
     }
+
+    public String getExternalChargeId() {
+        return charge.getExternalId();
+    }
 }

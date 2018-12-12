@@ -128,7 +128,7 @@ public class StripeRefundHandlerTest {
 
         GatewayRefundResponse response = refundHandler.refund(refundRequest);
         assertThat(response.getError().isPresent(), Is.is(true));
-        assertThat(response.getError().get().getMessage(), containsString("An internal server error occurred. ErrorId:"));
+        assertThat(response.getError().get().getMessage(), containsString("An internal server error occurred while refunding Transaction id:"));
         assertThat(response.getError().get().getErrorType(), Is.is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 }

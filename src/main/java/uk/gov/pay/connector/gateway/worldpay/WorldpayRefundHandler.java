@@ -33,7 +33,7 @@ public class WorldpayRefundHandler implements RefundHandler {
 
     private GatewayOrder buildRefundOrder(RefundGatewayRequest request) {
         return aWorldpayRefundOrderRequestBuilder()
-                .withReference(request.getReference())
+                .withReference(request.getRefundExternalId())
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withAmount(request.getAmount())
                 .withTransactionId(request.getTransactionId())

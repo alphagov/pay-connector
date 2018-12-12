@@ -88,9 +88,8 @@ public class StripeCancelHandler {
             
             Response response = e.getResponse();
             StripeErrorResponse stripeErrorResponse = response.readEntity(StripeErrorResponse.class);
-            String errorId = UUID.randomUUID().toString();
-            logger.error("Cancel failed for gateway transaction id {}. Failure code from Stripe: {}, failure message from Stripe: {}. ErrorId: {}. Response code from Stripe: {}",
-                    request.getTransactionId(), stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), errorId, response.getStatus());
+            logger.error("Cancel failed for gateway transaction id {}. Failure code from Stripe: {}, failure message from Stripe: {}. Charge External Id: {}. Response code from Stripe: {}",
+                    request.getTransactionId(), stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), request.getExternalChargeId(), response.getStatus());
             GatewayError gatewayError = genericGatewayError(stripeErrorResponse.getError().getMessage());
             return responseBuilder.withGatewayError(gatewayError).build();
 
@@ -100,10 +99,9 @@ public class StripeCancelHandler {
             
         } catch (DownstreamException e) {
             
-            String errorId = UUID.randomUUID().toString();
-            logger.error("Cancel failed for transaction id {}. Reason: {}. Status code from Stripe: {}. ErrorId: {}",
-                    request.getTransactionId(), e.getMessage(), e.getStatusCode(), errorId);
-            GatewayError gatewayError = unexpectedStatusCodeFromGateway("An internal server error occurred. ErrorId: " + errorId);
+            logger.error("Cancel failed for transaction id {}. Reason: {}. Status code from Stripe: {}. Charge External Id: {}",
+                    request.getTransactionId(), e.getMessage(), e.getStatusCode(), request.getExternalChargeId());
+            GatewayError gatewayError = unexpectedStatusCodeFromGateway("An internal server error occurred while cancelling external charge id: " + request.getExternalChargeId());
             return responseBuilder.withGatewayError(gatewayError).build();
         }
     }

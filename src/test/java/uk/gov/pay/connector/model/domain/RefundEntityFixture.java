@@ -74,7 +74,7 @@ public class RefundEntityFixture {
     }
 
     private ChargeEntity buildChargeEntity() {
-        return aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).build();
+        return aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withTransactionId("1234abc").build();
     }
 
     public RefundEntityFixture withCharge(ChargeEntity charge) {
