@@ -13,6 +13,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
@@ -24,6 +25,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.TestClientFactory;
@@ -67,6 +69,18 @@ public class StripePaymentProviderTest {
     @Test
     public void createCharge() {
         GatewayResponse gatewayResponse = authorise();
+        assertTrue(gatewayResponse.isSuccessful());
+    }
+
+    @Test
+    public void shouldAuthoriseSuccessfully_WithNoBillingAddress() {
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+                .withAddress(null)
+                .withEndDate("01/30")
+                .build();
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(getCharge(), authCardDetails);
+        GatewayResponse gatewayResponse = stripePaymentProvider.authorise(request);
         assertTrue(gatewayResponse.isSuccessful());
     }
 

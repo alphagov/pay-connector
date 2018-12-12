@@ -347,6 +347,20 @@ public class StripePaymentProvider implements PaymentProvider {
         params.add(new BasicNameValuePair("card[exp_month]", request.getAuthCardDetails().expiryMonth()));
         params.add(new BasicNameValuePair("card[exp_year]", request.getAuthCardDetails().expiryYear()));
         params.add(new BasicNameValuePair("card[number]", request.getAuthCardDetails().getCardNo()));
+        params.add(new BasicNameValuePair("card[name]", request.getAuthCardDetails().getCardHolder()));
+
+        request.getAuthCardDetails().getAddress().ifPresent(address -> {
+            params.add(new BasicNameValuePair("card[address_line1]", address.getLine1()));
+
+            if (StringUtils.isNotBlank(address.getLine2())) {
+                params.add(new BasicNameValuePair("card[address_line2]", address.getLine2()));
+            }
+
+            params.add(new BasicNameValuePair("card[address_city]", address.getCity()));
+            params.add(new BasicNameValuePair("card[address_country]", address.getCountry()));
+            params.add(new BasicNameValuePair("card[address_zip]", address.getPostcode()));
+        });
+
         return URLEncodedUtils.format(params, UTF_8);
     }
 }
