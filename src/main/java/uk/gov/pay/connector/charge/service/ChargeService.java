@@ -39,6 +39,7 @@ import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
@@ -309,7 +310,22 @@ public class ChargeService {
     public ChargeEntity lockChargeForProcessing(String chargeId, OperationType operationType) {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
             try {
+
+                GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
+
+                // Used by Sumo Logic saved search
+                logger.info("Card pre-operation - charge_external_id={}, charge_status={}, account_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
+                        chargeEntity.getExternalId(),
+                        fromString(chargeEntity.getStatus()),
+                        gatewayAccount.getId(),
+                        chargeEntity.getAmount(),
+                        operationType.getValue(),
+                        gatewayAccount.getGatewayName(),
+                        gatewayAccount.getType(),
+                        operationType.getLockingStatus());
+                
                 chargeEntity.setStatus(operationType.getLockingStatus());
+                
             } catch (InvalidStateTransitionException e) {
                 if (chargeIsInLockedStatus(operationType, chargeEntity)) {
                     throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), chargeEntity.getExternalId());

@@ -229,6 +229,7 @@ public class ChargeExpiryService {
 
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 
+            // Used by Sumo Logic saved search
             logger.info("Card cancel request sent - charge_external_id={}, charge_status={}, account_id={}, transaction_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
                     chargeEntity.getExternalId(),
                     chargeStatus,
