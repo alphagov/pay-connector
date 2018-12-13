@@ -51,6 +51,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
+import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlFor;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForWallet;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
@@ -58,17 +59,27 @@ import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class StripeResourceAuthorizeITest {
+    private static final String CARD_HOLDER_NAME = "Scrooge McDuck";
     private static final String CVC = "123";
     private static final String EXP_MONTH = "11";
     private static final String EXP_YEAR = "99";
-    private static final String CARD_NUMBER = "4444333322221111";
+    private static final String CARD_NUMBER = "4242424242424242";
     private static final String AMOUNT = "6234";
     private static final String DESCRIPTION = "Test description";
 
+    private static final String ADDRESS_LINE_1 = "The Money Pool";
+    private static final String ADDRESS_LINE_2 = "Moneybags Avenue";
+    private static final String ADDRESS_CITY = "London";
+    private static final String ADDRESS_POSTCODE = "DO11 4RS";
+    private static final String ADDRESS_COUNTRY_GB = "GB";
+    private static final String CARD_BRAND = "cardBrand";
     private RestAssuredClient connectorRestApiClient;
 
     private String stripeAccountId;
-    private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", CVC, EXP_MONTH + "/" + EXP_YEAR, "visa");
+    private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor(CARD_HOLDER_NAME, CARD_NUMBER, CVC,
+            EXP_MONTH + "/" + EXP_YEAR, CARD_BRAND, ADDRESS_LINE_1, ADDRESS_LINE_2, ADDRESS_CITY,
+            "London", ADDRESS_POSTCODE, ADDRESS_COUNTRY_GB);
+    private String validAuthorisationDetailsWithoutBillingAddress = buildJsonAuthorisationDetailsWithoutAddress();
     private String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
     private String paymentProvider = PaymentGatewayName.STRIPE.getName();
     private String accountId;
@@ -127,7 +138,37 @@ public class StripeResourceAuthorizeITest {
 
         verify(postRequestedFor(urlEqualTo("/v1/tokens"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
-                .withRequestBody(matching(constructExpectedTokensRequestBody())));
+                .withRequestBody(equalTo(constructExpectedTokensRequestBody())));
+
+        verify(postRequestedFor(urlEqualTo("/v1/sources"))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
+                .withRequestBody(equalTo(constructExpectedSourcesRequestBody())));
+
+        verify(postRequestedFor(urlEqualTo("/v1/charges"))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
+
+        List<LoggedRequest> requests = findAll(postRequestedFor(urlMatching("/v1/charges")));
+        assertThat(requests).hasSize(1);
+        assertThat(requests.get(0).getBodyAsString()).isEqualTo(constructExpectedAuthoriseRequestBody());
+    }
+
+    @Test
+    public void shouldAuthoriseChargeWithoutBillingAddress() {
+        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+
+        String externalChargeId = addCharge();
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validAuthorisationDetailsWithoutBillingAddress)
+                .post(authoriseChargeUrlFor(externalChargeId))
+                .then()
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
+                .statusCode(OK_200);
+
+        verify(postRequestedFor(urlEqualTo("/v1/tokens"))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
+                .withRequestBody(equalTo(constructExpectedTokensRequestBodyWithoutBillingAddress())));
 
         verify(postRequestedFor(urlEqualTo("/v1/sources"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
@@ -281,6 +322,24 @@ public class StripeResourceAuthorizeITest {
         params.add(new BasicNameValuePair("card[exp_month]", EXP_MONTH));
         params.add(new BasicNameValuePair("card[exp_year]", EXP_YEAR));
         params.add(new BasicNameValuePair("card[number]", CARD_NUMBER));
+        params.add(new BasicNameValuePair("card[name]", CARD_HOLDER_NAME));
+
+        params.add(new BasicNameValuePair("card[address_line1]", ADDRESS_LINE_1));
+        params.add(new BasicNameValuePair("card[address_line2]", ADDRESS_LINE_2));
+        params.add(new BasicNameValuePair("card[address_city]", ADDRESS_CITY));
+        params.add(new BasicNameValuePair("card[address_country]", ADDRESS_COUNTRY_GB));
+        params.add(new BasicNameValuePair("card[address_zip]", ADDRESS_POSTCODE));
+
+        return URLEncodedUtils.format(params, UTF_8);
+    }
+
+    private String constructExpectedTokensRequestBodyWithoutBillingAddress() {
+        List<BasicNameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("card[cvc]", CVC));
+        params.add(new BasicNameValuePair("card[exp_month]", EXP_MONTH));
+        params.add(new BasicNameValuePair("card[exp_year]", EXP_YEAR));
+        params.add(new BasicNameValuePair("card[number]", CARD_NUMBER));
+        params.add(new BasicNameValuePair("card[name]", CARD_HOLDER_NAME));
         return URLEncodedUtils.format(params, UTF_8);
     }
 }
