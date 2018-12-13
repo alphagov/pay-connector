@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.charge.model.domain.TransactionType;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 
 import java.util.List;
@@ -15,8 +16,8 @@ public class TransactionResponse extends ChargeResponse {
 
         private String transactionType;
 
-        public TransactionResponseBuilder withTransactionType(String transactionType) {
-            this.transactionType = transactionType;
+        public TransactionResponseBuilder withTransactionType(TransactionType transactionType) {
+            this.transactionType = transactionType.toString();
             return this;
         }
 
@@ -49,7 +50,7 @@ public class TransactionResponse extends ChargeResponse {
                                   Auth3dsData auth3dsData, SupportedLanguage language,
                                   boolean delayedCapture, Long corporateCardSurcharge, Long totalAmount) {
         super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference,
-                providerName, createdDate, dataLinks, refundSummary, settlementSummary, cardDetails, auth3dsData, 
+                providerName, createdDate, dataLinks, refundSummary, settlementSummary, cardDetails, auth3dsData,
                 language, delayedCapture, corporateCardSurcharge, totalAmount);
         this.transactionType = transactionType;
     }

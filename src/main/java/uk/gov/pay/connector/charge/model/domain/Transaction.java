@@ -69,7 +69,7 @@ public class Transaction {
     private boolean delayedCapture;
 
     @Id
-    private String transactionType;
+    private TransactionType transactionType;
     private String cardBrand;
     private String cardBrandLabel;
     private String cardHolderName;
@@ -127,7 +127,7 @@ public class Transaction {
         this.gatewayAccountId = gatewayAccountId;
         this.gatewayTransactionId = gatewayTransactionId;
         this.createdDate = new UTCDateTimeConverter().convertToEntityAttribute(createdDate);
-        this.transactionType = transactionType;
+        this.transactionType = TransactionType.fromString(transactionType);
         this.cardBrand = cardBrand;
         this.userExternalId = userExternalId;
         this.cardBrandLabel = cardBrandLabel;
@@ -183,7 +183,7 @@ public class Transaction {
         return createdDate;
     }
 
-    public String getTransactionType() {
+    public TransactionType getTransactionType() {
         return transactionType;
     }
 
