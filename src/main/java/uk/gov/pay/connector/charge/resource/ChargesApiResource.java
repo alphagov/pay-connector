@@ -45,7 +45,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.charge.model.TransactionType.inferTransactionTypeFrom;
+import static uk.gov.pay.connector.charge.model.TransactionSearchStrategyTransactionType.inferTransactionTypeFrom;
 import static uk.gov.pay.connector.charge.service.SearchService.TYPE.CHARGE;
 import static uk.gov.pay.connector.charge.service.SearchService.TYPE.TRANSACTION;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;

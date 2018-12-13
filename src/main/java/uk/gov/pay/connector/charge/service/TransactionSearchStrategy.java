@@ -6,7 +6,7 @@ import uk.gov.pay.connector.charge.dao.TransactionDao;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.ChargeResponse.RefundSummary;
 import uk.gov.pay.connector.charge.model.TransactionResponse.TransactionResponseBuilder;
-import uk.gov.pay.connector.charge.model.TransactionType;
+import uk.gov.pay.connector.charge.model.TransactionSearchStrategyTransactionType;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.domain.Transaction;
@@ -49,7 +49,7 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
     public ChargeResponse buildResponse(UriInfo uriInfo, Transaction transaction) {
         ExternalTransactionState externalTransactionState;
         RefundSummary refundSummary = null;
-        if (TransactionType.REFUND.getValue().equals(transaction.getTransactionType())) {
+        if (TransactionSearchStrategyTransactionType.REFUND.getValue().equals(transaction.getTransactionType())) {
             ExternalRefundStatus externalRefundStatus = RefundStatus.fromString(transaction.getStatus()).toExternal();
             externalTransactionState = new ExternalTransactionState(externalRefundStatus.getStatus(), externalRefundStatus.isFinished());
             refundSummary = buildRefundSummary(transaction);

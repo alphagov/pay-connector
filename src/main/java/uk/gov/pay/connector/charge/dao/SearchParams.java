@@ -4,7 +4,7 @@ import uk.gov.pay.connector.charge.model.CardHolderName;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
-import uk.gov.pay.connector.charge.model.TransactionType;
+import uk.gov.pay.connector.charge.model.TransactionSearchStrategyTransactionType;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
@@ -25,7 +25,7 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 public class SearchParams {
 
-    private TransactionType transactionType;
+    private TransactionSearchStrategyTransactionType transactionSearchStrategyTransactionType;
     private LastDigitsCardNumber lastDigitsCardNumber;
     private FirstDigitsCardNumber firstDigitsCardNumber;
     private CardHolderName cardHolderName;
@@ -47,8 +47,8 @@ public class SearchParams {
         return gatewayAccountId;
     }
 
-    public SearchParams withTransactionType(TransactionType transactionType) {
-        this.transactionType = transactionType;
+    public SearchParams withTransactionType(TransactionSearchStrategyTransactionType transactionSearchStrategyTransactionType) {
+        this.transactionSearchStrategyTransactionType = transactionSearchStrategyTransactionType;
         return this;
     }
 
@@ -251,8 +251,8 @@ public class SearchParams {
 
     private String buildQueryParams(boolean redactPii) {
         StringBuilder builder = new StringBuilder();
-        if (transactionType != null) {
-            builder.append("&transaction_type=").append(transactionType.getValue());
+        if (transactionSearchStrategyTransactionType != null) {
+            builder.append("&transaction_type=").append(transactionSearchStrategyTransactionType.getValue());
         }
         if (reference != null && isNotBlank(reference.toString()))
             builder.append("&reference=").append(reference);
@@ -312,7 +312,7 @@ public class SearchParams {
         return ExternalChargeState.fromStatusStringV2(state);
     }
 
-    public TransactionType getTransactionType() {
-        return transactionType;
+    public TransactionSearchStrategyTransactionType getTransactionSearchStrategyTransactionType() {
+        return transactionSearchStrategyTransactionType;
     }
 }

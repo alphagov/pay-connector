@@ -10,7 +10,7 @@ import org.jooq.SelectOrderByStep;
 import org.jooq.SelectSeekStep1;
 import org.jooq.impl.DSL;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumberConverter;
-import uk.gov.pay.connector.charge.model.TransactionType;
+import uk.gov.pay.connector.charge.model.TransactionSearchStrategyTransactionType;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.Transaction;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
@@ -150,12 +150,12 @@ public class TransactionDao {
         Condition queryFiltersForCharges = queryFilters;
         Condition queryFiltersForRefunds = queryFilters;
 
-        if (params.getTransactionType() != null) {
-            if (params.getTransactionType() == TransactionType.PAYMENT) {
+        if (params.getTransactionSearchStrategyTransactionType() != null) {
+            if (params.getTransactionSearchStrategyTransactionType() == TransactionSearchStrategyTransactionType.PAYMENT) {
                 queryFiltersForRefunds = queryFiltersForRefunds.and(
                         field("'refund'").eq("charge"));
             }
-            if (params.getTransactionType() == TransactionType.REFUND) {
+            if (params.getTransactionSearchStrategyTransactionType() == TransactionSearchStrategyTransactionType.REFUND) {
                 queryFiltersForCharges = queryFiltersForCharges.and(
                         field("'charge'").eq("refund"));
 
