@@ -9,8 +9,10 @@ import uk.gov.pay.connector.charge.model.CardHolderName;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.model.TransactionSearchStrategyTransactionType;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.Transaction;
+import uk.gov.pay.connector.charge.model.domain.TransactionType;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -27,8 +29,6 @@ import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.charge.model.TransactionSearchStrategyTransactionType.PAYMENT;
-import static uk.gov.pay.connector.charge.model.TransactionSearchStrategyTransactionType.REFUND;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;
@@ -76,7 +76,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(2));
 
         Transaction transactionRefund = transactions.get(0);
-        assertThat(transactionRefund.getTransactionType(), is("refund"));
+        assertThat(transactionRefund.getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactionRefund.getChargeId(), is(testCharge.getChargeId()));
         assertThat(transactionRefund.getAmount(), is(testRefund.getAmount()));
         assertThat(transactionRefund.getReference(), is(testCharge.getReference()));
@@ -90,7 +90,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertDateMatch(transactionRefund.getCreatedDate().toString());
 
         Transaction transactionCharge = transactions.get(1);
-        assertThat(transactionCharge.getTransactionType(), is("charge"));
+        assertThat(transactionCharge.getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactionCharge.getChargeId(), is(testCharge.getChargeId()));
         assertThat(transactionCharge.getAmount(), is(testCharge.getAmount()));
         assertThat(transactionCharge.getReference(), is(testCharge.getReference()));
@@ -119,7 +119,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(1));
 
         Transaction transactionCharge = transactions.get(0);
-        assertThat(transactionCharge.getTransactionType(), is("charge"));
+        assertThat(transactionCharge.getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactionCharge.getChargeId(), is(testCharge.getChargeId()));
         assertThat(transactionCharge.getAmount(), is(testCharge.getAmount()));
         assertThat(transactionCharge.getReference(), is(testCharge.getReference()));
@@ -149,10 +149,10 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(2));
 
         assertThat(transactions.get(0).getAmount(), is(testRefund.getAmount()));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(transactions.get(1).getAmount(), is(testCharge.getAmount()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(1).getUserExternalId(), is(nullValue()));
     }
 
@@ -172,10 +172,10 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(2));
 
         assertThat(transactions.get(0).getAmount(), is(testRefund.getAmount()));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(transactions.get(1).getAmount(), is(testCharge.getAmount()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(1).getUserExternalId(), is(nullValue()));
     }
 
@@ -196,10 +196,10 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(2));
 
         assertThat(transactions.get(0).getAmount(), is(testRefund.getAmount()));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(transactions.get(1).getAmount(), is(testCharge.getAmount()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(1).getUserExternalId(), is(nullValue()));
     }
 
@@ -227,16 +227,16 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(4));
 
         assertThat(transactions.get(0).getAmount(), is(testRefund2.getAmount()));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(transactions.get(1).getAmount(), is(testCharge2.getAmount()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(1).getUserExternalId(), is(nullValue()));
         assertThat(transactions.get(2).getAmount(), is(testRefund1.getAmount()));
-        assertThat(transactions.get(2).getTransactionType(), is("refund"));
+        assertThat(transactions.get(2).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(2).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(transactions.get(3).getAmount(), is(testCharge1.getAmount()));
-        assertThat(transactions.get(3).getTransactionType(), is("charge"));
+        assertThat(transactions.get(3).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(3).getUserExternalId(), is(nullValue()));
     }
 
@@ -259,32 +259,32 @@ public class TransactionDaoITest extends DaoITestBase {
         // then
         assertThat(transactions.size(), is(6));
         assertThat(transactions.get(0).getExternalId(), is(charge3.getExternalChargeId()));
-        assertThat(transactions.get(0).getTransactionType(), is("charge"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(0).getAmount(), is(6L));
         assertThat(transactions.get(0).getUserExternalId(), is(nullValue()));
 
         assertThat(transactions.get(1).getExternalId(), is(charge2.getExternalChargeId()));
-        assertThat(transactions.get(1).getTransactionType(), is("refund"));
+        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(1).getAmount(), is(5L));
         assertThat(transactions.get(1).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(2).getExternalId(), is(charge2.getExternalChargeId()));
-        assertThat(transactions.get(2).getTransactionType(), is("refund"));
+        assertThat(transactions.get(2).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(2).getAmount(), is(4L));
         assertThat(transactions.get(2).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(3).getExternalId(), is(charge2.getExternalChargeId()));
-        assertThat(transactions.get(3).getTransactionType(), is("charge"));
+        assertThat(transactions.get(3).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(3).getAmount(), is(3L));
         assertThat(transactions.get(3).getUserExternalId(), is(nullValue()));
 
         assertThat(transactions.get(4).getExternalId(), is(charge1.getExternalChargeId()));
-        assertThat(transactions.get(4).getTransactionType(), is("refund"));
+        assertThat(transactions.get(4).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(4).getAmount(), is(2L));
         assertThat(transactions.get(4).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(5).getExternalId(), is(charge1.getExternalChargeId()));
-        assertThat(transactions.get(5).getTransactionType(), is("charge"));
+        assertThat(transactions.get(5).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(5).getAmount(), is(1L));
         assertThat(transactions.get(5).getUserExternalId(), is(nullValue()));
     }
@@ -312,15 +312,15 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(3));
 
         assertThat(transactions.get(0).getExternalId(), is(charge3.getExternalChargeId()));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(1).getExternalId(), is(charge4.getExternalChargeId()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(1).getUserExternalId(), is(nullValue()));
 
         assertThat(transactions.get(2).getExternalId(), is(charge3.getExternalChargeId()));
-        assertThat(transactions.get(2).getTransactionType(), is("charge"));
+        assertThat(transactions.get(2).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(2).getUserExternalId(), is(nullValue()));
 
         // when
@@ -335,17 +335,17 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(3));
 
         assertThat(transactions.get(0).getExternalId(), is(charge2.getExternalChargeId()));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(0).getAmount(), is(5L));
         assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(1).getExternalId(), is(charge2.getExternalChargeId()));
-        assertThat(transactions.get(1).getTransactionType(), is("refund"));
+        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(1).getAmount(), is(4L));
         assertThat(transactions.get(1).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(2).getExternalId(), is(charge2.getExternalChargeId()));
-        assertThat(transactions.get(2).getTransactionType(), is("charge"));
+        assertThat(transactions.get(2).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(2).getUserExternalId(), is(nullValue()));
 
 
@@ -361,11 +361,11 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(2));
 
         assertThat(transactions.get(0).getExternalId(), is(charge1.getExternalChargeId()));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(1).getExternalId(), is(charge1.getExternalChargeId()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(1).getUserExternalId(), is(nullValue()));
 
     }
@@ -414,10 +414,10 @@ public class TransactionDaoITest extends DaoITestBase {
         Transaction charge = transactions.get(1);
 
         assertThat(refund.getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(refund.getTransactionType(), is("refund"));
+        assertThat(refund.getTransactionType(), is(TransactionType.REFUND));
         assertThat(refund.getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(charge.getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(charge.getTransactionType(), is("charge"));
+        assertThat(charge.getTransactionType(), is(TransactionType.CHARGE));
         assertThat(charge.getUserExternalId(), is(nullValue()));
     }
 
@@ -448,16 +448,16 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(3));
         assertThat(transactions.get(0).getExternalId(), is(partialReferenceCharge.getExternalChargeId()));
         assertThat(transactions.get(0).getReference(), is(partialReferenceCharge.getReference()));
-        assertThat(transactions.get(0).getTransactionType(), is("charge"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(0).getUserExternalId(), is(nullValue()));
 
         assertThat(transactions.get(1).getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(transactions.get(1).getTransactionType(), is("refund"));
+        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(1).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
 
         assertThat(transactions.get(2).getExternalId(), is(testCharge.getExternalChargeId()));
         assertThat(transactions.get(2).getReference(), is(testCharge.getReference()));
-        assertThat(transactions.get(2).getTransactionType(), is("charge"));
+        assertThat(transactions.get(2).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(2).getUserExternalId(), is(nullValue()));
 
     }
@@ -491,10 +491,10 @@ public class TransactionDaoITest extends DaoITestBase {
         Transaction charge = transactions.get(1);
 
         assertThat(refund.getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(refund.getTransactionType(), is("refund"));
+        assertThat(refund.getTransactionType(), is(TransactionType.REFUND));
         assertThat(refund.getCardHolderName(), is(cardHolderName));
         assertThat(charge.getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(charge.getTransactionType(), is("charge"));
+        assertThat(charge.getTransactionType(), is(TransactionType.CHARGE));
         assertThat(charge.getCardHolderName(), is(cardHolderName));
     }
 
@@ -527,10 +527,10 @@ public class TransactionDaoITest extends DaoITestBase {
         Transaction charge = transactions.get(1);
 
         assertThat(refund.getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(refund.getTransactionType(), is("refund"));
+        assertThat(refund.getTransactionType(), is(TransactionType.REFUND));
         assertThat(refund.getCardHolderName(), is(fullCardHolderName));
         assertThat(charge.getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(charge.getTransactionType(), is("charge"));
+        assertThat(charge.getTransactionType(), is(TransactionType.CHARGE));
         assertThat(charge.getCardHolderName(), is(fullCardHolderName));
     }
 
@@ -563,10 +563,10 @@ public class TransactionDaoITest extends DaoITestBase {
         Transaction charge = transactions.get(1);
 
         assertThat(refund.getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(refund.getTransactionType(), is("refund"));
+        assertThat(refund.getTransactionType(), is(TransactionType.REFUND));
         assertThat(refund.getLastDigitsCardNumber(), is(lastDigitsCardNumber));
         assertThat(charge.getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(charge.getTransactionType(), is("charge"));
+        assertThat(charge.getTransactionType(), is(TransactionType.CHARGE));
         assertThat(charge.getLastDigitsCardNumber(), is(lastDigitsCardNumber));
     }
 
@@ -599,10 +599,10 @@ public class TransactionDaoITest extends DaoITestBase {
         Transaction charge = transactions.get(1);
 
         assertThat(refund.getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(refund.getTransactionType(), is("refund"));
+        assertThat(refund.getTransactionType(), is(TransactionType.REFUND));
         assertThat(refund.getFirstDigitsCardNumber(), is(firstDigitsCardNumber));
         assertThat(charge.getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(charge.getTransactionType(), is("charge"));
+        assertThat(charge.getTransactionType(), is(TransactionType.CHARGE));
         assertThat(charge.getFirstDigitsCardNumber(), is(firstDigitsCardNumber));
     }
 
@@ -777,7 +777,7 @@ public class TransactionDaoITest extends DaoITestBase {
         Transaction refund = transactions.get(0);
         Transaction charge = transactions.get(1);
 
-        assertThat(charge.getTransactionType(), is("charge"));
+        assertThat(charge.getTransactionType(), is(TransactionType.CHARGE));
         assertThat(charge.getChargeId(), is(testCharge.getChargeId()));
         assertThat(charge.getAmount(), is(testCharge.getAmount()));
         assertThat(charge.getReference(), is(testCharge.getReference()));
@@ -787,7 +787,7 @@ public class TransactionDaoITest extends DaoITestBase {
 
         assertDateMatch(charge.getCreatedDate().toString());
 
-        assertThat(refund.getTransactionType(), is("refund"));
+        assertThat(refund.getTransactionType(), is(TransactionType.REFUND));
         assertThat(refund.getChargeId(), is(testCharge.getChargeId()));
         assertThat(refund.getAmount(), is(testRefund.getAmount()));
         assertThat(refund.getReference(), is(testCharge.getReference()));
@@ -819,7 +819,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(2));
 
         Transaction transactionRefund = transactions.get(0);
-        assertThat(transactionRefund.getTransactionType(), is("refund"));
+        assertThat(transactionRefund.getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactionRefund.getChargeId(), is(testCharge.getChargeId()));
         assertThat(transactionRefund.getAmount(), is(testRefund.getAmount()));
         assertThat(transactionRefund.getReference(), is(testCharge.getReference()));
@@ -829,7 +829,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertDateMatch(transactionRefund.getCreatedDate().toString());
 
         Transaction transactionCharge = transactions.get(1);
-        assertThat(transactionCharge.getTransactionType(), is("charge"));
+        assertThat(transactionCharge.getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactionCharge.getChargeId(), is(testCharge.getChargeId()));
         assertThat(transactionCharge.getAmount(), is(testCharge.getAmount()));
         assertThat(transactionCharge.getReference(), is(testCharge.getReference()));
@@ -848,7 +848,7 @@ public class TransactionDaoITest extends DaoITestBase {
         insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusSeconds(2));
 
         SearchParams params = new SearchParams()
-                .withTransactionType(PAYMENT)
+                .withTransactionType(TransactionSearchStrategyTransactionType.PAYMENT)
                 .withReferenceLike(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
                 .withFromDate(ZonedDateTime.parse(FROM_DATE));
@@ -860,7 +860,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(1));
 
         Transaction transactionCharge = transactions.get(0);
-        assertThat(transactionCharge.getTransactionType(), is("charge"));
+        assertThat(transactionCharge.getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactionCharge.getChargeId(), is(testCharge.getChargeId()));
         assertThat(transactionCharge.getAmount(), is(testCharge.getAmount()));
         assertThat(transactionCharge.getReference(), is(testCharge.getReference()));
@@ -879,7 +879,7 @@ public class TransactionDaoITest extends DaoITestBase {
         DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusSeconds(2));
 
         SearchParams params = new SearchParams()
-                .withTransactionType(REFUND)
+                .withTransactionType(TransactionSearchStrategyTransactionType.REFUND)
                 .withReferenceLike(testCharge.getReference())
                 .addExternalRefundStates(singletonList(EXTERNAL_SUBMITTED.getStatus()))
                 .withFromDate(ZonedDateTime.parse(FROM_DATE));
@@ -891,7 +891,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(1));
         Transaction refundTransaction = transactions.get(0);
 
-        assertThat(refundTransaction.getTransactionType(), is("refund"));
+        assertThat(refundTransaction.getTransactionType(), is(TransactionType.REFUND));
         assertThat(refundTransaction.getChargeId(), is(testCharge.getChargeId()));
         assertThat(refundTransaction.getAmount(), is(testRefund.getAmount()));
         assertThat(refundTransaction.getReference(), is(testCharge.getReference()));
@@ -951,13 +951,13 @@ public class TransactionDaoITest extends DaoITestBase {
 
         // then
         assertThat(transactions.size(), is(4));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(0).getStatus(), is(RefundStatus.REFUNDED.getValue()));
-        assertThat(transactions.get(1).getTransactionType(), is("refund"));
+        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(1).getStatus(), is(RefundStatus.CREATED.getValue()));
-        assertThat(transactions.get(2).getTransactionType(), is("charge"));
+        assertThat(transactions.get(2).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(2).getStatus(), is(AUTHORISATION_READY.getValue()));
-        assertThat(transactions.get(3).getTransactionType(), is("charge"));
+        assertThat(transactions.get(3).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(3).getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
     }
 
@@ -1012,15 +1012,15 @@ public class TransactionDaoITest extends DaoITestBase {
 
         // then
         assertThat(transactions.size(), is(5));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(0).getStatus(), is(RefundStatus.REFUNDED.getValue()));
-        assertThat(transactions.get(1).getTransactionType(), is("refund"));
+        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(1).getStatus(), is(RefundStatus.CREATED.getValue()));
-        assertThat(transactions.get(2).getTransactionType(), is("charge"));
+        assertThat(transactions.get(2).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(2).getStatus(), is(AUTHORISATION_READY.getValue()));
-        assertThat(transactions.get(3).getTransactionType(), is("charge"));
+        assertThat(transactions.get(3).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(3).getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
-        assertThat(transactions.get(4).getTransactionType(), is("charge"));
+        assertThat(transactions.get(4).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(4).getStatus(), is(ChargeStatus.CREATED.getValue()));
     }
 
@@ -1066,7 +1066,7 @@ public class TransactionDaoITest extends DaoITestBase {
                 .insert();
 
         SearchParams params = new SearchParams()
-                .withTransactionType(PAYMENT)
+                .withTransactionType(TransactionSearchStrategyTransactionType.PAYMENT)
                 .addExternalChargeStates(singletonList(EXTERNAL_STARTED.getStatus()));
 
         // when
@@ -1074,9 +1074,9 @@ public class TransactionDaoITest extends DaoITestBase {
 
         // then
         assertThat(transactions.size(), is(2));
-        assertThat(transactions.get(0).getTransactionType(), is("charge"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(0).getStatus(), is(AUTHORISATION_READY.getValue()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(1).getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
     }
 
@@ -1130,13 +1130,13 @@ public class TransactionDaoITest extends DaoITestBase {
 
         // then
         assertThat(transactions.size(), is(4));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(0).getStatus(), is(RefundStatus.REFUNDED.getValue()));
-        assertThat(transactions.get(1).getTransactionType(), is("charge"));
+        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(1).getStatus(), is(AUTHORISATION_READY.getValue()));
-        assertThat(transactions.get(2).getTransactionType(), is("charge"));
+        assertThat(transactions.get(2).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(2).getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
-        assertThat(transactions.get(3).getTransactionType(), is("charge"));
+        assertThat(transactions.get(3).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(3).getStatus(), is(ChargeStatus.CREATED.getValue()));
     }
 
@@ -1191,15 +1191,15 @@ public class TransactionDaoITest extends DaoITestBase {
 
         // then
         assertThat(transactions.size(), is(5));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(0).getStatus(), is(RefundStatus.REFUNDED.getValue()));
-        assertThat(transactions.get(1).getTransactionType(), is("refund"));
+        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(1).getStatus(), is(RefundStatus.CREATED.getValue()));
-        assertThat(transactions.get(2).getTransactionType(), is("charge"));
+        assertThat(transactions.get(2).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(2).getStatus(), is(AUTHORISATION_READY.getValue()));
-        assertThat(transactions.get(3).getTransactionType(), is("charge"));
+        assertThat(transactions.get(3).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(3).getStatus(), is(ENTERING_CARD_DETAILS.getValue()));
-        assertThat(transactions.get(4).getTransactionType(), is("charge"));
+        assertThat(transactions.get(4).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(4).getStatus(), is(ChargeStatus.CREATED.getValue()));
     }
 
@@ -1245,7 +1245,7 @@ public class TransactionDaoITest extends DaoITestBase {
                 .withCreatedDate(now().plusMinutes(4))
                 .insert();
         SearchParams params = new SearchParams()
-                .withTransactionType(REFUND)
+                .withTransactionType(TransactionSearchStrategyTransactionType.REFUND)
                 .addExternalRefundStates(singletonList(EXTERNAL_SUCCESS.getStatus()));
 
         // when
@@ -1253,7 +1253,7 @@ public class TransactionDaoITest extends DaoITestBase {
 
         // then
         assertThat(transactions.size(), is(1));
-        assertThat(transactions.get(0).getTransactionType(), is("refund"));
+        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(0).getStatus(), is(RefundStatus.REFUNDED.getValue()));
     }
 
@@ -1265,7 +1265,7 @@ public class TransactionDaoITest extends DaoITestBase {
         insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusSeconds(2));
 
         SearchParams params = new SearchParams()
-                .withTransactionType(PAYMENT)
+                .withTransactionType(TransactionSearchStrategyTransactionType.PAYMENT)
                 .withReferenceLike(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
                 .withCardBrand(testCardDetails.getCardBrand())
@@ -1280,7 +1280,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(1));
         Transaction charge = transactions.get(0);
 
-        assertThat(charge.getTransactionType(), is("charge"));
+        assertThat(charge.getTransactionType(), is(TransactionType.CHARGE));
         assertThat(charge.getChargeId(), is(testCharge.getChargeId()));
         assertThat(charge.getAmount(), is(testCharge.getAmount()));
         assertThat(charge.getReference(), is(testCharge.getReference()));
@@ -1300,7 +1300,7 @@ public class TransactionDaoITest extends DaoITestBase {
         insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusSeconds(2));
 
         SearchParams params = new SearchParams()
-                .withTransactionType(PAYMENT)
+                .withTransactionType(TransactionSearchStrategyTransactionType.PAYMENT)
                 .withReferenceLike(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
                 .withToDate(ZonedDateTime.parse(TO_DATE));
@@ -1312,7 +1312,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.size(), is(1));
         Transaction charge = transactions.get(0);
 
-        assertThat(charge.getTransactionType(), is("charge"));
+        assertThat(charge.getTransactionType(), is(TransactionType.CHARGE));
         assertThat(charge.getChargeId(), is(testCharge.getChargeId()));
         assertThat(charge.getAmount(), is(testCharge.getAmount()));
         assertThat(charge.getReference(), is(testCharge.getReference()));

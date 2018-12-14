@@ -13,6 +13,7 @@ import uk.gov.pay.connector.charge.model.LastDigitsCardNumberConverter;
 import uk.gov.pay.connector.charge.model.TransactionSearchStrategyTransactionType;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.Transaction;
+import uk.gov.pay.connector.charge.model.domain.TransactionType;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
@@ -153,12 +154,11 @@ public class TransactionDao {
         if (params.getTransactionSearchStrategyTransactionType() != null) {
             if (params.getTransactionSearchStrategyTransactionType() == TransactionSearchStrategyTransactionType.PAYMENT) {
                 queryFiltersForRefunds = queryFiltersForRefunds.and(
-                        field("'refund'").eq("charge"));
+                        field("'" + TransactionType.REFUND + "'").eq(TransactionType.CHARGE.toString()));
             }
             if (params.getTransactionSearchStrategyTransactionType() == TransactionSearchStrategyTransactionType.REFUND) {
                 queryFiltersForCharges = queryFiltersForCharges.and(
-                        field("'charge'").eq("refund"));
-
+                        field("'" + TransactionType.CHARGE + "'").eq(TransactionType.REFUND.toString()));
             }
         }
         if (params.getFromDate() != null) {
@@ -183,7 +183,7 @@ public class TransactionDao {
         }
 
         SelectConditionStep queryForCharges = DSL.select(
-                field("'charge'").as("transaction_type"),
+                field("'" + TransactionType.CHARGE + "'").as("transaction_type"),
                 field("c.id").as("charge_id"),
                 field("c.external_id"),
                 field("c.reference"),
@@ -214,7 +214,7 @@ public class TransactionDao {
                 .where(queryFiltersForCharges);
 
         SelectConditionStep queryForRefunds = DSL.select(
-                field("'refund'").as("transaction_type"),
+                field("'" + TransactionType.REFUND + "'").as("transaction_type"),
                 field("c.id").as("charge_id"),
                 field("c.external_id"),
                 field("c.reference"),

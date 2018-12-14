@@ -6,10 +6,10 @@ import uk.gov.pay.connector.charge.dao.TransactionDao;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.ChargeResponse.RefundSummary;
 import uk.gov.pay.connector.charge.model.TransactionResponse.TransactionResponseBuilder;
-import uk.gov.pay.connector.charge.model.TransactionSearchStrategyTransactionType;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.domain.Transaction;
+import uk.gov.pay.connector.charge.model.domain.TransactionType;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
@@ -49,7 +49,7 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
     public ChargeResponse buildResponse(UriInfo uriInfo, Transaction transaction) {
         ExternalTransactionState externalTransactionState;
         RefundSummary refundSummary = null;
-        if (TransactionSearchStrategyTransactionType.REFUND.getValue().equals(transaction.getTransactionType())) {
+        if (TransactionType.REFUND == transaction.getTransactionType()) {
             ExternalRefundStatus externalRefundStatus = RefundStatus.fromString(transaction.getStatus()).toExternal();
             externalTransactionState = new ExternalTransactionState(externalRefundStatus.getStatus(), externalRefundStatus.isFinished());
             refundSummary = buildRefundSummary(transaction);
@@ -95,7 +95,7 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
             transactionResponseBuilder.withRefunds(refundSummary);
         }
 
-        if ("charge".equals(transaction.getTransactionType())) {
+        if (TransactionType.CHARGE == transaction.getTransactionType()) {
             transaction.getCorporateCardSurcharge().ifPresent(surcharge -> {
                 if (surcharge > 0) {
                     transactionResponseBuilder
