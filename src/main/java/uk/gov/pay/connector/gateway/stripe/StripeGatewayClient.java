@@ -15,8 +15,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
-import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
-import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 
 /**
  * This class, while named StripeGatewayClient, is meant to be payment provider agnostic. It will be used by all
@@ -43,7 +41,7 @@ public class StripeGatewayClient {
 
         Response response;
         try {
-
+            logger.info("POSTing request for gateway url={}", url);
             Invocation.Builder clientBuilder = client.target(url.toString()).request();
             headers.keySet().forEach(headerKey -> clientBuilder.header(headerKey, headers.get(headerKey)));
 
@@ -63,18 +61,24 @@ public class StripeGatewayClient {
     }
 
     private void throwIfErrorResponse(Response response, String metricsPrefix) throws GatewayClientException, DownstreamException {
-        if (CLIENT_ERROR == response.getStatusInfo().getFamily()) {
-            metricRegistry.counter(metricsPrefix + ".failures").inc();
-            throw new GatewayClientException(
-                    "Unexpected HTTP status code " + response.getStatus() + " from gateway",
-                    response);
-        }
-        if (SERVER_ERROR == response.getStatusInfo().getFamily()) {
-            metricRegistry.counter(metricsPrefix + ".failures").inc();
-            String responseMessage = response.readEntity(String.class);
-            logger.error("Unexpected HTTP status code {} from gateway, error=[{}]",
-                    response.getStatus(), responseMessage);
-            throw new DownstreamException(response.getStatus(), responseMessage);
+
+        switch (response.getStatusInfo().getFamily()) {
+
+            case SUCCESSFUL:
+                break;
+
+            case CLIENT_ERROR:
+                metricRegistry.counter(metricsPrefix + ".failures").inc();
+                throw new GatewayClientException("Unexpected HTTP status code " + response.getStatus() + " from gateway", response);
+
+            case SERVER_ERROR:
+                metricRegistry.counter(metricsPrefix + ".failures").inc();
+                String responseMessage = response.readEntity(String.class);
+                logger.error("Unexpected HTTP status code {} from gateway, error=[{}]", response.getStatus(), responseMessage);
+                throw new DownstreamException(response.getStatus(), responseMessage);
+
+             default:
+                 logger.error("Other HTTP status from gateway=[stripe], response=[]", response);
         }
     }
 }
