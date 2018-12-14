@@ -3,3 +3,5 @@ release.tag=alpha_release-609
 release.alpha_release-609.date=2018-12-13:18:04:31
 
 staging-2.tag=FAILED-609
+
+staging-2.FAILED-609.date=
