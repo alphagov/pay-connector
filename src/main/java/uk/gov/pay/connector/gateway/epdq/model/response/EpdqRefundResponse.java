@@ -49,7 +49,7 @@ public class EpdqRefundResponse extends EpdqBaseResponse implements BaseRefundRe
     }
 
     @Override
-    public String toString() {
+    public String stringify() {
         StringJoiner joiner = new StringJoiner(", ", "ePDQ refund response (", ")");
         if (StringUtils.isNotBlank(transactionId)) {
             joiner.add("PAYID: " + transactionId);
@@ -69,4 +69,8 @@ public class EpdqRefundResponse extends EpdqBaseResponse implements BaseRefundRe
         return joiner.toString();
     }
 
+    @Override
+    public String toString() {
+        return stringify();
+    }
 }

@@ -18,6 +18,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.sandbox.applepay.SandboxApplePayAuthorisationHandler;
@@ -97,8 +98,9 @@ public class SandboxPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseRefundResponse> refund(RefundGatewayRequest request) {
-        return createGatewayBaseRefundResponse(request);
+    public GatewayRefundResponse refund(RefundGatewayRequest request) {
+        return GatewayRefundResponse.fromBaseRefundResponse(BaseRefundResponse.fromReference(randomUUID().toString(), SANDBOX),
+                GatewayRefundResponse.RefundState.COMPLETE);
     }
 
     @Override
@@ -135,33 +137,6 @@ public class SandboxPaymentProvider implements PaymentProvider {
             @Override
             public String toString() {
                 return "Sandbox cancel response (transactionId: " + getTransactionId() + ')';
-            }
-        }).build();
-    }
-
-    private GatewayResponse<BaseRefundResponse> createGatewayBaseRefundResponse(RefundGatewayRequest request) {
-        GatewayResponseBuilder<BaseRefundResponse> gatewayResponseBuilder = responseBuilder();
-        return gatewayResponseBuilder.withResponse(new BaseRefundResponse() {
-            @Override
-            public Optional<String> getReference() {
-                return Optional.of(request.getReference());
-            }
-
-            @Override
-            public String getErrorCode() {
-                return null;
-            }
-
-            @Override
-            public String getErrorMessage() {
-                return null;
-            }
-
-            @Override
-            public String toString() {
-                return getReference()
-                        .map(reference -> "Sandbox refund response (reference: " + reference + ')')
-                        .orElse("Sandbox refund response");
             }
         }).build();
     }

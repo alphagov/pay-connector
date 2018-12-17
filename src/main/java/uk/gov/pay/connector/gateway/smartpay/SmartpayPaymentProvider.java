@@ -21,8 +21,8 @@ import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
@@ -42,6 +42,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     private final GatewayClient client;
 
     private final SmartpayCaptureHandler smartpayCaptureHandler;
+    private final SmartpayRefundHandler smartpayRefundHandler;
 
     @Inject
     public SmartpayPaymentProvider(ConnectorConfiguration configuration,
@@ -51,6 +52,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         client = gatewayClientFactory.createGatewayClient(SMARTPAY, configuration.getGatewayConfigFor(SMARTPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
 
         this.smartpayCaptureHandler = new SmartpayCaptureHandler(client);
+        this.smartpayRefundHandler = new SmartpayRefundHandler(client);
     }
 
     @Override
@@ -85,9 +87,8 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseRefundResponse> refund(RefundGatewayRequest request) {
-        Either<GatewayError, GatewayClient.Response> response = client.postRequestFor(null, request.getGatewayAccount(), buildRefundOrderFor(request));
-        return GatewayResponseGenerator.getSmartpayGatewayResponse(client, response, SmartpayRefundResponse.class);
+    public GatewayRefundResponse refund(RefundGatewayRequest request) {
+        return smartpayRefundHandler.refund(request);
     }
 
     @Override
@@ -131,15 +132,6 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         return SmartpayOrderRequestBuilder.aSmartpayCancelOrderRequestBuilder()
                 .withTransactionId(request.getTransactionId())
                 .withMerchantCode(getMerchantCode(request))
-                .build();
-    }
-
-    private GatewayOrder buildRefundOrderFor(RefundGatewayRequest request) {
-        return SmartpayOrderRequestBuilder.aSmartpayRefundOrderRequestBuilder()
-                .withReference(request.getReference())
-                .withTransactionId(request.getTransactionId())
-                .withMerchantCode(getMerchantCode(request))
-                .withAmount(request.getAmount())
                 .build();
     }
 

@@ -8,9 +8,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.stripe.DownstreamException;
 import uk.gov.pay.connector.gateway.stripe.GatewayClientException;
 import uk.gov.pay.connector.gateway.stripe.GatewayException;
@@ -23,14 +21,15 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
-import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCodeFromGateway;
+import static uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse.fromBaseRefundResponse;
 import static uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil.getAuthHeaderValue;
 
 public class StripeRefundHandler {
@@ -43,11 +42,9 @@ public class StripeRefundHandler {
         this.stripeGatewayConfig = stripeGatewayConfig;
     }
 
-    public GatewayResponse<BaseRefundResponse> refund(RefundGatewayRequest request) {
+    public GatewayRefundResponse refund(RefundGatewayRequest request) {
         String url = stripeGatewayConfig.getUrl() + "/v1/refunds";
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
-
-        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
 
         try {
             String payload = URLEncodedUtils.format(buildPayload(request.getTransactionId(), request.getAmount()), UTF_8);
@@ -58,28 +55,28 @@ public class StripeRefundHandler {
                     APPLICATION_FORM_URLENCODED_TYPE,
                     format("gateway-operations.%s.%s.refund", gatewayAccount.getGatewayName(), gatewayAccount.getType()));
 
-            return responseBuilder.withResponse(StripeRefundResponse.of(response)).build();
+            return fromBaseRefundResponse(StripeRefundResponse.of((String) response.readEntity(Map.class).get("id")),
+                    GatewayRefundResponse.RefundState.COMPLETE);
 
         } catch (GatewayClientException e) {
 
             Response response = e.getResponse();
             StripeErrorResponse stripeErrorResponse = response.readEntity(StripeErrorResponse.class);
-            String errorId = UUID.randomUUID().toString();
-            logger.error("Refund failed for transaction id {}. Failure code from Stripe: {}, failure message from Stripe: {}. ErrorId: {}. Response code from Stripe: {}",
-                    request.getTransactionId(), stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), errorId, response.getStatus());
-            GatewayError gatewayError = genericGatewayError(stripeErrorResponse.getError().getMessage());
-            return responseBuilder.withGatewayError(gatewayError).build();
+            StripeErrorResponse.Error error = stripeErrorResponse.getError();
+            logger.error("Refund failed for transaction id {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
+                    request.getTransactionId(), error.getCode(), error.getMessage(), response.getStatus());
 
+            return fromBaseRefundResponse(
+                    StripeRefundResponse.of(request.getTransactionId(), error.getCode(), error.getMessage()),
+                    GatewayRefundResponse.RefundState.ERROR);
         } catch (GatewayException e) {
-
-            return responseBuilder.withGatewayError(GatewayError.of(e)).build();
-
+            return GatewayRefundResponse.fromGatewayError(GatewayError.of(e));
         } catch (DownstreamException e) {
             String errorId = UUID.randomUUID().toString();
             logger.error("Refund failed for transaction id {}. Reason: {}. Status code from Stripe: {}. ErrorId: {}",
                     request.getTransactionId(), e.getMessage(), e.getStatusCode(), errorId);
             GatewayError gatewayError = unexpectedStatusCodeFromGateway("An internal server error occurred. ErrorId: " + errorId);
-            return responseBuilder.withGatewayError(gatewayError).build();
+            return GatewayRefundResponse.fromGatewayError(gatewayError);
         }
     }
 

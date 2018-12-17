@@ -7,7 +7,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 
 import java.util.Optional;
@@ -92,36 +92,36 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     @Test
     public void shouldRefund() {
         mockPaymentProviderResponse(200, successRefundResponse());
-        GatewayResponse<BaseRefundResponse> response = provider.refund(buildTestRefundRequest());
+        GatewayRefundResponse response = provider.refund(buildTestRefundRequest());
         verifyPaymentProviderRequest(successRefundRequest());
         assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().get().getReference(), is(Optional.of("3014644340/1")));
+        assertThat(response.getReference(), is(Optional.of("3014644340/1")));
     }
 
     @Test
     public void shouldRefundWithPaymentDeletion() {
         mockPaymentProviderResponse(200, successDeletionResponse());
-        GatewayResponse<BaseRefundResponse> response = provider.refund(buildTestRefundRequest());
+        GatewayRefundResponse response = provider.refund(buildTestRefundRequest());
         verifyPaymentProviderRequest(successRefundRequest());
         assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().get().getReference(), is(Optional.of("3014644340/1")));
+        assertThat(response.getReference(), is(Optional.of("3014644340/1")));
     }
 
     @Test
     public void shouldNotRefundIfPaymentProviderReturnsErrorStatusCode() {
         mockPaymentProviderResponse(200, errorRefundResponse());
-        GatewayResponse<BaseRefundResponse> response = provider.refund(buildTestRefundRequest());
-        assertThat(response.isFailed(), is(true));
-        assertThat(response.getGatewayError().isPresent(), is(true));
+        GatewayRefundResponse response = provider.refund(buildTestRefundRequest());
+        assertThat(response.isSuccessful(), is(false));
+        assertThat(response.getError().isPresent(), is(true));
     }
 
     @Test
     public void shouldNotRefundIfPaymentProviderReturnsNon200HttpStatusCode() {
         mockPaymentProviderResponse(400, errorRefundResponse());
-        GatewayResponse<BaseRefundResponse> response = provider.refund(buildTestRefundRequest());
-        assertThat(response.isFailed(), is(true));
-        assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",
+        GatewayRefundResponse response = provider.refund(buildTestRefundRequest());
+        assertThat(response.isSuccessful(), is(false));
+        assertThat(response.getError().isPresent(), is(true));
+        assertEquals(response.getError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",
                 UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 }

@@ -10,8 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
@@ -66,10 +65,10 @@ public class StripeRefundHandlerTest {
 
         when(gatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(response);
 
-        final GatewayResponse<BaseRefundResponse> refund = refundHandler.refund(refundRequest);
+        final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
         assertNotNull(refund);
         assertTrue(refund.isSuccessful());
-        assertThat(refund.getBaseResponse().get().getReference().get(), is("re_1DRiccHj08j21DRiccHj08j2_test"));
+        assertThat(refund.getReference().get(), is("re_1DRiccHj08j21DRiccHj08j2_test"));
     }
 
     @Test
@@ -80,12 +79,11 @@ public class StripeRefundHandlerTest {
         GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", response);
         when(gatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
 
-        final GatewayResponse<BaseRefundResponse> refund = refundHandler.refund(refundRequest);
+        final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
         assertNotNull(refund);
-        assertTrue(refund.isFailed());
-        assertTrue(refund.getGatewayError().isPresent());
-        assertThat(refund.getGatewayError().get().getMessage(), is("Refund amount (£5.01) is greater than charge amount (£5.00)"));
-        assertThat(refund.getGatewayError().get().getErrorType(), Is.is(GENERIC_GATEWAY_ERROR));
+        assertTrue(refund.getError().isPresent());
+        assertThat(refund.getError().get().getMessage(), is("Stripe refund response (error: Refund amount (£5.01) is greater than charge amount (£5.00))"));
+        assertThat(refund.getError().get().getErrorType(), Is.is(GENERIC_GATEWAY_ERROR));
     }
 
     @Test
@@ -96,12 +94,12 @@ public class StripeRefundHandlerTest {
         GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", response);
         when(gatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
 
-        final GatewayResponse<BaseRefundResponse> refund = refundHandler.refund(refundRequest);
+        final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
+        
         assertNotNull(refund);
-        assertTrue(refund.isFailed());
-        assertTrue(refund.getGatewayError().isPresent());
-        assertThat(refund.getGatewayError().get().getMessage(), is("The transfer tr_blah_blah_blah is already fully reversed."));
-        assertThat(refund.getGatewayError().get().getErrorType(), Is.is(GENERIC_GATEWAY_ERROR));
+        assertTrue(refund.getError().isPresent());
+        assertThat(refund.getError().get().getMessage(), is("Stripe refund response (error: The transfer tr_blah_blah_blah is already fully reversed.)"));
+        assertThat(refund.getError().get().getErrorType(), Is.is(GENERIC_GATEWAY_ERROR));
     }
 
     @Test
@@ -112,12 +110,11 @@ public class StripeRefundHandlerTest {
         GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", response);
         when(gatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
 
-        final GatewayResponse<BaseRefundResponse> refund = refundHandler.refund(refundRequest);
+        final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
         assertNotNull(refund);
-        assertTrue(refund.isFailed());
-        assertTrue(refund.getGatewayError().isPresent());
-        assertThat(refund.getGatewayError().get().getMessage(), Is.is("No such charge: ch_123456 or something similar"));
-        assertThat(refund.getGatewayError().get().getErrorType(), Is.is(GENERIC_GATEWAY_ERROR));
+        assertTrue(refund.getError().isPresent());
+        assertThat(refund.getError().get().getMessage(), Is.is("Stripe refund response (error code: resource_missing, error: No such charge: ch_123456 or something similar)"));
+        assertThat(refund.getError().get().getErrorType(), Is.is(GENERIC_GATEWAY_ERROR));
     }
 
     @Test
@@ -125,10 +122,9 @@ public class StripeRefundHandlerTest {
         DownstreamException downstreamException = new DownstreamException(HttpStatus.INTERNAL_SERVER_ERROR_500, "Problem with Stripe servers");
         when(gatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(downstreamException);
 
-        GatewayResponse<BaseRefundResponse> response = refundHandler.refund(refundRequest);
-        assertThat(response.isFailed(), Is.is(true));
-        assertThat(response.getGatewayError().isPresent(), Is.is(true));
-        assertThat(response.getGatewayError().get().getMessage(), containsString("An internal server error occurred. ErrorId:"));
-        assertThat(response.getGatewayError().get().getErrorType(), Is.is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        GatewayRefundResponse response = refundHandler.refund(refundRequest);
+        assertThat(response.getError().isPresent(), Is.is(true));
+        assertThat(response.getError().get().getMessage(), containsString("An internal server error occurred. ErrorId:"));
+        assertThat(response.getError().get().getErrorType(), Is.is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 }

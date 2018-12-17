@@ -20,7 +20,7 @@ public class SmartpayRefundResponse extends SmartpayBaseResponse implements Base
     }
 
     @Override
-    public String toString() {
+    public String stringify() {
         StringJoiner joiner = new StringJoiner(", ", "SmartPay refund response (", ")");
         if (StringUtils.isNotBlank(pspReference)) {
             joiner.add("pspReference: " + pspReference);
@@ -34,4 +34,8 @@ public class SmartpayRefundResponse extends SmartpayBaseResponse implements Base
         return joiner.toString();
     }
 
+    @Override
+    public String toString() {
+        return stringify();
+    }
 }
