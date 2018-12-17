@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.rules;
 
+import com.github.tomakehurst.wiremock.http.Fault;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -49,6 +50,13 @@ public class SmartpayMockClient {
     public void mockCancel() {
         String cancelResponse = TestTemplateResourceLoader.load(SMARTPAY_CANCEL_SUCCESS_RESPONSE);
         paymentServiceResponse(cancelResponse);
+    }
+
+    public void mockServerFault() {
+        stubFor(
+                post(urlPathEqualTo("/pal/servlet/soap/Payment"))
+                        .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
+        );
     }
 
     public void mockRefundSuccess() {

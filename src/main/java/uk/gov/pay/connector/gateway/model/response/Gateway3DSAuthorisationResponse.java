@@ -24,7 +24,7 @@ public class Gateway3DSAuthorisationResponse {
     }
 
     public static Gateway3DSAuthorisationResponse ofException() {
-        return new Gateway3DSAuthorisationResponse(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED, null);
+        return new Gateway3DSAuthorisationResponse(BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION, null);
     }
 
     public boolean isDeclined() {

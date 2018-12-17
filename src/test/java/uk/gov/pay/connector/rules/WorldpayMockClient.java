@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.rules;
 
+import com.github.tomakehurst.wiremock.http.Fault;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -82,6 +83,13 @@ public class WorldpayMockClient {
                         .willReturn(
                                 aResponse().withStatus(404)
                         )
+        );
+    }
+    
+    public void mockServerFault() {
+        stubFor(
+                post(urlPathEqualTo("/jsp/merchant/xml/paymentService.jsp"))
+                        .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
         );
     }
     

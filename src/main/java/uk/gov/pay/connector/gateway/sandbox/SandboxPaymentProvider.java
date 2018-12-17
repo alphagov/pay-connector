@@ -68,7 +68,7 @@ public class SandboxPaymentProvider implements PaymentProvider {
 
     @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
-        return Gateway3DSAuthorisationResponse.ofException();
+        return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED);
     }
 
     @Override
