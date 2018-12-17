@@ -14,6 +14,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
@@ -208,4 +209,21 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
     }
 
+    @Test
+    public void shouldReturnStatus500_WhenAuthorisationCallThrowsException() {
+        String chargeId = createNewCharge(AUTHORISATION_3DS_REQUIRED);
+
+        String expectedErrorMessage = "Failed";
+        worldpayMockClient.mockServerFault();
+
+        givenSetup()
+                .body(buildJsonWithPaResponse())
+                .post(authorise3dsChargeUrlFor(chargeId))
+                .then()
+                .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
+                .contentType(JSON)
+                .body("message", is(expectedErrorMessage));
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_ERROR.getValue());
+    }
 }

@@ -24,6 +24,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
@@ -115,6 +116,21 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
                 .statusCode(400);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
+    }
+
+    @Test
+    public void shouldReturnStatus500_WhenAuthorisationCallThrowsException() throws JsonProcessingException {
+        databaseTestHelper.enable3dsForGatewayAccount(Long.parseLong(accountId));
+        String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_3DS_REQUIRED);
+        smartpayMockClient.mockServerFault();
+
+        givenSetup()
+                .body(new ObjectMapper().writeValueAsString(get3dsPayload()))
+                .post(authorise3dsChargeUrlFor(chargeId))
+                .then()
+                .statusCode(500);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_ERROR.getValue());
     }
 
     @Test
