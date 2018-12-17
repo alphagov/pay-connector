@@ -23,7 +23,7 @@ public class FileUploadResourceTest {
     public void testClientMultipart() {
         final FormDataMultiPart multiPart = new FormDataMultiPart()
                 .field("test-data", "Hello Multipart");
-        final String response = resource.target("/file-upload")
+        final String response = resource.target("/file-upload/simple-test")
                 .register(MultiPartFeature.class)
                 .request()
                 .post(Entity.entity(multiPart, multiPart.getMediaType()), String.class);

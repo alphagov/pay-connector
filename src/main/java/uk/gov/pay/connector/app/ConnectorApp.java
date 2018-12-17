@@ -32,6 +32,7 @@ import uk.gov.pay.connector.command.RenderStateTransitionGraphCommand;
 import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
 import uk.gov.pay.connector.common.exception.UnsupportedOperationExceptionMapper;
 import uk.gov.pay.connector.common.exception.ValidationExceptionMapper;
+import uk.gov.pay.connector.fileupload.FileUploadResource;
 import uk.gov.pay.connector.filters.LoggingFilter;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
 import uk.gov.pay.connector.gateway.smartpay.auth.BasicAuthUser;
@@ -97,14 +98,15 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         injector.getInstance(PersistenceServiceInitialiser.class);
 
         initialiseMetrics(configuration, environment);
-        
+
         environment.jersey().register(new ConstraintViolationExceptionMapper());
         environment.jersey().register(new ValidationExceptionMapper());
         environment.jersey().register(new UnsupportedOperationExceptionMapper());
-        environment.jersey().register(new LoggingExceptionMapper<Throwable>() {});
+        environment.jersey().register(new LoggingExceptionMapper<Throwable>() {
+        });
         environment.jersey().register(new JsonProcessingExceptionMapper());
         environment.jersey().register(new EarlyEofExceptionMapper());
-        
+
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(ChargeEventsResource.class));
         environment.jersey().register(injector.getInstance(SecurityTokensResource.class));
@@ -120,6 +122,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(SchemeRewriteFilter.class));
         environment.jersey().register(injector.getInstance(PerformanceReportResource.class));
         environment.jersey().register(injector.getInstance(SearchRefundsResource.class));
+        environment.jersey().register(injector.getInstance(FileUploadResource.class));
 
         setupSchedulers(configuration, environment, injector);
 
@@ -127,7 +130,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         environment.servlets().addFilter("LoggingFilter", injector.getInstance(LoggingFilter.class))
                 .addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
-        
+
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
         environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
@@ -135,7 +138,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         setGlobalProxies(configuration);
 
         if (configuration.isXrayEnabled())
-            Xray.init(environment, "pay-connector", Optional.empty(),"/v1/*");
+            Xray.init(environment, "pay-connector", Optional.empty(), "/v1/*");
     }
 
     private Injector createInjector(Environment environment, Module module) {
@@ -177,7 +180,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     private void setupSchedulers(ConnectorConfiguration configuration, Environment environment, Injector injector) {
-        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration, 
+        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration,
                 environment, injector.getInstance(CardCaptureProcess.class), injector.getInstance(XrayUtils.class));
         environment.lifecycle().manage(captureProcessScheduler);
     }
