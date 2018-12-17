@@ -9,22 +9,28 @@ import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.
 public class Gateway3DSAuthorisationResponse {
     private final BaseAuthoriseResponse.AuthoriseStatus authorisationStatus;
     private final String transactionId;
+    private final String stringified;
 
-    private Gateway3DSAuthorisationResponse(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId) {
+    private Gateway3DSAuthorisationResponse(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId, String stringified) {
         this.transactionId = transactionId;
         this.authorisationStatus = authorisationStatus;
+        this.stringified = stringified;
+    }
+
+    public static Gateway3DSAuthorisationResponse of(String stringified, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId) {
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, stringified);
     }
 
     public static Gateway3DSAuthorisationResponse of(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId) {
-        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId);
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, "");
+    }
+
+    public static Gateway3DSAuthorisationResponse of(String stringified, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus) {
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, null, stringified);
     }
 
     public static Gateway3DSAuthorisationResponse of(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus) {
-        return new Gateway3DSAuthorisationResponse(authorisationStatus, null);
-    }
-
-    public static Gateway3DSAuthorisationResponse ofException() {
-        return new Gateway3DSAuthorisationResponse(BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION, null);
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, null, "");
     }
 
     public boolean isDeclined() {
@@ -48,4 +54,9 @@ public class Gateway3DSAuthorisationResponse {
     public Optional<String> getTransactionId() {
         return Optional.ofNullable(transactionId);
     }
+    
+    public String toString() {
+        return stringified;
+    }
+
 }

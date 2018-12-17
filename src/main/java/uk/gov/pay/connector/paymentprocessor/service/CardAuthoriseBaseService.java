@@ -13,6 +13,7 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.gateway.exception.GenericGatewayRuntimeException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
+import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
@@ -84,24 +85,7 @@ public class CardAuthoriseBaseService {
         }
     }
     
-    public void logAuthorisation(
-            String operationDescription,
-            ChargeEntity updatedCharge,
-            ChargeStatus oldChargeStatus
-    ) {
-        logger.info("{} for {} ({} {}) for {} ({}) .'. {} -> {}",
-                operationDescription,
-                updatedCharge.getExternalId(),
-                updatedCharge.getPaymentGatewayName().getName(),
-                updatedCharge.getGatewayTransactionId(),
-                updatedCharge.getGatewayAccount().getAnalyticsId(),
-                updatedCharge.getGatewayAccount().getId(),
-                oldChargeStatus,
-                updatedCharge.getStatus()
-        );
-    }
-    
-    public void emitAuthorisationMetric(ChargeEntity charge, String operation) {
+    void emitAuthorisationMetric(ChargeEntity charge, String operation) {
         metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.%s.result.%s",
                 charge.getGatewayAccount().getGatewayName(),
                 charge.getGatewayAccount().getType(),
