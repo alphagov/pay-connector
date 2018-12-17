@@ -12,6 +12,7 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_FAILED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANCEL_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANCEL_SUCCESS_RESPONSE;
@@ -37,6 +38,11 @@ public class WorldpayMockClient {
 
     public void mockAuthorisationFailure() {
         String authoriseResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE);
+        paymentServiceResponse(authoriseResponse);
+    }
+
+    public void mockAuthorisationPaResParseError() {
+        String authoriseResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE);
         paymentServiceResponse(authoriseResponse);
     }
 

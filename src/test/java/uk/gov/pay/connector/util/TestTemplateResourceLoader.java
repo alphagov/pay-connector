@@ -13,6 +13,7 @@ public class TestTemplateResourceLoader {
     static final String WORLDPAY_AUTHORISATION_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-error-response.xml";
     public static final String WORLDPAY_AUTHORISATION_FAILED_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-failed-response.xml";
     static final String WORLDPAY_AUTHORISATION_CANCELLED_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-cancelled-response.xml";
+    public static final String WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-pares-parse-error-response.xml";
     public static final String WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS = WORLDPAY_BASE_NAME + "/special-char-valid-authorise-worldpay-request-address.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-3ds-request-min-address.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-excluding-3ds.xml";

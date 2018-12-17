@@ -21,8 +21,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
-import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildCorporateJsonAuthorisationDetailsFor;
+import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
 
@@ -215,6 +215,24 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
 
         String expectedErrorMessage = "Failed";
         worldpayMockClient.mockServerFault();
+
+        givenSetup()
+                .body(buildJsonWithPaResponse())
+                .post(authorise3dsChargeUrlFor(chargeId))
+                .then()
+                .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
+                .contentType(JSON)
+                .body("message", is(expectedErrorMessage));
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_ERROR.getValue());
+    }
+
+    @Test
+    public void shouldReturnStatus500_AWorldpayPaResParseError() {
+        String chargeId = createNewCharge(AUTHORISATION_3DS_REQUIRED);
+
+        String expectedErrorMessage = "Failed";
+        worldpayMockClient.mockAuthorisationPaResParseError();
 
         givenSetup()
                 .body(buildJsonWithPaResponse())
