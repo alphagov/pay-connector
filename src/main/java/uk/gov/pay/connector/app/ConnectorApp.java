@@ -15,6 +15,7 @@ import io.dropwizard.auth.basic.BasicCredentials;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.db.DataSourceFactory;
+import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jersey.errors.EarlyEofExceptionMapper;
 import io.dropwizard.jersey.errors.LoggingExceptionMapper;
 import io.dropwizard.jersey.jackson.JsonProcessingExceptionMapper;
@@ -83,6 +84,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                 return configuration.getDataSourceFactory();
             }
         });
+        bootstrap.addBundle(new MultiPartBundle());
 
         bootstrap.addCommand(new DependentResourceWaitCommand());
         bootstrap.addCommand(new RenderStateTransitionGraphCommand());
