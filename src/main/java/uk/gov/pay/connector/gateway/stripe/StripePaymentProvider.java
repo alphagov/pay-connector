@@ -101,7 +101,9 @@ public class StripePaymentProvider implements PaymentProvider {
                 .responseBuilder();
 
         try {
+            logger.info("Creating token for charge external id " + request.getChargeExternalId()); //FIXME remove when Stripe performance issues have been sorted out. Ref: https://github.com/alphagov/pay-connector/pull/916
             Response tokenResponse = createToken(request);
+            logger.info("Creating source for charge external id " + request.getChargeExternalId()); //FIXME see previous FIXME
             Response sourceResponse = createSource(
                     request,
                     tokenResponse.readEntity(StripeTokenResponse.class).getId()
@@ -114,6 +116,7 @@ public class StripePaymentProvider implements PaymentProvider {
 
                 return responseBuilder.withResponse(Stripe3dsSourceAuthorisationResponse.of(source3dsResponse)).build();
             } else {
+                logger.info("Creating charge for charge external id " + request.getChargeExternalId()); //FIXME see previous FIXME
                 Response authorisationResponse = createCharge(request, stripeSourcesResponse.getId());
                 StripeAuthorisationResponse stripeAuthResponse = new StripeAuthorisationResponse(authorisationResponse.readEntity(StripeCreateChargeResponse.class));
                 return responseBuilder.withResponse(stripeAuthResponse).build();
@@ -136,6 +139,7 @@ public class StripePaymentProvider implements PaymentProvider {
         } catch (DownstreamException e) {
             return unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage(), e.getStatusCode());
         } catch (GatewayException e) {
+            logger.error("GatewayException occurred for charge external id {}, error:\n {}", request.getChargeExternalId(), e);
             return responseBuilder.withGatewayError(GatewayError.of(e)).build();
         }
     }
