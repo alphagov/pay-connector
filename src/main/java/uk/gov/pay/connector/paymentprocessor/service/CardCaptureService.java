@@ -95,6 +95,7 @@ public class CardCaptureService {
 
         ChargeEntity charge = chargeService.updateChargePostCapture(chargeId, nextStatus);
 
+        // Used by Sumo Logic saved search
         LOG.info("Capture for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                 charge.getExternalId(), charge.getPaymentGatewayName().getName(), charge.getGatewayTransactionId(),
                 charge.getGatewayAccount().getAnalyticsId(), charge.getGatewayAccount().getId(),
