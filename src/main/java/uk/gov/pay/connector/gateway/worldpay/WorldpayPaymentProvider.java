@@ -93,8 +93,8 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
 
         return gatewayResponse.getBaseResponse().map(
-                baseResponse -> Gateway3DSAuthorisationResponse.of(baseResponse.authoriseStatus(), baseResponse.getTransactionId()))
-                .orElseGet(Gateway3DSAuthorisationResponse::ofException);
+                baseResponse -> Gateway3DSAuthorisationResponse.of(gatewayResponse.toString(), baseResponse.authoriseStatus(), baseResponse.getTransactionId()))
+                .orElseGet(() -> Gateway3DSAuthorisationResponse.of(gatewayResponse.toString(), BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION));
     }
 
     @Override

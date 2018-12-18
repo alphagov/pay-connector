@@ -151,11 +151,12 @@ public class EpdqPaymentProvider implements PaymentProvider {
                     authoriseStatus.name()))
                     .inc();
             gatewayResponse = reconstructErrorBiasedGatewayResponse(gatewayResponse, authoriseStatus, auth3DResult);
-
         }
-
-        return gatewayResponse.getBaseResponse().map(baseResponse -> Gateway3DSAuthorisationResponse.of(baseResponse.authoriseStatus(), baseResponse.getTransactionId()))
-                .orElseGet(() -> Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION));
+        
+        String gatewayResponseString = gatewayResponse.toString();
+        return gatewayResponse.getBaseResponse()
+                .map(baseResponse -> Gateway3DSAuthorisationResponse.of(gatewayResponseString, baseResponse.authoriseStatus(), baseResponse.getTransactionId()))
+                .orElseGet(() -> Gateway3DSAuthorisationResponse.of(gatewayResponseString, BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION));
     }
 
     @Override
