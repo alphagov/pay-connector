@@ -81,11 +81,15 @@ public class StripeNotificationService {
             StripeSourcesResponse stripeSourcesResponse = toSourceObject(notification.getObject());
 
             if (isBlank(stripeSourcesResponse.getTransactionId())) {
-                logger.error("{} notification {} failed verification because it has no transaction ID", PAYMENT_GATEWAY_NAME, notification);
+                logger.error("{} source notification [{}] failed verification because it has no transaction ID", PAYMENT_GATEWAY_NAME, notification);
                 return;
             }
 
-            logger.info("Evaluating {} for source notification [{}]", PAYMENT_GATEWAY_NAME, stripeSourcesResponse.getTransactionId());
+            logger.info("Evaluating {} source notification [notification id - {}, source id - {}]",
+                    PAYMENT_GATEWAY_NAME,
+                    notification.getId(),
+                    stripeSourcesResponse.getTransactionId()
+            );
 
             Optional<ChargeEntity> maybeCharge = chargeService.findByProviderAndTransactionId(PAYMENT_GATEWAY_NAME, stripeSourcesResponse.getTransactionId());
 

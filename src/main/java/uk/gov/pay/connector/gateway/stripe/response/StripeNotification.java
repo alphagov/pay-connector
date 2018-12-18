@@ -57,10 +57,10 @@ public class StripeNotification {
 
     @Override
     public String toString() {
+        // do not add `data` to toString() as it can contain PII (personally identifiable information)
         return "StripeNotification {" +
                 "id='" + id + "\'" +
                 ", type='" + type + "\'" +
-                ", data=" + data +
                 '}';
     }
 }
