@@ -118,11 +118,14 @@ public class ChargeRefundService {
                     gatewayRefundResponse, refundEntity.getStatus(), refundStatus);
 
             if (refundStatus == REFUNDED) {
+                // If the gateway confirms refunds immediately, insert history (REFUND_SUBMITTED) to record
+                // additional event for refund submitted date which also includes the user submitting the
+                // refund. This will also help services to view refund history in detail in self service
                 refundEntity.setStatus(REFUND_SUBMITTED);
                 userNotificationService.sendRefundIssuedEmail(refundEntity);
             }
-            
             refundEntity.setStatus(refundStatus);
+
             getRefundReference(refundEntity, gatewayRefundResponse).ifPresent(refundEntity::setReference);
         });
 

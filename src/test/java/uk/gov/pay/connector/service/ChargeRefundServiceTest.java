@@ -58,7 +58,6 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 
-
 @RunWith(MockitoJUnitRunner.class)
 public class ChargeRefundServiceTest {
 
@@ -184,6 +183,7 @@ public class ChargeRefundServiceTest {
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, amount)));
         verify(mockRefundDao, times(1)).findById(refundId);
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
+        verify(spiedRefundEntity, never()).setStatus(RefundStatus.REFUNDED);
         verify(spiedRefundEntity).setReference(reference);
 
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
@@ -272,7 +272,7 @@ public class ChargeRefundServiceTest {
     }
 
     @Test
-    public void shouldRefundSuccessfullyForSandboxAndSendEmail_forChargeWithNoCorporateSurcharge() {
+    public void shouldRefundAndSendEmail_whenGatewayRefundStateIsComplete_forChargeWithNoCorporateSurcharge() {
         String externalChargeId = "chargeId";
         Long accountId = 2L;
         String providerName = "sandbox";
@@ -288,11 +288,11 @@ public class ChargeRefundServiceTest {
                 .withStatus(CAPTURED)
                 .build();
 
-        testSandboxRefund(charge, 100L, charge.getAmount());
+        testSuccessfulRefund(charge, 100L, charge.getAmount());
     }
 
     @Test
-    public void shouldRefundSuccessfullyForSandboxAndSendEmail_forChargeWithCorporateSurcharge() {
+    public void shouldRefundAndSendEmail_whenGatewayRefundStatusIsComplete_forChargeWithCorporateSurcharge() {
         String externalChargeId = "chargeId";
         Long accountId = 2L;
         String providerName = "sandbox";
@@ -313,10 +313,10 @@ public class ChargeRefundServiceTest {
         // when there is a corporate surcharge we expect the amount available for refund to include this
         long amountAvailableForRefund = charge.getAmount() + corporateSurcharge;
 
-        testSandboxRefund(charge, amountAvailableForRefund, amountAvailableForRefund);
+        testSuccessfulRefund(charge, amountAvailableForRefund, amountAvailableForRefund);
     }
 
-    private void testSandboxRefund(ChargeEntity charge, Long refundAmount, Long amountAvailableForRefund) {
+    private void testSuccessfulRefund(ChargeEntity charge, Long refundAmount, Long amountAvailableForRefund) {
         RefundEntity spiedRefundEntity = spy(aValidRefundEntity().withCharge(charge).withAmount(refundAmount).build());
 
         Long accountId = charge.getGatewayAccount().getId();
@@ -347,6 +347,8 @@ public class ChargeRefundServiceTest {
         verify(mockRefundDao, times(1)).findById(refundId);
         verify(mockUserNotificationService).sendRefundIssuedEmail(spiedRefundEntity);
 
+        // should set refund status to both REFUND_SUBMITTED and REFUNDED in order - as gateway refund state is COMPLETE
+        verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUNDED);
 
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);

@@ -68,6 +68,7 @@ public class StripeRefundHandlerTest {
         final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
         assertNotNull(refund);
         assertTrue(refund.isSuccessful());
+        assertThat(refund.state(), is(GatewayRefundResponse.RefundState.COMPLETE));
         assertThat(refund.getReference().get(), is("re_1DRiccHj08j21DRiccHj08j2_test"));
     }
 
@@ -82,6 +83,7 @@ public class StripeRefundHandlerTest {
         final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
         assertNotNull(refund);
         assertTrue(refund.getError().isPresent());
+        assertThat(refund.state(), is(GatewayRefundResponse.RefundState.ERROR));
         assertThat(refund.getError().get().getMessage(), is("Stripe refund response (error: Refund amount (£5.01) is greater than charge amount (£5.00))"));
         assertThat(refund.getError().get().getErrorType(), Is.is(GENERIC_GATEWAY_ERROR));
     }
@@ -98,6 +100,7 @@ public class StripeRefundHandlerTest {
         
         assertNotNull(refund);
         assertTrue(refund.getError().isPresent());
+        assertThat(refund.state(), is(GatewayRefundResponse.RefundState.ERROR));
         assertThat(refund.getError().get().getMessage(), is("Stripe refund response (error: The transfer tr_blah_blah_blah is already fully reversed.)"));
         assertThat(refund.getError().get().getErrorType(), Is.is(GENERIC_GATEWAY_ERROR));
     }
@@ -113,6 +116,7 @@ public class StripeRefundHandlerTest {
         final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
         assertNotNull(refund);
         assertTrue(refund.getError().isPresent());
+        assertThat(refund.state(), is(GatewayRefundResponse.RefundState.ERROR));
         assertThat(refund.getError().get().getMessage(), Is.is("Stripe refund response (error code: resource_missing, error: No such charge: ch_123456 or something similar)"));
         assertThat(refund.getError().get().getErrorType(), Is.is(GENERIC_GATEWAY_ERROR));
     }
