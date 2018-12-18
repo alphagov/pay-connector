@@ -67,7 +67,7 @@ public class StripeRefundHandler {
                     request.getTransactionId(), error.getCode(), error.getMessage(), response.getStatus());
 
             return fromBaseRefundResponse(
-                    StripeRefundResponse.of(request.getTransactionId(), error.getCode(), error.getMessage()),
+                    StripeRefundResponse.of(error.getCode(), error.getMessage()),
                     GatewayRefundResponse.RefundState.ERROR);
         } catch (GatewayException e) {
             return GatewayRefundResponse.fromGatewayError(GatewayError.of(e));

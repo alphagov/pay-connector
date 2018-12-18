@@ -21,8 +21,8 @@ public class StripeRefundResponse implements BaseRefundResponse {
         this.errorMessage = errorMessage;
     }
 
-    public static StripeRefundResponse of(String reference, String errorCode, String errorMessage) {
-        return new StripeRefundResponse(reference, errorCode, errorMessage);
+    public static StripeRefundResponse of(String errorCode, String errorMessage) {
+        return new StripeRefundResponse(null, errorCode, errorMessage);
     }
 
     public static StripeRefundResponse of(String reference) {
