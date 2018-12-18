@@ -8,7 +8,6 @@ import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
@@ -120,9 +119,6 @@ public class ChargeRefundService {
 
             if (refundStatus == REFUNDED) {
                 refundEntity.setStatus(REFUND_SUBMITTED);
-            }
-            if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX
-                    && refundEntity.hasStatus(RefundStatus.REFUND_SUBMITTED)) {
                 userNotificationService.sendRefundIssuedEmail(refundEntity);
             }
             
