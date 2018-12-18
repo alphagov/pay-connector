@@ -8,19 +8,23 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import java.util.Optional;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class RefundNotificationProcessor {
-    
+
     private Logger logger = LoggerFactory.getLogger(getClass());
     private RefundDao refundDao;
+    private UserNotificationService userNotificationService;
 
     @Inject
-    RefundNotificationProcessor(RefundDao refundDao) {
+    RefundNotificationProcessor(RefundDao refundDao,
+                                UserNotificationService userNotificationService) {
         this.refundDao = refundDao;
+        this.userNotificationService = userNotificationService;
     }
 
     public void invoke(PaymentGatewayName gatewayName, RefundStatus newStatus, String reference, String transactionId) {
@@ -41,6 +45,10 @@ public class RefundNotificationProcessor {
         RefundStatus oldStatus = refundEntity.getStatus();
 
         refundEntity.setStatus(newStatus);
+
+        if (RefundStatus.REFUNDED.equals(newStatus)) {
+            userNotificationService.sendRefundIssuedEmail(refundEntity);
+        }
 
         GatewayAccountEntity gatewayAccount = refundEntity.getChargeEntity().getGatewayAccount();
         logger.info("Notification received for refund. Updating refund - charge_external_id={}, refund_reference={}, transaction_id={}, status={}, "
