@@ -462,6 +462,16 @@
             <artifactId>stripe-java</artifactId>
             <version>7.9.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>1.19.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-parsers</artifactId>
+            <version>1.19.1</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
