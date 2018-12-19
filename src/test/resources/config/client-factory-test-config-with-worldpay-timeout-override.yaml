@@ -59,7 +59,9 @@ epdq:
 
 stripe:
   url: ${GDS_CONNECTOR_STRIPE_URL:-https://api.stripe.com}
-  authToken: ${GDS_CONNECTOR_STRIPE_AUTH_TOKEN:-sk_test}
+  authTokens:
+    test: ${GDS_CONNECTOR_STRIPE_AUTH_TOKEN:-sk_test}
+    live: ${GDS_CONNECTOR_STRIPE_AUTH_LIVE_TOKEN}
   webhookSigningSecret: ${GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET:-whsec}
 
 jerseyClient:

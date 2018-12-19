@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
@@ -31,6 +32,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
@@ -57,6 +59,7 @@ public class StripeRefundHandlerTest {
         refundHandler = new StripeRefundHandler(gatewayClient, gatewayConfig);
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().withAmount(100L).build();
         refundRequest = RefundGatewayRequest.valueOf(refundEntity);
+        when(gatewayConfig.getAuthTokens()).thenReturn(mock(StripeAuthTokens.class));
     }
 
     @Test

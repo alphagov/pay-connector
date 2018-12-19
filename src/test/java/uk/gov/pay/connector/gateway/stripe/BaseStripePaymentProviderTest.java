@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.mockito.Mock;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
+import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
@@ -78,6 +79,7 @@ public abstract class BaseStripePaymentProviderTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
         when(stripeGatewayConfig.getUrl()).thenReturn("http://stripe.url");
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(mock(StripeAuthTokens.class));
         when(configuration.getStripeConfig()).thenReturn(stripeGatewayConfig);
 
         when(configuration.getLinks()).thenReturn(linksConfig);

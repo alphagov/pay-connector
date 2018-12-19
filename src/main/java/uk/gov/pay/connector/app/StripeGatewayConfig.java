@@ -13,7 +13,7 @@ public class StripeGatewayConfig extends Configuration {
 
     @Valid
     @NotNull
-    private String authToken;
+    private StripeAuthTokens authTokens;
 
     @Valid
     @NotNull
@@ -23,8 +23,8 @@ public class StripeGatewayConfig extends Configuration {
         return url;
     }
 
-    public String getAuthToken() {
-        return authToken;
+    public StripeAuthTokens getAuthTokens() {
+        return authTokens;
     }
 
     public String getWebhookSigningSecret() {
