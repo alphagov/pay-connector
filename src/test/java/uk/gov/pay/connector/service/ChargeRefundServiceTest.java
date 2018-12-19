@@ -344,7 +344,7 @@ public class ChargeRefundServiceTest {
         verify(mockChargeDao).findByExternalIdAndGatewayAccount(charge.getExternalId(), accountId);
         verify(mockRefundDao).persist(argThat(aRefundEntity(refundAmount, charge)));
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, refundAmount)));
-        verify(mockRefundDao, times(1)).findById(refundId);
+        verify(mockRefundDao, times(2)).findById(refundId);
         verify(mockUserNotificationService).sendRefundIssuedEmail(spiedRefundEntity);
 
         // should set refund status to both REFUND_SUBMITTED and REFUNDED in order - as gateway refund state is COMPLETE

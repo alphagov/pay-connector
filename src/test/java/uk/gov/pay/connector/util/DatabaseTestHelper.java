@@ -681,7 +681,7 @@ public class DatabaseTestHelper {
 
     public List<Map<String, Object>> getRefundsHistoryByChargeId(Long chargeId) {
         return jdbi.withHandle(h ->
-                h.createQuery("SELECT status FROM refunds_history WHERE charge_id = :chargeId")
+                h.createQuery("SELECT status FROM refunds_history WHERE charge_id = :chargeId order by history_start_date desc")
                         .bind("chargeId", chargeId).list()
         );
     }

@@ -73,7 +73,7 @@ public class ChargeRefundService {
         GatewayRefundResponse gatewayRefundResponse =
                 providers.byName(refundEntity.getChargeEntity().getPaymentGatewayName()).refund(RefundGatewayRequest.valueOf(refundEntity));
 
-        RefundEntity refund = updateRefundStatus(gatewayRefundResponse, refundEntity.getId());
+        RefundEntity refund = processRefund(gatewayRefundResponse, refundEntity.getId());
 
         return new Response(gatewayRefundResponse, refund);
     }
@@ -101,11 +101,24 @@ public class ChargeRefundService {
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    @Transactional
-    @SuppressWarnings("WeakerAccess")
-    public RefundEntity updateRefundStatus(GatewayRefundResponse gatewayRefundResponse, Long refundEntityId) {
+    private RefundEntity processRefund(GatewayRefundResponse gatewayRefundResponse, Long refundEntityId) {
         RefundStatus refundStatus = determineRefundStatus(gatewayRefundResponse);
 
+        if (refundStatus == REFUNDED) {
+            // If the gateway confirms refunds immediately, the refund status needs 
+            // to be set to REFUND_SUBMITTED and then REFUNDED. This will  help 
+            // services to view refund history in detail in self service.
+            // see Javadoc (RefundHistory) for details on how history is handled
+            setRefundStatus(refundEntityId, REFUND_SUBMITTED);
+        }
+
+        return updateRefund(gatewayRefundResponse, refundEntityId, refundStatus);
+    }
+
+    @Transactional
+    @SuppressWarnings("WeakerAccess")
+    public RefundEntity updateRefund(GatewayRefundResponse gatewayRefundResponse, Long refundEntityId,
+                                           RefundStatus refundStatus) {
         Optional<RefundEntity> refund = refundDao.findById(refundEntityId);
 
         refund.ifPresent(refundEntity -> {
@@ -118,18 +131,22 @@ public class ChargeRefundService {
                     gatewayRefundResponse, refundEntity.getStatus(), refundStatus);
 
             if (refundStatus == REFUNDED) {
-                // If the gateway confirms refunds immediately, insert history (REFUND_SUBMITTED) to record
-                // additional event for refund submitted date which also includes the user submitting the
-                // refund. This will also help services to view refund history in detail in self service
-                refundEntity.setStatus(REFUND_SUBMITTED);
                 userNotificationService.sendRefundIssuedEmail(refundEntity);
             }
-            refundEntity.setStatus(refundStatus);
 
+            refundEntity.setStatus(refundStatus);
             getRefundReference(refundEntity, gatewayRefundResponse).ifPresent(refundEntity::setReference);
         });
 
         return refund.get();
+    }
+
+    @Transactional
+    @SuppressWarnings("WeakerAccess")
+    public void setRefundStatus(Long refundEntityId, RefundStatus refundStatus) {
+        refundDao.findById(refundEntityId).ifPresent(refundEntity -> {
+            refundEntity.setStatus(refundStatus);
+        });
     }
 
     private RefundStatus determineRefundStatus(GatewayRefundResponse gatewayRefundResponse) {
