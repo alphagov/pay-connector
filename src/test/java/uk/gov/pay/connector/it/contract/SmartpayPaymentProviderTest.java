@@ -28,6 +28,7 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayAuthorisationResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
@@ -235,7 +236,7 @@ public class SmartpayPaymentProviderTest {
 
         RefundEntity refundEntity = new RefundEntity(chargeEntity, 1L, userExternalId);
         RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity);
-        GatewayResponse refundResponse = smartpay.refund(refundRequest);
+        GatewayRefundResponse refundResponse = smartpay.refund(refundRequest);
 
         assertThat(refundResponse.isSuccessful(), is(true));
 

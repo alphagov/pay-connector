@@ -20,7 +20,7 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
@@ -114,7 +114,7 @@ public class StripePaymentProviderTest {
         final RefundEntity refundEntity = new RefundEntity(chargeEntity, chargeAmount, "some-user-external-id");
 
         RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity);
-        GatewayResponse<BaseRefundResponse> refundResponse = stripePaymentProvider.refund(refundRequest);
+        GatewayRefundResponse refundResponse = stripePaymentProvider.refund(refundRequest);
 
         assertTrue(refundResponse.isSuccessful());
     }
@@ -130,7 +130,7 @@ public class StripePaymentProviderTest {
         final RefundEntity refundEntity = new RefundEntity(chargeEntity, chargeAmount / 2, "some-user-external-id");
 
         RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity);
-        GatewayResponse<BaseRefundResponse> refundResponse = stripePaymentProvider.refund(refundRequest);
+        GatewayRefundResponse refundResponse = stripePaymentProvider.refund(refundRequest);
 
         assertTrue(refundResponse.isSuccessful());
     }
@@ -146,12 +146,11 @@ public class StripePaymentProviderTest {
         final RefundEntity refundEntity = new RefundEntity(chargeEntity, chargeAmount + 1L, "some-user-external-id");
 
         RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity);
-        GatewayResponse<BaseRefundResponse> refundResponse = stripePaymentProvider.refund(refundRequest);
+        GatewayRefundResponse refundResponse = stripePaymentProvider.refund(refundRequest);
 
-        assertTrue(refundResponse.isFailed());
-        assertTrue(refundResponse.getGatewayError().isPresent());
-        assertThat(refundResponse.getGatewayError().get().getMessage(), is("Refund amount (£5.01) is greater than charge amount (£5.00)"));
-        assertThat(refundResponse.getGatewayError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
+        assertTrue(refundResponse.getError().isPresent());
+        assertThat(refundResponse.getError().get().getMessage(), is("Refund amount (£5.01) is greater than charge amount (£5.00)"));
+        assertThat(refundResponse.getError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
     }
 
     @Test
@@ -165,7 +164,7 @@ public class StripePaymentProviderTest {
         final RefundEntity refundEntity = new RefundEntity(chargeEntity, chargeAmount, "some-user-external-id");
 
         RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity);
-        GatewayResponse<BaseRefundResponse> refundResponse = stripePaymentProvider.refund(refundRequest);
+        GatewayRefundResponse refundResponse = stripePaymentProvider.refund(refundRequest);
 
         assertTrue(refundResponse.isSuccessful());
 
@@ -174,11 +173,10 @@ public class StripePaymentProviderTest {
         refundRequest = RefundGatewayRequest.valueOf(secondRefundEntity);
         refundResponse = stripePaymentProvider.refund(refundRequest);
 
-        assertTrue(refundResponse.isFailed());
-        assertTrue(refundResponse.getGatewayError().isPresent());
+        assertTrue(refundResponse.getError().isPresent());
         // full message looks like "The transfer tr_blah_blah_blah is already fully reversed."
-        assertThat(refundResponse.getGatewayError().get().getMessage(), containsString("is already fully reversed"));
-        assertThat(refundResponse.getGatewayError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
+        assertThat(refundResponse.getError().get().getMessage(), containsString("is already fully reversed"));
+        assertThat(refundResponse.getError().get().getErrorType(), is(GENERIC_GATEWAY_ERROR));
     }
 
     private GatewayResponse<BaseAuthoriseResponse> authorise() {

@@ -10,9 +10,8 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 
 import java.util.Optional;
@@ -31,7 +30,7 @@ public interface PaymentProvider {
 
     CaptureResponse capture(CaptureGatewayRequest request);
 
-    GatewayResponse<BaseRefundResponse> refund(RefundGatewayRequest request);
+    GatewayRefundResponse refund(RefundGatewayRequest request);
 
     GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request);
 

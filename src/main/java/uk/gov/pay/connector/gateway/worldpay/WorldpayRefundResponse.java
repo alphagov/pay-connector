@@ -16,7 +16,7 @@ public class WorldpayRefundResponse extends WorldpayBaseResponse implements Base
     }
 
     @Override
-    public String toString() {
+    public String stringify() {
         if (!StringUtils.isNotBlank(getErrorCode()) && !StringUtils.isNotBlank(getErrorMessage())) {
             return "Worldpay refund response";
         }
@@ -31,4 +31,8 @@ public class WorldpayRefundResponse extends WorldpayBaseResponse implements Base
         return joiner.toString();
     }
 
+    @Override
+    public String toString() {
+        return stringify();
+    }
 }

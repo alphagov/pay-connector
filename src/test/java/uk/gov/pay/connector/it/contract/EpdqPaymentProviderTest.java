@@ -31,8 +31,8 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -232,7 +232,7 @@ public class EpdqPaymentProviderTest {
         assertThat(captureResponse.isSuccessful(), is(true));
 
         RefundGatewayRequest refundGatewayRequest = buildRefundRequest(chargeEntity, (chargeEntity.getAmount() - 100));
-        GatewayResponse<BaseRefundResponse> refundResponse = paymentProvider.refund(refundGatewayRequest);
+        GatewayRefundResponse refundResponse = paymentProvider.refund(refundGatewayRequest);
         assertThat(refundResponse.isSuccessful(), is(true));
     }
 

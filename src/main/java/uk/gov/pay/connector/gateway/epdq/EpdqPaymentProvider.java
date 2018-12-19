@@ -17,7 +17,6 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
-import uk.gov.pay.connector.gateway.epdq.model.response.EpdqRefundResponse;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
@@ -27,8 +26,8 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
@@ -50,7 +49,6 @@ import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdq3D
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqQueryOrderRequestBuilder;
-import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
@@ -83,6 +81,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
     private final EpdqCaptureHandler epdqCaptureHandler;
+    private final EpdqRefundHandler epdqRefundHandler;
 
     @Inject
     public EpdqPaymentProvider(ConnectorConfiguration configuration,
@@ -97,6 +96,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
         this.externalRefundAvailabilityCalculator = new EpdqExternalRefundAvailabilityCalculator();
 
         epdqCaptureHandler = new EpdqCaptureHandler(captureClient);
+        epdqRefundHandler = new EpdqRefundHandler(refundClient);
     }
 
     @Override
@@ -116,9 +116,8 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseRefundResponse> refund(RefundGatewayRequest request) {
-        Either<GatewayError, GatewayClient.Response> response = refundClient.postRequestFor(ROUTE_FOR_MAINTENANCE_ORDER, request.getGatewayAccount(), buildRefundOrder(request));
-        return GatewayResponseGenerator.getEpdqGatewayResponse(refundClient, response, EpdqRefundResponse.class);
+    public GatewayRefundResponse refund(RefundGatewayRequest request) {
+        return epdqRefundHandler.refund(request);
     }
 
     @Override
@@ -234,18 +233,6 @@ public class EpdqPaymentProvider implements PaymentProvider {
                         CREDENTIALS_SHA_IN_PASSPHRASE))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
-                .build();
-    }
-
-    private GatewayOrder buildRefundOrder(RefundGatewayRequest request) {
-        return anEpdqRefundOrderRequestBuilder()
-                .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
-                .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
-                .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
-                        CREDENTIALS_SHA_IN_PASSPHRASE))
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .withTransactionId(request.getTransactionId())
-                .withAmount(request.getAmount())
                 .build();
     }
 

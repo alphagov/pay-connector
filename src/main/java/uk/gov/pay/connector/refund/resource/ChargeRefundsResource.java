@@ -3,8 +3,7 @@ package uk.gov.pay.connector.refund.resource;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.refund.exception.RefundException;
 import uk.gov.pay.connector.refund.model.RefundRequest;
 import uk.gov.pay.connector.refund.model.RefundResponse;
@@ -49,12 +48,12 @@ public class ChargeRefundsResource {
     public Response submitRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, RefundRequest refundRequest, @Context UriInfo uriInfo) {
         validateRefundRequest(refundRequest.getAmount());
         final ChargeRefundService.Response refundServiceResponse = refundService.doRefund(accountId, chargeId, refundRequest);
-        GatewayResponse<BaseRefundResponse> response = refundServiceResponse.getRefundGatewayResponse();
-        if (response.isSuccessful()) {
+        GatewayRefundResponse refundResponse = refundServiceResponse.getGatewayRefundResponse();
+        if (refundResponse.isSuccessful()) {
             return Response.accepted(RefundResponse.valueOf(refundServiceResponse.getRefundEntity(), uriInfo).serialize()).build();
         }
 
-        return serviceErrorResponse(response.getGatewayError().map(GatewayError::getMessage).orElse("unknown error"));
+        return serviceErrorResponse(refundResponse.getError().map(GatewayError::getMessage).orElse("unknown error"));
     }
 
     private void validateRefundRequest(long amount) {

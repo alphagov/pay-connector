@@ -20,8 +20,8 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
@@ -42,7 +42,6 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
-import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
 public class WorldpayPaymentProvider implements PaymentProvider {
@@ -56,6 +55,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
     private final WorldpayCaptureHandler worldpayCaptureHandler;
+    private final WorldpayRefundHandler worldpayRefundHandler;
     private final WorldpayApplePayAuthorisationHandler worldpayApplePayAuthorisationHandler;
 
     @Inject
@@ -68,6 +68,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         refundClient = gatewayClientFactory.createGatewayClient(WORLDPAY, REFUND, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         worldpayCaptureHandler = new WorldpayCaptureHandler(captureClient);
+        worldpayRefundHandler = new WorldpayRefundHandler(captureClient);
         worldpayApplePayAuthorisationHandler = new WorldpayApplePayAuthorisationHandler(authoriseClient);
     }
 
@@ -108,9 +109,8 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseRefundResponse> refund(RefundGatewayRequest request) {
-        Either<GatewayError, GatewayClient.Response> response = refundClient.postRequestFor(null, request.getGatewayAccount(), buildRefundOrder(request));
-        return GatewayResponseGenerator.getWorldpayGatewayResponse(refundClient, response, WorldpayRefundResponse.class);
+    public GatewayRefundResponse refund(RefundGatewayRequest request) {
+        return worldpayRefundHandler.refund(request);
     }
 
     @Override
@@ -150,15 +150,6 @@ public class WorldpayPaymentProvider implements PaymentProvider {
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withProviderSessionId(request.getProviderSessionId().orElse(""))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .build();
-    }
-
-    private GatewayOrder buildRefundOrder(RefundGatewayRequest request) {
-        return aWorldpayRefundOrderRequestBuilder()
-                .withReference(request.getReference())
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .withAmount(request.getAmount())
-                .withTransactionId(request.getTransactionId())
                 .build();
     }
 

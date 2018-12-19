@@ -6,6 +6,11 @@ import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 
+/**
+ * Entity which represents Refunds history (a record for each event for a particular refund)
+ * Each time a new status is set for RefundEntity a new record is created in RefundsHistory (Refunds_History table in database)
+ * which happens magically by @Customizer(HistoryCustomizer.class) annotation on RefundEntity
+ */
 public class RefundHistory extends RefundEntity {
 
     private ZonedDateTime historyStartDate;

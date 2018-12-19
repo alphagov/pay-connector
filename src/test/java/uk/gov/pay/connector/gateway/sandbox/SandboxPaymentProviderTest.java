@@ -15,7 +15,7 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
@@ -131,17 +131,13 @@ public class SandboxPaymentProviderTest {
     @Test
     public void refund_shouldSucceedWhenRefundingAnyCharge() {
 
-        GatewayResponse<BaseRefundResponse> gatewayResponse = provider.refund(RefundGatewayRequest.valueOf(RefundEntityFixture.aValidRefundEntity().build()));
+        GatewayRefundResponse refundResponse = provider.refund(RefundGatewayRequest.valueOf(RefundEntityFixture.aValidRefundEntity().build()));
 
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
-        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
-        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
-
-        BaseRefundResponse refundResponse = gatewayResponse.getBaseResponse().get();
+        assertThat(refundResponse.isSuccessful(), is(true));
+        assertThat(refundResponse.getReference().isPresent(), is(true));
         assertThat(refundResponse.getReference(), is(notNullValue()));
-        assertThat(refundResponse.getErrorCode(), is(nullValue()));
-        assertThat(refundResponse.getErrorMessage(), is(nullValue()));
+
+        assertThat(refundResponse.getError().isPresent(), is(false));
     }
 
     @Test

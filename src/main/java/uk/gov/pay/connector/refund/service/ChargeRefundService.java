@@ -8,11 +8,9 @@ import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
@@ -28,21 +26,23 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.refund.exception.RefundException.ErrorCode.NOT_SUFFICIENT_AMOUNT_AVAILABLE;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
 public class ChargeRefundService {
 
     public class Response {
 
-        private GatewayResponse<BaseRefundResponse> refundGatewayResponse;
+        private GatewayRefundResponse gatewayRefundResponse;
         private RefundEntity refundEntity;
 
-        public Response(GatewayResponse<BaseRefundResponse> refundGatewayResponse, RefundEntity refundEntity) {
-            this.refundGatewayResponse = refundGatewayResponse;
+        public Response(GatewayRefundResponse gatewayRefundResponse, RefundEntity refundEntity) {
+            this.gatewayRefundResponse = gatewayRefundResponse;
             this.refundEntity = refundEntity;
         }
 
-        public GatewayResponse<BaseRefundResponse> getRefundGatewayResponse() {
-            return refundGatewayResponse;
+        public GatewayRefundResponse getGatewayRefundResponse() {
+            return gatewayRefundResponse;
         }
 
         public RefundEntity getRefundEntity() {
@@ -70,13 +70,12 @@ public class ChargeRefundService {
     public Response doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
         RefundEntity refundEntity = createRefund(accountId, chargeId, refundRequest);
 
-        GatewayResponse<BaseRefundResponse> gatewayResponse =
+        GatewayRefundResponse gatewayRefundResponse =
                 providers.byName(refundEntity.getChargeEntity().getPaymentGatewayName()).refund(RefundGatewayRequest.valueOf(refundEntity));
 
-        updateRefundStatus(gatewayResponse, refundEntity.getId());
-        RefundEntity refund = updateSandboxStatus(refundEntity);
+        RefundEntity refund = processRefund(gatewayRefundResponse, refundEntity.getId());
 
-        return new Response(gatewayResponse, refund);
+        return new Response(gatewayRefundResponse, refund);
     }
 
     @Transactional
@@ -102,36 +101,66 @@ public class ChargeRefundService {
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
+    private RefundEntity processRefund(GatewayRefundResponse gatewayRefundResponse, Long refundEntityId) {
+        RefundStatus refundStatus = determineRefundStatus(gatewayRefundResponse);
+
+        if (refundStatus == REFUNDED) {
+            // If the gateway confirms refunds immediately, the refund status needs 
+            // to be set to REFUND_SUBMITTED and then REFUNDED. This will  help 
+            // services to view refund history in detail in self service.
+            // see Javadoc (RefundHistory) for details on how history is handled
+            setRefundStatus(refundEntityId, REFUND_SUBMITTED);
+        }
+
+        return updateRefund(gatewayRefundResponse, refundEntityId, refundStatus);
+    }
+
     @Transactional
     @SuppressWarnings("WeakerAccess")
-    public void updateRefundStatus(GatewayResponse<BaseRefundResponse> gatewayResponse, Long refundEntityId) {
-        RefundStatus status = gatewayResponse.isSuccessful() ? RefundStatus.REFUND_SUBMITTED : RefundStatus.REFUND_ERROR;
-        refundDao.findById(refundEntityId).ifPresent(refundEntity -> {
+    public RefundEntity updateRefund(GatewayRefundResponse gatewayRefundResponse, Long refundEntityId,
+                                           RefundStatus refundStatus) {
+        Optional<RefundEntity> refund = refundDao.findById(refundEntityId);
+
+        refund.ifPresent(refundEntity -> {
             ChargeEntity chargeEntity = refundEntity.getChargeEntity();
 
             logger.info("Refund {} ({} {}) for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                     refundEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), refundEntity.getReference(),
                     chargeEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), chargeEntity.getGatewayTransactionId(),
                     chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
-                    gatewayResponse, refundEntity.getStatus(), status);
+                    gatewayRefundResponse, refundEntity.getStatus(), refundStatus);
 
-            refundEntity.setStatus(status);
-            getRefundReference(refundEntity, gatewayResponse).ifPresent(refundEntity::setReference);
+            if (refundStatus == REFUNDED) {
+                userNotificationService.sendRefundIssuedEmail(refundEntity);
+            }
+
+            refundEntity.setStatus(refundStatus);
+            getRefundReference(refundEntity, gatewayRefundResponse).ifPresent(refundEntity::setReference);
         });
+
+        return refund.get();
     }
 
     @Transactional
     @SuppressWarnings("WeakerAccess")
-    public RefundEntity updateSandboxStatus(RefundEntity refundEntity) {
-        return refundDao.findById(refundEntity.getId()).map(refund -> {
-            ChargeEntity chargeEntity = refund.getChargeEntity();
-            if (chargeEntity.getPaymentGatewayName() == PaymentGatewayName.SANDBOX
-                    && refund.hasStatus(RefundStatus.REFUND_SUBMITTED)) {
-                refund.setStatus(REFUNDED);
-                userNotificationService.sendRefundIssuedEmail(refund);
+    public void setRefundStatus(Long refundEntityId, RefundStatus refundStatus) {
+        refundDao.findById(refundEntityId).ifPresent(refundEntity -> {
+            refundEntity.setStatus(refundStatus);
+        });
+    }
+
+    private RefundStatus determineRefundStatus(GatewayRefundResponse gatewayRefundResponse) {
+        if (gatewayRefundResponse.isSuccessful()) {
+            switch (gatewayRefundResponse.state()) {
+                case PENDING:
+                    return REFUND_SUBMITTED;
+                case COMPLETE:
+                    return REFUNDED;
+                default:
+                    return REFUND_ERROR;
             }
-            return refund;
-        }).orElse(refundEntity);
+        } else
+            return RefundStatus.REFUND_ERROR;
     }
 
     @Transactional
@@ -195,10 +224,10 @@ public class ChargeRefundService {
      *
      * @see RefundGatewayRequest valueOf()
      */
-    private Optional<String> getRefundReference(RefundEntity refundEntity, GatewayResponse<BaseRefundResponse> gatewayResponse) {
+    private Optional<String> getRefundReference(RefundEntity refundEntity, GatewayRefundResponse gatewayRefundResponse) {
 
-        if (gatewayResponse.isSuccessful()) {
-            return Optional.ofNullable(gatewayResponse.getBaseResponse().get().getReference().orElse(refundEntity.getExternalId()));
+        if (gatewayRefundResponse.isSuccessful()) {
+            return Optional.ofNullable(gatewayRefundResponse.getReference().orElse(refundEntity.getExternalId()));
         } else return Optional.empty();
     }
 
