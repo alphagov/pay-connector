@@ -247,7 +247,7 @@ public class StripePaymentProvider implements PaymentProvider {
         );
     }
 
-    private Response createToken(CardAuthorisationGatewayRequest request) throws GatewayClientException, GatewayException, DownstreamException {
+    public Response createToken(CardAuthorisationGatewayRequest request) throws GatewayClientException, GatewayException, DownstreamException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/tokens",
