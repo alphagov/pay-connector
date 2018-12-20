@@ -105,7 +105,7 @@ public class StripeCaptureHandlerTest {
         assertThat(response.isSuccessful(), is(false));
         assertThat(response.getError().isPresent(), is(true));
         assertThat(response.state(), is(nullValue()));
-        assertThat(response.getError().get().getMessage(), containsString("An internal server error occurred. ErrorId:"));
+        assertThat(response.getError().get().getMessage(), containsString("An internal server error occurred when capturing charge_external_id: " + captureGatewayRequest.getExternalId()));
         assertThat(response.getError().get().getErrorType(), is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
 

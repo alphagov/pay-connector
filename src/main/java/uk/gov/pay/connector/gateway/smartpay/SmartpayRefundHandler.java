@@ -33,7 +33,7 @@ public class SmartpayRefundHandler implements RefundHandler {
 
     private GatewayOrder buildRefundOrderFor(RefundGatewayRequest request) {
         return SmartpayOrderRequestBuilder.aSmartpayRefundOrderRequestBuilder()
-                .withReference(request.getReference())
+                .withReference(request.getRefundExternalId())
                 .withTransactionId(request.getTransactionId())
                 .withMerchantCode(getMerchantCode(request))
                 .withAmount(request.getAmount())

@@ -61,21 +61,19 @@ public class StripeRefundHandler {
         } catch (GatewayClientException e) {
 
             Response response = e.getResponse();
-            StripeErrorResponse stripeErrorResponse = response.readEntity(StripeErrorResponse.class);
-            StripeErrorResponse.Error error = stripeErrorResponse.getError();
-            logger.error("Refund failed for transaction id {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
-                    request.getTransactionId(), error.getCode(), error.getMessage(), response.getStatus());
+            StripeErrorResponse.Error error = response.readEntity(StripeErrorResponse.class).getError();
+            logger.error("Refund failed for refund gateway request {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
+                    request, error.getCode(), error.getMessage(), response.getStatus());
 
             return fromBaseRefundResponse(
                     StripeRefundResponse.of(error.getCode(), error.getMessage()),
                     GatewayRefundResponse.RefundState.ERROR);
         } catch (GatewayException e) {
+            logger.error("Refund failed for refund gateway request {}. GatewayException: {}.", request, e);    
             return GatewayRefundResponse.fromGatewayError(GatewayError.of(e));
         } catch (DownstreamException e) {
-            String errorId = UUID.randomUUID().toString();
-            logger.error("Refund failed for transaction id {}. Reason: {}. Status code from Stripe: {}. ErrorId: {}",
-                    request.getTransactionId(), e.getMessage(), e.getStatusCode(), errorId);
-            GatewayError gatewayError = unexpectedStatusCodeFromGateway("An internal server error occurred. ErrorId: " + errorId);
+            logger.error("Refund failed for refund gateway request {}. Reason: {}. Status code from Stripe: {}.", request, e.getMessage(), e.getStatusCode());
+            GatewayError gatewayError = unexpectedStatusCodeFromGateway("An internal server error occurred while refunding Transaction id: " + request.getTransactionId());
             return GatewayRefundResponse.fromGatewayError(gatewayError);
         }
     }

@@ -47,7 +47,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -195,10 +194,9 @@ public class StripePaymentProvider implements PaymentProvider {
                                                       GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder,
                                                       String errorMessage,
                                                       int statusCode) {
-        String errorId = UUID.randomUUID().toString();
-        logger.error("Authorisation failed for charge {}. Reason: {}. Status code from Stripe: {}. ErrorId: {}",
-                chargeExternalId, errorMessage, statusCode, errorId);
-        GatewayError gatewayError = unexpectedStatusCodeFromGateway("There was an internal server error. ErrorId: " + errorId);
+        logger.error("Authorisation failed for charge {}. Reason: {}. Status code from Stripe: {}.",
+                chargeExternalId, errorMessage, statusCode);
+        GatewayError gatewayError = unexpectedStatusCodeFromGateway("There was an internal server error authorising charge_external_id: " + chargeExternalId);
         return responseBuilder.withGatewayError(gatewayError).build();
     }
 

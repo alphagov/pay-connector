@@ -9,13 +9,13 @@ public class RefundGatewayRequest implements GatewayRequest {
     private final GatewayAccountEntity gatewayAccountEntity;
     private final String amount;
     private final String transactionId;
-    private final String reference;
+    private final String refundExternalId;
 
-    private RefundGatewayRequest(String transactionId, GatewayAccountEntity gatewayAccount, String amount, String reference) {
+    private RefundGatewayRequest(String transactionId, GatewayAccountEntity gatewayAccount, String amount, String refundExternalId) {
         this.transactionId = transactionId;
         this.gatewayAccountEntity = gatewayAccount;
         this.amount = amount;
-        this.reference = reference;
+        this.refundExternalId = refundExternalId;
     }
 
     public String getAmount() {
@@ -36,6 +36,10 @@ public class RefundGatewayRequest implements GatewayRequest {
         return GatewayOperation.REFUND;
     }
 
+    public String getRefundExternalId() {
+        return refundExternalId;
+    }
+    
     /**
      * <p>
      * For Worldpay ->
@@ -61,8 +65,16 @@ public class RefundGatewayRequest implements GatewayRequest {
                 String.valueOf(refundEntity.getAmount()),
                 refundEntity.getExternalId());
     }
-
-    public String getReference() {
-        return reference;
+    
+    @Override
+    public String toString() {
+        return new StringBuilder()
+                .append("RefundGatewayRequest[\n")
+                .append("transactionId: ")
+                .append(transactionId)
+                .append("\nrefundExternalId: ")
+                .append(refundExternalId)
+                .append("]")
+                .toString();
     }
 }

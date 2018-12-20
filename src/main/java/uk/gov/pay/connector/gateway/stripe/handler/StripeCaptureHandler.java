@@ -80,10 +80,9 @@ public class StripeCaptureHandler implements CaptureHandler {
             return CaptureResponse.fromGatewayError(GatewayError.of(e));
         
         } catch (DownstreamException e) {
-            String errorId = UUID.randomUUID().toString();
-            logger.error("Capture failed for transaction id {}. Reason: {}. Status code from Stripe: {}. ErrorId: {}",
-                    transactionId, e.getMessage(), e.getStatusCode(), errorId);
-            GatewayError gatewayError = unexpectedStatusCodeFromGateway("An internal server error occurred. ErrorId: " + errorId);
+            logger.error("Capture failed for transaction id {}. Reason: {}. Status code from Stripe: {}. Charge External Id: {}",
+                    transactionId, e.getMessage(), e.getStatusCode(), request.getExternalId());
+            GatewayError gatewayError = unexpectedStatusCodeFromGateway("An internal server error occurred when capturing charge_external_id: " + request.getExternalId());
             return CaptureResponse.fromGatewayError(gatewayError);
         }
 
