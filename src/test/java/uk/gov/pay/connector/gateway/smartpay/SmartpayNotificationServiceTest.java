@@ -11,7 +11,11 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.refund.dao.RefundDao;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.time.ZonedDateTime;
@@ -19,6 +23,7 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,13 +42,21 @@ public class SmartpayNotificationServiceTest {
     private SmartpayNotificationService notificationService;
 
     @Mock
-    private ChargeDao mockChargeDao;
+    protected ChargeDao mockChargeDao;
     @Mock
-    private ChargeNotificationProcessor mockChargeNotificationProcessor;
+    private RefundDao mockRefundDao;
     @Mock
-    private RefundNotificationProcessor mockRefundNotificationProcessor;
+    protected UserNotificationService mockUserNotificationService;
     @Mock
-    private ChargeEntity mockCharge;
+    protected ChargeNotificationProcessor mockChargeNotificationProcessor;
+
+    RefundNotificationProcessor mockRefundNotificationProcessor;
+    @Mock
+    protected ChargeEntity mockCharge;
+    @Mock
+    private RefundEntity mockRefund;
+    @Mock
+    protected GatewayAccountEntity mockGatewayAccountEntity;
 
     private final String originalReference = "original-reference";
     private final String pspReference = "psp-reference";
@@ -51,6 +64,7 @@ public class SmartpayNotificationServiceTest {
     @Before
     public void setup() {
         ObjectMapper objectMapper = new ObjectMapper();
+        mockRefundNotificationProcessor = spy(new RefundNotificationProcessor(mockRefundDao, mockUserNotificationService));
 
         notificationService = new SmartpayNotificationService(
                 mockChargeDao,
@@ -60,6 +74,9 @@ public class SmartpayNotificationServiceTest {
         when(mockCharge.getStatus()).thenReturn(AUTHORISATION_SUCCESS.getValue());
 
         when(mockChargeDao.findByProviderAndTransactionId(SMARTPAY.getName(), originalReference)).thenReturn(Optional.of(mockCharge));
+        when(mockRefundDao.findByProviderAndReference(SMARTPAY.getName(), pspReference)).thenReturn(Optional.of(mockRefund));
+        when(mockRefund.getChargeEntity()).thenReturn(mockCharge);
+        when(mockCharge.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
     }
 
     @Test
@@ -84,6 +101,7 @@ public class SmartpayNotificationServiceTest {
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
         verify(mockRefundNotificationProcessor).invoke(SMARTPAY,
                 RefundStatus.REFUNDED, pspReference, originalReference);
+        verify(mockUserNotificationService).sendRefundIssuedEmail(any());
     }
 
     @Test

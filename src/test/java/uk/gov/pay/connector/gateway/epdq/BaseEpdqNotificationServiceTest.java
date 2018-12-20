@@ -12,11 +12,15 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.refund.dao.RefundDao;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
@@ -28,11 +32,17 @@ public abstract class BaseEpdqNotificationServiceTest {
     @Mock
     protected ChargeDao mockChargeDao;
     @Mock
-    protected ChargeNotificationProcessor mockChargeNotificationProcessor;
+    private RefundDao mockRefundDao;
     @Mock
-    protected RefundNotificationProcessor mockRefundNotificationProcessor;
+    protected UserNotificationService mockUserNotificationService;
+    @Mock
+    protected ChargeNotificationProcessor mockChargeNotificationProcessor;
+
+    RefundNotificationProcessor mockRefundNotificationProcessor;
     @Mock
     protected ChargeEntity mockCharge;
+    @Mock
+    private RefundEntity mockRefund;
     @Mock
     protected GatewayAccountEntity mockGatewayAccountEntity;
 
@@ -42,6 +52,7 @@ public abstract class BaseEpdqNotificationServiceTest {
 
     @Before
     public void setup() {
+        mockRefundNotificationProcessor = spy(new RefundNotificationProcessor(mockRefundDao, mockUserNotificationService));
         notificationService = new EpdqNotificationService(
                 mockChargeDao,
                 new EpdqSha512SignatureGenerator(),
@@ -53,6 +64,9 @@ public abstract class BaseEpdqNotificationServiceTest {
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(ImmutableMap.of(CREDENTIALS_SHA_OUT_PASSPHRASE, shaPhraseOut));
 
         when(mockChargeDao.findByProviderAndTransactionId(EPDQ.getName(), payId)).thenReturn(Optional.of(mockCharge));
+        when(mockRefundDao.findByProviderAndReference(EPDQ.getName(), payId + "/" + payIdSub)).thenReturn(Optional.of(mockRefund));
+        when(mockRefund.getChargeEntity()).thenReturn(mockCharge);
+        when(mockCharge.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
     }
 
     protected String notificationPayloadForTransaction(String payId, EpdqNotification.StatusCode statusCode) {

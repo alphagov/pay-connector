@@ -21,7 +21,7 @@ public class RefundNotificationProcessor {
     private UserNotificationService userNotificationService;
 
     @Inject
-    RefundNotificationProcessor(RefundDao refundDao,
+    public RefundNotificationProcessor(RefundDao refundDao,
                                 UserNotificationService userNotificationService) {
         this.refundDao = refundDao;
         this.userNotificationService = userNotificationService;

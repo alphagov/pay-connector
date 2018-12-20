@@ -52,6 +52,7 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
         verify(mockRefundNotificationProcessor).invoke(EPDQ, RefundStatus.REFUNDED, payId + "/" + payIdSub, payId);
+        verify(mockUserNotificationService).sendRefundIssuedEmail(any());
     }
 
     @Test
