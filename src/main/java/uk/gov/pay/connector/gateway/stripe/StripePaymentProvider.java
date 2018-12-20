@@ -199,8 +199,8 @@ public class StripePaymentProvider implements PaymentProvider {
                 threeDSecurePayload(request, sourceId),
                 format("gateway-operations.%s.%s.authorise.create_3ds_source",
                         gatewayAccount.getGatewayName(),
-                        gatewayAccount.getType())
-        );
+                        gatewayAccount.getType()),
+                gatewayAccount.isLive());
     }
 
     private StripeAuthorisationResponse createChargeFor3DSSource(Auth3dsResponseGatewayRequest request, String sourceId)
@@ -211,7 +211,8 @@ public class StripePaymentProvider implements PaymentProvider {
                 authorise3DSChargePayload(request, sourceId),
                 format("gateway-operations.%s.%s.authorise.create_charge",
                         gatewayAccount.getGatewayName(),
-                        gatewayAccount.getType()));
+                        gatewayAccount.getType()),
+                gatewayAccount.isLive());
         final StripeCreateChargeResponse createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCreateChargeResponse.class);
         return new StripeAuthorisationResponse(createChargeResponse);
     }
@@ -223,7 +224,8 @@ public class StripePaymentProvider implements PaymentProvider {
                 authorisePayload(request, sourceId),
                 format("gateway-operations.%s.%s.authorise.create_charge",
                         gatewayAccount.getGatewayName(),
-                        gatewayAccount.getType()));
+                        gatewayAccount.getType()),
+                gatewayAccount.isLive());
         final StripeCreateChargeResponse createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCreateChargeResponse.class);
         return new StripeAuthorisationResponse(createChargeResponse);
     }
@@ -235,7 +237,8 @@ public class StripePaymentProvider implements PaymentProvider {
                 sourcesPayload(tokenId),
                 format("gateway-operations.%s.%s.authorise.create_source",
                         gatewayAccount.getGatewayName(),
-                        gatewayAccount.getType()));
+                        gatewayAccount.getType()),
+                gatewayAccount.isLive());
         return jsonObjectMapper.getObject(jsonResponse, StripeSourcesResponse.class);
     }
 
@@ -246,15 +249,16 @@ public class StripePaymentProvider implements PaymentProvider {
                 tokenPayload(request),
                 format("gateway-operations.%s.%s.authorise.create_token",
                         gatewayAccount.getGatewayName(),
-                        gatewayAccount.getType()));
+                        gatewayAccount.getType()),
+                gatewayAccount.isLive());
         return jsonObjectMapper.getObject(jsonResponse, StripeTokenResponse.class);
     }
 
-    private String postToStripe(String path, String payload, String metricsPrefix) throws GatewayClientException, GatewayException, DownstreamException {
+    private String postToStripe(String path, String payload, String metricsPrefix, boolean isLiveAccount) throws GatewayClientException, GatewayException, DownstreamException {
         return client.postRequest(
                 URI.create(stripeGatewayConfig.getUrl() + path),
                 payload,
-                ImmutableMap.of(AUTHORIZATION, StripeAuthUtil.getAuthHeaderValue(stripeGatewayConfig)),
+                ImmutableMap.of(AUTHORIZATION, StripeAuthUtil.getAuthHeaderValue(stripeGatewayConfig, isLiveAccount)),
                 APPLICATION_FORM_URLENCODED_TYPE,
                 metricsPrefix
         );

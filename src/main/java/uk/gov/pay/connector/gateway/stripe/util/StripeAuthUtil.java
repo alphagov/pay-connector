@@ -7,8 +7,9 @@ public class StripeAuthUtil {
     private StripeAuthUtil() {
     }
 
-    public static String getAuthHeaderValue(StripeGatewayConfig stripeGatewayConfig) {
-        return "Bearer " + stripeGatewayConfig.getAuthTokens().getTest();
+    public static String getAuthHeaderValue(StripeGatewayConfig stripeGatewayConfig, boolean isLiveAccount) {
+        String token = isLiveAccount ? stripeGatewayConfig.getAuthTokens().getLive() : stripeGatewayConfig.getAuthTokens().getTest();
+        return "Bearer " + token;
     }
 
 }

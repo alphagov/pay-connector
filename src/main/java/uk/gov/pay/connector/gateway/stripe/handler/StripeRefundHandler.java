@@ -53,7 +53,7 @@ public class StripeRefundHandler {
             final String response = client.postRequest(
                     URI.create(url),
                     payload,
-                    ImmutableMap.of(AUTHORIZATION, getAuthHeaderValue(stripeGatewayConfig)),
+                    ImmutableMap.of(AUTHORIZATION, getAuthHeaderValue(stripeGatewayConfig, gatewayAccount.isLive())),
                     APPLICATION_FORM_URLENCODED_TYPE,
                     format("gateway-operations.%s.%s.refund", gatewayAccount.getGatewayName(), gatewayAccount.getType()));
             String reference = jsonObjectMapper.getObject(response, Map.class).get("id").toString();

@@ -90,6 +90,10 @@ public class DatabaseTestHelper {
         addGatewayAccount(accountId, paymentProvider, credentials, null, TEST, null, null, EmailCollectionMode.MANDATORY, 0, 0, 0, 0);
     }
 
+    public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials, GatewayAccountEntity.Type gatewayAccountType) {
+        addGatewayAccount(accountId, paymentProvider, credentials, null, gatewayAccountType, null, null, EmailCollectionMode.MANDATORY, 0, 0, 0, 0);
+    }
+
     public void addGatewayAccount(long accountId, String paymentProvider) {
         addGatewayAccount(String.valueOf(accountId), paymentProvider);
     }

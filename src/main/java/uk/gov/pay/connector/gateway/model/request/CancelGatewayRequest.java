@@ -33,4 +33,8 @@ public class CancelGatewayRequest implements GatewayRequest {
     public String getExternalChargeId() {
         return charge.getExternalId();
     }
+
+    public boolean isLiveAccount() {
+        return charge.getGatewayAccount().isLive();
+    }
 }

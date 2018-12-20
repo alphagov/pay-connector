@@ -57,7 +57,7 @@ public class StripeCancelHandler {
             client.postRequest(
                     URI.create(url),
                     payload,
-                    ImmutableMap.of(AUTHORIZATION, getAuthHeaderValue(stripeGatewayConfig)),
+                    ImmutableMap.of(AUTHORIZATION, getAuthHeaderValue(stripeGatewayConfig, gatewayAccount.isLive())),
                     APPLICATION_FORM_URLENCODED_TYPE,
                     format("gateway-operations.%s.%s.cancel", gatewayAccount.getGatewayName(), gatewayAccount.getType()));
 
