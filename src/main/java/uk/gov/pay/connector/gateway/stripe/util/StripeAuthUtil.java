@@ -8,7 +8,7 @@ public class StripeAuthUtil {
     }
 
     public static String getAuthHeaderValue(StripeGatewayConfig stripeGatewayConfig) {
-        return "Bearer " + stripeGatewayConfig.getAuthToken();
+        return "Bearer " + stripeGatewayConfig.getAuthTokens().getTest();
     }
 
 }

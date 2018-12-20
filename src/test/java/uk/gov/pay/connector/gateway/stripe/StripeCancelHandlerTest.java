@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -47,6 +48,7 @@ public class StripeCancelHandlerTest {
     @Before
     public void setup() {
         stripeCancelHandler = new StripeCancelHandler(client, stripeGatewayConfig);
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(mock(StripeAuthTokens.class));
     }
     
     @Test
