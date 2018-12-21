@@ -34,6 +34,7 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeCreateChargeResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTokenResponse;
+import uk.gov.pay.connector.gateway.stripe.util.NoLiveTokenConfiguredException;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsSourceResponse;
 import uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
@@ -134,6 +135,10 @@ public class StripePaymentProvider implements PaymentProvider {
         } catch (GatewayException e) {
             logger.error("GatewayException occurred for charge external id {}, error:\n {}", request.getChargeExternalId(), e);
             return responseBuilder.withGatewayError(GatewayError.of(e)).build();
+        } catch (NoLiveTokenConfiguredException e) {
+            logger.error("Could not authorise charge external id {}. Reason: No live token configured for gateway account {}.", 
+                    request.getChargeExternalId(), request.getGatewayAccount().getId());
+            throw new WebApplicationException("There was an internal server error authorising charge external id: " + request.getChargeExternalId());
         }
     }
 
@@ -179,6 +184,10 @@ public class StripePaymentProvider implements PaymentProvider {
 
         } catch (DownstreamException | GatewayException e) {
             return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION);
+        } catch (NoLiveTokenConfiguredException e) {
+            logger.error("Could not authorise charge external id {}. Reason: No live token configured for gateway account {}.",
+                    request.getChargeExternalId(), request.getGatewayAccount().getId());
+            throw new WebApplicationException("There was an internal server error authorising charge external id: " + request.getChargeExternalId());
         }
     }
 
@@ -192,7 +201,8 @@ public class StripePaymentProvider implements PaymentProvider {
         return responseBuilder.withGatewayError(gatewayError).build();
     }
 
-    private String create3dsSource(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException, GatewayException, DownstreamException {
+    private String create3dsSource(CardAuthorisationGatewayRequest request, String sourceId) 
+            throws GatewayClientException, GatewayException, DownstreamException, NoLiveTokenConfiguredException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/sources",
@@ -204,7 +214,7 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     private StripeAuthorisationResponse createChargeFor3DSSource(Auth3dsResponseGatewayRequest request, String sourceId)
-            throws GatewayClientException, GatewayException, DownstreamException {
+            throws GatewayClientException, GatewayException, DownstreamException, NoLiveTokenConfiguredException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         String jsonResponse = postToStripe(
                 "/v1/charges",
@@ -217,7 +227,8 @@ public class StripePaymentProvider implements PaymentProvider {
         return new StripeAuthorisationResponse(createChargeResponse);
     }
 
-    private StripeAuthorisationResponse createCharge(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException, GatewayException, DownstreamException {
+    private StripeAuthorisationResponse createCharge(CardAuthorisationGatewayRequest request, String sourceId) 
+            throws GatewayClientException, GatewayException, DownstreamException, NoLiveTokenConfiguredException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         String jsonResponse = postToStripe(
                 "/v1/charges",
@@ -230,7 +241,8 @@ public class StripePaymentProvider implements PaymentProvider {
         return new StripeAuthorisationResponse(createChargeResponse);
     }
 
-    private StripeSourcesResponse createSource(CardAuthorisationGatewayRequest request, String tokenId) throws GatewayClientException, GatewayException, DownstreamException {
+    private StripeSourcesResponse createSource(CardAuthorisationGatewayRequest request, String tokenId) 
+            throws GatewayClientException, GatewayException, DownstreamException, NoLiveTokenConfiguredException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         String jsonResponse = postToStripe(
                 "/v1/sources",
@@ -242,7 +254,8 @@ public class StripePaymentProvider implements PaymentProvider {
         return jsonObjectMapper.getObject(jsonResponse, StripeSourcesResponse.class);
     }
 
-    private StripeTokenResponse createToken(CardAuthorisationGatewayRequest request) throws GatewayClientException, GatewayException, DownstreamException {
+    private StripeTokenResponse createToken(CardAuthorisationGatewayRequest request) 
+            throws GatewayClientException, GatewayException, DownstreamException, NoLiveTokenConfiguredException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         String jsonResponse = postToStripe(
                 "/v1/tokens",
@@ -254,7 +267,8 @@ public class StripePaymentProvider implements PaymentProvider {
         return jsonObjectMapper.getObject(jsonResponse, StripeTokenResponse.class);
     }
 
-    private String postToStripe(String path, String payload, String metricsPrefix, boolean isLiveAccount) throws GatewayClientException, GatewayException, DownstreamException {
+    private String postToStripe(String path, String payload, String metricsPrefix, boolean isLiveAccount) 
+            throws GatewayClientException, GatewayException, DownstreamException, NoLiveTokenConfiguredException {
         return client.postRequest(
                 URI.create(stripeGatewayConfig.getUrl() + path),
                 payload,
