@@ -32,21 +32,22 @@ public class StripeGatewayClient {
         this.metricRegistry = metricRegistry;
     }
 
-    public Response postRequest(URI url,
-                                String payload,
-                                Map<String, String> headers,
-                                MediaType mediaType,
-                                String metricsPrefix) throws GatewayClientException, GatewayException, DownstreamException {
+    public String postRequest(URI url,
+                              String payload,
+                              Map<String, String> headers,
+                              MediaType mediaType,
+                              String metricsPrefix) throws GatewayClientException, GatewayException, DownstreamException {
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
 
-        Response response;
+        StripeGatewayClientResponse clientResponse;
+        Response httpResponse = null;
         try {
             logger.info("POSTing request for gateway url={}", url);
             Invocation.Builder clientBuilder = client.target(url.toString()).request();
             headers.keySet().forEach(headerKey -> clientBuilder.header(headerKey, headers.get(headerKey)));
 
-            response = clientBuilder.post(Entity.entity(payload, mediaType));
-
+            httpResponse = clientBuilder.post(Entity.entity(payload, mediaType));
+            clientResponse = new StripeGatewayClientResponse(httpResponse);
         } catch (Exception e) {
             metricRegistry.counter(metricsPrefix + ".failures").inc();
             logger.error(format("Exception for gateway url=%s", url.toString()), e);
@@ -54,31 +55,30 @@ public class StripeGatewayClient {
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram(metricsPrefix + ".response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
+            if (httpResponse != null) {
+                httpResponse.close();
+            }
         }
-
-        throwIfErrorResponse(response, metricsPrefix);
-        return response;
+        throwIfErrorResponse(clientResponse, metricsPrefix);
+        return clientResponse.getPayload();
     }
 
-    private void throwIfErrorResponse(Response response, String metricsPrefix) throws GatewayClientException, DownstreamException {
+    private void throwIfErrorResponse(StripeGatewayClientResponse response, String metricsPrefix) throws GatewayClientException, DownstreamException {
 
-        switch (response.getStatusInfo().getFamily()) {
+        switch (response.getFamily()) {
 
             case SUCCESSFUL:
                 break;
-
             case CLIENT_ERROR:
                 metricRegistry.counter(metricsPrefix + ".failures").inc();
                 throw new GatewayClientException("Unexpected HTTP status code " + response.getStatus() + " from gateway", response);
-
             case SERVER_ERROR:
                 metricRegistry.counter(metricsPrefix + ".failures").inc();
-                String responseMessage = response.readEntity(String.class);
-                logger.error("Unexpected HTTP status code {} from gateway, error=[{}]", response.getStatus(), responseMessage);
-                throw new DownstreamException(response.getStatus(), responseMessage);
-
-             default:
-                 logger.error("Other HTTP status from gateway=[stripe], response=[]", response);
+                logger.error("Unexpected HTTP status code {} from gateway, error=[{}]", response.getStatus(), response.getPayload());
+                throw new DownstreamException(response.getStatus(), response.getPayload());
+            default:
+                logger.error("Other HTTP status from gateway=[stripe], response=[{}]", response);
         }
     }
+
 }

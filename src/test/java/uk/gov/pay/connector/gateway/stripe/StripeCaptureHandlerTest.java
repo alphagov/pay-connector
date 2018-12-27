@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.Before;
@@ -14,13 +13,10 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
-import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -30,6 +26,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
@@ -43,16 +40,17 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 public class StripeCaptureHandlerTest {
 
     private StripeCaptureHandler stripeCaptureHandler;
+    private URI captureUri;
 
     @Mock
     private StripeGatewayConfig stripeGatewayConfig;
     @Mock
     private StripeGatewayClient stripeGatewayClient;
     @Mock
-    private Response response;
-    
+    private StripeGatewayClientResponse response;
+
     private CaptureGatewayRequest captureGatewayRequest;
-    
+
     @Before
     public void setup() {
         when(stripeGatewayConfig.getUrl()).thenReturn("http://stripe.url");
@@ -60,21 +58,20 @@ public class StripeCaptureHandlerTest {
         stripeCaptureHandler = new StripeCaptureHandler(stripeGatewayClient, stripeGatewayConfig);
 
         GatewayAccountEntity gatewayAccount = buildGatewayAccountEntity();
-        
+
+        final String transactionId = "ch_1231231123123";
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
-                .withTransactionId("ch_1231231123123")
+                .withTransactionId(transactionId)
                 .build();
-        
+
         captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
+        captureUri = URI.create(stripeGatewayConfig.getUrl() + "/v1/charges/" + transactionId + "/capture");
     }
 
     @Test
     public void shouldCapture() throws Exception {
-        Map<String, Object> responsePayloadMap = new ObjectMapper().readValue(load(STRIPE_CAPTURE_SUCCESS_RESPONSE), HashMap.class);
-        when(response.readEntity(Map.class)).thenReturn(responsePayloadMap);
-
-        when(stripeGatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(response);
+        when(stripeGatewayClient.postRequest(eq(captureUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));
 
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
         assertTrue(response.isSuccessful());
@@ -85,12 +82,11 @@ public class StripeCaptureHandlerTest {
 
     @Test
     public void shouldNotCaptureIfPaymentProviderReturns4xxHttpStatusCode() throws Exception {
-        StripeErrorResponse stripeErrorResponse = new ObjectMapper().readValue(load(STRIPE_ERROR_RESPONSE), StripeErrorResponse.class);
-        when(response.readEntity(StripeErrorResponse.class)).thenReturn(stripeErrorResponse);
+        when(response.getPayload()).thenReturn(load(STRIPE_ERROR_RESPONSE));
 
         GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", response);
-        when(stripeGatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
-        
+        when(stripeGatewayClient.postRequest(eq(captureUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
+
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
         assertThat(response.isSuccessful(), is(false));
         assertThat(response.getError().isPresent(), is(true));
@@ -102,7 +98,7 @@ public class StripeCaptureHandlerTest {
     @Test
     public void shouldNotCaptureIfPaymentProviderReturns5xxHttpStatusCode() throws Exception {
         DownstreamException downstreamException = new DownstreamException(HttpStatus.INTERNAL_SERVER_ERROR_500, "Problem with Stripe servers");
-        when(stripeGatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(downstreamException);
+        when(stripeGatewayClient.postRequest(eq(captureUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(downstreamException);
 
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
         assertThat(response.isSuccessful(), is(false));

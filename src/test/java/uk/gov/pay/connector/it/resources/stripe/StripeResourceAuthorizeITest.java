@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.StringUtils;
@@ -8,6 +8,7 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -89,8 +90,11 @@ public class StripeResourceAuthorizeITest {
     @DropwizardTestContext
     private TestContext testContext;
 
+    @ClassRule
+    public static WireMockClassRule wireMockClassRule = new WireMockClassRule(WIREMOCK_PORT);
+
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
+    public WireMockClassRule wireMockRule = wireMockClassRule;
 
     @Before
     public void setup() {

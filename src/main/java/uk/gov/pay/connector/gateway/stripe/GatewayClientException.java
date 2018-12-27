@@ -1,19 +1,17 @@
 package uk.gov.pay.connector.gateway.stripe;
 
-import javax.ws.rs.core.Response;
-
 /**
  * This class represents 4xx exceptions
  */
-public class GatewayClientException extends Exception{
-    private final transient Response response;
-    
-    public GatewayClientException(String message, Response response) {
+public class GatewayClientException extends Exception {
+    private final transient StripeGatewayClientResponse response;
+
+    public GatewayClientException(String message, StripeGatewayClientResponse response) {
         super(message);
         this.response = response;
     }
 
-    public Response getResponse() {
+    public StripeGatewayClientResponse getResponse() {
         return response;
     }
 }

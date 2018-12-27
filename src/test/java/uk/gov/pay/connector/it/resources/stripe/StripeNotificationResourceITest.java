@@ -10,7 +10,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationType;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationUtilTest;
 import uk.gov.pay.connector.junit.DropwizardConfig;
@@ -48,7 +47,6 @@ public class StripeNotificationResourceITest {
 
     private RestAssuredClient connectorRestApiClient;
 
-    private String paymentProvider = PaymentGatewayName.STRIPE.getName();
     private String accountId;
     private DatabaseTestHelper databaseTestHelper;
     @DropwizardTestContext
@@ -57,7 +55,7 @@ public class StripeNotificationResourceITest {
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
 
-    StripeMockClient stripeMockClient;
+    private StripeMockClient stripeMockClient;
 
     @Before
     public void setup() {

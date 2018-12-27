@@ -1,12 +1,21 @@
 package uk.gov.pay.connector.gateway.stripe.response;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 
+import javax.ws.rs.WebApplicationException;
+import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 
+import static java.lang.String.format;
+
 public class StripeRefundResponse implements BaseRefundResponse {
+    private static final Logger logger = LoggerFactory.getLogger(StripeRefundResponse.class);
     private String reference;
     private String errorCode;
     private String errorMessage;
@@ -27,6 +36,16 @@ public class StripeRefundResponse implements BaseRefundResponse {
 
     public static StripeRefundResponse of(String reference) {
         return new StripeRefundResponse(reference);
+    }
+
+    public static StripeRefundResponse fromJsonString(String jsonString) {
+        try {
+            String reference = new ObjectMapper().readValue(jsonString, Map.class).get("id").toString();
+            return of(reference);
+        } catch (IOException e) {
+            logger.error("There was an error parsing the payload [{}]", jsonString);
+            throw new WebApplicationException(format("Payload cannot be parsed [%s]", jsonString));
+        }
     }
 
     @Override

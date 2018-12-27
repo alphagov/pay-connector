@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.core.Is;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,11 +13,9 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCancelHandler;
-import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.Map;
@@ -40,9 +37,9 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 public class StripeCancelHandlerTest {
 
     private StripeCancelHandler stripeCancelHandler;
-    @Mock 
+    @Mock
     private StripeGatewayClient client;
-    @Mock 
+    @Mock
     private StripeGatewayConfig stripeGatewayConfig;
 
     @Before
@@ -50,7 +47,7 @@ public class StripeCancelHandlerTest {
         stripeCancelHandler = new StripeCancelHandler(client, stripeGatewayConfig);
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(mock(StripeAuthTokens.class));
     }
-    
+
     @Test
     public void shouldCancelPaymentSuccessfully() {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
@@ -58,15 +55,14 @@ public class StripeCancelHandlerTest {
         final GatewayResponse<BaseCancelResponse> response = stripeCancelHandler.cancel(request);
         assertThat(response.isSuccessful(), is(true));
     }
-    
+
     @Test
     public void shouldHandle4xxFromStripeGateway() throws Exception {
-        Response mockedResponse = mock(Response.class);
-        StripeErrorResponse stripeErrorResponse = new ObjectMapper().readValue(load(STRIPE_ERROR_RESPONSE), StripeErrorResponse.class);
+        StripeGatewayClientResponse mockedResponse = mock(StripeGatewayClientResponse.class);
         GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", mockedResponse);
-        when(mockedResponse.readEntity(StripeErrorResponse.class)).thenReturn(stripeErrorResponse);
+        when(mockedResponse.getPayload()).thenReturn(load(STRIPE_ERROR_RESPONSE));
         when(client.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
-        
+
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(charge);
 
@@ -76,7 +72,7 @@ public class StripeCancelHandlerTest {
         assertThat(gatewayResponse.getGatewayError().get().getMessage(), Is.is("No such charge: ch_123456 or something similar"));
         assertThat(gatewayResponse.getGatewayError().get().getErrorType(), Is.is(GENERIC_GATEWAY_ERROR));
     }
-    
+
     @Test
     public void shouldHandle5xxFromStripeGateway() throws Exception {
         DownstreamException downstreamException = new DownstreamException(SC_SERVICE_UNAVAILABLE, "Problem with Stripe servers");
@@ -91,12 +87,12 @@ public class StripeCancelHandlerTest {
         assertThat(gatewayResponse.getGatewayError().get().getMessage(), containsString("An internal server error occurred while cancelling external charge id: " + request.getExternalChargeId()));
         assertThat(gatewayResponse.getGatewayError().get().getErrorType(), Is.is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
     }
-    
+
     @Test
     public void shouldHandleGatewayException() throws Exception {
         GatewayException gatewayException = new GatewayException("/v1/refunds", new SocketTimeoutException());
         when(client.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayException);
-        
+
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(charge);
 
