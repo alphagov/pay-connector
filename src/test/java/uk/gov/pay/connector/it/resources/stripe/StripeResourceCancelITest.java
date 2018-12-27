@@ -5,13 +5,18 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.junit.DropwizardTestContext;
+import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
-import uk.gov.pay.connector.util.PortFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -26,18 +31,17 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
-import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 
-// FIXME. StripeResourceCancelITest should use DropwizardJUnitRunner like other integration tests do. The reason it
-// doesn't is that there is an issue when it does. See https://payments-platform.atlassian.net/browse/PP-4438
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class StripeResourceCancelITest {
-    
     private static final String AMOUNT = "6234";
     private static final String DESCRIPTION = "Test description";
 
@@ -48,20 +52,19 @@ public class StripeResourceCancelITest {
 
     private DatabaseTestHelper databaseTestHelper;
 
-    private static int port = PortFactory.findFreePort();
+    @DropwizardTestContext
+    private TestContext testContext;
 
     @ClassRule
-    public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
-            config("stripe.url", "http://localhost:" + port)
-    );
+    public static WireMockClassRule wireMockClassRule = new WireMockClassRule(WIREMOCK_PORT);
 
-    @ClassRule
-    public static WireMockClassRule wireMockRule = new WireMockClassRule(port);
+    @Rule
+    public WireMockClassRule wireMockRule = wireMockClassRule;
 
     @Before
     public void setup() {
         stripeAccountId = String.valueOf(RandomUtils.nextInt());
-        databaseTestHelper = app.getDatabaseTestHelper();
+        databaseTestHelper = testContext.getDatabaseTestHelper();
         accountId = String.valueOf(RandomUtils.nextInt());
         stripeMockClient.mockCancelCharge();
     }
@@ -70,11 +73,11 @@ public class StripeResourceCancelITest {
     public void userCancelCharge() {
 
         addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
-        
+
         String transactionId = "stripe-" + RandomUtils.nextInt();
         String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
-        
-        given().port(app.getLocalPort())
+
+        given().port(testContext.getPort())
                 .contentType(JSON)
                 .post("/v1/frontend/charges/{chargeId}/cancel".replace("{chargeId}", externalChargeId))
                 .then()
@@ -96,7 +99,7 @@ public class StripeResourceCancelITest {
         String transactionId = "stripe-" + RandomUtils.nextInt();
         String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
 
-        given().port(app.getLocalPort())
+        given().port(testContext.getPort())
                 .contentType(JSON)
                 .post("/v1/api/accounts/" + accountId + "/charges/" + externalChargeId + "/cancel")
                 .then()
