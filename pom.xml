@@ -302,11 +302,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-csv</artifactId>
-            <version>1.4</version>
-        </dependency>
-        <dependency>
             <groupId>javax.mail</groupId>
             <artifactId>mailapi</artifactId>
             <version>1.4.3</version>
