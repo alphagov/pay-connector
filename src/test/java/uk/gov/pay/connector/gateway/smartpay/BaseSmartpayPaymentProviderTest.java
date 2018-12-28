@@ -29,7 +29,6 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Typ
 public abstract class BaseSmartpayPaymentProviderTest {
 
     protected SmartpayPaymentProvider provider;
-    private GatewayClientFactory gatewayClientFactory;
 
     @Mock
     protected Client mockClient;
@@ -46,7 +45,7 @@ public abstract class BaseSmartpayPaymentProviderTest {
 
     @Before
     public void setup() {
-        gatewayClientFactory = new GatewayClientFactory(mockClientFactory);
+        GatewayClientFactory gatewayClientFactory = new GatewayClientFactory(mockClientFactory);
 
         when(mockClientFactory.createWithDropwizardClient(eq(PaymentGatewayName.SMARTPAY), any(MetricRegistry.class)))
                 .thenReturn(mockClient);
@@ -58,7 +57,7 @@ public abstract class BaseSmartpayPaymentProviderTest {
         provider = new SmartpayPaymentProvider(configuration, gatewayClientFactory, environment);
     }
 
-    protected GatewayAccountEntity aServiceAccount() {
+    GatewayAccountEntity aServiceAccount() {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
         gatewayAccount.setId(1L);
         gatewayAccount.setGatewayName("smartpay");
@@ -72,7 +71,7 @@ public abstract class BaseSmartpayPaymentProviderTest {
         return gatewayAccount;
     }
 
-    protected void mockSmartpayResponse(int httpStatus, String responsePayload) {
+    void mockSmartpayResponse(int httpStatus, String responsePayload) {
         WebTarget mockTarget = mock(WebTarget.class);
         when(mockClient.target(anyString())).thenReturn(mockTarget);
         Invocation.Builder mockBuilder = mock(Invocation.Builder.class);

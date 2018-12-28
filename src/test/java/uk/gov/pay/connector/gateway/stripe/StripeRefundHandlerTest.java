@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.http.HttpStatus;
 import org.hamcrest.core.Is;
 import org.junit.Before;
@@ -16,7 +17,6 @@ import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import javax.ws.rs.core.MediaType;
-import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 
@@ -43,6 +43,7 @@ public class StripeRefundHandlerTest {
     private StripeRefundHandler refundHandler;
     private RefundGatewayRequest refundRequest;
     private URI refundsUri;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
     private StripeGatewayClient gatewayClient;
@@ -53,7 +54,7 @@ public class StripeRefundHandlerTest {
 
     @Before
     public void setup() {
-        refundHandler = new StripeRefundHandler(gatewayClient, gatewayConfig);
+        refundHandler = new StripeRefundHandler(gatewayClient, gatewayConfig, objectMapper);
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().withAmount(100L).build();
         refundRequest = RefundGatewayRequest.valueOf(refundEntity);
         when(gatewayConfig.getAuthTokens()).thenReturn(mock(StripeAuthTokens.class));
@@ -62,7 +63,8 @@ public class StripeRefundHandlerTest {
 
     @Test
     public void shouldRefundInFull() throws GatewayClientException, GatewayException, DownstreamException {
-        when(gatewayClient.postRequest(eq(refundsUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(load(STRIPE_REFUND_FULL_CHARGE_RESPONSE));
+        final String jsonResponse = load(STRIPE_REFUND_FULL_CHARGE_RESPONSE);
+        when(gatewayClient.postRequest(eq(refundsUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(jsonResponse);
 
         final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
         assertNotNull(refund);
@@ -73,7 +75,8 @@ public class StripeRefundHandlerTest {
 
     @Test
     public void shouldNotRefund_whenAmountIsMoreThanChargeAmount() throws GatewayClientException, GatewayException, DownstreamException {
-        when(response.getPayload()).thenReturn(load(STRIPE_REFUND_ERROR_GREATER_AMOUNT_RESPONSE));
+        final String jsonResponse = load(STRIPE_REFUND_ERROR_GREATER_AMOUNT_RESPONSE);
+        when(response.getPayload()).thenReturn(jsonResponse);
 
         GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", response);
         when(gatewayClient.postRequest(eq(refundsUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
@@ -87,8 +90,9 @@ public class StripeRefundHandlerTest {
     }
 
     @Test
-    public void shouldNotRefund_anAlreadyRefundedCharge() throws GatewayClientException, GatewayException, DownstreamException, IOException {
-        when(response.getPayload()).thenReturn(load(STRIPE_REFUND_ERROR_ALREADY_REFUNDED_RESPONSE));
+    public void shouldNotRefund_anAlreadyRefundedCharge() throws GatewayClientException, GatewayException, DownstreamException {
+        String jsonResponse = load(STRIPE_REFUND_ERROR_ALREADY_REFUNDED_RESPONSE);
+        when(response.getPayload()).thenReturn(jsonResponse);
 
         GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", response);
         when(gatewayClient.postRequest(eq(refundsUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
@@ -104,7 +108,8 @@ public class StripeRefundHandlerTest {
 
     @Test
     public void shouldNotRefund_whenStatusCode4xx() throws Exception {
-        when(response.getPayload()).thenReturn(load(STRIPE_ERROR_RESPONSE));
+        final String jsonResponse = load(STRIPE_ERROR_RESPONSE);
+        when(response.getPayload()).thenReturn(jsonResponse);
 
         GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", response);
         when(gatewayClient.postRequest(eq(refundsUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);

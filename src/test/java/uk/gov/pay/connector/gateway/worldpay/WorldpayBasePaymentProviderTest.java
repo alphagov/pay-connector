@@ -84,7 +84,7 @@ public abstract class WorldpayBasePaymentProviderTest {
         provider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
     }
 
-    protected GatewayAccountEntity aServiceAccount() {
+    GatewayAccountEntity aServiceAccount() {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
         gatewayAccount.setId(1L);
         gatewayAccount.setGatewayName("worldpay");
@@ -104,11 +104,11 @@ public abstract class WorldpayBasePaymentProviderTest {
         assertThat(actual.getErrorType(), is(expected.getErrorType()));
     }
 
-    protected void mockWorldpayErrorResponse(int httpStatus) {
+    void mockWorldpayErrorResponse(int httpStatus) {
         mockWorldpayResponse(httpStatus, errorResponse());
     }
 
-    protected void mockWorldpayResponse(int httpStatus, String responsePayload) {
+    void mockWorldpayResponse(int httpStatus, String responsePayload) {
         WebTarget mockTarget = mock(WebTarget.class);
         when(mockClient.target(anyString())).thenReturn(mockTarget);
         Invocation.Builder mockBuilder = mock(Invocation.Builder.class);
@@ -126,7 +126,7 @@ public abstract class WorldpayBasePaymentProviderTest {
         when(response.getStatus()).thenReturn(httpStatus);
     }
 
-    protected String errorResponse() {
+    private String errorResponse() {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<!DOCTYPE paymentService PUBLIC \"-//WorldPay//DTD WorldPay PaymentService v1//EN\"\n" +
                 "        \"http://dtd.worldpay.com/paymentService_v1.dtd\">\n" +

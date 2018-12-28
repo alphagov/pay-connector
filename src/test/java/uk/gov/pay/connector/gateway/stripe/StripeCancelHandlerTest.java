@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.core.Is;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,11 +16,14 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCancelHandler;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.Map;
 
+import static java.lang.String.format;
 import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,6 +41,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 public class StripeCancelHandlerTest {
 
     private StripeCancelHandler stripeCancelHandler;
+    private ObjectMapper objectMapper = new ObjectMapper();
+
     @Mock
     private StripeGatewayClient client;
     @Mock
@@ -44,7 +50,7 @@ public class StripeCancelHandlerTest {
 
     @Before
     public void setup() {
-        stripeCancelHandler = new StripeCancelHandler(client, stripeGatewayConfig);
+        stripeCancelHandler = new StripeCancelHandler(client, stripeGatewayConfig, objectMapper);
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(mock(StripeAuthTokens.class));
     }
 
@@ -60,7 +66,8 @@ public class StripeCancelHandlerTest {
     public void shouldHandle4xxFromStripeGateway() throws Exception {
         StripeGatewayClientResponse mockedResponse = mock(StripeGatewayClientResponse.class);
         GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", mockedResponse);
-        when(mockedResponse.getPayload()).thenReturn(load(STRIPE_ERROR_RESPONSE));
+        final String jsonString = load(STRIPE_ERROR_RESPONSE);
+        when(mockedResponse.getPayload()).thenReturn(jsonString);
         when(client.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
@@ -98,5 +105,13 @@ public class StripeCancelHandlerTest {
 
         final GatewayResponse<BaseCancelResponse> gatewayResponse = stripeCancelHandler.cancel(request);
         assertThat(gatewayResponse.isFailed(), is(true));
+    }
+
+    private <T> T getObjectFromJson(String jsonResponse, Class<T> targetType) {
+        try {
+            return objectMapper.readValue(jsonResponse, targetType);
+        } catch (IOException e) {
+            throw new WebApplicationException(format("There was an exception parsing the payload [%s] into an [%s]", jsonResponse, targetType));
+        }
     }
 }

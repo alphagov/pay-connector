@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -19,7 +20,10 @@ import uk.gov.pay.connector.gateway.stripe.response.StripeCaptureResponse;
 import uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import javax.ws.rs.WebApplicationException;
+import java.io.IOException;
 import java.net.URI;
+import java.util.Map;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
@@ -27,7 +31,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
 import static uk.gov.pay.connector.gateway.CaptureResponse.fromBaseCaptureResponse;
 import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCodeFromGateway;
-import static uk.gov.pay.connector.gateway.stripe.StripePaymentProvider.getObjectFromJson;
 
 public class StripeCaptureHandler implements CaptureHandler {
 
@@ -35,11 +38,14 @@ public class StripeCaptureHandler implements CaptureHandler {
 
     private final StripeGatewayClient client;
     private final StripeGatewayConfig stripeGatewayConfig;
+    private final ObjectMapper objectMapper;
 
     public StripeCaptureHandler(StripeGatewayClient client,
-                                StripeGatewayConfig stripeGatewayConfig) {
+                                StripeGatewayConfig stripeGatewayConfig,
+                                ObjectMapper objectMapper) {
         this.client = client;
         this.stripeGatewayConfig = stripeGatewayConfig;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -58,8 +64,8 @@ public class StripeCaptureHandler implements CaptureHandler {
                     format("gateway-operations.%s.%s.capture",
                             gatewayAccount.getGatewayName(),
                             gatewayAccount.getType()));
-
-            return fromBaseCaptureResponse(StripeCaptureResponse.from(captureResponse), COMPLETE);
+            String stripeTransactionId = getObjectFromJson(captureResponse, Map.class).get("id").toString();
+            return fromBaseCaptureResponse(new StripeCaptureResponse(stripeTransactionId), COMPLETE);
 
         } catch (GatewayClientException e) {
 
@@ -81,6 +87,15 @@ public class StripeCaptureHandler implements CaptureHandler {
                     transactionId, e.getMessage(), e.getStatusCode(), request.getExternalId());
             GatewayError gatewayError = unexpectedStatusCodeFromGateway("An internal server error occurred when capturing charge_external_id: " + request.getExternalId());
             return CaptureResponse.fromGatewayError(gatewayError);
+        }
+    }
+
+    private <T> T getObjectFromJson(String jsonResponse, Class<T> targetType) {
+        try {
+            return objectMapper.readValue(jsonResponse, targetType);
+        } catch (IOException e) {
+            logger.info("There was an exception parsing the payload [{}] into an [{}]", jsonResponse, targetType);
+            throw new WebApplicationException(format("There was an exception parsing the payload [%s] into an [%s]", jsonResponse, targetType));
         }
     }
 }
