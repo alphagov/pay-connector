@@ -17,7 +17,6 @@ import java.util.Map;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.OK;
-import static org.apache.commons.collections4.CollectionUtils.isEqualCollection;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -69,10 +68,8 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         List<String> events1 = databaseTestHelper.getInternalEvents(extChargeId1);
         List<String> events2 = databaseTestHelper.getInternalEvents(extChargeId2);
 
-        assertTrue(isEqualCollection(events1,
-                asList(CREATED.getValue(), EXPIRED.getValue())));
-        assertTrue(isEqualCollection(events2,
-                asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue())));
+        assertThat(asList(CREATED.getValue(), EXPIRED.getValue()), is(events1));
+        assertThat(asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()), is(events2));
     }
 
     @Test
@@ -110,10 +107,8 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         List<String> events1 = databaseTestHelper.getInternalEvents(shouldExpireChargeId);
         List<String> events2 = databaseTestHelper.getInternalEvents(shouldntExpireChargeId);
 
-        assertTrue(isEqualCollection(events1,
-                asList(CREATED.getValue(), EXPIRED.getValue())));
-        assertTrue(isEqualCollection(events2,
-                Collections.singletonList(CREATED.getValue())));
+        assertThat(asList(CREATED.getValue(), EXPIRED.getValue()), is(events1));
+        assertThat(Collections.singletonList(CREATED.getValue()), is(events2));
     }
 
     @Test
@@ -141,8 +136,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
 
         List<String> events = databaseTestHelper.getInternalEvents(extChargeId1);
 
-        assertTrue(isEqualCollection(events,
-                asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRE_CANCEL_FAILED.getValue())));
+        assertThat(asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRE_CANCEL_FAILED.getValue()), is(events));
 
     }
 
@@ -185,10 +179,8 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         List<String> events1 = databaseTestHelper.getInternalEvents(extChargeId1);
         List<String> events2 = databaseTestHelper.getInternalEvents(extChargeId2);
 
-        assertTrue(isEqualCollection(events1,
-                asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue())));
-        assertTrue(isEqualCollection(events2,
-                asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRE_CANCEL_FAILED.getValue())));
+        assertThat(asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()), is(events1));
+        assertThat(asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRE_CANCEL_FAILED.getValue()), is(events2));
 
     }
 
@@ -254,10 +246,8 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         List<String> events1 = databaseTestHelper.getInternalEvents(chargeToBeExpiredCreatedStatus);
         List<String> events2 = databaseTestHelper.getInternalEvents(chargeToBeExpiredAwaitingCaptureRequest);
 
-        assertTrue(isEqualCollection(events1,
-                asList(CREATED.getValue(), EXPIRED.getValue())));
-        assertTrue(isEqualCollection(events2,
-                asList(AWAITING_CAPTURE_REQUEST.getValue())));
+        assertThat(asList(CREATED.getValue(), EXPIRED.getValue()), is(events1));
+        assertThat(asList(AWAITING_CAPTURE_REQUEST.getValue()), is(events2));
     }
 
     @Test
@@ -295,9 +285,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         List<String> events1 = databaseTestHelper.getInternalEvents(chargeToBeExpiredCreatedStatus);
         List<String> events2 = databaseTestHelper.getInternalEvents(chargeToBeExpiredAwaitingCaptureRequest);
 
-        assertTrue(isEqualCollection(events1,
-                asList(CREATED.getValue(), EXPIRED.getValue())));
-        assertTrue(isEqualCollection(events2,
-                asList(AWAITING_CAPTURE_REQUEST.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue())));
+        assertThat(asList(CREATED.getValue(), EXPIRED.getValue()), is(events1));
+        assertThat(asList(AWAITING_CAPTURE_REQUEST.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()), is(events2));
     }
 }
