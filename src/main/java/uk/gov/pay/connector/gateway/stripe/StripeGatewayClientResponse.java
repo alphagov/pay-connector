@@ -1,17 +1,20 @@
 package uk.gov.pay.connector.gateway.stripe;
 
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status.Family;
+
 public class StripeGatewayClientResponse {
-    private javax.ws.rs.core.Response.Status.Family statusFamily;
+    private Family statusFamily;
     private String payload;
     private int status;
 
-    StripeGatewayClientResponse(javax.ws.rs.core.Response response) {
+    StripeGatewayClientResponse(Response response) {
         this.payload = response.readEntity(String.class);
         this.statusFamily = response.getStatusInfo().getFamily();
         this.status = response.getStatus();
     }
 
-    javax.ws.rs.core.Response.Status.Family getFamily() {
+    Family getFamily() {
         return this.statusFamily;
     }
 
