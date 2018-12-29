@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.chargeevent.model.TransactionEvent.Type;
 import static uk.gov.pay.connector.chargeevent.model.TransactionEvent.extractState;
 import static uk.gov.pay.connector.common.model.api.ExternalRefundStatus.EXTERNAL_SUBMITTED;
@@ -21,7 +22,7 @@ public class TransactionEventTest {
 
         TransactionEvent event = new TransactionEvent(Type.PAYMENT, "charge", extractState(ExternalChargeState.EXTERNAL_CREATED), 100L, ZonedDateTime.now());
 
-        assertThat(event.equals(event), is(true));
+        assertEquals(event, event);
     }
 
     @Test
