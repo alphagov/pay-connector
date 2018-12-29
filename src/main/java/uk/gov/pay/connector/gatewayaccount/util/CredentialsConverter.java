@@ -19,9 +19,7 @@ public class CredentialsConverter implements AttributeConverter<Map<String,Strin
         pgCredentials.setType("json");
         try {
             pgCredentials.setValue(new ObjectMapper().writeValueAsString(credentials));
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (JsonProcessingException e) {
+        } catch (SQLException | JsonProcessingException e) {
             throw new RuntimeException(e);
         }
         return pgCredentials;
