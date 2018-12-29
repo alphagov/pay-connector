@@ -425,7 +425,7 @@ public class ChargeDaoITest extends DaoITestBase {
         // given
         insertTestCharge();
         ServicePaymentReference paymentReference = ServicePaymentReference.of("Council Tax Payment reference 2");
-        Long chargeId = System.currentTimeMillis();
+        long chargeId = System.currentTimeMillis();
         String externalChargeId = "chargeabc";
 
         DatabaseFixtures
@@ -869,7 +869,7 @@ public class ChargeDaoITest extends DaoITestBase {
 
     @Test
     public void chargeEvents_shouldRecordTransactionIdWithEachStatusChange() {
-        Long chargeId = 56735L;
+        long chargeId = 56735L;
         String externalChargeId = "charge456";
 
         String transactionId = "345654";
@@ -1335,7 +1335,7 @@ public class ChargeDaoITest extends DaoITestBase {
 
     @Test
     public void findChargesForCapture_shouldReturnChargesInCaptureApprovedState() {
-        final Long chargeId1 = nextLong();
+        final long chargeId1 = nextLong();
 
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -1388,7 +1388,7 @@ public class ChargeDaoITest extends DaoITestBase {
         List<ChargeEntity> charges = chargeDao.findChargesForCapture(10, Duration.of(60, ChronoUnit.MINUTES));
 
         assertThat(charges.size(), is(1));
-        assertEquals(charges.get(0).getId(), chargeId1);
+        assertEquals(charges.get(0).getId().longValue(), chargeId1);
     }
 
     @Test
