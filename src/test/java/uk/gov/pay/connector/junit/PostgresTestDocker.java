@@ -5,6 +5,7 @@ import uk.gov.pay.commons.testing.db.PostgresContainer;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import static java.lang.String.format;
 import static java.sql.DriverManager.getConnection;
 
 final class PostgresTestDocker {
@@ -16,19 +17,19 @@ final class PostgresTestDocker {
         try {
             if (container == null) {
                 container = new PostgresContainer();
-                createDatabase(DB_NAME);
+                createDatabase();
             }
         } catch (Exception e) {
             throw new PostgresTestDockerException(e);
         }
     }
     
-    private static void createDatabase(String dbName) {
+    private static void createDatabase() {
         final String dbUser = getDbUsername();
 
         try (Connection connection = getConnection(getDbRootUri(), dbUser, getDbPassword())) {
-            connection.createStatement().execute("CREATE DATABASE " + dbName + " WITH owner=" + dbUser + " TEMPLATE postgres");
-            connection.createStatement().execute("GRANT ALL PRIVILEGES ON DATABASE " + dbName + " TO " + dbUser);
+            connection.createStatement().execute(format("CREATE DATABASE %s WITH owner=%s TEMPLATE postgres", DB_NAME, dbUser));
+            connection.createStatement().execute(format("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", DB_NAME, dbUser));
         } catch (SQLException e) {
             throw new PostgresTestDockerException(e);
         }
