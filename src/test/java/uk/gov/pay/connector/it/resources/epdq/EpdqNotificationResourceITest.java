@@ -124,7 +124,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
 
     private String createNewChargeWithRefund(String transactionId, String refundExternalId, String payIdSub, long refundAmount) {
         String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
-        String chargeId = externalChargeId.substring(externalChargeId.indexOf("-") + 1, externalChargeId.length());
+        String chargeId = externalChargeId.substring(externalChargeId.indexOf("-") + 1);
         createNewRefund(REFUND_SUBMITTED, Long.valueOf(chargeId), refundExternalId, transactionId + "/" + payIdSub, refundAmount);
         return externalChargeId;
     }

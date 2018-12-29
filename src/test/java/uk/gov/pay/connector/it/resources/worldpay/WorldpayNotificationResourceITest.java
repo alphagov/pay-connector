@@ -190,7 +190,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
 
     private String createNewChargeWithRefund(String transactionId, String refundExternalId, long refundAmount) {
         String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
-        String chargeId = externalChargeId.substring(externalChargeId.indexOf("-") + 1, externalChargeId.length());
+        String chargeId = externalChargeId.substring(externalChargeId.indexOf("-") + 1);
         createNewRefund(REFUND_SUBMITTED, Long.valueOf(chargeId), refundExternalId, refundExternalId, refundAmount);
         return externalChargeId;
     }
