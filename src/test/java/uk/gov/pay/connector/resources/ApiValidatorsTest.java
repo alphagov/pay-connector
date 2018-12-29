@@ -125,7 +125,7 @@ public class ApiValidatorsTest {
 
         ZonedDateTime date = maybeDate.get();
         assertThat(date.getDayOfMonth(), is(20));
-        assertThat(date.getMonthValue(), is(06));
+        assertThat(date.getMonthValue(), is(6));
         assertThat(date.getYear(), is(2018));
     }
 
