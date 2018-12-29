@@ -352,9 +352,7 @@ public class GatewayAccountResource {
     }
 
     private boolean hasAnyRequired3ds(List<CardTypeEntity> cardTypeEntities) {
-        return cardTypeEntities.stream()
-                .filter(CardTypeEntity::isRequires3ds)
-                .count() > 0;
+        return cardTypeEntities.stream().anyMatch(CardTypeEntity::isRequires3ds);
     }
 
     private List<String> extractNotFoundCardTypeIds(List<UUID> cardTypeIds, List<CardTypeEntity> cardTypeEntities) {
