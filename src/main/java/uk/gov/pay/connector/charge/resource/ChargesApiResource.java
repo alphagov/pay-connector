@@ -185,8 +185,6 @@ public class ChargesApiResource {
 
         List<Pair<String, String>> inputDatePairMap = ImmutableList.of(Pair.of(FROM_DATE_KEY, fromDate), Pair.of(TO_DATE_KEY, toDate));
         List<Pair<String, Long>> nonNegativePairMap = ImmutableList.of(Pair.of(PAGE, pageNumber), Pair.of(DISPLAY_SIZE, displaySize));
-        //Client using v2 API will have the feature flag enabled by default
-        boolean isFeatureTransactionsEnabled = true;
 
         return ApiValidators
                 .validateQueryParams(inputDatePairMap, nonNegativePairMap) //TODO - improvement, get the entire searchparam object into the validateQueryParams
@@ -209,7 +207,7 @@ public class ChargesApiResource {
                             .addExternalRefundStates(toList(refundStates));
 
                     return gatewayAccountDao.findById(accountId)
-                            .map(gatewayAccount -> listCharges(searchParams, isFeatureTransactionsEnabled, uriInfo))
+                            .map(gatewayAccount -> listCharges(searchParams, true, uriInfo))
                             .orElseGet(() -> notFoundResponse(format("account with id %s not found", accountId)));
                 }); // always the first page if its missing
     }
