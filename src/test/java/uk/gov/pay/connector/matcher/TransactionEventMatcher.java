@@ -85,7 +85,7 @@ public class TransactionEventMatcher extends TypeSafeMatcher<Map<String, Object>
 
     @Override
     protected boolean matchesSafely(Map<String, Object> record) {
-        boolean stateMatches = false;
+        boolean stateMatches;
 
         if (record.get("state") == null) {
             stateMatches = (state == null);
