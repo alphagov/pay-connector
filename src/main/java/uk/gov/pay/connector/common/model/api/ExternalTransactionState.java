@@ -3,6 +3,8 @@ package uk.gov.pay.connector.common.model.api;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.util.Objects;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public class ExternalTransactionState {
@@ -51,17 +53,13 @@ public class ExternalTransactionState {
 
         if (finished != that.finished) return false;
         if (!value.equals(that.value)) return false;
-        if (code != null ? !code.equals(that.code) : that.code != null) return false;
-        return message != null ? message.equals(that.message) : that.message == null;
+        if (!Objects.equals(code, that.code)) return false;
+        return Objects.equals(message, that.message);
     }
 
     @Override
     public int hashCode() {
-        int result = value.hashCode();
-        result = 31 * result + (finished ? 1 : 0);
-        result = 31 * result + (code != null ? code.hashCode() : 0);
-        result = 31 * result + (message != null ? message.hashCode() : 0);
-        return result;
+        return Objects.hash(value, finished, code, message);
     }
 
     @Override

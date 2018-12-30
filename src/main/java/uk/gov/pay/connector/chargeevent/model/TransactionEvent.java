@@ -9,6 +9,7 @@ import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 @JsonSnakeCase
 public class TransactionEvent implements Comparable<TransactionEvent> {
@@ -51,13 +52,13 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
 
             State state = (State) o;
 
-            return !(status != null ? !status.equals(state.status) : state.status != null);
+            return Objects.equals(status, state.status);
 
         }
 
         @Override
         public int hashCode() {
-            return status != null ? status.hashCode() : 0;
+            return Objects.hash(status);
         }
     }
 
@@ -167,22 +168,17 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
 
         TransactionEvent that = (TransactionEvent) o;
 
-        if (type != that.type) return false;
-        if (extRefundReference != null ? !extRefundReference.equals(that.extRefundReference) : that.extRefundReference != null) return false;
-        if (extChargeId != null ? !extChargeId.equals(that.extChargeId) : that.extChargeId != null) return false;
-        if (state != null ? !state.equals(that.state) : that.state != null) return false;
-        if (userExternalId != null ? !userExternalId.equals(that.userExternalId) : that.userExternalId != null) return false;
-        return !(amount != null ? !amount.equals(that.amount) : that.amount != null);
+        return (type != that.type)
+            && Objects.equals(extRefundReference, that.extRefundReference)
+            && Objects.equals(extChargeId, that.extChargeId)
+            && Objects.equals(state, that.state)
+            && Objects.equals(userExternalId, that.userExternalId)
+            && Objects.equals(amount, that.amount);
     }
 
 
     @Override
     public int hashCode() {
-        int result = type != null ? type.hashCode() : 0;
-        result = 31 * result + (extRefundReference != null ? extRefundReference.hashCode() : 0);
-        result = 31 * result + (extChargeId != null ? extChargeId.hashCode() : 0);
-        result = 31 * result + (state != null ? state.hashCode() : 0);
-        result = 31 * result + (amount != null ? amount.hashCode() : 0);
-        return result;
+        return Objects.hash(type, extRefundReference, extChargeId, state, amount);
     }
 }

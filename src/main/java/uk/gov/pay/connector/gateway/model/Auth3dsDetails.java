@@ -2,6 +2,8 @@ package uk.gov.pay.connector.gateway.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 public class Auth3dsDetails implements AuthorisationDetails {
 
     public enum Auth3dsResult {
@@ -57,16 +59,13 @@ public class Auth3dsDetails implements AuthorisationDetails {
 
         Auth3dsDetails that = (Auth3dsDetails) o;
 
-        if (paResponse != null ? !paResponse.equals(that.paResponse) : that.paResponse != null) return false;
-        if (auth3DsResult != that.auth3DsResult) return false;
-        return md != null ? md.equals(that.md) : that.md == null;
+        return Objects.equals(paResponse, that.paResponse)
+            && auth3DsResult != that.auth3DsResult
+            && Objects.equals(md, that.md);
     }
 
     @Override
     public int hashCode() {
-        int result = paResponse != null ? paResponse.hashCode() : 0;
-        result = 31 * result + (auth3DsResult != null ? auth3DsResult.hashCode() : 0);
-        result = 31 * result + (md != null ? md.hashCode() : 0);
-        return result;
+        return Objects.hash(paResponse, auth3DsResult, md);
     }
 }

@@ -9,6 +9,7 @@ import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Embeddable;
 import javax.persistence.Embedded;
+import java.util.Objects;
 import java.util.Optional;
 
 @Embeddable
@@ -119,26 +120,16 @@ public class CardDetailsEntity {
 
         CardDetailsEntity that = (CardDetailsEntity) o;
 
-        if (lastDigitsCardNumber != null ? !lastDigitsCardNumber.equals(that.lastDigitsCardNumber) : that.lastDigitsCardNumber != null)
-            return false;
-        if (firstDigitsCardNumber != null ? !firstDigitsCardNumber.equals(that.firstDigitsCardNumber) : that.firstDigitsCardNumber != null)
-            return false;
-        if (cardHolderName != null ? !cardHolderName.equals(that.cardHolderName) : that.cardHolderName != null)
-            return false;
-        if (expiryDate != null ? !expiryDate.equals(that.expiryDate) : that.expiryDate != null) return false;
-        if (cardBrand != null ? !cardBrand.equals(that.cardBrand) : that.cardBrand != null) return false;
-        return billingAddress != null ? billingAddress.equals(that.billingAddress) : that.billingAddress == null;
-
+        return Objects.equals(lastDigitsCardNumber, that.lastDigitsCardNumber)
+            && Objects.equals(firstDigitsCardNumber, that.firstDigitsCardNumber)
+            && Objects.equals(cardHolderName, that.cardHolderName)
+            && Objects.equals(expiryDate, that.expiryDate)
+            && Objects.equals(cardBrand, that.cardBrand)
+            && Objects.equals(billingAddress, that.billingAddress);
     }
 
     @Override
     public int hashCode() {
-        int result = lastDigitsCardNumber != null ? lastDigitsCardNumber.hashCode() : 0;
-        result = 31 * result + (firstDigitsCardNumber != null ? firstDigitsCardNumber.hashCode() : 0);
-        result = 31 * result + (cardHolderName != null ? cardHolderName.hashCode() : 0);
-        result = 31 * result + (expiryDate != null ? expiryDate.hashCode() : 0);
-        result = 31 * result + (cardBrand != null ? cardBrand.hashCode() : 0);
-        result = 31 * result + (billingAddress != null ? billingAddress.hashCode() : 0);
-        return result;
+        return Objects.hash(lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, expiryDate, cardBrand, billingAddress);
     }
 }

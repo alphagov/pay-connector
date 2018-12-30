@@ -35,7 +35,7 @@ public class GatewayStatusOnly<T> implements StatusMapFromStatus<T> {
 
     @Override
     public int hashCode() {
-        return 31 * status.hashCode();
+        return Objects.hash(status);
     }
 
     @Override

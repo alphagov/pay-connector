@@ -8,6 +8,7 @@ import uk.gov.pay.connector.refund.model.builder.AbstractRefundsResponseBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -102,31 +103,17 @@ public class SearchRefundsResponse {
 
         SearchRefundsResponse that = (SearchRefundsResponse) o;
 
-        if (refundId != null ? !refundId.equals(that.refundId) : that.refundId != null)
-            return false;
-        if (createdDate != null ? !createdDate.equals(that.createdDate) : that.createdDate != null)
-            return false;
-        if (!status.equals(that.status)) {
-            return false;
-        }
-        if (extChargeId != null ? !extChargeId.equals(that.extChargeId) : that.extChargeId != null)
-            return false;
-        if (dataLinks != null ? !dataLinks.equals(that.dataLinks) : that.dataLinks != null)
-            return false;
-        return amountSubmitted != null ? amountSubmitted.equals(that.amountSubmitted)
-                : that.amountSubmitted == null;
+        return Objects.equals(refundId, that.refundId)
+            && Objects.equals(createdDate, that.createdDate)
+            && status.equals(that.status)
+            && Objects.equals(extChargeId, that.extChargeId)
+            && Objects.equals(dataLinks, that.dataLinks)
+            && Objects.equals(amountSubmitted, that.amountSubmitted);
     }
 
     @Override
     public int hashCode() {
-        int result = dataLinks != null ? dataLinks.hashCode() : 0;
-        result = 31 * result + (refundId != null ? refundId.hashCode() : 0);
-        result = 31 * result + (createdDate != null ? createdDate.hashCode() : 0);
-        result = 31 * result + (status != null ? status.hashCode() : 0);
-        result = 31 * result + (extChargeId != null ? extChargeId.hashCode() : 0);
-        result = 31 * result + (amountSubmitted != null ? amountSubmitted.hashCode() : 0);
-        result = 31 * result + (dataLinks != null ? dataLinks.hashCode() : 0);
-        return result;
+        return Objects.hash(dataLinks, refundId, createdDate, status, extChargeId, amountSubmitted);
     }
 
     @Override

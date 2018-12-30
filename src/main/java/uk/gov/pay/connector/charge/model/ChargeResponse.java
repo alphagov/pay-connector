@@ -79,28 +79,15 @@ public class ChargeResponse {
 
             RefundSummary that = (RefundSummary) o;
 
-            if (!status.equals(that.status)) {
-                return false;
-            }
-            if (userExternalId != null ? !userExternalId.equals(that.userExternalId)
-                    : that.userExternalId != null) {
-                return false;
-            }
-            if (amountAvailable != null ? !amountAvailable.equals(that.amountAvailable)
-                    : that.amountAvailable != null) {
-                return false;
-            }
-            return amountSubmitted != null ? amountSubmitted.equals(that.amountSubmitted)
-                    : that.amountSubmitted == null;
+            return status.equals(that.status)
+                && Objects.equals(userExternalId, that.userExternalId)
+                && Objects.equals(amountAvailable, that.amountAvailable)
+                && Objects.equals(amountSubmitted, that.amountSubmitted);
         }
 
         @Override
         public int hashCode() {
-            int result = status.hashCode();
-            result = 31 * result + (userExternalId != null ? userExternalId.hashCode() : 0);
-            result = 31 * result + (amountAvailable != null ? amountAvailable.hashCode() : 0);
-            result = 31 * result + (amountSubmitted != null ? amountSubmitted.hashCode() : 0);
-            return result;
+            return Objects.hash(status, userExternalId, amountAvailable, amountSubmitted);
         }
 
         @Override
@@ -143,17 +130,14 @@ public class ChargeResponse {
 
             SettlementSummary that = (SettlementSummary) o;
 
-            if (captureSubmitTime != null ? !captureSubmitTime.equals(that.captureSubmitTime) : that.captureSubmitTime != null)
-                return false;
-            return capturedTime != null ? capturedTime.equals(that.capturedTime) : that.capturedTime == null;
+            return Objects.equals(captureSubmitTime, that.captureSubmitTime)
+                && Objects.equals(capturedTime, that.capturedTime);
 
         }
 
         @Override
         public int hashCode() {
-            int result = captureSubmitTime != null ? captureSubmitTime.hashCode() : 0;
-            result = 31 * result + (capturedTime != null ? capturedTime.hashCode() : 0);
-            return result;
+            return Objects.hash(captureSubmitTime, capturedTime);
         }
 
         @Override

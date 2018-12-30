@@ -12,6 +12,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class FrontendChargeResponse extends ChargeResponse {
     public static class FrontendChargeResponseBuilder extends AbstractChargeResponseBuilder<FrontendChargeResponseBuilder, FrontendChargeResponse> {
@@ -83,19 +84,15 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         FrontendChargeResponse that = (FrontendChargeResponse) o;
 
-        if (status != null ? !status.equals(that.status) : that.status != null) return false;
-        if (cardDetails != null ? !cardDetails.equals(that.cardDetails) : that.cardDetails != null) return false;
-        return gatewayAccount != null ? gatewayAccount.equals(that.gatewayAccount) : that.gatewayAccount == null;
+        return Objects.equals(status, that.status)
+            && Objects.equals(cardDetails, that.cardDetails)
+            && Objects.equals(gatewayAccount, that.gatewayAccount);
 
     }
 
     @Override
     public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (status != null ? status.hashCode() : 0);
-        result = 31 * result + (cardDetails != null ? cardDetails.hashCode() : 0);
-        result = 31 * result + (gatewayAccount != null ? gatewayAccount.hashCode() : 0);
-        return result;
+        return Objects.hash(super.hashCode(), status, cardDetails, gatewayAccount);
     }
 
     @Override

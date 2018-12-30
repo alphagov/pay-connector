@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.common.model.domain;
 
+import java.util.Objects;
+
 public class Address {
 
     private String line1;
@@ -76,23 +78,16 @@ public class Address {
 
         Address address = (Address) o;
 
-        if (line1 != null ? !line1.equals(address.line1) : address.line1 != null) return false;
-        if (line2 != null ? !line2.equals(address.line2) : address.line2 != null) return false;
-        if (postcode != null ? !postcode.equals(address.postcode) : address.postcode != null) return false;
-        if (city != null ? !city.equals(address.city) : address.city != null) return false;
-        if (county != null ? !county.equals(address.county) : address.county != null) return false;
-        return country != null ? country.equals(address.country) : address.country == null;
-
+        return Objects.equals(line1, address.line1)
+            && Objects.equals(line2, address.line2)
+            && Objects.equals(postcode, address.postcode)
+            && Objects.equals(city, address.city)
+            && Objects.equals(county, address.county)
+            && Objects.equals(country, address.country);
     }
 
     @Override
     public int hashCode() {
-        int result = line1 != null ? line1.hashCode() : 0;
-        result = 31 * result + (line2 != null ? line2.hashCode() : 0);
-        result = 31 * result + (postcode != null ? postcode.hashCode() : 0);
-        result = 31 * result + (city != null ? city.hashCode() : 0);
-        result = 31 * result + (county != null ? county.hashCode() : 0);
-        result = 31 * result + (country != null ? country.hashCode() : 0);
-        return result;
+        return Objects.hash(line1, line2, postcode, city, county, country);
     }
 }
