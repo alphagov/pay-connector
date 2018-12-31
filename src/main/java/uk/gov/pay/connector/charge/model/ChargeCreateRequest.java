@@ -98,8 +98,8 @@ public class ChargeCreateRequest {
                 "amount=" + amount +
                 ", reference='" + reference + '\'' +
                 ", returnUrl='" + returnUrl + '\'' +
-                delayedCapture != null ? ", delayed_capture=" + delayedCapture : "" +
-                language != null ? ", language=" + language.toString() : "" +
+                ", delayed_capture=" + delayedCapture +
+                (language != null ? ", language=" + language.toString() : "") +
                 '}';
     }
 }
