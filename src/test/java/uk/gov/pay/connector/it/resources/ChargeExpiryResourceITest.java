@@ -247,7 +247,7 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
         List<String> events2 = databaseTestHelper.getInternalEvents(chargeToBeExpiredAwaitingCaptureRequest);
 
         assertThat(asList(CREATED.getValue(), EXPIRED.getValue()), is(events1));
-        assertThat(asList(AWAITING_CAPTURE_REQUEST.getValue()), is(events2));
+        assertThat(Collections.singletonList(AWAITING_CAPTURE_REQUEST.getValue()), is(events2));
     }
 
     @Test

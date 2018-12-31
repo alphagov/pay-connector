@@ -42,7 +42,7 @@ import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.Gatewa
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 @RunWith(MockitoJUnitRunner.class)
-/**
+/*
  * PP-2626 FIXME: Cancellation and expirations statuses needs revisiting
  * For `non gateway operations` seems the statuses are not all the required ones.
  * This won't make the system broken but doing unnecessary processing.

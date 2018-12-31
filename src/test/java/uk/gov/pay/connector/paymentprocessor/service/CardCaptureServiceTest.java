@@ -243,7 +243,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         Long chargeId = 1234L;
         ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.CREATED);
 
-        /**
+        /*
          * FIXME (PP-2626)
          * This is not going to be thrown from this method, but just to test preOp throwing
          * OptimisticLockException when commit the transaction. We won't do merge in pre-op

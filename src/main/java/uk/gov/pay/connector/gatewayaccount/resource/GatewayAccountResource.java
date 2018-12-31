@@ -245,7 +245,7 @@ public class GatewayAccountResource {
     @JsonView(GatewayAccountEntity.Views.ApiView.class)
     public Response updateGatewayAccountCredentials(@PathParam("accountId") Long gatewayAccountId, Map<String, Object> gatewayAccountPayload) {
         if (!gatewayAccountPayload.containsKey(CREDENTIALS_FIELD_NAME)) {
-            return fieldsMissingResponse(Arrays.asList(CREDENTIALS_FIELD_NAME));
+            return fieldsMissingResponse(Collections.singletonList(CREDENTIALS_FIELD_NAME));
         }
 
         return gatewayDao.findById(gatewayAccountId)
@@ -272,12 +272,12 @@ public class GatewayAccountResource {
     @Transactional
     public Response updateGatewayAccountServiceName(@PathParam("accountId") Long gatewayAccountId, Map<String, String> gatewayAccountPayload) {
         if (!gatewayAccountPayload.containsKey(SERVICE_NAME_FIELD_NAME)) {
-            return fieldsMissingResponse(Arrays.asList(SERVICE_NAME_FIELD_NAME));
+            return fieldsMissingResponse(Collections.singletonList(SERVICE_NAME_FIELD_NAME));
         }
 
         String serviceName = gatewayAccountPayload.get(SERVICE_NAME_FIELD_NAME);
         if (serviceName.length() > SERVICE_NAME_FIELD_LENGTH) {
-            return fieldsInvalidSizeResponse(Arrays.asList(SERVICE_NAME_FIELD_NAME));
+            return fieldsInvalidSizeResponse(Collections.singletonList(SERVICE_NAME_FIELD_NAME));
         }
 
         return gatewayDao.findById(gatewayAccountId)
@@ -298,7 +298,7 @@ public class GatewayAccountResource {
     @Transactional
     public Response updateGatewayAccount3dsToggle(@PathParam("accountId") Long gatewayAccountId, Map<String, String> gatewayAccountPayload) {
         if (!gatewayAccountPayload.containsKey(REQUIRES_3DS_FIELD_NAME)) {
-            return fieldsMissingResponse(Arrays.asList(REQUIRES_3DS_FIELD_NAME));
+            return fieldsMissingResponse(Collections.singletonList(REQUIRES_3DS_FIELD_NAME));
         }
 
         return gatewayDao.findById(gatewayAccountId)
@@ -324,7 +324,7 @@ public class GatewayAccountResource {
     public Response updateGatewayAccountAcceptedCardTypes(@PathParam("accountId") Long gatewayAccountId, Map<String, List<UUID>> cardTypes) {
 
         if (!cardTypes.containsKey(CARD_TYPES_FIELD_NAME)) {
-            return fieldsMissingResponse(Arrays.asList(CARD_TYPES_FIELD_NAME));
+            return fieldsMissingResponse(Collections.singletonList(CARD_TYPES_FIELD_NAME));
         }
 
         List<UUID> cardTypeIds = cardTypes.get(CARD_TYPES_FIELD_NAME);
@@ -352,9 +352,7 @@ public class GatewayAccountResource {
     }
 
     private boolean hasAnyRequired3ds(List<CardTypeEntity> cardTypeEntities) {
-        return cardTypeEntities.stream()
-                .filter(CardTypeEntity::isRequires3ds)
-                .count() > 0;
+        return cardTypeEntities.stream().anyMatch(CardTypeEntity::isRequires3ds);
     }
 
     private List<String> extractNotFoundCardTypeIds(List<UUID> cardTypeIds, List<CardTypeEntity> cardTypeEntities) {

@@ -78,7 +78,7 @@ public class WorldpayNotificationServiceTest {
                 "MERCHANTCODE",
                 "CAPTURED",
                 10,
-                03,
+                3,
                 2017,
                 transactionId,
                 referenceId

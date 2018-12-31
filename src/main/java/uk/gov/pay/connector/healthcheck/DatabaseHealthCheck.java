@@ -26,7 +26,6 @@ public class DatabaseHealthCheck extends HealthCheck {
     static {
         longDatabaseStatsMap = new HashMap<String, Long>();
         longDatabaseStatsMap.put("numbackends", 0l);
-        longDatabaseStatsMap.put("numbackends", 0l);
         longDatabaseStatsMap.put("xact_commit", 0l);
         longDatabaseStatsMap.put("xact_rollback", 0l);
         longDatabaseStatsMap.put("blks_read", 0l);
@@ -64,22 +63,16 @@ public class DatabaseHealthCheck extends HealthCheck {
 
     @Override
     protected Result check() throws Exception {
-        Connection connection = null;
-        try {
-            connection = DriverManager.getConnection(
-                    configuration.getDataSourceFactory().getUrl(),
-                    configuration.getDataSourceFactory().getUser(),
-                    configuration.getDataSourceFactory().getPassword());
+        try (Connection connection = DriverManager.getConnection(
+                configuration.getDataSourceFactory().getUrl(),
+                configuration.getDataSourceFactory().getUser(),
+                configuration.getDataSourceFactory().getPassword())) {
             connection.setReadOnly(true);
             updateMetricData(connection);
 
             return connection.isValid(2) ? Result.healthy() : Result.unhealthy("Could not validate the DB connection.");
         } catch (Exception e) {
             return Result.unhealthy(e.getMessage());
-        } finally {
-            if (connection != null) {
-                connection.close();
-            }
         }
     }
 

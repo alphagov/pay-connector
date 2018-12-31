@@ -34,7 +34,7 @@ public class RenderStateTransitionGraphCommand extends Command {
         System.out.format("Wrote state transition graph to '%s'\n\n", path);
         System.out.println("Render using: ");
         System.out.println("  $ dot -Tpng -O states.dot");
-        System.out.println("");
+        System.out.println();
         System.out.println("or upload to http://www.webgraphviz.com/");
     }
 
