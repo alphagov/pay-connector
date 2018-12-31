@@ -26,7 +26,6 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
-import uk.gov.pay.connector.usernotification.model.Notification;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.client.Client;
@@ -61,25 +60,15 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_E
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CANCEL_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_DELETE_SUCCESS_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_NOTIFICATION_TEMPLATE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_REFUND_SUCCESS_RESPONSE;
 
 public abstract class BaseEpdqPaymentProviderTest {
-    static final String NOTIFICATION_STATUS = "9";
-    static final String NOTIFICATION_PAY_ID = "3020450409";
-    static final String NOTIFICATION_PAY_ID_SUB = "2";
-    static final String NOTIFICATION_SHA_SIGN = "9537B9639F108CDF004459D8A690C598D97506CDF072C3926A60E39759A6402C5089161F6D7A8EA12BBC0FD6F899CE72D5A0C4ACC2913C56ACF6D01B034protected";
-
-    protected GatewayClientFactory gatewayClientFactory;
     protected EpdqPaymentProvider provider;
-
 
     @Mock
     private Client mockClient;
-    @Mock
-    GatewayAccountEntity mockGatewayAccountEntity;
     @Mock
     MetricRegistry mockMetricRegistry;
     @Mock
@@ -89,23 +78,19 @@ public abstract class BaseEpdqPaymentProviderTest {
     @Mock
     ClientFactory mockClientFactory;
     @Mock
-    SignatureGenerator mockSignatureGenerator;
-    @Mock
     Environment environment;
     @Mock
     ConnectorConfiguration configuration;
-    @Mock
-    Notification mockNotification;
     @Mock
     GatewayConfig gatewayConfig;
     @Mock
     LinksConfig linksConfig;
 
-    Invocation.Builder mockClientInvocationBuilder;
+    private Invocation.Builder mockClientInvocationBuilder;
 
     @Before
     public void setup() {
-        gatewayClientFactory = new GatewayClientFactory(mockClientFactory);
+        GatewayClientFactory gatewayClientFactory = new GatewayClientFactory(mockClientFactory);
 
         mockClientInvocationBuilder = mockClientInvocationBuilder();
         when(environment.metrics()).thenReturn(mockMetricRegistry);
@@ -200,23 +185,7 @@ public abstract class BaseEpdqPaymentProviderTest {
         return TestTemplateResourceLoader.load(EPDQ_DELETE_SUCCESS_RESPONSE);
     }
 
-    String notificationPayloadForTransaction(String status, String payId, String payIdSub, String shaSign) {
-        return TestTemplateResourceLoader.load(EPDQ_NOTIFICATION_TEMPLATE)
-                .replace("{{status}}", status)
-                .replace("{{payId}}", payId)
-                .replace("{{payIdSub}}", payIdSub)
-                .replace("{{shaSign}}", shaSign);
-    }
-
-    CardAuthorisationGatewayRequest buildTestAuthorisationRequest(ChargeEntity chargeEntity) {
-        return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
-    }
-
-    CancelGatewayRequest buildTestCancelRequest(ChargeEntity chargeEntity) {
-        return CancelGatewayRequest.valueOf(chargeEntity);
-    }
-
-    RefundGatewayRequest buildTestRefundRequest(ChargeEntity chargeEntity) {
+    private RefundGatewayRequest buildTestRefundRequest(ChargeEntity chargeEntity) {
         return RefundGatewayRequest.valueOf(new RefundEntity(chargeEntity, chargeEntity.getAmount() - 100, userExternalId));
     }
 
@@ -263,7 +232,7 @@ public abstract class BaseEpdqPaymentProviderTest {
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
                 .build();
-        return buildTestAuthorisationRequest(chargeEntity);
+        return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
     }
 
     private CancelGatewayRequest buildTestCancelRequest(GatewayAccountEntity accountEntity) {
@@ -271,7 +240,7 @@ public abstract class BaseEpdqPaymentProviderTest {
                 .withGatewayAccountEntity(accountEntity)
                 .withTransactionId("payId")
                 .build();
-        return buildTestCancelRequest(chargeEntity);
+        return CancelGatewayRequest.valueOf(chargeEntity);
     }
 
     private RefundGatewayRequest buildTestRefundRequest(GatewayAccountEntity accountEntity) {

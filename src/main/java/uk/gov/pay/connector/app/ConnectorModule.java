@@ -21,6 +21,7 @@ import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactoryProvider;
 import uk.gov.pay.connector.usernotification.service.EntityBuilder;
 import uk.gov.pay.connector.util.HashUtil;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.XrayUtils;
 
 import java.util.Properties;
@@ -105,5 +106,11 @@ public class ConnectorModule extends AbstractModule {
     @Provides
     public StripeGatewayConfig stripeGatewayConfig(ConnectorConfiguration connectorConfiguration) {
         return connectorConfiguration.getStripeConfig();
+    }
+    
+    @Provides
+    @Singleton
+    public JsonObjectMapper jsonObjectMapper() {
+        return new JsonObjectMapper(provideObjectMapper());
     }
 }

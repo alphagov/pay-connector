@@ -13,16 +13,16 @@ import uk.gov.pay.connector.gateway.stripe.DownstreamException;
 import uk.gov.pay.connector.gateway.stripe.GatewayClientException;
 import uk.gov.pay.connector.gateway.stripe.GatewayException;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
+import uk.gov.pay.connector.gateway.stripe.StripeGatewayClientResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -36,10 +36,12 @@ public class StripeRefundHandler {
     private static final Logger logger = LoggerFactory.getLogger(StripeRefundHandler.class);
     private final StripeGatewayClient client;
     private final StripeGatewayConfig stripeGatewayConfig;
+    private JsonObjectMapper jsonObjectMapper;
 
-    public StripeRefundHandler(StripeGatewayClient client, StripeGatewayConfig stripeGatewayConfig) {
+    public StripeRefundHandler(StripeGatewayClient client, StripeGatewayConfig stripeGatewayConfig, JsonObjectMapper jsonObjectMapper) {
         this.client = client;
         this.stripeGatewayConfig = stripeGatewayConfig;
+        this.jsonObjectMapper = jsonObjectMapper;
     }
 
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
@@ -48,20 +50,19 @@ public class StripeRefundHandler {
 
         try {
             String payload = URLEncodedUtils.format(buildPayload(request.getTransactionId(), request.getAmount()), UTF_8);
-            final Response response = client.postRequest(
+            final String response = client.postRequest(
                     URI.create(url),
                     payload,
                     ImmutableMap.of(AUTHORIZATION, getAuthHeaderValue(stripeGatewayConfig)),
                     APPLICATION_FORM_URLENCODED_TYPE,
                     format("gateway-operations.%s.%s.refund", gatewayAccount.getGatewayName(), gatewayAccount.getType()));
-
-            return fromBaseRefundResponse(StripeRefundResponse.of((String) response.readEntity(Map.class).get("id")),
-                    GatewayRefundResponse.RefundState.COMPLETE);
+            String reference = jsonObjectMapper.getObject(response, Map.class).get("id").toString();
+            return fromBaseRefundResponse(StripeRefundResponse.of(reference), GatewayRefundResponse.RefundState.COMPLETE);
 
         } catch (GatewayClientException e) {
 
-            Response response = e.getResponse();
-            StripeErrorResponse.Error error = response.readEntity(StripeErrorResponse.class).getError();
+            StripeGatewayClientResponse response = e.getResponse();
+            StripeErrorResponse.Error error = jsonObjectMapper.getObject(response.getPayload(), StripeErrorResponse.class).getError();
             logger.error("Refund failed for refund gateway request {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
                     request, error.getCode(), error.getMessage(), response.getStatus());
 
@@ -69,7 +70,7 @@ public class StripeRefundHandler {
                     StripeRefundResponse.of(error.getCode(), error.getMessage()),
                     GatewayRefundResponse.RefundState.ERROR);
         } catch (GatewayException e) {
-            logger.error("Refund failed for refund gateway request {}. GatewayException: {}.", request, e);    
+            logger.error("Refund failed for refund gateway request {}. GatewayException: {}.", request, e);
             return GatewayRefundResponse.fromGatewayError(GatewayError.of(e));
         } catch (DownstreamException e) {
             logger.error("Refund failed for refund gateway request {}. Reason: {}. Status code from Stripe: {}.", request, e.getMessage(), e.getStatusCode());

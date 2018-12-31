@@ -34,15 +34,16 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeCreateChargeResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTokenResponse;
+import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsSourceResponse;
 import uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +64,7 @@ public class StripePaymentProvider implements PaymentProvider {
 
     private final StripeGatewayClient client;
     private final String frontendUrl;
+    private final JsonObjectMapper jsonObjectMapper;
     private final StripeGatewayConfig stripeGatewayConfig;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final StripeCaptureHandler stripeCaptureHandler;
@@ -71,14 +73,16 @@ public class StripePaymentProvider implements PaymentProvider {
 
     @Inject
     public StripePaymentProvider(StripeGatewayClient stripeGatewayClient,
-                                 ConnectorConfiguration configuration) {
+                                 ConnectorConfiguration configuration,
+                                 JsonObjectMapper jsonObjectMapper) {
         this.stripeGatewayConfig = configuration.getStripeConfig();
         this.client = stripeGatewayClient;
         this.frontendUrl = configuration.getLinks().getFrontendUrl();
+        this.jsonObjectMapper = jsonObjectMapper;
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
-        stripeCaptureHandler = new StripeCaptureHandler(client, stripeGatewayConfig);
-        stripeCancelHandler = new StripeCancelHandler(client, stripeGatewayConfig);
-        stripeRefundHandler = new StripeRefundHandler(client, stripeGatewayConfig);
+        stripeCaptureHandler = new StripeCaptureHandler(client, stripeGatewayConfig, jsonObjectMapper);
+        stripeCancelHandler = new StripeCancelHandler(client, stripeGatewayConfig, jsonObjectMapper);
+        stripeRefundHandler = new StripeRefundHandler(client, stripeGatewayConfig, jsonObjectMapper);
     }
 
     @Override
@@ -100,35 +104,25 @@ public class StripePaymentProvider implements PaymentProvider {
                 .responseBuilder();
 
         try {
-            logger.info("Creating token for charge external id " + request.getChargeExternalId()); //FIXME remove when Stripe performance issues have been sorted out. Ref: https://github.com/alphagov/pay-connector/pull/916
-            Response tokenResponse = createToken(request);
-            logger.info("Creating source for charge external id " + request.getChargeExternalId()); //FIXME see previous FIXME
-            Response sourceResponse = createSource(
-                    request,
-                    tokenResponse.readEntity(StripeTokenResponse.class).getId()
-            );
-
-            StripeSourcesResponse stripeSourcesResponse = sourceResponse.readEntity(StripeSourcesResponse.class);
-
+            StripeTokenResponse tokenResponse = createToken(request);
+            StripeSourcesResponse stripeSourcesResponse = createSource(request, tokenResponse.getId());
             if (stripeSourcesResponse.require3ds()) {
-                Response source3dsResponse = create3dsSource(request, stripeSourcesResponse.getId());
-
-                return responseBuilder.withResponse(Stripe3dsSourceAuthorisationResponse.of(source3dsResponse)).build();
+                String source3dsResponse = create3dsSource(request, stripeSourcesResponse.getId());
+                Stripe3dsSourceResponse sourceResponse = jsonObjectMapper.getObject(source3dsResponse, Stripe3dsSourceResponse.class);
+                return responseBuilder.withResponse(new Stripe3dsSourceAuthorisationResponse(sourceResponse)).build();
             } else {
-                logger.info("Creating charge for charge external id " + request.getChargeExternalId()); //FIXME see previous FIXME
-                Response authorisationResponse = createCharge(request, stripeSourcesResponse.getId());
-                StripeAuthorisationResponse stripeAuthResponse = new StripeAuthorisationResponse(authorisationResponse.readEntity(StripeCreateChargeResponse.class));
+                StripeAuthorisationResponse stripeAuthResponse = createCharge(request, stripeSourcesResponse.getId());
                 return responseBuilder.withResponse(stripeAuthResponse).build();
             }
         } catch (GatewayClientException e) {
 
-            Response response = e.getResponse();
+            StripeGatewayClientResponse response = e.getResponse();
 
             if (response.getStatus() == HttpStatus.SC_UNAUTHORIZED) {
                 return unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage(), HttpStatus.SC_UNAUTHORIZED);
             }
 
-            StripeErrorResponse stripeErrorResponse = response.readEntity(StripeErrorResponse.class);
+            StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(response.getPayload(), StripeErrorResponse.class);
             logger.error("Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
                     request.getChargeExternalId(), stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), response.getStatus());
             GatewayError gatewayError = genericGatewayError(stripeErrorResponse.getError().getMessage());
@@ -167,19 +161,17 @@ public class StripePaymentProvider implements PaymentProvider {
 
     private Gateway3DSAuthorisationResponse authorise3DSSource(Auth3dsResponseGatewayRequest request) {
         try {
-            Response authorisationResponse = createChargeFor3DSSource(request, request.getTransactionId().get());
-            StripeAuthorisationResponse stripeAuthResponse = new StripeAuthorisationResponse(authorisationResponse.readEntity(StripeCreateChargeResponse.class));
-
+            StripeAuthorisationResponse stripeAuthResponse = createChargeFor3DSSource(request, request.getTransactionId().get());
             return Gateway3DSAuthorisationResponse.of(stripeAuthResponse.authoriseStatus(), stripeAuthResponse.getTransactionId());
         } catch (GatewayClientException e) {
 
-            Response response = e.getResponse();
+            StripeGatewayClientResponse response = e.getResponse();
 
             if (response.getStatus() == HttpStatus.SC_UNAUTHORIZED) {
                 return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.ERROR);
             }
 
-            StripeErrorResponse stripeErrorResponse = response.readEntity(StripeErrorResponse.class);
+            StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(response.getPayload(), StripeErrorResponse.class);
             logger.error("3DS Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
                     request.getChargeExternalId(), stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), response.getStatus());
 
@@ -200,7 +192,7 @@ public class StripePaymentProvider implements PaymentProvider {
         return responseBuilder.withGatewayError(gatewayError).build();
     }
 
-    private Response create3dsSource(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException, GatewayException, DownstreamException {
+    private String create3dsSource(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException, GatewayException, DownstreamException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
                 "/v1/sources",
@@ -211,52 +203,54 @@ public class StripePaymentProvider implements PaymentProvider {
         );
     }
 
-    private Response createChargeFor3DSSource(Auth3dsResponseGatewayRequest request, String sourceId)
+    private StripeAuthorisationResponse createChargeFor3DSSource(Auth3dsResponseGatewayRequest request, String sourceId)
             throws GatewayClientException, GatewayException, DownstreamException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
-        return postToStripe(
+        String jsonResponse = postToStripe(
                 "/v1/charges",
                 authorise3DSChargePayload(request, sourceId),
                 format("gateway-operations.%s.%s.authorise.create_charge",
                         gatewayAccount.getGatewayName(),
-                        gatewayAccount.getType())
-        );
+                        gatewayAccount.getType()));
+        final StripeCreateChargeResponse createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCreateChargeResponse.class);
+        return new StripeAuthorisationResponse(createChargeResponse);
     }
 
-    private Response createCharge(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException, GatewayException, DownstreamException {
+    private StripeAuthorisationResponse createCharge(CardAuthorisationGatewayRequest request, String sourceId) throws GatewayClientException, GatewayException, DownstreamException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
-        return postToStripe(
+        String jsonResponse = postToStripe(
                 "/v1/charges",
                 authorisePayload(request, sourceId),
                 format("gateway-operations.%s.%s.authorise.create_charge",
                         gatewayAccount.getGatewayName(),
-                        gatewayAccount.getType())
-        );
+                        gatewayAccount.getType()));
+        final StripeCreateChargeResponse createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCreateChargeResponse.class);
+        return new StripeAuthorisationResponse(createChargeResponse);
     }
 
-    private Response createSource(CardAuthorisationGatewayRequest request, String tokenId) throws GatewayClientException, GatewayException, DownstreamException {
+    private StripeSourcesResponse createSource(CardAuthorisationGatewayRequest request, String tokenId) throws GatewayClientException, GatewayException, DownstreamException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
-        return postToStripe(
+        String jsonResponse = postToStripe(
                 "/v1/sources",
                 sourcesPayload(tokenId),
                 format("gateway-operations.%s.%s.authorise.create_source",
                         gatewayAccount.getGatewayName(),
-                        gatewayAccount.getType())
-        );
+                        gatewayAccount.getType()));
+        return jsonObjectMapper.getObject(jsonResponse, StripeSourcesResponse.class);
     }
 
-    private Response createToken(CardAuthorisationGatewayRequest request) throws GatewayClientException, GatewayException, DownstreamException {
+    private StripeTokenResponse createToken(CardAuthorisationGatewayRequest request) throws GatewayClientException, GatewayException, DownstreamException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
-        return postToStripe(
+        String jsonResponse = postToStripe(
                 "/v1/tokens",
                 tokenPayload(request),
                 format("gateway-operations.%s.%s.authorise.create_token",
                         gatewayAccount.getGatewayName(),
-                        gatewayAccount.getType())
-        );
+                        gatewayAccount.getType()));
+        return jsonObjectMapper.getObject(jsonResponse, StripeTokenResponse.class);
     }
 
-    private Response postToStripe(String path, String payload, String metricsPrefix) throws GatewayClientException, GatewayException, DownstreamException {
+    private String postToStripe(String path, String payload, String metricsPrefix) throws GatewayClientException, GatewayException, DownstreamException {
         return client.postRequest(
                 URI.create(stripeGatewayConfig.getUrl() + path),
                 payload,

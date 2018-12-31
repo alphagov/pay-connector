@@ -13,15 +13,12 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
-import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -31,6 +28,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
@@ -45,28 +43,29 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 public class StripeRefundHandlerTest {
     private StripeRefundHandler refundHandler;
     private RefundGatewayRequest refundRequest;
+    private URI refundsUri;
+    private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
 
     @Mock
     private StripeGatewayClient gatewayClient;
     @Mock
     private StripeGatewayConfig gatewayConfig;
     @Mock
-    private Response response;
+    private StripeGatewayClientResponse response;
 
     @Before
     public void setup() {
-        refundHandler = new StripeRefundHandler(gatewayClient, gatewayConfig);
+        refundHandler = new StripeRefundHandler(gatewayClient, gatewayConfig, objectMapper);
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().withAmount(100L).build();
         refundRequest = RefundGatewayRequest.valueOf(refundEntity);
         when(gatewayConfig.getAuthTokens()).thenReturn(mock(StripeAuthTokens.class));
+        refundsUri = URI.create(gatewayConfig.getUrl() + "/v1/refunds");
     }
 
     @Test
-    public void shouldRefundInFull() throws GatewayClientException, GatewayException, DownstreamException, IOException {
-        Map<String, Object> responsePayloadMap = new ObjectMapper().readValue(load(STRIPE_REFUND_FULL_CHARGE_RESPONSE), HashMap.class);
-        when(response.readEntity(Map.class)).thenReturn(responsePayloadMap);
-
-        when(gatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(response);
+    public void shouldRefundInFull() throws GatewayClientException, GatewayException, DownstreamException {
+        final String jsonResponse = load(STRIPE_REFUND_FULL_CHARGE_RESPONSE);
+        when(gatewayClient.postRequest(eq(refundsUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(jsonResponse);
 
         final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
         assertNotNull(refund);
@@ -76,12 +75,12 @@ public class StripeRefundHandlerTest {
     }
 
     @Test
-    public void shouldNotRefund_whenAmountIsMoreThanChargeAmount() throws GatewayClientException, GatewayException, DownstreamException, IOException {
-        StripeErrorResponse stripeErrorResponse = new ObjectMapper().readValue(load(STRIPE_REFUND_ERROR_GREATER_AMOUNT_RESPONSE), StripeErrorResponse.class);
-        when(response.readEntity(StripeErrorResponse.class)).thenReturn(stripeErrorResponse);
+    public void shouldNotRefund_whenAmountIsMoreThanChargeAmount() throws GatewayClientException, GatewayException, DownstreamException {
+        final String jsonResponse = load(STRIPE_REFUND_ERROR_GREATER_AMOUNT_RESPONSE);
+        when(response.getPayload()).thenReturn(jsonResponse);
 
         GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", response);
-        when(gatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
+        when(gatewayClient.postRequest(eq(refundsUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
 
         final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
         assertNotNull(refund);
@@ -92,15 +91,15 @@ public class StripeRefundHandlerTest {
     }
 
     @Test
-    public void shouldNotRefund_anAlreadyRefundedCharge() throws GatewayClientException, GatewayException, DownstreamException, IOException {
-        StripeErrorResponse stripeErrorResponse = new ObjectMapper().readValue(load(STRIPE_REFUND_ERROR_ALREADY_REFUNDED_RESPONSE), StripeErrorResponse.class);
-        when(response.readEntity(StripeErrorResponse.class)).thenReturn(stripeErrorResponse);
+    public void shouldNotRefund_anAlreadyRefundedCharge() throws GatewayClientException, GatewayException, DownstreamException {
+        String jsonResponse = load(STRIPE_REFUND_ERROR_ALREADY_REFUNDED_RESPONSE);
+        when(response.getPayload()).thenReturn(jsonResponse);
 
         GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", response);
-        when(gatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
+        when(gatewayClient.postRequest(eq(refundsUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
 
         final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
-        
+
         assertNotNull(refund);
         assertTrue(refund.getError().isPresent());
         assertThat(refund.state(), is(GatewayRefundResponse.RefundState.ERROR));
@@ -110,11 +109,11 @@ public class StripeRefundHandlerTest {
 
     @Test
     public void shouldNotRefund_whenStatusCode4xx() throws Exception {
-        StripeErrorResponse stripeErrorResponse = new ObjectMapper().readValue(load(STRIPE_ERROR_RESPONSE), StripeErrorResponse.class);
-        when(response.readEntity(StripeErrorResponse.class)).thenReturn(stripeErrorResponse);
+        final String jsonResponse = load(STRIPE_ERROR_RESPONSE);
+        when(response.getPayload()).thenReturn(jsonResponse);
 
         GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", response);
-        when(gatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
+        when(gatewayClient.postRequest(eq(refundsUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
 
         final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
         assertNotNull(refund);
@@ -127,7 +126,7 @@ public class StripeRefundHandlerTest {
     @Test
     public void shouldNotRefund_whenStatusCode5xx() throws Exception {
         DownstreamException downstreamException = new DownstreamException(HttpStatus.INTERNAL_SERVER_ERROR_500, "Problem with Stripe servers");
-        when(gatewayClient.postRequest(any(URI.class), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(downstreamException);
+        when(gatewayClient.postRequest(eq(refundsUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(downstreamException);
 
         GatewayRefundResponse response = refundHandler.refund(refundRequest);
         assertThat(response.getError().isPresent(), Is.is(true));

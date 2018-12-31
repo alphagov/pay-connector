@@ -15,12 +15,10 @@ public class StripeCaptureResponse implements BaseCaptureResponse {
         this.transactionId = transactionId;
         this.errorCode = errorCode;
         this.errorMessage = errorMessage;
-    }    
-    
-    public StripeCaptureResponse(String transactionId) {
-        this.transactionId = transactionId;
-        this.errorCode = null;
-        this.errorMessage = null;
+    }
+
+    public StripeCaptureResponse(String stripeTransactionId) {
+        this(stripeTransactionId, null, null);
     }
 
     @Override
@@ -37,7 +35,7 @@ public class StripeCaptureResponse implements BaseCaptureResponse {
     public String getErrorMessage() {
         return errorMessage;
     }
-    
+
     @Override
     public String stringify() {
         StringJoiner joiner = new StringJoiner(", ", "Stripe capture response (", ")");

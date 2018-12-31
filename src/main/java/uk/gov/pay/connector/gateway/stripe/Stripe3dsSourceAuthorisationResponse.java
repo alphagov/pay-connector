@@ -5,14 +5,13 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsSourceResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeParamsFor3ds;
 
-import javax.ws.rs.core.Response;
 import java.util.Optional;
 
 public class Stripe3dsSourceAuthorisationResponse implements BaseAuthoriseResponse {
 
     private Stripe3dsSourceResponse jsonResponse;
 
-    private Stripe3dsSourceAuthorisationResponse(Stripe3dsSourceResponse jsonResponse) {
+    Stripe3dsSourceAuthorisationResponse(Stripe3dsSourceResponse jsonResponse) {
         this.jsonResponse = jsonResponse;
     }
 
@@ -43,9 +42,4 @@ public class Stripe3dsSourceAuthorisationResponse implements BaseAuthoriseRespon
     public String getErrorMessage() {
         return null;
     }
-
-    public static Stripe3dsSourceAuthorisationResponse of(Response response) {
-        return new Stripe3dsSourceAuthorisationResponse(response.readEntity(Stripe3dsSourceResponse.class));
-    }
-
 }

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.contract;
 
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.junit.Before;
@@ -28,6 +29,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.TestClientFactory;
 
 import static java.util.UUID.randomUUID;
@@ -54,16 +56,15 @@ public class StripePaymentProviderTest {
 
     private StripePaymentProvider stripePaymentProvider;
 
-    private String stripeAccountId = "<replace me>";
-
     private static final Long chargeAmount = 500L;
+    private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
 
     @Before
     public void setup() {
         ConnectorConfiguration connectorConfig = app.getInstanceFromGuiceContainer(ConnectorConfiguration.class);
         MetricRegistry metricRegistry = app.getInstanceFromGuiceContainer(Environment.class).metrics();
         StripeGatewayClient stripeGatewayClient = new StripeGatewayClient(TestClientFactory.createJerseyClient(), metricRegistry);
-        stripePaymentProvider = new StripePaymentProvider(stripeGatewayClient, connectorConfig);
+        stripePaymentProvider = new StripePaymentProvider(stripeGatewayClient, connectorConfig, objectMapper);
     }
 
     @Test
@@ -194,6 +195,7 @@ public class StripePaymentProviderTest {
         GatewayAccountEntity validGatewayAccount = new GatewayAccountEntity();
         validGatewayAccount.setId(123L);
         validGatewayAccount.setGatewayName(PaymentGatewayName.STRIPE.getName());
+        String stripeAccountId = "<replace me>";
         validGatewayAccount.setCredentials(ImmutableMap.of("stripe_account_id", stripeAccountId));
         validGatewayAccount.setType(TEST);
         return aValidChargeEntity()
