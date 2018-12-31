@@ -8,9 +8,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.google.common.primitives.Chars.asList;
-import static org.apache.commons.collections4.CollectionUtils.containsAll;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.util.RandomIdGenerator.newId;
 
 public class RandomIdGeneratorTest {
@@ -18,27 +17,29 @@ public class RandomIdGeneratorTest {
     private static final List<Character> BASE32_DICTIONARY = asList("0123456789abcdefghijklmnopqrstuv".toCharArray());
 
     @Test
-    public void shouldGenerateRandomIds() throws Exception {
-
-        // given
+    public void shouldGenerateUniqueRandomIds() {
         Set<String> randomIds = IntStream.range(0, 100)
-                .parallel()
-                .mapToObj(value -> newId()).collect(Collectors.toSet());
+            .parallel()
+            .mapToObj(value -> newId())
+            .collect(Collectors.toSet());
 
-        // then 1. guarantees no duplicates
-        assertThat(randomIds.size(), is(100));
-
-        // then 2. expects dictionary in Base32
-        randomIds.forEach(id ->
-                assertThat(containsAll(BASE32_DICTIONARY, asList(id.toCharArray())), is(true)));
+        assertEquals(100, randomIds.size());
     }
 
     @Test
-    public void shouldGenerateIdsOf26CharsInLength() throws Exception {
-        Set<String> randomIds = IntStream.range(0, 100)
-                .parallel()
-                .mapToObj(value -> newId()).collect(Collectors.toSet());
+    public void shouldGenerateRandomIdsInBase32() {
+        IntStream.range(0, 100)
+            .parallel()
+            .mapToObj(value -> newId())
+            .map(id -> asList(id.toCharArray()))
+            .forEach(idArray -> assertTrue(BASE32_DICTIONARY.containsAll(idArray)));
+    }
 
-        randomIds.forEach(id -> assertThat(id.length(), is(26)));
+    @Test
+    public void shouldGenerateIdsOf26CharsInLength() {
+        IntStream.range(0, 100)
+            .parallel()
+            .mapToObj(value -> newId())
+            .forEach(id -> assertEquals(26, id.length()));
     }
 }

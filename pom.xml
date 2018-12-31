@@ -12,6 +12,7 @@
         <guice.version>4.1.0</guice.version>
         <jackson.version>2.9.7</jackson.version>
         <pay-java-commons.version>1.0.0-f6097986677849386f283bb84072198b57931b1b</pay-java-commons.version>
+        <surefire.version>2.22.1</surefire.version>
         <dependency-check.skip>true</dependency-check.skip>
     </properties>
     <repositories>
@@ -282,6 +283,35 @@
             <artifactId>jooq</artifactId>
             <version>3.9.5</version>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-util</artifactId>
+            <version>9.4.11.v20180605</version>
+        </dependency>
+        <dependency>
+            <groupId>black.door</groupId>
+            <artifactId>hate</artifactId>
+            <version>v1r4t0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.datatype</groupId>
+                    <artifactId>jackson-datatype-jsr310</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.datatype</groupId>
+                    <artifactId>jackson-datatype-jdk8</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>7.9.0</version>
+        </dependency>
         <!-- testing -->
         <dependency>
             <groupId>org.mockito</groupId>
@@ -294,22 +324,6 @@
             <artifactId>json-path-assert</artifactId>
             <version>2.2.0</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-collections4</artifactId>
-            <version>4.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-csv</artifactId>
-            <version>1.4</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.mail</groupId>
-            <artifactId>mailapi</artifactId>
-            <version>1.4.3</version>
         </dependency>
         <dependency>
             <groupId>au.com.dius</groupId>
@@ -403,31 +417,13 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.8.0</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mock-server</groupId>
             <artifactId>mockserver-netty</artifactId>
             <version>5.5.0</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>black.door</groupId>
-            <artifactId>hate</artifactId>
-            <version>v1r4t0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-databind</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.datatype</groupId>
-                    <artifactId>jackson-datatype-jsr310</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.datatype</groupId>
-                    <artifactId>jackson-datatype-jdk8</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.carlosbecker</groupId>
@@ -442,20 +438,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-util</artifactId>
-            <version>9.4.11.v20180605</version>
-        </dependency>
-        <dependency>
             <groupId>org.glassfish</groupId>
             <artifactId>javax.json</artifactId>
             <version>1.1.2</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.stripe</groupId>
-            <artifactId>stripe-java</artifactId>
-            <version>7.9.0</version>
         </dependency>
     </dependencies>
     <build>
@@ -609,7 +595,7 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.12.4</version>
+                        <version>${surefire.version}</version>
                         <configuration>
                             <excludes>
                                 <exclude>**/*ContractTest.java</exclude>
@@ -631,7 +617,7 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.12.4</version>
+                        <version>${surefire.version}</version>
                         <configuration>
                             <includes>
                                 <include>**/*ContractTestSuite.java</include>
