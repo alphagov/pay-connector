@@ -15,15 +15,13 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCancelHandler;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
-import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.Map;
 
-import static java.lang.String.format;
 import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -41,7 +39,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 public class StripeCancelHandlerTest {
 
     private StripeCancelHandler stripeCancelHandler;
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
 
     @Mock
     private StripeGatewayClient client;
@@ -105,13 +103,5 @@ public class StripeCancelHandlerTest {
 
         final GatewayResponse<BaseCancelResponse> gatewayResponse = stripeCancelHandler.cancel(request);
         assertThat(gatewayResponse.isFailed(), is(true));
-    }
-
-    private <T> T getObjectFromJson(String jsonResponse, Class<T> targetType) {
-        try {
-            return objectMapper.readValue(jsonResponse, targetType);
-        } catch (IOException e) {
-            throw new WebApplicationException(format("There was an exception parsing the payload [%s] into an [%s]", jsonResponse, targetType));
-        }
     }
 }

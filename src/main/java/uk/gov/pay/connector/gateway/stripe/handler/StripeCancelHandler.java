@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
@@ -19,9 +18,8 @@ import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClientResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import javax.ws.rs.WebApplicationException;
-import java.io.IOException;
 import java.net.URI;
 
 import static java.lang.String.format;
@@ -40,12 +38,12 @@ public class StripeCancelHandler {
 
     private final StripeGatewayClient client;
     private final StripeGatewayConfig stripeGatewayConfig;
-    private ObjectMapper objectMapper;
+    private JsonObjectMapper jsonObjectMapper;
 
-    public StripeCancelHandler(StripeGatewayClient client, StripeGatewayConfig stripeGatewayConfig, ObjectMapper objectMapper) {
+    public StripeCancelHandler(StripeGatewayClient client, StripeGatewayConfig stripeGatewayConfig, JsonObjectMapper jsonObjectMapper) {
         this.client = client;
         this.stripeGatewayConfig = stripeGatewayConfig;
-        this.objectMapper = objectMapper;
+        this.jsonObjectMapper = jsonObjectMapper;
     }
 
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
@@ -91,7 +89,7 @@ public class StripeCancelHandler {
         } catch (GatewayClientException e) {
 
             StripeGatewayClientResponse response = e.getResponse();
-            StripeErrorResponse stripeErrorResponse = getObjectFromJson(response.getPayload());
+            StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(response.getPayload(), StripeErrorResponse.class);
             logger.error("Cancel failed for gateway transaction id {}. Failure code from Stripe: {}, failure message from Stripe: {}. Charge External Id: {}. Response code from Stripe: {}",
                     request.getTransactionId(), stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), request.getExternalChargeId(), response.getStatus());
             GatewayError gatewayError = genericGatewayError(stripeErrorResponse.getError().getMessage());
@@ -104,15 +102,6 @@ public class StripeCancelHandler {
                     request.getTransactionId(), e.getMessage(), e.getStatusCode(), request.getExternalChargeId());
             GatewayError gatewayError = unexpectedStatusCodeFromGateway("An internal server error occurred while cancelling external charge id: " + request.getExternalChargeId());
             return responseBuilder.withGatewayError(gatewayError).build();
-        }
-    }
-
-    private StripeErrorResponse getObjectFromJson(String jsonResponse) {
-        try {
-            return objectMapper.readValue(jsonResponse, StripeErrorResponse.class);
-        } catch (IOException e) {
-            logger.info("There was an exception parsing the payload [{}] into an [{}]", jsonResponse, StripeErrorResponse.class);
-            throw new WebApplicationException(format("There was an exception parsing the payload [%s] into an [%s]", jsonResponse, StripeErrorResponse.class));
         }
     }
 }

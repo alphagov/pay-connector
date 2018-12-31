@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
@@ -40,11 +39,11 @@ import uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +64,7 @@ public class StripePaymentProvider implements PaymentProvider {
 
     private final StripeGatewayClient client;
     private final String frontendUrl;
-    private final ObjectMapper objectMapper;
+    private final JsonObjectMapper jsonObjectMapper;
     private final StripeGatewayConfig stripeGatewayConfig;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final StripeCaptureHandler stripeCaptureHandler;
@@ -75,15 +74,15 @@ public class StripePaymentProvider implements PaymentProvider {
     @Inject
     public StripePaymentProvider(StripeGatewayClient stripeGatewayClient,
                                  ConnectorConfiguration configuration,
-                                 ObjectMapper objectMapper) {
+                                 JsonObjectMapper jsonObjectMapper) {
         this.stripeGatewayConfig = configuration.getStripeConfig();
         this.client = stripeGatewayClient;
         this.frontendUrl = configuration.getLinks().getFrontendUrl();
-        this.objectMapper = objectMapper;
+        this.jsonObjectMapper = jsonObjectMapper;
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
-        stripeCaptureHandler = new StripeCaptureHandler(client, stripeGatewayConfig, objectMapper);
-        stripeCancelHandler = new StripeCancelHandler(client, stripeGatewayConfig, objectMapper);
-        stripeRefundHandler = new StripeRefundHandler(client, stripeGatewayConfig, objectMapper);
+        stripeCaptureHandler = new StripeCaptureHandler(client, stripeGatewayConfig, jsonObjectMapper);
+        stripeCancelHandler = new StripeCancelHandler(client, stripeGatewayConfig, jsonObjectMapper);
+        stripeRefundHandler = new StripeRefundHandler(client, stripeGatewayConfig, jsonObjectMapper);
     }
 
     @Override
@@ -109,7 +108,7 @@ public class StripePaymentProvider implements PaymentProvider {
             StripeSourcesResponse stripeSourcesResponse = createSource(request, tokenResponse.getId());
             if (stripeSourcesResponse.require3ds()) {
                 String source3dsResponse = create3dsSource(request, stripeSourcesResponse.getId());
-                Stripe3dsSourceResponse sourceResponse = getObjectFromJson(source3dsResponse, Stripe3dsSourceResponse.class);
+                Stripe3dsSourceResponse sourceResponse = jsonObjectMapper.getObject(source3dsResponse, Stripe3dsSourceResponse.class);
                 return responseBuilder.withResponse(new Stripe3dsSourceAuthorisationResponse(sourceResponse)).build();
             } else {
                 StripeAuthorisationResponse stripeAuthResponse = createCharge(request, stripeSourcesResponse.getId());
@@ -123,7 +122,7 @@ public class StripePaymentProvider implements PaymentProvider {
                 return unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage(), HttpStatus.SC_UNAUTHORIZED);
             }
 
-            StripeErrorResponse stripeErrorResponse = getObjectFromJson(response.getPayload(), StripeErrorResponse.class);
+            StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(response.getPayload(), StripeErrorResponse.class);
             logger.error("Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
                     request.getChargeExternalId(), stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), response.getStatus());
             GatewayError gatewayError = genericGatewayError(stripeErrorResponse.getError().getMessage());
@@ -172,7 +171,7 @@ public class StripePaymentProvider implements PaymentProvider {
                 return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.ERROR);
             }
 
-            StripeErrorResponse stripeErrorResponse = getObjectFromJson(response.getPayload(), StripeErrorResponse.class);
+            StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(response.getPayload(), StripeErrorResponse.class);
             logger.error("3DS Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
                     request.getChargeExternalId(), stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), response.getStatus());
 
@@ -213,7 +212,7 @@ public class StripePaymentProvider implements PaymentProvider {
                 format("gateway-operations.%s.%s.authorise.create_charge",
                         gatewayAccount.getGatewayName(),
                         gatewayAccount.getType()));
-        final StripeCreateChargeResponse createChargeResponse = getObjectFromJson(jsonResponse, StripeCreateChargeResponse.class);
+        final StripeCreateChargeResponse createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCreateChargeResponse.class);
         return new StripeAuthorisationResponse(createChargeResponse);
     }
 
@@ -225,7 +224,7 @@ public class StripePaymentProvider implements PaymentProvider {
                 format("gateway-operations.%s.%s.authorise.create_charge",
                         gatewayAccount.getGatewayName(),
                         gatewayAccount.getType()));
-        final StripeCreateChargeResponse createChargeResponse = getObjectFromJson(jsonResponse, StripeCreateChargeResponse.class);
+        final StripeCreateChargeResponse createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCreateChargeResponse.class);
         return new StripeAuthorisationResponse(createChargeResponse);
     }
 
@@ -237,7 +236,7 @@ public class StripePaymentProvider implements PaymentProvider {
                 format("gateway-operations.%s.%s.authorise.create_source",
                         gatewayAccount.getGatewayName(),
                         gatewayAccount.getType()));
-        return getObjectFromJson(jsonResponse, StripeSourcesResponse.class);
+        return jsonObjectMapper.getObject(jsonResponse, StripeSourcesResponse.class);
     }
 
     private StripeTokenResponse createToken(CardAuthorisationGatewayRequest request) throws GatewayClientException, GatewayException, DownstreamException {
@@ -248,7 +247,7 @@ public class StripePaymentProvider implements PaymentProvider {
                 format("gateway-operations.%s.%s.authorise.create_token",
                         gatewayAccount.getGatewayName(),
                         gatewayAccount.getType()));
-        return getObjectFromJson(jsonResponse, StripeTokenResponse.class);
+        return jsonObjectMapper.getObject(jsonResponse, StripeTokenResponse.class);
     }
 
     private String postToStripe(String path, String payload, String metricsPrefix) throws GatewayClientException, GatewayException, DownstreamException {
@@ -358,14 +357,5 @@ public class StripePaymentProvider implements PaymentProvider {
         });
 
         return URLEncodedUtils.format(params, UTF_8);
-    }
-    
-    private <T> T getObjectFromJson(String jsonResponse, Class<T> targetType) {
-        try {
-            return objectMapper.readValue(jsonResponse, targetType);
-        } catch (IOException e) {
-            logger.info("There was an exception parsing the payload [{}] into an [{}]", jsonResponse, targetType);
-            throw new WebApplicationException(format("There was an exception parsing the payload [%s] into an [%s]", jsonResponse, targetType));
-        }
     }
 }

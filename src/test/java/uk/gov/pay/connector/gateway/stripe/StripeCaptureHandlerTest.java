@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import javax.ws.rs.core.MediaType;
 import java.net.URI;
@@ -51,7 +52,7 @@ public class StripeCaptureHandlerTest {
     private StripeGatewayClientResponse response;
 
     private CaptureGatewayRequest captureGatewayRequest;
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
 
     @Before
     public void setup() {

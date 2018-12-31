@@ -25,6 +25,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeParamsFor3ds;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
@@ -34,7 +35,6 @@ import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
 
-import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -71,7 +71,7 @@ public class StripePaymentProviderTest {
     private URI tokensUrl;
     private URI sourcesUrl;
     private URI chargesUrl;
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
 
     @Before
     public void before() {
@@ -335,13 +335,5 @@ public class StripePaymentProviderTest {
         gatewayAccount.setCredentials(ImmutableMap.of("stripe_account_id", "stripe_account_id"));
         gatewayAccount.setType(TEST);
         return gatewayAccount;
-    }
-
-    private <T> T getObjectFromJson(String jsonResponse, Class<T> targetType) {
-        try {
-            return objectMapper.readValue(jsonResponse, targetType);
-        } catch (IOException e) {
-            throw new WebApplicationException(format("There was an exception parsing the payload [%s] into an [%s]", jsonResponse, targetType));
-        }
     }
 }

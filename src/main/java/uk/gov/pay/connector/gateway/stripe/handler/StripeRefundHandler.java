@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
@@ -18,9 +17,8 @@ import uk.gov.pay.connector.gateway.stripe.StripeGatewayClientResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import javax.ws.rs.WebApplicationException;
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,12 +36,12 @@ public class StripeRefundHandler {
     private static final Logger logger = LoggerFactory.getLogger(StripeRefundHandler.class);
     private final StripeGatewayClient client;
     private final StripeGatewayConfig stripeGatewayConfig;
-    private ObjectMapper objectMapper;
+    private JsonObjectMapper jsonObjectMapper;
 
-    public StripeRefundHandler(StripeGatewayClient client, StripeGatewayConfig stripeGatewayConfig, ObjectMapper objectMapper) {
+    public StripeRefundHandler(StripeGatewayClient client, StripeGatewayConfig stripeGatewayConfig, JsonObjectMapper jsonObjectMapper) {
         this.client = client;
         this.stripeGatewayConfig = stripeGatewayConfig;
-        this.objectMapper = objectMapper;
+        this.jsonObjectMapper = jsonObjectMapper;
     }
 
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
@@ -58,13 +56,13 @@ public class StripeRefundHandler {
                     ImmutableMap.of(AUTHORIZATION, getAuthHeaderValue(stripeGatewayConfig)),
                     APPLICATION_FORM_URLENCODED_TYPE,
                     format("gateway-operations.%s.%s.refund", gatewayAccount.getGatewayName(), gatewayAccount.getType()));
-            String reference = getObjectFromJson(response, Map.class).get("id").toString();
+            String reference = jsonObjectMapper.getObject(response, Map.class).get("id").toString();
             return fromBaseRefundResponse(StripeRefundResponse.of(reference), GatewayRefundResponse.RefundState.COMPLETE);
 
         } catch (GatewayClientException e) {
 
             StripeGatewayClientResponse response = e.getResponse();
-            StripeErrorResponse.Error error = getObjectFromJson(response.getPayload(), StripeErrorResponse.class).getError();
+            StripeErrorResponse.Error error = jsonObjectMapper.getObject(response.getPayload(), StripeErrorResponse.class).getError();
             logger.error("Refund failed for refund gateway request {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
                     request, error.getCode(), error.getMessage(), response.getStatus());
 
@@ -89,14 +87,5 @@ public class StripeRefundHandler {
         payload.add(new BasicNameValuePair("reverse_transfer", "true"));
 
         return payload;
-    }
-
-    private <T> T getObjectFromJson(String jsonResponse, Class<T> targetType) {
-        try {
-            return objectMapper.readValue(jsonResponse, targetType);
-        } catch (IOException e) {
-            logger.info("There was an exception parsing the payload [{}] into an [{}]", jsonResponse, targetType);
-            throw new WebApplicationException(format("There was an exception parsing the payload [%s] into an [%s]", jsonResponse, targetType));
-        }
     }
 }

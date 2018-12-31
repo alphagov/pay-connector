@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import javax.ws.rs.core.MediaType;
 import java.net.URI;
@@ -43,7 +44,7 @@ public class StripeRefundHandlerTest {
     private StripeRefundHandler refundHandler;
     private RefundGatewayRequest refundRequest;
     private URI refundsUri;
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
 
     @Mock
     private StripeGatewayClient gatewayClient;

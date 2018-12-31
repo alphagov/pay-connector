@@ -29,6 +29,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.TestClientFactory;
 
 import static java.util.UUID.randomUUID;
@@ -56,7 +57,7 @@ public class StripePaymentProviderTest {
     private StripePaymentProvider stripePaymentProvider;
 
     private static final Long chargeAmount = 500L;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
 
     @Before
     public void setup() {
