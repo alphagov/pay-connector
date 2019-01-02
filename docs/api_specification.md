@@ -48,6 +48,7 @@ Content-Type: application/json
 | `type`                   |          | Account type for this provider.                                  | test, live (defaults to test if missing) |
 | `description`            |          | Some useful non-ambiguiuos description about the gateway account | |
 | `analytics_id`           |          | Google Analytics (GA) unique ID for the GOV.UK Pay platform      | |
+| `requires_3ds`           |          | Set to 'true' to enable 3DS for this account                     | true, false (default) |
 
 ### Response example
 
@@ -61,6 +62,7 @@ Location: https://connector.example.com/v1/api/accounts/1
     "type": "live",
     "description": "This is an account for the GOV.UK Pay team",
     "analytics_id": "PAY-GA-123",
+    "requires_3ds": "false"
     "links": [{
         "href": "https://connector.example.com/v1/api/accounts/1",
         "rel" : "self",
@@ -76,6 +78,7 @@ Location: https://connector.example.com/v1/api/accounts/1
 | `gateway_account_id`     | X              | The account Id created by the connector       |
 | `type`                   | X              | Account type for this provider (test/live)    |
 | `description`            | X              | Some useful non-ambiguiuos description about the gateway account |
+| `requires_3ds`           | X              | Indicates if 3DS is enabled or disabled for the account |
 | `analytics_id`           | X              | Google Analytics (GA) unique ID for the GOV.UK Pay platform      |
 | `links`                  | X              | HTTP self link containing resource reference to the account.     |
 

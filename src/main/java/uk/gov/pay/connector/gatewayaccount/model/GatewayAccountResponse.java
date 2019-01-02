@@ -25,10 +25,13 @@ public class GatewayAccountResponse {
 
     @JsonProperty("gateway_account_id")
     private final String gatewayAccountId;
-    
+
+    @JsonProperty("requires_3ds")
+    private final boolean requires3ds;
+
     @JsonProperty("links")
     private final List<Map<String, Object>> links;
-    
+
     @JsonIgnore
     private final URI location;
 
@@ -40,6 +43,7 @@ public class GatewayAccountResponse {
         this.analyticsId = gatewayAccountResponseBuilder.analyticsId;
         this.links = gatewayAccountResponseBuilder.links;
         this.location = gatewayAccountResponseBuilder.location;
+        this.requires3ds = gatewayAccountResponseBuilder.requires3ds;
     }
 
     public String getProviderAccountType() {
@@ -70,6 +74,10 @@ public class GatewayAccountResponse {
         return location;
     }
 
+    public boolean getRequires3ds() {
+        return requires3ds;
+    }
+
     public static class GatewayAccountResponseBuilder {
 
         private String providerAccountType;
@@ -78,6 +86,7 @@ public class GatewayAccountResponse {
         private String description;
         private String analyticsId;
         private String gatewayAccountId;
+        private boolean requires3ds;
         private URI location;
         private List<Map<String, Object>> links;
 
@@ -118,6 +127,11 @@ public class GatewayAccountResponse {
 
         public GatewayAccountResponseBuilder location(URI href) {
             this.location = href;
+            return this;
+        }
+
+        public GatewayAccountResponseBuilder requires3ds(boolean requires3ds) {
+            this.requires3ds = requires3ds;
             return this;
         }
     }
