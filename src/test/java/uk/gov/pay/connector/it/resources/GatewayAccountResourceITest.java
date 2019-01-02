@@ -92,6 +92,16 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
+    public void getAccountShouldReturn3dsSetting() {
+        String gatewayAccountId = createAGatewayAccountFor("stripe", "desc", null, "true");
+        givenSetup()
+                .get(ACCOUNTS_API_URL + gatewayAccountId)
+                .then()
+                .statusCode(200)
+                .body("toggle_3ds", is("true"));
+    }
+
+    @Test
     public void getAccountShouldReturnCorporateCreditCardSurchargeAmountAndCorporateDebitCardSurchargeAmount() {
         int corporateCreditCardSurchargeAmount = 250;
         int corporateDebitCardSurchargeAmount = 50;
@@ -424,7 +434,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void shouldReturn200_whenEmailCollectionModeIsUpdated() throws Exception{
+    public void shouldReturn200_whenEmailCollectionModeIsUpdated() throws Exception {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "email_collection_mode",
@@ -437,7 +447,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void shouldReturn400_whenEmailCollectionModeIsUpdated_withWrongValue() throws Exception{
+    public void shouldReturn400_whenEmailCollectionModeIsUpdated_withWrongValue() throws Exception {
         String gatewayAccountId = createAGatewayAccountFor("worldpay");
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "email_collection_mode",
@@ -499,7 +509,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode());
     }
-    
+
     @Test
     public void allow_web_payments_shouldBeFalseByDefault() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
@@ -508,7 +518,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .then()
                 .body("allow_web_payments", is("false"));
     }
-    
+
     @Test
     public void patchGatewayAccountToAllowWebPayments() throws JsonProcessingException {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
@@ -520,13 +530,13 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(OK.getStatusCode());
-        
+
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("allow_web_payments", is("true"));
     }
-    
+
     @Test
     public void patchGatewayAccount_forCorporateCreditCardSurcharge() throws JsonProcessingException {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");

@@ -56,6 +56,10 @@ public class GatewayAccountResourceTestBase {
     }
 
     String createAGatewayAccountFor(String testProvider, String description, String analyticsId) {
+        return createAGatewayAccountFor(testProvider, description, analyticsId, null);
+    }
+
+    String createAGatewayAccountFor(String testProvider, String description, String analyticsId, String requires_3ds) {
         Map<String, String> payload = Maps.newHashMap();
         payload.put("payment_provider", testProvider);
         if (description != null) {
@@ -63,6 +67,9 @@ public class GatewayAccountResourceTestBase {
         }
         if (analyticsId != null) {
             payload.put("analytics_id", analyticsId);
+        }
+        if (requires_3ds != null) {
+            payload.put("requires_3ds", requires_3ds);
         }
         ValidatableResponse response = givenSetup()
                 .body(toJson(payload))

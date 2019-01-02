@@ -24,6 +24,7 @@ public class GatewayAccountObjectConverter {
         gatewayAccountEntity.setServiceName(gatewayAccountRequest.getServiceName());
         gatewayAccountEntity.setDescription(gatewayAccountRequest.getDescription());
         gatewayAccountEntity.setAnalyticsId(gatewayAccountRequest.getAnalyticsId());
+        gatewayAccountEntity.setRequires3ds(gatewayAccountRequest.getRequires3ds());
 
         gatewayAccountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(gatewayAccountEntity));
         gatewayAccountEntity.addNotification(EmailNotificationType.REFUND_ISSUED, new EmailNotificationEntity(gatewayAccountEntity));
@@ -36,18 +37,16 @@ public class GatewayAccountObjectConverter {
         URI uri = uriInfo.
                 getBaseUriBuilder().
                 path("/v1/api/accounts/{accountId}").build(entity.getId());
-        
-        GatewayAccountResponse gatewayAccountResponse
-                = new GatewayAccountResponse.GatewayAccountResponseBuilder()
+
+        return new GatewayAccountResponse.GatewayAccountResponseBuilder()
                 .gatewayAccountId(entity.getId().toString())
                 .serviceName(entity.getServiceName())
                 .description(entity.getDescription())
                 .analyticsId(entity.getAnalyticsId())
                 .providerAccountType(entity.getType())
+                .requires3ds(entity.isRequires3ds())
                 .location(uri)
                 .generateLinks(uri)
                 .build();
-
-        return gatewayAccountResponse;
     }
 }

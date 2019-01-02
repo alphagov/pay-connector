@@ -31,7 +31,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTestBase {
 
     GatewayAccountDao gatewayAccountDao;
-    
+
     @Before
     public void setUp() {
         super.setUp();
@@ -43,7 +43,7 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
     public void createAGatewayAccount(String provider) {
         createAGatewayAccountFor(provider, "my test service", "analytics");
     }
-    
+
     @Test
     public void createStripeGatewayAccountWithoutCredentials() throws Exception {
         Map<String, Object> payload = ImmutableMap.of(
@@ -64,7 +64,7 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 .body("links[0].rel", is("self"))
                 .body("links[0].method", is("GET"));
     }
-    
+
     @Test
     public void createStripeGatewayAccountWithCredentials() throws Exception {
         Map<String, Object> payload = ImmutableMap.of(
@@ -93,10 +93,10 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
         assertThat(gatewayAccount.isPresent(), is(true));
         assertThat(gatewayAccount.get().getCredentials().get("stripe_account_id"), is("abc"));
     }
-    
+
     @Test
     public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() {
-        String payload = toJson(ImmutableMap.of("name", "test account","type","test"));
+        String payload = toJson(ImmutableMap.of("name", "test account", "type", "test"));
 
         ValidatableResponse response = givenSetup()
                 .body(payload)
@@ -134,6 +134,34 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
 
         assertCorrectCreateResponse(response, LIVE);
         assertGettingAccountReturnsProviderName(response, "worldpay", LIVE);
+    }
+
+    @Test
+    public void createGatewayAccountWithRequires3dsToTrue() {
+        String payload = toJson(ImmutableMap.of("payment_provider", "stripe", "type", LIVE.toString(), "requires_3ds", "true"));
+        ValidatableResponse response = givenSetup()
+                .body(payload)
+                .post(ACCOUNTS_API_URL)
+                .then()
+                .statusCode(201);
+
+        assertCorrectCreateResponse(response, LIVE);
+
+        response.body("requires_3ds", is(true));
+    }
+
+    @Test
+    public void createGatewayAccountWithRequires3dsDefaultsToFalse() {
+        String payload = toJson(ImmutableMap.of("payment_provider", "worldpay", "type", LIVE.toString()));
+        ValidatableResponse response = givenSetup()
+                .body(payload)
+                .post(ACCOUNTS_API_URL)
+                .then()
+                .statusCode(201);
+
+        assertCorrectCreateResponse(response, LIVE);
+
+        response.body("requires_3ds", is(false));
     }
 
     @Test

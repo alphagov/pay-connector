@@ -18,9 +18,11 @@ public class StripeGatewayAccountRequest extends GatewayAccountRequest {
                                        @JsonProperty("service_name") String serviceName,
                                        @JsonProperty("description") String description,
                                        @JsonProperty("analytics_id") String analyticsId,
-                                       @JsonProperty("credentials") StripeCredentials credentials) {
-        
-        super(providerAccountType, paymentProvider, serviceName, description, analyticsId);
+                                       @JsonProperty("credentials") StripeCredentials credentials,
+                                       @JsonProperty("requires_3ds") boolean requires3ds
+    ) {
+
+        super(providerAccountType, paymentProvider, serviceName, description, analyticsId, requires3ds);
         this.credentials = Optional.ofNullable(credentials);
     }
 

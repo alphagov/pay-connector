@@ -35,14 +35,19 @@ public class GatewayAccountRequest {
 
     private String paymentProvider;
     
+    private boolean requires3ds;
+    
     public GatewayAccountRequest(@JsonProperty("type") String providerAccountType,
                                  @JsonProperty("payment_provider") String paymentProvider,
                                  @JsonProperty("service_name") String serviceName,
                                  @JsonProperty("description") String description,
-                                 @JsonProperty("analytics_id") String analyticsId) {
+                                 @JsonProperty("analytics_id") String analyticsId,
+                                 @JsonProperty("requires_3ds") boolean requires3ds
+    ) {
         this.serviceName = serviceName;
         this.description = description;
         this.analyticsId = analyticsId;
+        this.requires3ds = requires3ds;
 
         this.providerAccountType = (providerAccountType == null || providerAccountType.isEmpty()) ?
                 TEST.toString() : providerAccountType;
@@ -51,7 +56,7 @@ public class GatewayAccountRequest {
                 PaymentGatewayName.SANDBOX.getName() : paymentProvider;
 
     }
-    
+
     @ValidationMethod(message = "Unsupported payment provider account type, should be one of (test, live)")
     @JsonIgnore
     public boolean isValidProviderAccountType() {
@@ -91,5 +96,9 @@ public class GatewayAccountRequest {
 
     public Map<String, String> getCredentialsAsMap() {
         return newHashMap();
+    }
+
+    public boolean getRequires3ds() {
+        return requires3ds;
     }
 }
