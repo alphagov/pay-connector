@@ -6,6 +6,8 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Mandatory annotation when using {@link DropwizardJUnitRunner} to configure the
@@ -55,4 +57,6 @@ public @interface DropwizardConfig {
      * @return boolean
      */
     boolean withDockerPostgres() default true;
+    
+    ConfigOverride[] configOverrides() default {};
 }

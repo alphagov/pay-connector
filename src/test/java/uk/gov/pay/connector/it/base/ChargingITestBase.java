@@ -40,6 +40,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
@@ -47,7 +48,10 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
+import static uk.gov.pay.connector.it.util.ChargeUtils.createNewRefund;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
@@ -204,19 +208,7 @@ public class ChargingITestBase {
     }
 
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
-        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId);
-    }
-
-    protected String createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId) {
-        long chargeId = RandomUtils.nextInt();
-        String externalChargeId = "charge-" + chargeId;
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, 6234L, status, "RETURN_URL", gatewayTransactionId);
-        return externalChargeId;
-    }
-
-    protected void createNewRefund(RefundStatus status, long chargeId, String refundExternalId, String reference, long amount) {
-        long refundId = RandomUtils.nextInt();
-        databaseTestHelper.addRefund(refundId, refundExternalId, reference, amount, status.getValue(), chargeId, ZonedDateTime.now());
+        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, databaseTestHelper).toString();
     }
 
     protected RequestSpecification givenSetup() {

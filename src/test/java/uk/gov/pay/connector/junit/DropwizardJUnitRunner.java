@@ -9,6 +9,7 @@ import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 import uk.gov.pay.connector.util.PortFactory;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,12 +58,18 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
     protected Statement classBlock(final RunNotifier notifier) {
         DropwizardConfig dropwizardConfigAnnotation = dropwizardConfigAnnotation();
         List<ConfigOverride> configOverride = newArrayList();
+        
         if (dropwizardConfigAnnotation.withDockerPostgres()) {
             getOrCreate();
             configOverride.add(config("database.url", getDbUri()));
             configOverride.add(config("database.user", getDbUsername()));
             configOverride.add(config("database.password", getDbPassword()));
         }
+        
+        if (dropwizardConfigAnnotation.configOverrides().length > 0) 
+            Arrays.stream(dropwizardConfigAnnotation.configOverrides()).forEach(c -> configOverride.add(config(c.key(), c.value())));
+        
+        
         configOverride.add(config("worldpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/jsp/merchant/xml/paymentService.jsp"));
         configOverride.add(config("smartpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/pal/servlet/soap/Payment"));
         configOverride.add(config("epdq.urls.test", "http://localhost:" + WIREMOCK_PORT + "/epdq"));
