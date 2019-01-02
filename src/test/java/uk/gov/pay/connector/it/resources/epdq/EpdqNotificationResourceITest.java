@@ -8,6 +8,7 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.util.ChargeUtils;
+import uk.gov.pay.connector.it.util.NotificationUtils;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
@@ -27,7 +28,7 @@ import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.StatusCode.EPDQ
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewRefund;
-import static uk.gov.pay.connector.it.util.EpdqNotificationUtils.notificationPayloadForTransaction;
+import static uk.gov.pay.connector.it.util.NotificationUtils.epdqNotificationPayload;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -163,7 +164,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     @Test
     public void shouldFailWhenUnexpectedContentType() {
         given().port(testContext.getPort())
-                .body(notificationPayloadForTransaction("any", "1", "WHATEVER", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE)))
+                .body(epdqNotificationPayload("any", "1", "WHATEVER", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE)))
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH)
                 .then()
@@ -171,11 +172,11 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     }
 
     private ValidatableResponse notifyConnector(String transactionId, String status, String shaOutPassphrase) {
-        return notifyConnector(notificationPayloadForTransaction(transactionId, status, shaOutPassphrase));
+        return notifyConnector(NotificationUtils.epdqNotificationPayload(transactionId, status, shaOutPassphrase));
     }
 
     private ValidatableResponse notifyConnector(String transactionId, String payIdSub, String status, String shaOutPassphrase) {
-        return notifyConnector(notificationPayloadForTransaction(transactionId, payIdSub, status, shaOutPassphrase));
+        return notifyConnector(epdqNotificationPayload(transactionId, payIdSub, status, shaOutPassphrase));
     }
 
     private ValidatableResponse notifyConnector(String payload) {
