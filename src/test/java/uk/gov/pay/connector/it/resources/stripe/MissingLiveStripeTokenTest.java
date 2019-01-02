@@ -8,6 +8,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
@@ -27,7 +28,8 @@ import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlF
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 
 @RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config-without-stripe-live-token.yaml")
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml",
+        configOverrides = {@ConfigOverride(key = "stripe.authTokens.live", value = "${GDS_CONNECTOR_STRIPE_AUTH_LIVE_TOKEN}")})
 public class MissingLiveStripeTokenTest {
 
     @Rule
