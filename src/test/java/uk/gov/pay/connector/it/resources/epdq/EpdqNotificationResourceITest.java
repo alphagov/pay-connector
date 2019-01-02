@@ -1,23 +1,15 @@
 package uk.gov.pay.connector.it.resources.epdq;
 
-import com.google.common.collect.Lists;
 import com.jayway.restassured.response.ValidatableResponse;
 import junitparams.Parameters;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import static com.jayway.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
@@ -33,6 +25,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_
 import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.StatusCode.EPDQ_AUTHORISED;
 import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.StatusCode.EPDQ_AUTHORISED_CANCELLED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
+import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
+import static uk.gov.pay.connector.it.util.ChargeUtils.createNewRefund;
+import static uk.gov.pay.connector.it.util.EpdqNotificationUtils.notificationPayloadForTransaction;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -109,8 +104,9 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
         String refundExternalId = "999999";
         int refundAmount = 1000;
 
-        String externalChargeId = createNewChargeWithRefund(transactionId, refundExternalId, payIdSub, refundAmount);
-
+        ChargeUtils.ExternalChargeId externalChargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper);
+        createNewRefund(REFUND_SUBMITTED, externalChargeId.chargeId, refundExternalId, transactionId + "/" + payIdSub, 1000, databaseTestHelper);
+        
         String response = notifyConnector(transactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
                 .statusCode(200)
                 .extract().body()
@@ -118,15 +114,8 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_EPDQ));
 
-        assertFrontendChargeStatusIs(externalChargeId, CAPTURED.getValue());
-        assertRefundStatus(externalChargeId, refundExternalId, "success", refundAmount);
-    }
-
-    private String createNewChargeWithRefund(String transactionId, String refundExternalId, String payIdSub, long refundAmount) {
-        String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
-        String chargeId = externalChargeId.substring(externalChargeId.indexOf("-") + 1);
-        createNewRefund(REFUND_SUBMITTED, Long.valueOf(chargeId), refundExternalId, transactionId + "/" + payIdSub, refundAmount);
-        return externalChargeId;
+        assertFrontendChargeStatusIs(externalChargeId.toString(), CAPTURED.getValue());
+        assertRefundStatus(externalChargeId.toString(), refundExternalId, "success", refundAmount);
     }
 
     @Test
@@ -172,7 +161,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldFailWhenUnexpectedContentType() throws Exception {
+    public void shouldFailWhenUnexpectedContentType() {
         given().port(testContext.getPort())
                 .body(notificationPayloadForTransaction("any", "1", "WHATEVER", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE)))
                 .contentType(APPLICATION_JSON)
@@ -181,44 +170,19 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
                 .statusCode(415);
     }
 
-    private ValidatableResponse notifyConnector(String transactionId, String status, String shaOutPassphrase) throws Exception {
+    private ValidatableResponse notifyConnector(String transactionId, String status, String shaOutPassphrase) {
         return notifyConnector(notificationPayloadForTransaction(transactionId, status, shaOutPassphrase));
     }
 
-    private ValidatableResponse notifyConnector(String transactionId, String payIdSub, String status, String shaOutPassphrase) throws Exception {
+    private ValidatableResponse notifyConnector(String transactionId, String payIdSub, String status, String shaOutPassphrase) {
         return notifyConnector(notificationPayloadForTransaction(transactionId, payIdSub, status, shaOutPassphrase));
     }
 
-    private ValidatableResponse notifyConnector(String payload) throws Exception {
+    private ValidatableResponse notifyConnector(String payload) {
         return given().port(testContext.getPort())
                 .body(payload)
                 .contentType(APPLICATION_FORM_URLENCODED)
                 .post(NOTIFICATION_PATH)
                 .then();
-    }
-
-    private String notificationPayloadForTransaction(String transactionId, String status, String shaOutPassphrase) throws IOException {
-        List<NameValuePair> payloadParameters = buildPayload(transactionId, status);
-        return notificationPayloadForTransaction(payloadParameters, shaOutPassphrase);
-    }
-
-    private String notificationPayloadForTransaction(String transactionId, String payIdSub, String status, String shaOutPassphrase) throws IOException {
-        List<NameValuePair> payloadParameters = buildPayload(transactionId, status);
-        payloadParameters.add(new BasicNameValuePair("PAYIDSUB", payIdSub));
-        return notificationPayloadForTransaction(payloadParameters, shaOutPassphrase);
-    }
-
-    private List<NameValuePair> buildPayload(String transactionId, String status) {
-        return Lists.newArrayList(
-                new BasicNameValuePair("orderID", "order-id"),
-                new BasicNameValuePair("STATUS", status),
-                new BasicNameValuePair("PAYID", transactionId));
-    }
-
-    private String notificationPayloadForTransaction(List<NameValuePair> payloadParameters, String shaOutPassphrase) {
-        String signature = new EpdqSha512SignatureGenerator().sign(payloadParameters, shaOutPassphrase);
-
-        payloadParameters.add(new BasicNameValuePair("SHASIGN", signature));
-        return URLEncodedUtils.format(payloadParameters, StandardCharsets.UTF_8.toString());
     }
 }

@@ -38,6 +38,7 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildDetailedJsonAuthori
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithFullAddress;
+import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -269,16 +270,16 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         databaseTestHelper.addGatewayAccount(accountId, "sandbox", "description", "",
                 corporateCreditCardSurchargeAmount, 0, 0, 0);
         
-        String chargeId = createNewChargeWithAccountId(ENTERING_CARD_DETAILS, randomId(), accountId);
+        String externalChargeId = createNewChargeWithAccountId(ENTERING_CARD_DETAILS, randomId(), accountId, databaseTestHelper).toString();
         String cardDetails = buildCorporateJsonAuthorisationDetailsFor(PayersCardType.CREDIT);
 
         givenSetup()
                 .body(cardDetails)
-                .post(authoriseChargeUrlFor(chargeId))
+                .post(authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(200);
 
-        assertFrontendChargeCorporateSurchargeAmount(chargeId, AUTHORISATION_SUCCESS.getValue(), corporateCreditCardSurchargeAmount);
+        assertFrontendChargeCorporateSurchargeAmount(externalChargeId, AUTHORISATION_SUCCESS.getValue(), corporateCreditCardSurchargeAmount);
     }
 
     @Test

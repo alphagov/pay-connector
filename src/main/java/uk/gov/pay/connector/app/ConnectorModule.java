@@ -116,6 +116,10 @@ public class ConnectorModule extends AbstractModule {
     @Provides
     @Singleton
     public NotifyClientFactory notifyClientFactory(ConnectorConfiguration connectorConfiguration) {
+        return getNotifyClientFactory(connectorConfiguration);
+    }
+
+    protected NotifyClientFactory getNotifyClientFactory(ConnectorConfiguration connectorConfiguration) {
         return new NotifyClientFactory(connectorConfiguration);
     }
 }

@@ -90,7 +90,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
     @Override
     public void run(ConnectorConfiguration configuration, Environment environment) {
-        final Injector injector = createInjector(environment, new ConnectorModule(configuration, environment));
+        final Injector injector = createInjector(environment, getModule(configuration, environment));
 
         injector.getInstance(PersistenceServiceInitialiser.class);
 
@@ -134,6 +134,10 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         if (configuration.isXrayEnabled())
             Xray.init(environment, "pay-connector", Optional.empty(),"/v1/*");
+    }
+
+    protected ConnectorModule getModule(ConnectorConfiguration configuration, Environment environment) {
+        return new ConnectorModule(configuration, environment);
     }
 
     private Injector createInjector(Environment environment, Module module) {
