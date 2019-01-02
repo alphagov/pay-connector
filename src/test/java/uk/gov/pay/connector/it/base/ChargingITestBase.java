@@ -255,7 +255,7 @@ public class ChargingITestBase {
         return "/v1/frontend/charges/{chargeId}/capture".replace("{chargeId}", chargeId);
     }
 
-    protected static String cancelChargeUrlFor(String accountId, String chargeId) {
+    public static String cancelChargeUrlFor(String accountId, String chargeId) {
         return "/v1/api/accounts/{accountId}/charges/{chargeId}/cancel".replace("{accountId}", accountId).replace("{chargeId}", chargeId);
     }
 

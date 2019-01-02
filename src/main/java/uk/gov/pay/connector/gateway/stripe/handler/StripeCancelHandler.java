@@ -17,9 +17,11 @@ import uk.gov.pay.connector.gateway.stripe.GatewayException;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClientResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
+import uk.gov.pay.connector.gateway.stripe.util.NoLiveTokenConfiguredException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
+import javax.ws.rs.WebApplicationException;
 import java.net.URI;
 
 import static java.lang.String.format;
@@ -57,7 +59,7 @@ public class StripeCancelHandler {
             client.postRequest(
                     URI.create(url),
                     payload,
-                    ImmutableMap.of(AUTHORIZATION, getAuthHeaderValue(stripeGatewayConfig)),
+                    ImmutableMap.of(AUTHORIZATION, getAuthHeaderValue(stripeGatewayConfig, gatewayAccount.isLive())),
                     APPLICATION_FORM_URLENCODED_TYPE,
                     format("gateway-operations.%s.%s.cancel", gatewayAccount.getGatewayName(), gatewayAccount.getType()));
 
@@ -102,6 +104,10 @@ public class StripeCancelHandler {
                     request.getTransactionId(), e.getMessage(), e.getStatusCode(), request.getExternalChargeId());
             GatewayError gatewayError = unexpectedStatusCodeFromGateway("An internal server error occurred while cancelling external charge id: " + request.getExternalChargeId());
             return responseBuilder.withGatewayError(gatewayError).build();
+        } catch (NoLiveTokenConfiguredException e) {
+            logger.error("Could not cancel charge external id {}. Reason: No live token configured for gateway account {}.",
+                    request.getExternalChargeId(), request.getGatewayAccount().getId());
+            throw new WebApplicationException("There was an internal server error cancelling charge external id: " + request.getExternalChargeId());
         }
     }
 }
