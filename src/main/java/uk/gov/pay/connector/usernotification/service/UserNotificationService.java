@@ -14,7 +14,6 @@ import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntit
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
-import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactoryProvider;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.service.notify.NotificationClient;
 import uk.gov.service.notify.NotificationClientException;
@@ -42,15 +41,15 @@ public class UserNotificationService {
     private String refundIssuedEmailTemplateId;
     private boolean emailNotifyGloballyEnabled;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
-    private NotifyClientFactoryProvider notifyClientFactoryProvider;
+    private NotifyClientFactory notifyClientFactory;
     private ExecutorService executorService;
     private final MetricRegistry metricRegistry;
 
     @Inject
-    public UserNotificationService(NotifyClientFactoryProvider notifyClientFactoryProvider, ConnectorConfiguration configuration, Environment environment) {
+    public UserNotificationService(NotifyClientFactory notifyClientFactory, ConnectorConfiguration configuration, Environment environment) {
         readEmailConfig(configuration);
         if (emailNotifyGloballyEnabled) {
-            this.notifyClientFactoryProvider = notifyClientFactoryProvider;
+            this.notifyClientFactory = notifyClientFactory;
             int numberOfThreads = configuration.getExecutorServiceConfig().getThreadsPerCpu() * getRuntime().availableProcessors();
             executorService = Executors.newFixedThreadPool(numberOfThreads);
         }
@@ -96,7 +95,6 @@ public class UserNotificationService {
     private NotifyClientSettings getNotifyClientSettings(EmailNotificationType emailNotificationType, ChargeEntity chargeEntity) {
         // todo introduce type for notify settings instead of Map
         Map<String, String> notifySettings = chargeEntity.getGatewayAccount().getNotifySettings();
-        NotifyClientFactory notifyClientFactory = notifyClientFactoryProvider.clientFactory();
         switch (emailNotificationType) {
             case REFUND_ISSUED:
                 return NotifyClientSettings.of(notifySettings, notifyClientFactory, "refund_issued_template_id", refundIssuedEmailTemplateId);

@@ -18,7 +18,7 @@ import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
-import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactoryProvider;
+import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
 import uk.gov.pay.connector.usernotification.service.EntityBuilder;
 import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -50,7 +50,6 @@ public class ConnectorModule extends AbstractModule {
         bind(GatewayAccountRequestValidator.class).in(Singleton.class);
 
         install(jpaModule(configuration));
-        install(new FactoryModuleBuilder().build(NotifyClientFactoryProvider.class));
         install(new FactoryModuleBuilder().build(GatewayAccountServicesFactory.class));
     }
 
@@ -112,5 +111,11 @@ public class ConnectorModule extends AbstractModule {
     @Singleton
     public JsonObjectMapper jsonObjectMapper() {
         return new JsonObjectMapper(provideObjectMapper());
+    }
+    
+    @Provides
+    @Singleton
+    public NotifyClientFactory notifyClientFactory(ConnectorConfiguration connectorConfiguration) {
+        return new NotifyClientFactory(connectorConfiguration);
     }
 }
