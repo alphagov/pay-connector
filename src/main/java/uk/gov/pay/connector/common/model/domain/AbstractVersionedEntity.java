@@ -11,9 +11,6 @@ public abstract class AbstractVersionedEntity implements Serializable {
     @Column(name = "version")
     private Long version;
 
-    public AbstractVersionedEntity() {
-    }
-
     public Long getVersion() {
         return version;
     }
