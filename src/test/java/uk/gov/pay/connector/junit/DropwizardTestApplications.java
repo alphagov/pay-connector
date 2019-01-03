@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.junit;
 
+import com.google.common.collect.Sets;
 import io.dropwizard.Application;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
@@ -10,6 +11,7 @@ import uk.gov.pay.connector.app.InjectorLookup;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.lang.Runtime.getRuntime;
@@ -27,6 +29,7 @@ import static java.lang.Runtime.getRuntime;
 final class DropwizardTestApplications {
 
     private static final Map<Pair<Class<? extends Application>, String>, DropwizardTestSupport> apps = new ConcurrentHashMap<>();
+    private static Set<ConfigOverride> configs = Sets.newHashSet();
 
     static {
         getRuntime().addShutdownHook(new Thread(() -> {
@@ -38,16 +41,27 @@ final class DropwizardTestApplications {
 
     static Optional<DropwizardTestSupport> createIfNotRunning(Class<? extends Application> appClass, String configClasspathLocation, ConfigOverride... configOverrides) {
         Pair<Class<? extends Application>, String> key = Pair.of(appClass, configClasspathLocation);
+
+        shutdownIfConfigHasChanged(key, configOverrides);
+
         if (!apps.containsKey(key)) {
             String resourceConfigFilePath = ResourceHelpers.resourceFilePath(configClasspathLocation);
             DropwizardTestSupport newApp = new DropwizardTestSupport(appClass,
                     resourceConfigFilePath,
                     configOverrides);
             apps.put(key, newApp);
+            configs = Sets.newHashSet(configOverrides);
             newApp.before();
             return Optional.of(newApp);
         }
         return Optional.empty();
+    }
+
+    private static void shutdownIfConfigHasChanged(Pair<Class<? extends Application>, String> key, ConfigOverride[] configOverrides) {
+        if (!configs.containsAll(Sets.newHashSet(configOverrides)) && apps.containsKey(key)) {
+            apps.get(key).after();
+            apps.clear();
+        }
     }
 
     static TestContext getTestContextOf(Class<? extends Application<?>> appClass, String configClasspathLocation) {
