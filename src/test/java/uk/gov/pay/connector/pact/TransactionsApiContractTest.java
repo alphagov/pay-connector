@@ -32,6 +32,10 @@ import java.util.concurrent.ThreadLocalRandom;
         authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"))
 public class TransactionsApiContractTest {
 
+    static {
+        System.setProperty("pact.verifier.publishResults", "true");
+    }
+    
     @ClassRule
     public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
@@ -43,6 +47,7 @@ public class TransactionsApiContractTest {
     public static void setUp() {
         target = new HttpTarget(app.getLocalPort());
         dbHelper = app.getDatabaseTestHelper();
+        
         System.clearProperty("https.proxyHost");
         System.clearProperty("https.proxyPort");
     }
