@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.usernotification.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.gateway.smartpay.auth.BasicAuthUser;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

@@ -3,8 +3,8 @@ package uk.gov.pay.connector.usernotification.model.domain;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -39,23 +39,20 @@ public class EmailNotificationEntity extends AbstractVersionedEntity {
     @Column(name = "type", insertable = false, updatable = false)
     @Enumerated(EnumType.STRING)
     private EmailNotificationType type;
-    
+
     @OneToOne
     @JoinColumn(name = "account_id", nullable = false)
     @JsonBackReference
     private GatewayAccountEntity accountEntity;
 
-    public EmailNotificationEntity () {
+    public EmailNotificationEntity() {
+        // for JPA
     }
 
     public EmailNotificationEntity(GatewayAccountEntity gatewayAccount, String templateBody, boolean enabled) {
         this.accountEntity = gatewayAccount;
         this.templateBody = templateBody;
         this.enabled = enabled;
-    }
-
-    public EmailNotificationEntity(GatewayAccountEntity gatewayAccount, String templateBody) {
-        this(gatewayAccount, templateBody, true);
     }
 
     public EmailNotificationEntity(GatewayAccountEntity gatewayAccount) {

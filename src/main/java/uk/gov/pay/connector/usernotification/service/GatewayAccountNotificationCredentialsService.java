@@ -14,24 +14,22 @@ public class GatewayAccountNotificationCredentialsService {
 
     private static final int MINIMUM_PASSWORD_LENGTH = 10;
     private final GatewayAccountDao gatewayDao;
-    private final EntityBuilder entityBuilder;
     private final HashUtil hashUtil;
 
     @Inject
     public GatewayAccountNotificationCredentialsService(GatewayAccountDao gatewayDao,
-                                                        EntityBuilder entityBuilder, HashUtil hashUtil) {
+                                                        HashUtil hashUtil) {
         this.gatewayDao = gatewayDao;
-        this.entityBuilder = entityBuilder;
         this.hashUtil = hashUtil;
     }
 
-    public void setCredentialsForAccount(Map<String,String> notificationCredentials, GatewayAccountEntity gatewayAccountEntity) throws CredentialsException {
+    public void setCredentialsForAccount(Map<String, String> notificationCredentials, GatewayAccountEntity gatewayAccountEntity) throws CredentialsException {
         if (notificationCredentials.get("password").length() < MINIMUM_PASSWORD_LENGTH) {
             throw new CredentialsException("Invalid password length");
         }
 
         NotificationCredentials existingCredentials = Optional.ofNullable(gatewayAccountEntity.getNotificationCredentials())
-                    .orElseGet(() -> entityBuilder.newNotificationCredentials(gatewayAccountEntity));
+                .orElseGet(() -> new NotificationCredentials(gatewayAccountEntity));
 
         existingCredentials.setUserName(notificationCredentials.get("username"));
         existingCredentials.setPassword(hashUtil.hash(notificationCredentials.get("password")));

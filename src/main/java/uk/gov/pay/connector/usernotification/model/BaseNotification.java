@@ -14,8 +14,8 @@ public class BaseNotification<T> implements Notification<T> {
     private ZonedDateTime gatewayEventDate;
     private List<NameValuePair> payload;
 
-    public BaseNotification(String transactionId, String reference, T status, ZonedDateTime gatewayEventDate,
-                            List<NameValuePair> payload) {
+    BaseNotification(String transactionId, String reference, T status, ZonedDateTime gatewayEventDate,
+                     List<NameValuePair> payload) {
         this.reference = reference;
         this.transactionId = transactionId;
         this.status = status;

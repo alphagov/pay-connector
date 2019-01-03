@@ -35,13 +35,14 @@ public class EmailNotificationResource {
     private static final Logger logger = LoggerFactory.getLogger(EmailNotificationResource.class);
 
     public static final String EMAIL_NOTIFICATION_TEMPLATE_BODY = "template_body";
-    public static final String EMAIL_NOTIFICATION_ENABLED = "enabled";
+    private static final String EMAIL_NOTIFICATION_ENABLED = "enabled";
 
-    public static final Set<String> VALID_PATHS = ImmutableSet.of(
-            format("/%s/%s", EmailNotificationType.PAYMENT_CONFIRMED.toString().toLowerCase(), EMAIL_NOTIFICATION_TEMPLATE_BODY),
-            format("/%s/%s", EmailNotificationType.PAYMENT_CONFIRMED.toString().toLowerCase(), EMAIL_NOTIFICATION_ENABLED),
-            format("/%s/%s", EmailNotificationType.REFUND_ISSUED.toString().toLowerCase(), EMAIL_NOTIFICATION_TEMPLATE_BODY),
-            format("/%s/%s", EmailNotificationType.REFUND_ISSUED.toString().toLowerCase(), EMAIL_NOTIFICATION_ENABLED)
+    private static final String FORMATTER = "/%s/%s";
+    private static final Set<String> VALID_PATHS = ImmutableSet.of(
+            format(FORMATTER, EmailNotificationType.PAYMENT_CONFIRMED.toString().toLowerCase(), EMAIL_NOTIFICATION_TEMPLATE_BODY),
+            format(FORMATTER, EmailNotificationType.PAYMENT_CONFIRMED.toString().toLowerCase(), EMAIL_NOTIFICATION_ENABLED),
+            format(FORMATTER, EmailNotificationType.REFUND_ISSUED.toString().toLowerCase(), EMAIL_NOTIFICATION_TEMPLATE_BODY),
+            format(FORMATTER, EmailNotificationType.REFUND_ISSUED.toString().toLowerCase(), EMAIL_NOTIFICATION_ENABLED)
     );
     private final GatewayAccountDao gatewayDao;
 
@@ -86,7 +87,7 @@ public class EmailNotificationResource {
         List<String> pathTokens = emailPatchRequest.getPathTokens();
         return new NotificationPatchInfo(EmailNotificationType.fromString(pathTokens.get(0)), pathTokens.get(1), emailPatchRequest.getValue());
     }
-    
+
     private void patch(EmailNotificationEntity emailNotificationEntity, NotificationPatchInfo patchInfo) {
         switch (patchInfo.getPath()) {
             case EMAIL_NOTIFICATION_ENABLED:
@@ -97,11 +98,11 @@ public class EmailNotificationResource {
                 break;
         }
     }
-    
+
     private EmailNotificationEntity newDisabledEmailNotificationEntityWithNoTemplate(GatewayAccountEntity gatewayAccount, EmailNotificationType type) {
         EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(gatewayAccount, null, false);
         gatewayAccount.addNotification(type, emailNotificationEntity);
-        return  emailNotificationEntity;
+        return emailNotificationEntity;
     }
 
     private class NotificationPatchInfo {
@@ -110,7 +111,7 @@ public class EmailNotificationResource {
         private final String path;
         private final String value;
 
-        public NotificationPatchInfo(EmailNotificationType emailNotificationType, String path, String value) {
+        NotificationPatchInfo(EmailNotificationType emailNotificationType, String path, String value) {
             this.emailNotificationType = emailNotificationType;
             this.path = path;
             this.value = value;
@@ -120,7 +121,7 @@ public class EmailNotificationResource {
             return value;
         }
 
-        public EmailNotificationType getEmailNotificationType() {
+        EmailNotificationType getEmailNotificationType() {
             return emailNotificationType;
         }
 
