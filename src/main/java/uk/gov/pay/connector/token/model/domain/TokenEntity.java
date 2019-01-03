@@ -31,9 +31,10 @@ public class TokenEntity extends AbstractVersionedEntity {
 
     @ManyToOne
     @JoinColumn(name = "charge_id", nullable = false)
-    ChargeEntity chargeEntity;
+    private ChargeEntity chargeEntity;
 
     public TokenEntity() {
+        // for JPA
     }
 
     public static TokenEntity generateNewTokenFor(ChargeEntity chargeEntity) {

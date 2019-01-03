@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.token.dao.TokenDao;
+import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
@@ -21,7 +22,6 @@ import java.util.Optional;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.ResponseUtil.noContentResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
-import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 
 @Path("/")
 public class SecurityTokensResource {
@@ -44,7 +44,7 @@ public class SecurityTokensResource {
         logger.debug("get charge for token {}", chargeTokenId);
         Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId(chargeTokenId);
         return chargeOpt
-                .map(charge -> successResponseWithEntity(charge))
+                .map(ResponseUtil::successResponseWithEntity)
                 .orElseGet(() -> notFoundResponse("Token invalid!"));
     }
 
