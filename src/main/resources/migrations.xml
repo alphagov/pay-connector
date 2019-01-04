@@ -957,4 +957,10 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="Enable 3DS for all Stripe gateway accounts" author="">
+        <sql>
+            update gateway_accounts set requires_3ds = true where payment_provider = 'stripe';
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
