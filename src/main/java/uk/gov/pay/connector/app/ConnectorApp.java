@@ -55,7 +55,6 @@ import uk.gov.pay.connector.util.XrayUtils;
 import uk.gov.pay.connector.webhook.resource.NotificationResource;
 
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSocketFactory;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -130,7 +129,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
         environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
 
-        setGlobalProxies(configuration);
+        HttpsURLConnection.setDefaultSSLSocketFactory(new TrustingSSLSocketFactory());
 
         if (configuration.isXrayEnabled())
             Xray.init(environment, "pay-connector", Optional.empty(),"/v1/*");
@@ -168,14 +167,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
     public static void main(String[] args) throws Exception {
         new ConnectorApp().run(args);
-    }
-
-    private void setGlobalProxies(ConnectorConfiguration configuration) {
-        SSLSocketFactory socketFactory = new TrustingSSLSocketFactory();
-        HttpsURLConnection.setDefaultSSLSocketFactory(socketFactory);
-
-        System.setProperty("https.proxyHost", configuration.getClientConfiguration().getProxyConfiguration().getHost());
-        System.setProperty("https.proxyPort", configuration.getClientConfiguration().getProxyConfiguration().getPort().toString());
     }
 
     private void setupSchedulers(ConnectorConfiguration configuration, Environment environment, Injector injector) {

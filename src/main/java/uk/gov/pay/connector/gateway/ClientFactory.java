@@ -4,7 +4,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.httpclient.InstrumentedHttpClientConnectionManager;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.client.JerseyClientConfiguration;
-import io.dropwizard.client.proxy.ProxyConfiguration;
 import io.dropwizard.setup.Environment;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.HttpClientConnectionManager;
@@ -14,9 +13,7 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.conn.ManagedHttpClientConnectionFactory;
 import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.glassfish.jersey.SslConfigurator;
-import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
-import org.glassfish.jersey.client.ClientProperties;
 import uk.gov.pay.commons.utils.xray.XRayHttpClientFilter;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.OperationOverrides;
@@ -65,11 +62,6 @@ public class ClientFactory {
             defaultClientBuilder
                     .withProperty(READ_TIMEOUT, getDefaultTimeout())
                     .withProperty(CONNECTION_MANAGER, createConnectionManager(gateway.getName(), "all", metricRegistry));
-        }
-
-        if (conf.getCustomJerseyClient().isProxyEnabled()) {
-            defaultClientBuilder
-                    .withProperty(ClientProperties.PROXY_URI, proxyUrl(clientConfiguration.getProxyConfiguration()));
         }
 
         Client client = defaultClientBuilder.build(gateway.getName());
@@ -125,29 +117,5 @@ public class ClientFactory {
                 format("%s.%s", gatewayName, operation)
         );
     }
-
-    /**
-     * Constructs the proxy URL required by JerseyClient property ClientProperties.PROXY_URI
-     * <p>
-     * <b>NOTE:</b> The reason for doing this is, Dropwizard jersey client doesn't seem to work as per
-     * http://www.dropwizard.io/0.9.2/docs/manual/configuration.html#proxy where just setting the proxy config in
-     * client configuration is only needed. But after several test, that doesn't seem to work, but by setting the
-     * native jersey proxy config as per this implementation seems to work
-     * <p>
-     * similar problem discussed in here -> https://groups.google.com/forum/#!topic/dropwizard-user/AbDSYfLB17M
-     * </p>
-     * </p>
-     *
-     * @param proxyConfig from config.yml
-     * @return proxy server URL
-     */
-    private String proxyUrl(ProxyConfiguration proxyConfig) {
-        return format("%s://%s:%s",
-                proxyConfig.getScheme(),
-                proxyConfig.getHost(),
-                proxyConfig.getPort()
-        );
-    }
-
 }
 

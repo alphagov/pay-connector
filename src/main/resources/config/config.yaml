@@ -119,12 +119,6 @@ jerseyClient:
   retries: 0
   userAgent: connector
   gzipEnabledForRequests: false
-  proxy:
-    host: ${HTTP_PROXY_HOST:-0}
-    port: ${HTTP_PROXY_PORT:-0}
-    scheme : ${HTTP_PROXY_SCHEME:-https}
-    nonProxyHosts:
-      - localhost
 
 customJerseyClient:
   # Sets the read timeout to a specified timeout, in
@@ -134,7 +128,6 @@ customJerseyClient:
   # for read, a java.net.SocketTimeoutException is raised. A
   # timeout of zero is interpreted as an infinite timeout.
   readTimeout: 90000ms
-  enableProxy: ${HTTP_PROXY_ENABLED}
 
 database:
   driverClass: org.postgresql.Driver

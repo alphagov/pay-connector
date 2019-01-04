@@ -45,8 +45,6 @@ public class TransactionsApiContractTest {
         target = new HttpTarget(app.getLocalPort());
         dbHelper = app.getDatabaseTestHelper();
 
-        System.clearProperty("https.proxyHost");
-        System.clearProperty("https.proxyPort");
     }
 
     @Before

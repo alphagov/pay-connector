@@ -76,16 +76,9 @@ jerseyClient:
   retries: 0
   userAgent: connector
   gzipEnabledForRequests: false
-  proxy:
-      host: localhost
-      port: 1234
-      scheme : http
-      nonProxyHosts:
-        - localhost
 
 customJerseyClient:
   readTimeout: 50000ms
-  enableProxy: false
 
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
