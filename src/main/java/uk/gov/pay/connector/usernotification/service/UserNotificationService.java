@@ -25,8 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -41,7 +39,6 @@ public class UserNotificationService {
     private boolean emailNotifyGloballyEnabled;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private NotifyClientFactory notifyClientFactory;
-    private ExecutorService executorService;
     private final MetricRegistry metricRegistry;
 
     @Inject
@@ -49,8 +46,6 @@ public class UserNotificationService {
         readEmailConfig(configuration);
         if (emailNotifyGloballyEnabled) {
             this.notifyClientFactory = notifyClientFactory;
-            int numberOfThreads = 1000; //TODO fix this
-            executorService = Executors.newFixedThreadPool(numberOfThreads);
         }
         this.metricRegistry = environment.metrics();
     }
@@ -70,7 +65,7 @@ public class UserNotificationService {
         if (emailNotifyGloballyEnabled && isEmailEnabled) {
             String emailAddress = chargeEntity.getEmail();
             Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
-            return executorService.submit(() -> {
+            return CompletableFuture.supplyAsync(() -> {
                 try {
                     NotifyClientSettings notifyClientSettings = getNotifyClientSettings(emailNotificationType, chargeEntity);
                     logger.info("Sending {} email, charge_external_id={}", emailNotificationType, chargeEntity.getExternalId());
