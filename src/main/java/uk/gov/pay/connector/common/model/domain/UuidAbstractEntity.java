@@ -7,30 +7,16 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
-import javax.persistence.Version;
-import java.io.Serializable;
 import java.util.UUID;
 
 @MappedSuperclass
-public abstract class UuidAbstractEntity implements Serializable {
-
-    public UuidAbstractEntity() {
-        //for jpa
-    }
+public abstract class UuidAbstractEntity extends AbstractVersionedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "uuid")
     @JsonProperty
     private UUID id;
-
-    @Version
-    @Column(name = "version")
-    private Long version;
-
-    public Long getVersion() {
-        return version;
-    }
 
     public UUID getId() {
         return id;

@@ -13,7 +13,7 @@ public class EvaluatedRefundStatusNotification<T> implements EvaluatedNotificati
     private final Notification<T> notification;
     private final RefundStatus refundStatus;
 
-    public EvaluatedRefundStatusNotification(Notification<T> notification, RefundStatus refundStatus) {
+    EvaluatedRefundStatusNotification(Notification<T> notification, RefundStatus refundStatus) {
         this.notification = notification;
         this.refundStatus = refundStatus;
     }

@@ -117,7 +117,7 @@ public class UserNotificationService {
             return client;
         }
 
-        public String getTemplateId() {
+        String getTemplateId() {
             return templateId;
         }
 

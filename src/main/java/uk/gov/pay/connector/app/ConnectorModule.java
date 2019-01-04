@@ -19,7 +19,6 @@ import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidat
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
-import uk.gov.pay.connector.usernotification.service.EntityBuilder;
 import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.XrayUtils;
@@ -44,7 +43,6 @@ public class ConnectorModule extends AbstractModule {
         bind(CardExecutorService.class).in(Singleton.class);
         bind(ApplePayDecrypter.class).in(Singleton.class);
         bind(PaymentProviders.class).in(Singleton.class);
-        bind(EntityBuilder.class);
         bind(HashUtil.class);
         bind(RequestValidator.class);
         bind(GatewayAccountRequestValidator.class).in(Singleton.class);
@@ -68,7 +66,7 @@ public class ConnectorModule extends AbstractModule {
         properties.put("eclipselink.query-results-cache", jpaConfiguration.getCacheSharedDefault());
         properties.put("eclipselink.cache.shared.default", jpaConfiguration.getCacheSharedDefault());
         properties.put("eclipselink.ddl-generation.output-mode", jpaConfiguration.getDdlGenerationOutputMode());
-        
+
         if (configuration.isXrayEnabled()) {
             properties.put("eclipselink.session.customizer", "uk.gov.pay.connector.util.ConnectorSessionCustomiserWithXrayProfiling");
         } else {
@@ -91,28 +89,28 @@ public class ConnectorModule extends AbstractModule {
     public XrayUtils xrayUtils(ConnectorConfiguration connectorConfiguration) {
         return new XrayUtils(connectorConfiguration.isXrayEnabled());
     }
-    
+
     @Provides
     public SignatureGenerator signatureGenerator() {
         return new EpdqSha512SignatureGenerator();
     }
-    
+
     @Provides
     public StripeGatewayClient stripeGatewayClient(GatewayClientFactory gatewayClientFactory) {
         return gatewayClientFactory.createStripeGatewayClient(STRIPE, environment.metrics());
     }
-    
+
     @Provides
     public StripeGatewayConfig stripeGatewayConfig(ConnectorConfiguration connectorConfiguration) {
         return connectorConfiguration.getStripeConfig();
     }
-    
+
     @Provides
     @Singleton
     public JsonObjectMapper jsonObjectMapper() {
         return new JsonObjectMapper(provideObjectMapper());
     }
-    
+
     @Provides
     @Singleton
     public NotifyClientFactory notifyClientFactory(ConnectorConfiguration connectorConfiguration) {

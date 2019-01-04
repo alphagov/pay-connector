@@ -12,7 +12,7 @@ public class EvaluatedChargeStatusNotification<T> implements EvaluatedNotificati
     private final Notification<T> notification;
     private final ChargeStatus chargeStatus;
 
-    public EvaluatedChargeStatusNotification(Notification<T> notification, ChargeStatus chargeStatus) {
+    EvaluatedChargeStatusNotification(Notification<T> notification, ChargeStatus chargeStatus) {
         this.notification = notification;
         this.chargeStatus = chargeStatus;
     }
