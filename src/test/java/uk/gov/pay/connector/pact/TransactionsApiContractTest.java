@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.pact;
 
+import au.com.dius.pact.provider.junit.PactRunner;
 import au.com.dius.pact.provider.junit.Provider;
 import au.com.dius.pact.provider.junit.State;
 import au.com.dius.pact.provider.junit.loader.PactBroker;
@@ -26,13 +27,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
-@RunWith(PayPactRunner.class)
+@RunWith(PactRunner.class)
 @Provider("connector")
 @PactBroker(scheme = "https", host = "pact-broker-test.cloudapps.digital", tags = {"${PACT_CONSUMER_TAG}", "test", "staging", "production"},
         authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"))
 public class TransactionsApiContractTest {
-
-    private long chargeIdCounter;
 
     @ClassRule
     public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -45,6 +44,9 @@ public class TransactionsApiContractTest {
     public static void setUp() {
         target = new HttpTarget(app.getLocalPort());
         dbHelper = app.getDatabaseTestHelper();
+
+        System.clearProperty("https.proxyHost");
+        System.clearProperty("https.proxyPort");
     }
 
     @Before
