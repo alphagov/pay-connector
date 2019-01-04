@@ -1,10 +1,8 @@
 package uk.gov.pay.connector.it.gatewayclient;
 
 import com.codahale.metrics.MetricRegistry;
-import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
-import org.glassfish.jersey.client.ClientProperties;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.any;
@@ -33,8 +30,6 @@ import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 import static org.mockserver.socket.PortFactory.findFreePort;
-import static org.mockserver.verify.VerificationTimes.exactly;
-import static org.mockserver.verify.VerificationTimes.once;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -61,46 +56,6 @@ public class ClientFactoryTest {
         proxy.stop();
         mockServer.stop();
         app.after();
-    }
-
-    @Test
-    public void shouldProxyRequestToTargetServer_whenProxyEnabled() throws Exception {
-        app = startAppWithProxy(true);
-
-        mockServer
-                .when(request().withMethod("GET").withPath("/hello"))
-                .respond(response("world").withStatusCode(200));
-
-        when(mockMetricRegistry.register(any(), any())).thenReturn(null);
-        Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient(WORLDPAY, AUTHORISE, mockMetricRegistry);
-
-        client.target(serverUrl).path("hello").request().get();
-
-        mockServer.verify(request().withPath("/hello"), once());
-        assertEquals(90000, client.getConfiguration().getProperty(ClientProperties.READ_TIMEOUT));
-
-        proxy.verify(request().withPath("/hello"), once());
-    }
-
-    @Test
-    public void shouldNotProxyRequestToTargetServer_whenProxyDisabled() throws Exception {
-        app = startAppWithProxy(false);
-
-        mockServer
-                .when(request().withMethod("GET").withPath("/hello"))
-                .respond(response("world").withStatusCode(200));
-        when(mockMetricRegistry.register(any(), any())).thenReturn(null);
-
-        Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
-                .createWithDropwizardClient(WORLDPAY, AUTHORISE, mockMetricRegistry);
-
-        client.target(serverUrl).path("hello").request().get();
-
-        mockServer.verify(request().withPath("/hello"), once());
-        assertEquals(90000, client.getConfiguration().getProperty(ClientProperties.READ_TIMEOUT));
-
-        proxy.verify(request().withPath("/hello"), exactly(0));
     }
 
     @Test
@@ -242,14 +197,5 @@ public class ClientFactoryTest {
             assertThat(actualDuration, lessThan(expectedTimeout));
         }
 
-    }
-
-    private DropwizardTestSupport<ConnectorConfiguration> startAppWithProxy(boolean proxyEnabled) {
-        DropwizardTestSupport<ConnectorConfiguration> app = new DropwizardTestSupport<>(ConnectorApp.class,
-                ResourceHelpers.resourceFilePath("config/test-it-config.yaml"),
-                ConfigOverride.config("customJerseyClient.enableProxy", String.valueOf(proxyEnabled)),
-                ConfigOverride.config("jerseyClient.proxy.port", String.valueOf(proxyPort)));
-        app.before();
-        return app;
     }
 }
