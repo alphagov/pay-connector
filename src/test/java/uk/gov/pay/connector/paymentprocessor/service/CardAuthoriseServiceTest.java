@@ -1,10 +1,7 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
-import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,8 +20,8 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
+import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
@@ -34,13 +31,11 @@ import uk.gov.pay.connector.model.domain.AddressFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
+import uk.gov.pay.connector.util.XrayUtils;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static java.lang.String.format;
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -49,7 +44,6 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -69,8 +63,6 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.MALFORMED_RESPONSE_RE
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionTimeoutException;
 import static uk.gov.pay.connector.gateway.model.GatewayError.malformedResponseReceivedFromGateway;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
-import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardAuthoriseServiceTest extends CardServiceTest {
@@ -83,9 +75,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private final ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
 
     @Mock
-    private CardExecutorService mockExecutorService;
-
-    @Mock
     private Environment mockEnvironment;
 
     @Mock
@@ -95,19 +84,19 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Before
     public void setUpCardAuthorisationService() {
-        mockMetricRegistry = mock(MetricRegistry.class);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(histogram);
 
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null);
 
-        CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
+        CardAuthorisationExecutor cardAuthorisationExecutor = new CardAuthorisationExecutor(mockEnvironment, mock(XrayUtils.class));
         cardAuthorisationService = new CardAuthoriseService(
                 mockedCardTypeDao,
                 mockedProviders,
-                cardAuthoriseBaseService,
+                cardAuthorisationExecutor,
                 chargeService,
                 mockEnvironment);
     }
@@ -115,11 +104,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Before
     public void configureChargeDaoMock() {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-    }
-
-    public void mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue() {
-        doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
-                .when(mockExecutorService).execute(any(Supplier.class));
     }
 
     private GatewayResponse mockAuthResponse(String TRANSACTION_ID, AuthoriseStatus authoriseStatus, String errorCode) {
@@ -360,7 +344,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         String generatedTransactionId = "generated-transaction-id";
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(generatedTransactionId));
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         when(mockedPaymentProvider.authorise(any())).thenThrow(RuntimeException.class);
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -395,8 +378,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedCardTypeDao.findByBrand(authCardDetails.getCardBrand())).thenReturn(newArrayList(cardTypeEntity));
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-
         try {
             cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
             fail("Expected test to fail with ConflictRuntimeException due to configuration conflicting in 3ds requirements");
@@ -424,7 +405,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void doAuthorise_shouldRespondAuthorisationCancelled_whenProviderAuthorisationIsCancelled() {
 
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.CANCELLED, null);
         providerWillRespondToAuthoriseWith(authResponse);
 
@@ -551,27 +531,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getProviderSessionId(), is(nullValue()));
     }
 
-    @Test
-    public void doAuthorise_shouldThrowAnOperationAlreadyInProgressRuntimeException_whenTimeout() {
-
-        when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-
-        try {
-            cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
-            fail("Exception not thrown.");
-        } catch (OperationAlreadyInProgressRuntimeException e) {
-            Map<String, String> expectedMessage = ImmutableMap.of("message", format("Authorisation for charge already in progress, %s", charge.getExternalId()));
-            assertThat(e.getResponse().getEntity(), is(expectedMessage));
-        }
-    }
-
     @Test(expected = ChargeNotFoundRuntimeException.class)
     public void doAuthorise_shouldThrowAChargeNotFoundRuntimeException_whenChargeDoesNotExist() {
 
         String chargeId = "jgk3erq5sv2i4cds6qqa9f1a8a";
-
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
         when(mockedChargeDao.findByExternalId(chargeId))
                 .thenReturn(Optional.empty());
@@ -585,7 +548,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.AUTHORISATION_READY);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
@@ -598,7 +560,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.CREATED);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
@@ -642,13 +603,11 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     private void providerWillAuthorise() {
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null);
         providerWillRespondToAuthoriseWith(authResponse);
     }
 
     private void worldpayProviderWillRequire3ds(String sessionIdentifier) {
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         WorldpayOrderStatusResponse worldpayResponse = new WorldpayOrderStatusResponse();
         worldpayResponse.set3dsPaRequest(PA_REQ_VALUE_FROM_PROVIDER);
         worldpayResponse.set3dsIssuerUrl(ISSUER_URL_FROM_PROVIDER);
@@ -664,7 +623,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     private void epdqProviderWillRequire3ds() {
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         EpdqAuthorisationResponse epdqResponse = new EpdqAuthorisationResponse();
         epdqResponse.setHtmlAnswer("Base64encodedHtmlForm");
         epdqResponse.setStatus("46");
@@ -680,19 +638,16 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     private void providerWillReject() {
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.REJECTED, null);
         providerWillRespondToAuthoriseWith(authResponse);
     }
 
     private void providerWillError() {
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         GatewayResponse authResponse = mockAuthResponse(null, AuthoriseStatus.ERROR, "error-code");
         providerWillRespondToAuthoriseWith(authResponse);
     }
 
     private void providerWillRespondWithError(GatewayError gatewayError) {
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         setupPaymentProviderMock(gatewayError);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);

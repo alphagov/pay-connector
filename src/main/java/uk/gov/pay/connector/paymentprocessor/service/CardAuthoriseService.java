@@ -32,7 +32,7 @@ import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.
 public class CardAuthoriseService {
 
     private final CardTypeDao cardTypeDao;
-    private final CardAuthoriseBaseService cardAuthoriseBaseService;
+    private final CardAuthorisationExecutor cardAuthorisationExecutor;
     private final ChargeService chargeService;
     private final PaymentProviders providers;
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -41,18 +41,18 @@ public class CardAuthoriseService {
     @Inject
     public CardAuthoriseService(CardTypeDao cardTypeDao,
                                 PaymentProviders providers,
-                                CardAuthoriseBaseService cardAuthoriseBaseService,
+                                CardAuthorisationExecutor cardAuthorisationExecutor,
                                 ChargeService chargeService,
                                 Environment environment) {
         this.providers = providers;
-        this.cardAuthoriseBaseService = cardAuthoriseBaseService;
+        this.cardAuthorisationExecutor = cardAuthorisationExecutor;
         this.chargeService = chargeService;
         this.metricRegistry = environment.metrics();
         this.cardTypeDao = cardTypeDao;
     }
 
     public AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
-        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
+        return cardAuthorisationExecutor.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
             GatewayResponse<BaseAuthoriseResponse> operationResponse = authorise(charge, authCardDetails);
             processGatewayAuthorisationResponse(
@@ -108,8 +108,8 @@ public class CardAuthoriseService {
             AuthCardDetails authCardDetails,
             GatewayResponse<BaseAuthoriseResponse> operationResponse) {
 
-        Optional<String> transactionId = cardAuthoriseBaseService.extractTransactionId(chargeExternalId, operationResponse);
-        ChargeStatus status = cardAuthoriseBaseService.extractChargeStatus(operationResponse.getBaseResponse(), operationResponse.getGatewayError());
+        Optional<String> transactionId = cardAuthorisationExecutor.extractTransactionId(chargeExternalId, operationResponse);
+        ChargeStatus status = cardAuthorisationExecutor.extractChargeStatus(operationResponse.getBaseResponse(), operationResponse.getGatewayError());
 
         ChargeEntity updatedCharge = chargeService.updateChargePostAuthorisation(
                 chargeExternalId,

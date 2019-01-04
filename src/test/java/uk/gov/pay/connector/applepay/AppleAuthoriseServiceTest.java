@@ -1,10 +1,7 @@
 package uk.gov.pay.connector.applepay;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
-import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,23 +19,18 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
-import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
-import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
+import uk.gov.pay.connector.paymentprocessor.service.CardAuthorisationExecutor;
 import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
+import uk.gov.pay.connector.util.XrayUtils;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
-import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -55,8 +47,6 @@ import static uk.gov.pay.connector.gateway.model.GatewayError.malformedResponseR
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
-import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
-import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AppleAuthoriseServiceTest extends CardServiceTest {
@@ -65,9 +55,6 @@ public class AppleAuthoriseServiceTest extends CardServiceTest {
     private static final String TRANSACTION_ID = "transaction-id";
 
     private final ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
-
-    @Mock
-    private CardExecutorService mockExecutorService;
 
     @Mock
     private Environment mockEnvironment;
@@ -85,7 +72,7 @@ public class AppleAuthoriseServiceTest extends CardServiceTest {
 
     @Before
     public void setUpAppleAuthorisationService() {
-        mockMetricRegistry = mock(MetricRegistry.class);
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(histogram);
         when(mockedProviders.byName(any())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
@@ -94,13 +81,13 @@ public class AppleAuthoriseServiceTest extends CardServiceTest {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
 
-        CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
+        CardAuthorisationExecutor cardAuthorisationExecutor = new CardAuthorisationExecutor(mockEnvironment, mock(XrayUtils.class));
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null);
         appleAuthoriseService = new AppleAuthoriseService(
                 mockedProviders,
                 chargeService,
-                cardAuthoriseBaseService,
+                cardAuthorisationExecutor,
                 mockEnvironment);
     }
 
@@ -215,19 +202,6 @@ public class AppleAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getProviderSessionId(), is(nullValue()));
     }
 
-    @Test
-    public void doAuthorise_shouldThrowAnOperationAlreadyInProgressRuntimeException_whenTimeout() {
-        when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
-
-        try {
-            appleAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
-            fail("Exception not thrown.");
-        } catch (OperationAlreadyInProgressRuntimeException e) {
-            Map<String, String> expectedMessage = ImmutableMap.of("message", format("Authorisation for charge already in progress, %s", charge.getExternalId()));
-            assertThat(e.getResponse().getEntity(), is(expectedMessage));
-        }
-    }
-
     @Test(expected = ChargeNotFoundRuntimeException.class)
     public void doAuthorise_shouldThrowAChargeNotFoundRuntimeException_whenChargeDoesNotExist() {
         String chargeId = "jgk3erq5sv2i4cds6qqa9f1a8a";
@@ -291,8 +265,7 @@ public class AppleAuthoriseServiceTest extends CardServiceTest {
     }
 
     public void mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue() {
-        doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
-                .when(mockExecutorService).execute(any(Supplier.class));
+        //what to do here?
     }
     
     private void providerWillAuthorise() {

@@ -11,7 +11,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.app.NotifyConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -62,8 +61,6 @@ public class UserNotificationServiceTest {
     @Mock
     private NotifyConfiguration mockNotifyConfiguration;
     @Mock
-    private ExecutorServiceConfig mockExecutorConfiguration;
-    @Mock
     private MetricRegistry mockMetricRegistry;
     @Mock
     private Environment mockEnvironment;
@@ -80,8 +77,6 @@ public class UserNotificationServiceTest {
         when(mockNotifyConfiguration.getRefundIssuedEmailTemplateId()).thenReturn("another-template");
         when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
 
-        when(mockConfig.getExecutorServiceConfig()).thenReturn(mockExecutorConfiguration);
-        when(mockExecutorConfiguration.getThreadsPerCpu()).thenReturn(2);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
     }
 

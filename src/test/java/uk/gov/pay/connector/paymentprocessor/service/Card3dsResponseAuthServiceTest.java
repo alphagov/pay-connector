@@ -1,10 +1,7 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
-import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,19 +19,16 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.util.AuthUtils;
+import uk.gov.pay.connector.util.XrayUtils;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
-import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -42,8 +36,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
-import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
 
 @RunWith(MockitoJUnitRunner.class)
 public class Card3dsResponseAuthServiceTest extends CardServiceTest {
@@ -51,29 +43,25 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     private static final String GENERATED_TRANSACTION_ID = "generated-transaction-id";
 
     private ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);
-    private ChargeService chargeService;
     private Card3dsResponseAuthService card3dsResponseAuthService;
-    private CardExecutorService mockExecutorService = mock(CardExecutorService.class);
 
     @Before
     public void setUpCardAuthorisationService() {
         Environment mockEnvironment = mock(Environment.class);
-        mockMetricRegistry = mock(MetricRegistry.class);
         Counter mockCounter = mock(Counter.class);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(histogram);
 
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
-        chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
+        ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
                 null, mockConfiguration, null);
-        CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
+        CardAuthorisationExecutor cardAuthorisationExecutor = new CardAuthorisationExecutor(mockEnvironment, mock(XrayUtils.class));
 
-        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, cardAuthoriseBaseService);
+        card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, cardAuthorisationExecutor);
     }
 
-    public void setupMockExecutorServiceMock() {
-        doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
-                .when(mockExecutorService).execute(any(Supplier.class));
+    public void setupMockExecutorServiceMock() {//what to do here?
     }
 
     private void setupPaymentProviderMock(String transactionId, AuthoriseStatus authoriseStatus, ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor) {
@@ -180,19 +168,6 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         Gateway3DSAuthorisationResponse response = anAuthorisationErrorResponse(charge, argumentCaptor);
 
         assertThat(response.isSuccessful(), is(false));
-    }
-
-    @Test
-    public void authoriseShouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenTimeout() {
-        when(mockExecutorService.execute(any())).thenReturn(Pair.of(IN_PROGRESS, null));
-
-        try {
-            card3dsResponseAuthService.process3DSecureAuthorisation(charge.getExternalId(), AuthUtils.buildAuth3dsDetails());
-            fail("Exception not thrown.");
-        } catch (OperationAlreadyInProgressRuntimeException e) {
-            Map<String, String> expectedMessage = ImmutableMap.of("message", format("Authorisation for charge already in progress, %s", charge.getExternalId()));
-            assertThat(e.getResponse().getEntity(), is(expectedMessage));
-        }
     }
 
     @Test(expected = ChargeNotFoundRuntimeException.class)

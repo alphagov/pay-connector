@@ -20,29 +20,28 @@ public class Card3dsResponseAuthService {
     private static final Logger LOGGER = LoggerFactory.getLogger(Card3dsResponseAuthService.class);
 
     private final ChargeService chargeService;
-    private final CardAuthoriseBaseService cardAuthoriseBaseService;
+    private final CardAuthorisationExecutor cardAuthorisationExecutor;
     private final PaymentProviders providers;
 
     @Inject
     public Card3dsResponseAuthService(PaymentProviders providers,
                                       ChargeService chargeService,
-                                      CardAuthoriseBaseService cardAuthoriseBaseService
+                                      CardAuthorisationExecutor cardAuthorisationExecutor
     ) {
         this.providers = providers;
         this.chargeService = chargeService;
-        this.cardAuthoriseBaseService = cardAuthoriseBaseService;
+        this.cardAuthorisationExecutor = cardAuthorisationExecutor;
     }
 
     public Gateway3DSAuthorisationResponse process3DSecureAuthorisation(String chargeId, Auth3dsDetails auth3DsDetails) {
-        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
-
+        return cardAuthorisationExecutor.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, AUTHORISATION_3DS);
             return authoriseAndProcess3DS(auth3DsDetails, charge);
         });
     }
 
-    public Gateway3DSAuthorisationResponse process3DSecureAuthorisationWithoutLocking(String chargeId, Auth3dsDetails auth3DsDetails) {
-        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
+    public void process3DSecureAuthorisationWithoutLocking(String chargeId, Auth3dsDetails auth3DsDetails) {
+        cardAuthorisationExecutor.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = chargeService.findChargeById(chargeId);
             return authoriseAndProcess3DS(auth3DsDetails, charge);
         });
@@ -87,6 +86,6 @@ public class Card3dsResponseAuthService {
                 updatedCharge.getStatus()
         );
 
-        cardAuthoriseBaseService.emitAuthorisationMetric(updatedCharge, "authorise-3ds");
+        cardAuthorisationExecutor.emitAuthorisationMetric(updatedCharge, "authorise-3ds");
     }
 }

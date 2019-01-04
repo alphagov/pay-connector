@@ -15,14 +15,14 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
-import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
+import uk.gov.pay.connector.paymentprocessor.service.CardAuthorisationExecutor;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 public class AppleAuthoriseService {
     private static final DateTimeFormatter EXPIRY_DATE_FORMAT = DateTimeFormatter.ofPattern("MM/yy");
-    private final CardAuthoriseBaseService cardAuthoriseBaseService;
+    private final CardAuthorisationExecutor cardAuthorisationExecutor;
     private final ChargeService chargeService;
     private final PaymentProviders paymentProviders;
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -31,16 +31,16 @@ public class AppleAuthoriseService {
     @Inject
     AppleAuthoriseService(PaymentProviders paymentProviders,
                           ChargeService chargeService,
-                          CardAuthoriseBaseService cardAuthoriseBaseService,
+                          CardAuthorisationExecutor cardAuthorisationExecutor,
                           Environment environment) {
         this.paymentProviders = paymentProviders;
-        this.cardAuthoriseBaseService = cardAuthoriseBaseService;
+        this.cardAuthorisationExecutor = cardAuthorisationExecutor;
         this.chargeService = chargeService;
         this.metricRegistry = environment.metrics();
     }
 
     GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, AppleDecryptedPaymentData authCardDetails) {
-        return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
+        return cardAuthorisationExecutor.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId);
             GatewayResponse<BaseAuthoriseResponse> operationResponse = authorise(charge, authCardDetails);
             processGatewayAuthorisationResponse(
@@ -69,8 +69,8 @@ public class AppleAuthoriseService {
             GatewayResponse<BaseAuthoriseResponse> operationResponse) {
 
         logger.info("Processing gateway auth response for apple pay");
-        Optional<String> transactionId = cardAuthoriseBaseService.extractTransactionId(chargeExternalId, operationResponse);
-        ChargeStatus status = cardAuthoriseBaseService.extractChargeStatus(
+        Optional<String> transactionId = cardAuthorisationExecutor.extractTransactionId(chargeExternalId, operationResponse);
+        ChargeStatus status = cardAuthorisationExecutor.extractChargeStatus(
                 operationResponse.getBaseResponse(),
                 operationResponse.getGatewayError());
 
@@ -97,7 +97,7 @@ public class AppleAuthoriseService {
                 status.toString())).inc();
     }
 
-    protected GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, AppleDecryptedPaymentData applePaymentData) {
+    private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, AppleDecryptedPaymentData applePaymentData) {
         logger.info("Authorising charge for apple pay");
         ApplePayAuthorisationGatewayRequest authorisationGatewayRequest = ApplePayAuthorisationGatewayRequest.valueOf(chargeEntity, applePaymentData);
         return getPaymentProviderFor(chargeEntity)

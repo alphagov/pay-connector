@@ -1,10 +1,8 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
-
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -13,44 +11,65 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.gateway.exception.GenericGatewayRuntimeException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
-import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
+import uk.gov.pay.connector.util.XrayUtils;
 
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
-import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus;
 
-public class CardAuthoriseBaseService {
-    private final CardExecutorService cardExecutorService;
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+public class CardAuthorisationExecutor {
+
+    private static final int QUEUE_WAIT_WARN_THRESHOLD_MILLIS = 10000;
+    
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final MetricRegistry metricRegistry;
+    private final XrayUtils xrayUtils;
 
     @Inject
-    public CardAuthoriseBaseService(CardExecutorService cardExecutorService, Environment environment) {
-        this.cardExecutorService = cardExecutorService;
+    public CardAuthorisationExecutor(Environment environment, XrayUtils xrayUtils) {
         this.metricRegistry = environment.metrics();
+        this.xrayUtils = xrayUtils;
     }
+    
+    public <T> T executeAuthorise(String chargeId, Supplier<T> f) {
+        final long startTime = System.currentTimeMillis();
+        xrayUtils.beginSegment();
 
- 
-    public <T> T executeAuthorise(String chargeId, Supplier<T> authorisationSupplier) {
-        Pair<ExecutionStatus, T> executeResult = (Pair<ExecutionStatus, T>) cardExecutorService.execute(authorisationSupplier);
+        try {
+            return CompletableFuture.supplyAsync(() -> {
+                long totalWaitTime = System.currentTimeMillis() - startTime;
+                logger.debug("Card operation task spent {} ms in queue", totalWaitTime);
+                if (totalWaitTime > QUEUE_WAIT_WARN_THRESHOLD_MILLIS) {
+                    logger.warn("CardExecutor Service delay - queue_wait_time={}", totalWaitTime);
+                }
+                metricRegistry.histogram("card-executor.delay").update(totalWaitTime);
+                return f.get();
+            }).get(1000, TimeUnit.SECONDS);
 
-        switch (executeResult.getLeft()) {
-            case COMPLETED:
-                return executeResult.getRight();
-            case IN_PROGRESS:
-                throw new OperationAlreadyInProgressRuntimeException(OperationType.AUTHORISATION.getValue(), chargeId);
-            default:
-                throw new GenericGatewayRuntimeException("Exception occurred while doing authorisation");
+        } catch (InterruptedException | ExecutionException exception) {
+            if (exception.getCause() instanceof WebApplicationException) {
+                throw (WebApplicationException) exception.getCause();
+            } else if (exception.getCause() instanceof UnsupportedOperationException) {
+                throw (UnsupportedOperationException) exception.getCause();
+            }
+            throw new GenericGatewayRuntimeException("Exception occurred while doing authorisation");
+        } catch (TimeoutException e) {
+            throw new OperationAlreadyInProgressRuntimeException(OperationType.AUTHORISATION.getValue(), chargeId);
+        } finally {
+            xrayUtils.endSegment();
         }
     }
-
     
     public ChargeStatus extractChargeStatus(Optional<BaseAuthoriseResponse> baseResponse,
                                      Optional<GatewayError> gatewayError) {

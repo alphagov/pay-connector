@@ -17,7 +17,6 @@ import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
-import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
 import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -40,7 +39,6 @@ public class ConnectorModule extends AbstractModule {
     protected void configure() {
         bind(ConnectorConfiguration.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
-        bind(CardExecutorService.class).in(Singleton.class);
         bind(ApplePayDecrypter.class).in(Singleton.class);
         bind(PaymentProviders.class).in(Singleton.class);
         bind(HashUtil.class);
