@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -34,6 +35,7 @@ import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.util.XrayUtils;
 
 import java.util.Optional;
+import java.util.concurrent.Executors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static junit.framework.TestCase.assertTrue;
@@ -75,7 +77,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private final ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
 
     @Mock
-    private Environment mockEnvironment;
+    private Environment env;
 
     @Mock
     private Counter mockCounter;
@@ -85,20 +87,23 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Before
     public void setUpCardAuthorisationService() {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
-        when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
+        when(env.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(histogram);
 
-        ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
+        ConnectorConfiguration config = mock(ConnectorConfiguration.class);
+        ExecutorServiceConfig executorService = mock(ExecutorServiceConfig.class);
+        when(executorService.getTimeoutInSeconds()).thenReturn(1);
+        when(config.getExecutorServiceConfig()).thenReturn(executorService);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null);
+                null, null, config, null);
 
-        CardAuthorisationExecutor cardAuthorisationExecutor = new CardAuthorisationExecutor(mockEnvironment, mock(XrayUtils.class));
+        CardAuthorisationExecutor cardAuthorisationExecutor = new CardAuthorisationExecutor(config, env, mock(XrayUtils.class), Executors.newSingleThreadExecutor());
         cardAuthorisationService = new CardAuthoriseService(
                 mockedCardTypeDao,
                 mockedProviders,
                 cardAuthorisationExecutor,
                 chargeService,
-                mockEnvironment);
+                env);
     }
 
     @Before

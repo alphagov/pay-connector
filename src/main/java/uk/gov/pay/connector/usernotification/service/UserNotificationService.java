@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -34,6 +35,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class UserNotificationService {
 
+    private final ExecutorService executorService;
     private String confirmationEmailTemplateId;
     private String refundIssuedEmailTemplateId;
     private boolean emailNotifyGloballyEnabled;
@@ -42,7 +44,11 @@ public class UserNotificationService {
     private final MetricRegistry metricRegistry;
 
     @Inject
-    public UserNotificationService(NotifyClientFactory notifyClientFactory, ConnectorConfiguration configuration, Environment environment) {
+    public UserNotificationService(NotifyClientFactory notifyClientFactory,
+                                   ConnectorConfiguration configuration,
+                                   Environment environment,
+                                   ExecutorService executorService) {
+        this.executorService = executorService;
         readEmailConfig(configuration);
         if (emailNotifyGloballyEnabled) {
             this.notifyClientFactory = notifyClientFactory;
@@ -80,7 +86,7 @@ public class UserNotificationService {
                     responseTimeStopwatch.stop();
                     metricRegistry.histogram("notify-operations.response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
                 }
-            });
+            }, executorService);
         }
         return CompletableFuture.completedFuture(Optional.empty());
     }

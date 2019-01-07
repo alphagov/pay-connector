@@ -22,7 +22,8 @@ public class HealthCheckResourceITest {
                 .statusCode(200)
                 .body("ping.healthy", is(true))
                 .body("database.healthy", is(true))
-                .body("deadlocks.healthy", is(true));
+                .body("deadlocks.healthy", is(true))
+                .body("executorService.healthy", is(true));
     }
 
     @Test
@@ -35,6 +36,7 @@ public class HealthCheckResourceITest {
                 .statusCode(503)
                 .body("ping.healthy", is(true))
                 .body("database.healthy", is(false))
-                .body("deadlocks.healthy", is(true));
+                .body("deadlocks.healthy", is(true))
+                .body("executorService.healthy", is(true));
     }
 }

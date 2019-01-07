@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -17,13 +18,18 @@ import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
+import uk.gov.pay.connector.paymentprocessor.service.CardAuthorisationExecutor;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
 import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.XrayUtils;
 
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
+import static java.lang.Runtime.getRuntime;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 
 public class ConnectorModule extends AbstractModule {
@@ -40,6 +46,7 @@ public class ConnectorModule extends AbstractModule {
         bind(ConnectorConfiguration.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
         bind(ApplePayDecrypter.class).in(Singleton.class);
+        bind(CardAuthorisationExecutor.class).in(Singleton.class);
         bind(PaymentProviders.class).in(Singleton.class);
         bind(HashUtil.class);
         bind(RequestValidator.class);
@@ -75,6 +82,14 @@ public class ConnectorModule extends AbstractModule {
         jpaModule.properties(properties);
 
         return jpaModule;
+    }
+    
+    @Provides
+    @Singleton
+    public ExecutorService executorService(ConnectorConfiguration configuration) {
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("ConnectorThreadFactory-%d").build();
+        int numberOfThreads = configuration.getExecutorServiceConfig().getThreadsPerCpu() * getRuntime().availableProcessors();
+        return Executors.newFixedThreadPool(numberOfThreads, threadFactory);
     }
 
     @Provides

@@ -4,6 +4,7 @@ import com.google.inject.Injector;
 import io.dropwizard.db.DataSourceFactory;
 import org.skife.jdbi.v2.DBI;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 public class TestContext {
@@ -36,6 +37,10 @@ public class TestContext {
 
     public int getPort() {
         return port;
+    }
+
+    public ExecutorServiceConfig getExecutorServiceConfig() {
+        return connectorConfiguration.getExecutorServiceConfig();
     }
 
     public <T> T getInstanceFromGuiceContainer(Class<T> clazz) {

@@ -37,6 +37,7 @@ import uk.gov.pay.connector.gateway.smartpay.auth.BasicAuthUser;
 import uk.gov.pay.connector.gateway.smartpay.auth.SmartpayAccountSpecificAuthenticator;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountResource;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
+import uk.gov.pay.connector.healthcheck.ExecutorServiceHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.healthcheck.resource.HealthCheckResource;
 import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
@@ -126,6 +127,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
+        environment.healthChecks().register("executorService", injector.getInstance(ExecutorServiceHealthCheck.class));
 
         HttpsURLConnection.setDefaultSSLSocketFactory(new TrustingSSLSocketFactory());
 

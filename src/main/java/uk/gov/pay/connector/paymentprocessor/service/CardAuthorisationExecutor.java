@@ -5,6 +5,8 @@ import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
@@ -20,6 +22,7 @@ import javax.ws.rs.WebApplicationException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
@@ -28,6 +31,13 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 
+/**
+ * CardAuthorisationExecutor executes tasks passed to it in a separate thread. The point of running tasks in a separate thread 	
+ * is that it can keep running after the originating thread has returned to the user. That is the purpose of the 	
+ * .get(config.getTimeoutInSeconds(), TimeUnit.SECONDS). If you look how that is used in the authorise service, it 	
+ * catches the timeout exception and returns to frontend as 'in progress'. Frontend then polls connector until the 	
+ * charge is authorised (by the CES thread), and continues on its merry way.	
+ */
 public class CardAuthorisationExecutor {
 
     private static final int QUEUE_WAIT_WARN_THRESHOLD_MILLIS = 10000;
@@ -35,11 +45,18 @@ public class CardAuthorisationExecutor {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final MetricRegistry metricRegistry;
     private final XrayUtils xrayUtils;
+    private final ExecutorService executorService;
+    private final ExecutorServiceConfig config;
 
     @Inject
-    public CardAuthorisationExecutor(Environment environment, XrayUtils xrayUtils) {
+    public CardAuthorisationExecutor(ConnectorConfiguration configuration, 
+                                     Environment environment, 
+                                     XrayUtils xrayUtils, 
+                                     ExecutorService executorService) {
         this.metricRegistry = environment.metrics();
         this.xrayUtils = xrayUtils;
+        this.executorService = executorService;
+        this.config = configuration.getExecutorServiceConfig();
     }
     
     public <T> T executeAuthorise(String chargeId, Supplier<T> f) {
@@ -55,7 +72,7 @@ public class CardAuthorisationExecutor {
                 }
                 metricRegistry.histogram("card-executor.delay").update(totalWaitTime);
                 return f.get();
-            }).get(1000, TimeUnit.SECONDS);
+            }, executorService).get(config.getTimeoutInSeconds(), TimeUnit.SECONDS);
 
         } catch (InterruptedException | ExecutionException exception) {
             if (exception.getCause() instanceof WebApplicationException) {

@@ -17,6 +17,10 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    private ExecutorServiceConfig executorServiceConfig = new ExecutorServiceConfig();
+
+    @Valid
+    @NotNull
     private CaptureProcessConfig captureProcessConfig;
 
     @Valid
@@ -123,7 +127,11 @@ public class ConnectorConfiguration extends Configuration {
     public JPAConfiguration getJpaConfiguration() {
         return jpaConfiguration;
     }
-    
+
+    public ExecutorServiceConfig getExecutorServiceConfig() {
+        return executorServiceConfig;
+    }
+
     public TransactionsPaginationServiceConfig getTransactionsPaginationConfig() {
         return transactionsPaginationServiceConfig;
     }

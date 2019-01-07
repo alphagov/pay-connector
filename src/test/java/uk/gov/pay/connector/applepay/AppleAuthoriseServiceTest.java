@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -24,6 +25,7 @@ import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
 import uk.gov.pay.connector.util.XrayUtils;
 
 import java.util.Optional;
+import java.util.concurrent.Executors;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -78,10 +80,13 @@ public class AppleAuthoriseServiceTest extends CardServiceTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
+        ExecutorServiceConfig executorService = mock(ExecutorServiceConfig.class);
+        when(executorService.getTimeoutInSeconds()).thenReturn(1);
+        when(mockConfiguration.getExecutorServiceConfig()).thenReturn(executorService);
 
-        CardAuthorisationExecutor cardAuthorisationExecutor = new CardAuthorisationExecutor(mockEnvironment, mock(XrayUtils.class));
+        CardAuthorisationExecutor cardAuthorisationExecutor = new CardAuthorisationExecutor(mockConfiguration, 
+                mockEnvironment, mock(XrayUtils.class), Executors.newSingleThreadExecutor());
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null);
         appleAuthoriseService = new AppleAuthoriseService(
@@ -215,7 +220,6 @@ public class AppleAuthoriseServiceTest extends CardServiceTest {
     public void doAuthorise_shouldThrowAnOperationAlreadyInProgressRuntimeException_whenStatusIsAuthorisationReady() {
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.AUTHORISATION_READY);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
         appleAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 
@@ -226,7 +230,6 @@ public class AppleAuthoriseServiceTest extends CardServiceTest {
     public void doAuthorise_shouldThrowAnIllegalStateRuntimeException_whenInvalidStatus() {
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.CREATED);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
         appleAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 
@@ -262,10 +265,6 @@ public class AppleAuthoriseServiceTest extends CardServiceTest {
                 .withResponse(worldpayResponse)
                 .withSessionIdentifier(SESSION_IDENTIFIER)
                 .build();
-    }
-
-    public void mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue() {
-        //what to do here?
     }
     
     private void providerWillAuthorise() {
