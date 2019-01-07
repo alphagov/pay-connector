@@ -75,7 +75,7 @@ public class ResponseUtil {
     }
 
     public static Response acceptedResponse(String message) {
-        logger.error(message);
+        logger.info(message);
         return responseWithMessageMap(ACCEPTED, message);
     }
 
