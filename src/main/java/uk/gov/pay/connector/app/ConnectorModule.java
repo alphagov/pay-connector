@@ -117,7 +117,7 @@ public class ConnectorModule extends AbstractModule {
         return getNotifyClientFactory(connectorConfiguration);
     }
 
-    protected NotifyClientFactory getNotifyClientFactory(ConnectorConfiguration connectorConfiguration) {
+    protected NotifyClientFactory  getNotifyClientFactory(ConnectorConfiguration connectorConfiguration) {
         return new NotifyClientFactory(connectorConfiguration);
     }
 }
