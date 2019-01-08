@@ -46,10 +46,14 @@ public class CaptureProcessScheduler implements Managed {
             schedulerThreads = captureProcessConfig.getSchedulerThreads();
         }
 
+        // Total number of threads is schedulerThreads (dedicated threads that captures the charges)
+        //  + main thread that initiates loading and capturing the charges
+        int totalThreads = schedulerThreads + 1;
+        
         scheduledExecutorService = environment
                 .lifecycle()
                 .scheduledExecutorService(CAPTURE_PROCESS_SCHEDULER_NAME)
-                .threads(schedulerThreads + 1)
+                .threads(totalThreads)  
                 .build();
     }
 
