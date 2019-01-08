@@ -58,26 +58,25 @@ public class CaptureProcessScheduler implements Managed {
         logger.info("Scheduling CardCaptureProcess to run every {} seconds (will start in {} seconds)", interval, initialDelayInSeconds);
 
         scheduledExecutorService.scheduleAtFixedRate(() -> {
-            for (int threadNumber = 1; threadNumber <= schedulerThreads; threadNumber++) {
-                final int finalThreadNumber = threadNumber;
-
-                cardCaptureProcess.loadCaptureQueue();
-                scheduleCaptureThreads(finalThreadNumber);
-            }
+            cardCaptureProcess.loadCaptureQueue();
+            scheduleCaptureThreads();
         }, initialDelayInSeconds, interval, TimeUnit.SECONDS);
     }
 
-    private void scheduleCaptureThreads(int finalThreadNumber) {
-        scheduledExecutorService.schedule(() -> {
-            try {
-                xrayUtils.beginSegment();
-                cardCaptureProcess.runCapture(finalThreadNumber);
-            } catch (Exception e) {
-                logger.error("Unexpected error running capture operations", e);
-            } finally {
-                xrayUtils.endSegment();
-            }
-        }, 0, TimeUnit.SECONDS);
+    private void scheduleCaptureThreads() {
+        for (int threadNumber = 1; threadNumber <= schedulerThreads; threadNumber++) {
+            final int finalThreadNumber = threadNumber;
+            scheduledExecutorService.schedule(() -> {
+                try {
+                    xrayUtils.beginSegment();
+                    cardCaptureProcess.runCapture(finalThreadNumber);
+                } catch (Exception e) {
+                    logger.error("Unexpected error running capture operations", e);
+                } finally {
+                    xrayUtils.endSegment();
+                }
+            }, 0, TimeUnit.SECONDS);
+        }
     }
 
     private long randomTimeInterval() {
