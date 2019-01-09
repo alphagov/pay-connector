@@ -135,7 +135,7 @@ public class CardResource {
     public Response cancelCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
         return chargeCancelService.doSystemCancel(chargeId, accountId)
                 .map(chargeEntity -> Response.noContent().build())
-                .orElse(ResponseUtil.responseWithChargeNotFound(chargeId));
+                .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(chargeId));
     }
 
     @POST
@@ -144,7 +144,7 @@ public class CardResource {
     public Response userCancelCharge(@PathParam("chargeId") String chargeId) {
         return chargeCancelService.doUserCancel(chargeId)
                 .map(chargeEntity -> Response.noContent().build())
-                .orElse(ResponseUtil.responseWithChargeNotFound(chargeId));
+                .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(chargeId));
     }
 
     private Response handleError(GatewayError error) {
