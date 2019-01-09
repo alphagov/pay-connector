@@ -14,6 +14,7 @@ import org.apache.http.impl.conn.ManagedHttpClientConnectionFactory;
 import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
+import org.glassfish.jersey.client.ClientProperties;
 import uk.gov.pay.commons.utils.xray.XRayHttpClientFilter;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.OperationOverrides;
@@ -33,6 +34,9 @@ import static org.glassfish.jersey.client.ClientProperties.READ_TIMEOUT;
 public class ClientFactory {
     private final Environment environment;
     private final ConnectorConfiguration conf;
+
+    private final static String PROXY_HOST_PROPERTY = "https.proxyHost";
+    private final static String PROXY_PORT_PROPERTY = "https.proxyPort";
 
     @Inject
     public ClientFactory(Environment environment, ConnectorConfiguration conf) {
@@ -62,6 +66,12 @@ public class ClientFactory {
             defaultClientBuilder
                     .withProperty(READ_TIMEOUT, getDefaultTimeout())
                     .withProperty(CONNECTION_MANAGER, createConnectionManager(gateway.getName(), "all", metricRegistry));
+        }
+
+        if (System.getProperty(PROXY_HOST_PROPERTY) != null && System.getProperty(PROXY_PORT_PROPERTY) != null) {
+            defaultClientBuilder.withProperty(ClientProperties.PROXY_URI, format("http://%s:%s",
+                    System.getProperty(PROXY_HOST_PROPERTY), System.getProperty(PROXY_PORT_PROPERTY))
+            );
         }
 
         Client client = defaultClientBuilder.build(gateway.getName());
