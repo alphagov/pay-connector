@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.paymentprocessor.resource;
 
 import com.google.common.collect.ImmutableMap;
+import org.jooq.tools.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.applepay.ApplePayService;
@@ -67,21 +68,24 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response authoriseCharge(@PathParam("chargeId") String chargeId, AuthCardDetails authCardDetails) {
         if (!isWellFormatted(authCardDetails)) {
+            logger.error("Charge {}: Card details are not well formatted. Values do not match expected format/length.", chargeId);
             return badRequestResponse("Values do not match expected format/length.");
         }
         AuthorisationResponse response = cardAuthoriseService.doAuthorise(chargeId, authCardDetails);
 
         return response.getGatewayError().map(this::handleError)
-                .orElseGet(() -> response.getAuthoriseStatus().map(this::handleAuthResponse)
+                .orElseGet(() -> response.getAuthoriseStatus().map(status -> handleAuthResponse(chargeId, status))
                         .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
     }
 
-    private Response handleAuthResponse(AuthoriseStatus authoriseStatus) {
+    private Response handleAuthResponse(String chargeId, AuthoriseStatus authoriseStatus) {
         if (authoriseStatus.equals(AuthoriseStatus.SUBMITTED)) {
+            logger.info("Charge {}: authorisation was deferred.", chargeId);
             return badRequestResponse("This transaction was deferred.");
         }
 
         if (isAuthorisationDeclined(authoriseStatus)) {
+            logger.info("Charge {}: authorisation was declined.", chargeId);
             return badRequestResponse("This transaction was declined.");
         }
 
@@ -94,7 +98,11 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsDetails auth3DsDetails) {
         Gateway3DSAuthorisationResponse response = card3dsResponseAuthService.process3DSecureAuthorisation(chargeId, auth3DsDetails);
-        return response.isDeclined() ? badRequestResponse("This transaction was declined.") : handleGateway3DSAuthoriseResponse(response);
+        if (response.isDeclined()) {
+            logger.info("Charge {}: 3ds authorisation was declined.", chargeId);
+            return badRequestResponse("This transaction was declined.");
+        }
+        return handleGateway3DSAuthoriseResponse(response);
     }
 
     private Response handleGateway3DSAuthoriseResponse(Gateway3DSAuthorisationResponse response) {
@@ -156,6 +164,7 @@ public class CardResource {
             case GATEWAY_CONNECTION_SOCKET_ERROR:
                 return serviceErrorResponse(error.getMessage());
             default:
+                logger.error("Charge {}: error {}", error.getMessage());
                 return badRequestResponse(error.getMessage());
         }
     }

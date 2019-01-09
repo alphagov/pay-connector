@@ -129,6 +129,7 @@ public class GatewayAccountResource {
                     .map(Long::parseLong)
                     .collect(Collectors.toList());
         } catch (NumberFormatException e) {
+            logger.error("Could not parse accountIds {} as Longs", accountIdsArg);
             return badRequestResponse(format("Could not parse accountIds %s as Longs.", accountIdsArg));
         }
 
@@ -336,7 +337,9 @@ public class GatewayAccountResource {
                 .collect(Collectors.toList());
 
         if (cardTypeIds.size() != cardTypeEntities.size()) {
-            return badRequestResponse(format("Accepted Card Type(s) referenced by id(s) '%s' not found", String.join(",", extractNotFoundCardTypeIds(cardTypeIds, cardTypeEntities))));
+            String errorMessage = format("Accepted Card Type(s) referenced by id(s) '%s' not found", String.join(",", extractNotFoundCardTypeIds(cardTypeIds, cardTypeEntities)));
+            logger.error(errorMessage);
+            return badRequestResponse(errorMessage);
         }
 
         return gatewayDao.findById(gatewayAccountId)
@@ -386,6 +389,7 @@ public class GatewayAccountResource {
                         gatewayAccountNotificationCredentialsService.setCredentialsForAccount(notificationCredentials,
                                 gatewayAccountEntity);
                     } catch (CredentialsException e) {
+                        logger.error("Credentials update failure: {}", e.getMessage());
                         return badRequestResponse("Credentials update failure: " + e.getMessage());
                     }
 
