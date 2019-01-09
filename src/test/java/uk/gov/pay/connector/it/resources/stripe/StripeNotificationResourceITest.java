@@ -164,7 +164,7 @@ public class StripeNotificationResourceITest {
 
     private Response notifyConnector(String payload) {
         return notifyConnectorWithHeader(payload, StripeNotificationUtilTest.generateSigHeader(
-                "whsec", payload));
+                "whtest", payload));
     }
 
     private static String sampleStripeNotification(String location,

@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.app.StripeWebhookSigningSecrets;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
@@ -21,6 +22,7 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -50,18 +52,30 @@ public class StripeNotificationServiceTest {
 
     private final String externalId = "external-id";
     private final String sourceId = "source-id";
-    private final String webhookSigningSecret = "whsec";
+    private final String webhookTestSigningSecret = "whtest";
+    private final String webhookLiveSigningSecret = "whlive";
 
     @Before
     public void setup() {
         notificationService = new StripeNotificationService(mockCard3dsResponseAuthService,
                 mockChargeService, stripeGatewayConfig);
 
-        when(stripeGatewayConfig.getWebhookSigningSecret()).thenReturn(webhookSigningSecret);
+        StripeWebhookSigningSecrets stripeWebhookSigningSecrets = mock(StripeWebhookSigningSecrets.class);
+        when(stripeWebhookSigningSecrets.getTest()).thenReturn(webhookTestSigningSecret);
+        when(stripeWebhookSigningSecrets.getLive()).thenReturn(webhookLiveSigningSecret);
+        when(stripeGatewayConfig.getWebhookSigningSecrets()).thenReturn(stripeWebhookSigningSecrets);
         when(mockCharge.getExternalId()).thenReturn(externalId);
         when(mockCharge.getStatus()).thenReturn(AUTHORISATION_3DS_REQUIRED.getValue());
         when(mockCharge.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
         when(mockChargeService.findByProviderAndTransactionId(STRIPE.getName(), sourceId)).thenReturn(Optional.of(mockCharge));
+    }
+
+    private String signPayload(String payload) {
+        return StripeNotificationUtilTest.generateSigHeader(webhookLiveSigningSecret, payload);
+    }
+
+    private String signPayloadWithTestSecret(String payload) {
+        return StripeNotificationUtilTest.generateSigHeader(webhookTestSigningSecret, payload);
     }
 
     @Test
@@ -74,8 +88,14 @@ public class StripeNotificationServiceTest {
         verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.AUTHORISED));
     }
 
-    private String signPayload(String payload) {
-        return StripeNotificationUtilTest.generateSigHeader(webhookSigningSecret, payload);
+    @Test
+    public void shouldUpdateCharge_WhenNotificationIsFor3DSSourceChargeable_withTestWebhook() {
+        final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
+                sourceId, SOURCE_CHARGEABLE);
+
+        notificationService.handleNotificationFor(payload, signPayloadWithTestSecret(payload));
+
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.AUTHORISED));
     }
 
     @Test

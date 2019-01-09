@@ -17,7 +17,7 @@ public class StripeGatewayConfig extends Configuration {
 
     @Valid
     @NotNull
-    private String webhookSigningSecret;
+    private StripeWebhookSigningSecrets webhookSigningSecrets;
 
     public String getUrl() {
         return url;
@@ -27,7 +27,7 @@ public class StripeGatewayConfig extends Configuration {
         return authTokens;
     }
 
-    public String getWebhookSigningSecret() {
-        return webhookSigningSecret;
+    public StripeWebhookSigningSecrets getWebhookSigningSecrets() {
+        return webhookSigningSecrets;
     }
 }

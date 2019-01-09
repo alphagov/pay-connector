@@ -171,13 +171,22 @@ public class StripeNotificationService {
     }
 
     private boolean isValidNotificationSignature(String payload, String signatureHeader) {
+        if (isValidNotificationSignature(payload, signatureHeader, stripeGatewayConfig.getWebhookSigningSecrets().getTest()) || 
+                isValidNotificationSignature(payload, signatureHeader, stripeGatewayConfig.getWebhookSigningSecrets().getLive())) {
+            return true;
+        } else {
+            logger.warn("Could not verify Stripe authentication header");
+            return false;
+        }
+    }
+    
+    private boolean isValidNotificationSignature(String payload, String signatureHeader, String secret) {
         try {
             return Webhook.Signature.verifyHeader(payload,
                     signatureHeader,
-                    stripeGatewayConfig.getWebhookSigningSecret(),
+                    secret,
                     DEFAULT_TOLERANCE);
         } catch (SignatureVerificationException e) {
-            logger.error("Exception [{}] for signature header - {}", e.getMessage(), e.getSigHeader());
             return false;
         }
     }
