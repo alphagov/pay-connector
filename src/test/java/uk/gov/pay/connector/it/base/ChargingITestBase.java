@@ -8,7 +8,6 @@ import com.jayway.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.After;
 import org.junit.Before;
@@ -38,9 +37,9 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
@@ -49,9 +48,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
-import static uk.gov.pay.connector.it.util.ChargeUtils.createNewRefund;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
-import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
@@ -292,15 +289,28 @@ public class ChargingITestBase {
         connectorRestApiClient
                 .withChargeId(chargeId)
                 .getCharge()
-                .body("state.status", Matchers.is("cancelled"))
-                .body("state.message", Matchers.is("Payment was cancelled by the service"))
-                .body("state.code", Matchers.is("P0040"));
+                .body("state.status", is("cancelled"))
+                .body("state.message", is("Payment was cancelled by the service"))
+                .body("state.code", is("P0040"));
 
         connectorRestApiClient
                 .withChargeId(chargeId)
                 .getFrontendCharge()
-                .body("status", Matchers.is(targetState.getValue()));
+                .body("status", is(targetState.getValue()))
+                .body("state.status", is("cancelled"))
+                .body("state.finished", is(true))
+                .body("state.message", is("Payment was cancelled by the service"))
+                .body("state.code", is("P0040"));
 
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getCharge()
+                .body("status", isEmptyOrNullString())
+                .body("state.status", is("cancelled"))
+                .body("state.finished", is(true))
+                .body("state.message", is("Payment was cancelled by the service"))
+                .body("state.code", is("P0040"));
+        
         return chargeId;
     }
 
