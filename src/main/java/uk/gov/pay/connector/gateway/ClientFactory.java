@@ -45,22 +45,19 @@ public class ClientFactory {
     }
 
     public Client createWithDropwizardClient(PaymentGatewayName gateway, GatewayOperation operation, MetricRegistry metricRegistry) {
-        return createWithDropwizardClient(gateway, Optional.of(operation), metricRegistry);
+        return createWithDropwizardClient(gateway, getReadTimeout(operation, gateway), operation.getConfigKey(), metricRegistry);
     }
 
     public Client createWithDropwizardClient(PaymentGatewayName gateway, MetricRegistry metricRegistry) {
-        return createWithDropwizardClient(gateway, Optional.empty(), metricRegistry);
+        return createWithDropwizardClient(gateway, conf.getCustomJerseyClient().getReadTimeout(), "all", metricRegistry);
     }
 
-    private Client createWithDropwizardClient(PaymentGatewayName gateway, Optional<GatewayOperation> operation, MetricRegistry metricRegistry) {
+    private Client createWithDropwizardClient(PaymentGatewayName gateway, Duration readTimeout, String metricName, MetricRegistry metricRegistry) {
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
                 .using(new ApacheConnectorProvider())
                 .using(conf.getClientConfiguration())
-                .withProperty(READ_TIMEOUT, (int) getReadTimeout(operation.orElse(null), gateway).toMilliseconds())
-                .withProperty(CONNECTION_MANAGER, createConnectionManager(
-                        gateway.getName(),
-                        operation.map(GatewayOperation::getConfigKey).orElse("all"),
-                        metricRegistry));
+                .withProperty(READ_TIMEOUT, (int) readTimeout.toMilliseconds())
+                .withProperty(CONNECTION_MANAGER, createConnectionManager(gateway.getName(), metricName, metricRegistry));
 
         if (System.getProperty(PROXY_HOST_PROPERTY) != null && System.getProperty(PROXY_PORT_PROPERTY) != null) {
             defaultClientBuilder.withProperty(ClientProperties.PROXY_URI, format("http://%s:%s",
