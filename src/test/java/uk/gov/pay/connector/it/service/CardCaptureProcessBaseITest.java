@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Rule;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.rules.GuiceAppWithPostgresRule;
 import uk.gov.pay.connector.util.PortFactory;
 
@@ -43,20 +44,7 @@ abstract public class CardCaptureProcessBaseITest {
             config("captureProcessConfig.retryFailuresEvery", "0 minutes"));
 
     public DatabaseFixtures.TestCharge createTestCharge(String paymentProvider, ChargeStatus chargeStatus) {
-        DatabaseFixtures.TestAccount testAccount = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
-                .aTestAccount()
-                .withPaymentProvider(paymentProvider)
-                .withCredentials(CREDENTIALS);
-
-        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
-                .aTestCharge()
-                .withTestAccount(testAccount)
-                .withChargeStatus(chargeStatus)
-                .withTransactionId(TRANSACTION_ID);
-
-        testAccount.insert();
-        return testCharge.insert();
+        return ChargeUtils.createTestCharge(app.getDatabaseTestHelper(),
+                paymentProvider, chargeStatus, CREDENTIALS, TRANSACTION_ID);
     }
 }
