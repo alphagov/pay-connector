@@ -274,7 +274,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[0].reference", is("My reference"))
                 .body("results[0].return_url", is(RETURN_URL))
                 .body("results[0].description", is(description))
-                .body("results[0].created_date", is("2016-01-26T13:45:32Z"))
+                .body("results[0].created_date", is("2016-01-26T13:45:32.000Z"))
                 .body("results[0].payment_provider", is(PROVIDER_NAME));
     }
 

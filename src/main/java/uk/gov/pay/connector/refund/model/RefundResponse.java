@@ -2,10 +2,11 @@ package uk.gov.pay.connector.refund.model;
 
 import black.door.hate.HalRepresentation;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
-import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+
+import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 
 public class RefundResponse extends HalResourceResponse {
 
@@ -31,7 +32,7 @@ public class RefundResponse extends HalResourceResponse {
                 .addProperty("refund_id", refundEntity.getExternalId())
                 .addProperty("amount", refundEntity.getAmount())
                 .addProperty("status", refundEntity.getStatus().toExternal().getStatus())
-                .addProperty("created_date", DateTimeUtils.toUTCDateTimeString(refundEntity.getCreatedDate()))
+                .addProperty("created_date", ISO_INSTANT_MILLISECOND_PRECISION.format(refundEntity.getCreatedDate()))
                 .addProperty("user_external_id", refundEntity.getUserExternalId())
                 .addLink("self", selfLink)
                 .addLink("payment", paymentLink), selfLink);

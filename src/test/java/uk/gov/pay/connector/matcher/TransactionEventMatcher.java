@@ -3,10 +3,11 @@ package uk.gov.pay.connector.matcher;
 import org.apache.commons.lang.ObjectUtils;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
-import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
+
+import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 
 public class TransactionEventMatcher extends TypeSafeMatcher<Map<String, Object>> {
 
@@ -52,7 +53,7 @@ public class TransactionEventMatcher extends TypeSafeMatcher<Map<String, Object>
         this.type = type;
         this.state = state;
         this.amount = amount;
-        this.updated = DateTimeUtils.toUTCDateTimeString(updated);
+        this.updated = ISO_INSTANT_MILLISECOND_PRECISION.format(updated);
         this.refundReference = refundReference;
         this.refundSubmittedBy = submittedBy;
     }

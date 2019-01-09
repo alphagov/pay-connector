@@ -15,10 +15,9 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
+import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -39,6 +38,7 @@ import java.util.Optional;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.charge.model.FrontendChargeResponse.aFrontendChargeResponse;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.EMAIL_KEY;
 import static uk.gov.pay.connector.common.service.PatchRequestBuilder.aPatchRequestBuilder;
@@ -158,7 +158,7 @@ public class ChargesFrontendResource {
                 .withAmount(charge.getAmount())
                 .withDescription(charge.getDescription())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
-                .withCreatedDate(DateTimeUtils.toUTCDateTimeString(charge.getCreatedDate()))
+                .withCreatedDate(ISO_INSTANT_MILLISECOND_PRECISION.format(charge.getCreatedDate()))
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
                 .withChargeCardDetails(persistedCard)

@@ -17,13 +17,13 @@ import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.search.AbstractSearchStrategy;
 import uk.gov.pay.connector.common.service.search.SearchStrategy;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
+import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.charge.model.TransactionResponse.aTransactionResponseBuilder;
 
 public class TransactionSearchStrategy extends AbstractSearchStrategy<Transaction, ChargeResponse> implements SearchStrategy {
@@ -71,7 +71,7 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
                 .withState(externalTransactionState)
                 .withCardDetails(cardDetails)
                 .withChargeId(transaction.getExternalId())
-                .withCreatedDate(DateTimeUtils.toUTCDateTimeString(transaction.getCreatedDate()))
+                .withCreatedDate(ISO_INSTANT_MILLISECOND_PRECISION.format(transaction.getCreatedDate()))
                 .withDescription(transaction.getDescription())
                 .withReference(transaction.getReference())
                 .withEmail(transaction.getEmail())

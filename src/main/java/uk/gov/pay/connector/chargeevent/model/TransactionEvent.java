@@ -6,9 +6,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.jackson.JsonSnakeCase;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
-import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.time.ZonedDateTime;
+
+import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 
 @JsonSnakeCase
 public class TransactionEvent implements Comparable<TransactionEvent> {
@@ -144,7 +145,7 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
 
     @JsonProperty("updated")
     public String getUpdated() {
-        return DateTimeUtils.toUTCDateTimeString(updated);
+        return ISO_INSTANT_MILLISECOND_PRECISION.format(updated);
     }
 
     @JsonIgnore

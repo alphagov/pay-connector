@@ -9,7 +9,6 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.util.List;
@@ -32,6 +31,7 @@ import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
@@ -59,8 +59,8 @@ public class ChargesApiFilterChargesITest extends ChargingITestBase {
 
         ValidatableResponse response = connectorRestApiClient
                 .withAccountId(accountId)
-                .withQueryParam("from_date", DateTimeUtils.toUTCDateTimeString(now().minusDays(1)))
-                .withQueryParam("to_date", DateTimeUtils.toUTCDateTimeString(now().plusDays(1)))
+                .withQueryParam("from_date", ISO_INSTANT_MILLISECOND_PRECISION.format(now().minusDays(1)))
+                .withQueryParam("to_date", ISO_INSTANT_MILLISECOND_PRECISION.format(now().plusDays(1)))
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getChargesV1()
                 .statusCode(OK.getStatusCode())
