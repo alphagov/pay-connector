@@ -8,16 +8,13 @@ import ch.qos.logback.core.Appender;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
 import org.hamcrest.Matchers;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.paymentprocessor.service.CaptureProcessScheduler;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.rules.GuiceAppWithPostgresRule;
@@ -25,9 +22,12 @@ import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.PortFactory;
 import uk.gov.pay.connector.util.XrayUtils;
 
+import java.util.List;
 import java.util.Map;
 
 import static io.dropwizard.testing.ConfigOverride.config;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -38,7 +38,6 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 
-@RunWith(MockitoJUnitRunner.class)
 public class CaptureProcessSchedulerITest {
 
     private static final String PAYMENT_PROVIDER = "worldpay";
@@ -71,24 +70,6 @@ public class CaptureProcessSchedulerITest {
             config("captureProcessConfig.schedulerRandomIntervalMaximumInSeconds", "1")
     );
 
-    private DatabaseFixtures.TestCharge createTestCharge(String paymentProvider, ChargeStatus chargeStatus) {
-        DatabaseFixtures.TestAccount testAccount = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
-                .aTestAccount()
-                .withPaymentProvider(paymentProvider)
-                .withCredentials(CREDENTIALS);
-
-        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
-                .withDatabaseTestHelper(app.getDatabaseTestHelper())
-                .aTestCharge()
-                .withTestAccount(testAccount)
-                .withChargeStatus(chargeStatus)
-                .withTransactionId(TRANSACTION_ID);
-
-        testAccount.insert();
-        return testCharge.insert();
-    }
-
     @Before
     public void setup() {
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureProcess.class);
@@ -99,7 +80,8 @@ public class CaptureProcessSchedulerITest {
     @Test
     public void schedulerShouldStartMultipleThreadsAsPerConfig_AndCaptureCharge() throws InterruptedException {
 
-        DatabaseFixtures.TestCharge testCharge = createTestCharge(PAYMENT_PROVIDER, CAPTURE_APPROVED);
+        DatabaseFixtures.TestCharge testCharge = ChargeUtils.createTestCharge(app.getDatabaseTestHelper(), PAYMENT_PROVIDER, CAPTURE_APPROVED,
+                CREDENTIALS, TRANSACTION_ID);
         new WorldpayMockClient().mockCaptureSuccess();
 
         CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(app.getConf(),
@@ -114,7 +96,20 @@ public class CaptureProcessSchedulerITest {
         // Thread 1: Capturing: 1 of 1 charges ,  Capturing [1 of 1] [chargeId=...] ,  Capture complete ...
         // Thread 2: Capture complete ....
         verify(mockAppender, times(4)).doAppend(loggingEventArgumentCaptor.capture());
+        assertThatTwoThreadsAreCompletingCaptureProcess(loggingEventArgumentCaptor);
 
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_SUBMITTED.getValue()));
+        assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_SUBMITTED.getValue()));
+    }
+
+    private void assertThatTwoThreadsAreCompletingCaptureProcess(ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor) {
+        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+
+        int noOfCaptureCompletes = 0;
+        for (LoggingEvent loggingEvent : loggingEvents) {
+            if (loggingEvent.getFormattedMessage().contains("Capture complete")) {
+                noOfCaptureCompletes++;
+            }
+        }
+        assertEquals(2, noOfCaptureCompletes);
     }
 }
