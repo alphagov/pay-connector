@@ -31,7 +31,8 @@ public class GatewayCaptureFailuresITest extends BaseGatewayITest {
     public void shouldFailCaptureWhenUnexpectedResponseCodeFromGateway() {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
         setupGatewayStub().respondWithUnexpectedResponseCodeWhenCapture();
-        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
         assertThatLastGatewayClientLoggingEventIs(
                 String.format("Gateway returned unexpected status code: 999, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test", port));
@@ -42,7 +43,8 @@ public class GatewayCaptureFailuresITest extends BaseGatewayITest {
     public void shouldFailCaptureWhenMalformedResponseFromGateway() {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
         setupGatewayStub().respondWithMalformedBody_WhenCapture();
-        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
         assertThatLastGatewayClientLoggingEventIs("Could not unmarshall response >>>|<malformed xml/>|<<<.");
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));
@@ -52,7 +54,8 @@ public class GatewayCaptureFailuresITest extends BaseGatewayITest {
     public void shouldSucceedCapture() {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
         setupGatewayStub().respondWithSuccessWhenCapture();
-        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_SUBMITTED.getValue()));
     }
 }

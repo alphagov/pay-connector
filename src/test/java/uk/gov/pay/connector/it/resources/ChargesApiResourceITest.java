@@ -75,7 +75,8 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .statusCode(204);
 
         // Trigger the capture process programmatically which normally would be invoked by the scheduler.
-        testContext.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
+        testContext.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
+        testContext.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
         getCharge(chargeId)
                 .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))

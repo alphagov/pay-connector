@@ -91,6 +91,7 @@ captureProcessConfig:
   schedulerRandomIntervalMaximumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MAXIMUM_SECONDS:-20}
 
   batchSize: ${CAPTURE_PROCESS_BATCH_SIZE:-10}
+  schedulerThreads: ${SCHEDULER_THREADS:-10}
 
   # The below effectively get multiplied together. In order to handle how
   # certain payment gateways do things, it is extremely desirable to keep these

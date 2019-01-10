@@ -13,7 +13,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class CaptureProcessScheduler implements Managed {
-    final Logger logger = LoggerFactory.getLogger(CaptureProcessScheduler.class);
+    private final Logger logger = LoggerFactory.getLogger(CaptureProcessScheduler.class);
 
     static final String CAPTURE_PROCESS_SCHEDULER_NAME = "capture-process";
     static final int SCHEDULER_THREADS = 1;
@@ -25,13 +25,14 @@ public class CaptureProcessScheduler implements Managed {
     private long initialDelayInSeconds = INITIAL_DELAY_IN_SECONDS;
     private long randomIntervalMinimumInSeconds = RANDOM_INTERVAL_MINIMUM_IN_SECONDS;
     private long randomIntervalMaximumInSeconds = RANDOM_INTERVAL_MAXIMUM_IN_SECONDS;
+    private int schedulerThreads = SCHEDULER_THREADS;
 
     private final CardCaptureProcess cardCaptureProcess;
     private final ScheduledExecutorService scheduledExecutorService;
     private final XrayUtils xrayUtils;
 
-    public CaptureProcessScheduler(ConnectorConfiguration configuration, 
-                                   Environment environment, 
+    public CaptureProcessScheduler(ConnectorConfiguration configuration,
+                                   Environment environment,
                                    CardCaptureProcess cardCaptureProcess,
                                    XrayUtils xrayUtils) {
         this.cardCaptureProcess = cardCaptureProcess;
@@ -42,12 +43,17 @@ public class CaptureProcessScheduler implements Managed {
             initialDelayInSeconds = captureProcessConfig.getSchedulerInitialDelayInSeconds();
             randomIntervalMinimumInSeconds = captureProcessConfig.getSchedulerRandomIntervalMinimumInSeconds();
             randomIntervalMaximumInSeconds = captureProcessConfig.getSchedulerRandomIntervalMaximumInSeconds();
+            schedulerThreads = captureProcessConfig.getSchedulerThreads();
         }
 
+        // Total number of threads is schedulerThreads (dedicated threads that captures the charges)
+        //  + main thread that initiates loading and capturing the charges
+        int totalThreads = schedulerThreads + 1;
+        
         scheduledExecutorService = environment
                 .lifecycle()
                 .scheduledExecutorService(CAPTURE_PROCESS_SCHEDULER_NAME)
-                .threads(SCHEDULER_THREADS)
+                .threads(totalThreads)  
                 .build();
     }
 
@@ -56,15 +62,25 @@ public class CaptureProcessScheduler implements Managed {
         logger.info("Scheduling CardCaptureProcess to run every {} seconds (will start in {} seconds)", interval, initialDelayInSeconds);
 
         scheduledExecutorService.scheduleAtFixedRate(() -> {
-            try {
-                xrayUtils.beginSegment();
-                cardCaptureProcess.runCapture();
-            } catch (Exception e) {
-                logger.error("Unexpected error running capture operations", e);
-            } finally {
-                xrayUtils.endSegment();
-            }
+            cardCaptureProcess.loadCaptureQueue();
+            scheduleCaptureThreads();
         }, initialDelayInSeconds, interval, TimeUnit.SECONDS);
+    }
+
+    private void scheduleCaptureThreads() {
+        for (int threadNumber = 1; threadNumber <= schedulerThreads; threadNumber++) {
+            final int finalThreadNumber = threadNumber;
+            scheduledExecutorService.schedule(() -> {
+                try {
+                    xrayUtils.beginSegment();
+                    cardCaptureProcess.runCapture(finalThreadNumber);
+                } catch (Exception e) {
+                    logger.error("Unexpected error running capture operations", e);
+                } finally {
+                    xrayUtils.endSegment();
+                }
+            }, 0, TimeUnit.SECONDS);
+        }
     }
 
     private long randomTimeInterval() {

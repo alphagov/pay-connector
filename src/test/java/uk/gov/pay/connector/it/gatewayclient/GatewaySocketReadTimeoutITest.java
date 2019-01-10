@@ -31,7 +31,8 @@ public class GatewaySocketReadTimeoutITest extends BaseGatewayITest {
     public void shouldFailCaptureWhenConnectionTimeoutFromGateway() {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(app.getDatabaseTestHelper());
         setupGatewayStub().respondWithTimeoutWhenCapture();
-        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
         assertThatLastGatewayClientLoggingEventIs(
                 String.format("Connection timed out error for gateway url=http://localhost:%s/pal/servlet/soap/Payment", port));

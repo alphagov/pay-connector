@@ -78,6 +78,7 @@ captureProcessConfig:
   schedulerRandomIntervalMinimumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MINIMUM_SECONDS:-150}
   schedulerRandomIntervalMaximumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MAXIMUM_SECONDS:-200}
   batchSize: 10
+  schedulerThreads: 1
   retryFailuresEvery: 60 minutes
   maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-48}
 
