@@ -85,7 +85,6 @@ public class CardResource {
         }
 
         if (isAuthorisationDeclined(authoriseStatus)) {
-            logger.info("Charge {}: authorisation was declined.", chargeId);
             return badRequestResponse("This transaction was declined.");
         }
 
@@ -98,11 +97,7 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsDetails auth3DsDetails) {
         Gateway3DSAuthorisationResponse response = card3dsResponseAuthService.process3DSecureAuthorisation(chargeId, auth3DsDetails);
-        if (response.isDeclined()) {
-            logger.info("Charge {}: 3ds authorisation was declined.", chargeId);
-            return badRequestResponse("This transaction was declined.");
-        }
-        return handleGateway3DSAuthoriseResponse(response);
+        return response.isDeclined() ? badRequestResponse("This transaction was declined.") : handleGateway3DSAuthoriseResponse(response);
     }
 
     private Response handleGateway3DSAuthoriseResponse(Gateway3DSAuthorisationResponse response) {

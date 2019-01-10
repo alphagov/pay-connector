@@ -40,12 +40,7 @@ public class ApplePayService {
             LOGGER.info("Charge {}: apple pay authorisation was deferred.", chargeId);
             return badRequestResponse("This transaction was deferred.");
         }
-        if (isAuthorisationDeclined(response)) {
-            LOGGER.info("Charge {}: apple pay authorisation was declined.", chargeId);
-            return badRequestResponse("This transaction was declined.");
-
-        }
-        return handleGatewayAuthoriseResponse(response);
+        return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
     }
 
 
