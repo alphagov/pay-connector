@@ -11,20 +11,18 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import javax.ws.rs.core.HttpHeaders;
-
 import java.time.ZonedDateTime;
 
 import static com.jayway.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static java.time.ZonedDateTime.now;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -53,8 +51,8 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
         
         String refundExternalId1 = randomAlphanumeric(10);
         String refundExternalId2 = randomAlphanumeric(10);
-        String refundDate1 = "2016-02-03T00:00:00Z";
-        String refundDate2 = "2016-02-02T00:00:00Z";
+        String refundDate1 = "2016-02-03T00:00:00.000Z";
+        String refundDate2 = "2016-02-02T00:00:00.000Z";
         
         databaseTestHelper.addRefund(RandomUtils.nextInt(), refundExternalId1, "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId, ZonedDateTime.parse(refundDate1));
         databaseTestHelper.addRefund(RandomUtils.nextInt(), refundExternalId2, "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId, ZonedDateTime.parse(refundDate2));

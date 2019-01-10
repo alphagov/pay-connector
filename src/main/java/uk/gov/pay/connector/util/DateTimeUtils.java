@@ -40,21 +40,6 @@ public class DateTimeUtils {
     }
 
     /**
-     * Converts a ZonedDateTime to a UTC ISO_8601 string representation
-     * <p>
-     * e.g. <br/>
-     * 1. ZonedDateTime("2010-01-01T12:00:00+01:00[Europe/Paris]") ==> "2010-12-31T22:59:59.132Z" <br/>
-     * 2. ZonedDateTime("2010-12-31T22:59:59.132Z") ==> "2010-12-31T22:59:59.132Z" <br/>
-     * </p>
-     *
-     * @param dateTime
-     * @return UTC ISO_8601 date string
-     */
-    public static String toUTCDateTimeString(ZonedDateTime dateTime) {
-        return dateTime.format(dateTimeFormatterUTC);
-    }
-
-    /**
      * Converts a LocalDateTime to a UTC ISO_8601 string representation
      * <p>
      * e.g. <br/>

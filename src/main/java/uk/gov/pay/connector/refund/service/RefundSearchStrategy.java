@@ -1,15 +1,12 @@
 package uk.gov.pay.connector.refund.service;
 
 import uk.gov.pay.connector.charge.dao.SearchParams;
-import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
-import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.search.AbstractSearchStrategy;
 import uk.gov.pay.connector.common.service.search.BuildResponseStrategy;
 import uk.gov.pay.connector.common.service.search.SearchStrategy;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.SearchRefundsResponse;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
-import uk.gov.pay.connector.util.DateTimeUtils;
 
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -18,6 +15,7 @@ import java.util.List;
 
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
+import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.refund.model.SearchRefundsResponse.anAllRefundsResponseBuilder;
 
 public class RefundSearchStrategy extends AbstractSearchStrategy<RefundEntity, SearchRefundsResponse> implements SearchStrategy, BuildResponseStrategy<RefundEntity, SearchRefundsResponse> {
@@ -52,7 +50,7 @@ public class RefundSearchStrategy extends AbstractSearchStrategy<RefundEntity, S
 
         return responseBuilder
                 .withRefundId(externalRefundId)
-                .withCreatedDate(DateTimeUtils.toUTCDateTimeString(refundEntity.getCreatedDate()))
+                .withCreatedDate(ISO_INSTANT_MILLISECOND_PRECISION.format(refundEntity.getCreatedDate()))
                 .withStatus(refundEntity.getStatus().toExternal().getStatus())
                 .withChargeId(externalChargeId)
                 .withAmountSubmitted(refundEntity.getAmount())

@@ -312,13 +312,13 @@ public class WorldpayRefundITest extends ChargingITestBase {
                 .body("_embedded.refunds[0].refund_id", is(testRefund1.getExternalRefundId()))
                 .body("_embedded.refunds[0].amount", is(10))
                 .body("_embedded.refunds[0].status", is("submitted"))
-                .body("_embedded.refunds[0].created_date", is("2016-08-01T00:00:00Z"))
+                .body("_embedded.refunds[0].created_date", is("2016-08-01T00:00:00.000Z"))
                 .body("_embedded.refunds[0]._links.self.href", is(paymentUrl + "/refunds/" + testRefund1.getExternalRefundId()))
                 .body("_embedded.refunds[0]._links.payment.href", is(paymentUrl))
                 .body("_embedded.refunds[1].refund_id", is(testRefund2.getExternalRefundId()))
                 .body("_embedded.refunds[1].amount", is(20))
                 .body("_embedded.refunds[1].status", is("submitted"))
-                .body("_embedded.refunds[1].created_date", is("2016-08-02T00:00:00Z"))
+                .body("_embedded.refunds[1].created_date", is("2016-08-02T00:00:00.000Z"))
                 .body("_embedded.refunds[1]._links.self.href", is(paymentUrl + "/refunds/" + testRefund2.getExternalRefundId()))
                 .body("_embedded.refunds[1]._links.payment.href", is(paymentUrl));
     }
