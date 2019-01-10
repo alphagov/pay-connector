@@ -26,6 +26,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.jayway.restassured.RestAssured.given;
+import static java.lang.String.format;
+
 @RunWith(PactRunner.class)
 @Provider("connector")
 @PactBroker(scheme = "https", host = "pact-broker-test.cloudapps.digital", tags = {"${PACT_CONSUMER_TAG}", "test", "staging", "production"},
@@ -97,6 +100,21 @@ public class TransactionsApiContractTest {
                     chargeId, createdDate);
         }
     }
+
+    private void cancelCharge(String gatewayAccountId, String chargeExternalId) {
+        given().port(app.getLocalPort()).post(format("/v1/api/accounts/%s/charges/%s/cancel", gatewayAccountId, chargeExternalId));
+    }
+
+    @State("a canceled charge exists")
+    public void aCanceledChargeExists(Map<String, String> params) {
+        String gatewayAccountId = params.get("gateway_account_id");
+        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        String chargeExternalId = params.get("charge_id");
+        setUpGatewayAccount(Long.valueOf(gatewayAccountId));
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, ZonedDateTime.now(), false);
+        cancelCharge(gatewayAccountId, chargeExternalId);
+    }
+
 
     @State("User 666 exists in the database")
     public void account666Exists() {
