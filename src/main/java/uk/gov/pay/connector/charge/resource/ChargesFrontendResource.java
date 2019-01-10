@@ -121,7 +121,6 @@ public class ChargesFrontendResource {
     }
 
     private Response getInvalidStatusResponse(String chargeId, ChargeStatus newChargeStatus) {
-        logger.warn("charge with id {} cannot be updated to the new status: {}", chargeId, newChargeStatus.getValue());
         return badRequestResponse("charge with id: " + chargeId +
                 " cannot be updated to the new status: " + newChargeStatus.getValue());
     }
