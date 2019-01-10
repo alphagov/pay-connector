@@ -94,14 +94,14 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         injector.getInstance(PersistenceServiceInitialiser.class);
 
         initialiseMetrics(configuration, environment);
-        
+
         environment.jersey().register(new ConstraintViolationExceptionMapper());
         environment.jersey().register(new ValidationExceptionMapper());
         environment.jersey().register(new UnsupportedOperationExceptionMapper());
         environment.jersey().register(new LoggingExceptionMapper<Throwable>() {});
         environment.jersey().register(new JsonProcessingExceptionMapper());
         environment.jersey().register(new EarlyEofExceptionMapper());
-        
+
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(ChargeEventsResource.class));
         environment.jersey().register(injector.getInstance(SecurityTokensResource.class));
@@ -124,7 +124,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         environment.servlets().addFilter("LoggingFilter", injector.getInstance(LoggingFilter.class))
                 .addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
-        
+
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
         environment.healthChecks().register("executorService", injector.getInstance(ExecutorServiceHealthCheck.class));
@@ -132,9 +132,9 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         HttpsURLConnection.setDefaultSSLSocketFactory(new TrustingSSLSocketFactory());
 
         if (configuration.isXrayEnabled())
-            Xray.init(environment, "pay-connector", Optional.empty(),"/v1/*");
+            Xray.init(environment, "pay-connector", Optional.empty(), "/v1/*");
     }
-
+    
     protected ConnectorModule getModule(ConnectorConfiguration configuration, Environment environment) {
         return new ConnectorModule(configuration, environment);
     }
@@ -170,7 +170,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     private void setupSchedulers(ConnectorConfiguration configuration, Environment environment, Injector injector) {
-        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration, 
+        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration,
                 environment, injector.getInstance(CardCaptureProcess.class), injector.getInstance(XrayUtils.class));
         environment.lifecycle().manage(captureProcessScheduler);
     }

@@ -57,6 +57,22 @@ public class CardAuthorisationExecutor {
         this.xrayUtils = xrayUtils;
         this.executorService = executorService;
         this.config = configuration.getExecutorServiceConfig();
+        addShutdownHook();
+    }
+
+    private void addShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            String className = ExecutorService.class.getSimpleName();
+            logger.info("Shutting down {}", className);
+            executorService.shutdown();
+            logger.info("Awaiting for {} threads to terminate", className);
+            try {
+                executorService.awaitTermination(1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.error("Error while waiting for {} threads to terminate", className);
+            }
+            executorService.shutdownNow();
+        }));
     }
     
     public <T> T executeAuthorise(String chargeId, Supplier<T> f) {
