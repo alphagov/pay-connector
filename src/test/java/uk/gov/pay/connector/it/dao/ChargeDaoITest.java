@@ -910,8 +910,6 @@ public class ChargeDaoITest extends DaoITestBase {
         chargeDao.persist(chargeEntity);
 
         assertThat(chargeEntity.getId(), is(notNullValue()));
-        // Ensure always max precision is being millis
-        assertThat(chargeEntity.getCreatedDate().getNano() % 1000000, is(0));
     }
 
     @Test
