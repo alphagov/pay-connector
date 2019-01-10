@@ -3,8 +3,8 @@ package uk.gov.pay.connector.gateway;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.httpclient.InstrumentedHttpClientConnectionManager;
 import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.setup.Environment;
+import io.dropwizard.util.Duration;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
@@ -45,28 +45,19 @@ public class ClientFactory {
     }
 
     public Client createWithDropwizardClient(PaymentGatewayName gateway, GatewayOperation operation, MetricRegistry metricRegistry) {
-        return createWithDropwizardClient(gateway, Optional.of(operation), metricRegistry);
+        return createWithDropwizardClient(gateway, getReadTimeout(operation, gateway), operation.getConfigKey(), metricRegistry);
     }
 
     public Client createWithDropwizardClient(PaymentGatewayName gateway, MetricRegistry metricRegistry) {
-        return createWithDropwizardClient(gateway, Optional.empty(), metricRegistry);
+        return createWithDropwizardClient(gateway, conf.getCustomJerseyClient().getReadTimeout(), "all", metricRegistry);
     }
 
-    private Client createWithDropwizardClient(PaymentGatewayName gateway, Optional<GatewayOperation> operation, MetricRegistry metricRegistry) {
-        JerseyClientConfiguration clientConfiguration = conf.getClientConfiguration();
+    private Client createWithDropwizardClient(PaymentGatewayName gateway, Duration readTimeout, String metricName, MetricRegistry metricRegistry) {
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
                 .using(new ApacheConnectorProvider())
-                .using(clientConfiguration);
-
-        if (operation.isPresent()) {
-            defaultClientBuilder
-                    .withProperty(READ_TIMEOUT, getReadTimeoutInMillis(operation.get(), gateway))
-                    .withProperty(CONNECTION_MANAGER, createConnectionManager(gateway.getName(), operation.get().getConfigKey(), metricRegistry));
-        } else {
-            defaultClientBuilder
-                    .withProperty(READ_TIMEOUT, getDefaultTimeout())
-                    .withProperty(CONNECTION_MANAGER, createConnectionManager(gateway.getName(), "all", metricRegistry));
-        }
+                .using(conf.getClientConfiguration())
+                .withProperty(READ_TIMEOUT, (int) readTimeout.toMilliseconds())
+                .withProperty(CONNECTION_MANAGER, createConnectionManager(gateway.getName(), metricName, metricRegistry));
 
         if (System.getProperty(PROXY_HOST_PROPERTY) != null && System.getProperty(PROXY_PORT_PROPERTY) != null) {
             defaultClientBuilder.withProperty(ClientProperties.PROXY_URI, format("http://%s:%s",
@@ -82,24 +73,17 @@ public class ClientFactory {
         return client;
     }
 
-    private int getReadTimeoutInMillis(GatewayOperation operation, PaymentGatewayName gateway) {
-        OperationOverrides overrides = getOverridesFor(operation, gateway);
-        if (overrides != null && overrides.getReadTimeout() != null) {
-            return (int) overrides.getReadTimeout().toMilliseconds();
-        }
-        return getDefaultTimeout();
+    private Duration getReadTimeout(GatewayOperation operation, PaymentGatewayName gateway) {
+        return getOverridesFor(operation, gateway)
+                .map(OperationOverrides::getReadTimeout)
+                .orElse(conf.getCustomJerseyClient().getReadTimeout());
     }
 
-    private int getDefaultTimeout() {
-        return (int) conf.getCustomJerseyClient().getReadTimeout().toMilliseconds();
-    }
-
-    private OperationOverrides getOverridesFor(GatewayOperation operation, PaymentGatewayName gateway) {
-        if (gateway.equals(PaymentGatewayName.STRIPE)) return null;
+    private Optional<OperationOverrides> getOverridesFor(GatewayOperation operation, PaymentGatewayName gateway) {
+        if (gateway.equals(PaymentGatewayName.STRIPE)) return Optional.empty();
         return conf.getGatewayConfigFor(gateway)
                 .getJerseyClientOverrides()
-                .map(jerseyClientOverrides -> jerseyClientOverrides.getOverridesFor(operation))
-                .orElse(null);
+                .map(jerseyClientOverrides -> jerseyClientOverrides.getOverridesFor(operation));
     }
 
     private HttpClientConnectionManager createConnectionManager(String gatewayName, String operation, MetricRegistry metricRegistry) {
