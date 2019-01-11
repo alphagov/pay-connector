@@ -50,7 +50,6 @@ public class ResponseUtil {
     }
 
     public static Response badRequestResponse(String message) {
-        logger.error(message);
         return responseWithMessageMap(BAD_REQUEST, message);
     }
 
@@ -75,7 +74,6 @@ public class ResponseUtil {
     }
 
     public static Response acceptedResponse(String message) {
-        logger.info(message);
         return responseWithMessageMap(ACCEPTED, message);
     }
 

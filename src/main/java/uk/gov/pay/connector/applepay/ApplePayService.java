@@ -37,9 +37,9 @@ public class ApplePayService {
         LOGGER.info("Authorising apple pay charge with id {} ", chargeId);
         GatewayResponse<BaseAuthoriseResponse> response = authoriseService.doAuthorise(chargeId, data);
         if (isAuthorisationSubmitted(response)) {
+            LOGGER.info("Charge {}: apple pay authorisation was deferred.", chargeId);
             return badRequestResponse("This transaction was deferred.");
         }
-
         return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
     }
 
@@ -62,6 +62,7 @@ public class ApplePayService {
             case GATEWAY_CONNECTION_SOCKET_ERROR:
                 return serviceErrorResponse(error.getMessage());
             default:
+                LOGGER.error("Charge {}: error {}", error.getMessage());
                 return badRequestResponse(error.getMessage());
         }
     }

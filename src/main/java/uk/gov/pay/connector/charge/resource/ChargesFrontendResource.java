@@ -90,6 +90,7 @@ public class ChargesFrontendResource {
         }
 
         if (!validateChargePatchParams(chargePatchRequest)) {
+            logger.error("Charge {}: InvalidPatchParameters", chargeId);
             return badRequestResponse("Invalid patch parameters" + chargePatchMap.toString());
         }
 
