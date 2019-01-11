@@ -73,7 +73,7 @@ public class CardResource {
         }
         AuthorisationResponse response = cardAuthoriseService.doAuthorise(chargeId, authCardDetails);
 
-        return response.getGatewayError().map(this::handleError)
+        return response.getGatewayError().map(error -> handleError(chargeId, error))
                 .orElseGet(() -> response.getAuthoriseStatus().map(status -> handleAuthResponse(chargeId, status))
                         .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
     }
@@ -150,7 +150,7 @@ public class CardResource {
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(chargeId));
     }
 
-    private Response handleError(GatewayError error) {
+    private Response handleError(String chargeId, GatewayError error) {
         switch (error.getErrorType()) {
             case UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY:
             case MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY:
@@ -159,7 +159,7 @@ public class CardResource {
             case GATEWAY_CONNECTION_SOCKET_ERROR:
                 return serviceErrorResponse(error.getMessage());
             default:
-                logger.error("Charge {}: error {}", error.getMessage());
+                logger.error("Charge {}: error {}", chargeId, error.getMessage());
                 return badRequestResponse(error.getMessage());
         }
     }
