@@ -52,7 +52,9 @@ stripe:
   authTokens:
     test: ${GDS_CONNECTOR_STRIPE_AUTH_TOKEN:-sk_test}
     live: ${GDS_CONNECTOR_STRIPE_AUTH_LIVE_TOKEN}
-  webhookSigningSecret: ${GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET:-whsec}
+  webhookSigningSecrets:
+      test: ${GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET:-whtest}
+      live: ${GDS_CONNECTOR_STRIPE_WEBHOOK_LIVE_SIGN_SECRET:-whlive}
 
 jerseyClient:
   timeout: 500ms
