@@ -39,7 +39,7 @@ import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -213,7 +213,7 @@ public class ChargesFrontendResourceITest {
                 .withChargeId(chargeId)
                 .putChargeStatus(putBody)
                 .statusCode(NO_CONTENT.getStatusCode())
-                .body(isEmptyOrNullString());
+                .body(emptyOrNullString());
 
         validateGetCharge(expectedAmount, chargeId, ENTERING_CARD_DETAILS, true);
     }

@@ -37,7 +37,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -305,7 +305,7 @@ public class ChargingITestBase {
         connectorRestApiClient
                 .withChargeId(chargeId)
                 .getCharge()
-                .body("status", isEmptyOrNullString())
+                .body("status", emptyOrNullString())
                 .body("state.status", is("cancelled"))
                 .body("state.finished", is(true))
                 .body("state.message", is("Payment was cancelled by the service"))

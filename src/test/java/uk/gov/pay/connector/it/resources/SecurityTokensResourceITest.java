@@ -17,7 +17,7 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.emptyOrNullString;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -85,7 +85,7 @@ public class SecurityTokensResourceITest {
                 .delete(tokensUrlFor(defaultTestToken.getSecureRedirectToken()))
                 .then()
                 .statusCode(204)
-                .body(isEmptyOrNullString());
+                .body(emptyOrNullString());
         findTokenGetsStatusCode(defaultTestToken.getSecureRedirectToken(), 404)
                 .body("message", is("Token invalid!"));
     }
