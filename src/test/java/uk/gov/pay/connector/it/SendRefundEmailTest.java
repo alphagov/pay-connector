@@ -21,7 +21,7 @@ import uk.gov.service.notify.NotificationClient;
 
 import java.util.Map;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;

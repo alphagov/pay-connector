@@ -9,7 +9,7 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
-import static com.jayway.restassured.http.ContentType.JSON;
+import static io.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.hamcrest.Matchers.is;

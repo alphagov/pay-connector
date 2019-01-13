@@ -2,8 +2,8 @@ package uk.gov.pay.connector.it.resources.worldpay;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
-import com.jayway.restassured.http.ContentType;
-import com.jayway.restassured.response.ValidatableResponse;
+import io.restassured.http.ContentType;
+import io.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

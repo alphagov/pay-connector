@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
-import com.jayway.restassured.response.ValidatableResponse;
+import io.restassured.response.ValidatableResponse;
 import junitparams.Parameters;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,7 +15,7 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.jayway.restassured.http.ContentType.JSON;
+import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

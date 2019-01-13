@@ -4,7 +4,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.is;
 
 public class DatabaseConnectionITest {

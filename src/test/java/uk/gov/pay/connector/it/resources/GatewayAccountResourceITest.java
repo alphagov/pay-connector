@@ -3,7 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import com.jayway.restassured.http.ContentType;
+import io.restassured.http.ContentType;
 import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,7 +12,7 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
-import static com.jayway.restassured.http.ContentType.JSON;
+import static io.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;

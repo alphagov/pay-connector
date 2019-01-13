@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static java.lang.String.format;
 
 @RunWith(PactRunner.class)

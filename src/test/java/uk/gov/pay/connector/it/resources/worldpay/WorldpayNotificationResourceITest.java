@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
-import com.jayway.restassured.response.ValidatableResponse;
+import io.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -13,7 +13,7 @@ import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.io.IOException;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;

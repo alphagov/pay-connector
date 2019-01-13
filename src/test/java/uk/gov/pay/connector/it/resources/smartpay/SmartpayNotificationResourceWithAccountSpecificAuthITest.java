@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.it.resources.smartpay;
 
 import com.google.common.collect.ImmutableMap;
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;

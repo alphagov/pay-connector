@@ -14,7 +14,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import javax.ws.rs.core.HttpHeaders;
 import java.time.ZonedDateTime;
 
-import static com.jayway.restassured.http.ContentType.JSON;
+import static io.restassured.http.ContentType.JSON;
 import static java.time.ZonedDateTime.now;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;

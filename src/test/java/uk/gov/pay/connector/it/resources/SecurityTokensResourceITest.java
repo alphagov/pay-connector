@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
-import com.jayway.restassured.response.ValidatableResponse;
-import com.jayway.restassured.specification.RequestSpecification;
+import io.restassured.response.ValidatableResponse;
+import io.restassured.specification.RequestSpecification;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,8 +14,8 @@ import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
-import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.http.ContentType.JSON;
+import static io.restassured.RestAssured.given;
+import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;

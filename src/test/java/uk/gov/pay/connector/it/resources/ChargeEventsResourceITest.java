@@ -20,7 +20,7 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZonedDateTime;
 
-import static com.jayway.restassured.http.ContentType.JSON;
+import static io.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.Is.is;

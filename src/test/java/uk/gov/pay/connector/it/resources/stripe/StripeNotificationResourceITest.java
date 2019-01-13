@@ -2,7 +2,7 @@ package uk.gov.pay.connector.it.resources.stripe;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
@@ -21,7 +21,7 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.apache.commons.lang.math.RandomUtils.nextInt;
