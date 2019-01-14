@@ -75,7 +75,8 @@ public class StripeMockClient {
     }
 
     public void mockCreateSourceWithThreeDSecureRequired() {
-        String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE)
+                .replace("{{three_d_secure_option}}","required");
         setupResponse(payload, "/v1/sources", 200);
     }
 

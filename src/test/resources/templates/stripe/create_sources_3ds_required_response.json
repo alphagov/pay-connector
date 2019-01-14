@@ -3,7 +3,7 @@
   "object": "source",
   "amount": null,
   "card": {
-    "three_d_secure": "required"
+    "three_d_secure": "{{three_d_secure_option}}"
   },
   "client_secret": "src_client_secret_Dz9E1oktM2D04med4z8Il4Df",
   "currency": null,
