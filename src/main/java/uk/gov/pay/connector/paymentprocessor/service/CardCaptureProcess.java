@@ -72,7 +72,7 @@ public class CardCaptureProcess {
                         logger.info("Another process has already attempted to capture [chargeId={}]. Skipping.", charge.getExternalId());
                         skipped++;
                     } catch (Exception e) {
-                        logger.info("Exception capturing charge [chargeId={}]. Skipping.", charge.getExternalId());
+                        logger.info("Exception [{}] when capturing charge [chargeId={}]. Skipping.", e.getMessage(), charge.getExternalId());
                         skipped++;
                     }
                 } else {
@@ -101,7 +101,7 @@ public class CardCaptureProcess {
         if (captureQueue.isEmpty()) {
             runCaptureId = RandomIdGenerator.newId();
             MDC.put(HEADER_REQUEST_ID, format("runCapture-%s", runCaptureId));
-            
+
             waitingCaptureQueueSize = chargeDao.countChargesAwaitingCaptureRetry(captureConfig.getRetryFailuresEveryAsJavaDuration());
 
             List<ChargeEntity> chargesToCapture = chargeDao.findChargesForCapture(captureConfig.getBatchSize(),
