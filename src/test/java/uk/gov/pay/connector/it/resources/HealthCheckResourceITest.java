@@ -4,8 +4,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
-import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.http.ContentType.JSON;
+import static io.restassured.RestAssured.given;
+import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.is;
 
 public class HealthCheckResourceITest {

@@ -14,7 +14,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import javax.ws.rs.core.HttpHeaders;
 import java.time.ZonedDateTime;
 
-import static com.jayway.restassured.http.ContentType.JSON;
+import static io.restassured.http.ContentType.JSON;
 import static java.time.ZonedDateTime.now;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -22,7 +22,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
@@ -108,7 +108,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
                 .body("count", is(2))
                 .body("page", is(1))
                 .body("_links.next_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=2&display_size=2&payment_states=timedout%2Csuccess&refund_states=submitted")))
-                .body("_links.prev_page", isEmptyOrNullString())
+                .body("_links.prev_page", emptyOrNullString())
                 .body("_links.first_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=1&display_size=2&payment_states=timedout%2Csuccess&refund_states=submitted")))
                 .body("_links.last_page.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=2&display_size=2&payment_states=timedout%2Csuccess&refund_states=submitted")))
                 .body("_links.self.href", is(expectedChargesLocationFor(accountId, "?reference=ref-3&page=1&display_size=2&payment_states=timedout%2Csuccess&refund_states=submitted")))
@@ -140,8 +140,8 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
                 .body("results[1].email", is(email))
                 .body("results[1].state.finished", is(false))
                 .body("results[1].state.status", is("submitted"))
-                .body("results[1].state.code", is(isEmptyOrNullString()))
-                .body("results[1].state.message", is(isEmptyOrNullString()))
+                .body("results[1].state.code", is(emptyOrNullString()))
+                .body("results[1].state.message", is(emptyOrNullString()))
                 .body("results[1].card_details.card_brand", is("Visa"))
                 .body("results[1].card_details.cardholder_name", is(cardHolderName))
                 .body("results[1].card_details.expiry_date", is(expiryDate))

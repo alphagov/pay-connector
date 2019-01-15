@@ -13,8 +13,8 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.lang.reflect.Field;
 
-import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.http.ContentType.JSON;
+import static io.restassured.RestAssured.given;
+import static io.restassured.http.ContentType.JSON;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;

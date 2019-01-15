@@ -21,7 +21,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
-import static com.jayway.restassured.http.ContentType.JSON;
+import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
 import static java.time.temporal.ChronoUnit.SECONDS;

@@ -1,14 +1,12 @@
 package uk.gov.pay.connector.util;
 
 import org.apache.commons.validator.routines.InetAddressValidator;
-import org.hamcrest.text.MatchesPattern;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.text.MatchesPattern.*;
 import static org.junit.Assert.assertThat;
 
 public class DnsUtilsITest {

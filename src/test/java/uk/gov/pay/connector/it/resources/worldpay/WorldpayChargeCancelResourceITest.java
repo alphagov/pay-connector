@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
-import com.jayway.restassured.http.ContentType;
+import io.restassured.http.ContentType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;

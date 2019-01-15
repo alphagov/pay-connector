@@ -13,7 +13,7 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.jayway.restassured.http.ContentType.JSON;
+import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;

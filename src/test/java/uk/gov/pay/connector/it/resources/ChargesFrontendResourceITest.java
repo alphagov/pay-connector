@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
-import com.jayway.restassured.response.ValidatableResponse;
+import io.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,7 +21,7 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 import javax.ws.rs.core.HttpHeaders;
 import java.util.List;
 
-import static com.jayway.restassured.http.ContentType.JSON;
+import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static java.util.Arrays.asList;
@@ -39,7 +39,7 @@ import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -213,7 +213,7 @@ public class ChargesFrontendResourceITest {
                 .withChargeId(chargeId)
                 .putChargeStatus(putBody)
                 .statusCode(NO_CONTENT.getStatusCode())
-                .body(isEmptyOrNullString());
+                .body(emptyOrNullString());
 
         validateGetCharge(expectedAmount, chargeId, ENTERING_CARD_DETAILS, true);
     }
