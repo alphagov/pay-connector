@@ -2,9 +2,14 @@ package uk.gov.pay.connector.gateway.stripe.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableList;
+
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StripeSourcesResponse {
+
+    private List<String> threeDSecureRequiredOptions = ImmutableList.of("required", "recommended", "optional");
 
     @JsonProperty("id")
     private String id;
@@ -21,7 +26,7 @@ public class StripeSourcesResponse {
     }
 
     public boolean require3ds() {
-        return card != null && "required".equals(card.getThreeDSecure());
+        return card != null && threeDSecureRequiredOptions.contains(card.getThreeDSecure());
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

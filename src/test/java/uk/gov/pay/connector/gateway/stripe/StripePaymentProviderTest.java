@@ -1,13 +1,14 @@
 package uk.gov.pay.connector.gateway.stripe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.StripeAuthTokens;
@@ -32,6 +33,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -57,21 +59,18 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(JUnitParamsRunner.class)
 public class StripePaymentProviderTest {
     protected StripePaymentProvider provider;
-    @Mock
-    StripeGatewayClient mockGatewayClient;
-    @Mock
-    ConnectorConfiguration configuration;
-    @Mock
-    StripeGatewayConfig gatewayConfig;
-    @Mock
-    LinksConfig linksConfig;
+    StripeGatewayClient mockGatewayClient = mock(StripeGatewayClient.class);
+    ConnectorConfiguration configuration = mock(ConnectorConfiguration.class);
+    StripeGatewayConfig gatewayConfig = mock(StripeGatewayConfig.class);
+    LinksConfig linksConfig = mock(LinksConfig.class);
     private URI tokensUrl;
     private URI sourcesUrl;
     private URI chargesUrl;
     private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
+    List<String> threeDSecureRequiredOptions = ImmutableList.of("required", "recommended", "optional");
 
     @Before
     public void before() {
@@ -99,9 +98,12 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthoriseAs3dsRequired_whenChargeRequired3ds() throws GatewayClientException, GatewayException, DownstreamException {
+    @Parameters({"recommended", "required", "optional"})
+    public void shouldAuthoriseAs3dsRequired_whenStripeSourceSupports3ds(String threeDSecureOption) throws GatewayClientException, GatewayException, DownstreamException {
+
         when(mockGatewayClient.postRequest(eq(tokensUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(successTokenResponse());
-        when(mockGatewayClient.postRequest(eq(sourcesUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(successSourceResponseWith3dsRequired(), success3dsSourceResponse());
+        when(mockGatewayClient.postRequest(eq(sourcesUrl), anyString(), any(Map.class), any(MediaType.class), anyString()))
+                .thenReturn(successSourceResponseWith3dsRequired(threeDSecureOption), success3dsSourceResponse());
 
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
 
@@ -112,7 +114,6 @@ public class StripePaymentProviderTest {
         Optional<StripeParamsFor3ds> stripeParamsFor3ds = (Optional<StripeParamsFor3ds>) response.getBaseResponse().get().getGatewayParamsFor3ds();
         assertThat(stripeParamsFor3ds.isPresent(), is(true));
         assertThat(stripeParamsFor3ds.get().toAuth3dsDetailsEntity().getIssuerUrl(), containsString("https://hooks.stripe.com")); //from templates/stripe/create_3ds_sources_response.json
-
     }
 
     @Test
@@ -271,8 +272,8 @@ public class StripePaymentProviderTest {
         return load(STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE);
     }
 
-    private String successSourceResponseWith3dsRequired() {
-        return load(STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE);
+    private String successSourceResponseWith3dsRequired(String threeDSecureOption) {
+        return load(STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE).replace("{{three_d_secure_option}}", threeDSecureOption);
     }
 
     private String success3dsSourceResponse() {
