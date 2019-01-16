@@ -40,20 +40,20 @@ public class ApplePayService {
             LOGGER.info("Charge {}: apple pay authorisation was deferred.", chargeId);
             return badRequestResponse("This transaction was deferred.");
         }
-        return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(response);
+        return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(chargeId, response);
     }
 
 
     //PP-4314 These methods duplicated from the CardResource. This kind of handling shouldn't be there in the first place, so will refactor to be embedded in services rather than at resource level
-    private Response handleGatewayAuthoriseResponse(GatewayResponse<? extends BaseAuthoriseResponse> response) {
+    private Response handleGatewayAuthoriseResponse(String chargeId, GatewayResponse<? extends BaseAuthoriseResponse> response) {
         return response.getGatewayError()
-                .map(this::handleError)
+                .map(error -> handleError(chargeId, error))
                 .orElseGet(() -> response.getBaseResponse()
                         .map(r -> ResponseUtil.successResponseWithEntity(ImmutableMap.of("status", r.authoriseStatus().getMappedChargeStatus().toString())))
                         .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
     }
     
-    private Response handleError(GatewayError error) {
+    private Response handleError(String chargeId, GatewayError error) {
         switch (error.getErrorType()) {
             case UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY:
             case MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY:
@@ -62,7 +62,7 @@ public class ApplePayService {
             case GATEWAY_CONNECTION_SOCKET_ERROR:
                 return serviceErrorResponse(error.getMessage());
             default:
-                LOGGER.error("Charge {}: error {}", error.getMessage());
+                LOGGER.error("Charge {}: error {}", chargeId, error.getMessage());
                 return badRequestResponse(error.getMessage());
         }
     }
