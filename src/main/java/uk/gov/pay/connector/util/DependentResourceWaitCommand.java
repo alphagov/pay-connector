@@ -3,7 +3,9 @@ package uk.gov.pay.connector.util;
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
-import net.sourceforge.argparse4j.inf.Subparser;
+
+import uk.gov.pay.commons.utils.startup.ApplicationStartupDependentResourceChecker;
+import uk.gov.pay.commons.utils.startup.DatabaseStartupResource;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 
 public class DependentResourceWaitCommand extends ConfiguredCommand<ConnectorConfiguration> {
@@ -12,13 +14,13 @@ public class DependentResourceWaitCommand extends ConfiguredCommand<ConnectorCon
     }
 
     @Override
-    public void configure(Subparser subparser) {
-        super.configure(subparser);
-    }
-
-    @Override
     protected void run(Bootstrap<ConnectorConfiguration> bs, Namespace ns, ConnectorConfiguration conf) {
-        ApplicationStartupDependentResourceChecker applicationStartupDependentResourceChecker = new ApplicationStartupDependentResourceChecker(new ApplicationStartupDependentResource(conf));
-        applicationStartupDependentResourceChecker.checkAndWaitForResources();
+        new ApplicationStartupDependentResourceChecker(new DatabaseStartupResource(conf.getDataSourceFactory()), duration -> {
+            try {
+                Thread.sleep(duration.toNanos() / 1000);
+            } catch (InterruptedException ignored) {
+            }
+        })
+                .checkAndWaitForResource();
     }
 }
