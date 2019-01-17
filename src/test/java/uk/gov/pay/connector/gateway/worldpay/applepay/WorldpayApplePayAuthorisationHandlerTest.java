@@ -10,13 +10,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.xml.sax.SAXException;
 import uk.gov.pay.connector.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
-import uk.gov.pay.connector.applepay.api.ApplePaymentInfo;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.common.model.api.PaymentInfo;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.GatewayOrder;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
@@ -25,14 +22,12 @@ import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Map;
-import java.util.function.BiFunction;
 
 import static fj.data.Either.left;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCodeFromGateway;
@@ -77,7 +72,7 @@ public class WorldpayApplePayAuthorisationHandlerTest {
 
     private ApplePayAuthorisationGatewayRequest getApplePayAuthorisationRequest(ChargeEntity chargeEntity) {
         AppleDecryptedPaymentData data = new AppleDecryptedPaymentData(
-                new ApplePaymentInfo(
+                new PaymentInfo(
                         "4242",
                         "visa",
                         PayersCardType.DEBIT,

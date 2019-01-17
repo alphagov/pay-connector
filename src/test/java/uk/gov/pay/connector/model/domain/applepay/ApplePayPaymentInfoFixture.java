@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.model.domain.applepay;
 
-import uk.gov.pay.connector.applepay.api.ApplePaymentInfo;
+import uk.gov.pay.connector.common.model.api.PaymentInfo;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 
 public final class ApplePayPaymentInfoFixture {
@@ -51,8 +51,8 @@ public final class ApplePayPaymentInfoFixture {
         return this;
     }
 
-    public ApplePaymentInfo build() {
-        return new ApplePaymentInfo(
+    public PaymentInfo build() {
+        return new PaymentInfo(
                 lastDigitsCardNumber,
                 brand,
                 cardType,

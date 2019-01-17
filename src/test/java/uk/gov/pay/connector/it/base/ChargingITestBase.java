@@ -228,8 +228,8 @@ public class ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, status);
     }
 
-    public static String authoriseChargeUrlForWallet(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/wallets".replace("{chargeId}", chargeId);
+    public static String authoriseChargeUrlForApplePay(String chargeId) {
+        return "/v1/frontend/charges/{chargeId}/wallets/apple-pay".replace("{chargeId}", chargeId);
     }
     
     public static String authoriseChargeUrlFor(String chargeId) {

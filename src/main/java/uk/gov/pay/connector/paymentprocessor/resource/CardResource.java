@@ -1,11 +1,10 @@
 package uk.gov.pay.connector.paymentprocessor.resource;
 
 import com.google.common.collect.ImmutableMap;
-import org.jooq.tools.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.applepay.ApplePayService;
-import uk.gov.pay.connector.applepay.api.ApplePayToken;
+import uk.gov.pay.connector.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -54,12 +53,12 @@ public class CardResource {
     }
 
     @POST
-    @Path("/v1/frontend/charges/{chargeId}/wallets")
+    @Path("/v1/frontend/charges/{chargeId}/wallets/apple-pay")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authoriseCharge(@PathParam("chargeId") String chargeId, ApplePayToken applePayToken) {
+    public Response authoriseCharge(@PathParam("chargeId") String chargeId, ApplePayAuthRequest applePayAuthRequest) {
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
-        return applePayService.authorise(chargeId, applePayToken);
+        return applePayService.authorise(chargeId, applePayAuthRequest);
     }
 
     @POST

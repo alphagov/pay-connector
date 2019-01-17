@@ -1,13 +1,13 @@
 package uk.gov.pay.connector.model.domain.applepay;
 
 import uk.gov.pay.connector.applepay.AppleDecryptedPaymentData;
-import uk.gov.pay.connector.applepay.api.ApplePaymentInfo;
+import uk.gov.pay.connector.common.model.api.PaymentInfo;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 
 import java.time.LocalDate;
 
 public final class ApplePayDecryptedPaymentDataFixture {
-    private ApplePaymentInfo applePaymentInfo = new ApplePaymentInfo(
+    private PaymentInfo applePaymentInfo = new PaymentInfo(
             "4242",
             "visa",
             PayersCardType.DEBIT,
@@ -30,11 +30,11 @@ public final class ApplePayDecryptedPaymentDataFixture {
         return new ApplePayDecryptedPaymentDataFixture();
     }
 
-    public ApplePaymentInfo getApplePaymentInfo() {
+    public PaymentInfo getApplePaymentInfo() {
         return applePaymentInfo;
     }
 
-    public ApplePayDecryptedPaymentDataFixture withApplePaymentInfo(ApplePaymentInfo applePaymentInfo) {
+    public ApplePayDecryptedPaymentDataFixture withApplePaymentInfo(PaymentInfo applePaymentInfo) {
         this.applePaymentInfo = applePaymentInfo;
         return this;
     }

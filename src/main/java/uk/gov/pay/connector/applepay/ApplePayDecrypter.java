@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ApplePayConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.applepay.api.ApplePayToken;
+import uk.gov.pay.connector.applepay.api.ApplePayAuthRequest;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
@@ -55,10 +55,10 @@ public class ApplePayDecrypter {
         this.objectMapper = objectMapper;
     }
 
-    public AppleDecryptedPaymentData performDecryptOperation(ApplePayToken applePayToken)  {
+    public AppleDecryptedPaymentData performDecryptOperation(ApplePayAuthRequest applePayAuthRequest)  {
         try {
-            byte[] data = BASE64_DECODER.decode(applePayToken.getEncryptedPaymentData().getData().getBytes(UTF_8));
-            byte[] ephemeralPublicKey = BASE64_DECODER.decode(applePayToken.getEncryptedPaymentData().getHeader().getEphemeralPublicKey().getBytes(UTF_8));
+            byte[] data = BASE64_DECODER.decode(applePayAuthRequest.getEncryptedPaymentData().getData().getBytes(UTF_8));
+            byte[] ephemeralPublicKey = BASE64_DECODER.decode(applePayAuthRequest.getEncryptedPaymentData().getHeader().getEphemeralPublicKey().getBytes(UTF_8));
             PrivateKey privateKey = generatePrivateKey();
             Certificate certificate = generateCertificate();
 

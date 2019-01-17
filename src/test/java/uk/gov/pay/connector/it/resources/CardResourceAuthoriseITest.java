@@ -256,7 +256,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
 
         givenSetup()
                 .body(cardDetails)
-                .post(authoriseChargeUrlForWallet(chargeId))
+                .post(authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(200);
 
