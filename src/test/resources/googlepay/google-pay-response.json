@@ -1,0 +1,14 @@
+{
+  "tokenizationData": {
+    "type": "DIRECT",
+    "token": {
+      "signature":"..."
+    },
+    "intermediateSigningKey": {
+      "signedKey":"{\"keyValue\":\"...\",\"keyExpiration\":\"...\"}",
+      "signatures":["..."]
+    },
+    "protocolVersion":"ECv2",
+    "signedMessage":"{\"encryptedMessage\":\"...\",\"ephemeralPublicKey\":\"...\",\"tag\":\"...\"}"
+  }
+}

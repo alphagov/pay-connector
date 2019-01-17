@@ -3,6 +3,7 @@ package uk.gov.pay.connector.app;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.graphite.GraphiteSender;
 import com.codahale.metrics.graphite.GraphiteUDP;
+import com.google.crypto.tink.apps.paymentmethodtoken.GooglePaymentsPublicKeysManager;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -133,6 +134,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         if (configuration.isXrayEnabled())
             Xray.init(environment, "pay-connector", Optional.empty(),"/v1/*");
+
+        GooglePaymentsPublicKeysManager.INSTANCE_PRODUCTION.refreshInBackground();
     }
 
     protected ConnectorModule getModule(ConnectorConfiguration configuration, Environment environment) {
