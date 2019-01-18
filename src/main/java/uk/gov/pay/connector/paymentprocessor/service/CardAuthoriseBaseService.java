@@ -13,7 +13,6 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.gateway.exception.GenericGatewayRuntimeException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
-import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
@@ -39,7 +38,7 @@ public class CardAuthoriseBaseService {
 
  
     public <T> T executeAuthorise(String chargeId, Supplier<T> authorisationSupplier) {
-        Pair<ExecutionStatus, T> executeResult = (Pair<ExecutionStatus, T>) cardExecutorService.execute(authorisationSupplier);
+        Pair<ExecutionStatus, T> executeResult = cardExecutorService.execute(authorisationSupplier);
 
         switch (executeResult.getLeft()) {
             case COMPLETED:

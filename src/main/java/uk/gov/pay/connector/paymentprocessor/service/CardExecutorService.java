@@ -34,7 +34,7 @@ import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.
  * catches the timeout exception and returns to frontend as 'in progress'. Frontend then polls connector until the 
  * charge is authorised (by the CES thread), and continues on its merry way.
  */
-public class CardExecutorService<T> {
+public class CardExecutorService {
 
     private static final Logger logger = LoggerFactory.getLogger(CardExecutorService.class);
     private static final int QUEUE_WAIT_WARN_THRESHOLD_MILLIS = 10000;
@@ -88,7 +88,7 @@ public class CardExecutorService<T> {
 
     // accepts a supplier function and executed that in a separate Thread of its own.
     // returns a Pair of the execution status and the return type
-    public Pair<ExecutionStatus, T> execute(Supplier<T> callable) {
+    public <T> Pair<ExecutionStatus, T> execute(Supplier<T> callable) {
         Callable<T> task = callable::get;
         final long startTime = System.currentTimeMillis();
 
