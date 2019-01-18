@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.applepay;
+package uk.gov.pay.connector.wallets.applepay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
@@ -9,7 +9,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ApplePayConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.WorldpayConfig;
-import uk.gov.pay.connector.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -17,7 +17,7 @@ import java.time.LocalDate;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.applepay.ApplePayAuthRequestBuilder.anApplePayToken;
+import static uk.gov.pay.connector.wallets.applepay.ApplePayAuthRequestBuilder.anApplePayToken;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApplePayDecrypterTest {

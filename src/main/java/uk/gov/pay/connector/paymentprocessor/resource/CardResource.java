@@ -3,8 +3,8 @@ package uk.gov.pay.connector.paymentprocessor.resource;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.applepay.ApplePayService;
-import uk.gov.pay.connector.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.applepay.ApplePayService;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -53,7 +53,7 @@ public class CardResource {
     }
 
     @POST
-    @Path("/v1/frontend/charges/{chargeId}/wallets/apple-pay")
+    @Path("/v1/frontend/charges/{chargeId}/wallets/apple")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authoriseCharge(@PathParam("chargeId") String chargeId, ApplePayAuthRequest applePayAuthRequest) {

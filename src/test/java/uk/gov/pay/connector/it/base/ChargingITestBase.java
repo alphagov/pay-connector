@@ -229,7 +229,7 @@ public class ChargingITestBase {
     }
 
     public static String authoriseChargeUrlForApplePay(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/wallets/apple-pay".replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/wallets/apple".replace("{chargeId}", chargeId);
     }
     
     public static String authoriseChargeUrlFor(String chargeId) {

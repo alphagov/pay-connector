@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.applepay;
+package uk.gov.pay.connector.wallets.applepay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ApplePayConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.applepay;
+package uk.gov.pay.connector.wallets.applepay;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
@@ -6,7 +6,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;

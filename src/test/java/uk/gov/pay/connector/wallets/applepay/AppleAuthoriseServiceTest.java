@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.applepay;
+package uk.gov.pay.connector.wallets.applepay;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
@@ -25,6 +25,7 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
+import uk.gov.pay.connector.wallets.WalletType;
 
 import java.util.Map;
 import java.util.Optional;

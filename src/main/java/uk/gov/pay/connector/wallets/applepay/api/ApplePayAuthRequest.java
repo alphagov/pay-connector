@@ -1,17 +1,17 @@
-package uk.gov.pay.connector.applepay.api;
+package uk.gov.pay.connector.wallets.applepay.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import uk.gov.pay.connector.common.model.api.PaymentInfo;
+import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class ApplePayAuthRequest {
-    private PaymentInfo applePaymentInfo;
+    private WalletPaymentInfo applePaymentInfo;
     private EncryptedPaymentData encryptedPaymentData;
 
     @JsonProperty("payment_info")
-    public PaymentInfo getApplePaymentInfo() {
+    public WalletPaymentInfo getApplePaymentInfo() {
         return applePaymentInfo;
     }
 
@@ -22,7 +22,7 @@ public class ApplePayAuthRequest {
     public ApplePayAuthRequest() {
     }
 
-    public ApplePayAuthRequest(PaymentInfo applePaymentInfo, EncryptedPaymentData encryptedPaymentData) {
+    public ApplePayAuthRequest(WalletPaymentInfo applePaymentInfo, EncryptedPaymentData encryptedPaymentData) {
         this.applePaymentInfo = applePaymentInfo;
         this.encryptedPaymentData = encryptedPaymentData;
     }

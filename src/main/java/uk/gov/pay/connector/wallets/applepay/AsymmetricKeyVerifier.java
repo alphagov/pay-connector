@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.applepay;
+package uk.gov.pay.connector.wallets.applepay;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;

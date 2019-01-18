@@ -8,7 +8,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
-import uk.gov.pay.connector.applepay.ApplePayDecrypter;
+import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;

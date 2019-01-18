@@ -1,11 +1,11 @@
-package uk.gov.pay.connector.common.model.api;
+package uk.gov.pay.connector.wallets.model;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
-public class PaymentInfo {
+public class WalletPaymentInfo {
     
     private String lastDigitsCardNumber;
     private String brand;
@@ -13,10 +13,10 @@ public class PaymentInfo {
     private String cardholderName;
     private String email;
 
-    public PaymentInfo() {
+    public WalletPaymentInfo() {
     }
 
-    public PaymentInfo(String lastDigitsCardNumber, String brand, PayersCardType cardType, String cardholderName, String email) {
+    public WalletPaymentInfo(String lastDigitsCardNumber, String brand, PayersCardType cardType, String cardholderName, String email) {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
         this.brand = brand;
         this.cardType = cardType;
@@ -46,7 +46,7 @@ public class PaymentInfo {
 
     @Override
     public String toString() { //this might be logged, so we serialise without PII
-        return "PaymentInfo{" +
+        return "WalletPaymentInfo{" +
                 "lastDigitsCardNumber='" + lastDigitsCardNumber + '\'' +
                 ", brand='" + brand + '\'' +
                 ", cardType=" + cardType +

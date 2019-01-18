@@ -1,8 +1,8 @@
-package uk.gov.pay.connector.applepay;
+package uk.gov.pay.connector.wallets.applepay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import uk.gov.pay.connector.applepay.api.ApplePayAuthRequest;
-import uk.gov.pay.connector.common.model.api.PaymentInfo;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.io.IOException;
 
@@ -34,7 +34,7 @@ public class ApplePayAuthRequestBuilder {
 
     public ApplePayAuthRequest build() {
         return new ApplePayAuthRequest(
-                new PaymentInfo(),
+                new WalletPaymentInfo(),
                 new ApplePayAuthRequest.EncryptedPaymentData(
                         validEncryptedPaymentData.getVersion(),
                         this.data,

@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.sandbox.applepay;
 
-import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
-import uk.gov.pay.connector.applepay.ApplePayAuthorisationHandler;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationHandler;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;

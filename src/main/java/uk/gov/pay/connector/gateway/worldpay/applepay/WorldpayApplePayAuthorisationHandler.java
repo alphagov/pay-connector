@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.gateway.worldpay.applepay;
 
 import fj.data.Either;
-import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
-import uk.gov.pay.connector.applepay.ApplePayAuthorisationHandler;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationHandler;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.GatewayError;

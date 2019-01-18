@@ -8,16 +8,16 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.xml.sax.SAXException;
-import uk.gov.pay.connector.applepay.AppleDecryptedPaymentData;
-import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.common.model.api.PaymentInfo;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
+import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -72,7 +72,7 @@ public class WorldpayApplePayAuthorisationHandlerTest {
 
     private ApplePayAuthorisationGatewayRequest getApplePayAuthorisationRequest(ChargeEntity chargeEntity) {
         AppleDecryptedPaymentData data = new AppleDecryptedPaymentData(
-                new PaymentInfo(
+                new WalletPaymentInfo(
                         "4242",
                         "visa",
                         PayersCardType.DEBIT,

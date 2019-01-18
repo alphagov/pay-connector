@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.applepay;
+package uk.gov.pay.connector.wallets.applepay;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;

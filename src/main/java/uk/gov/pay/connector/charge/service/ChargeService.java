@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
-import uk.gov.pay.connector.applepay.WalletType;
+import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;

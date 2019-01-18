@@ -2,8 +2,8 @@ package uk.gov.pay.connector.gateway.sandbox.applepay;
 
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.applepay.AppleDecryptedPaymentData;
-import uk.gov.pay.connector.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
