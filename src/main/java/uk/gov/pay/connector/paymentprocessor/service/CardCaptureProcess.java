@@ -20,9 +20,10 @@ import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.filters.LoggingFilter.HEADER_REQUEST_ID;
 
 public class CardCaptureProcess {
+
+    private static final String HEADER_REQUEST_ID = "X-Request-Id";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ChargeDao chargeDao;
