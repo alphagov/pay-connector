@@ -13,6 +13,10 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    private GooglePayKeyManagement googlePayKeyManagement;
+
+    @Valid
+    @NotNull
     private WorldpayConfig worldpayConfig;
 
     @Valid
@@ -80,6 +84,11 @@ public class ConnectorConfiguration extends Configuration {
 
     @NotNull
     private Boolean xrayEnabled;
+
+    @JsonProperty("googlePayKeyManagement")
+    public GooglePayKeyManagement getGooglePayKeyManagement() {
+        return googlePayKeyManagement;
+    }
 
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {

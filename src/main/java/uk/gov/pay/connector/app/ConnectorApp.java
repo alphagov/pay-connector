@@ -135,7 +135,9 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         if (configuration.isXrayEnabled())
             Xray.init(environment, "pay-connector", Optional.empty(),"/v1/*");
 
-        GooglePaymentsPublicKeysManager.INSTANCE_PRODUCTION.refreshInBackground();
+        if (configuration.getGooglePayKeyManagement().isProduction()) {
+            GooglePaymentsPublicKeysManager.INSTANCE_PRODUCTION.refreshInBackground();
+        } else GooglePaymentsPublicKeysManager.INSTANCE_TEST.refreshInBackground();
     }
 
     protected ConnectorModule getModule(ConnectorConfiguration configuration, Environment environment) {
