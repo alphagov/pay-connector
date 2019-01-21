@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.webpayments;
+package uk.gov.pay.connector.wallets;
 
 import java.util.Optional;
 

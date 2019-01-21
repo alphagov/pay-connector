@@ -2,7 +2,6 @@ package uk.gov.pay.connector.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 public class GooglePayKeyManagement {
@@ -11,7 +10,6 @@ public class GooglePayKeyManagement {
     @JsonProperty("production")
     private Boolean production;
 
-    @Valid
     @NotNull
     @JsonProperty("privateDecryptionKey")
     private String privateDecryptionKey;

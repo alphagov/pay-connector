@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.webpayments.googlepay;
+package uk.gov.pay.connector.wallets.googlepay;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.crypto.tink.apps.paymentmethodtoken.PaymentMethodTokenRecipient;
@@ -6,7 +6,8 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import org.json.JSONObject;
-import uk.gov.pay.connector.webpayments.PaymentData;
+import uk.gov.pay.connector.wallets.googlepay.api.EncryptedPaymentData;
+import uk.gov.pay.connector.wallets.PaymentData;
 
 import java.security.GeneralSecurityException;
 
@@ -16,7 +17,7 @@ import static com.google.crypto.tink.apps.paymentmethodtoken.GooglePaymentsPubli
 public class GooglePayDecrypter {
 
     /*
-    For PAN_ONLY encrypted message, should return something like
+    PAN_ONLY encrypted message should look like
     {
       "paymentMethod": "CARD",
       "paymentMethodDetails": {
@@ -29,7 +30,7 @@ public class GooglePayDecrypter {
       "messageExpiration": "1577862000000"
     }
     
-    For CRYPTOGRAM_3DS encrypted message, should return above but "paymentMethodDetails" should look like
+    CRYPTOGRAM_3DS encrypted message should look like the above but "paymentMethodDetails" should look like
     {
       "authMethod": "CRYPTOGRAM_3DS",
       "pan": "1111222233334444",
@@ -39,14 +40,14 @@ public class GooglePayDecrypter {
       "eciIndicator": "eci indicator"
     }
      */
-    public PaymentData decrypt(String tokenizationData, String privateKey, boolean isProduction, String merchantId) throws GeneralSecurityException {
+    public PaymentData decrypt(EncryptedPaymentData encryptedPaymentData, String privateKey, boolean isProduction, String merchantId) throws GeneralSecurityException {
         String decryptedMessage = new PaymentMethodTokenRecipient.Builder()
                 .fetchSenderVerifyingKeysWith(isProduction ? INSTANCE_PRODUCTION : INSTANCE_TEST)
                 .recipientId("merchant:" + merchantId)
                 .protocolVersion("ECv2")
                 .addRecipientPrivateKey(privateKey)
                 .build()
-                .unseal(getEncryptedMessageJsonFromTokenizationData(tokenizationData));
+                .unseal(createEncryptedMessage(encryptedPaymentData));
         Object document = Configuration.defaultConfiguration().jsonProvider().parse(decryptedMessage);
         return new PaymentData(
                 getStringValue(document, "$.paymentMethodDetails.cryptogram"), 
@@ -54,15 +55,14 @@ public class GooglePayDecrypter {
                 getStringValue(document, "$.paymentMethodDetails.pan"));
     }
 
-    private static String getEncryptedMessageJsonFromTokenizationData(String tokenizationData) {
-        Object document = Configuration.defaultConfiguration().jsonProvider().parse(tokenizationData);
+    private static String createEncryptedMessage(EncryptedPaymentData tokenizationData) {
         JSONObject encryptedMessageJson = new JSONObject();
-        encryptedMessageJson.put("signature", getStringValue(document, "$.tokenizationData.token.signature"));
+        encryptedMessageJson.put("signature", tokenizationData.getToken().getSignature());
         encryptedMessageJson.put("intermediateSigningKey", ImmutableMap.of(
-                "signedKey", getStringValue(document, "$.tokenizationData.intermediateSigningKey.signedKey"),
-                "signatures", new String[]{getStringValue(document, "$.tokenizationData.intermediateSigningKey.signatures[0]")}));
-        encryptedMessageJson.put("protocolVersion", getStringValue(document, "$.tokenizationData.protocolVersion"));
-        encryptedMessageJson.put("signedMessage", getStringValue(document, "$.tokenizationData.signedMessage"));
+                "signedKey", tokenizationData.getIntermediateSigningKey().getSignedKey(),
+                "signatures", tokenizationData.getIntermediateSigningKey().getSignatures()));
+        encryptedMessageJson.put("protocolVersion", tokenizationData.getProtocolVersion());
+        encryptedMessageJson.put("signedMessage", tokenizationData.getSignedMessage());
         return encryptedMessageJson.toString();
     }
 

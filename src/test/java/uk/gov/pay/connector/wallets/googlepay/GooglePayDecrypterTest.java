@@ -1,12 +1,12 @@
-package uk.gov.pay.connector.webpayments.googlepay;
+package uk.gov.pay.connector.wallets.googlepay;
 
 import com.google.crypto.tink.apps.paymentmethodtoken.GooglePaymentsPublicKeysManager;
 import org.junit.Ignore;
 import org.junit.Test;
-import uk.gov.pay.connector.webpayments.PaymentData;
+import uk.gov.pay.connector.wallets.PaymentData;
+import uk.gov.pay.connector.wallets.googlepay.api.EncryptedPaymentData;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @Ignore
 public class GooglePayDecrypterTest {
@@ -16,12 +16,17 @@ public class GooglePayDecrypterTest {
     private static final String PRIVATE_KEY = "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgJeFYEqqxGkLmJsBEm8AoKqvMMk2jVnAxJsUv6Ur1Hw6hRANCAAS8s/nVkI04fve0Yk+2zrZEpL3BGTm1IAsWp7XVIy5EALRlnHDEPp0Kegmk2oSwTcVve9ennSmiXBBvePNkjJMF";
     
     @Test
-    public void decryptSuccessfully() throws Exception {
-        GooglePayDecrypter googlePayDecrypter = new GooglePayDecrypter();
+    public void decryptPAN_ONLY() throws Exception {
         GooglePaymentsPublicKeysManager.INSTANCE_TEST.refreshInBackground();
-        PaymentData paymentData = googlePayDecrypter.decrypt(load("googlepay/google-pay-response.json"), PRIVATE_KEY, false, "12345678901234567890");
-        assertThat(paymentData.worldpayTokenNumber).isEqualTo("4111111111111111");
+        EncryptedPaymentData encryptedPaymentData = new EncryptedPaymentData(null, null, null, "DIRECT", "ECv2");
+        PaymentData paymentData = new GooglePayDecrypter().decrypt(encryptedPaymentData, PRIVATE_KEY, false, "12345678901234567890");
+        assertThat(paymentData.worldpayTokenNumber).isEqualTo("??");
         assertThat(paymentData.eciIndicator.isPresent()).isFalse();
         assertThat(paymentData.onlinePaymentCryptogram.isPresent()).isFalse();
+    }
+    
+    @Test
+    public void decryptCRYPTOGRAM_3DS() {
+        
     }
 }
