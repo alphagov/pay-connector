@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
-import uk.gov.pay.connector.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;

@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay.applepay;
 
-import uk.gov.pay.connector.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 
 import java.time.format.DateTimeFormatter;
 

@@ -1,15 +1,15 @@
-package uk.gov.pay.connector.applepay;
+package uk.gov.pay.connector.wallets.applepay;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
-import uk.gov.pay.connector.applepay.api.ApplePaymentInfo;
 import uk.gov.pay.connector.gateway.model.AuthorisationDetails;
+import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.time.LocalDate;
 
 public class AppleDecryptedPaymentData implements AuthorisationDetails {
-    private ApplePaymentInfo paymentInfo;
+    private WalletPaymentInfo paymentInfo;
     private String applicationPrimaryAccountNumber;
     private String currencyCode;
     private long transactionAmount;
@@ -23,7 +23,7 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails {
     public AppleDecryptedPaymentData() {
     }
 
-    public AppleDecryptedPaymentData(ApplePaymentInfo applePaymentInfo, String applicationPrimaryAccountNumber, LocalDate applicationExpirationDate, String currencyCode, long transactionAmount, String deviceManufacturerIdentifier, String paymentDataType, PaymentData paymentData) {
+    public AppleDecryptedPaymentData(WalletPaymentInfo applePaymentInfo, String applicationPrimaryAccountNumber, LocalDate applicationExpirationDate, String currencyCode, long transactionAmount, String deviceManufacturerIdentifier, String paymentDataType, PaymentData paymentData) {
         this.paymentInfo = applePaymentInfo;
         this.applicationPrimaryAccountNumber = applicationPrimaryAccountNumber;
         this.applicationExpirationDate = applicationExpirationDate;
@@ -62,11 +62,11 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails {
         return paymentData;
     }
 
-    public void setPaymentInfo(ApplePaymentInfo applePaymentInfo) {
+    public void setPaymentInfo(WalletPaymentInfo applePaymentInfo) {
         this.paymentInfo = applePaymentInfo;
     }
 
-    public ApplePaymentInfo getPaymentInfo() {
+    public WalletPaymentInfo getPaymentInfo() {
         return paymentInfo;
     }
 

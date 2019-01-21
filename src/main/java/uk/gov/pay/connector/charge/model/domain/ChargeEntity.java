@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.SupportedLanguageJpaConverter;
-import uk.gov.pay.connector.applepay.WalletType;
+import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;

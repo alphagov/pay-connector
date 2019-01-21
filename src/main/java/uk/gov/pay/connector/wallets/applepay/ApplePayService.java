@@ -1,9 +1,9 @@
-package uk.gov.pay.connector.applepay;
+package uk.gov.pay.connector.wallets.applepay;
 
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.applepay.api.ApplePayToken;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -28,11 +28,11 @@ public class ApplePayService {
         this.authoriseService = authoriseService;
     }
 
-    public Response authorise(String chargeId, ApplePayToken applePayToken) {
+    public Response authorise(String chargeId, ApplePayAuthRequest applePayAuthRequest) {
         LOGGER.info("Decrypting apple pay payload for charge with id {} ", chargeId);
 
-        AppleDecryptedPaymentData data = applePayDecrypter.performDecryptOperation(applePayToken);
-        data.setPaymentInfo(applePayToken.getApplePaymentInfo());
+        AppleDecryptedPaymentData data = applePayDecrypter.performDecryptOperation(applePayAuthRequest);
+        data.setPaymentInfo(applePayAuthRequest.getApplePaymentInfo());
 
         LOGGER.info("Authorising apple pay charge with id {} ", chargeId);
         GatewayResponse<BaseAuthoriseResponse> response = authoriseService.doAuthorise(chargeId, data);

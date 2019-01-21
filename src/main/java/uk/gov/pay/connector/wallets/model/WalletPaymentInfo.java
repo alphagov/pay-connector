@@ -1,21 +1,22 @@
-package uk.gov.pay.connector.applepay.api;
+package uk.gov.pay.connector.wallets.model;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
-public class ApplePaymentInfo {
+public class WalletPaymentInfo {
+    
     private String lastDigitsCardNumber;
     private String brand;
     private PayersCardType cardType;
     private String cardholderName;
     private String email;
 
-    public ApplePaymentInfo() {
+    public WalletPaymentInfo() {
     }
 
-    public ApplePaymentInfo(String lastDigitsCardNumber, String brand, PayersCardType cardType, String cardholderName, String email) {
+    public WalletPaymentInfo(String lastDigitsCardNumber, String brand, PayersCardType cardType, String cardholderName, String email) {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
         this.brand = brand;
         this.cardType = cardType;
@@ -45,7 +46,7 @@ public class ApplePaymentInfo {
 
     @Override
     public String toString() { //this might be logged, so we serialise without PII
-        return "PaymentInfo{" +
+        return "WalletPaymentInfo{" +
                 "lastDigitsCardNumber='" + lastDigitsCardNumber + '\'' +
                 ", brand='" + brand + '\'' +
                 ", cardType=" + cardType +

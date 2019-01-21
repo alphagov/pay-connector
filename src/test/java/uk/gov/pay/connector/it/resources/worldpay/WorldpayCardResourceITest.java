@@ -61,7 +61,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
 
         givenSetup()
                 .body(validApplePayAuthorisationDetails)
-                .post(authoriseChargeUrlForWallet(chargeId))
+                .post(authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(200);
@@ -77,7 +77,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
 
         givenSetup()
                 .body(validApplePayAuthorisationDetails)
-                .post(authoriseChargeUrlForWallet(chargeId))
+                .post(authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)

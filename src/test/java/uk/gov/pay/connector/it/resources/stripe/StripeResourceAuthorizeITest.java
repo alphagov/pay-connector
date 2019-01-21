@@ -54,7 +54,7 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthori
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlFor;
-import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForWallet;
+import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForApplePay;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -253,7 +253,7 @@ public class StripeResourceAuthorizeITest {
         given().port(testContext.getPort())
                 .contentType(JSON)
                 .body(validApplePayAuthorisationDetails)
-                .post(authoriseChargeUrlForWallet(externalChargeId))
+                .post(authoriseChargeUrlForApplePay(externalChargeId))
                 .then()
                 .statusCode(400)
                 .body("message", containsString("Apple Pay is not supported for Stripe"));
