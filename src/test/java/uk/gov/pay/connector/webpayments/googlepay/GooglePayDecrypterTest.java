@@ -5,6 +5,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.webpayments.PaymentData;
 
+import static org.assertj.core.api.Java6Assertions.assertThat;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @Ignore
@@ -18,6 +19,9 @@ public class GooglePayDecrypterTest {
     public void decryptSuccessfully() throws Exception {
         GooglePayDecrypter googlePayDecrypter = new GooglePayDecrypter();
         GooglePaymentsPublicKeysManager.INSTANCE_TEST.refreshInBackground();
-        PaymentData paymentData = googlePayDecrypter.decrypt(load("googlepay/google-pay-response.json"), PRIVATE_KEY);
+        PaymentData paymentData = googlePayDecrypter.decrypt(load("googlepay/google-pay-response.json"), PRIVATE_KEY, false, "12345678901234567890");
+        assertThat(paymentData.worldpayTokenNumber).isEqualTo("4111111111111111");
+        assertThat(paymentData.eciIndicator.isPresent()).isFalse();
+        assertThat(paymentData.onlinePaymentCryptogram.isPresent()).isFalse();
     }
 }

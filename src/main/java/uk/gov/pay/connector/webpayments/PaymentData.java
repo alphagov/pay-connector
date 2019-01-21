@@ -1,11 +1,15 @@
 package uk.gov.pay.connector.webpayments;
 
+import java.util.Optional;
+
 public class PaymentData {
     
-    public final String onlinePaymentCryptogram, eciIndicator;
+    public final Optional<String> onlinePaymentCryptogram, eciIndicator;
+    public final String worldpayTokenNumber;
 
-    public PaymentData(String onlinePaymentCryptogram, String eciIndicator) {
-        this.onlinePaymentCryptogram = onlinePaymentCryptogram;
-        this.eciIndicator = eciIndicator;
+    public PaymentData(String onlinePaymentCryptogram, String eciIndicator, String worldpayTokenNumber) {
+        this.onlinePaymentCryptogram = Optional.ofNullable(onlinePaymentCryptogram);
+        this.eciIndicator = Optional.ofNullable(eciIndicator);
+        this.worldpayTokenNumber = worldpayTokenNumber;
     }
 }
