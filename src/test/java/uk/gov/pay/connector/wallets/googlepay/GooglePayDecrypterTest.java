@@ -3,7 +3,7 @@ package uk.gov.pay.connector.wallets.googlepay;
 import com.google.crypto.tink.apps.paymentmethodtoken.GooglePaymentsPublicKeysManager;
 import org.junit.Ignore;
 import org.junit.Test;
-import uk.gov.pay.connector.wallets.PaymentData;
+import uk.gov.pay.connector.wallets.DecryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.EncryptedPaymentData;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
@@ -19,14 +19,11 @@ public class GooglePayDecrypterTest {
     public void decryptPAN_ONLY() throws Exception {
         GooglePaymentsPublicKeysManager.INSTANCE_TEST.refreshInBackground();
         EncryptedPaymentData encryptedPaymentData = new EncryptedPaymentData(null, null, null, "DIRECT", "ECv2");
-        PaymentData paymentData = new GooglePayDecrypter().decrypt(encryptedPaymentData, PRIVATE_KEY, false, "12345678901234567890");
-        assertThat(paymentData.worldpayTokenNumber).isEqualTo("??");
-        assertThat(paymentData.eciIndicator.isPresent()).isFalse();
-        assertThat(paymentData.onlinePaymentCryptogram.isPresent()).isFalse();
+        DecryptedPaymentData decryptedPaymentData = new GooglePayDecrypter().decrypt(encryptedPaymentData, PRIVATE_KEY, false, "12345678901234567890");
+        assertThat(decryptedPaymentData.worldpayTokenNumber).isEqualTo("??");
+        assertThat(decryptedPaymentData.eciIndicator.isPresent()).isFalse();
+        assertThat(decryptedPaymentData.onlinePaymentCryptogram.isPresent()).isFalse();
     }
     
-    @Test
-    public void decryptCRYPTOGRAM_3DS() {
-        
-    }
+    //TODO public void decryptCRYPTOGRAM_3DS() {
 }

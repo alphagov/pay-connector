@@ -7,7 +7,7 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import org.json.JSONObject;
 import uk.gov.pay.connector.wallets.googlepay.api.EncryptedPaymentData;
-import uk.gov.pay.connector.wallets.PaymentData;
+import uk.gov.pay.connector.wallets.DecryptedPaymentData;
 
 import java.security.GeneralSecurityException;
 
@@ -40,7 +40,7 @@ public class GooglePayDecrypter {
       "eciIndicator": "eci indicator"
     }
      */
-    public PaymentData decrypt(EncryptedPaymentData encryptedPaymentData, String privateKey, boolean isProduction, String merchantId) throws GeneralSecurityException {
+    public DecryptedPaymentData decrypt(EncryptedPaymentData encryptedPaymentData, String privateKey, boolean isProduction, String merchantId) throws GeneralSecurityException {
         String decryptedMessage = new PaymentMethodTokenRecipient.Builder()
                 .fetchSenderVerifyingKeysWith(isProduction ? INSTANCE_PRODUCTION : INSTANCE_TEST)
                 .recipientId("merchant:" + merchantId)
@@ -49,7 +49,7 @@ public class GooglePayDecrypter {
                 .build()
                 .unseal(createEncryptedMessage(encryptedPaymentData));
         Object document = Configuration.defaultConfiguration().jsonProvider().parse(decryptedMessage);
-        return new PaymentData(
+        return new DecryptedPaymentData(
                 getStringValue(document, "$.paymentMethodDetails.cryptogram"), 
                 getStringValue(document, "$.paymentMethodDetails.eciIndicator"), 
                 getStringValue(document, "$.paymentMethodDetails.pan"));
