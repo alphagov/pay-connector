@@ -22,9 +22,9 @@ public class GooglePayAuthRequestTest {
     public void shouldDeserializeFromJsonCorrectly() throws IOException {
         ObjectMapper objectMapper = Jackson.getObjectMapper();
         
-        JsonNode expected = objectMapper.readTree(fixture("googlepay/exampleAuthRequest.json"));
+        JsonNode expected = objectMapper.readTree(fixture("googlepay/example-auth-request.json"));
         GooglePayAuthRequest actual = objectMapper.readValue(
-                fixture("googlepay/exampleAuthRequest.json"), GooglePayAuthRequest.class);
+                fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
         JsonNode paymentInfo = expected.get("payment_info");
         assertThat(actual.getPaymentInfo().getCardholderName(), is(paymentInfo.get("cardholder_name").asText()));
@@ -57,7 +57,7 @@ public class GooglePayAuthRequestTest {
     @Test
     public void shouldPassValidation() throws IOException {
         GooglePayAuthRequest valid = Jackson.getObjectMapper()
-                .readValue(fixture("googlepay/exampleAuthRequest.json"), GooglePayAuthRequest.class);
+                .readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         Set<ConstraintViolation<GooglePayAuthRequest>> errors = validator.validate(valid);
