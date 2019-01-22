@@ -121,6 +121,7 @@ public class CardAuthoriseService {
 
         boolean billingAddressSubmitted = updatedCharge.getCardDetails().getBillingAddress().isPresent();
 
+        // Used by Sumo Logic saved search
         logger.info("Authorisation {} for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                 billingAddressSubmitted ? "with billing address" : "without billing address",
                 updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
