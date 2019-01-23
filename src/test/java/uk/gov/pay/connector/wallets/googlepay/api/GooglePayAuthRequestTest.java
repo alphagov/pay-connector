@@ -30,23 +30,9 @@ public class GooglePayAuthRequestTest {
         assertThat(actual.getPaymentInfo().getEmail(), is(paymentInfo.get("email").asText()));
 
         JsonNode encryptedPaymentData = expected.get("encrypted_payment_data");
-        assertThat(actual.getEncryptedPaymentData().getType(), is(encryptedPaymentData.get("type").asText()));
-        assertThat(actual.getEncryptedPaymentData().getProtocolVersion(), is(encryptedPaymentData.get("protocolVersion").asText()));
-
-        JsonNode signedMessage = encryptedPaymentData.get("signedMessage");
-        assertThat(actual.getEncryptedPaymentData().getSignedMessage().getEncryptedMessage(), is(signedMessage.get("encryptedMessage").asText()));
-        assertThat(actual.getEncryptedPaymentData().getSignedMessage().getEphemeralPublicKey(), is(signedMessage.get("ephemeralPublicKey").asText()));
-        assertThat(actual.getEncryptedPaymentData().getSignedMessage().getTag(), is(signedMessage.get("tag").asText()));
-
-        JsonNode intermediateSigningKey = encryptedPaymentData.get("intermediateSigningKey");
-        assertThat(actual.getEncryptedPaymentData().getIntermediateSigningKey().getSignatures().length, is(intermediateSigningKey.get("signatures").size()));
-        assertThat(actual.getEncryptedPaymentData().getIntermediateSigningKey().getSignatures()[0], is(intermediateSigningKey.get("signatures").get(0).asText()));
-
-        JsonNode signedKey = intermediateSigningKey.get("signedKey");
-        assertThat(actual.getEncryptedPaymentData().getIntermediateSigningKey().getSignedKey().getExpirationDate(), is(signedKey.get("keyExpiration").asText()));
-        assertThat(actual.getEncryptedPaymentData().getIntermediateSigningKey().getSignedKey().getKey(), is(signedKey.get("keyValue").asText()));
-
-        JsonNode token = encryptedPaymentData.get("token");
-        assertThat(actual.getEncryptedPaymentData().getToken().getSignature(), is(token.get("signature").asText()));
+        assertThat(actual.getEncryptedPaymentData().getSignature(), is(encryptedPaymentData.get("signature").asText()));
+        assertThat(actual.getEncryptedPaymentData().getProtocolVersion(), is(encryptedPaymentData.get("protocol_version").asText()));
+        assertThat(actual.getEncryptedPaymentData().getSignedMessage(), is(encryptedPaymentData.get("signed_message").asText()));
+        
     }
 }
