@@ -139,7 +139,3 @@ xrayEnabled: false
 chargesSweepConfig:
   defaultChargeExpiryThreshold: ${CHARGE_EXPIRY_WINDOW_SECONDS:-5400}
   awaitingCaptureExpiryThreshold: ${AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW:-172800}
-
-googlePayKeyManagement:
-  production: false
-  privateDecryptionKey: ${GOOGLE_PAY_PK:-gp_pk}
