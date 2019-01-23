@@ -3,13 +3,15 @@ package uk.gov.pay.connector.it.util;
 import org.apache.commons.lang.math.RandomUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.pay.connector.util.RefundId;
 
-import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class ChargeUtils {
+
+    private ChargeUtils() {}
 
     public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId, DatabaseTestHelper databaseTestHelper) {
         long chargeId = RandomUtils.nextInt();
@@ -18,9 +20,8 @@ public class ChargeUtils {
         return externalChargeId;
     }
 
-    public static void createNewRefund(RefundStatus status, long chargeId, String refundExternalId, String reference, long amount, DatabaseTestHelper databaseTestHelper) {
-        long refundId = RandomUtils.nextInt();
-        databaseTestHelper.addRefund(refundId, refundExternalId, reference, amount, status.getValue(), chargeId, ZonedDateTime.now());
+    public static void createNewRefund(Consumer<RefundId> saveToDataStore) {
+        saveToDataStore.accept(RefundId.generate());
     }
 
     public static DatabaseFixtures.TestCharge createTestCharge(DatabaseTestHelper databaseTestHelper, String paymentProvider, ChargeStatus chargeStatus,

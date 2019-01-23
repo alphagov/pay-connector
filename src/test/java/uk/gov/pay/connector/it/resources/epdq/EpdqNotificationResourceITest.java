@@ -12,6 +12,8 @@ import uk.gov.pay.connector.it.util.NotificationUtils;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
+import java.time.ZonedDateTime;
+
 import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -99,14 +101,15 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldHandleARefundNotification() throws Exception {
+    public void shouldHandleARefundNotification() {
         String transactionId = "123456";
         String payIdSub = "2";
         String refundExternalId = "999999";
         int refundAmount = 1000;
 
         ChargeUtils.ExternalChargeId externalChargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper);
-        createNewRefund(REFUND_SUBMITTED, externalChargeId.chargeId, refundExternalId, transactionId + "/" + payIdSub, 1000, databaseTestHelper);
+        createNewRefund(databaseTestHelper.addRefundFunction(refundExternalId, transactionId + "/" + payIdSub,
+                refundAmount, REFUND_SUBMITTED, externalChargeId.chargeId, ZonedDateTime.now()));
         
         String response = notifyConnector(transactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
                 .statusCode(200)

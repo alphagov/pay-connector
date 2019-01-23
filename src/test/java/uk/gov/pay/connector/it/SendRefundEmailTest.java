@@ -19,6 +19,7 @@ import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.service.notify.NotificationClient;
 
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
@@ -81,8 +82,9 @@ public class SendRefundEmailTest {
         String refundExternalId = "999999";
 
         long chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper).chargeId;
-        createNewRefund(REFUND_SUBMITTED, chargeId, refundExternalId, transactionId + "/" + payIdSub, 100, databaseTestHelper);
-
+        createNewRefund(databaseTestHelper.addRefundFunction(refundExternalId, transactionId + "/" + payIdSub,
+                100, REFUND_SUBMITTED, chargeId, ZonedDateTime.now()));
+        
         given().port(testContext.getPort())
                 .body(epdqNotificationPayload(transactionId, payIdSub, "8", credentials.get(CREDENTIALS_SHA_OUT_PASSPHRASE)))
                 .contentType(APPLICATION_FORM_URLENCODED)

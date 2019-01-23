@@ -14,6 +14,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
 import java.sql.SQLException;
@@ -22,6 +23,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static java.time.ZonedDateTime.now;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
@@ -272,6 +274,10 @@ public class DatabaseTestHelper {
                         .bind("version", 1)
                         .execute()
         );
+    }
+    
+    public Consumer<RefundId> addRefundFunction(String externalId, String reference, long amount, RefundStatus status, Long chargeId, ZonedDateTime createdDate) {
+        return refundId -> addRefund(refundId.refundId, externalId, reference, amount, status.getValue(), chargeId, createdDate);
     }
 
     public void addRefund(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, String submittedByUserExternalId) {
