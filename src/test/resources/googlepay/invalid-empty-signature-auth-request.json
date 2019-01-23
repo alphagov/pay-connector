@@ -1,0 +1,30 @@
+{
+  "payment_info": {
+    "last_digits_card_number": "1234",
+    "brand": "visa",
+    "card_type": "DEBIT",
+    "cardholder_name": "Example Name",
+    "email": "example@test.example"
+  },
+  "encrypted_payment_data": {
+    "type": "DIRECT",
+    "token": {
+      "signature": ""
+    },
+    "intermediateSigningKey": {
+      "signedKey": {
+        "keyValue": "aKey",
+        "keyExpiration": "anExpiration"
+      },
+      "signatures": [
+        "aSignature"
+      ]
+    },
+    "protocolVersion": "ECv2",
+    "signedMessage": {
+      "encryptedMessage": "aMessage",
+      "ephemeralPublicKey": "aPublicKey",
+      "tag": "aTag"
+    }
+  }
+}

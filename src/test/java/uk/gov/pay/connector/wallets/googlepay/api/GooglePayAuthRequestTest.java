@@ -5,11 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
 import java.io.IOException;
-import java.util.Set;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.hamcrest.CoreMatchers.is;
@@ -52,15 +48,5 @@ public class GooglePayAuthRequestTest {
 
         JsonNode token = encryptedPaymentData.get("token");
         assertThat(actual.getEncryptedPaymentData().getToken().getSignature(), is(token.get("signature").asText()));
-    }
-
-    @Test
-    public void shouldPassValidation() throws IOException {
-        GooglePayAuthRequest valid = Jackson.getObjectMapper()
-                .readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
-        
-        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-        Set<ConstraintViolation<GooglePayAuthRequest>> errors = validator.validate(valid);
-        assertThat(errors.size(), is(0));
     }
 }

@@ -10,8 +10,12 @@ public class EncryptedPaymentData {
     @NotNull @Valid private final SignedMessage signedMessage;
     @NotNull @Valid private final IntermediateSigningKey intermediateSigningKey;
     @NotNull @Valid private final Token token;
-    @NotEmpty private final String type;
-    @NotEmpty private final String protocolVersion;
+    
+    @NotEmpty(message= "Field [type] must not be empty")
+    private final String type;
+    
+    @NotEmpty(message= "Field [protocolVersion] must not be empty")
+    private final String protocolVersion;
 
     public EncryptedPaymentData(@JsonProperty("signedMessage") SignedMessage signedMessage,
                                 @JsonProperty("intermediateSigningKey") IntermediateSigningKey intermediateSigningKey,
@@ -46,9 +50,14 @@ public class EncryptedPaymentData {
     }
 
     public static class SignedMessage {
-        @NotEmpty private final String encryptedMessage;
-        @NotEmpty private final String ephemeralPublicKey;
-        @NotEmpty private final String tag;
+        @NotEmpty(message= "Field [encryptedMessage] must not be empty")
+        private final String encryptedMessage;
+        
+        @NotEmpty(message= "Field [ephemeralPublicKey] must not be empty")
+        private final String ephemeralPublicKey;
+        
+        @NotEmpty(message= "Field [tag] must not be empty")
+        private final String tag;
 
         public SignedMessage(@JsonProperty("encryptedMessage") String encryptedMessage,
                              @JsonProperty("ephemeralPublicKey") String ephemeralPublicKey,
@@ -72,8 +81,11 @@ public class EncryptedPaymentData {
     }
 
     public static class IntermediateSigningKey {
+        
         @NotNull @Valid private final IntermediateSigningKey.SignedKey signedKey;
-        @NotEmpty private final String[] signatures;
+        
+        @NotEmpty(message= "Field [signatures] must not be empty") 
+        private final String[] signatures;
 
         public IntermediateSigningKey(@JsonProperty("signedKey") IntermediateSigningKey.SignedKey signedKey,
                                       @JsonProperty("signatures") String[] signatures) {
@@ -90,8 +102,12 @@ public class EncryptedPaymentData {
         }
 
         public static class SignedKey {
-            @NotEmpty private final String key;
-            @NotEmpty private final String expirationDate;
+            
+            @NotEmpty(message= "Field [keyValue] must not be empty")
+            private final String key;
+            
+            @NotEmpty(message= "Field [keyExpiration] must not be empty") 
+            private final String expirationDate;
 
             public SignedKey(@JsonProperty("keyValue") String key,
                              @JsonProperty("keyExpiration") String expirationDate) {
@@ -110,7 +126,9 @@ public class EncryptedPaymentData {
     }
 
     public static class Token {
-        @NotEmpty private final String signature;
+        
+        @NotEmpty(message= "Field [signature] must not be empty")
+        private final String signature;
 
         public Token(@JsonProperty("signature") String signature) {
             this.signature = signature;
