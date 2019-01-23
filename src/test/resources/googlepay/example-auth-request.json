@@ -7,24 +7,8 @@
     "email": "example@test.example"
   },
   "encrypted_payment_data": {
-    "type": "DIRECT",
-    "token": {
-      "signature": "aSignature"
-    },
-    "intermediateSigningKey": {
-      "signedKey": {
-        "keyValue": "aKey",
-        "keyExpiration": "anExpiration"
-      },
-      "signatures": [
-        "aSignature"
-      ]
-    },
-    "protocolVersion": "ECv2",
-    "signedMessage": {
-      "encryptedMessage": "aMessage",
-      "ephemeralPublicKey": "aPublicKey",
-      "tag": "aTag"
-    }
+    "signature": "MEYCIQC+a+AzSpQGr42UR1uTNX91DQM2r7SeKwzNs0UPoeSrrQIhAPpSzHjYTvvJGGzWwli8NRyHYE/diQMLL8aXqm9VIrwl",
+    "protocol_version": "ECv1",
+    "signed_message": "aSignedMessage"
   }
 }
