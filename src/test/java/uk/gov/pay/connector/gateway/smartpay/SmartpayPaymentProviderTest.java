@@ -24,7 +24,6 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE;
@@ -91,7 +90,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
 
     @Test(expected = UnsupportedOperationException.class)
     public void shouldThrow_IfTryingToAuthoriseAnApplePayPayment() {
-        provider.authoriseApplePay(null);
+        provider.authoriseWallet(null);
     }
 
     @Test

@@ -158,7 +158,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
                 .post(authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(400)
-                .body("message", containsString("Apple Pay is not supported for Smartpay"));
+                .body("message", containsString("Wallets are not supported for Smartpay"));
     }
     
     @Test

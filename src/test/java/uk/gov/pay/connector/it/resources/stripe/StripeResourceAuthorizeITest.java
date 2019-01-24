@@ -256,7 +256,7 @@ public class StripeResourceAuthorizeITest {
                 .post(authoriseChargeUrlForApplePay(externalChargeId))
                 .then()
                 .statusCode(400)
-                .body("message", containsString("Apple Pay is not supported for Stripe"));
+                .body("message", containsString("Wallets are not supported for Stripe"));
     }
 
     @Test

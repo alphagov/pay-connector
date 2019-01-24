@@ -2,8 +2,9 @@ package uk.gov.pay.connector.gateway.sandbox.applepay;
 
 import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.connector.gateway.worldpay.applepay.ApplePayTemplateData;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
-import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -17,9 +18,9 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
 
-public class SandboxApplePayAuthorisationHandlerTest {
+public class SandboxWalletAuthorisationHandlerTest {
 
-    private SandboxApplePayAuthorisationHandler sandboxApplePayAuthorisationHandler;
+    private SandboxWalletAuthorisationHandler sandboxWalletAuthorisationHandler;
 
     private static final String AUTH_SUCCESS_APPLE_PAY_LAST_DIGITS_CARD_NUMBER = "4242";
     private static final String AUTH_REJECTED_APPLE_PAY_LAST_DIGITS_CARD_NUMBER = "0002";
@@ -27,7 +28,7 @@ public class SandboxApplePayAuthorisationHandlerTest {
 
     @Before
     public void setup() {
-        sandboxApplePayAuthorisationHandler = new SandboxApplePayAuthorisationHandler();
+        sandboxWalletAuthorisationHandler = new SandboxWalletAuthorisationHandler();
     }
 
     @Test
@@ -39,7 +40,8 @@ public class SandboxApplePayAuthorisationHandlerTest {
                                         .withLastDigitsCardNumber(AUTH_SUCCESS_APPLE_PAY_LAST_DIGITS_CARD_NUMBER)
                                         .build())
                         .build();
-        GatewayResponse gatewayResponse = sandboxApplePayAuthorisationHandler.authorise(new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePaymentData));
+        GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authorise(
+                new WalletAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), ApplePayTemplateData.from(applePaymentData)));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -63,7 +65,8 @@ public class SandboxApplePayAuthorisationHandlerTest {
                                         .withLastDigitsCardNumber(AUTH_REJECTED_APPLE_PAY_LAST_DIGITS_CARD_NUMBER)
                                         .build())
                         .build();
-        GatewayResponse gatewayResponse = sandboxApplePayAuthorisationHandler.authorise(new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePaymentData));
+        GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authorise(
+                new WalletAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), ApplePayTemplateData.from(applePaymentData)));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -87,7 +90,8 @@ public class SandboxApplePayAuthorisationHandlerTest {
                                         .withLastDigitsCardNumber(AUTH_ERROR_APPLE_PAY_LAST_DIGITS_CARD_NUMBER)
                                         .build())
                         .build();
-        GatewayResponse gatewayResponse = sandboxApplePayAuthorisationHandler.authorise(new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePaymentData));
+        GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authorise(
+                new WalletAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), ApplePayTemplateData.from(applePaymentData)));
 
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.isFailed(), is(true));

@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway;
 
-import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
@@ -26,7 +26,7 @@ public interface PaymentProvider {
 
     Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request);
 
-    GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest request);
+    GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request);
 
     CaptureResponse capture(CaptureGatewayRequest request);
 

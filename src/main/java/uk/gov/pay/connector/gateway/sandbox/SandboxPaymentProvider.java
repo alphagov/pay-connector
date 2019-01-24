@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.sandbox;
 
-import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureResponse;
@@ -21,7 +21,7 @@ import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationRespon
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
-import uk.gov.pay.connector.gateway.sandbox.applepay.SandboxApplePayAuthorisationHandler;
+import uk.gov.pay.connector.gateway.sandbox.applepay.SandboxWalletAuthorisationHandler;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
@@ -39,11 +39,11 @@ public class SandboxPaymentProvider implements PaymentProvider {
 
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
-    private SandboxApplePayAuthorisationHandler sandboxApplePayAuthorisationHandler;
+    private SandboxWalletAuthorisationHandler sandboxWalletAuthorisationHandler;
 
     public SandboxPaymentProvider() {
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
-        this.sandboxApplePayAuthorisationHandler = new SandboxApplePayAuthorisationHandler();
+        this.sandboxWalletAuthorisationHandler = new SandboxWalletAuthorisationHandler();
     }
 
     @Override
@@ -73,8 +73,8 @@ public class SandboxPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest request) {
-        return sandboxApplePayAuthorisationHandler.authorise(request);
+    public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) {
+        return sandboxWalletAuthorisationHandler.authorise(request);
     }
 
     @Override
