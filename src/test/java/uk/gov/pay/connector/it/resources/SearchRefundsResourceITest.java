@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -8,7 +7,6 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.time.ZonedDateTime;
@@ -24,6 +22,8 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -54,9 +54,9 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
         String refundDate1 = "2016-02-03T00:00:00.000Z";
         String refundDate2 = "2016-02-02T00:00:00.000Z";
         
-        databaseTestHelper.addRefund(RandomUtils.nextInt(), refundExternalId1, "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId, ZonedDateTime.parse(refundDate1));
-        databaseTestHelper.addRefund(RandomUtils.nextInt(), refundExternalId2, "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId, ZonedDateTime.parse(refundDate2));
-        databaseTestHelper.addRefund(RandomUtils.nextInt(), "shouldnotberetrieved", "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, ZonedDateTime.parse(refundDate1));
+        databaseTestHelper.addRefund(refundExternalId1, "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId, ZonedDateTime.parse(refundDate1));
+        databaseTestHelper.addRefund(refundExternalId2, "refund-2-provider-reference", 2L, REFUNDED, chargeId, ZonedDateTime.parse(refundDate2));
+        databaseTestHelper.addRefund("shouldnotberetrieved", "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId2, ZonedDateTime.parse(refundDate1));
         databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient.withAccountId(accountId)

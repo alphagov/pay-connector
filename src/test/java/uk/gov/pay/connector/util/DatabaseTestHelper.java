@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.util;
 
 import com.google.gson.Gson;
-import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
@@ -14,6 +14,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
 import java.sql.SQLException;
@@ -123,7 +124,7 @@ public class DatabaseTestHelper {
     }
 
     public void addCharge(String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
-        addCharge((long) RandomUtils.nextInt(1, 9999999), externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId,
+        addCharge((long) RandomUtils.nextInt(), externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId,
                 "Test description", ServicePaymentReference.of("Test reference"), now(), 1, null, SupportedLanguage.ENGLISH, false);
     }
 
@@ -258,37 +259,27 @@ public class DatabaseTestHelper {
                         .bind("accountId", accountId).execute());
     }
 
-    public void addRefund(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate) {
-        jdbi.withHandle(handle ->
-                handle
-                        .createStatement("INSERT INTO refunds(id, external_id, reference, amount, status, charge_id, created_date) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date)")
-                        .bind("id", id)
-                        .bind("external_id", externalId)
-                        .bind("reference", reference)
-                        .bind("amount", amount)
-                        .bind("status", status)
-                        .bind("charge_id", chargeId)
-                        .bind("created_date", Timestamp.from(createdDate.toInstant()))
-                        .bind("version", 1)
-                        .execute()
-        );
+    public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId, ZonedDateTime createdDate) {
+        return addRefund(externalId, reference, amount, status, chargeId, createdDate, null);
     }
 
-    public void addRefund(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, String submittedByUserExternalId) {
+    public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId, ZonedDateTime createdDate, String submittedByUserExternalId) {
+        int refundId = RandomUtils.nextInt();
         jdbi.withHandle(handle ->
                 handle
                         .createStatement("INSERT INTO refunds(id, external_id, reference, amount, status, charge_id, created_date, user_external_id) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :user_external_id)")
-                        .bind("id", id)
+                        .bind("id", refundId)
                         .bind("external_id", externalId)
                         .bind("reference", reference)
                         .bind("amount", amount)
-                        .bind("status", status)
+                        .bind("status", status.getValue())
                         .bind("charge_id", chargeId)
                         .bind("created_date", Timestamp.from(createdDate.toInstant()))
                         .bind("user_external_id", submittedByUserExternalId)
                         .bind("version", 1)
                         .execute()
         );
+        return refundId;
     }
 
     public void addRefundHistory(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate, String submittedByUserExternalId) {

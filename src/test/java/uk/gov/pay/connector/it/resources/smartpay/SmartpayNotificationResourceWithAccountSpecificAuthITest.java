@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources.smartpay;
 
 import com.google.common.collect.ImmutableMap;
 import io.restassured.response.Response;
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,11 +14,12 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static io.restassured.RestAssured.given;
 import static io.dropwizard.testing.FixtureHelpers.fixture;
+import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -131,7 +133,8 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
         String transactionId = randomId();
         String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
         Long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge-"));
-        String externalRefundId = createNewRefundWith(REFUND_SUBMITTED, 10L, chargeId, reference);
+        String externalRefundId = "refund-" + RandomUtils.nextInt();
+        int refundId = databaseTestHelper.addRefund(externalRefundId, reference, 10L, REFUND_SUBMITTED, chargeId, ZonedDateTime.now());
 
         String response = notifyConnector(notificationPayloadForTransaction(externalRefundId, transactionId, reference, "notification-refund"))
                 .then()
@@ -139,9 +142,8 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
                 .extract().body().asString();
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_SMARTPAY));
-
         assertFrontendChargeStatusIs(externalChargeId, "CAPTURED");
-        assertRefundStatusIs(externalRefundId, "REFUNDED");
+        assertRefundStatusIs(refundId, "REFUNDED");
     }
 
     @Test
@@ -237,8 +239,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
                 .replace("{{pspReference2}}", transactionId2);
     }
 
-    private void assertRefundStatusIs(String externalRefundId, String expectedStatus) {
-        long refundId = Long.parseLong(StringUtils.removeStart(externalRefundId, "refund-"));
+    private void assertRefundStatusIs(int refundId, String expectedStatus) {
         List<Map<String, Object>> refund = databaseTestHelper.getRefund(refundId);
         assertThat(refund.get(0).get("status"), is(expectedStatus));
     }

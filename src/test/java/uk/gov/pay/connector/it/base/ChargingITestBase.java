@@ -17,7 +17,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
-import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.EpdqMockClient;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
@@ -36,8 +35,8 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -187,13 +186,6 @@ public class ChargingITestBase {
 
     protected String createNewCharge() {
         return createNewChargeWith(CREATED, "");
-    }
-
-    protected String createNewRefundWith(RefundStatus refundStatus, Long amount, Long chargeId, String reference) {
-        long refundId = RandomUtils.nextInt();
-        String externalRefundId = "refund-" + refundId;
-        databaseTestHelper.addRefund(refundId, externalRefundId, reference, amount, refundStatus.getValue(), chargeId, ZonedDateTime.now());
-        return externalRefundId;
     }
 
     protected String createNewChargeWithNoTransactionId(ChargeStatus status) {

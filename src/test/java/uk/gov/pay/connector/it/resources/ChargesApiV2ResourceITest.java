@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -9,7 +8,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.time.ZonedDateTime;
@@ -31,6 +29,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
 /**
  * This is effectively a copy of TransactionsApiResourceITest pointing to V2 resource
@@ -89,8 +89,8 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         String externalChargeId2 = addChargeAndCardDetails(chargeId2, CAPTURED, ServicePaymentReference.of("ref-3"), transactionIdCharge2, now().minusDays(2),
                 "visa", returnUrl, email);
 
-        databaseTestHelper.addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
-        databaseTestHelper.addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId2, now().minusHours(2));
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-2-provider-reference", 2L, REFUNDED, chargeId2, now().minusHours(3));
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -167,8 +167,8 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         String externalChargeId2 = addChargeAndCardDetails(chargeId2, CAPTURED, referenceCharge2, transactionIdCharge2, now().minusDays(2), "visa",
                 returnUrl, email);
 
-        databaseTestHelper.addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
-        databaseTestHelper.addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId2, now().minusHours(2));
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-2-provider-reference", 2L, REFUNDED, chargeId2, now().minusHours(3));
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -256,8 +256,8 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         String externalChargeId2 = addChargeAndCardDetails(chargeId2, CAPTURED, ServicePaymentReference.of("ref-3"), transactionIdCharge2, now().minusDays(2),
                 "visa", returnUrl, email);
 
-        databaseTestHelper.addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-1-provider-reference", 1L, RefundStatus.REFUND_SUBMITTED.getValue(), chargeId2, now().minusHours(2));
-        databaseTestHelper.addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", 2L, RefundStatus.REFUNDED.getValue(), chargeId2, now().minusHours(3));
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId2, now().minusHours(2));
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-2-provider-reference", 2L, REFUNDED, chargeId2, now().minusHours(3));
 
         connectorRestApiClient
                 .withAccountId(accountId)

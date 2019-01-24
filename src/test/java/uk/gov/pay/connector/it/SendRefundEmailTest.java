@@ -19,6 +19,7 @@ import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.service.notify.NotificationClient;
 
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
@@ -36,7 +37,6 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
-import static uk.gov.pay.connector.it.util.ChargeUtils.createNewRefund;
 import static uk.gov.pay.connector.it.util.NotificationUtils.epdqNotificationPayload;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.REFUND_ISSUED;
@@ -81,7 +81,7 @@ public class SendRefundEmailTest {
         String refundExternalId = "999999";
 
         long chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper).chargeId;
-        createNewRefund(REFUND_SUBMITTED, chargeId, refundExternalId, transactionId + "/" + payIdSub, 100, databaseTestHelper);
+        databaseTestHelper.addRefund(refundExternalId, transactionId + "/" + payIdSub, 100,  REFUND_SUBMITTED, chargeId, ZonedDateTime.now());
 
         given().port(testContext.getPort())
                 .body(epdqNotificationPayload(transactionId, payIdSub, "8", credentials.get(CREDENTIALS_SHA_OUT_PASSPHRASE)))
