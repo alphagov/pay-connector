@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.wallets.applepay;
+package uk.gov.pay.connector.wallets;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;
@@ -14,14 +14,14 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.worldpay.applepay.ApplePayTemplateData;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
+import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
-public class AppleAuthoriseService {
+public class WalletAuthoriseService {
     private static final DateTimeFormatter EXPIRY_DATE_FORMAT = DateTimeFormatter.ofPattern("MM/yy");
     private final CardAuthoriseBaseService cardAuthoriseBaseService;
     private final ChargeService chargeService;
@@ -30,24 +30,24 @@ public class AppleAuthoriseService {
     private MetricRegistry metricRegistry;
 
     @Inject
-    AppleAuthoriseService(PaymentProviders paymentProviders,
-                          ChargeService chargeService,
-                          CardAuthoriseBaseService cardAuthoriseBaseService,
-                          Environment environment) {
+    public WalletAuthoriseService(PaymentProviders paymentProviders,
+                           ChargeService chargeService,
+                           CardAuthoriseBaseService cardAuthoriseBaseService,
+                           Environment environment) {
         this.paymentProviders = paymentProviders;
         this.cardAuthoriseBaseService = cardAuthoriseBaseService;
         this.chargeService = chargeService;
         this.metricRegistry = environment.metrics();
     }
 
-    GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, AppleDecryptedPaymentData authCardDetails) {
+    public GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, WalletAuthorisationData walletAuthorisationData) {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId);
-            GatewayResponse<BaseAuthoriseResponse> operationResponse = authorise(charge, authCardDetails);
+            GatewayResponse<BaseAuthoriseResponse> operationResponse = authorise(charge, walletAuthorisationData);
             processGatewayAuthorisationResponse(
                     charge.getExternalId(),
                     ChargeStatus.fromString(charge.getStatus()),
-                    authCardDetails,
+                    walletAuthorisationData,
                     operationResponse);
 
             return operationResponse;
@@ -55,7 +55,7 @@ public class AppleAuthoriseService {
     }
 
     @Transactional
-    public ChargeEntity prepareChargeForAuthorisation(String chargeId) {
+    private ChargeEntity prepareChargeForAuthorisation(String chargeId) {
         ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
         getPaymentProviderFor(charge)
                 .generateTransactionId()
@@ -66,23 +66,24 @@ public class AppleAuthoriseService {
     private void processGatewayAuthorisationResponse(
             String chargeExternalId,
             ChargeStatus oldChargeStatus,
-            AppleDecryptedPaymentData applePaymentData,
+            WalletAuthorisationData walletAuthorisationData,
             GatewayResponse<BaseAuthoriseResponse> operationResponse) {
 
-        logger.info("Processing gateway auth response for apple pay");
+        logger.info("Processing gateway auth response for {}", walletAuthorisationData.getWalletType().toString());
         Optional<String> transactionId = cardAuthoriseBaseService.extractTransactionId(chargeExternalId, operationResponse);
         ChargeStatus status = cardAuthoriseBaseService.extractChargeStatus(
                 operationResponse.getBaseResponse(),
                 operationResponse.getGatewayError());
 
-        AuthCardDetails authCardDetailsToBePersisted = authCardDetailsFor(applePaymentData);
-        ChargeEntity updatedCharge = chargeService.updateChargePostApplePayAuthorisation(
+        AuthCardDetails authCardDetailsToBePersisted = authCardDetailsFor(walletAuthorisationData);
+        ChargeEntity updatedCharge = chargeService.updateChargePostWalletAuthorisation(
                 chargeExternalId,
                 status,
                 transactionId,
                 Optional.empty(),
                 operationResponse.getSessionIdentifier(),
-                authCardDetailsToBePersisted);
+                authCardDetailsToBePersisted,
+                walletAuthorisationData.getWalletType());
 
         logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                 updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
@@ -98,21 +99,21 @@ public class AppleAuthoriseService {
                 status.toString())).inc();
     }
 
-    protected GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, AppleDecryptedPaymentData applePaymentData) {
-        logger.info("Authorising charge for apple pay");
+    protected GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, WalletAuthorisationData walletAuthorisationData) {
+        logger.info("Authorising charge for {}", walletAuthorisationData.getWalletType().toString());
         WalletAuthorisationGatewayRequest authorisationGatewayRequest = 
-                WalletAuthorisationGatewayRequest.valueOf(chargeEntity, ApplePayTemplateData.from(applePaymentData));
+                WalletAuthorisationGatewayRequest.valueOf(chargeEntity, walletAuthorisationData.getWalletTemplateData());
         return getPaymentProviderFor(chargeEntity)
                 .authoriseWallet(authorisationGatewayRequest);
     }
 
-    private AuthCardDetails authCardDetailsFor(AppleDecryptedPaymentData applePaymentData) {
+    private AuthCardDetails authCardDetailsFor(WalletAuthorisationData walletAuthorisationData) {
         AuthCardDetails authCardDetails = new AuthCardDetails();
-        authCardDetails.setCardHolder(applePaymentData.getPaymentInfo().getCardholderName());
-        authCardDetails.setCardNo(applePaymentData.getPaymentInfo().getLastDigitsCardNumber());
-        authCardDetails.setPayersCardType(applePaymentData.getPaymentInfo().getCardType());
-        authCardDetails.setCardBrand(applePaymentData.getPaymentInfo().getBrand());
-        authCardDetails.setEndDate(applePaymentData.getApplicationExpirationDate().format(EXPIRY_DATE_FORMAT));
+        authCardDetails.setCardHolder(walletAuthorisationData.getPaymentInfo().getCardholderName());
+        authCardDetails.setCardNo(walletAuthorisationData.getPaymentInfo().getLastDigitsCardNumber());
+        authCardDetails.setPayersCardType(walletAuthorisationData.getPaymentInfo().getCardType());
+        authCardDetails.setCardBrand(walletAuthorisationData.getPaymentInfo().getBrand());
+        authCardDetails.setEndDate(walletAuthorisationData.getApplicationExpirationDate().format(EXPIRY_DATE_FORMAT));
         authCardDetails.setCorporateCard(false);
         return authCardDetails;
     }

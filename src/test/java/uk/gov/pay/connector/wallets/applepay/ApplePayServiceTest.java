@@ -6,11 +6,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
+import uk.gov.pay.connector.wallets.WalletAuthoriseService;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -32,7 +33,7 @@ public class ApplePayServiceTest {
     private ApplePayDecrypter mockedApplePayDecrypter;
 
     @Mock
-    private AppleAuthoriseService mockedApplePayAuthoriseService;
+    private WalletAuthoriseService mockedApplePayAuthoriseService;
 
     private ApplePayService applePayService;
     private AppleDecryptedPaymentData validData =

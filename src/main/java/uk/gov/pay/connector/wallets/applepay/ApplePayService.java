@@ -3,11 +3,12 @@ package uk.gov.pay.connector.wallets.applepay;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.util.ResponseUtil;
+import uk.gov.pay.connector.wallets.WalletAuthoriseService;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
@@ -20,10 +21,10 @@ public class ApplePayService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplePayService.class);
 
     private ApplePayDecrypter applePayDecrypter;
-    private AppleAuthoriseService authoriseService;
+    private WalletAuthoriseService authoriseService;
 
     @Inject
-    public ApplePayService(ApplePayDecrypter applePayDecrypter, AppleAuthoriseService authoriseService) {
+    public ApplePayService(ApplePayDecrypter applePayDecrypter, WalletAuthoriseService authoriseService) {
         this.applePayDecrypter = applePayDecrypter;
         this.authoriseService = authoriseService;
     }

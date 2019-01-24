@@ -259,14 +259,15 @@ public class ChargeService {
     }
 
     @Transactional
-    public ChargeEntity updateChargePostApplePayAuthorisation(String chargeExternalId,
-                                                              ChargeStatus status,
-                                                              Optional<String> transactionId,
-                                                              Optional<Auth3dsDetailsEntity> auth3dsDetails,
-                                                              Optional<String> sessionIdentifier,
-                                                              AuthCardDetails authCardDetails) {
+    public ChargeEntity updateChargePostWalletAuthorisation(String chargeExternalId,
+                                                            ChargeStatus status,
+                                                            Optional<String> transactionId,
+                                                            Optional<Auth3dsDetailsEntity> auth3dsDetails,
+                                                            Optional<String> sessionIdentifier,
+                                                            AuthCardDetails authCardDetails,
+                                                            WalletType walletType) {
         ChargeEntity charge = updateChargePostAuthorisation(chargeExternalId, status, transactionId, auth3dsDetails, sessionIdentifier, authCardDetails);
-        charge.setWalletType(WalletType.APPLE_PAY);
+        charge.setWalletType(walletType);
         return charge;
     }
 
