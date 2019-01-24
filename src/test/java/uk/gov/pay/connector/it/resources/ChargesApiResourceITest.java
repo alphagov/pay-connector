@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -12,7 +11,6 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
-import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
@@ -46,6 +44,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -231,7 +230,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         String externalChargeId = RandomIdGenerator.newId();
 
         createCharge(externalChargeId, chargeId);
-        databaseTestHelper.addRefund(RandomUtils.nextInt(), randomAlphanumeric(10), "refund-2-provider-reference", AMOUNT + 150L, RefundStatus.REFUNDED.getValue(), chargeId, now().minusHours(3));
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-2-provider-reference", AMOUNT + 150L, REFUNDED, chargeId, now().minusHours(3));
 
         connectorRestApiClient
                 .withAccountId(accountId)

@@ -638,7 +638,7 @@ public class  DatabaseFixtures {
     }
 
     public class TestRefund {
-        Long id = RandomUtils.nextLong(1, 99999);
+        int id;
         String externalRefundId = RandomIdGenerator.newId();
         String reference;
         long amount = 101L;
@@ -691,7 +691,7 @@ public class  DatabaseFixtures {
         public TestRefund insert() {
             if (testCharge == null)
                 throw new IllegalStateException("Test charge must be provided.");
-            databaseTestHelper.addRefund(id, externalRefundId, reference, amount, status.toString(), testCharge.getChargeId(), createdDate, submittedByUserExternalId);
+            id = databaseTestHelper.addRefund(externalRefundId, reference, amount, status, testCharge.getChargeId(), createdDate, submittedByUserExternalId);
             return this;
         }
 
@@ -758,10 +758,6 @@ public class  DatabaseFixtures {
                 throw new IllegalStateException("Test Account must be provided.");
             databaseTestHelper.addToken(testAccount.getAccountId(), template);
             return this;
-        }
-
-        public TestAccount getTestAccount() {
-            return testAccount;
         }
     }
 

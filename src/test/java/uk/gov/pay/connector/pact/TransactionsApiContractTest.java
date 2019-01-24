@@ -8,6 +8,7 @@ import au.com.dius.pact.provider.junit.loader.PactBrokerAuth;
 import au.com.dius.pact.provider.junit.target.HttpTarget;
 import au.com.dius.pact.provider.junit.target.Target;
 import au.com.dius.pact.provider.junit.target.TestTarget;
+import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -16,7 +17,6 @@ import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -28,6 +28,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static io.restassured.RestAssured.given;
 import static java.lang.String.format;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 
 @RunWith(PactRunner.class)
 @Provider("connector")
@@ -94,9 +95,7 @@ public class TransactionsApiContractTest {
                 "aTransactionId", ServicePaymentReference.of("aReference"), ZonedDateTime.now().minusHours(12), "test@test.com@");
 
         for (int i = 0; i < numberOfRefunds; i++) {
-            long refundId = ThreadLocalRandom.current().nextLong(100, 100000);
-
-            dbHelper.addRefund(refundId, String.valueOf(refundId), "reference", 1L, RefundStatus.REFUNDED.getValue(),
+            dbHelper.addRefund("external" + RandomUtils.nextInt(), "reference", 1L, REFUNDED,
                     chargeId, createdDate);
         }
     }

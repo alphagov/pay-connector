@@ -12,6 +12,7 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
 
 import static io.restassured.RestAssured.given;
 import static java.lang.String.format;
@@ -23,7 +24,6 @@ import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
-import static uk.gov.pay.connector.it.util.ChargeUtils.createNewRefund;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 
@@ -192,7 +192,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     private String createNewChargeWithRefund(String transactionId, String refundExternalId, long refundAmount) {
         String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
         String chargeId = externalChargeId.substring(externalChargeId.indexOf("-") + 1);
-        createNewRefund(REFUND_SUBMITTED, Long.valueOf(chargeId), refundExternalId, refundExternalId, refundAmount, databaseTestHelper);
+        databaseTestHelper.addRefund(refundExternalId, refundExternalId, refundAmount, REFUND_SUBMITTED, Long.valueOf(chargeId), ZonedDateTime.now());
         return externalChargeId;
     }
 

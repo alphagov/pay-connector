@@ -12,6 +12,8 @@ import uk.gov.pay.connector.it.util.NotificationUtils;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
+import java.time.ZonedDateTime;
+
 import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -27,7 +29,6 @@ import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.StatusCode.EPDQ
 import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.StatusCode.EPDQ_AUTHORISED_CANCELLED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
-import static uk.gov.pay.connector.it.util.ChargeUtils.createNewRefund;
 import static uk.gov.pay.connector.it.util.NotificationUtils.epdqNotificationPayload;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
@@ -106,7 +107,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
         int refundAmount = 1000;
 
         ChargeUtils.ExternalChargeId externalChargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper);
-        createNewRefund(REFUND_SUBMITTED, externalChargeId.chargeId, refundExternalId, transactionId + "/" + payIdSub, 1000, databaseTestHelper);
+        databaseTestHelper.addRefund(refundExternalId, transactionId + "/" + payIdSub, 1000,  REFUND_SUBMITTED, externalChargeId.chargeId, ZonedDateTime.now());
         
         String response = notifyConnector(transactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
                 .statusCode(200)
