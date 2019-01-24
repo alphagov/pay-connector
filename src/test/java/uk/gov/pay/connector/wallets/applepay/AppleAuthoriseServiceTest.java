@@ -140,7 +140,7 @@ public class AppleAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void doAuthorise_shouldRespondAuthorisationCancelled_whenProviderAuthorisationIsCancelled() {
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.CANCELLED, null);
-        when(mockedPaymentProvider.authoriseApplePay(any(ApplePayAuthorisationGatewayRequest.class))).thenReturn(authResponse);
+        when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
 
         GatewayResponse response = appleAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 
@@ -298,23 +298,23 @@ public class AppleAuthoriseServiceTest extends CardServiceTest {
     
     private void providerWillAuthorise() {
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null);
-        when(mockedPaymentProvider.authoriseApplePay(any(ApplePayAuthorisationGatewayRequest.class))).thenReturn(authResponse);
+        when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
     }
 
     private void providerWillReject() {
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.REJECTED, null);
-         when(mockedPaymentProvider.authoriseApplePay(any(ApplePayAuthorisationGatewayRequest.class))).thenReturn(authResponse);
+         when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
     }
 
     private void providerWillError() {
         GatewayResponse authResponse = mockAuthResponse(null, AuthoriseStatus.ERROR, "error-code");
-         when(mockedPaymentProvider.authoriseApplePay(any(ApplePayAuthorisationGatewayRequest.class))).thenReturn(authResponse);
+         when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
     }
 
     private void providerWillRespondWithError(GatewayError gatewayError) {
         GatewayResponse authorisationResponse = responseBuilder()
                 .withGatewayError(gatewayError)
                 .build();
-        when(mockedPaymentProvider.authoriseApplePay(any(ApplePayAuthorisationGatewayRequest.class))).thenReturn(authorisationResponse);
+        when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authorisationResponse);
     }
 }

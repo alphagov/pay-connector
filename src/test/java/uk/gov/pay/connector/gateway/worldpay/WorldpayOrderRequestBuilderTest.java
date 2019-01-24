@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
+import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
@@ -16,7 +17,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
-import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseApplePayOrderRequestBuilder;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseWalletOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCaptureOrderRequestBuilder;
@@ -171,8 +172,8 @@ public class WorldpayOrderRequestBuilderTest {
 
     @Test
     public void shouldGenerateValidAuthoriseApplePayOrderRequest() throws Exception {
-        GatewayOrder actualRequest = aWorldpayAuthoriseApplePayOrderRequestBuilder()
-                .withApplePayTemplateData(ApplePayTemplateData.from(validData))
+        GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.APPLE_PAY)
+                .withWalletTemplateData(ApplePayTemplateData.from(validData))
                 .withSessionId("uniqueSessionId")
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
@@ -196,8 +197,8 @@ public class WorldpayOrderRequestBuilderTest {
                                         .withCardholderName(null)
                                         .withLastDigitsCardNumber("4242").build())
                         .build();
-        GatewayOrder actualRequest = aWorldpayAuthoriseApplePayOrderRequestBuilder()
-                .withApplePayTemplateData(ApplePayTemplateData.from(validData))
+        GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.APPLE_PAY)
+                .withWalletTemplateData(ApplePayTemplateData.from(validData))
                 .withSessionId("uniqueSessionId")
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")

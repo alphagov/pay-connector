@@ -41,7 +41,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void shouldThrow_IfTryingToAuthoriseAnApplePayPayment() {
-        provider.authoriseApplePay(null);
+        provider.authoriseWallet(null);
     }
 
     @Test

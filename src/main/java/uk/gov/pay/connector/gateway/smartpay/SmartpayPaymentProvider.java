@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.smartpay;
 import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureResponse;
@@ -99,8 +99,8 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest request) {
-        throw new UnsupportedOperationException("Apple Pay is not supported for Smartpay");
+    public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) {
+        throw new UnsupportedOperationException("Wallets are not supported for Smartpay");
     }
 
     @Override

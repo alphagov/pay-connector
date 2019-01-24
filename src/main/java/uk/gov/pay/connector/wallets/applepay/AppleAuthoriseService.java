@@ -14,6 +14,7 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.worldpay.applepay.ApplePayTemplateData;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
 
@@ -99,9 +100,10 @@ public class AppleAuthoriseService {
 
     protected GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, AppleDecryptedPaymentData applePaymentData) {
         logger.info("Authorising charge for apple pay");
-        ApplePayAuthorisationGatewayRequest authorisationGatewayRequest = ApplePayAuthorisationGatewayRequest.valueOf(chargeEntity, applePaymentData);
+        WalletAuthorisationGatewayRequest authorisationGatewayRequest = 
+                WalletAuthorisationGatewayRequest.valueOf(chargeEntity, ApplePayTemplateData.from(applePaymentData));
         return getPaymentProviderFor(chargeEntity)
-                .authoriseApplePay(authorisationGatewayRequest);
+                .authoriseWallet(authorisationGatewayRequest);
     }
 
     private AuthCardDetails authCardDetailsFor(AppleDecryptedPaymentData applePaymentData) {

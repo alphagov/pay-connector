@@ -6,7 +6,8 @@ import uk.gov.pay.connector.gateway.OrderRequestBuilder;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
 import uk.gov.pay.connector.gateway.templates.TemplateBuilder;
-import uk.gov.pay.connector.gateway.worldpay.applepay.ApplePayTemplateData;
+import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.pay.connector.wallets.model.WalletTemplateData;
 
 import javax.ws.rs.core.MediaType;
 
@@ -103,8 +104,8 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE);
     }
     
-    public static WorldpayOrderRequestBuilder aWorldpayAuthoriseApplePayOrderRequestBuilder() {
-        return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_APPLE_PAY_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE_APPLE_PAY);
+    public static WorldpayOrderRequestBuilder aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType walletType) {
+        return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), walletType.getWorldPayTemplate(), walletType.getOrderRequestType());
     }
 
     public static WorldpayOrderRequestBuilder aWorldpay3dsResponseAuthOrderRequestBuilder() {
@@ -148,8 +149,8 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         return this;
     }
 
-    public WorldpayOrderRequestBuilder withApplePayTemplateData(ApplePayTemplateData applePayTemplateData) {
-        worldpayTemplateData.setApplePayTemplateData(applePayTemplateData);
+    public WorldpayOrderRequestBuilder withWalletTemplateData(WalletTemplateData walletTemplateData) {
+        worldpayTemplateData.setWalletTemplateData(walletTemplateData);
         return this;
     }
     

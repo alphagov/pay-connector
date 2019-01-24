@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureResponse;
@@ -26,7 +26,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
-import uk.gov.pay.connector.gateway.worldpay.applepay.WorldpayApplePayAuthorisationHandler;
+import uk.gov.pay.connector.gateway.worldpay.applepay.WorldpayWalletAuthorisationHandler;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Invocation.Builder;
@@ -56,7 +56,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
 
     private final WorldpayCaptureHandler worldpayCaptureHandler;
     private final WorldpayRefundHandler worldpayRefundHandler;
-    private final WorldpayApplePayAuthorisationHandler worldpayApplePayAuthorisationHandler;
+    private final WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler;
 
     @Inject
     public WorldpayPaymentProvider(ConnectorConfiguration configuration,
@@ -69,7 +69,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         worldpayCaptureHandler = new WorldpayCaptureHandler(captureClient);
         worldpayRefundHandler = new WorldpayRefundHandler(captureClient);
-        worldpayApplePayAuthorisationHandler = new WorldpayApplePayAuthorisationHandler(authoriseClient);
+        worldpayWalletAuthorisationHandler = new WorldpayWalletAuthorisationHandler(authoriseClient);
     }
 
     @Override
@@ -104,8 +104,8 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest request) {
-        return worldpayApplePayAuthorisationHandler.authorise(request);
+    public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) {
+        return worldpayWalletAuthorisationHandler.authorise(request);
     }
 
     @Override

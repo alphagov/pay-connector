@@ -108,7 +108,7 @@ public class EpdqCardResourceITest extends ChargingITestBase {
                 .post(authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(400)
-                .body("message", containsString("Apple Pay is not supported for ePDQ"));
+                .body("message", containsString("Wallets are not supported for ePDQ"));
     }
     
     @Test

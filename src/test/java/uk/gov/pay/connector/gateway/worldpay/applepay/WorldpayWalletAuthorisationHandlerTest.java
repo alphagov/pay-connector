@@ -16,7 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
-import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.io.IOException;
@@ -34,19 +34,19 @@ import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCo
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 
 @RunWith(MockitoJUnitRunner.class)
-public class WorldpayApplePayAuthorisationHandlerTest {
+public class WorldpayWalletAuthorisationHandlerTest {
 
     
     @Mock
     private GatewayClient mockGatewayClient;
     @Mock
     private GatewayAccountEntity mockGatewayAccountEntity;
-    private WorldpayApplePayAuthorisationHandler worldpayApplePayAuthorisationHandler;
+    private WorldpayWalletAuthorisationHandler worldpayApplePayAuthorisationHandler;
     
     
     @Before
     public void setUp() {
-        worldpayApplePayAuthorisationHandler = new WorldpayApplePayAuthorisationHandler(mockGatewayClient);
+        worldpayApplePayAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient);
     }
     
     @Test
@@ -70,7 +70,7 @@ public class WorldpayApplePayAuthorisationHandlerTest {
         assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
     }
 
-    private ApplePayAuthorisationGatewayRequest getApplePayAuthorisationRequest(ChargeEntity chargeEntity) {
+    private WalletAuthorisationGatewayRequest getApplePayAuthorisationRequest(ChargeEntity chargeEntity) {
         AppleDecryptedPaymentData data = new AppleDecryptedPaymentData(
                 new WalletPaymentInfo(
                         "4242",
@@ -90,7 +90,7 @@ public class WorldpayApplePayAuthorisationHandlerTest {
                         "7"
                 )
         );
-        return new ApplePayAuthorisationGatewayRequest(chargeEntity, data);
+        return new WalletAuthorisationGatewayRequest(chargeEntity, ApplePayTemplateData.from(data));
     }
 
 }
