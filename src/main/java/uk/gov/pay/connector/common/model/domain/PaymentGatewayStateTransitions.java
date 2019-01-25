@@ -147,8 +147,7 @@ public class PaymentGatewayStateTransitions {
                 .map(edge -> Triple.of(
                         edge.nodeU(),
                         edge.nodeV(),
-                        graph.edgeValue(edge.nodeU(), edge.nodeV()
-                        )))
+                        graph.edgeValueOrDefault(edge.nodeU(), edge.nodeV(), "")))
                 .collect(Collectors.toSet());
     }
 
