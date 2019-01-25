@@ -3,16 +3,17 @@ package uk.gov.pay.connector.wallets.applepay.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
-public class ApplePayAuthRequest {
-    private WalletPaymentInfo applePaymentInfo;
+public class ApplePayAuthRequest implements WalletAuthorisationRequest {
+    private WalletPaymentInfo paymentInfo;
     private EncryptedPaymentData encryptedPaymentData;
 
     @JsonProperty("payment_info")
-    public WalletPaymentInfo getApplePaymentInfo() {
-        return applePaymentInfo;
+    public WalletPaymentInfo getPaymentInfo() {
+        return paymentInfo;
     }
 
     public EncryptedPaymentData getEncryptedPaymentData() {
@@ -22,8 +23,8 @@ public class ApplePayAuthRequest {
     public ApplePayAuthRequest() {
     }
 
-    public ApplePayAuthRequest(WalletPaymentInfo applePaymentInfo, EncryptedPaymentData encryptedPaymentData) {
-        this.applePaymentInfo = applePaymentInfo;
+    public ApplePayAuthRequest(WalletPaymentInfo paymentInfo, EncryptedPaymentData encryptedPaymentData) {
+        this.paymentInfo = paymentInfo;
         this.encryptedPaymentData = encryptedPaymentData;
     }
 
