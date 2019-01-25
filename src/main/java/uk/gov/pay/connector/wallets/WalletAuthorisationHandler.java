@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.wallets.applepay;
+package uk.gov.pay.connector.wallets;
 
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;

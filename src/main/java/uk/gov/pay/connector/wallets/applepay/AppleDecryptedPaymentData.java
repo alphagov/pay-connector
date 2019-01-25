@@ -4,11 +4,15 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import uk.gov.pay.connector.gateway.model.AuthorisationDetails;
+import uk.gov.pay.connector.gateway.worldpay.applepay.ApplePayTemplateData;
+import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
+import uk.gov.pay.connector.wallets.model.WalletTemplateData;
 
 import java.time.LocalDate;
 
-public class AppleDecryptedPaymentData implements AuthorisationDetails {
+public class AppleDecryptedPaymentData implements AuthorisationDetails, WalletAuthorisationData {
     private WalletPaymentInfo paymentInfo;
     private String applicationPrimaryAccountNumber;
     private String currencyCode;
@@ -38,8 +42,13 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails {
         return applicationPrimaryAccountNumber;
     }
 
-    public LocalDate getApplicationExpirationDate() {
+    public LocalDate getCardExpiryDate() {
         return applicationExpirationDate;
+    }
+
+    @Override
+    public WalletType getWalletType() {
+        return WalletType.APPLE_PAY;
     }
 
     public String getCurrencyCode() {
@@ -65,9 +74,15 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails {
     public void setPaymentInfo(WalletPaymentInfo applePaymentInfo) {
         this.paymentInfo = applePaymentInfo;
     }
-
+    
+    @Override
     public WalletPaymentInfo getPaymentInfo() {
         return paymentInfo;
+    }
+
+    @Override
+    public WalletTemplateData getWalletTemplateData() {
+        return ApplePayTemplateData.from(this);
     }
 
     public static class PaymentData {

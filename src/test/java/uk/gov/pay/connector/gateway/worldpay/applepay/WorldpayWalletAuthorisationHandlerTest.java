@@ -16,7 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
-import uk.gov.pay.connector.wallets.applepay.WalletAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.io.IOException;

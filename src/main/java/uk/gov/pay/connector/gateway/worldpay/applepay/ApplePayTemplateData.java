@@ -28,8 +28,8 @@ public class ApplePayTemplateData implements WalletTemplateData {
     public static ApplePayTemplateData from(AppleDecryptedPaymentData appleDecryptedPaymentData) {
         return new ApplePayTemplateData(
                 appleDecryptedPaymentData.getApplicationPrimaryAccountNumber(), 
-                appleDecryptedPaymentData.getApplicationExpirationDate().format(DateTimeFormatter.ofPattern("MM")),
-                appleDecryptedPaymentData.getApplicationExpirationDate().format(DateTimeFormatter.ofPattern("yyyy")),
+                appleDecryptedPaymentData.getCardExpiryDate().format(DateTimeFormatter.ofPattern("MM")),
+                appleDecryptedPaymentData.getCardExpiryDate().format(DateTimeFormatter.ofPattern("yyyy")),
                 appleDecryptedPaymentData.getPaymentInfo().getCardholderName(),
                 appleDecryptedPaymentData.getPaymentData().getOnlinePaymentCryptogram(),
                 appleDecryptedPaymentData.getPaymentData().getEciIndicator(),
