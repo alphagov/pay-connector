@@ -8,7 +8,7 @@ public interface WalletAuthorisationData {
     
     WalletPaymentInfo getPaymentInfo();
     WalletTemplateData getWalletTemplateData();
-    LocalDate getApplicationExpirationDate();
+    LocalDate getCardExpiryDate();
     WalletType getWalletType();
     
 }

@@ -42,7 +42,7 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails, WalletAu
         return applicationPrimaryAccountNumber;
     }
 
-    public LocalDate getApplicationExpirationDate() {
+    public LocalDate getCardExpiryDate() {
         return applicationExpirationDate;
     }
 

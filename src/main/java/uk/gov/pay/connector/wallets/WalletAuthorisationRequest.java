@@ -4,5 +4,5 @@ import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 public interface WalletAuthorisationRequest {
     
-    public WalletPaymentInfo getPaymentInfo();
+    WalletPaymentInfo getPaymentInfo();
 }
