@@ -93,6 +93,7 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_REJECTED, "");
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_CANCELLED, "");
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, USER_CANCELLED, "");
+        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED,  EXPIRE_CANCEL_READY, "");
         graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_SUCCESS, "");
         graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_REJECTED, "");
         graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_ERROR, "");
