@@ -5,7 +5,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import java.util.List;
 
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -53,7 +52,6 @@ public class StatusFlow {
             ImmutableList.of(
                     CREATED,
                     ENTERING_CARD_DETAILS,
-                    AUTHORISATION_3DS_REQUIRED,
                     AUTHORISATION_SUCCESS,
                     AWAITING_CAPTURE_REQUEST
             ),

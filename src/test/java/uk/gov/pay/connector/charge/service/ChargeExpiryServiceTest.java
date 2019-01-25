@@ -108,30 +108,6 @@ public class ChargeExpiryServiceTest {
     }
 
     @Test
-    public void shouldExpireChargesWithStatus_authorisation3DSRequired_byCallingProviderToCancel() {
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-                .withAmount(200L)
-                .withCreatedDate(ZonedDateTime.now())
-                .withStatus(ChargeStatus.AUTHORISATION_3DS_REQUIRED)
-                .withGatewayAccountEntity(gatewayAccount)
-                .build();
-
-        when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
-
-        when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
-        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
-        ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
-        ArgumentCaptor<CancelGatewayRequest> cancelCaptor = ArgumentCaptor.forClass(CancelGatewayRequest.class);
-        doNothing().when(mockChargeEventDao).persistChargeEventOf(captor.capture());
-
-        chargeExpiryService.expire(singletonList(chargeEntity));
-
-        verify(mockPaymentProvider).cancel(cancelCaptor.capture());
-        assertThat(cancelCaptor.getValue().getTransactionId(), is(chargeEntity.getGatewayTransactionId()));
-        assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
-    }
-
-    @Test
     public void shouldExpireChargesWithStatus_awaitingCaptureRequest_byCallingProviderToCancel() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
