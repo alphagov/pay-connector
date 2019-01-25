@@ -63,6 +63,7 @@ public class ChargeExpiryService {
     private final ChargeEventDao chargeEventDao;
     private final PaymentProviders providers;
     static final List<ChargeStatus> GATEWAY_CANCELLABLE_STATUSES = Arrays.asList(
+            AUTHORISATION_3DS_REQUIRED,
             AUTHORISATION_SUCCESS,
             AWAITING_CAPTURE_REQUEST
     );
