@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.worldpay.applepay;
+package uk.gov.pay.connector.gateway.worldpay.wallets;
 
 import com.amazonaws.util.json.Jackson;
 import com.google.common.collect.ImmutableMap;
@@ -13,6 +13,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
+import uk.gov.pay.connector.gateway.worldpay.applepay.ApplePayTemplateData;
+import uk.gov.pay.connector.gateway.worldpay.applepay.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;

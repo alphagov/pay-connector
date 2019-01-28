@@ -100,12 +100,32 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
         JsonNode validPayload = Jackson.getObjectMapper().readTree(
                 fixture("googlepay/example-auth-request.json"));
 
+        worldpayMockClient.mockAuthorisationSuccess();
+
         givenSetup()
                 .body(validPayload)
                 .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(OK.getStatusCode())
                 .body("status", is(ChargeStatus.AUTHORISATION_SUCCESS.toString()));
+    }
+
+    @Test
+    public void shouldNotAuthoriseChargeWithGooglePay_ForAWorldpayErrorCard() throws IOException {
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        JsonNode validPayload = Jackson.getObjectMapper().readTree(
+                fixture("googlepay/example-auth-request.json"));
+        worldpayMockClient.mockAuthorisationFailure();
+
+        givenSetup()
+                .body(validPayload)
+                .post(authoriseChargeUrlForGooglePay(chargeId))
+                .then()
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .body("message", is("This transaction was declined."));
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
     }
 
     @Test

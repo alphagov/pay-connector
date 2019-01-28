@@ -3,9 +3,6 @@ package uk.gov.pay.connector.paymentprocessor.resource;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.wallets.applepay.ApplePayService;
-import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -17,6 +14,9 @@ import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureService;
 import uk.gov.pay.connector.util.ResponseUtil;
+import uk.gov.pay.connector.wallets.applepay.ApplePayService;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.GooglePayService;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 
 import javax.inject.Inject;
@@ -45,15 +45,18 @@ public class CardResource {
     private final CardCaptureService cardCaptureService;
     private final ChargeCancelService chargeCancelService;
     private final ApplePayService applePayService;
+    private final GooglePayService googlePayService;
     
     @Inject
     public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
-                        CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService, ApplePayService applePayService) {
+                        CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService, ApplePayService applePayService,
+                        GooglePayService googlePayService) {
         this.cardAuthoriseService = cardAuthoriseService;
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.cardCaptureService = cardCaptureService;
         this.chargeCancelService = chargeCancelService;
         this.applePayService = applePayService;
+        this.googlePayService = googlePayService;
     }
 
     @POST
@@ -72,8 +75,7 @@ public class CardResource {
     public Response authoriseCharge(@PathParam("chargeId") String chargeId,
                                     @NotNull @Valid GooglePayAuthRequest googlePayAuthRequest) {
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
-        //TODO implement service logic.
-        return Response.ok().entity(ImmutableMap.of("status", ChargeStatus.AUTHORISATION_SUCCESS.toString())).build();
+        return googlePayService.authorise(chargeId, googlePayAuthRequest);
     }
 
     @POST

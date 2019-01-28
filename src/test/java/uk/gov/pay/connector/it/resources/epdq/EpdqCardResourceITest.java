@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.it.resources.epdq;
 
+import com.amazonaws.util.json.Jackson;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.restassured.response.ValidatableResponse;
@@ -11,19 +13,21 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
+import java.io.IOException;
 import java.util.Map;
 
+import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.gateway.model.Auth3dsDetails.Auth3dsResult.AUTHORISED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.gateway.model.Auth3dsDetails.Auth3dsResult.AUTHORISED;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 
@@ -106,6 +110,21 @@ public class EpdqCardResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body(validApplePayAuthorisationDetails)
                 .post(authoriseChargeUrlForApplePay(chargeId))
+                .then()
+                .statusCode(400)
+                .body("message", containsString("Wallets are not supported for ePDQ"));
+    }
+
+    @Test
+    public void shouldReturnBadRequestResponseWhenTryingToAuthoriseAGooglePayPayment() throws IOException {
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        JsonNode validPayload = Jackson.getObjectMapper().readTree(
+                fixture("googlepay/example-auth-request.json"));
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validPayload)
+                .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(400)
                 .body("message", containsString("Wallets are not supported for ePDQ"));

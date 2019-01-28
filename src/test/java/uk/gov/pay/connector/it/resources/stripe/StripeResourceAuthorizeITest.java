@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
+import com.amazonaws.util.json.Jackson;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.google.common.collect.ImmutableMap;
@@ -23,6 +25,7 @@ import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +37,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -55,6 +59,7 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlFor;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForApplePay;
+import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForGooglePay;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -254,6 +259,23 @@ public class StripeResourceAuthorizeITest {
                 .contentType(JSON)
                 .body(validApplePayAuthorisationDetails)
                 .post(authoriseChargeUrlForApplePay(externalChargeId))
+                .then()
+                .statusCode(400)
+                .body("message", containsString("Wallets are not supported for Stripe"));
+    }
+
+    @Test
+    public void shouldReturnBadRequestResponseWhenTryingToAuthoriseAGooglePayPayment() throws IOException {
+        addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
+        JsonNode validPayload = Jackson.getObjectMapper().readTree(
+                fixture("googlepay/example-auth-request.json"));
+
+        String externalChargeId = addCharge();
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validPayload)
+                .post(authoriseChargeUrlForGooglePay(externalChargeId))
                 .then()
                 .statusCode(400)
                 .body("message", containsString("Wallets are not supported for Stripe"));
