@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.smartpay;
 import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.gateway.epdq.ChargeQueryResponse;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
@@ -101,6 +102,11 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) {
         throw new UnsupportedOperationException("Wallets are not supported for Smartpay");
+    }
+
+    @Override
+    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) {
+        throw new UnsupportedOperationException("Querying payment status not currently supported by Smartpay");
     }
 
     @Override

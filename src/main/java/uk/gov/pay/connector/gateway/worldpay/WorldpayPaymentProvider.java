@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.gateway.epdq.ChargeQueryResponse;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
@@ -82,6 +83,11 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         return Optional.of(randomUUID().toString());
     }
 
+    @Override
+    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) {
+        throw new UnsupportedOperationException("Querying payment status not currently supported by Worldpay");
+    }
+    
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) {
         Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrder(request));
