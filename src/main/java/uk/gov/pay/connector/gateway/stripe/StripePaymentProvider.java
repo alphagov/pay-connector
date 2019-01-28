@@ -14,6 +14,7 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.epdq.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -95,7 +96,12 @@ public class StripePaymentProvider implements PaymentProvider {
     public Optional<String> generateTransactionId() {
         return Optional.empty();
     }
-
+    
+    @Override
+    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) {
+        throw new UnsupportedOperationException("Querying payment status not currently supported by Stripe");
+    }
+    
     @Override
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
         logger.info("Calling Stripe for authorisation of charge [{}]", request.getChargeExternalId());

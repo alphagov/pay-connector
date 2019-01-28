@@ -164,6 +164,7 @@ public class CardResource {
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(chargeId));
     }
 
+
     private Response handleError(String chargeId, GatewayError error) {
         switch (error.getErrorType()) {
             case UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY:

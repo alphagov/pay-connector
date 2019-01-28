@@ -210,4 +210,11 @@ public class RestAssuredClient {
                 .post(path)
                 .then();
     }
+
+    public ValidatableResponse getDiscrepancyReport(String chargeIds) {
+        return addQueryParams(given().port(port))
+                .contentType(JSON).body(chargeIds)
+                .post("/v1/api/reports/discrepancies")
+                .then();
+    }
 }
