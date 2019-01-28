@@ -5,13 +5,12 @@ import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
-import uk.gov.pay.connector.wallets.model.WalletTemplateData;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 
-public class GooglePayAuthRequest implements WalletAuthorisationRequest, WalletTemplateData, WalletAuthorisationData {
+public class GooglePayAuthRequest implements WalletAuthorisationRequest, WalletAuthorisationData {
 
     @NotNull @Valid private final WalletPaymentInfo paymentInfo;
     @NotNull @Valid private final EncryptedPaymentData encryptedPaymentData;
@@ -24,11 +23,6 @@ public class GooglePayAuthRequest implements WalletAuthorisationRequest, WalletT
 
     public WalletPaymentInfo getPaymentInfo() {
         return paymentInfo;
-    }
-
-    @Override
-    public WalletTemplateData getWalletTemplateData() {
-        return this;
     }
 
     @Override

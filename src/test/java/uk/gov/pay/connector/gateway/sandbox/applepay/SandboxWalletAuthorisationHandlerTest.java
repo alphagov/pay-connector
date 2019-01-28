@@ -2,13 +2,12 @@ package uk.gov.pay.connector.gateway.sandbox.applepay;
 
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.gateway.worldpay.applepay.ApplePayTemplateData;
-import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
-import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -41,7 +40,7 @@ public class SandboxWalletAuthorisationHandlerTest {
                                         .build())
                         .build();
         GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authorise(
-                new WalletAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), ApplePayTemplateData.from(applePaymentData)));
+                new WalletAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePaymentData));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -66,7 +65,7 @@ public class SandboxWalletAuthorisationHandlerTest {
                                         .build())
                         .build();
         GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authorise(
-                new WalletAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), ApplePayTemplateData.from(applePaymentData)));
+                new WalletAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePaymentData));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -91,7 +90,7 @@ public class SandboxWalletAuthorisationHandlerTest {
                                         .build())
                         .build();
         GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authorise(
-                new WalletAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), ApplePayTemplateData.from(applePaymentData)));
+                new WalletAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePaymentData));
 
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.isFailed(), is(true));

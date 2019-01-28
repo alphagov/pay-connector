@@ -15,7 +15,7 @@ public final class ApplePayDecryptedPaymentDataFixture {
             "aaa@bbb.test"
     );
     private String applicationPrimaryAccountNumber = "4818528840010767";
-    private LocalDate applicationExpirationDate = LocalDate.of(2023, 12, 31);
+    private LocalDate applicationExpirationDate = LocalDate.of(2023, 12, 1);
     private String currencyCode = "643";
     private Long transactionAmount = 10L;
     private String deviceManufacturerIdentifier = "040010030273";

@@ -4,13 +4,12 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import uk.gov.pay.connector.gateway.model.AuthorisationDetails;
-import uk.gov.pay.connector.gateway.worldpay.applepay.ApplePayTemplateData;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
-import uk.gov.pay.connector.wallets.model.WalletTemplateData;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class AppleDecryptedPaymentData implements AuthorisationDetails, WalletAuthorisationData {
     private WalletPaymentInfo paymentInfo;
@@ -22,12 +21,14 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails, WalletAu
     private PaymentData paymentData;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyMMdd")
     @JsonDeserialize(using = LocalDateDeserializer.class)
-    private LocalDate applicationExpirationDate; 
+    private LocalDate applicationExpirationDate;
     
     public AppleDecryptedPaymentData() {
     }
 
-    public AppleDecryptedPaymentData(WalletPaymentInfo applePaymentInfo, String applicationPrimaryAccountNumber, LocalDate applicationExpirationDate, String currencyCode, long transactionAmount, String deviceManufacturerIdentifier, String paymentDataType, PaymentData paymentData) {
+    public AppleDecryptedPaymentData(WalletPaymentInfo applePaymentInfo, String applicationPrimaryAccountNumber,
+                                     LocalDate applicationExpirationDate, String currencyCode, long transactionAmount,
+                                     String deviceManufacturerIdentifier, String paymentDataType, PaymentData paymentData) {
         this.paymentInfo = applePaymentInfo;
         this.applicationPrimaryAccountNumber = applicationPrimaryAccountNumber;
         this.applicationExpirationDate = applicationExpirationDate;
@@ -46,6 +47,19 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails, WalletAu
         return applicationExpirationDate;
     }
 
+    @Override
+    public String getLastDigitsCardNumber() {
+        return paymentInfo.getLastDigitsCardNumber();
+    }
+
+    public String getExpiryDateMonth() {
+        return applicationExpirationDate.format(DateTimeFormatter.ofPattern("MM"));
+    }
+
+    public String getExpiryDateYear() {
+        return applicationExpirationDate.format(DateTimeFormatter.ofPattern("YYYY"));
+    }
+    
     @Override
     public WalletType getWalletType() {
         return WalletType.APPLE_PAY;
@@ -78,11 +92,6 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails, WalletAu
     @Override
     public WalletPaymentInfo getPaymentInfo() {
         return paymentInfo;
-    }
-
-    @Override
-    public WalletTemplateData getWalletTemplateData() {
-        return ApplePayTemplateData.from(this);
     }
 
     public static class PaymentData {

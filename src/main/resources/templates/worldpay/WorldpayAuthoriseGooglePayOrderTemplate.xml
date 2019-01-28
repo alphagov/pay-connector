@@ -8,9 +8,9 @@
             <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             <paymentDetails>
                 <PAYWITHGOOGLE-SSL>
-                    <protocolVersion>${walletTemplateData.encryptedPaymentData.protocolVersion?xml}</protocolVersion>
-                    <signature>${walletTemplateData.encryptedPaymentData.signature?xml}</signature>
-                    <signedMessage>${walletTemplateData.encryptedPaymentData.signedMessage?xml}</signedMessage>
+                    <protocolVersion>${walletAuthorisationData.encryptedPaymentData.protocolVersion?xml}</protocolVersion>
+                    <signature>${walletAuthorisationData.encryptedPaymentData.signature?xml}</signature>
+                    <signedMessage>${walletAuthorisationData.encryptedPaymentData.signedMessage?xml}</signedMessage>
                 </PAYWITHGOOGLE-SSL>
             </paymentDetails>
         </order>

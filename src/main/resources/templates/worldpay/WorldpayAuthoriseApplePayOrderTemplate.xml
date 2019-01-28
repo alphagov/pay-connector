@@ -8,14 +8,14 @@
             <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             <paymentDetails>
                 <EMVCO_TOKEN-SSL type="APPLEPAY">
-                    <tokenNumber>${walletTemplateData.applicationPrimaryAccountNumber?xml}</tokenNumber>
-                    <expiryDate><date month="${walletTemplateData.expiryDateMonth}" year="${walletTemplateData.expiryDateYear}"/></expiryDate>
-                    <#if walletTemplateData.cardholderName??>
-                    <cardHolderName>${walletTemplateData.cardholderName?xml}</cardHolderName>
+                    <tokenNumber>${walletAuthorisationData.applicationPrimaryAccountNumber?xml}</tokenNumber>
+                    <expiryDate><date month="${walletAuthorisationData.getExpiryDateMonth()}" year="${walletAuthorisationData.getExpiryDateYear()}"/></expiryDate>
+                    <#if walletAuthorisationData.paymentInfo.cardholderName??>
+                    <cardHolderName>${walletAuthorisationData.paymentInfo.cardholderName?xml}</cardHolderName>
                     </#if>
-                    <cryptogram>${walletTemplateData.onlinePaymentCryptogram?xml}</cryptogram>
-                    <#if walletTemplateData.eciIndicator??>
-                    <eciIndicator>0${walletTemplateData.eciIndicator?xml}</eciIndicator>
+                    <cryptogram>${walletAuthorisationData.paymentData.onlinePaymentCryptogram?xml}</cryptogram>
+                    <#if walletAuthorisationData.paymentData.eciIndicator??>
+                    <eciIndicator>0${walletAuthorisationData.paymentData.eciIndicator?xml}</eciIndicator>
                     </#if>
                 </EMVCO_TOKEN-SSL>
             </paymentDetails>

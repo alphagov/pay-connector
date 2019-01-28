@@ -7,7 +7,7 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
 import uk.gov.pay.connector.gateway.templates.TemplateBuilder;
 import uk.gov.pay.connector.wallets.WalletType;
-import uk.gov.pay.connector.wallets.model.WalletTemplateData;
+import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
 import javax.ws.rs.core.MediaType;
 
@@ -150,8 +150,8 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         return this;
     }
 
-    public WorldpayOrderRequestBuilder withWalletTemplateData(WalletTemplateData walletTemplateData) {
-        worldpayTemplateData.setWalletTemplateData(walletTemplateData);
+    public WorldpayOrderRequestBuilder withWalletTemplateData(WalletAuthorisationData walletTemplateData) {
+        worldpayTemplateData.setWalletAuthorisationData(walletTemplateData);
         return this;
     }
     

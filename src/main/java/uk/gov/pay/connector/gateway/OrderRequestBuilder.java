@@ -4,7 +4,7 @@ package uk.gov.pay.connector.gateway;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
-import uk.gov.pay.connector.wallets.model.WalletTemplateData;
+import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
 import javax.ws.rs.core.MediaType;
 
@@ -16,7 +16,7 @@ public abstract class OrderRequestBuilder {
         private String merchantCode;
         private String description;
         private AuthCardDetails authCardDetails;
-        private WalletTemplateData walletTemplateData;
+        private WalletAuthorisationData walletAuthorisationData;
         private String amount;
         private String paymentPlatformReference;
 
@@ -68,12 +68,12 @@ public abstract class OrderRequestBuilder {
             this.paymentPlatformReference = paymentPlatformReference;
         }
 
-        public WalletTemplateData getWalletTemplateData() {
-            return walletTemplateData;
+        public WalletAuthorisationData getWalletAuthorisationData() {
+            return walletAuthorisationData;
         }
 
-        public void setWalletTemplateData(WalletTemplateData walletTemplateData) {
-            this.walletTemplateData = walletTemplateData;
+        public void setWalletAuthorisationData(WalletAuthorisationData walletAuthorisationData) {
+            this.walletAuthorisationData = walletAuthorisationData;
         }
     }
 
