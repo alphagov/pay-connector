@@ -14,11 +14,9 @@ import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 import java.util.HashMap;
-import java.util.Map;   
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
@@ -27,12 +25,9 @@ import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.Response.Status.OK;
-import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
-import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionSocketException;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionTimeoutException;
-import static uk.gov.pay.connector.gateway.model.GatewayError.malformedResponseReceivedFromGateway;
-import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCodeFromGateway;
-import static uk.gov.pay.connector.gateway.model.GatewayError.unknownHostException;
+import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
+import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.encode;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -83,25 +78,17 @@ public class GatewayClient {
             } else {
                 logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}", statusCode, gatewayUrl, account.getType());
                 incrementFailureCounter(metricRegistry, metricsPrefix);
-                return left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code " + statusCode + " from gateway"));
+                return left(gatewayConnectionError("Unexpected HTTP status code " + statusCode + " from gateway"));
             }
         } catch (ProcessingException pe) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
             if (pe.getCause() != null) {
-                if (pe.getCause() instanceof UnknownHostException) {
-                    logger.error(format("DNS resolution error for gateway url=%s", gatewayUrl), pe);
-                    return left(unknownHostException("Gateway Url DNS resolution error"));
-                }
                 if (pe.getCause() instanceof SocketTimeoutException) {
                     logger.error(format("Connection timed out error for gateway url=%s", gatewayUrl), pe);
                     return left(gatewayConnectionTimeoutException("Gateway connection timeout error"));
                 }
-                if (pe.getCause() instanceof SocketException) {
-                    logger.error(format("Socket Exception for gateway url=%s", gatewayUrl), pe);
-                    return left(gatewayConnectionSocketException("Gateway connection socket error"));
-                }
             }
-            logger.error(format("Exception for gateway url=%s", gatewayUrl), pe);
+            logger.error(format("Exception for gateway url=%s, error message: %s", gatewayUrl, pe.getMessage()), pe);
             return left(genericGatewayError(pe.getMessage()));
         } catch (Exception e) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
@@ -124,7 +111,7 @@ public class GatewayClient {
         } catch (XMLUnmarshallerException e) {
             String error = format("Could not unmarshall response %s.", payload);
             logger.error(error, e);
-            return left(malformedResponseReceivedFromGateway("Invalid Response Received From Gateway"));
+            return left(gatewayConnectionError("Invalid Response Received From Gateway"));
         }
     }
 

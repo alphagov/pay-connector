@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -15,7 +16,6 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
@@ -58,8 +58,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",
-                UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
     }
 
     @Test
@@ -85,8 +84,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
         GatewayResponse<BaseCancelResponse> response = provider.cancel(buildTestCancelRequest());
         assertThat(response.isFailed(), is(true));
         assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",
-                UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
     }
 
     @Test
@@ -121,7 +119,6 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
         GatewayRefundResponse response = provider.refund(buildTestRefundRequest());
         assertThat(response.isSuccessful(), is(false));
         assertThat(response.getError().isPresent(), is(true));
-        assertEquals(response.getError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway",
-                UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        assertEquals(response.getError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
     }
 }

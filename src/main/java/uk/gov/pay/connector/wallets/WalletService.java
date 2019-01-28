@@ -53,11 +53,8 @@ public abstract class WalletService {
 
     protected Response handleError(String chargeId, GatewayError error) {
         switch (error.getErrorType()) {
-            case UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY:
-            case MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY:
-            case GATEWAY_URL_DNS_ERROR:
+            case GATEWAY_CONNECTION_ERROR:
             case GATEWAY_CONNECTION_TIMEOUT_ERROR:
-            case GATEWAY_CONNECTION_SOCKET_ERROR:
                 return serviceErrorResponse(error.getMessage());
             default:
                 LOGGER.error("Charge {}: error {}", chargeId, error.getMessage());

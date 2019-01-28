@@ -7,7 +7,6 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -15,9 +14,9 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.GatewayClient;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.PortFactory;
 
@@ -25,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -82,9 +82,9 @@ abstract public class BaseGatewayITest {
         root.addAppender(mockAppender);
     }
 
-    public void assertThatLastGatewayClientLoggingEventIs(String loggingEvent) {
+    public void assertLastGatewayClientLoggingEventContains(String loggingEvent) {
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        Assert.assertThat(logStatement.get(logStatement.size() - 1).getFormattedMessage(), is(loggingEvent));
+        assertThat(logStatement.get(logStatement.size() - 1).getFormattedMessage().contains(loggingEvent), is(true));
     }
 }
