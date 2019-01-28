@@ -8,8 +8,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
@@ -48,7 +46,6 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
  * This test will hit the external https://api.stripe.com which is set in in stripe.url in the test-it-config.yaml.
  */
 @Ignore
-@RunWith(MockitoJUnitRunner.class)
 public class StripePaymentProviderTest {
 
     @Rule
