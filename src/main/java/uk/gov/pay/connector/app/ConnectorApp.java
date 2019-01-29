@@ -41,11 +41,11 @@ import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.healthcheck.resource.HealthCheckResource;
 import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
+import uk.gov.pay.connector.paymentprocessor.resource.DiscrepancyResource;
 import uk.gov.pay.connector.paymentprocessor.service.CaptureProcessScheduler;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.refund.resource.ChargeRefundsResource;
 import uk.gov.pay.connector.refund.resource.SearchRefundsResource;
-import uk.gov.pay.connector.report.resource.GatewayStatusComparisonReportResource;
 import uk.gov.pay.connector.report.resource.PerformanceReportResource;
 import uk.gov.pay.connector.report.resource.TransactionsSummaryResource;
 import uk.gov.pay.connector.token.resource.SecurityTokensResource;
@@ -118,7 +118,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(SchemeRewriteFilter.class));
         environment.jersey().register(injector.getInstance(PerformanceReportResource.class));
         environment.jersey().register(injector.getInstance(SearchRefundsResource.class));
-        environment.jersey().register(injector.getInstance(GatewayStatusComparisonReportResource.class));
+        environment.jersey().register(injector.getInstance(DiscrepancyResource.class));
 
         setupSchedulers(configuration, environment, injector);
 
