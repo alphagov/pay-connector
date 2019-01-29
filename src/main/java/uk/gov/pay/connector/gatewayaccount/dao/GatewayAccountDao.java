@@ -31,7 +31,7 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
         return entityManager.get()
                 .createQuery(query, GatewayAccountEntity.class)
                 .setParameter("username", username)
-                .getResultList().stream().findFirst();
+                .getResultStream().findFirst();
     }
 
     public List<GatewayAccountResourceDTO> list(List<Long> accountIds) {
