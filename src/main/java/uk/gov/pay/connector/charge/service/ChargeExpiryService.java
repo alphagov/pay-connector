@@ -164,6 +164,10 @@ public class ChargeExpiryService {
             return chargeEntity;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
     }
+    
+    public GatewayResponse<BaseCancelResponse> forceCancelWithGateway(ChargeEntity charge) {
+        return doGatewayCancel(charge);
+    }
 
     private void logUnsuccessfulResponseReasons(ChargeEntity chargeEntity, GatewayResponse<BaseCancelResponse> gatewayResponse) {
         gatewayResponse.getGatewayError().ifPresent(error ->

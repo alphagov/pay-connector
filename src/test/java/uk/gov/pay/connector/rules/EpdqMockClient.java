@@ -23,6 +23,14 @@ public class EpdqMockClient {
         paymentServiceResponse(ROUTE_FOR_QUERY_ORDER, TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_SUCCESS_RESPONSE));
     }
 
+    public void mockCancelQuerySuccess() {
+        paymentServiceResponse(ROUTE_FOR_QUERY_ORDER, TestTemplateResourceLoader.load(EPDQ_CANCEL_SUCCESS_RESPONSE));
+    }    
+    
+    public void mockCaptureQuerySuccess() {
+        paymentServiceResponse(ROUTE_FOR_QUERY_ORDER, TestTemplateResourceLoader.load(EPDQ_CAPTURE_SUCCESS_RESPONSE));
+    }
+
     public void mockAuthorisation3dsSuccess() {
         paymentServiceResponse(ROUTE_FOR_NEW_ORDER, TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_SUCCESS_3D_RESPONSE));
     }

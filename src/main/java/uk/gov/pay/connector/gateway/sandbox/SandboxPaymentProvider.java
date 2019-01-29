@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.sandbox;
 
+import uk.gov.pay.connector.gateway.epdq.ChargeQueryResponse;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
@@ -26,6 +27,7 @@ import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalcul
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
 
+import javax.naming.OperationNotSupportedException;
 import java.util.Optional;
 
 import static java.util.UUID.randomUUID;
@@ -65,6 +67,11 @@ public class SandboxPaymentProvider implements PaymentProvider {
         return gatewayResponseBuilder
                 .withGatewayError(new GatewayError("Unsupported card details.", GENERIC_GATEWAY_ERROR))
                 .build();
+    }
+
+    @Override
+    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) {
+        throw new UnsupportedOperationException("Querying payment status not currently supported by Sandbox");
     }
 
     @Override

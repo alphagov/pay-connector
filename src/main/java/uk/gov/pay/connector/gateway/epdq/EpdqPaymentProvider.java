@@ -6,6 +6,7 @@ import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.gateway.epdq.model.response.EpdqQueryResponse;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
@@ -34,6 +35,7 @@ import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
 
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Invocation;
 import java.nio.charset.Charset;
 import java.util.Optional;
@@ -130,6 +132,19 @@ public class EpdqPaymentProvider implements PaymentProvider {
     public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) {
         throw new UnsupportedOperationException("Wallets are not supported for ePDQ");
     }
+    
+    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) {
+        Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(
+                ROUTE_FOR_QUERY_ORDER,
+                charge.getGatewayAccount(),
+                buildQueryOrderRequestFor(charge)
+        );
+        GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = GatewayResponseGenerator.getEpdqGatewayResponse(authoriseClient, response, EpdqQueryResponse.class);
+        
+        return epdqGatewayResponse.getBaseResponse().map(EpdqQueryResponse::toChargeQueryResponse).orElseGet(() -> {
+            throw new  WebApplicationException("Things went wrong");
+        });
+    }
 
     @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
@@ -203,6 +218,17 @@ public class EpdqPaymentProvider implements PaymentProvider {
                         CREDENTIALS_SHA_IN_PASSPHRASE))
                 .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .build();
+    }
+
+    private GatewayOrder buildQueryOrderRequestFor(ChargeEntity charge) {
+        return anEpdqQueryOrderRequestBuilder()
+                .withOrderId(charge.getExternalId())
+                .withPassword(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
+                .withShaInPassphrase(charge.getGatewayAccount().getCredentials().get(
+                        CREDENTIALS_SHA_IN_PASSPHRASE))
+                .withUserId(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
+                .withMerchantCode(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .build();
     }
 
