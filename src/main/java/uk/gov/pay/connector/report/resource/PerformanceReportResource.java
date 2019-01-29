@@ -11,6 +11,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
@@ -67,22 +69,16 @@ public class PerformanceReportResource {
     @Path("/v1/api/reports/gateway-account-performance-report")
     @Produces(APPLICATION_JSON)
     public Response getGatewayAccountPerformanceReport() {
-        HashMap<String, ImmutableMap<String, Object>> response = new HashMap<String, ImmutableMap<String, Object>>();
-
-         performanceReportDao
-           .aggregateNumberAndValueOfPaymentsByGatewayAccount()
-           .forEach(
-             performance -> response.put(
-               performance.getGatewayAccountId().toString(),
-               ImmutableMap.of(
-                 "total_volume", performance.getTotalVolume(),
-                 "total_amount", performance.getTotalAmount(),
-                 "average_amount", performance.getAverageAmount(),
-                 "min_amount", performance.getMinAmount(),
-                 "max_amount", performance.getMaxAmount()
-               )
-             )
-           );
+         Map<String, Map<String, Object>> response = performanceReportDao.aggregateNumberAndValueOfPaymentsByGatewayAccount()
+                 .collect(Collectors.toMap(
+                         performance -> performance.getGatewayAccountId().toString(), 
+                         performance -> ImmutableMap.of(
+                                 "total_volume", performance.getTotalVolume(),
+                                 "total_amount", performance.getTotalAmount(),
+                                 "average_amount", performance.getAverageAmount(),
+                                 "min_amount", performance.getMinAmount(),
+                                 "max_amount", performance.getMaxAmount()
+                 )));
 
          return ok().entity(response).build();
     }
