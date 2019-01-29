@@ -7,8 +7,8 @@ import java.time.LocalDate;
 public interface WalletAuthorisationData {
     
     WalletPaymentInfo getPaymentInfo();
-    WalletTemplateData getWalletTemplateData();
     LocalDate getCardExpiryDate();
     WalletType getWalletType();
+    String getLastDigitsCardNumber();
     
 }

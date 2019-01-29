@@ -2,23 +2,22 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
-import uk.gov.pay.connector.wallets.WalletType;
-import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
-import uk.gov.pay.connector.gateway.worldpay.applepay.ApplePayTemplateData;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
+import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
-import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseWalletOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseWalletOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCaptureOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
@@ -173,7 +172,7 @@ public class WorldpayOrderRequestBuilderTest {
     @Test
     public void shouldGenerateValidAuthoriseApplePayOrderRequest() throws Exception {
         GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.APPLE_PAY)
-                .withWalletTemplateData(ApplePayTemplateData.from(validData))
+                .withWalletTemplateData(validData)
                 .withSessionId("uniqueSessionId")
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
@@ -198,7 +197,7 @@ public class WorldpayOrderRequestBuilderTest {
                                         .withLastDigitsCardNumber("4242").build())
                         .build();
         GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.APPLE_PAY)
-                .withWalletTemplateData(ApplePayTemplateData.from(validData))
+                .withWalletTemplateData(validData)
                 .withSessionId("uniqueSessionId")
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")

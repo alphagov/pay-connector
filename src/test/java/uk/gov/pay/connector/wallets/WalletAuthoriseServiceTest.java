@@ -1,5 +1,6 @@
-package uk.gov.pay.connector.wallets.applepay;
+package uk.gov.pay.connector.wallets;
 
+import com.amazonaws.util.json.Jackson;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
@@ -19,20 +20,23 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
-import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
-import uk.gov.pay.connector.wallets.WalletAuthoriseService;
-import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -108,7 +112,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthoriseCard_shouldRespondAuthorisationSuccess() {
+    public void doAuthoriseCard_ApplePay_shouldRespondAuthorisationSuccess() {
         providerWillAuthorise();
         
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
@@ -124,6 +128,28 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
+        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+    }
+
+    @Test
+    public void doAuthoriseCard_GooglePay_shouldRespondAuthorisationSuccess() throws IOException {
+        providerWillAuthorise();
+        WalletAuthorisationData authorisationData = 
+                Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+
+        GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.doAuthorise(charge.getExternalId(), authorisationData);
+
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getSessionIdentifier().isPresent(), is(true));
+        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
+
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        verify(mockedChargeEventDao).persistChargeEventOf(charge);
+        assertThat(charge.get3dsDetails(), is(nullValue()));
+        assertThat(charge.getCardDetails(), is(notNullValue()));
+        assertThat(charge.getWalletType(), is(WalletType.GOOGLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
     }
 

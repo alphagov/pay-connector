@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.it.resources.smartpay;
 
+import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.restassured.http.ContentType;
@@ -14,10 +16,12 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.containsString;
@@ -156,6 +160,21 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body(validApplePayAuthorisationDetails)
                 .post(authoriseChargeUrlForApplePay(chargeId))
+                .then()
+                .statusCode(400)
+                .body("message", containsString("Wallets are not supported for Smartpay"));
+    }
+
+    @Test
+    public void shouldReturnBadRequestResponseWhenTryingToAuthoriseAGooglePayPayment() throws IOException {
+        String chargeId = createNewChargeWithNoTransactionId(ChargeStatus.ENTERING_CARD_DETAILS);
+        JsonNode validPayload = Jackson.getObjectMapper().readTree(
+                fixture("googlepay/example-auth-request.json"));
+        
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validPayload)
+                .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(400)
                 .body("message", containsString("Wallets are not supported for Smartpay"));

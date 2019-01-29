@@ -15,7 +15,7 @@ import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.Gatewa
 public class SandboxWalletAuthorisationHandler implements WalletAuthorisationHandler {
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(WalletAuthorisationGatewayRequest request) {
-        String lastDigitsCardNumber = request.getWalletTemplateData().getLastDigitsCardNumber();        
+        String lastDigitsCardNumber = request.getWalletAuthorisationData().getLastDigitsCardNumber();
         GatewayResponse.GatewayResponseBuilder<BaseAuthoriseResponse> gatewayResponseBuilder = responseBuilder();
 
         //PP-4314 This is duplicated from the "standard" auth in sandbox payment provider, should be extracted when we refactor further to implement the AuthorisationHandler

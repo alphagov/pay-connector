@@ -23,6 +23,7 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITHOUT_ADDRESS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-without-address.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_MIN_DATA = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-apple-pay-min-data.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-apple-pay.xml";
+    public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-google-pay.xml";
 
     public static final String WORLDPAY_3DS_RESPONSE = WORLDPAY_BASE_NAME + "/3ds-response.xml";
     public static final String WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST = WORLDPAY_BASE_NAME + "/valid-3ds-response-auth-worldpay-request.xml";

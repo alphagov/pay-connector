@@ -102,7 +102,7 @@ public class WalletAuthoriseService {
     protected GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, WalletAuthorisationData walletAuthorisationData) {
         logger.info("Authorising charge for {}", walletAuthorisationData.getWalletType().toString());
         WalletAuthorisationGatewayRequest authorisationGatewayRequest = 
-                WalletAuthorisationGatewayRequest.valueOf(chargeEntity, walletAuthorisationData.getWalletTemplateData());
+                WalletAuthorisationGatewayRequest.valueOf(chargeEntity, walletAuthorisationData);
         return getPaymentProviderFor(chargeEntity)
                 .authoriseWallet(authorisationGatewayRequest);
     }
