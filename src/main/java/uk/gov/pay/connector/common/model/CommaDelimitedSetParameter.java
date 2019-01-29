@@ -1,20 +1,21 @@
 package uk.gov.pay.connector.common.model;
 
-import java.util.Arrays;
+import com.google.common.collect.Sets;
+
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static com.google.common.collect.Sets.newHashSet;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class CommaDelimitedSetParameter {
 
-    private Set<String> elements = newHashSet();
+    private Set<String> elements;
 
     public CommaDelimitedSetParameter(String queryString) {
-        if (isNotBlank(queryString)) {
-            elements.addAll(Arrays.asList(queryString.split(",")));
-        }
+        elements = isBlank(queryString)
+                ? new HashSet<>()
+                : Sets.newHashSet(queryString.split(","));
     }
 
     public Stream<String> stream() {
