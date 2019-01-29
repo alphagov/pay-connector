@@ -23,6 +23,7 @@ import javax.ws.rs.core.Response;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.LongSummaryStatistics;
 
 import static fj.data.Either.reduce;
 import static java.util.stream.Collectors.toList;
@@ -70,28 +71,28 @@ public class TransactionsSummaryResource {
     }
 
     private Response summarisePaymentsAndRefunds(Long gatewayAccountId, Pair<ZonedDateTime, ZonedDateTime> fromDateAndToDate) {
-        List<ChargeEntity> successfulPayments = chargeDao.findByAccountBetweenDatesWithStatusIn(
-                gatewayAccountId,
-                fromDateAndToDate.getLeft(),
-                fromDateAndToDate.getRight(),
-                CHARGE_SUCCESS_STATUSES);
+        LongSummaryStatistics successfulPaymentStats = chargeDao.findByAccountBetweenDatesWithStatusIn(
+                    gatewayAccountId,
+                    fromDateAndToDate.getLeft(),
+                    fromDateAndToDate.getRight(),
+                    CHARGE_SUCCESS_STATUSES)
+                .stream()
+                .mapToLong(ChargeEntity::getAmount)
+                .summaryStatistics();
 
-        int successfulPaymentsCount = successfulPayments.size();
-        long successfulPaymentsTotalInPence = successfulPayments.stream().mapToLong(ChargeEntity::getAmount).sum();
+        LongSummaryStatistics successfulRefundStats = refundDao.findByAccountBetweenDatesWithStatusIn(
+                    gatewayAccountId,
+                    fromDateAndToDate.getLeft(),
+                    fromDateAndToDate.getRight(),
+                    REFUND_SUCCESS_STATUSES)
+                .stream()
+                .mapToLong(RefundEntity::getAmount)
+                .summaryStatistics();
 
-        List<RefundEntity> successfulRefunds = refundDao.findByAccountBetweenDatesWithStatusIn(
-                gatewayAccountId,
-                fromDateAndToDate.getLeft(),
-                fromDateAndToDate.getRight(),
-                REFUND_SUCCESS_STATUSES);
-
-        int successfulRefundsCount = successfulRefunds.size();
-        long successfulRefundsTotalInPence = successfulRefunds.stream().mapToLong(RefundEntity::getAmount).sum();
-
-        long netIncome = successfulPaymentsTotalInPence - successfulRefundsTotalInPence;
-
-        TransactionsSummaryResponse response = new TransactionsSummaryResponse(successfulPaymentsCount, successfulPaymentsTotalInPence,
-                successfulRefundsCount, successfulRefundsTotalInPence, netIncome);
+        TransactionsSummaryResponse response = new TransactionsSummaryResponse(
+                (int) successfulPaymentStats.getCount(), successfulPaymentStats.getSum(),
+                (int) successfulRefundStats.getCount(), successfulRefundStats.getSum(),
+                successfulPaymentStats.getSum() - successfulRefundStats.getSum());
 
         return Response.ok(response).build();
     }
