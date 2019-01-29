@@ -13,6 +13,7 @@ import uk.gov.pay.connector.report.model.domain.PerformanceReportEntity;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.math.BigDecimal.ZERO;
 import static org.hamcrest.Matchers.is;
@@ -75,14 +76,22 @@ public class PerformanceReportDaoITest extends DaoITestBase {
         insertCharge(anotherGatewayAccount, 6L, ZonedDateTime.now());
         insertCharge(anotherGatewayAccount, 3L, ZonedDateTime.now());
         insertCharge(anotherGatewayAccount, 6L, ZonedDateTime.now());
-        List<GatewayAccountPerformanceReportEntity> gatewayAccountPerformanceReportEntities = performanceReportDao.aggregateNumberAndValueOfPaymentsByGatewayAccount();
+
+        List<GatewayAccountPerformanceReportEntity> gatewayAccountPerformanceReportEntities =
+                performanceReportDao.aggregateNumberAndValueOfPaymentsByGatewayAccount().collect(Collectors.toList());
+
         assertThat(gatewayAccountPerformanceReportEntities.size(), is(2));
-        assertThat(gatewayAccountPerformanceReportEntities.get(0).getAverageAmount(), is(closeTo(new BigDecimal("6"), ZERO)));
-        assertThat(gatewayAccountPerformanceReportEntities.get(0).getTotalAmount(), is(closeTo(new BigDecimal("12"), ZERO)));
-        assertThat(gatewayAccountPerformanceReportEntities.get(0).getTotalVolume(), is(2L));
-        assertThat(gatewayAccountPerformanceReportEntities.get(1).getAverageAmount(), is(closeTo(new BigDecimal("5"), ZERO)));
-        assertThat(gatewayAccountPerformanceReportEntities.get(1).getTotalAmount(), is(closeTo(new BigDecimal("15"), ZERO)));
-        assertThat(gatewayAccountPerformanceReportEntities.get(1).getTotalVolume(), is(3L));
+
+        GatewayAccountPerformanceReportEntity first = gatewayAccountPerformanceReportEntities.get(0);
+        GatewayAccountPerformanceReportEntity second = gatewayAccountPerformanceReportEntities.get(1);
+
+        assertThat(first.getAverageAmount(), is(closeTo(new BigDecimal("6"), ZERO)));
+        assertThat(first.getTotalAmount(), is(closeTo(new BigDecimal("12"), ZERO)));
+        assertThat(first.getTotalVolume(), is(2L));
+
+        assertThat(second.getAverageAmount(), is(closeTo(new BigDecimal("5"), ZERO)));
+        assertThat(second.getTotalAmount(), is(closeTo(new BigDecimal("15"), ZERO)));
+        assertThat(second.getTotalVolume(), is(3L));
     }
 
     @Test
