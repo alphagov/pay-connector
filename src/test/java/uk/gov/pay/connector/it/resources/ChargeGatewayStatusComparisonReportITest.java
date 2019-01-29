@@ -40,14 +40,14 @@ public class ChargeGatewayStatusComparisonReportITest extends ChargingITestBase 
         assertEquals(2, results.size());
 
 
-        assertEquals( "AUTHORISATION_SUCCESS", results.get(0).get("gatewayStatus").asText());
+        assertEquals( "AUTHORISATION SUCCESS", results.get(0).get("gatewayStatus").asText());
         assertEquals( "EXPIRED", results.get(0).get("payStatus").asText());
         assertEquals( chargeId, results.get(0).get("chargeId").asText());
         assertEquals( "ePDQ query response (PAYID: 3014644340, STATUS: 5)", results.get(0).get("rawGatewayResponse").asText());
         assertEquals( "EXTERNAL_SUBMITTED", results.get(0).get("gatewayExternalStatus").asText());
         assertEquals( "EXTERNAL_FAILED_EXPIRED", results.get(0).get("payExternalStatus").asText());
 
-        assertEquals( "AUTHORISATION_SUCCESS", results.get(1).get("gatewayStatus").asText());
+        assertEquals( "AUTHORISATION SUCCESS", results.get(1).get("gatewayStatus").asText());
         assertEquals( "CREATED", results.get(1).get("payStatus").asText());
         assertEquals( chargeId2, results.get(1).get("chargeId").asText());
         assertEquals( "ePDQ query response (PAYID: 3014644340, STATUS: 5)", results.get(1).get("rawGatewayResponse").asText());
@@ -82,7 +82,7 @@ public class ChargeGatewayStatusComparisonReportITest extends ChargingITestBase 
         assertEquals(2, results.size());
 
 
-        assertEquals( "AUTHORISATION_SUCCESS", results.get(0).get("gatewayStatus").asText());
+        assertEquals( "AUTHORISATION SUCCESS", results.get(0).get("gatewayStatus").asText());
         assertEquals( "EXPIRED", results.get(0).get("payStatus").asText());
         assertEquals( chargeId, results.get(0).get("chargeId").asText());
         assertEquals( "ePDQ query response (PAYID: 3014644340, STATUS: 5)", results.get(0).get("rawGatewayResponse").asText());

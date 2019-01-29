@@ -67,8 +67,6 @@ public class EpdqQueryResponse extends EpdqBaseResponse implements BaseResponse 
     }
 
     public static ChargeQueryResponse toChargeQueryResponse(EpdqQueryResponse epdqQueryResponse) {
-        epdqQueryResponse.getErrorCode();
-        
         return new ChargeQueryResponse(EpdqStatusMapper.map(epdqQueryResponse.getStatus()), epdqQueryResponse.toString());
     }
 }
