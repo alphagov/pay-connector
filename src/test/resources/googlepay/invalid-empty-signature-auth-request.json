@@ -2,7 +2,6 @@
   "payment_info": {
     "last_digits_card_number": "1234",
     "brand": "visa",
-    "card_type": "DEBIT",
     "cardholder_name": "Example Name",
     "email": "example@test.example"
   },

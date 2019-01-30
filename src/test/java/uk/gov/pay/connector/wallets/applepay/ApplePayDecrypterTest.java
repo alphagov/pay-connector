@@ -50,7 +50,7 @@ public class ApplePayDecrypterTest {
     @Test
     public void shouldDecryptData_whenPrivateKeyAndPublicCertificateAreValid() {
         AppleDecryptedPaymentData appleDecryptedPaymentData = applePayDecrypter.performDecryptOperation(applePayAuthRequest);
-        assertThat(appleDecryptedPaymentData.getCardExpiryDate(), is(LocalDate.of(2020, 7, 31)));
+        assertThat(appleDecryptedPaymentData.getCardExpiryDate().get(), is(LocalDate.of(2020, 7, 31)));
         assertThat(appleDecryptedPaymentData.getApplicationPrimaryAccountNumber(), is("4109370251004320"));
         assertThat(appleDecryptedPaymentData.getCurrencyCode(), is("840"));
         assertThat(appleDecryptedPaymentData.getDeviceManufacturerIdentifier(), is("040010030273"));
