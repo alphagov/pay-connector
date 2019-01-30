@@ -9,6 +9,7 @@ import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.Optional;
 
 public class GooglePayAuthRequest implements WalletAuthorisationRequest, WalletAuthorisationData {
 
@@ -26,9 +27,8 @@ public class GooglePayAuthRequest implements WalletAuthorisationRequest, WalletA
     }
 
     @Override
-    public LocalDate getCardExpiryDate() {
-        //TODO card expiry data is required when creating authCardDetails but not supplied by Google.
-        return LocalDate.now().plusYears(2);
+    public Optional<LocalDate> getCardExpiryDate() {
+        return Optional.empty();
     }
 
     public EncryptedPaymentData getEncryptedPaymentData() {

@@ -10,6 +10,7 @@ import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
 public class AppleDecryptedPaymentData implements AuthorisationDetails, WalletAuthorisationData {
     private WalletPaymentInfo paymentInfo;
@@ -43,8 +44,8 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails, WalletAu
         return applicationPrimaryAccountNumber;
     }
 
-    public LocalDate getCardExpiryDate() {
-        return applicationExpirationDate;
+    public Optional<LocalDate> getCardExpiryDate() {
+        return Optional.ofNullable(applicationExpirationDate);
     }
 
     @Override

@@ -113,7 +113,8 @@ public class WalletAuthoriseService {
         authCardDetails.setCardNo(walletAuthorisationData.getPaymentInfo().getLastDigitsCardNumber());
         authCardDetails.setPayersCardType(walletAuthorisationData.getPaymentInfo().getCardType());
         authCardDetails.setCardBrand(walletAuthorisationData.getPaymentInfo().getBrand());
-        authCardDetails.setEndDate(walletAuthorisationData.getCardExpiryDate().format(EXPIRY_DATE_FORMAT));
+        walletAuthorisationData.getCardExpiryDate().ifPresent(
+                cardExpiry -> authCardDetails.setEndDate(cardExpiry.format(EXPIRY_DATE_FORMAT)));
         authCardDetails.setCorporateCard(false);
         return authCardDetails;
     }
