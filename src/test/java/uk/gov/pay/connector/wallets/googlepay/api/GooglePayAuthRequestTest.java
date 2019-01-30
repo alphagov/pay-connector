@@ -26,7 +26,6 @@ public class GooglePayAuthRequestTest {
         assertThat(actual.getPaymentInfo().getCardholderName(), is(paymentInfo.get("cardholder_name").asText()));
         assertThat(actual.getPaymentInfo().getLastDigitsCardNumber(), is(paymentInfo.get("last_digits_card_number").asText()));
         assertThat(actual.getPaymentInfo().getBrand(), is(paymentInfo.get("brand").asText()));
-        assertThat(actual.getPaymentInfo().getCardType().toString(), is(paymentInfo.get("card_type").asText()));
         assertThat(actual.getPaymentInfo().getEmail(), is(paymentInfo.get("email").asText()));
 
         JsonNode encryptedPaymentData = expected.get("encrypted_payment_data");
