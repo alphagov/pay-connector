@@ -15,7 +15,6 @@ import java.util.List;
 
 import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
-import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.refund.model.SearchRefundsResponse.anAllRefundsResponseBuilder;
 
 public class RefundSearchStrategy extends AbstractSearchStrategy<RefundEntity, SearchRefundsResponse> implements SearchStrategy, BuildResponseStrategy<RefundEntity, SearchRefundsResponse> {
@@ -50,7 +49,7 @@ public class RefundSearchStrategy extends AbstractSearchStrategy<RefundEntity, S
 
         return responseBuilder
                 .withRefundId(externalRefundId)
-                .withCreatedDate(ISO_INSTANT_MILLISECOND_PRECISION.format(refundEntity.getCreatedDate()))
+                .withCreatedDate(refundEntity.getCreatedDate())
                 .withStatus(refundEntity.getStatus().toExternal().getStatus())
                 .withChargeId(externalChargeId)
                 .withAmountSubmitted(refundEntity.getAmount())
