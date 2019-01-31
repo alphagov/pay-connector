@@ -3,8 +3,11 @@ package uk.gov.pay.connector.refund.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import uk.gov.pay.commons.api.json.ApiResponseDateTimeSerializer;
 import uk.gov.pay.connector.refund.model.builder.AbstractRefundsResponseBuilder;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +45,8 @@ public class SearchRefundsResponse {
     private String refundId;
 
     @JsonProperty("created_date")
-    private String createdDate;
+    @JsonSerialize(using = ApiResponseDateTimeSerializer.class)
+    private ZonedDateTime createdDate;
 
     @JsonProperty("status")
     private String status;
@@ -55,12 +59,12 @@ public class SearchRefundsResponse {
     @JsonProperty("links")
     private List<Map<String, Object>> dataLinks = new ArrayList<>();
 
-    protected SearchRefundsResponse(String refundId,
-                                    String createdDate,
-                                    String status,
-                                    String extChargeId,
-                                    Long amountSubmitted,
-                                    List<Map<String, Object>> dataLinks) {
+    private SearchRefundsResponse(String refundId,
+                                  ZonedDateTime createdDate,
+                                  String status,
+                                  String extChargeId,
+                                  Long amountSubmitted,
+                                  List<Map<String, Object>> dataLinks) {
         this.refundId = refundId;
         this.createdDate = createdDate;
         this.status = status;
@@ -74,7 +78,7 @@ public class SearchRefundsResponse {
     }
 
 
-    public String getCreatedDate() {
+    public ZonedDateTime getCreatedDate() {
         return createdDate;
     }
 

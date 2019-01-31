@@ -4,12 +4,13 @@ import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractRefundsResponseBuilder<T extends AbstractRefundsResponseBuilder<T, R>, R> {
-    protected String createdDate;
+    protected ZonedDateTime createdDate;
     protected List<Map<String, Object>> dataLinks = new ArrayList<>();
     protected String refundId;
     protected RefundEntity refundEntity;
@@ -24,7 +25,7 @@ public abstract class AbstractRefundsResponseBuilder<T extends AbstractRefundsRe
         return thisObject();
     }
 
-    public T withCreatedDate(String createdDate) {
+    public T withCreatedDate(ZonedDateTime createdDate) {
         this.createdDate = createdDate;
         return thisObject();
     }
