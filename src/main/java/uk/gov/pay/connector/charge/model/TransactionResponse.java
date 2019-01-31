@@ -7,6 +7,7 @@ import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.domain.TransactionType;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +46,7 @@ public class TransactionResponse extends ChargeResponse {
     protected TransactionResponse(String transactionType, String chargeId, Long amount, ExternalTransactionState state,
                                   String cardBrand, String gatewayTransactionId, String returnUrl, String email,
                                   String description, ServicePaymentReference reference, String providerName,
-                                  String createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary,
+                                  ZonedDateTime createdDate, List<Map<String, Object>> dataLinks, RefundSummary refundSummary,
                                   SettlementSummary settlementSummary, PersistedCard cardDetails,
                                   Auth3dsData auth3dsData, SupportedLanguage language,
                                   boolean delayedCapture, Long corporateCardSurcharge, Long totalAmount) {
