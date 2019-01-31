@@ -57,7 +57,7 @@ import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
-import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCodeFromGateway;
+import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 
 @Singleton
 public class StripePaymentProvider implements PaymentProvider {
@@ -203,7 +203,7 @@ public class StripePaymentProvider implements PaymentProvider {
                                                       int statusCode) {
         logger.error("Authorisation failed for charge {}. Reason: {}. Status code from Stripe: {}.",
                 chargeExternalId, errorMessage, statusCode);
-        GatewayError gatewayError = unexpectedStatusCodeFromGateway("There was an internal server error authorising charge_external_id: " + chargeExternalId);
+        GatewayError gatewayError = gatewayConnectionError("There was an internal server error authorising charge_external_id: " + chargeExternalId);
         return responseBuilder.withGatewayError(gatewayError).build();
     }
 

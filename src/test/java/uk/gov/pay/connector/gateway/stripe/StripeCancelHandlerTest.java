@@ -30,8 +30,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
@@ -90,7 +90,7 @@ public class StripeCancelHandlerTest {
         assertThat(gatewayResponse.isFailed(), is(true));
         assertThat(gatewayResponse.getGatewayError().isPresent(), Is.is(true));
         assertThat(gatewayResponse.getGatewayError().get().getMessage(), containsString("An internal server error occurred while cancelling external charge id: " + request.getExternalChargeId()));
-        assertThat(gatewayResponse.getGatewayError().get().getErrorType(), Is.is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        assertThat(gatewayResponse.getGatewayError().get().getErrorType(), Is.is(GATEWAY_CONNECTION_ERROR));
     }
 
     @Test

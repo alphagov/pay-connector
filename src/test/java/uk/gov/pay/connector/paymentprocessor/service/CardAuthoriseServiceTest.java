@@ -23,8 +23,8 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
+import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
@@ -65,9 +65,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.gateway.model.ErrorType.MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY;
+import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_ERROR;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionTimeoutException;
-import static uk.gov.pay.connector.gateway.model.GatewayError.malformedResponseReceivedFromGateway;
+import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
@@ -623,14 +623,14 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void doAuthorise_shouldReportUnexpectedError_whenProviderError() {
 
-        GatewayError gatewayError = malformedResponseReceivedFromGateway("Malformed response received");
+        GatewayError gatewayError = gatewayConnectionError("Malformed response received");
         providerWillRespondWithError(gatewayError);
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
 
         assertTrue(response.getGatewayError().isPresent());
-        assertThat(response.getGatewayError().get().getErrorType(), is(MALFORMED_RESPONSE_RECEIVED_FROM_GATEWAY));
+        assertThat(response.getGatewayError().get().getErrorType(), is(GATEWAY_CONNECTION_ERROR));
         assertThat(charge.getStatus(), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
     }
 

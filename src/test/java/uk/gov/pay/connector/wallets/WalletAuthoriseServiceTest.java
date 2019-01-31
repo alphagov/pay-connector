@@ -58,7 +58,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionTimeoutException;
-import static uk.gov.pay.connector.gateway.model.GatewayError.malformedResponseReceivedFromGateway;
+import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
@@ -300,7 +300,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void doAuthorise_shouldReportUnexpectedError_whenProviderError() {
-        providerWillRespondWithError(malformedResponseReceivedFromGateway("Malformed response received"));
+        providerWillRespondWithError(gatewayConnectionError("Malformed response received"));
 
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 

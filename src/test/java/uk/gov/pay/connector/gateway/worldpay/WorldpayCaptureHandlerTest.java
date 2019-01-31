@@ -27,9 +27,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.gateway.model.ErrorType.UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY;
-import static uk.gov.pay.connector.gateway.model.GatewayError.unexpectedStatusCodeFromGateway;
+import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -96,14 +96,14 @@ public class WorldpayCaptureHandlerTest {
     @Test
     public void shouldErrorIfWorldpayResponseIsNot200() {
         //mock client.postRequestFor
-        Either<GatewayError, GatewayClient.Response> response = left(unexpectedStatusCodeFromGateway("Unexpected HTTP status code 400 from gateway"));
+        Either<GatewayError, GatewayClient.Response> response = left(gatewayConnectionError("Unexpected HTTP status code 400 from gateway"));
         when(client.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(response);
         
         CaptureResponse gatewayResponse = worldpayCaptureHandler.capture(getCaptureRequest());
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.getError().isPresent(), is(true));
         assertThat(gatewayResponse.getError().get().getMessage(), is("Unexpected HTTP status code 400 from gateway"));
-        assertThat(gatewayResponse.getError().get().getErrorType(), is(UNEXPECTED_HTTP_STATUS_CODE_FROM_GATEWAY));
+        assertThat(gatewayResponse.getError().get().getErrorType(), is(GATEWAY_CONNECTION_ERROR));
     }
 
     private CaptureGatewayRequest getCaptureRequest() {

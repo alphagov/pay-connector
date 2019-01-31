@@ -96,7 +96,7 @@ public class GatewayAuthFailuresITest {
     }
 
     @Test
-    public void shouldFailAuthWhenUnexpectedHttpStatusCodeFromGateway() throws Exception {
+    public void shouldFailAuthWhenUnexpectedHttpStatusCodeFromGateway() {
         gatewayStub.respondWithUnexpectedResponseCodeWhenCardAuth();
 
         String errorMessage = "Unexpected HTTP status code 999 from gateway";
