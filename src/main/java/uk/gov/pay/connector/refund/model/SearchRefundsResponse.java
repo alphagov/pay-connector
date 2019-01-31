@@ -8,38 +8,15 @@ import uk.gov.pay.commons.api.json.ApiResponseDateTimeSerializer;
 import uk.gov.pay.connector.refund.model.builder.AbstractRefundsResponseBuilder;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @JsonInclude(Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public class SearchRefundsResponse {
-
-    public static class SearchRefundsResponseBuilder extends AbstractRefundsResponseBuilder<SearchRefundsResponseBuilder, SearchRefundsResponse> {
-        @Override
-        protected SearchRefundsResponseBuilder thisObject() {
-            return this;
-        }
-
-        @Override
-        public SearchRefundsResponse build() {
-            return new SearchRefundsResponse(
-                    refundId,
-                    createdDate,
-                    status,
-                    extChargeId,
-                    amountSubmitted,
-                    dataLinks
-            );
-        }
-    }
-
-    public static SearchRefundsResponseBuilder anAllRefundsResponseBuilder() {
-        return new SearchRefundsResponseBuilder();
-    }
 
     @JsonProperty("refund_id")
     private String refundId;
@@ -57,7 +34,7 @@ public class SearchRefundsResponse {
     private Long amountSubmitted;
 
     @JsonProperty("links")
-    private List<Map<String, Object>> dataLinks = new ArrayList<>();
+    private List<Map<String, Object>> dataLinks;
 
     private SearchRefundsResponse(String refundId,
                                   ZonedDateTime createdDate,
@@ -106,19 +83,18 @@ public class SearchRefundsResponse {
 
         SearchRefundsResponse that = (SearchRefundsResponse) o;
 
-        if (refundId != null ? !refundId.equals(that.refundId) : that.refundId != null)
+        if (!Objects.equals(refundId, that.refundId))
             return false;
-        if (createdDate != null ? !createdDate.equals(that.createdDate) : that.createdDate != null)
+        if (!Objects.equals(createdDate, that.createdDate))
             return false;
         if (!status.equals(that.status)) {
             return false;
         }
-        if (extChargeId != null ? !extChargeId.equals(that.extChargeId) : that.extChargeId != null)
+        if (!Objects.equals(extChargeId, that.extChargeId))
             return false;
-        if (dataLinks != null ? !dataLinks.equals(that.dataLinks) : that.dataLinks != null)
+        if (!Objects.equals(dataLinks, that.dataLinks))
             return false;
-        return amountSubmitted != null ? amountSubmitted.equals(that.amountSubmitted)
-                : that.amountSubmitted == null;
+        return Objects.equals(amountSubmitted, that.amountSubmitted);
     }
 
     @Override
@@ -143,6 +119,29 @@ public class SearchRefundsResponse {
                 ", amountSubmitted=" + amountSubmitted +
                 ", dataLinks=" + dataLinks +
                 '}';
+    }
+
+    public static class SearchRefundsResponseBuilder extends AbstractRefundsResponseBuilder<SearchRefundsResponseBuilder, SearchRefundsResponse> {
+        @Override
+        protected SearchRefundsResponseBuilder thisObject() {
+            return this;
+        }
+
+        @Override
+        public SearchRefundsResponse build() {
+            return new SearchRefundsResponse(
+                    refundId,
+                    createdDate,
+                    status,
+                    extChargeId,
+                    amountSubmitted,
+                    dataLinks
+            );
+        }
+    }
+
+    public static SearchRefundsResponseBuilder anAllRefundsResponseBuilder() {
+        return new SearchRefundsResponseBuilder();
     }
 }
 
