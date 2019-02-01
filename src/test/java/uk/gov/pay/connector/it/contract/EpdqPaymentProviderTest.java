@@ -117,7 +117,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthoriseSuccessfully() {
+    public void shouldAuthoriseSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
@@ -125,7 +125,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthoriseSuccessfullyWithNoAddressInRequest() {
+    public void shouldAuthoriseSuccessfullyWithNoAddressInRequest() throws Exception {
         setUpAndCheckThatEpdqIsUp();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withAddress(null)
@@ -138,7 +138,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthoriseWith3dsOnSuccessfully() {
+    public void shouldAuthoriseWith3dsOnSuccessfully() throws Exception {
         setUpFor3dsAndCheckThatEpdqIsUp();
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
@@ -147,7 +147,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthoriseWith3dsOnAndNoAddressInRequestSuccessfully() {
+    public void shouldAuthoriseWith3dsOnAndNoAddressInRequestSuccessfully() throws Exception {
         setUpFor3dsAndCheckThatEpdqIsUp();
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
@@ -161,7 +161,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldCheckAuthorisationStatusSuccessfully() {
+    public void shouldCheckAuthorisationStatusSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
@@ -174,7 +174,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthoriseSuccessfullyWhenCardholderNameContainsRightSingleQuotationMark() {
+    public void shouldAuthoriseSuccessfullyWhenCardholderNameContainsRightSingleQuotationMark() throws Exception {
         setUpAndCheckThatEpdqIsUp();
         String cardholderName = "John O’Connor"; // That’s a U+2019 RIGHT SINGLE QUOTATION MARK, not a U+0027 APOSTROPHE
 
@@ -188,7 +188,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldCaptureSuccessfully() {
+    public void shouldCaptureSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
 
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
@@ -204,7 +204,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldCancelSuccessfully() {
+    public void shouldCancelSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
@@ -218,7 +218,7 @@ public class EpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldRefundSuccessfully() {
+    public void shouldRefundSuccessfully() throws Exception {
         setUpAndCheckThatEpdqIsUp();
 
         CardAuthorisationGatewayRequest request = buildAuthorisationRequest(chargeEntity);

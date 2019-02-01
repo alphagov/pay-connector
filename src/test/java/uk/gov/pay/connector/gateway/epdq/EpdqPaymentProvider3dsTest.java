@@ -24,7 +24,7 @@ import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.
 public class EpdqPaymentProvider3dsTest extends BaseEpdqPaymentProviderTest {
 
     @Test
-    public void shouldRequire3dsAuthoriseRequest() {
+    public void shouldRequire3dsAuthoriseRequest() throws Exception {
         mockPaymentProviderResponse(200, successAuth3dResponse());
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
         verifyPaymentProviderRequest(successAuthRequest());

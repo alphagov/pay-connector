@@ -8,9 +8,9 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.xml.sax.SAXException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.GatewayClient;
+import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.worldpay.applepay.WorldpayWalletAuthorisationHandler;
@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Map;
 
-import static fj.data.Either.left;
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,7 +33,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST;
 
@@ -51,7 +49,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     
     
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         worldpayApplePayAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient);
          chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withDescription("This is the description").build();
@@ -61,11 +59,11 @@ public class WorldpayWalletAuthorisationHandlerTest {
         Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
         when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
         when(mockGatewayClient.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
-                .thenReturn(left(gatewayConnectionError("Unexpected HTTP status code 400 from gateway")));
+                .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
     }
     
     @Test
-    public void shouldSendApplePayRequestWhenApplePayDetailsArePresent() throws IOException, SAXException {
+    public void shouldSendApplePayRequestWhenApplePayDetailsArePresent() throws Exception {
         worldpayApplePayAuthorisationHandler.authorise(getApplePayAuthorisationRequest());
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
@@ -74,7 +72,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
-    public void shouldSendGooglePayRequestWhenGooglePayDetailsArePresent() throws IOException, SAXException {
+    public void shouldSendGooglePayRequestWhenGooglePayDetailsArePresent() throws Exception {
         worldpayApplePayAuthorisationHandler.authorise(getGooglePayAuthorisationRequest());
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);

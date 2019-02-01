@@ -31,7 +31,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthorise() {
+    public void shouldAuthorise() throws Exception {
         mockPaymentProviderResponse(200, successAuthResponse());
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
         verifyPaymentProviderRequest(successAuthRequest());
@@ -45,7 +45,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldNotAuthoriseIfPaymentProviderReturnsUnexpectedStatusCode() {
+    public void shouldNotAuthoriseIfPaymentProviderReturnsUnexpectedStatusCode() throws Exception {
         mockPaymentProviderResponse(200, errorAuthResponse());
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
         assertThat(response.isFailed(), is(true));
@@ -53,7 +53,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldNotAuthoriseIfPaymentProviderReturnsNon200HttpStatusCode() {
+    public void shouldNotAuthoriseIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
         mockPaymentProviderResponse(400, errorAuthResponse());
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
         assertThat(response.isFailed(), is(true));
@@ -62,7 +62,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldCancel() {
+    public void shouldCancel() throws Exception {
         mockPaymentProviderResponse(200, successCancelResponse());
         GatewayResponse<BaseCancelResponse> response = provider.cancel(buildTestCancelRequest());
         verifyPaymentProviderRequest(successCancelRequest());
@@ -71,7 +71,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldNotCancelIfPaymentProviderReturnsUnexpectedStatusCode() {
+    public void shouldNotCancelIfPaymentProviderReturnsUnexpectedStatusCode() throws Exception {
         mockPaymentProviderResponse(200, errorCancelResponse());
         GatewayResponse<BaseCancelResponse> response = provider.cancel(buildTestCancelRequest());
         assertThat(response.isFailed(), is(true));
@@ -79,7 +79,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     }
 
     @Test
-    public void shouldNotCancelIfPaymentProviderReturnsNon200HttpStatusCode() {
+    public void shouldNotCancelIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
         mockPaymentProviderResponse(400, errorCancelResponse());
         GatewayResponse<BaseCancelResponse> response = provider.cancel(buildTestCancelRequest());
         assertThat(response.isFailed(), is(true));

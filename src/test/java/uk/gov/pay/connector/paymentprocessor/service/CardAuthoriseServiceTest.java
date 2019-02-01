@@ -20,9 +20,9 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.gateway.GatewayErrors;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
@@ -63,11 +63,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_ERROR;
-import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionTimeoutException;
-import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
@@ -135,16 +133,12 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .build();
     }
 
-    private void setupPaymentProviderMock(GatewayError gatewayError) {
-        GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse authorisationResponse = gatewayResponseBuilder
-                .withGatewayError(gatewayError)
-                .build();
-        when(mockedPaymentProvider.authorise(any())).thenReturn(authorisationResponse);
+    private void setupPaymentProviderMock(Exception gatewayError) throws Exception {
+        when(mockedPaymentProvider.authorise(any())).thenThrow(gatewayError);
     }
 
     @Test
-    public void doAuthoriseWithNonCorporateCard_shouldRespondAuthorisationSuccess() {
+    public void doAuthoriseWithNonCorporateCard_shouldRespondAuthorisationSuccess() throws Exception {
 
         providerWillAuthorise();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -163,7 +157,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthoriseWithNonCorporateCard_shouldRespondAuthorisationSuccess_2() {
+    public void doAuthoriseWithNonCorporateCard_shouldRespondAuthorisationSuccess_2() throws Exception {
 
         providerWillAuthorise();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -182,7 +176,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthoriseWithoutBillingAddress_shouldRespondAuthorisationSuccess() {
+    public void doAuthoriseWithoutBillingAddress_shouldRespondAuthorisationSuccess() throws Exception {
 
         providerWillAuthorise();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
@@ -205,7 +199,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthoriseWithCorporateCard_shouldRespondAuthorisationSuccess_whenNoCorporateSurchargeSet() {
+    public void doAuthoriseWithCorporateCard_shouldRespondAuthorisationSuccess_whenNoCorporateSurchargeSet() throws Exception {
 
         providerWillAuthorise();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
@@ -230,7 +224,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthoriseWithCreditCorporateSurcharge_shouldRespondAuthorisationSuccess() {
+    public void doAuthoriseWithCreditCorporateSurcharge_shouldRespondAuthorisationSuccess() throws Exception {
 
         providerWillAuthorise();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
@@ -255,7 +249,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthoriseWithDebitCorporateSurcharge_shouldRespondAuthorisationSuccess() {
+    public void doAuthoriseWithDebitCorporateSurcharge_shouldRespondAuthorisationSuccess() throws Exception {
 
         providerWillAuthorise();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
@@ -281,7 +275,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondAuthorisationSuccess_overridingGeneratedTransactionId() {
+    public void doAuthorise_shouldRespondAuthorisationSuccess_overridingGeneratedTransactionId() throws Exception {
 
         providerWillAuthorise();
 
@@ -305,7 +299,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondWith3dsResponseFor3dsOrders() {
+    public void doAuthorise_shouldRespondWith3dsResponseFor3dsOrders() throws Exception {
 
         worldpayProviderWillRequire3ds(null);
 
@@ -322,7 +316,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondWith3dsResponseForEpdq3dsOrders() {
+    public void doAuthorise_shouldRespondWith3dsResponseForEpdq3dsOrders() throws Exception {
         epdqProviderWillRequire3ds();
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -338,7 +332,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondWith3dsResponseFor3dsOrdersWithWorldpayMachineCookie() {
+    public void doAuthorise_shouldRespondWith3dsResponseFor3dsOrdersWithWorldpayMachineCookie() throws Exception {
 
         worldpayProviderWillRequire3ds(SESSION_IDENTIFIER);
 
@@ -355,7 +349,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRetainGeneratedTransactionId_WhenProviderAuthorisationFails() {
+    public void doAuthorise_shouldRetainGeneratedTransactionId_WhenProviderAuthorisationFails() throws Exception {
 
         String generatedTransactionId = "generated-transaction-id";
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
@@ -407,7 +401,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondAuthorisationRejected_whenProviderAuthorisationIsRejected() {
+    public void doAuthorise_shouldRespondAuthorisationRejected_whenProviderAuthorisationIsRejected() throws Exception {
 
         providerWillReject();
 
@@ -422,7 +416,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldRespondAuthorisationCancelled_whenProviderAuthorisationIsCancelled() {
+    public void doAuthorise_shouldRespondAuthorisationCancelled_whenProviderAuthorisationIsCancelled() throws Exception {
 
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.CANCELLED, null);
@@ -439,7 +433,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void shouldRespondAuthorisationError() {
+    public void shouldRespondAuthorisationError() throws Exception {
 
         providerWillError();
 
@@ -454,7 +448,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldStoreExpectedCardDetails_whenAuthorisationSuccess() {
+    public void doAuthorise_shouldStoreExpectedCardDetails_whenAuthorisationSuccess() throws Exception {
 
         String cardholderName = "Mr Bright";
         String cardNumber = "4242424242424242";
@@ -506,7 +500,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldStoreCardDetails_evenIfAuthorisationRejected() {
+    public void doAuthorise_shouldStoreCardDetails_evenIfAuthorisationRejected() throws Exception {
 
         providerWillReject();
 
@@ -518,7 +512,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldStoreCardDetails_evenIfInAuthorisationError() {
+    public void doAuthorise_shouldStoreCardDetails_evenIfInAuthorisationError() throws Exception {
 
         providerWillError();
 
@@ -530,7 +524,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldStoreProviderSessionId_evenIfAuthorisationRejected() {
+    public void doAuthorise_shouldStoreProviderSessionId_evenIfAuthorisationRejected() throws Exception {
 
         providerWillReject();
 
@@ -541,7 +535,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldNotProviderSessionId_whenAuthorisationError() {
+    public void doAuthorise_shouldNotProviderSessionId_whenAuthorisationError() throws Exception {
 
         providerWillError();
 
@@ -607,9 +601,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldReportAuthorisationTimeout_whenProviderTimeout() {
-        GatewayError gatewayError = gatewayConnectionTimeoutException("Connection timed out");
-        providerWillRespondWithError(gatewayError);
+    public void doAuthorise_shouldReportAuthorisationTimeout_whenProviderTimeout() throws Exception {
+        
+        providerWillRespondWithError(new GatewayErrors.GatewayConnectionTimeoutErrorException("Connection timed out"));
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
@@ -621,10 +615,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    public void doAuthorise_shouldReportUnexpectedError_whenProviderError() {
+    public void doAuthorise_shouldReportUnexpectedError_whenProviderError() throws Exception {
 
-        GatewayError gatewayError = gatewayConnectionError("Malformed response received");
-        providerWillRespondWithError(gatewayError);
+        providerWillRespondWithError(new GatewayErrors.GatewayConnectionErrorException("Malformed response received"));
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
@@ -634,20 +627,20 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getStatus(), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
     }
 
-    private void providerWillRespondToAuthoriseWith(GatewayResponse value) {
+    private void providerWillRespondToAuthoriseWith(GatewayResponse value) throws Exception {
         when(mockedPaymentProvider.authorise(any())).thenReturn(value);
 
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
     }
 
-    private void providerWillAuthorise() {
+    private void providerWillAuthorise() throws Exception {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null);
         providerWillRespondToAuthoriseWith(authResponse);
     }
 
-    private void worldpayProviderWillRequire3ds(String sessionIdentifier) {
+    private void worldpayProviderWillRequire3ds(String sessionIdentifier) throws Exception {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         WorldpayOrderStatusResponse worldpayResponse = new WorldpayOrderStatusResponse();
         worldpayResponse.set3dsPaRequest(PA_REQ_VALUE_FROM_PROVIDER);
@@ -663,7 +656,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
     }
 
-    private void epdqProviderWillRequire3ds() {
+    private void epdqProviderWillRequire3ds() throws Exception {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         EpdqAuthorisationResponse epdqResponse = new EpdqAuthorisationResponse();
         epdqResponse.setHtmlAnswer("Base64encodedHtmlForm");
@@ -679,19 +672,19 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
     }
 
-    private void providerWillReject() {
+    private void providerWillReject() throws Exception {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.REJECTED, null);
         providerWillRespondToAuthoriseWith(authResponse);
     }
 
-    private void providerWillError() {
+    private void providerWillError() throws Exception {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         GatewayResponse authResponse = mockAuthResponse(null, AuthoriseStatus.ERROR, "error-code");
         providerWillRespondToAuthoriseWith(authResponse);
     }
 
-    private void providerWillRespondWithError(GatewayError gatewayError) {
+    private void providerWillRespondWithError(Exception gatewayError) throws Exception {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         setupPaymentProviderMock(gatewayError);
 
