@@ -38,7 +38,6 @@ import java.util.Optional;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.charge.model.FrontendChargeResponse.aFrontendChargeResponse;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.EMAIL_KEY;
 import static uk.gov.pay.connector.common.service.PatchRequestBuilder.aPatchRequestBuilder;
@@ -159,7 +158,7 @@ public class ChargesFrontendResource {
                 .withAmount(charge.getAmount())
                 .withDescription(charge.getDescription())
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
-                .withCreatedDate(ISO_INSTANT_MILLISECOND_PRECISION.format(charge.getCreatedDate()))
+                .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
                 .withChargeCardDetails(persistedCard)

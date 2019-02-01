@@ -10,6 +10,7 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -62,7 +63,7 @@ public class FrontendChargeResponse extends ChargeResponse {
 
     private FrontendChargeResponse(String chargeId, Long amount, ExternalTransactionState state, String cardBrand,
                                    String gatewayTransactionId, String returnUrl, String email, String description,
-                                   ServicePaymentReference reference, String providerName, String createdDate,
+                                   ServicePaymentReference reference, String providerName, ZonedDateTime createdDate,
                                    List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary,
                                    SettlementSummary settlementSummary, PersistedCard chargeCardDetails,
                                    Auth3dsData auth3dsData, GatewayAccountEntity gatewayAccount,

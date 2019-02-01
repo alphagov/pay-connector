@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import uk.gov.pay.commons.api.json.ApiResponseDateTimeSerializer;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
@@ -13,7 +14,6 @@ import uk.gov.pay.connector.util.DateTimeUtils;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -259,7 +259,7 @@ public class ChargeResponse {
     }
 
     @JsonProperty("links")
-    private List<Map<String, Object>> dataLinks = new ArrayList<>();
+    private List<Map<String, Object>> dataLinks;
 
     @JsonProperty("charge_id")
     private String chargeId;
@@ -293,7 +293,8 @@ public class ChargeResponse {
     private String providerName;
 
     @JsonProperty("created_date")
-    private String createdDate;
+    @JsonSerialize(using = ApiResponseDateTimeSerializer.class)
+    private ZonedDateTime createdDate;
 
     @JsonProperty("refund_summary")
     private RefundSummary refundSummary;
@@ -321,11 +322,11 @@ public class ChargeResponse {
     private Long totalAmount;
 
 
-    protected ChargeResponse(String chargeId, Long amount, ExternalTransactionState state, String cardBrand, String gatewayTransactionId, String returnUrl,
-                             String email, String description, ServicePaymentReference reference, String providerName, String createdDate,
-                             List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails,
-                             Auth3dsData auth3dsData, SupportedLanguage language, boolean delayedCapture,
-                             Long corporateCardSurcharge, Long totalAmount) {
+    ChargeResponse(String chargeId, Long amount, ExternalTransactionState state, String cardBrand, String gatewayTransactionId, String returnUrl,
+                   String email, String description, ServicePaymentReference reference, String providerName, ZonedDateTime createdDate,
+                   List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails,
+                   Auth3dsData auth3dsData, SupportedLanguage language, boolean delayedCapture,
+                   Long corporateCardSurcharge, Long totalAmount) {
         this.dataLinks = dataLinks;
         this.chargeId = chargeId;
         this.amount = amount;

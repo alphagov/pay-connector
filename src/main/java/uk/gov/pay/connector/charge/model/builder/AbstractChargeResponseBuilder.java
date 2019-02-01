@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 
 import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected String gatewayTransactionId;
     protected String returnUrl;
     protected String description;
-    protected String createdDate;
+    protected ZonedDateTime createdDate;
     protected List<Map<String, Object>> links = new ArrayList<>();
     protected ServicePaymentReference reference;
     protected String providerName;
@@ -76,7 +77,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
 
-    public T withCreatedDate(String createdDate) {
+    public T withCreatedDate(ZonedDateTime createdDate) {
         this.createdDate = createdDate;
         return thisObject();
     }

@@ -23,7 +23,6 @@ import java.util.List;
 
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
-import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.charge.model.TransactionResponse.aTransactionResponseBuilder;
 
 public class TransactionSearchStrategy extends AbstractSearchStrategy<Transaction, ChargeResponse> implements SearchStrategy {
@@ -71,7 +70,7 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
                 .withState(externalTransactionState)
                 .withCardDetails(cardDetails)
                 .withChargeId(transaction.getExternalId())
-                .withCreatedDate(ISO_INSTANT_MILLISECOND_PRECISION.format(transaction.getCreatedDate()))
+                .withCreatedDate(transaction.getCreatedDate())
                 .withDescription(transaction.getDescription())
                 .withReference(transaction.getReference())
                 .withEmail(transaction.getEmail())
