@@ -12,7 +12,7 @@
     "status": "pending",
     "url": "https://hooks.stripe.com/redirect/authenticate/src_1DXAxYC6H5MjhE5Y4jZVJwNV?client_secret=src_client_secret_Dz9Gdfev1r48Lq5Ayox6qOD6"
   },
-  "status": "pending",
+  "status": "{{three_d_source_status}}",
   "three_d_secure": {
     "card": "src_1DXAwDC6H5MjhE5YtbPXsoBL",
     "three_d_secure": "required"

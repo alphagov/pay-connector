@@ -58,6 +58,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
+import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
 
 @Singleton
 public class StripePaymentProvider implements PaymentProvider {
@@ -96,12 +97,12 @@ public class StripePaymentProvider implements PaymentProvider {
     public Optional<String> generateTransactionId() {
         return Optional.empty();
     }
-    
+
     @Override
     public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) {
         throw new UnsupportedOperationException("Querying payment status not currently supported by Stripe");
     }
-    
+
     @Override
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
         logger.info("Calling Stripe for authorisation of charge [{}]", request.getChargeExternalId());
@@ -116,6 +117,14 @@ public class StripePaymentProvider implements PaymentProvider {
             if (stripeSourcesResponse.require3ds()) {
                 String source3dsResponse = create3dsSource(request, stripeSourcesResponse.getId());
                 Stripe3dsSourceResponse sourceResponse = jsonObjectMapper.getObject(source3dsResponse, Stripe3dsSourceResponse.class);
+
+                Stripe3dsSourceAuthorisationResponse response = new Stripe3dsSourceAuthorisationResponse(sourceResponse);
+                
+                if(AUTHORISED.equals(response.authoriseStatus())){
+                    StripeAuthorisationResponse stripeAuthResponse = createCharge(request, response.getTransactionId());
+                    return responseBuilder.withResponse(stripeAuthResponse).build();
+                }
+                
                 return responseBuilder.withResponse(new Stripe3dsSourceAuthorisationResponse(sourceResponse)).build();
             } else {
                 StripeAuthorisationResponse stripeAuthResponse = createCharge(request, stripeSourcesResponse.getId());
@@ -142,7 +151,7 @@ public class StripePaymentProvider implements PaymentProvider {
             logger.error("GatewayException occurred for charge external id {}, error:\n {}", request.getChargeExternalId(), e);
             return responseBuilder.withGatewayError(GatewayError.of(e)).build();
         } catch (NoLiveTokenConfiguredException e) {
-            logger.error("Could not authorise charge external id {}. Reason: No live token configured for gateway account {}.", 
+            logger.error("Could not authorise charge external id {}. Reason: No live token configured for gateway account {}.",
                     request.getChargeExternalId(), request.getGatewayAccount().getId());
             throw new WebApplicationException("There was an internal server error authorising charge external id: " + request.getChargeExternalId());
         }
@@ -207,7 +216,7 @@ public class StripePaymentProvider implements PaymentProvider {
         return responseBuilder.withGatewayError(gatewayError).build();
     }
 
-    private String create3dsSource(CardAuthorisationGatewayRequest request, String sourceId) 
+    private String create3dsSource(CardAuthorisationGatewayRequest request, String sourceId)
             throws GatewayClientException, GatewayException, DownstreamException, NoLiveTokenConfiguredException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         return postToStripe(
@@ -233,7 +242,7 @@ public class StripePaymentProvider implements PaymentProvider {
         return new StripeAuthorisationResponse(createChargeResponse);
     }
 
-    private StripeAuthorisationResponse createCharge(CardAuthorisationGatewayRequest request, String sourceId) 
+    private StripeAuthorisationResponse createCharge(CardAuthorisationGatewayRequest request, String sourceId)
             throws GatewayClientException, GatewayException, DownstreamException, NoLiveTokenConfiguredException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         String jsonResponse = postToStripe(
@@ -247,7 +256,7 @@ public class StripePaymentProvider implements PaymentProvider {
         return new StripeAuthorisationResponse(createChargeResponse);
     }
 
-    private StripeSourcesResponse createSource(CardAuthorisationGatewayRequest request, String tokenId) 
+    private StripeSourcesResponse createSource(CardAuthorisationGatewayRequest request, String tokenId)
             throws GatewayClientException, GatewayException, DownstreamException, NoLiveTokenConfiguredException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         String jsonResponse = postToStripe(
@@ -260,7 +269,7 @@ public class StripePaymentProvider implements PaymentProvider {
         return jsonObjectMapper.getObject(jsonResponse, StripeSourcesResponse.class);
     }
 
-    private StripeTokenResponse createToken(CardAuthorisationGatewayRequest request) 
+    private StripeTokenResponse createToken(CardAuthorisationGatewayRequest request)
             throws GatewayClientException, GatewayException, DownstreamException, NoLiveTokenConfiguredException {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
         String jsonResponse = postToStripe(
@@ -273,7 +282,7 @@ public class StripePaymentProvider implements PaymentProvider {
         return jsonObjectMapper.getObject(jsonResponse, StripeTokenResponse.class);
     }
 
-    private String postToStripe(String path, String payload, String metricsPrefix, boolean isLiveAccount) 
+    private String postToStripe(String path, String payload, String metricsPrefix, boolean isLiveAccount)
             throws GatewayClientException, GatewayException, DownstreamException, NoLiveTokenConfiguredException {
         return client.postRequest(
                 URI.create(stripeGatewayConfig.getUrl() + path),

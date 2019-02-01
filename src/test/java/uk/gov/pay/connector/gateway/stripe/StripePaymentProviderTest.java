@@ -117,6 +117,21 @@ public class StripePaymentProviderTest {
     }
 
     @Test
+    public void shouldAuthoriseChargeImmediately_whenStripe3dsSourceIsChargeable() throws GatewayClientException, GatewayException, DownstreamException {
+
+        when(mockGatewayClient.postRequest(eq(tokensUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(successTokenResponse());
+        when(mockGatewayClient.postRequest(eq(sourcesUrl), anyString(), any(Map.class), any(MediaType.class), anyString()))
+                .thenReturn(successSourceResponseWith3dsRequired("recommended"), success3dsSourceResponse("chargeable"));
+        when(mockGatewayClient.postRequest(eq(chargesUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(successChargeResponse());
+
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
+
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().get().getTransactionId(), is("ch_1DRQ842eZvKYlo2CPbf7NNDv_test")); 
+    }
+
+    @Test
     public void shouldNotAuthorise_whenProcessingExceptionIsThrown() throws GatewayClientException, GatewayException, DownstreamException {
         when(mockGatewayClient.postRequest(eq(tokensUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(successTokenResponse());
         when(mockGatewayClient.postRequest(eq(sourcesUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(successSourceResponse());
@@ -277,7 +292,12 @@ public class StripePaymentProviderTest {
     }
 
     private String success3dsSourceResponse() {
-        return load(STRIPE_CREATE_3DS_SOURCES_RESPONSE);
+        return success3dsSourceResponse("pending");
+    }
+
+    private String success3dsSourceResponse(String threeDSourceStatus) {
+        return load(STRIPE_CREATE_3DS_SOURCES_RESPONSE)
+                .replace("{{three_d_source_status}}", threeDSourceStatus);
     }
 
     private String successChargeResponse() {
