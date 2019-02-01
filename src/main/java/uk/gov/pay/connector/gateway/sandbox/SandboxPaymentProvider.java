@@ -1,12 +1,11 @@
 package uk.gov.pay.connector.gateway.sandbox;
 
-import uk.gov.pay.connector.gateway.epdq.ChargeQueryResponse;
-import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.epdq.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -26,8 +25,8 @@ import uk.gov.pay.connector.gateway.sandbox.applepay.SandboxWalletAuthorisationH
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
+import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
-import javax.naming.OperationNotSupportedException;
 import java.util.Optional;
 
 import static java.util.UUID.randomUUID;

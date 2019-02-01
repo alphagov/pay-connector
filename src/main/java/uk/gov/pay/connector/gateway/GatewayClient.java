@@ -2,12 +2,11 @@ package uk.gov.pay.connector.gateway;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
-import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
-import uk.gov.pay.connector.gateway.util.XMLUnmarshallerException;
+import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionTimeoutErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrors.GenericGatewayErrorException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.ws.rs.ProcessingException;
@@ -20,20 +19,15 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
-import static fj.data.Either.left;
-import static fj.data.Either.right;
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.Response.Status.OK;
-import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionTimeoutException;
-import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
-import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.encode;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 
 public class GatewayClient {
-    private final Logger logger = LoggerFactory.getLogger(GatewayClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(GatewayClient.class);
 
     private final Client client;
     private final Map<String, String> gatewayUrlMap;
@@ -50,7 +44,8 @@ public class GatewayClient {
         this.sessionIdentifier = sessionIdentifier;
     }
 
-    public Either<GatewayError, GatewayClient.Response> postRequestFor(String route, GatewayAccountEntity account, GatewayOrder request) {
+    public GatewayClient.Response postRequestFor(String route, GatewayAccountEntity account, GatewayOrder request) 
+            throws GenericGatewayErrorException, GatewayConnectionTimeoutErrorException, GatewayConnectionErrorException {
         String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
         javax.ws.rs.core.Response response = null;
 
@@ -74,26 +69,28 @@ public class GatewayClient {
             int statusCode = response.getStatus();
             Response gatewayResponse = new Response(response);
             if (statusCode == OK.getStatusCode()) {
-                return right(gatewayResponse);
+                return gatewayResponse;
             } else {
                 logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}", statusCode, gatewayUrl, account.getType());
                 incrementFailureCounter(metricRegistry, metricsPrefix);
-                return left(gatewayConnectionError("Unexpected HTTP status code " + statusCode + " from gateway"));
+                throw new GatewayConnectionErrorException("Unexpected HTTP status code " + statusCode + " from gateway");
             }
         } catch (ProcessingException pe) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
             if (pe.getCause() != null) {
                 if (pe.getCause() instanceof SocketTimeoutException) {
                     logger.error(format("Connection timed out error for gateway url=%s", gatewayUrl), pe);
-                    return left(gatewayConnectionTimeoutException("Gateway connection timeout error"));
+                    throw new GatewayConnectionTimeoutErrorException("Gateway connection timeout error");
                 }
             }
             logger.error(format("Exception for gateway url=%s, error message: %s", gatewayUrl, pe.getMessage()), pe);
-            return left(genericGatewayError(pe.getMessage()));
+            throw new GenericGatewayErrorException(pe.getMessage());
+        } catch(GatewayConnectionErrorException e) {
+            throw e;
         } catch (Exception e) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
             logger.error(format("Exception for gateway url=%s", gatewayUrl), e);
-            return left(genericGatewayError(e.getMessage()));
+            throw new GenericGatewayErrorException(e.getMessage());
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram(metricsPrefix + ".response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
@@ -103,18 +100,6 @@ public class GatewayClient {
         }
     }
     
-    public <T> Either<GatewayError, T> unmarshallResponse(GatewayClient.Response response, Class<T> clazz) {
-        String payload = response.getEntity();
-        logger.debug("response payload={}", payload);
-        try {
-            return right(XMLUnmarshaller.unmarshall(payload, clazz));
-        } catch (XMLUnmarshallerException e) {
-            String error = format("Could not unmarshall response %s.", payload);
-            logger.error(error, e);
-            return left(gatewayConnectionError("Invalid Response Received From Gateway"));
-        }
-    }
-
     private void incrementFailureCounter(MetricRegistry metricRegistry, String metricsPrefix) {
         metricRegistry.counter(metricsPrefix + ".failures").inc();
     }

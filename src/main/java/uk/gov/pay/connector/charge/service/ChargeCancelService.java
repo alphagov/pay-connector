@@ -11,6 +11,9 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionTimeoutErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrors.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -80,39 +83,43 @@ public class ChargeCancelService {
 
     private void cancelChargeWithGatewayCleanup(ChargeEntity chargeEntity, StatusFlow statusFlow) {
         prepareForTerminate(chargeEntity, statusFlow);
-        final GatewayResponse<BaseCancelResponse> gatewayResponse = doGatewayCancel(chargeEntity);
-        gatewayResponse.getGatewayError().ifPresent(error -> logger.error(error.getMessage()));
-        finishCancel(chargeEntity, statusFlow, gatewayResponse);
-    }
 
-    private GatewayResponse<BaseCancelResponse> doGatewayCancel(ChargeEntity chargeEntity) {
-        return providers.byName(chargeEntity.getPaymentGatewayName())
-                .cancel(CancelGatewayRequest.valueOf(chargeEntity));
-    }
+        ChargeStatus chargeStatus;
+        String stringifiedResponse;
 
-    private void finishCancel(ChargeEntity chargeEntity, StatusFlow statusFlow, GatewayResponse<BaseCancelResponse> cancelResponse) {
-        ChargeStatus status = determineTerminalState(cancelResponse, statusFlow);
+        try {
+            final GatewayResponse<BaseCancelResponse> gatewayResponse = doGatewayCancel(chargeEntity);
+            chargeStatus = determineTerminalState(gatewayResponse.getBaseResponse().get(), statusFlow);
+            stringifiedResponse = gatewayResponse.getBaseResponse().get().toString();
+        } catch (GenericGatewayErrorException | GatewayConnectionErrorException | GatewayConnectionTimeoutErrorException e) {
+            logger.error(e.getMessage());
+            chargeStatus = statusFlow.getFailureTerminalState();
+            stringifiedResponse = e.getMessage();
+        }
 
         logger.info("Cancel for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                 chargeEntity.getExternalId(), chargeEntity.getPaymentGatewayName().getName(), chargeEntity.getGatewayTransactionId(),
                 chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
-                cancelResponse, chargeEntity.getStatus(), status);
+                stringifiedResponse, chargeEntity.getStatus(), chargeStatus);
 
-        chargeEntity.setStatus(status);
+        chargeEntity.setStatus(chargeStatus);
         chargeEventDao.persistChargeEventOf(chargeEntity);
     }
 
-    private static ChargeStatus determineTerminalState(GatewayResponse<BaseCancelResponse> cancelResponse, StatusFlow statusFlow) {
-        return cancelResponse.getBaseResponse().map(response -> {
-            switch (response.cancelStatus()) {
-                case CANCELLED:
-                    return statusFlow.getSuccessTerminalState();
-                case SUBMITTED:
-                    return statusFlow.getSubmittedState();
-                default:
-                    return statusFlow.getFailureTerminalState();
-            }
-        }).orElse(statusFlow.getFailureTerminalState());
+    private GatewayResponse<BaseCancelResponse> doGatewayCancel(ChargeEntity chargeEntity)
+            throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
+        return providers.byName(chargeEntity.getPaymentGatewayName()).cancel(CancelGatewayRequest.valueOf(chargeEntity));
+    }
+
+    private static ChargeStatus determineTerminalState(BaseCancelResponse response, StatusFlow statusFlow) {
+        switch (response.cancelStatus()) {
+            case CANCELLED:
+                return statusFlow.getSuccessTerminalState();
+            case SUBMITTED:
+                return statusFlow.getSubmittedState();
+            default:
+                return statusFlow.getFailureTerminalState();
+        }
     }
 
     private void nonGatewayCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
@@ -150,7 +157,8 @@ public class ChargeCancelService {
         chargeEventDao.persistChargeEventOf(chargeEntity);
     }
 
-    private void validateChargeStatus(StatusFlow statusFlow, ChargeEntity chargeEntity, ChargeStatus newStatus, ChargeStatus chargeStatus) {
+    private void validateChargeStatus(StatusFlow statusFlow, ChargeEntity chargeEntity, ChargeStatus
+            newStatus, ChargeStatus chargeStatus) {
         if (!chargeIsInTerminatableStatus(statusFlow, chargeStatus)) {
             if (newStatus.equals(chargeStatus)) {
                 throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), chargeEntity.getExternalId());

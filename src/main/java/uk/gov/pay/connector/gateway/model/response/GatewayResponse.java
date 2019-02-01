@@ -13,7 +13,7 @@ public class GatewayResponse<T extends BaseResponse> {
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayResponse.class);
 
-    private GatewayError gatewayError;
+    private GatewayError gatewayError; //TODO delete
     private T baseResponse;
 
     private String sessionIdentifier;

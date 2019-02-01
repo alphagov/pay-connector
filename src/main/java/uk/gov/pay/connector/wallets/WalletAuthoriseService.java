@@ -9,6 +9,9 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionTimeoutErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrors.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -20,6 +23,10 @@ import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 
 public class WalletAuthoriseService {
     private static final DateTimeFormatter EXPIRY_DATE_FORMAT = DateTimeFormatter.ofPattern("MM/yy");
@@ -43,12 +50,27 @@ public class WalletAuthoriseService {
     public GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, WalletAuthorisationData walletAuthorisationData) {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId);
-            GatewayResponse<BaseAuthoriseResponse> operationResponse = authorise(charge, walletAuthorisationData);
+            GatewayResponse<BaseAuthoriseResponse> operationResponse = null;
+
+            ChargeStatus chargeStatus;
+            
+            try {
+                operationResponse = authorise(charge, walletAuthorisationData);
+                chargeStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
+            } catch (GenericGatewayErrorException e) {
+                chargeStatus = AUTHORISATION_ERROR;
+            } catch (GatewayConnectionErrorException e) {
+                chargeStatus = AUTHORISATION_UNEXPECTED_ERROR;
+            } catch (GatewayConnectionTimeoutErrorException e) {
+                chargeStatus = AUTHORISATION_TIMEOUT;
+            }
+
             processGatewayAuthorisationResponse(
                     charge.getExternalId(),
                     ChargeStatus.fromString(charge.getStatus()),
                     walletAuthorisationData,
-                    operationResponse);
+                    operationResponse, 
+                    chargeStatus);
 
             return operationResponse;
         });
@@ -67,14 +89,11 @@ public class WalletAuthoriseService {
             String chargeExternalId,
             ChargeStatus oldChargeStatus,
             WalletAuthorisationData walletAuthorisationData,
-            GatewayResponse<BaseAuthoriseResponse> operationResponse) {
+            GatewayResponse<BaseAuthoriseResponse> operationResponse, 
+            ChargeStatus status) {
 
         logger.info("Processing gateway auth response for {}", walletAuthorisationData.getWalletType().toString());
         Optional<String> transactionId = cardAuthoriseBaseService.extractTransactionId(chargeExternalId, operationResponse);
-        ChargeStatus status = cardAuthoriseBaseService.extractChargeStatus(
-                operationResponse.getBaseResponse(),
-                operationResponse.getGatewayError());
-
         AuthCardDetails authCardDetailsToBePersisted = authCardDetailsFor(walletAuthorisationData);
         ChargeEntity updatedCharge = chargeService.updateChargePostWalletAuthorisation(
                 chargeExternalId,
@@ -99,12 +118,13 @@ public class WalletAuthoriseService {
                 status.toString())).inc();
     }
 
-    protected GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, WalletAuthorisationData walletAuthorisationData) {
+    private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, WalletAuthorisationData walletAuthorisationData) 
+            throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
+        
         logger.info("Authorising charge for {}", walletAuthorisationData.getWalletType().toString());
         WalletAuthorisationGatewayRequest authorisationGatewayRequest = 
                 WalletAuthorisationGatewayRequest.valueOf(chargeEntity, walletAuthorisationData);
-        return getPaymentProviderFor(chargeEntity)
-                .authoriseWallet(authorisationGatewayRequest);
+        return getPaymentProviderFor(chargeEntity).authoriseWallet(authorisationGatewayRequest);
     }
 
     private AuthCardDetails authCardDetailsFor(WalletAuthorisationData walletAuthorisationData) {
