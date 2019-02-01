@@ -81,7 +81,8 @@ public class StripeMockClient {
     }
 
     public void mockCreate3dsSource() {
-        String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_3DS_SOURCES_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_3DS_SOURCES_RESPONSE)
+                .replace("{{three_d_source_status}}", "pending");
         setupResponse("three_d_secure", payload, "/v1/sources", 200);
     }
 

@@ -25,6 +25,9 @@ public class Stripe3dsSourceAuthorisationResponse implements BaseAuthoriseRespon
         if ("pending".equals(jsonResponse.getStatus())) {
             return AuthoriseStatus.REQUIRES_3DS;
         }
+        if ("chargeable".equals(jsonResponse.getStatus())) {
+            return AuthoriseStatus.AUTHORISED;
+        }
         return AuthoriseStatus.ERROR;
     }
 
