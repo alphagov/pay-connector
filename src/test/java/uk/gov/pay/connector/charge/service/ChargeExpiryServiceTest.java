@@ -77,12 +77,14 @@ public class ChargeExpiryServiceTest {
     private static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ImmutableList.of(
             CREATED,
             ENTERING_CARD_DETAILS,
-            AUTHORISATION_3DS_READY,
             AUTHORISATION_3DS_REQUIRED,
+            AUTHORISATION_3DS_READY,
             AUTHORISATION_SUCCESS
     );
 
     private static final List<ChargeStatus> GATEWAY_CANCELLABLE_STATUSES = ImmutableList.of(
+            AUTHORISATION_3DS_READY,
+            AUTHORISATION_3DS_REQUIRED,
             AUTHORISATION_SUCCESS,
             AWAITING_CAPTURE_REQUEST
     );
@@ -219,6 +221,7 @@ public class ChargeExpiryServiceTest {
         when(mockChargeDao.findByExternalId(chargeEntityAwaitingCapture.getExternalId())).thenReturn(Optional.of(chargeEntityAwaitingCapture));
         when(mockChargeDao.findByExternalId(chargeEntityAuthorisationSuccess.getExternalId())).thenReturn(Optional.of(chargeEntityAuthorisationSuccess));
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
+
         doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class));
         when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS))).thenReturn(singletonList(chargeEntityAwaitingCapture));
         when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(EXPIRABLE_REGULAR_STATUSES))).thenReturn(singletonList(chargeEntityAuthorisationSuccess));

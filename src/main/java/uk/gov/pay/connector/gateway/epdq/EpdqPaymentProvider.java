@@ -142,18 +142,19 @@ public class EpdqPaymentProvider implements PaymentProvider {
         throw new UnsupportedOperationException("Wallets are not supported for ePDQ");
     }
 
-    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) {
-        try {
-            GatewayClient.Response response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, charge.getGatewayAccount(), buildQueryOrderRequestFor(charge));
-            GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getEpdqGatewayResponse(response, EpdqQueryResponse.class);
+    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) throws GatewayErrorException {
+        GatewayClient.Response response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, charge.getGatewayAccount(), buildQueryOrderRequestFor(charge));
+        GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getEpdqGatewayResponse(response, EpdqQueryResponse.class);
 
-            return epdqGatewayResponse.getBaseResponse()
-                    .map(EpdqQueryResponse::toChargeQueryResponse)
-                    .orElseThrow(() -> new WebApplicationException("Things went wrong"));
+        return epdqGatewayResponse.getBaseResponse()
+                .map(EpdqQueryResponse::toChargeQueryResponse)
+                .orElseThrow(() -> 
+                        new WebApplicationException(String.format(
+                                "Unable to query charge %s - an error occurred: %s",
+                                charge.getExternalId(),
+                                epdqGatewayResponse.getGatewayError().toString()
+                        )));
             
-        } catch (GatewayErrorException e) {
-            throw new WebApplicationException("Things went wrong");
-        }
     }
 
     @Override

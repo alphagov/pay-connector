@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.tuple.Pair;
@@ -12,12 +13,14 @@ import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.GatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.epdq.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -27,10 +30,11 @@ import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -38,6 +42,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
+import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.DURING_AUTHORISATION;
+import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.POST_AUTHORISATION;
+import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.PRE_AUTHORISATION;
 import static uk.gov.pay.connector.charge.service.StatusFlow.EXPIRE_FLOW;
 
 public class ChargeExpiryService {
@@ -47,16 +54,6 @@ public class ChargeExpiryService {
     private static final String EXPIRY_SUCCESS = "expiry-success";
     private static final String EXPIRY_FAILED = "expiry-failed";
 
-    private static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ExpirableChargeStatus.getValuesAsStream()
-            .filter(ExpirableChargeStatus::isRegularThresholdType)
-            .map(ExpirableChargeStatus::getChargeStatus)
-            .collect(Collectors.toList());
-    
-    private static final List<ChargeStatus> EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS = ExpirableChargeStatus.getValuesAsStream()
-            .filter(ExpirableChargeStatus::isDelayedThresholdType)
-            .map(ExpirableChargeStatus::getChargeStatus)
-            .collect(Collectors.toList());
-    
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
     private final PaymentProviders providers;
@@ -75,26 +72,60 @@ public class ChargeExpiryService {
     }
 
     Map<String, Integer> expire(List<ChargeEntity> charges) {
-        Map<Boolean, List<ChargeEntity>> chargesToProcessExpiry = charges
+        Map<AuthorisationStage, List<ChargeEntity>> chargesGroupedByAuthStage = charges
                 .stream()
-                .collect(Collectors.partitioningBy(chargeEntity ->
-                        ExpirableChargeStatus.of(ChargeStatus.fromString(chargeEntity.getStatus())).shouldExpireWithGateway())
-                );
+                .collect(Collectors.groupingBy(this::getAuthorisationStage));
 
-        int expiredSuccess = expireChargesWithCancellationNotRequired(chargesToProcessExpiry.get(Boolean.FALSE));
-        Pair<Integer, Integer> expireWithCancellationResult = expireChargesWithGatewayCancellation(chargesToProcessExpiry.get(Boolean.TRUE));
+        Map<Boolean, List<ChargeEntity>> chargesPartitionedByNeedForExpiryWithGateway = 
+                getNullSafeList(chargesGroupedByAuthStage.get(DURING_AUTHORISATION))
+                        .stream()
+                        .collect(Collectors.partitioningBy(this::isExpirableWithGateway));
+        
+        List<ChargeEntity> toExpireWithoutGateway = new ImmutableList.Builder<ChargeEntity>()
+                .addAll(getNullSafeList(chargesGroupedByAuthStage.get(PRE_AUTHORISATION)))
+                .addAll(getNullSafeList(chargesPartitionedByNeedForExpiryWithGateway.get(Boolean.FALSE)))
+                .build();
+        int expiredSuccess = expireChargesWithoutGateway(toExpireWithoutGateway);
 
-        return ImmutableMap.of(EXPIRY_SUCCESS, expiredSuccess + expireWithCancellationResult.getLeft(),
-                EXPIRY_FAILED, expireWithCancellationResult.getRight());
+        List<ChargeEntity> toExpireWithGateway = new ImmutableList.Builder<ChargeEntity>()
+                .addAll(getNullSafeList(chargesGroupedByAuthStage.get(POST_AUTHORISATION)))
+                .addAll(getNullSafeList(chargesPartitionedByNeedForExpiryWithGateway.get(Boolean.TRUE)))
+                .build();
+        Pair<Integer, Integer> expireWithCancellationResult = expireChargesWithGateway(toExpireWithGateway);
+
+        return ImmutableMap.of(
+                EXPIRY_SUCCESS, expiredSuccess + expireWithCancellationResult.getLeft(),
+                EXPIRY_FAILED, expireWithCancellationResult.getRight()
+        );
+    }
+
+    private List<ChargeEntity> getNullSafeList(List<ChargeEntity> charges) {
+        return Optional.ofNullable(charges)
+                .orElseGet(Collections::emptyList);
+    }
+
+    private AuthorisationStage getAuthorisationStage(ChargeEntity chargeEntity) {
+        return ExpirableChargeStatus.of(ChargeStatus.fromString(chargeEntity.getStatus())).getAuthorisationStage();
+    }
+
+    private boolean isExpirableWithGateway(ChargeEntity charge) {
+        try {
+            ChargeQueryResponse queryResponse = providers.byName(charge.getPaymentGatewayName())
+                    .queryPaymentStatus(charge);
+            
+            return !queryResponse.getMappedStatus().toExternal().isFinished();
+            
+        } catch (WebApplicationException | UnsupportedOperationException | GatewayErrorException e) {
+            logger.info("Unable to retrieve status for charge {}: {}", charge.getExternalId(), e.getMessage());
+            return false;
+        }
     }
 
     public Map<String, Integer> sweepAndExpireCharges() {
-        List<ChargeEntity> chargesToExpire = new ArrayList<>();
-        chargesToExpire.addAll(chargeDao.findBeforeDateWithStatusIn(getExpiryDateForRegularCharges(),
-                EXPIRABLE_REGULAR_STATUSES));
-        
-        chargesToExpire.addAll(chargeDao.findBeforeDateWithStatusIn(getExpiryDateForAwaitingCaptureRequest(),
-                EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS));
+        List<ChargeEntity> chargesToExpire = new ImmutableList.Builder<ChargeEntity>()
+                .addAll(getChargesToExpireWithRegularExpiryThreshold())
+                .addAll(getChargesToExpireWithDelayedExpiryThreshold())
+                .build();
         
         logger.info("Charges found for expiry - number_of_charges={}, since_date={}, awaiting_capture_date{}",
                 chargesToExpire.size(), getExpiryDateForRegularCharges(), getExpiryDateForAwaitingCaptureRequest());
@@ -102,7 +133,23 @@ public class ChargeExpiryService {
         return expire(chargesToExpire);
     }
 
-    private int expireChargesWithCancellationNotRequired(List<ChargeEntity> nonAuthSuccessCharges) {
+    private List<ChargeEntity> getChargesToExpireWithDelayedExpiryThreshold() {
+        return chargeDao.findBeforeDateWithStatusIn(getExpiryDateForAwaitingCaptureRequest(),
+                ExpirableChargeStatus.getValuesAsStream()
+                        .filter(ExpirableChargeStatus::isDelayedThresholdType)
+                        .map(ExpirableChargeStatus::getChargeStatus)
+                        .collect(Collectors.toList()));
+    }
+
+    private List<ChargeEntity> getChargesToExpireWithRegularExpiryThreshold() {
+        return chargeDao.findBeforeDateWithStatusIn(getExpiryDateForRegularCharges(),
+                ExpirableChargeStatus.getValuesAsStream()
+                        .filter(ExpirableChargeStatus::isRegularThresholdType)
+                        .map(ExpirableChargeStatus::getChargeStatus)
+                        .collect(Collectors.toList()));
+    }
+
+    private int expireChargesWithoutGateway(List<ChargeEntity> nonAuthSuccessCharges) {
         List<ChargeEntity> processedEntities = nonAuthSuccessCharges
                 .stream().map(chargeEntity -> changeStatusTo(chargeEntity.getExternalId(), EXPIRED))
                 .collect(Collectors.toList());
@@ -110,7 +157,7 @@ public class ChargeExpiryService {
         return processedEntities.size();
     }
 
-    private Pair<Integer, Integer> expireChargesWithGatewayCancellation(List<ChargeEntity> gatewayAuthorizedCharges) {
+    private Pair<Integer, Integer> expireChargesWithGateway(List<ChargeEntity> gatewayAuthorizedCharges) {
 
         final List<ChargeEntity> expireCancelled = newArrayList();
         final List<ChargeEntity> expireCancelFailed = newArrayList();
@@ -161,7 +208,10 @@ public class ChargeExpiryService {
         try {
             return doGatewayCancel(charge);
         } catch (GatewayErrorException e) {
-            throw new WebApplicationException("Things went wrong");
+            throw new WebApplicationException(String.format(
+                    "Unable to cancel charge %s with gateway: %s",
+                    charge.getExternalId(),
+                    e.getMessage()));
         }
     }
     

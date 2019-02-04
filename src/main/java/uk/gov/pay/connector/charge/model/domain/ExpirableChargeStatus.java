@@ -5,19 +5,19 @@ import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
 public enum ExpirableChargeStatus {
-    CREATED(ChargeStatus.CREATED, false, ExpiryThresholdType.REGULAR),
-    ENTERING_CARD_DETAILS(ChargeStatus.ENTERING_CARD_DETAILS, false, ExpiryThresholdType.REGULAR),
-    AUTHORISATION_3DS_READY(ChargeStatus.AUTHORISATION_3DS_READY, false, ExpiryThresholdType.REGULAR),
-    AUTHORISATION_3DS_REQUIRED(ChargeStatus.AUTHORISATION_3DS_REQUIRED, false, ExpiryThresholdType.REGULAR),
-    AUTHORISATION_SUCCESS(ChargeStatus.AUTHORISATION_SUCCESS, true, ExpiryThresholdType.REGULAR),
-    AWAITING_CAPTURE_REQUEST(ChargeStatus.AWAITING_CAPTURE_REQUEST, true, ExpiryThresholdType.DELAYED);
+    CREATED(ChargeStatus.CREATED, AuthorisationStage.PRE_AUTHORISATION, ExpiryThresholdType.REGULAR),
+    ENTERING_CARD_DETAILS(ChargeStatus.ENTERING_CARD_DETAILS, AuthorisationStage.PRE_AUTHORISATION, ExpiryThresholdType.REGULAR),
+    AUTHORISATION_3DS_REQUIRED(ChargeStatus.AUTHORISATION_3DS_REQUIRED, AuthorisationStage.DURING_AUTHORISATION, ExpiryThresholdType.REGULAR),
+    AUTHORISATION_3DS_READY(ChargeStatus.AUTHORISATION_3DS_READY, AuthorisationStage.DURING_AUTHORISATION, ExpiryThresholdType.REGULAR),
+    AUTHORISATION_SUCCESS(ChargeStatus.AUTHORISATION_SUCCESS, AuthorisationStage.POST_AUTHORISATION, ExpiryThresholdType.REGULAR),
+    AWAITING_CAPTURE_REQUEST(ChargeStatus.AWAITING_CAPTURE_REQUEST, AuthorisationStage.POST_AUTHORISATION, ExpiryThresholdType.DELAYED);
     
-    ExpirableChargeStatus(ChargeStatus chargeStatus, boolean expireWithGateway, ExpiryThresholdType expiryThresholdType) {
+    ExpirableChargeStatus(ChargeStatus chargeStatus, AuthorisationStage authorisationStage, ExpiryThresholdType expiryThresholdType) {
         this.chargeStatus = chargeStatus;
-        this.expireWithGateway = expireWithGateway;
+        this.authorisationStage = authorisationStage;
         this.expiryThresholdType = expiryThresholdType;
     }
-    private final boolean expireWithGateway;
+    private final AuthorisationStage authorisationStage;
     private final ChargeStatus chargeStatus;
     private final ExpiryThresholdType expiryThresholdType;
 
@@ -26,15 +26,15 @@ public enum ExpirableChargeStatus {
     }
     
     public static ExpirableChargeStatus of(ChargeStatus chargeStatus) {
-        return Arrays.stream(values())
+        return getValuesAsStream()
                 .filter(expirableChargeStatus -> expirableChargeStatus.getChargeStatus().equals(chargeStatus))
                 .findFirst()
                 .orElseThrow(
                         () -> new NoSuchElementException(String.format("No expiry status corresponds to charge status %s", chargeStatus)));
     }
 
-    public boolean shouldExpireWithGateway() {
-        return expireWithGateway;
+    public AuthorisationStage getAuthorisationStage() {
+        return authorisationStage;
     }
 
     public ChargeStatus getChargeStatus() {
@@ -52,5 +52,11 @@ public enum ExpirableChargeStatus {
     public enum ExpiryThresholdType {
         REGULAR ,
         DELAYED 
+    }
+    
+    public enum AuthorisationStage {
+        PRE_AUTHORISATION,
+        DURING_AUTHORISATION,
+        POST_AUTHORISATION
     }
 }

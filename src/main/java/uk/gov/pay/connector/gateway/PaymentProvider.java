@@ -25,7 +25,7 @@ public interface PaymentProvider {
 
     GatewayResponse authorise(CardAuthorisationGatewayRequest request) throws GatewayErrorException;
 
-    ChargeQueryResponse queryPaymentStatus(ChargeEntity charge);
+    ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) throws GatewayErrorException;
 
     Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request);
 
