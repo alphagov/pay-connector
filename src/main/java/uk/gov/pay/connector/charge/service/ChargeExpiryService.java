@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.charge.service;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.tuple.Pair;
@@ -12,6 +11,7 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
@@ -35,12 +35,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
 import static uk.gov.pay.connector.charge.service.StatusFlow.EXPIRE_FLOW;
@@ -52,22 +47,20 @@ public class ChargeExpiryService {
     private static final String EXPIRY_SUCCESS = "expiry-success";
     private static final String EXPIRY_FAILED = "expiry-failed";
 
-    static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ImmutableList.of(
-            CREATED,
-            ENTERING_CARD_DETAILS,
-            AUTHORISATION_3DS_READY,
-            AUTHORISATION_3DS_REQUIRED,
-            AUTHORISATION_SUCCESS);
-
-    static final List<ChargeStatus> EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS = ImmutableList.of(AWAITING_CAPTURE_REQUEST);
-
+    private static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ExpirableChargeStatus.getValuesAsStream()
+            .filter(ExpirableChargeStatus::isRegularThresholdType)
+            .map(ExpirableChargeStatus::getChargeStatus)
+            .collect(Collectors.toList());
+    
+    private static final List<ChargeStatus> EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS = ExpirableChargeStatus.getValuesAsStream()
+            .filter(ExpirableChargeStatus::isDelayedThresholdType)
+            .map(ExpirableChargeStatus::getChargeStatus)
+            .collect(Collectors.toList());
+    
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
     private final PaymentProviders providers;
-    static final List<ChargeStatus> GATEWAY_CANCELLABLE_STATUSES = Arrays.asList(
-            AUTHORISATION_SUCCESS,
-            AWAITING_CAPTURE_REQUEST
-    );
+    
     private final ChargeSweepConfig chargeSweepConfig;
 
     @Inject
@@ -85,7 +78,7 @@ public class ChargeExpiryService {
         Map<Boolean, List<ChargeEntity>> chargesToProcessExpiry = charges
                 .stream()
                 .collect(Collectors.partitioningBy(chargeEntity ->
-                        GATEWAY_CANCELLABLE_STATUSES.contains(ChargeStatus.fromString(chargeEntity.getStatus())))
+                        ExpirableChargeStatus.of(ChargeStatus.fromString(chargeEntity.getStatus())).shouldExpireWithGateway())
                 );
 
         int expiredSuccess = expireChargesWithCancellationNotRequired(chargesToProcessExpiry.get(Boolean.FALSE));
@@ -99,10 +92,13 @@ public class ChargeExpiryService {
         List<ChargeEntity> chargesToExpire = new ArrayList<>();
         chargesToExpire.addAll(chargeDao.findBeforeDateWithStatusIn(getExpiryDateForRegularCharges(),
                 EXPIRABLE_REGULAR_STATUSES));
+        
         chargesToExpire.addAll(chargeDao.findBeforeDateWithStatusIn(getExpiryDateForAwaitingCaptureRequest(),
                 EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS));
+        
         logger.info("Charges found for expiry - number_of_charges={}, since_date={}, awaiting_capture_date{}",
                 chargesToExpire.size(), getExpiryDateForRegularCharges(), getExpiryDateForAwaitingCaptureRequest());
+        
         return expire(chargesToExpire);
     }
 

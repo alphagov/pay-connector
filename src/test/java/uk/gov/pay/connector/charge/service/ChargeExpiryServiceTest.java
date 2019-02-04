@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
+import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,6 +28,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static java.util.Collections.singletonList;
@@ -38,8 +40,12 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.charge.service.ChargeExpiryService.EXPIRABLE_REGULAR_STATUSES;
-import static uk.gov.pay.connector.charge.service.ChargeExpiryService.GATEWAY_CANCELLABLE_STATUSES;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -67,6 +73,23 @@ public class ChargeExpiryServiceTest {
 
     @Mock
     private ConnectorConfiguration mockedConfig;
+    
+    private static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ImmutableList.of(
+            CREATED,
+            ENTERING_CARD_DETAILS,
+            AUTHORISATION_3DS_READY,
+            AUTHORISATION_3DS_REQUIRED,
+            AUTHORISATION_SUCCESS
+    );
+
+    private static final List<ChargeStatus> GATEWAY_CANCELLABLE_STATUSES = ImmutableList.of(
+            AUTHORISATION_SUCCESS,
+            AWAITING_CAPTURE_REQUEST
+    );
+
+    private static final List<ChargeStatus> EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS = ImmutableList.of(
+            AWAITING_CAPTURE_REQUEST
+    );
 
     private GatewayResponse<BaseCancelResponse> gatewayResponse;
     private GatewayAccountEntity gatewayAccount;
@@ -197,8 +220,8 @@ public class ChargeExpiryServiceTest {
         when(mockChargeDao.findByExternalId(chargeEntityAuthorisationSuccess.getExternalId())).thenReturn(Optional.of(chargeEntityAuthorisationSuccess));
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
         doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class));
-        when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(ChargeExpiryService.EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS))).thenReturn(singletonList(chargeEntityAwaitingCapture));
-        when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(ChargeExpiryService.EXPIRABLE_REGULAR_STATUSES))).thenReturn(singletonList(chargeEntityAuthorisationSuccess));
+        when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS))).thenReturn(singletonList(chargeEntityAwaitingCapture));
+        when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(EXPIRABLE_REGULAR_STATUSES))).thenReturn(singletonList(chargeEntityAuthorisationSuccess));
 
         chargeExpiryService.sweepAndExpireCharges();
 
