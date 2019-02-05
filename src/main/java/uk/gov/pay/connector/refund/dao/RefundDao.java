@@ -54,7 +54,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
                 .createQuery(query, RefundEntity.class)
                 .setParameter("reference", reference)
                 .setParameter("provider", provider)
-                .getResultStream().findFirst();
+                .getResultList().stream().findFirst();
     }
 
     public List<RefundEntity> findByAccountBetweenDatesWithStatusIn(Long gatewayAccountId,
@@ -105,7 +105,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
         return entityManager.get()
                 .createQuery(query, RefundEntity.class)
                 .setParameter("externalId", externalId)
-                .getResultStream().findFirst();
+                .getResultList().stream().findFirst();
     }
 
     public Long getTotalFor(SearchParams params) {

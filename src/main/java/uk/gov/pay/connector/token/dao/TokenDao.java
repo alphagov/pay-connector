@@ -21,7 +21,7 @@ public class TokenDao extends JpaDao<TokenEntity> {
         return entityManager.get()
                 .createQuery("SELECT t FROM TokenEntity t WHERE t.token = :token", TokenEntity.class)
                 .setParameter("token", tokenId)
-                .getResultStream()
+                .getResultList().stream()
                 .findFirst();
     }
 
@@ -29,7 +29,7 @@ public class TokenDao extends JpaDao<TokenEntity> {
         return entityManager.get()
                 .createQuery("SELECT t FROM TokenEntity t WHERE t.chargeEntity.id = :chargeId", TokenEntity.class)
                 .setParameter("chargeId", chargeId)
-                .getResultStream()
+                .getResultList().stream()
                 .findFirst();
     }
 }
