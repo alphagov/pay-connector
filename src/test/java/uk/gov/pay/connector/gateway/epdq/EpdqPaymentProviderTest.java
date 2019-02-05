@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.gateway.GatewayErrors;
 import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -54,11 +55,12 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
 
     @Test
     public void shouldNotAuthoriseIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
-        mockPaymentProviderResponse(400, errorAuthResponse());
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
-        assertThat(response.isFailed(), is(true));
-        assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
+        try {
+            mockPaymentProviderResponse(400, errorAuthResponse());
+            GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
+        } catch (GatewayErrors.GatewayConnectionErrorException e) {
+            assertEquals(e.toGatewayError(), new GatewayError("Unexpected HTTP status code 400 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
+        }
     }
 
     @Test
@@ -80,11 +82,12 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
 
     @Test
     public void shouldNotCancelIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
-        mockPaymentProviderResponse(400, errorCancelResponse());
-        GatewayResponse<BaseCancelResponse> response = provider.cancel(buildTestCancelRequest());
-        assertThat(response.isFailed(), is(true));
-        assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
+        try {
+            mockPaymentProviderResponse(400, errorCancelResponse());
+            GatewayResponse<BaseCancelResponse> response = provider.cancel(buildTestCancelRequest());
+        } catch (GatewayErrors.GatewayConnectionErrorException e) {
+            assertEquals(e.toGatewayError(), new GatewayError("Unexpected HTTP status code 400 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
+        }
     }
 
     @Test

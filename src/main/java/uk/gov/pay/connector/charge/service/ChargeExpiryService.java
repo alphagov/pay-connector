@@ -124,17 +124,18 @@ public class ChargeExpiryService {
         gatewayAuthorizedCharges.forEach(chargeEntity -> {
 
             ChargeEntity processedEntity = prepareForTermination(chargeEntity.getExternalId());
-
-            GatewayResponse<BaseCancelResponse> gatewayResponse = null;
+            ChargeStatus newStatus;
 
             try {
-                gatewayResponse = doGatewayCancel(processedEntity);
+                GatewayResponse<BaseCancelResponse> gatewayResponse = doGatewayCancel(processedEntity);
+                newStatus = determineTerminalState(gatewayResponse);
             } catch (GenericGatewayErrorException | GatewayConnectionErrorException | GatewayConnectionTimeoutErrorException e) {
+                newStatus= EXPIRE_FLOW.getFailureTerminalState();
                 logger.error("Gateway error while cancelling the Charge - charge_external_id={}, gateway_error={}",
                         chargeEntity.getExternalId(), e.getMessage());
             }
 
-            ChargeEntity expiredCharge = finishExpireCancel(processedEntity.getExternalId(), gatewayResponse.getBaseResponse().get());
+            ChargeEntity expiredCharge = changeStatusTo(processedEntity.getExternalId(), newStatus);
 
             if (EXPIRED.getValue().equals(expiredCharge.getStatus())) {
                 expireCancelled.add(processedEntity);
@@ -149,28 +150,17 @@ public class ChargeExpiryService {
         );
     }
 
-    private ChargeStatus determineTerminalState(BaseCancelResponse cancelResponse) {
-        switch (cancelResponse.cancelStatus()) {
-            case CANCELLED:
-                return EXPIRE_FLOW.getSuccessTerminalState();
-            case SUBMITTED:
-                return EXPIRE_FLOW.getSubmittedState();
-            default:
-                return EXPIRE_FLOW.getFailureTerminalState();
-        }
-    }
-
-    @Transactional
-    @SuppressWarnings("WeakerAccess")
-    public ChargeEntity finishExpireCancel(String chargeExternalId, BaseCancelResponse gatewayResponse) {
-        return chargeDao.findByExternalId(chargeExternalId).map(chargeEntity -> {
-            ChargeStatus status = determineTerminalState(gatewayResponse);
-            logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
-                    chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
-            chargeEntity.setStatus(status);
-            chargeEventDao.persistChargeEventOf(chargeEntity);
-            return chargeEntity;
-        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
+    private ChargeStatus determineTerminalState(GatewayResponse<BaseCancelResponse> cancelResponse) {
+        return cancelResponse.getBaseResponse().map(response -> {
+            switch (response.cancelStatus()) {
+                case CANCELLED:
+                    return EXPIRE_FLOW.getSuccessTerminalState();
+                case SUBMITTED:
+                    return EXPIRE_FLOW.getSubmittedState();
+                default:
+                    return EXPIRE_FLOW.getFailureTerminalState();
+            }
+        }).orElse(EXPIRE_FLOW.getFailureTerminalState());
     }
     
     public GatewayResponse<BaseCancelResponse> forceCancelWithGateway(ChargeEntity charge) {

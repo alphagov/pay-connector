@@ -38,7 +38,6 @@ import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.argThat;
@@ -124,22 +123,20 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
         when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any(Map.class), any(BiFunction.class), any())).thenReturn(mockGatewayClient);
 
-        WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
-
-        worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity));
-
-        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-
-        verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
-
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS), gatewayOrderArgumentCaptor.getValue().getPayload());
+        try {
+            WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
+            worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity));
+        } catch (GatewayConnectionErrorException e) {
+            ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+            verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
+            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS), gatewayOrderArgumentCaptor.getValue().getPayload());
+        }
     }
 
     @Test
     public void shouldInclude3dsElementsWhen3dsToggleEnabled() throws Exception {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         chargeEntity.setGatewayTransactionId("transaction-id");
-
         chargeEntity.setGatewayAccount(mockGatewayAccountEntity);
         ChargeEntity mockChargeEntity = mock(ChargeEntity.class);
 
@@ -161,13 +158,13 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
 
         WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
 
-        worldpayPaymentProvider.authorise(getCardAuthorisationRequest(mockChargeEntity));
-
-        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-
-        verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
-
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS), gatewayOrderArgumentCaptor.getValue().getPayload());
+        try {
+            worldpayPaymentProvider.authorise(getCardAuthorisationRequest(mockChargeEntity));
+        } catch (GatewayConnectionErrorException e) {
+            ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+            verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
+            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS), gatewayOrderArgumentCaptor.getValue().getPayload());
+        }
     }
 
 
@@ -240,12 +237,11 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     @Test
     public void shouldErrorIfAuthorisationIsUnsuccessful() throws Exception {
         mockWorldpayErrorResponse(401);
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(getCardAuthorisationRequest());
-
-        assertThat(response.isFailed(), is(true));
-        assertFalse(response.getSessionIdentifier().isPresent());
-        assertThat(response.getGatewayError().isPresent(), is(true));
-        assertEquals(response.getGatewayError().get(), new GatewayError("Unexpected HTTP status code 401 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
+        try {
+            provider.authorise(getCardAuthorisationRequest());
+        } catch (GatewayConnectionErrorException e) {
+            assertEquals(e.toGatewayError(), new GatewayError("Unexpected HTTP status code 401 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
+        }
     }
 
     private CardAuthorisationGatewayRequest getCardAuthorisationRequest() {

@@ -30,6 +30,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqCaptureHandlerTest {
@@ -49,8 +50,10 @@ public class EpdqCaptureHandlerTest {
     @Test
     public void shouldCapture() throws Exception {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
+        when(response.readEntity(String.class)).thenReturn(load("templates/epdq/capture-success-response.xml"));
+        TestResponse testResponse = new TestResponse(this.response);
         when(client.postRequestFor(anyString(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
-                .thenReturn(new TestResponse(this.response));
+                .thenReturn(testResponse);
 
         CaptureResponse gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
         assertTrue(gatewayResponse.isSuccessful());
@@ -69,8 +72,9 @@ public class EpdqCaptureHandlerTest {
     @Test
     public void shouldNotCaptureIfPaymentProviderReturnsUnexpectedStatusCode() throws Exception{
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
-        when(client.postRequestFor(anyString(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
-                .thenReturn(new TestResponse(this.response));
+        when(response.readEntity(String.class)).thenReturn(load("templates/epdq/capture-error-response.xml"));
+        TestResponse testResponse = new TestResponse(this.response);
+        when(client.postRequestFor(anyString(), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(testResponse);
         
         CaptureResponse gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
         assertThat(gatewayResponse.isSuccessful(), is(false));

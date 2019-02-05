@@ -1,7 +1,9 @@
 package uk.gov.pay.connector.gateway.worldpay.applepay;
 
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayErrors;
+import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionTimeoutErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrors.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -21,7 +23,9 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise(WalletAuthorisationGatewayRequest request) throws GatewayErrors.GenericGatewayErrorException, GatewayErrors.GatewayConnectionErrorException, GatewayErrors.GatewayConnectionTimeoutErrorException {
+    public GatewayResponse<BaseAuthoriseResponse> authorise(WalletAuthorisationGatewayRequest request) 
+            throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
+        
         GatewayClient.Response response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildWalletAuthoriseOrder(request));
         return getWorldpayGatewayResponse(response);
     }

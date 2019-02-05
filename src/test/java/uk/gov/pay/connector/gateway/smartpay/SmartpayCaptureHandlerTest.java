@@ -46,12 +46,11 @@ public class SmartpayCaptureHandlerTest {
     public void shouldCaptureAPaymentSuccessfully() throws Exception {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(successCaptureResponse());
+        TestResponse testResponse = new TestResponse(this.response);
         when(client.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
-                .thenReturn(new TestResponse(this.response));
+                .thenReturn(testResponse);
         
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withGatewayAccountEntity(aServiceAccount())
-                .build();
+        ChargeEntity chargeEntity = aValidChargeEntity().withGatewayAccountEntity(aServiceAccount()).build();
 
         CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(chargeEntity);
         CaptureResponse gatewayResponse = smartpayCaptureHandler.capture(request);
@@ -73,7 +72,6 @@ public class SmartpayCaptureHandlerTest {
                 "merchant_id", "theMerchantCode"
         ));
         gatewayAccount.setType(TEST);
-
         return gatewayAccount;
     }
     

@@ -90,6 +90,10 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         try {
             GatewayClient.Response response = client.postRequestFor(null, request.getGatewayAccount(), build3dsResponseAuthOrderFor(request));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
+            
+            if (!gatewayResponse.getBaseResponse().isPresent())
+                gatewayResponse.throwGatewayError();
+            
             transactionId = Optional.ofNullable(gatewayResponse.getBaseResponse().get().getTransactionId());
             stringifiedResponse = gatewayResponse.toString();
             authorisationStatus = gatewayResponse.getBaseResponse().get().authoriseStatus();

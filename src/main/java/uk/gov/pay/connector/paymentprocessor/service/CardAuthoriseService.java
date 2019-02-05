@@ -30,9 +30,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 
 public class CardAuthoriseService {
@@ -61,28 +58,33 @@ public class CardAuthoriseService {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
             
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
-            
             GatewayResponse<BaseAuthoriseResponse> operationResponse = null;
-            
             ChargeStatus newStatus;
+            Optional<String> transactionId = Optional.empty();
+            Optional<String> sessionIdentifier = Optional.empty();
+            Optional<Auth3dsDetailsEntity> auth3dsDetailsEntity = Optional.empty();
+            
             try {
                 operationResponse = authorise(charge, authCardDetails);
+                
+                if (!operationResponse.getBaseResponse().isPresent()) operationResponse.throwGatewayError();
+                    
                 newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
-            } catch (GenericGatewayErrorException e) {
-                newStatus = AUTHORISATION_ERROR;
-            } catch (GatewayConnectionErrorException e) {
-                newStatus = AUTHORISATION_UNEXPECTED_ERROR;
-            } catch (GatewayConnectionTimeoutErrorException e) {
-                newStatus = AUTHORISATION_TIMEOUT;
+                transactionId = cardAuthoriseBaseService.extractTransactionId(charge.getExternalId(), operationResponse);
+                auth3dsDetailsEntity = extractAuth3dsDetails(operationResponse);
+                sessionIdentifier = operationResponse.getSessionIdentifier();
+                
+            } catch (GenericGatewayErrorException | GatewayConnectionErrorException | GatewayConnectionTimeoutErrorException e) {
+                newStatus = e.chargeStatus();
+                operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
 
-            Optional<String> transactionId = cardAuthoriseBaseService.extractTransactionId(charge.getExternalId(), operationResponse);
             ChargeEntity updatedCharge = chargeService.updateChargePostAuthorisation(
                     charge.getExternalId(),
                     newStatus,
                     transactionId,
-                    extractAuth3dsDetails(operationResponse),
-                    operationResponse.getSessionIdentifier(),
+                    auth3dsDetailsEntity,
+                    sessionIdentifier,
                     authCardDetails);
 
             boolean billingAddressSubmitted = updatedCharge.getCardDetails().getBillingAddress().isPresent();

@@ -30,6 +30,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @RunWith(MockitoJUnitRunner.class)
 public class WorldpayCaptureHandlerTest {
@@ -48,8 +49,8 @@ public class WorldpayCaptureHandlerTest {
 
     @Test
     public void shouldCaptureAPaymentSuccessfully() throws Exception {
-        //mock client.postRequestFor
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
+        when(response.readEntity(String.class)).thenReturn(load("templates/worldpay/capture-success-response.xml"));
         GatewayClient.Response response = new TestResponse(this.response);
         when(client.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(response);
         
@@ -68,7 +69,9 @@ public class WorldpayCaptureHandlerTest {
     @Test
     public void shouldErrorIfOrderReferenceNotKnownInCapture() throws Exception {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
-        when(client.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(new TestResponse(this.response));
+        when(response.readEntity(String.class)).thenReturn(load("templates/worldpay/error-response.xml"));
+        TestResponse testResponse = new TestResponse(this.response);
+        when(client.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(testResponse);
 
         CaptureResponse gatewayResponse = worldpayCaptureHandler.capture(getCaptureRequest());
 

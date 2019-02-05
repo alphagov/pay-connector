@@ -84,13 +84,16 @@ public class ChargeCancelService {
     private void cancelChargeWithGatewayCleanup(ChargeEntity chargeEntity, StatusFlow statusFlow) {
         prepareForTerminate(chargeEntity, statusFlow);
 
-        ChargeStatus chargeStatus;
-        String stringifiedResponse;
+        ChargeStatus chargeStatus = null;
+        String stringifiedResponse = null;
 
         try {
             final GatewayResponse<BaseCancelResponse> gatewayResponse = doGatewayCancel(chargeEntity);
-            chargeStatus = determineTerminalState(gatewayResponse.getBaseResponse().get(), statusFlow);
-            stringifiedResponse = gatewayResponse.getBaseResponse().get().toString();
+            Optional<BaseCancelResponse> baseResponse = gatewayResponse.getBaseResponse();
+            if (baseResponse.isPresent()) {
+                chargeStatus = determineTerminalState(baseResponse.get(), statusFlow);
+                stringifiedResponse = baseResponse.get().toString();
+            } else gatewayResponse.throwGatewayError();
         } catch (GenericGatewayErrorException | GatewayConnectionErrorException | GatewayConnectionTimeoutErrorException e) {
             logger.error(e.getMessage());
             chargeStatus = statusFlow.getFailureTerminalState();

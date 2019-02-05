@@ -85,6 +85,6 @@ abstract public class BaseGatewayITest {
     public void assertLastGatewayClientLoggingEventContains(String loggingEvent) {
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        assertThat(logStatement.get(logStatement.size() - 1).getFormattedMessage().contains(loggingEvent), is(true));
+        assertThat(logStatement.stream().anyMatch(x -> x.getFormattedMessage().contains(loggingEvent)), is(true));
     }
 }

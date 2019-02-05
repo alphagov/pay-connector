@@ -39,19 +39,18 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 @RunWith(MockitoJUnitRunner.class)
 public class WorldpayWalletAuthorisationHandlerTest {
 
-    
     @Mock
     private GatewayClient mockGatewayClient;
     @Mock
     private GatewayAccountEntity mockGatewayAccountEntity;
     private WorldpayWalletAuthorisationHandler worldpayApplePayAuthorisationHandler;
     private ChargeEntity chargeEntity;
-    
-    
+
+
     @Before
     public void setUp() throws Exception {
         worldpayApplePayAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient);
-         chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+        chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withDescription("This is the description").build();
         chargeEntity.setGatewayTransactionId("MyUniqueTransactionId!");
         chargeEntity.setGatewayAccount(mockGatewayAccountEntity);
@@ -61,31 +60,35 @@ public class WorldpayWalletAuthorisationHandlerTest {
         when(mockGatewayClient.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
                 .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
     }
-    
+
     @Test
     public void shouldSendApplePayRequestWhenApplePayDetailsArePresent() throws Exception {
-        worldpayApplePayAuthorisationHandler.authorise(getApplePayAuthorisationRequest());
-
-        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
+        try {
+            worldpayApplePayAuthorisationHandler.authorise(getApplePayAuthorisationRequest());
+        } catch (GatewayConnectionErrorException e) {
+            ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+            verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
+            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
+        }
     }
 
     @Test
     public void shouldSendGooglePayRequestWhenGooglePayDetailsArePresent() throws Exception {
-        worldpayApplePayAuthorisationHandler.authorise(getGooglePayAuthorisationRequest());
-
-        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
+        try {
+            worldpayApplePayAuthorisationHandler.authorise(getGooglePayAuthorisationRequest());
+        } catch (GatewayConnectionErrorException e) {
+            ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+            verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
+            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
+        }
     }
-    
+
     private WalletAuthorisationGatewayRequest getGooglePayAuthorisationRequest() throws IOException {
-        GooglePayAuthRequest googlePayAuthRequest = 
+        GooglePayAuthRequest googlePayAuthRequest =
                 Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         return new WalletAuthorisationGatewayRequest(chargeEntity, googlePayAuthRequest);
     }
-    
+
     private WalletAuthorisationGatewayRequest getApplePayAuthorisationRequest() {
         AppleDecryptedPaymentData data = new AppleDecryptedPaymentData(
                 new WalletPaymentInfo(

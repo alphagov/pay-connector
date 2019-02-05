@@ -138,5 +138,4 @@ public abstract class WorldpayBasePaymentProviderTest {
                 "    </reply>\n" +
                 "</paymentService>";
     }
-
 }
