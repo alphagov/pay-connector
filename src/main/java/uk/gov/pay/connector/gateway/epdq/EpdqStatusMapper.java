@@ -15,14 +15,18 @@ public class EpdqStatusMapper {
     
     static {
         Map<String, ChargeStatus> aMap = new HashMap<>();
-        aMap.put("5", ChargeStatus.AUTHORISATION_SUCCESS);
-        aMap.put("51", ChargeStatus.AUTHORISATION_SUCCESS);
+        aMap.put("2", ChargeStatus.AUTHORISATION_REJECTED);
+
         aMap.put("46", ChargeStatus.AUTHORISATION_3DS_REQUIRED);
+        
+        aMap.put("5", ChargeStatus.AUTHORISATION_SUCCESS);
         aMap.put("50", ChargeStatus.AUTHORISATION_SUBMITTED);
         aMap.put("51", ChargeStatus.AUTHORISATION_SUBMITTED);
-        aMap.put("2", ChargeStatus.AUTHORISATION_REJECTED);
+        aMap.put("52", ChargeStatus.AUTHORISATION_SUBMITTED);
+        
         aMap.put("6", ChargeStatus.USER_CANCELLED);
-        aMap.put("61", ChargeStatus.AUTHORISATION_SUBMITTED);
+        aMap.put("61", ChargeStatus.USER_CANCEL_SUBMITTED);
+        
         aMap.put("9", ChargeStatus.CAPTURED);
         aMap.put("91", ChargeStatus.CAPTURED);
 
