@@ -62,7 +62,7 @@ public class GatewayAccountPerformanceReportResourceTest {
     @Test
     public void noTransactionsPerformanceReportEntitySerializesCorrectly() {
         given(mockPerformanceReportDao.aggregateNumberAndValueOfPaymentsByGatewayAccount())
-                .willReturn(noTransactionsPerformanceReportEntity.stream());
+                .willReturn(noTransactionsPerformanceReportEntity);
 
         Response result = resource.getGatewayAccountPerformanceReport();
 
@@ -76,7 +76,7 @@ public class GatewayAccountPerformanceReportResourceTest {
     @Test
     public void someTransactionsPerformanceReportEntitySerializesCorrectly() {
         given(mockPerformanceReportDao.aggregateNumberAndValueOfPaymentsByGatewayAccount())
-                .willReturn(someTransactionsPerformanceReportEntity.stream());
+                .willReturn(someTransactionsPerformanceReportEntity);
 
         Response result = resource.getGatewayAccountPerformanceReport();
 

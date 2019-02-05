@@ -75,21 +75,14 @@ public class PerformanceReportDaoITest extends DaoITestBase {
         insertCharge(anotherGatewayAccount, 6L, ZonedDateTime.now());
         insertCharge(anotherGatewayAccount, 3L, ZonedDateTime.now());
         insertCharge(anotherGatewayAccount, 6L, ZonedDateTime.now());
-
-        Object[] gatewayAccountPerformanceReportEntities = performanceReportDao.aggregateNumberAndValueOfPaymentsByGatewayAccount().toArray();
-
-        assertThat(gatewayAccountPerformanceReportEntities.length, is(2));
-
-        GatewayAccountPerformanceReportEntity first = (GatewayAccountPerformanceReportEntity) gatewayAccountPerformanceReportEntities[0];
-        GatewayAccountPerformanceReportEntity second = (GatewayAccountPerformanceReportEntity) gatewayAccountPerformanceReportEntities[1];
-
-        assertThat(first.getAverageAmount(), is(closeTo(new BigDecimal("6"), ZERO)));
-        assertThat(first.getTotalAmount(), is(closeTo(new BigDecimal("12"), ZERO)));
-        assertThat(first.getTotalVolume(), is(2L));
-
-        assertThat(second.getAverageAmount(), is(closeTo(new BigDecimal("5"), ZERO)));
-        assertThat(second.getTotalAmount(), is(closeTo(new BigDecimal("15"), ZERO)));
-        assertThat(second.getTotalVolume(), is(3L));
+        List<GatewayAccountPerformanceReportEntity> gatewayAccountPerformanceReportEntities = performanceReportDao.aggregateNumberAndValueOfPaymentsByGatewayAccount();
+        assertThat(gatewayAccountPerformanceReportEntities.size(), is(2));
+        assertThat(gatewayAccountPerformanceReportEntities.get(0).getAverageAmount(), is(closeTo(new BigDecimal("6"), ZERO)));
+        assertThat(gatewayAccountPerformanceReportEntities.get(0).getTotalAmount(), is(closeTo(new BigDecimal("12"), ZERO)));
+        assertThat(gatewayAccountPerformanceReportEntities.get(0).getTotalVolume(), is(2L));
+        assertThat(gatewayAccountPerformanceReportEntities.get(1).getAverageAmount(), is(closeTo(new BigDecimal("5"), ZERO)));
+        assertThat(gatewayAccountPerformanceReportEntities.get(1).getTotalAmount(), is(closeTo(new BigDecimal("15"), ZERO)));
+        assertThat(gatewayAccountPerformanceReportEntities.get(1).getTotalVolume(), is(3L));
     }
 
     @Test

@@ -52,7 +52,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)
                 .setParameter("externalId", externalId)
-                .getResultStream().findFirst();
+                .getResultList().stream().findFirst();
     }
 
     public Optional<ChargeEntity> findByTokenId(String tokenId) {
@@ -61,7 +61,8 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)
                 .setParameter("tokenId", tokenId)
-                .getResultStream()
+                .getResultList()
+                .stream()
                 .findFirst();
     }
 
@@ -75,7 +76,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .createQuery(query, ChargeEntity.class)
                 .setParameter("externalId", externalId)
                 .setParameter("accountId", accountId)
-                .getResultStream().findFirst();
+                .getResultList().stream().findFirst();
     }
 
     public Optional<ChargeEntity> findByProviderAndTransactionId(String provider, String transactionId) {
@@ -87,7 +88,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)
                 .setParameter("gatewayTransactionId", transactionId)
-                .setParameter("provider", provider).getResultStream().findFirst();
+                .setParameter("provider", provider).getResultList().stream().findFirst();
     }
 
     public List<ChargeEntity> findBeforeDateWithStatusIn(ZonedDateTime date, List<ChargeStatus> statuses) {
