@@ -105,7 +105,7 @@ public class GatewayAccountResourceTestBase {
         assertCorrectCreateResponse(response, type, null, null, null);
     }
 
-    void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type, String description, String analyticsId, String name) {
+    static void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type, String description, String analyticsId, String name) {
         String accountId = response.extract().path("gateway_account_id");
         String urlSlug = "api/accounts/" + accountId;
 
