@@ -89,11 +89,11 @@ public class ChargeCancelService {
 
         try {
             final GatewayResponse<BaseCancelResponse> gatewayResponse = doGatewayCancel(chargeEntity);
-            Optional<BaseCancelResponse> baseResponse = gatewayResponse.getBaseResponse();
-            if (baseResponse.isPresent()) {
-                chargeStatus = determineTerminalState(baseResponse.get(), statusFlow);
-                stringifiedResponse = baseResponse.get().toString();
-            } else gatewayResponse.throwGatewayError();
+            
+            if (!gatewayResponse.getBaseResponse().isPresent()) gatewayResponse.throwGatewayError();
+            
+            chargeStatus = determineTerminalState(gatewayResponse.getBaseResponse().get(), statusFlow);
+            stringifiedResponse = gatewayResponse.getBaseResponse().get().toString();
         } catch (GenericGatewayErrorException | GatewayConnectionErrorException | GatewayConnectionTimeoutErrorException e) {
             logger.error(e.getMessage());
             chargeStatus = statusFlow.getFailureTerminalState();
@@ -140,15 +140,15 @@ public class ChargeCancelService {
 
     private void prepareForTerminate(ChargeEntity chargeEntity, StatusFlow statusFlow) {
         ChargeStatus newStatus = statusFlow.getLockState();
-        final ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
+        ChargeStatus currentStatus = ChargeStatus.fromString(chargeEntity.getStatus());
 
-        validateChargeStatus(statusFlow, chargeEntity, newStatus, chargeStatus);
+        validateChargeStatus(statusFlow, chargeEntity, newStatus, currentStatus);
         chargeEntity.setStatus(newStatus);
 
         // Used by Sumo Logic saved search
         logger.info("Card cancel request sent - charge_external_id={}, charge_status={}, account_id={}, transaction_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
                 chargeEntity.getExternalId(),
-                chargeStatus,
+                currentStatus,
                 chargeEntity.getGatewayAccount().getId(),
                 chargeEntity.getGatewayTransactionId(),
                 chargeEntity.getAmount(),
@@ -160,12 +160,11 @@ public class ChargeCancelService {
         chargeEventDao.persistChargeEventOf(chargeEntity);
     }
 
-    private void validateChargeStatus(StatusFlow statusFlow, ChargeEntity chargeEntity, ChargeStatus
-            newStatus, ChargeStatus chargeStatus) {
-        if (!chargeIsInTerminatableStatus(statusFlow, chargeStatus)) {
-            if (newStatus.equals(chargeStatus)) {
+    private void validateChargeStatus(StatusFlow statusFlow, ChargeEntity chargeEntity, ChargeStatus newStatus, ChargeStatus oldStatus) {
+        if (!chargeIsInTerminatableStatus(statusFlow, oldStatus)) {
+            if (newStatus.equals(oldStatus)) {
                 throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), chargeEntity.getExternalId());
-            } else if (Arrays.asList(AUTHORISATION_READY, AUTHORISATION_3DS_READY).contains(chargeStatus)) {
+            } else if (Arrays.asList(AUTHORISATION_READY, AUTHORISATION_3DS_READY).contains(oldStatus)) {
                 throw new ConflictRuntimeException(chargeEntity.getExternalId());
             }
 

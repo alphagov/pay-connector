@@ -57,7 +57,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     public void shouldNotAuthoriseIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
         try {
             mockPaymentProviderResponse(400, errorAuthResponse());
-            GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
+            provider.authorise(buildTestAuthorisationRequest());
         } catch (GatewayErrors.GatewayConnectionErrorException e) {
             assertEquals(e.toGatewayError(), new GatewayError("Unexpected HTTP status code 400 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
         }
@@ -84,7 +84,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     public void shouldNotCancelIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
         try {
             mockPaymentProviderResponse(400, errorCancelResponse());
-            GatewayResponse<BaseCancelResponse> response = provider.cancel(buildTestCancelRequest());
+            provider.cancel(buildTestCancelRequest());
         } catch (GatewayErrors.GatewayConnectionErrorException e) {
             assertEquals(e.toGatewayError(), new GatewayError("Unexpected HTTP status code 400 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
         }

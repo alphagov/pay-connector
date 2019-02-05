@@ -98,8 +98,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
             GatewayClient.Response response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), build3dsResponseAuthOrder(request));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getWorldpayGatewayResponse(response);
             
-            if (!gatewayResponse.getBaseResponse().isPresent())
-                gatewayResponse.throwGatewayError();
+            if (!gatewayResponse.getBaseResponse().isPresent()) gatewayResponse.throwGatewayError();
             
             BaseAuthoriseResponse authoriseResponse = gatewayResponse.getBaseResponse().get();
             return Gateway3DSAuthorisationResponse.of(gatewayResponse.toString(), authoriseResponse.authoriseStatus(), authoriseResponse.getTransactionId());

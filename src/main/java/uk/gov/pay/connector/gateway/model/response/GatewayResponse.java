@@ -58,16 +58,11 @@ public class GatewayResponse<T extends BaseResponse> {
             case GATEWAY_CONNECTION_ERROR: throw new GatewayConnectionErrorException(gatewayError.getMessage());
             case GATEWAY_CONNECTION_TIMEOUT_ERROR: throw new GatewayConnectionTimeoutErrorException(gatewayError.getMessage());
         }
-        
     }
 
     @Override
     public String toString() {
-        if (isFailed()) {
-            return gatewayError.toString();
-        } else {
-            return baseResponse.toString();
-        }
+        return Optional.ofNullable(gatewayError).map(x -> x.toString()).orElse(baseResponse.toString());
     }
 
     public static GatewayResponse with(GatewayError gatewayError) {

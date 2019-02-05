@@ -46,8 +46,7 @@ public class GatewayCaptureFailuresITest extends BaseGatewayITest {
         setupGatewayStub().respondWithMalformedBodyWhenCapture();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
-
-//        assertLastGatewayClientLoggingEventContains("Could not unmarshall response >>>|<malformed xml/>|<<<.");
+        
         assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));
     }
 

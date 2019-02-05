@@ -11,7 +11,6 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_TI
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_ERROR;
 
-//TODO deprecate this. we throw exceptions now
 public class GatewayError {
     private String message;
     private ErrorType errorType;

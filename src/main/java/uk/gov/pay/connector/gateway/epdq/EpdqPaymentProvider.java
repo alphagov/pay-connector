@@ -149,8 +149,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
             GatewayClient.Response response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, charge.getGatewayAccount(), buildQueryOrderRequestFor(charge));
             GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getEpdqGatewayResponse(response, EpdqQueryResponse.class);
             
-            if (!epdqGatewayResponse.getBaseResponse().isPresent()) 
-                epdqGatewayResponse.throwGatewayError();
+            if (!epdqGatewayResponse.getBaseResponse().isPresent()) epdqGatewayResponse.throwGatewayError();
             
             return toChargeQueryResponse(epdqGatewayResponse.getBaseResponse().get());
         } catch (GenericGatewayErrorException | GatewayConnectionTimeoutErrorException | GatewayConnectionErrorException e) {
@@ -168,7 +167,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
             GatewayClient.Response response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, request.getGatewayAccount(), buildQueryOrderRequestFor(request));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
             BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse()
-                    .map(epdqStatus -> epdqStatus.authoriseStatus()).orElse(BaseAuthoriseResponse.AuthoriseStatus.ERROR);
+                    .map(epdqStatus -> epdqStatus.authoriseStatus()).orElse(ERROR);
             Auth3dsDetails.Auth3dsResult auth3DResult = request.getAuth3DsDetails().getAuth3DsResult() == null ?
                     Auth3dsDetails.Auth3dsResult.ERROR : // we treat no result from frontend as an error
                     request.getAuth3DsDetails().getAuth3DsResult();
