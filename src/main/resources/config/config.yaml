@@ -27,8 +27,8 @@ worldpay:
   notificationDomain: ${SECURE_WORLDPAY_NOTIFICATION_DOMAIN:-worldpay.com}
   credentials: ['username','password','merchant_id']
   applePay:
-    privateKey: ${WORLDPAY_APPLE_PAY_PRIVATE_KEY:-privateKeyWhichShouldBeBase64Encoded}
-    publicCertificate: ${WORLDPAY_APPLE_PAY_PUBLIC_CERTIFICATE:-publicCertificateWhichShouldBeBase64Encoded}
+    privateKey: ${WORLDPAY_APPLE_PAY_PRIVATE_KEY}
+    publicCertificate: ${WORLDPAY_APPLE_PAY_PUBLIC_CERTIFICATE}
   jerseyClientOverrides:
     auth:
       # Auth is run in a background thread which will release the HTTP request from frontend after 1 second
