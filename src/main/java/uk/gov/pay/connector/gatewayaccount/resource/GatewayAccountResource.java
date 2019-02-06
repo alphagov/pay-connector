@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -43,6 +42,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -81,7 +81,7 @@ public class GatewayAccountResource {
     private final GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService;
     private final GatewayAccountRequestValidator validator;
     private final GatewayAccountServicesFactory gatewayAccountServicesFactory;
-    
+
     @Inject
     public GatewayAccountResource(GatewayAccountService gatewayAccountService, GatewayAccountDao gatewayDao, CardTypeDao cardTypeDao, ConnectorConfiguration conf,
                                   GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService,
@@ -238,6 +238,31 @@ public class GatewayAccountResource {
                 .orElseGet(() -> Response.status(NOT_FOUND).build());
     }
 
+    //Deprecate when self service has functionality to update the gateway merchant id
+    @PATCH
+    @Path("/v1/frontend/accounts/{accountId}/gateway-merchant-id/{gatewayMerchantId}")
+    @Consumes(APPLICATION_JSON)
+    @Transactional
+    public Response updateGatewayAccountCredentialsWithGatewayMerchantId(@PathParam("accountId") Long gatewayAccountId, @PathParam("gatewayMerchantId") String gatewayMerchantId) {
+        return gatewayDao.findById(gatewayAccountId).map(gatewayAccount -> {
+            Map<String, String> credentials = gatewayAccount.getCredentials();
+            Map<String, String> updatedCredentials = new HashMap<>(credentials);
+            updatedCredentials.put("gateway_merchant_id", gatewayMerchantId);
+            gatewayAccount.setCredentials(updatedCredentials);
+            return Response.ok().build();
+        }).orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+    } 
+    
+    @GET
+    @Path("/v1/frontend/accounts/{accountId}/gateway-merchant-id")
+    @Produces(APPLICATION_JSON)
+    public Response getGatewayMerchantId(@PathParam("accountId") Long gatewayAccountId) {
+        return gatewayDao.findById(gatewayAccountId).map(gatewayAccount -> {
+            String gatewayMerchantId = gatewayAccount.getCredentials().get("gateway_merchant_id");
+            return Response.ok(ImmutableMap.of("gateway_merchant_id", gatewayMerchantId)).build();
+        }).orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+    }
+
     @PATCH
     @Path("/v1/frontend/accounts/{accountId}/credentials")
     @Consumes(APPLICATION_JSON)
@@ -252,13 +277,13 @@ public class GatewayAccountResource {
         return gatewayDao.findById(gatewayAccountId)
                 .map(gatewayAccount ->
                         {
-                            Map credentialsPayload = (Map) gatewayAccountPayload.get(CREDENTIALS_FIELD_NAME);
+                            Map<String, String> credentialsPayload = (Map) gatewayAccountPayload.get(CREDENTIALS_FIELD_NAME);
                             List<String> missingCredentialsFields = checkMissingCredentialsFields(credentialsPayload, gatewayAccount.getGatewayName());
                             if (!missingCredentialsFields.isEmpty()) {
                                 return fieldsMissingResponse(missingCredentialsFields);
                             }
 
-                            gatewayAccount.setCredentials(new ObjectMapper().convertValue(credentialsPayload, Map.class));
+                            gatewayAccount.setCredentials(credentialsPayload);
                             return Response.ok().build();
                         }
                 )
@@ -425,7 +450,7 @@ public class GatewayAccountResource {
         return charge;
     }
 
-    private List<String> checkMissingCredentialsFields(Map<String, Object> credentialsPayload, String provider) {
+    private List<String> checkMissingCredentialsFields(Map<String, String> credentialsPayload, String provider) {
         return providerCredentialFields.get(provider).stream()
                 .filter(requiredField -> !credentialsPayload.containsKey(requiredField))
                 .collect(Collectors.toList());

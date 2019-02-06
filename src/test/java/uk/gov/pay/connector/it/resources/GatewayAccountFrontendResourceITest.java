@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
+import org.apache.http.HttpStatus;
 import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -121,6 +122,24 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     private Gson gson = new Gson();
+    
+    @Test
+    public void updateAndGetGatewayAccountWithWorldpayMerchantId() {
+        String accountId = createAGatewayAccountFor("worldpay");
+        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
+        updateGatewayAccountCredentialsWith(accountId, gatewayAccountPayload.buildCredentialsPayload());
+
+        givenSetup().accept(JSON)
+                .patch(ACCOUNTS_FRONTEND_URL + accountId + "/gateway-merchant-id/" + "1234abc")
+                .then()
+                .statusCode(HttpStatus.SC_OK);
+
+        givenSetup().accept(JSON)
+                .get(ACCOUNTS_FRONTEND_URL + accountId + "/gateway-merchant-id")
+                .then()
+                .statusCode(HttpStatus.SC_OK)
+                .body("gateway_merchant_id", is("1234abc"));
+    }
 
     @Test
     public void shouldGetGatewayAccountForExistingAccount() {
