@@ -16,11 +16,9 @@ import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClientResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeRefundResponse;
-import uk.gov.pay.connector.gateway.stripe.util.NoLiveTokenConfiguredException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import javax.ws.rs.WebApplicationException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,10 +76,6 @@ public class StripeRefundHandler {
             logger.error("Refund failed for refund gateway request {}. Reason: {}. Status code from Stripe: {}.", request, e.getMessage(), e.getStatusCode());
             GatewayError gatewayError = gatewayConnectionError("An internal server error occurred while refunding Transaction id: " + request.getTransactionId());
             return GatewayRefundResponse.fromGatewayError(gatewayError);
-        } catch (NoLiveTokenConfiguredException e) {
-            logger.error("Could not refund refund external id {}. Reason: No live token configured for gateway account {}.",
-                    request.getRefundExternalId(), request.getGatewayAccount().getId());
-            throw new WebApplicationException("There was an internal server error refunding refund external id: " + request.getRefundExternalId());
         }
     }
 
