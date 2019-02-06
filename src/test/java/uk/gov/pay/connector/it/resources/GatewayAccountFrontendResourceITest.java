@@ -139,6 +139,21 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .then()
                 .statusCode(HttpStatus.SC_OK)
                 .body("gateway_merchant_id", is("1234abc"));
+
+        givenSetup().accept(JSON)
+                .get(ACCOUNTS_FRONTEND_URL + accountId + "/gateway-merchant-id")
+                .then()
+                .statusCode(HttpStatus.SC_OK)
+                .body("gateway_merchant_id", is("1234abc"));
+    }
+    
+    @Test
+    public void getGatewayAccountWithInvalidAccount(){
+        givenSetup().accept(JSON)
+                .get(ACCOUNTS_FRONTEND_URL + "99999999" + "/gateway-merchant-id")
+                .then()
+                .statusCode(HttpStatus.SC_NOT_FOUND)
+                .body("message", is("The gateway account id '99999999' does not exist"));
     }
 
     @Test
