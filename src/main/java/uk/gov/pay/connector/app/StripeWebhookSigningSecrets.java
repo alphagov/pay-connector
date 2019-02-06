@@ -12,6 +12,7 @@ public class StripeWebhookSigningSecrets extends Configuration {
     private String test;
 
     @Valid
+    @NotNull
     private String live;
 
     public String getTest() {

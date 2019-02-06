@@ -16,12 +16,10 @@ import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClientResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeCaptureResponse;
-import uk.gov.pay.connector.gateway.stripe.util.NoLiveTokenConfiguredException;
 import uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import javax.ws.rs.WebApplicationException;
 import java.net.URI;
 import java.util.Map;
 
@@ -87,10 +85,6 @@ public class StripeCaptureHandler implements CaptureHandler {
                     transactionId, e.getMessage(), e.getStatusCode(), request.getExternalId());
             GatewayError gatewayError = gatewayConnectionError("An internal server error occurred when capturing charge_external_id: " + request.getExternalId());
             return CaptureResponse.fromGatewayError(gatewayError);
-        } catch (NoLiveTokenConfiguredException e) {
-            logger.error("Could not capture charge external id {}. Reason: No live token configured for gateway account {}.",
-                    request.getExternalId(), request.getGatewayAccount().getId());
-            throw new WebApplicationException("There was an internal server error capturing charge external id: " + request.getExternalId());
         }
     }
 }

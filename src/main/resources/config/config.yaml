@@ -77,11 +77,11 @@ epdq:
 stripe:
   url: ${GDS_CONNECTOR_STRIPE_URL:-https://api.stripe.com}
   authTokens:
-    test: ${GDS_CONNECTOR_STRIPE_AUTH_TOKEN:-sk_test}
+    test: ${GDS_CONNECTOR_STRIPE_AUTH_TOKEN}
     live: ${GDS_CONNECTOR_STRIPE_AUTH_LIVE_TOKEN}
   webhookSigningSecrets:
-      test: ${GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET:-whtest}
-      live: ${GDS_CONNECTOR_STRIPE_WEBHOOK_LIVE_SIGN_SECRET:-whlive}
+    test: ${GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET}
+    live: ${GDS_CONNECTOR_STRIPE_WEBHOOK_LIVE_SIGN_SECRET}
 
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
