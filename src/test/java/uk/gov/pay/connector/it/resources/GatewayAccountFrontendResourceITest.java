@@ -129,31 +129,43 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
         updateGatewayAccountCredentialsWith(accountId, gatewayAccountPayload.buildCredentialsPayload());
 
-        givenSetup().accept(JSON)
+        givenSetup()
                 .patch(ACCOUNTS_FRONTEND_URL + accountId + "/gateway-merchant-id/" + "1234abc")
                 .then()
                 .statusCode(HttpStatus.SC_OK);
 
-        givenSetup().accept(JSON)
+        givenSetup()
                 .get(ACCOUNTS_FRONTEND_URL + accountId + "/gateway-merchant-id")
                 .then()
                 .statusCode(HttpStatus.SC_OK)
                 .body("gateway_merchant_id", is("1234abc"));
 
-        givenSetup().accept(JSON)
+        givenSetup()
                 .get(ACCOUNTS_FRONTEND_URL + accountId + "/gateway-merchant-id")
                 .then()
                 .statusCode(HttpStatus.SC_OK)
                 .body("gateway_merchant_id", is("1234abc"));
     }
-    
+
     @Test
     public void getGatewayAccountWithInvalidAccount(){
-        givenSetup().accept(JSON)
+        givenSetup()
                 .get(ACCOUNTS_FRONTEND_URL + "99999999" + "/gateway-merchant-id")
                 .then()
                 .statusCode(HttpStatus.SC_NOT_FOUND)
                 .body("message", is("The gateway account id '99999999' does not exist"));
+    }
+
+    @Test
+    public void getGatewayAccountWithoutMerchantId(){
+        String accountId = createAGatewayAccountFor("worldpay");
+        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
+        updateGatewayAccountCredentialsWith(accountId, gatewayAccountPayload.buildCredentialsPayload());
+        givenSetup()
+                .get(ACCOUNTS_FRONTEND_URL + accountId + "/gateway-merchant-id")
+                .then()
+                .statusCode(HttpStatus.SC_NOT_FOUND)
+                .body("message", is(format("The gateway account id '%s' does not have a merchant id set", accountId)));
     }
 
     @Test
