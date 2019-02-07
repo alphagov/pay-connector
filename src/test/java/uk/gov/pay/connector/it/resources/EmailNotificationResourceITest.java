@@ -13,6 +13,7 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -29,7 +30,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .aTestAccount()
                 .insert();
 
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .body(new HashMap<>())
                 .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
@@ -42,7 +43,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
         String nonExistingAccountId = "111111111";
         String templateBody = "lorem ipsum";
 
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .body(getPatchRequestBody("replace", "/payment_confirmed/" + EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY, templateBody))
                 .patch(ACCOUNTS_API_URL + nonExistingAccountId + "/email-notification")
                 .then()
@@ -56,7 +57,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .aTestAccount()
                 .insert();
 
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .body(getPatchRequestBody("replace", "/refund_issued/enabled", true))
                 .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
@@ -74,7 +75,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .aTestAccount()
                 .insert();
 
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .body(getPatchRequestBody("replace", "/payment_confirmed/enabled", false))
                 .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
@@ -93,7 +94,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .insert();
         String newTemplateBody = "new value";
 
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .body(getPatchRequestBody("replace", "/refund_issued/template_body", newTemplateBody))
                 .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
@@ -112,7 +113,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .insert();
         String newTemplateBody = "new value";
 
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .body(getPatchRequestBody("replace",                       
                         "/payment_confirmed/template_body", newTemplateBody))
                 .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
@@ -133,7 +134,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .insert();
         String newTemplateBody = "new value";
 
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .body(getPatchRequestBody("replace", "/payment_confirmed/template_body", newTemplateBody))
                 .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
@@ -151,7 +152,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .aTestAccount()
                 .withEmailNotifications(new HashMap<>())
                 .insert();
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .body(getPatchRequestBody("replace","/refund_issued/enabled", false))
                 .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()

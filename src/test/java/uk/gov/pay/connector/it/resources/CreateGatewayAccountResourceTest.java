@@ -15,6 +15,7 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -41,7 +42,7 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
     @Test
     @Parameters({"sandbox", "worldpay", "smartpay", "epdq"})
     public void createAGatewayAccount(String provider) {
-        createAGatewayAccountFor(provider, "my test service", "analytics");
+        createAGatewayAccountFor(testContext.getPort(), provider, "my test service", "analytics", databaseTestHelper);
     }
 
     @Test
@@ -50,7 +51,7 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 "type", "test",
                 "payment_provider", "stripe",
                 "service_name", "My shiny new stripe service");
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(toJson(payload))
                 .post(ACCOUNTS_API_URL)
                 .then()
@@ -72,7 +73,7 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 "payment_provider", "stripe",
                 "service_name", "My shiny new stripe service",
                 "credentials", ImmutableMap.of("stripe_account_id", "abc"));
-        String gatewayAccountId = givenSetup()
+        String gatewayAccountId = given().port(testContext.getPort()).contentType(JSON)
                 .body(toJson(payload))
                 .post(ACCOUNTS_API_URL)
                 .then()
@@ -98,20 +99,20 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
     public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() {
         String payload = toJson(ImmutableMap.of("name", "test account", "type", "test"));
 
-        ValidatableResponse response = givenSetup()
+        ValidatableResponse response = given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .post(ACCOUNTS_API_URL)
                 .then()
                 .statusCode(201);
 
         assertCorrectCreateResponse(response);
-        assertGettingAccountReturnsProviderName(response, "sandbox", TEST);
+        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "sandbox", TEST);
     }
 
     @Test
     public void createGatewayAccount_shouldNotReturnCorporateSurcharges() {
         String payload = toJson(ImmutableMap.of("name", "test account"));
-        ValidatableResponse response = givenSetup()
+        ValidatableResponse response = given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .post(ACCOUNTS_API_URL)
                 .then()
@@ -126,20 +127,20 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
     @Test
     public void createGatewayAccountWithProviderUrlTypeLive() {
         String payload = toJson(ImmutableMap.of("payment_provider", "worldpay", "type", LIVE.toString()));
-        ValidatableResponse response = givenSetup()
+        ValidatableResponse response = given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .post(ACCOUNTS_API_URL)
                 .then()
                 .statusCode(201);
 
         assertCorrectCreateResponse(response, LIVE);
-        assertGettingAccountReturnsProviderName(response, "worldpay", LIVE);
+        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "worldpay", LIVE);
     }
 
     @Test
     public void createGatewayAccountWithRequires3dsToTrue() {
         String payload = toJson(ImmutableMap.of("payment_provider", "stripe", "type", LIVE.toString(), "requires_3ds", "true"));
-        ValidatableResponse response = givenSetup()
+        ValidatableResponse response = given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .post(ACCOUNTS_API_URL)
                 .then()
@@ -153,7 +154,7 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
     @Test
     public void createGatewayAccountWithRequires3dsDefaultsToFalse() {
         String payload = toJson(ImmutableMap.of("payment_provider", "worldpay", "type", LIVE.toString()));
-        ValidatableResponse response = givenSetup()
+        ValidatableResponse response = given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .post(ACCOUNTS_API_URL)
                 .then()
@@ -167,26 +168,26 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
     @Test
     public void createGatewayAccountWithNameDescriptionAndAnalyticsId() {
         String payload = toJson(ImmutableMap.of("service_name", "my service name", "description", "desc", "analytics_id", "analytics-id"));
-        ValidatableResponse response = givenSetup()
+        ValidatableResponse response = given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .post(ACCOUNTS_API_URL)
                 .then()
                 .statusCode(201);
 
         assertCorrectCreateResponse(response, TEST, "desc", "analytics-id", "my service name");
-        assertGettingAccountReturnsProviderName(response, "sandbox", TEST);
+        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "sandbox", TEST);
     }
 
     @Test
     public void createGatewayAccountWithMissingProviderUrlTypeCreatesTestType() {
         String payload = toJson(ImmutableMap.of("payment_provider", "worldpay"));
-        ValidatableResponse response = givenSetup()
+        ValidatableResponse response = given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .post(ACCOUNTS_API_URL)
                 .then()
                 .statusCode(201);
 
         assertCorrectCreateResponse(response, TEST);
-        assertGettingAccountReturnsProviderName(response, "worldpay", TEST);
+        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "worldpay", TEST);
     }
 }

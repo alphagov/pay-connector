@@ -12,6 +12,7 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
+import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
@@ -32,7 +33,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     @Test
     public void getAccountShouldReturn404IfAccountIdIsUnknown() {
         String unknownAccountId = "92348739";
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get(ACCOUNTS_API_URL + unknownAccountId)
                 .then()
                 .statusCode(404);
@@ -40,8 +41,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void getAccountShouldNotReturnCredentials() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
                 .then()
                 .statusCode(200)
@@ -50,8 +51,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void getAccountShouldNotReturnCardTypes() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
                 .then()
                 .statusCode(200)
@@ -60,8 +61,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void getAccountShouldReturnDescriptionAndAnalyticsId() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", "id");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "desc", "id", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
                 .then()
                 .statusCode(200)
@@ -71,8 +72,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void getAccountShouldReturnAnalyticsId() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", null, "id");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "desc", "id", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
                 .then()
                 .statusCode(200)
@@ -82,8 +83,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void getAccountShouldReturnDescription() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", null);
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "desc", null, databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
                 .then()
                 .statusCode(200)
@@ -93,8 +94,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void getAccountShouldReturn3dsSetting() {
-        String gatewayAccountId = createAGatewayAccountFor("stripe", "desc", null, "true");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "stripe", "desc", null, "true", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
                 .then()
                 .statusCode(200)
@@ -112,7 +113,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .withCorporateDebitCardSurchargeAmount(corporateDebitCardSurchargeAmount)
                 .insert();
 
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get(ACCOUNTS_API_URL + defaultTestAccount.getAccountId())
                 .then()
                 .statusCode(200)
@@ -131,7 +132,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .withCorporatePrepaidDebitCardSurchargeAmount(corporatePrepaidDebitCardSurchargeAmount)
                 .insert();
 
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get(ACCOUNTS_API_URL + defaultTestAccount.getAccountId())
                 .then()
                 .statusCode(200)
@@ -146,7 +147,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .aTestAccount()
                 .insert();
 
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get(ACCOUNTS_API_URL + defaultTestAccount.getAccountId())
                 .then()
                 .statusCode(200)
@@ -198,7 +199,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .insert();
 
         // assert properties are there
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts")
                 .then()
                 .statusCode(200)
@@ -233,7 +234,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void shouldReturnEmptyCollectionOfAccountsWhenNoneFound() {
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts")
                 .then()
                 .statusCode(200)
@@ -244,7 +245,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     public void getAccountShouldReturn404IfAccountIdIsNotNumeric() {
         String unknownAccountId = "92348739wsx673hdg";
 
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get(ACCOUNTS_API_URL + unknownAccountId)
                 .then()
                 .contentType(JSON)
@@ -255,8 +256,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void createValidNotificationCredentials_responseShouldBe200_Ok() {
-        String gatewayAccountId = createAGatewayAccountFor("smartpay");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "smartpay", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsbigsecret")))
                 .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
                 .then()
@@ -265,14 +266,14 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void patchGatewayAccountAnalyticsId_responseShouldBe200_Ok() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "old-desc", "old-id", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(toJson(ImmutableMap.of("analytics_id", "new-id")))
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/description-analytics-id")
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("description", is("old-desc"))
@@ -281,14 +282,14 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void patchGatewayAccountDescription_responseShouldBe200_Ok() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "old-desc", "old-id", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(toJson(ImmutableMap.of("description", "new-desc")))
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/description-analytics-id")
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("description", is("new-desc"))
@@ -297,14 +298,14 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void patchGatewayAccountDescriptionAndAnalyticsId_responseShouldBe200_Ok() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "old-desc", "old-id", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(toJson(ImmutableMap.of("analytics_id", "new-id", "description", "new-desc")))
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/description-analytics-id")
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(200)
@@ -314,14 +315,14 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void patchGatewayAccountDescriptionAndAnalyticsIdEmpty_responseShouldReturn400() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "old-desc", "old-id", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(toJson(ImmutableMap.of()))
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/description-analytics-id")
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode());
 
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("description", is("old-desc"))
@@ -330,14 +331,14 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void shouldToggle3dsToTrue() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "old-desc", "old-id", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(toJson(ImmutableMap.of("toggle_3ds", true)))
                 .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("toggle_3ds", is("true"));
@@ -345,14 +346,14 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void shouldToggle3dsToFalse() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "old-desc", "old-id", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(toJson(ImmutableMap.of("toggle_3ds", false)))
                 .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("toggle_3ds", is("false"));
@@ -360,22 +361,22 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void shouldReturn409Conflict_Toggling3dsToFalse_WhenA3dsCardTypeIsAccepted() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "desc", "id");
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "desc", "id", databaseTestHelper);
         String maestroCardTypeId = databaseTestHelper.getCardTypeId("maestro", "DEBIT");
 
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(toJson(ImmutableMap.of("toggle_3ds", true)))
                 .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .body("{\"card_types\": [\"" + maestroCardTypeId + "\"]}")
                 .post(ACCOUNTS_FRONTEND_URL + gatewayAccountId + "/card-types")
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(toJson(ImmutableMap.of("toggle_3ds", false)))
                 .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
                 .then()
@@ -384,8 +385,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void whenNotificationCredentialsInvalidKeys_shouldReturn400() {
-        String gatewayAccountId = createAGatewayAccountFor("smartpay");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "smartpay", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(toJson(ImmutableMap.of("bob", "bob", "bobby", "bobsbigsecret")))
                 .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
                 .then()
@@ -394,8 +395,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void whenNotificationCredentialsInvalidValues_shouldReturn400() {
-        String gatewayAccountId = createAGatewayAccountFor("smartpay");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "smartpay", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(toJson(ImmutableMap.of("username", "bob", "password", "tooshort")))
                 .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
                 .then()
@@ -406,13 +407,13 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void shouldReturn200_whenNotifySettingsIsUpdated() throws Exception {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "notify_settings",
                 "value", ImmutableMap.of("api_token", "anapitoken",
                         "template_id", "atemplateid",
                         "refund_issued_template_id", "anothertemplate")));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
@@ -421,12 +422,12 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void shouldReturn400_whenNotifySettingsIsUpdated_withWrongOp() throws Exception {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "insert",
                 "path", "notify_settings",
                 "value", ImmutableMap.of("api_token", "anapitoken",
                         "template_id", "atemplateid")));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
@@ -435,11 +436,11 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void shouldReturn200_whenEmailCollectionModeIsUpdated() throws Exception {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "email_collection_mode",
                 "value", "OFF"));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
@@ -448,11 +449,11 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void shouldReturn400_whenEmailCollectionModeIsUpdated_withWrongValue() throws Exception {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "email_collection_mode",
                 "value", "nope"));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
@@ -467,7 +468,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 "value", ImmutableMap.of("api_token", "anapitoken",
                         "template_id", "atemplateid",
                         "refund_issued_template_id", "anothertemplate")));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
@@ -476,13 +477,13 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void shouldReturn200_whenNotifySettingsIsRemoved() throws Exception {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "notify_settings",
                 "value", ImmutableMap.of("api_token", "anapitoken",
                         "template_id", "atemplateid",
                         "refund_issued_template_id", "anothertemplate")));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
@@ -491,7 +492,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
         payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "remove",
                 "path", "notify_settings"));
 
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
@@ -500,10 +501,10 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void shouldReturn400_whenNotifySettingsIsRemoved_withWrongPath() throws Exception {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "insert",
                 "path", "notify_setting"));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
@@ -512,8 +513,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void allow_web_payments_shouldBeFalseByDefault() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
-        givenSetup()
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "old-desc", "old-id", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("allow_web_payments", is("false"));
@@ -521,17 +522,17 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void patchGatewayAccountToAllowWebPayments() throws JsonProcessingException {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "old-desc", "old-id", databaseTestHelper);
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "allow_web_payments",
                 "value", "true"));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("allow_web_payments", is("true"));
@@ -539,23 +540,23 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void patchGatewayAccount_forCorporateCreditCardSurcharge() throws JsonProcessingException {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "a-description", "analytics-id", databaseTestHelper);
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "corporate_credit_card_surcharge_amount",
                 "value", 100));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("corporate_credit_card_surcharge_amount", is(0))
                 .body("corporate_debit_card_surcharge_amount", is(0))
                 .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
                 .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(OK.getStatusCode());
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("corporate_credit_card_surcharge_amount", is(100))
@@ -566,23 +567,23 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void patchGatewayAccount_forCorporateDebitCardSurcharge() throws JsonProcessingException {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "a-description", "analytics-id", databaseTestHelper);
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "corporate_debit_card_surcharge_amount",
                 "value", 200));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("corporate_credit_card_surcharge_amount", is(0))
                 .body("corporate_debit_card_surcharge_amount", is(0))
                 .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
                 .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(OK.getStatusCode());
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("corporate_credit_card_surcharge_amount", is(0))
@@ -593,23 +594,23 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void patchGatewayAccount_forCorporatePrepaidCreditCardSurcharge() throws JsonProcessingException {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "a-description", "analytics-id", databaseTestHelper);
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "corporate_prepaid_credit_card_surcharge_amount",
                 "value", 300));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("corporate_credit_card_surcharge_amount", is(0))
                 .body("corporate_debit_card_surcharge_amount", is(0))
                 .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
                 .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(OK.getStatusCode());
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("corporate_credit_card_surcharge_amount", is(0))
@@ -620,23 +621,23 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void patchGatewayAccount_forCorporatePrepaidDebitCardSurcharge() throws JsonProcessingException {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        String gatewayAccountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "a-description", "analytics-id", databaseTestHelper);
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "corporate_prepaid_debit_card_surcharge_amount",
                 "value", 400));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("corporate_credit_card_surcharge_amount", is(0))
                 .body("corporate_debit_card_surcharge_amount", is(0))
                 .body("corporate_prepaid_credit_card_surcharge_amount", is(0))
                 .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(OK.getStatusCode());
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .body("corporate_credit_card_surcharge_amount", is(0))
@@ -651,7 +652,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "corporate_credit_card_surcharge_amount",
                 "value", 100));
-        givenSetup()
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()

@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -42,7 +43,7 @@ import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceTestBase {
-
+    
     private static final String ACCOUNTS_CARD_TYPE_FRONTEND_URL = "v1/frontend/accounts/{accountId}/card-types";
 
     static class GatewayAccountPayload {
@@ -127,44 +128,44 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     
     @Test
     public void updateGatewayAccountWithGatewayMerchantId() throws Exception {
-        String accountId = createAGatewayAccountFor("worldpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
         updateGatewayAccountCredentialsWith(accountId, gatewayAccountPayload.buildCredentialsPayload());
 
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "add",
                 "path", "credentials/gateway_merchant_id",
                 "value", "1234abc"));
-        
-        givenSetup()
+
+        given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + accountId)
                 .then()
                 .statusCode(HttpStatus.SC_OK);
 
-        String chargeId = givenSetup()
+        String chargeId = given().port(testContext.getPort()).contentType(JSON)
                 .contentType(JSON)
                 .body(createChargePostBody(accountId))
                 .post(format("/v1/api/accounts/%s/charges", accountId))
                 .then()
                 .extract()
                 .path("charge_id");
-        
-        givenSetup().contentType(JSON)
+
+        given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/frontend/charges/" + chargeId)
-                .then().log().body()
+                .then()
                 .body("gateway_account.gateway_merchant_id", is("1234abc"));
     }
 
     @Test
     public void shouldGetGatewayAccountForExistingAccount() {
-        String accountId = createAGatewayAccountFor("worldpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
         databaseTestHelper.updateCredentialsFor(Long.valueOf(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
         databaseTestHelper.updateServiceNameFor(Long.valueOf(accountId), gatewayAccountPayload.getServiceName());
         databaseTestHelper.updateCorporateCreditCardSurchargeAmountFor(Long.valueOf(accountId), 250);
         databaseTestHelper.updateCorporateDebitCardSurchargeAmountFor(Long.valueOf(accountId), 50);
 
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + accountId)
                 .then()
                 .statusCode(200)
@@ -187,8 +188,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void shouldGetGatewayAccountWithDescriptionAndAnalyticsId() {
-        String accountId = createAGatewayAccountFor("worldpay", "a-description", "an-analytics-id");
-        givenSetup().accept(JSON)
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", "a-description", "an-analytics-id", databaseTestHelper);
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + accountId)
                 .then()
                 .statusCode(200)
@@ -200,12 +201,12 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void shouldGetNotificationCredentialsWhenTheyExistForGatewayAccount() {
-        String accountId = createAGatewayAccountFor("smartpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "smartpay", databaseTestHelper);
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault();
         databaseTestHelper.updateCredentialsFor(Long.valueOf(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
         databaseTestHelper.addNotificationCredentialsFor(Long.valueOf(accountId), "bob", "bobssecret");
 
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + accountId)
                 .then()
                 .statusCode(200)
@@ -217,14 +218,14 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void shouldFilterGetGatewayAccountForExistingAccount() {
-        String accountId = createAGatewayAccountFor("worldpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
         databaseTestHelper.updateCredentialsFor(Long.valueOf(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
         databaseTestHelper.updateServiceNameFor(Long.valueOf(accountId), gatewayAccountPayload.getServiceName());
         databaseTestHelper.updateCorporateCreditCardSurchargeAmountFor(Long.valueOf(accountId), 250);
         databaseTestHelper.updateCorporateDebitCardSurchargeAmountFor(Long.valueOf(accountId), 50);
 
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .get("/v1/frontend/accounts?accountIds=" + accountId)
                 .then()
                 .statusCode(200)
@@ -249,12 +250,12 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void shouldAcceptAllCardTypesNotRequiring3DSForNewlyCreatedAccountAs3dsIsDisabledByDefault() {
-        String accountId = createAGatewayAccountFor("worldpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
         String frontendCardTypeUrl = ACCOUNTS_CARD_TYPE_FRONTEND_URL.replace("{accountId}", accountId);
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
         databaseTestHelper.updateCredentialsFor(Long.valueOf(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
         databaseTestHelper.updateServiceNameFor(Long.valueOf(accountId), gatewayAccountPayload.getServiceName());
-        ValidatableResponse response = givenSetup().accept(JSON)
+        ValidatableResponse response = given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .get(frontendCardTypeUrl)
                 .then()
                 .statusCode(200)
@@ -273,7 +274,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     @Test
     public void shouldReturn404IfGatewayAccountDoesNotExist() {
         String nonExistingGatewayAccount = "12345";
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + nonExistingGatewayAccount)
                 .then()
                 .statusCode(404)
@@ -284,7 +285,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     @Test
     public void shouldReturn404IfGatewayAccountIsNotNumeric() {
         String nonNumericGatewayAccount = "ABC";
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + nonNumericGatewayAccount)
                 .then()
                 .contentType(JSON)
@@ -295,7 +296,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void updateCredentials_shouldUpdateGatewayAccountCredentialsForAWorldpayAccountSuccessfully() {
-        String accountId = createAGatewayAccountFor("worldpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
 
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault()
                 .withMerchantId("a-merchant-id");
@@ -310,7 +311,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void updateCredentials_shouldUpdateGatewayAccountCredentialsForASmartpayAccountSuccessfully() {
-        String accountId = createAGatewayAccountFor("smartpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "smartpay", databaseTestHelper);
 
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault();
 
@@ -324,7 +325,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void updateCredentials_shouldUpdateGatewayAccountCredentialsWithSpecialCharactersInUserNamesAndPassword() {
-        String accountId = createAGatewayAccountFor("smartpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "smartpay", databaseTestHelper);
 
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault()
                 .withUsername("someone@some{[]where&^%>?\\/")
@@ -340,7 +341,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfMissingCredentials() {
-        String accountId = createAGatewayAccountFor("worldpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
 
         updateGatewayAccountCredentialsWith(accountId, new HashMap<>())
                 .then()
@@ -350,7 +351,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountWith2RequiredCredentialsMisses1Credential() {
-        String accountId = createAGatewayAccountFor("smartpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "smartpay", databaseTestHelper);
 
         Map<String, Object> credentials = new GatewayAccountPayload()
                 .withUsername("a-username")
@@ -367,7 +368,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountWith3RequiredCredentialsMisses1Credential() {
-        String accountId = createAGatewayAccountFor("worldpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
 
         Map<String, Object> credentials = new GatewayAccountPayload()
                 .withUsername("a-username")
@@ -383,7 +384,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountWith3RequiredCredentialsMisses2Credentials() {
-        String accountId = createAGatewayAccountFor("worldpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
 
         Map<String, Object> credentials = new GatewayAccountPayload()
                 .withUsername("a-username")
@@ -410,7 +411,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     @Test
     public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountIdDoesNotExist() {
         String nonExistingAccountId = "111111111";
-        createAGatewayAccountFor("smartpay");
+        createAGatewayAccountFor(testContext.getPort(), "smartpay", databaseTestHelper);
 
         Map<String, Object> credentials = GatewayAccountPayload.createDefault().buildCredentialsPayload();
         updateGatewayAccountCredentialsWith(nonExistingAccountId, credentials)
@@ -421,11 +422,11 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void updateServiceName_shouldUpdateGatewayAccountServiceNameSuccessfully() {
-        String accountId = createAGatewayAccountFor("smartpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "smartpay", databaseTestHelper);
 
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault();
 
-        givenSetup().accept(JSON)
+        given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .body(gatewayAccountPayload.buildServiceNamePayload())
                 .patch(ACCOUNTS_FRONTEND_URL + accountId + "/servicename")
                 .then()
@@ -437,7 +438,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfMissingServiceName() {
-        String accountId = createAGatewayAccountFor("worldpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
 
         updateGatewayAccountServiceNameWith(accountId, new HashMap<>())
                 .then()
@@ -447,7 +448,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
     @Test
     public void updateServiceName_shouldFailUpdatingIfInvalidServiceNameLength() {
-        String accountId = createAGatewayAccountFor("worldpay");
+        String accountId = createAGatewayAccountFor(testContext.getPort(), "worldpay", databaseTestHelper);
 
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault()
                 .withServiceName("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
@@ -472,7 +473,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     @Test
     public void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdDoesNotExist() {
         String nonExistingAccountId = "111111111";
-        createAGatewayAccountFor("smartpay");
+        createAGatewayAccountFor(testContext.getPort(), "smartpay", databaseTestHelper);
 
         Map<String, String> serviceNamePayload = GatewayAccountPayload.createDefault().buildServiceNamePayload();
         updateGatewayAccountServiceNameWith(nonExistingAccountId, serviceNamePayload)
@@ -574,19 +575,19 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     }
 
     private Response updateGatewayAccountCredentialsWith(String accountId, Map<String, Object> credentials) {
-        return givenSetup().accept(JSON)
+        return given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .body(credentials)
                 .patch(ACCOUNTS_FRONTEND_URL + accountId + "/credentials");
     }
 
     private Response updateGatewayAccountServiceNameWith(String accountId, Map<String, String> serviceName) {
-        return givenSetup().accept(JSON)
+        return given().port(testContext.getPort()).contentType(JSON).accept(JSON)
                 .body(serviceName)
                 .patch(ACCOUNTS_FRONTEND_URL + accountId + "/servicename");
     }
 
     private Response updateGatewayAccountCardTypesWith(long accountId, String body) {
-        return givenSetup()
+        return given().port(testContext.getPort()).contentType(JSON)
                 .contentType(ContentType.JSON)
                 .accept(JSON)
                 .body(body)

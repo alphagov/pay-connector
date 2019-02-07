@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.Maps;
 import io.restassured.response.ValidatableResponse;
-import io.restassured.specification.RequestSpecification;
 import org.junit.After;
 import org.junit.Before;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
@@ -46,20 +45,21 @@ public class GatewayAccountResourceTestBase {
         databaseTestHelper.truncateAllData();
     }
 
-    protected RequestSpecification givenSetup() {
-        return given().port(testContext.getPort())
-                .contentType(JSON);
+    //TODO move static methods to utils class
+    public static String createAGatewayAccountFor(int port, String testProvider, DatabaseTestHelper databaseTestHelper) {
+        return createAGatewayAccountFor(port, testProvider, null, null, databaseTestHelper);
     }
 
-    String createAGatewayAccountFor(String testProvider) {
-        return createAGatewayAccountFor(testProvider, null, null);
+    public static String createAGatewayAccountFor(int port, String testProvider, String description, String analyticsId, DatabaseTestHelper databaseTestHelper) {
+        return createAGatewayAccountFor(port, testProvider, description, analyticsId, null, databaseTestHelper);
     }
 
-    String createAGatewayAccountFor(String testProvider, String description, String analyticsId) {
-        return createAGatewayAccountFor(testProvider, description, analyticsId, null);
-    }
-
-    String createAGatewayAccountFor(String testProvider, String description, String analyticsId, String requires_3ds) {
+    public static String createAGatewayAccountFor(int port, 
+                                                  String testProvider, 
+                                                  String description, 
+                                                  String analyticsId, 
+                                                  String requires_3ds, 
+                                                  DatabaseTestHelper databaseTestHelper) {
         Map<String, String> payload = Maps.newHashMap();
         payload.put("payment_provider", testProvider);
         if (description != null) {
@@ -71,7 +71,7 @@ public class GatewayAccountResourceTestBase {
         if (requires_3ds != null) {
             payload.put("requires_3ds", requires_3ds);
         }
-        ValidatableResponse response = givenSetup()
+        ValidatableResponse response = given().port(port).contentType(JSON)
                 .body(toJson(payload))
                 .post(ACCOUNTS_API_URL)
                 .then()
@@ -79,15 +79,15 @@ public class GatewayAccountResourceTestBase {
                 .contentType(JSON);
 
         assertCorrectCreateResponse(response, GatewayAccountEntity.Type.TEST, description, analyticsId, null);
-        assertGettingAccountReturnsProviderName(response, testProvider, GatewayAccountEntity.Type.TEST);
-        assertGatewayAccountCredentialsAreEmptyInDB(response);
-        assertGatewayAccountCredentialsAreEmptyInDB(response);
-        assertGatewayAccountCredentialsAreEmptyInDB(response);
+        assertGettingAccountReturnsProviderName(port, response, testProvider, GatewayAccountEntity.Type.TEST);
+        assertGatewayAccountCredentialsAreEmptyInDB(response, databaseTestHelper);
+        assertGatewayAccountCredentialsAreEmptyInDB(response, databaseTestHelper);
+        assertGatewayAccountCredentialsAreEmptyInDB(response, databaseTestHelper);
         return response.extract().path("gateway_account_id");
     }
 
-    void assertGettingAccountReturnsProviderName(ValidatableResponse response, String providerName, GatewayAccountEntity.Type providerUrlType) {
-        givenSetup()
+    public static void assertGettingAccountReturnsProviderName(int port, ValidatableResponse response, String providerName, GatewayAccountEntity.Type providerUrlType) {
+        given().port(port).contentType(JSON)
                 .get(response.extract().header("Location").replace("https", "http")) //Scheme on links back are forced to be https
                 .then()
                 .statusCode(200)
@@ -122,7 +122,7 @@ public class GatewayAccountResourceTestBase {
                 .body("links[0].method", is("GET"));
     }
 
-    private void assertGatewayAccountCredentialsAreEmptyInDB(ValidatableResponse response) {
+    public static void assertGatewayAccountCredentialsAreEmptyInDB(ValidatableResponse response, DatabaseTestHelper databaseTestHelper) {
         String gateway_account_id = response.extract().path("gateway_account_id");
         Map<String, String> accountCredentials = databaseTestHelper.getAccountCredentials(Long.valueOf(gateway_account_id));
         assertThat(accountCredentials, is(new HashMap<>()));
