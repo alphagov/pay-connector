@@ -42,7 +42,6 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -236,21 +235,6 @@ public class GatewayAccountResource {
                 .doPatch(gatewayAccountId, PatchRequest.from(payload))
                 .map(gatewayAccount -> Response.ok().build())
                 .orElseGet(() -> Response.status(NOT_FOUND).build());
-    }
-
-    //Deprecate when self service has functionality to update the gateway merchant id
-    @PATCH
-    @Path("/v1/frontend/accounts/{accountId}/gateway-merchant-id/{gatewayMerchantId}")
-    @Consumes(APPLICATION_JSON)
-    @Transactional
-    public Response updateGatewayAccountCredentialsWithGatewayMerchantId(@PathParam("accountId") Long gatewayAccountId, @PathParam("gatewayMerchantId") String gatewayMerchantId) {
-        return gatewayDao.findById(gatewayAccountId).map(gatewayAccount -> {
-            Map<String, String> credentials = gatewayAccount.getCredentials();
-            Map<String, String> updatedCredentials = new HashMap<>(credentials);
-            updatedCredentials.put("gateway_merchant_id", gatewayMerchantId);
-            gatewayAccount.setCredentials(updatedCredentials);
-            return Response.ok().build();
-        }).orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
     @GET

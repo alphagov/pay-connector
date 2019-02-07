@@ -23,7 +23,9 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_VAL
 public class GatewayAccountRequestValidator {
 
     private static final String REPLACE_OP = "replace";
+    private static final String ADD_OP = "add";
     private static final String REMOVE_OP = "remove";
+    public static final String CREDENTIALS_GATEWAY_MERCHANT_ID = "credentials/gateway_merchant_id";
     public static final String FIELD_ALLOW_WEB_PAYMENTS = "allow_web_payments";
     public static final String FIELD_NOTIFY_SETTINGS = "notify_settings";
     public static final String FIELD_EMAIL_COLLECTION_MODE = "email_collection_mode";
@@ -31,7 +33,9 @@ public class GatewayAccountRequestValidator {
     public static final String FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT = "corporate_debit_card_surcharge_amount";
     public static final String FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT = "corporate_prepaid_credit_card_surcharge_amount";
     public static final String FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT = "corporate_prepaid_debit_card_surcharge_amount";
-    private static final List<String> VALID_PATHS = asList(FIELD_NOTIFY_SETTINGS, 
+    private static final List<String> VALID_PATHS = asList(
+            CREDENTIALS_GATEWAY_MERCHANT_ID,
+            FIELD_NOTIFY_SETTINGS, 
             FIELD_EMAIL_COLLECTION_MODE, 
             FIELD_ALLOW_WEB_PAYMENTS,
             FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT,
@@ -56,6 +60,9 @@ public class GatewayAccountRequestValidator {
             throw new ValidationException(Collections.singletonList(format("Operation [%s] not supported for path [%s]", FIELD_OPERATION, path)));
         
         switch (path) {
+            case CREDENTIALS_GATEWAY_MERCHANT_ID:
+                validateGatewayMerchantId(payload);
+                break;
             case FIELD_NOTIFY_SETTINGS: 
                 validateNotifySettingsRequest(payload);
                 break;
@@ -72,6 +79,11 @@ public class GatewayAccountRequestValidator {
                 validateCorporateCardSurchargePayload(payload);
                 break;
         }
+    }
+
+    private void validateGatewayMerchantId(JsonNode payload) {
+        throwIfInvalidFieldOperation(payload, ADD_OP);
+        throwIfNullFieldValue(payload.get(FIELD_VALUE));
     }
 
     private void validateNotifySettingsRequest(JsonNode payload) {

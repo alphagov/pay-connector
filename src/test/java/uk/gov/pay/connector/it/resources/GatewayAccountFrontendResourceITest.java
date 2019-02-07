@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import io.restassured.http.ContentType;
@@ -124,13 +125,18 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     private Gson gson = new Gson();
     
     @Test
-    public void updateAndGetGatewayAccountWithWorldpayMerchantId() {
+    public void updateAndGetGatewayAccountWithWorldpayMerchantId() throws Exception {
         String accountId = createAGatewayAccountFor("worldpay");
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
         updateGatewayAccountCredentialsWith(accountId, gatewayAccountPayload.buildCredentialsPayload());
 
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "add",
+                "path", "credentials/gateway_merchant_id",
+                "value", "1234abc"));
+        
         givenSetup()
-                .patch(ACCOUNTS_FRONTEND_URL + accountId + "/gateway-merchant-id/" + "1234abc")
+                .body(payload)
+                .patch("/v1/api/accounts/" + accountId)
                 .then()
                 .statusCode(HttpStatus.SC_OK);
 
