@@ -237,18 +237,6 @@ public class GatewayAccountResource {
                 .orElseGet(() -> Response.status(NOT_FOUND).build());
     }
 
-    @GET
-    @Path("/v1/frontend/accounts/{accountId}/gateway-merchant-id")
-    @Produces(APPLICATION_JSON)
-    public Response getGatewayMerchantId(@PathParam("accountId") Long gatewayAccountId) {
-        return gatewayDao.findById(gatewayAccountId).map(gatewayAccount -> {
-            Optional<String> maybeGatewayMerchantId = Optional.ofNullable(gatewayAccount.getCredentials().get("gateway_merchant_id"));
-            return maybeGatewayMerchantId.map(gatewayMerchantId -> Response.ok(ImmutableMap.of("gateway_merchant_id", maybeGatewayMerchantId.get())).build())
-                    .orElse(notFoundResponse(format("The gateway account id '%s' does not have a merchant id set", gatewayAccountId)));
-
-        }).orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
-    }
-
     @PATCH
     @Path("/v1/frontend/accounts/{accountId}/credentials")
     @Consumes(APPLICATION_JSON)

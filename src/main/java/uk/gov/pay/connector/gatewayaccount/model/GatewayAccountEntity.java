@@ -170,6 +170,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return credentials;
     }
 
+    @JsonProperty("gateway_merchant_id")
+    @JsonView(Views.FrontendView.class)
+    public String getGatewayMerchantId() {
+        return credentials.get("gateway_merchant_id");
+    }
+
     @JsonView(Views.ApiView.class)
     public String getDescription() {
         return description;

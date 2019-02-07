@@ -53,6 +53,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -425,15 +426,7 @@ public class ChargesFrontendResourceITest {
 
     private String postToCreateACharge(long expectedAmount) {
         String reference = "Test reference";
-        String postBody = toJson(ImmutableMap.builder()
-                .put("reference", reference)
-                .put("description", description)
-                .put("amount", expectedAmount)
-                .put("gateway_account_id", accountId)
-                .put("return_url", returnUrl)
-                .put("email", email)
-                .put("delayed_capture", true).build());
-
+        String postBody = createChargePostBody(description, expectedAmount, accountId, returnUrl, email);
         ValidatableResponse response = connectorRestApi
                 .withAccountId(accountId)
                 .postCreateCharge(postBody)

@@ -37,6 +37,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -125,7 +126,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     private Gson gson = new Gson();
     
     @Test
-    public void updateAndGetGatewayAccountWithWorldpayMerchantId() throws Exception {
+    public void updateGatewayAccountWithGatewayMerchantId() throws Exception {
         String accountId = createAGatewayAccountFor("worldpay");
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
         updateGatewayAccountCredentialsWith(accountId, gatewayAccountPayload.buildCredentialsPayload());
@@ -140,38 +141,18 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .then()
                 .statusCode(HttpStatus.SC_OK);
 
-        givenSetup()
-                .get(ACCOUNTS_FRONTEND_URL + accountId + "/gateway-merchant-id")
+        String chargeId = givenSetup()
+                .contentType(JSON)
+                .body(createChargePostBody(accountId))
+                .post(format("/v1/api/accounts/%s/charges", accountId))
                 .then()
-                .statusCode(HttpStatus.SC_OK)
-                .body("gateway_merchant_id", is("1234abc"));
-
-        givenSetup()
-                .get(ACCOUNTS_FRONTEND_URL + accountId + "/gateway-merchant-id")
-                .then()
-                .statusCode(HttpStatus.SC_OK)
-                .body("gateway_merchant_id", is("1234abc"));
-    }
-
-    @Test
-    public void getGatewayAccountWithInvalidAccount(){
-        givenSetup()
-                .get(ACCOUNTS_FRONTEND_URL + "99999999" + "/gateway-merchant-id")
-                .then()
-                .statusCode(HttpStatus.SC_NOT_FOUND)
-                .body("message", is("The gateway account id '99999999' does not exist"));
-    }
-
-    @Test
-    public void getGatewayAccountWithoutMerchantId(){
-        String accountId = createAGatewayAccountFor("worldpay");
-        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
-        updateGatewayAccountCredentialsWith(accountId, gatewayAccountPayload.buildCredentialsPayload());
-        givenSetup()
-                .get(ACCOUNTS_FRONTEND_URL + accountId + "/gateway-merchant-id")
-                .then()
-                .statusCode(HttpStatus.SC_NOT_FOUND)
-                .body("message", is(format("The gateway account id '%s' does not have a merchant id set", accountId)));
+                .extract()
+                .path("charge_id");
+        
+        givenSetup().contentType(JSON)
+                .get("/v1/frontend/charges/" + chargeId)
+                .then().log().body()
+                .body("gateway_account.gateway_merchant_id", is("1234abc"));
     }
 
     @Test
