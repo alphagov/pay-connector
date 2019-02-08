@@ -12,9 +12,10 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
-import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionTimeoutErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrors.GenericGatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionTimeoutErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -30,6 +31,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 
 public class CardAuthoriseService {
@@ -59,7 +63,7 @@ public class CardAuthoriseService {
             
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
             GatewayResponse<BaseAuthoriseResponse> operationResponse = null;
-            ChargeStatus newStatus;
+            ChargeStatus newStatus = null;
             Optional<String> transactionId = Optional.empty();
             Optional<String> sessionIdentifier = Optional.empty();
             Optional<Auth3dsDetailsEntity> auth3dsDetailsEntity = Optional.empty();
@@ -74,8 +78,12 @@ public class CardAuthoriseService {
                 auth3dsDetailsEntity = extractAuth3dsDetails(operationResponse);
                 sessionIdentifier = operationResponse.getSessionIdentifier();
                 
-            } catch (GenericGatewayErrorException | GatewayConnectionErrorException | GatewayConnectionTimeoutErrorException e) {
-                newStatus = e.chargeStatus();
+            } catch (GatewayErrorException e) {
+                
+                if (e instanceof GenericGatewayErrorException) newStatus = AUTHORISATION_ERROR;
+                if (e instanceof GatewayConnectionTimeoutErrorException) newStatus = AUTHORISATION_TIMEOUT;
+                if (e instanceof GatewayConnectionErrorException) newStatus = AUTHORISATION_UNEXPECTED_ERROR;
+                
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
 
@@ -141,10 +149,8 @@ public class CardAuthoriseService {
         return cardTypes.stream().anyMatch(CardTypeEntity::isRequires3ds);
     }
 
-    private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) 
-            throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
-        return getPaymentProviderFor(charge)
-                .authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
+    private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) throws GatewayErrorException {
+        return getPaymentProviderFor(charge).authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
     }
 
     private Optional<Auth3dsDetailsEntity> extractAuth3dsDetails(GatewayResponse<BaseAuthoriseResponse> operationResponse) {

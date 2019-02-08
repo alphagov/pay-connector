@@ -11,7 +11,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayErrors;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -102,14 +102,14 @@ public class GatewayClientTest {
         when(mockGatewayOrder.getMediaType()).thenReturn(mediaType);
     }
 
-    @Test(expected = GatewayErrors.GatewayConnectionErrorException.class)
+    @Test(expected = GatewayErrorException.GatewayConnectionErrorException.class)
     public void shouldReturnGatewayErrorWhenProviderFails() throws Exception {
         when(mockResponse.getStatus()).thenReturn(500);
         gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder);
         verify(mockResponse).close();
     }
 
-    @Test(expected = GatewayErrors.GenericGatewayErrorException.class)
+    @Test(expected = GatewayErrorException.GenericGatewayErrorException.class)
     public void shouldReturnGatewayErrorWhenProviderFailsWithAProcessingException() throws Exception {
         when(mockBuilder.post(Entity.entity(orderPayload, mediaType))).thenThrow(new ProcessingException(new SocketException("socket failed")));
         gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder);

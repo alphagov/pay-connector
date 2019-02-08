@@ -5,5 +5,5 @@ import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 
 public interface RefundHandler {
 
-    GatewayRefundResponse refund(RefundGatewayRequest request) throws GatewayErrors.GenericGatewayErrorException, GatewayErrors.GatewayConnectionErrorException, GatewayErrors.GatewayConnectionTimeoutErrorException;
+    GatewayRefundResponse refund(RefundGatewayRequest request) throws GatewayErrorException;
 }

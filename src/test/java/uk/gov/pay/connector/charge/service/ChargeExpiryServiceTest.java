@@ -12,9 +12,8 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
-import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionTimeoutErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrors.GenericGatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -151,7 +150,7 @@ public class ChargeExpiryServiceTest {
 
                     try {
                         verify(mockPaymentProvider, never()).cancel(any());
-                    } catch (GenericGatewayErrorException | GatewayConnectionErrorException | GatewayConnectionTimeoutErrorException e) {}
+                    } catch (GatewayErrorException e) {}
                     
                     assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
                 });

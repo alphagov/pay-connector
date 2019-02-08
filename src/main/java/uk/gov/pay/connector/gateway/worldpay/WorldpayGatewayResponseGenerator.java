@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 
 import java.util.Optional;

@@ -7,9 +7,10 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionTimeoutErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrors.GenericGatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionTimeoutErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -53,7 +54,6 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                                    Environment environment) {
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         client = gatewayClientFactory.createGatewayClient(SMARTPAY, configuration.getGatewayConfigFor(SMARTPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
-
         this.smartpayCaptureHandler = new SmartpayCaptureHandler(client);
         this.smartpayRefundHandler = new SmartpayRefundHandler(client);
     }
@@ -69,8 +69,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) 
-            throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
+    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayErrorException {
         GatewayClient.Response response = client.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrderFor(request));
         return getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
     }
@@ -97,7 +96,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
             transactionId = Optional.ofNullable(gatewayResponse.getBaseResponse().get().getTransactionId());
             stringifiedResponse = gatewayResponse.toString();
             authorisationStatus = gatewayResponse.getBaseResponse().get().authoriseStatus();
-        } catch (GenericGatewayErrorException | GatewayConnectionTimeoutErrorException | GatewayConnectionErrorException e) {
+        } catch (GatewayErrorException e) {
             authorisationStatus = BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION;
             stringifiedResponse = e.getMessage();
         }

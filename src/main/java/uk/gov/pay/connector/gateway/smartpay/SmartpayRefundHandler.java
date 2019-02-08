@@ -1,9 +1,7 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionTimeoutErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrors.GenericGatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.RefundHandler;
 import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
@@ -24,16 +22,12 @@ public class SmartpayRefundHandler implements RefundHandler {
 
     @Override
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
-        SmartpayRefundResponse unmarshalled;
-        
         try {
             GatewayClient.Response response = client.postRequestFor(null, request.getGatewayAccount(), buildRefundOrderFor(request));
-            unmarshalled = unmarshallResponse(response, SmartpayRefundResponse.class);
-        } catch (GenericGatewayErrorException | GatewayConnectionTimeoutErrorException | GatewayConnectionErrorException e) {
+            return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, SmartpayRefundResponse.class), PENDING);
+        } catch (GatewayErrorException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());
         }
-        
-        return GatewayRefundResponse.fromBaseRefundResponse(unmarshalled, PENDING);
     }
 
     private GatewayOrder buildRefundOrderFor(RefundGatewayRequest request) {

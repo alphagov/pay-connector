@@ -5,9 +5,7 @@ import org.joda.time.DateTimeZone;
 import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionTimeoutErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrors.GenericGatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 
@@ -26,16 +24,12 @@ public class WorldpayCaptureHandler implements CaptureHandler {
 
     @Override
     public CaptureResponse capture(CaptureGatewayRequest request) {
-        WorldpayCaptureResponse unmarshalled;
-        
         try {
             GatewayClient.Response response = client.postRequestFor(null, request.getGatewayAccount(), buildCaptureOrder(request));
-            unmarshalled = unmarshallResponse(response, WorldpayCaptureResponse.class);
-        } catch (GenericGatewayErrorException | GatewayConnectionTimeoutErrorException | GatewayConnectionErrorException e) {
+            return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, WorldpayCaptureResponse.class), PENDING);
+        } catch (GatewayErrorException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());
         }
-        
-        return CaptureResponse.fromBaseCaptureResponse(unmarshalled, PENDING);
      }
 
     private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {

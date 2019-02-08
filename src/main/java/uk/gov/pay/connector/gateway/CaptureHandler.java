@@ -4,5 +4,5 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 
 public interface CaptureHandler {
 
-    CaptureResponse capture(CaptureGatewayRequest request) throws GatewayErrors.GenericGatewayErrorException, GatewayErrors.GatewayConnectionErrorException, GatewayErrors.GatewayConnectionTimeoutErrorException;
+    CaptureResponse capture(CaptureGatewayRequest request) throws GatewayErrorException;
 }

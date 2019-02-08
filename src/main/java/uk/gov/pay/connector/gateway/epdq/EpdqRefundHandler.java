@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.gateway.epdq;
 
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrors.GatewayConnectionTimeoutErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrors.GenericGatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionTimeoutErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.RefundHandler;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqRefundResponse;
@@ -29,16 +29,12 @@ public class EpdqRefundHandler implements RefundHandler {
 
     @Override
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
-        EpdqRefundResponse unmarshalled;
-        
         try {
             GatewayClient.Response response = client.postRequestFor(ROUTE_FOR_MAINTENANCE_ORDER, request.getGatewayAccount(), buildRefundOrder(request));
-            unmarshalled = unmarshallResponse(response, EpdqRefundResponse.class);
+            return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, EpdqRefundResponse.class), PENDING);
         } catch (GenericGatewayErrorException | GatewayConnectionTimeoutErrorException | GatewayConnectionErrorException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());
         }
-        
-        return GatewayRefundResponse.fromBaseRefundResponse(unmarshalled, PENDING);
     }
 
     private GatewayOrder buildRefundOrder(RefundGatewayRequest request) {
