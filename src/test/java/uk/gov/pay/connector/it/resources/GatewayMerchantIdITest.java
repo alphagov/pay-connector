@@ -36,17 +36,7 @@ public class GatewayMerchantIdITest {
         replaceGatewayMerchantId(accountId, "abc1234");
         assertGatewayMerchantIdOnCharge(accountId, "abc1234");
     }
-
-    private void replaceGatewayMerchantId(String accountId, String gatewayMerchantId) throws JsonProcessingException {
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
-                "path", "credentials/gateway_merchant_id",
-                "value", gatewayMerchantId));
-        given().port(testContext.getPort())
-                .contentType(JSON)
-                .body(payload)
-                .patch("/v1/api/accounts/" + accountId);
-    }
-
+    
     @Test
     public void addGatewayMerchantIdToGatewayAccount() throws Exception {
         String accountId = setUpAccount();
@@ -72,17 +62,25 @@ public class GatewayMerchantIdITest {
                 .body("gateway_account.gateway_merchant_id", is(gatewayMerchantId));
     }
 
-    private void addGatewayMerchantIdToAccount(String accountId, String gatewayMerchantId) throws JsonProcessingException {
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "add",
+    private void replaceGatewayMerchantId(String accountId, String gatewayMerchantId) throws JsonProcessingException {
+        patch(accountId, gatewayMerchantId, "replace");
+    }
+
+    private void patch(String accountId, String gatewayMerchantId, String op) throws JsonProcessingException {
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", op,
                 "path", "credentials/gateway_merchant_id",
                 "value", gatewayMerchantId));
-
+        
         given().port(testContext.getPort())
                 .contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + accountId)
                 .then()
                 .statusCode(HttpStatus.SC_OK);
+    }
+
+    private void addGatewayMerchantIdToAccount(String accountId, String gatewayMerchantId) throws JsonProcessingException {
+        patch(accountId, gatewayMerchantId, "add");
     }
     
     private String setUpAccount() {

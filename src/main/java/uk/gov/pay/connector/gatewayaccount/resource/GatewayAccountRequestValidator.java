@@ -12,6 +12,7 @@ import java.util.List;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOTIFY_API_TOKEN;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOTIFY_REFUND_ISSUED_TEMPLATE_ID;
@@ -84,6 +85,12 @@ public class GatewayAccountRequestValidator {
     private void validateGatewayMerchantId(JsonNode payload) {
         throwIfInvalidFieldOperation(payload, ADD_OP, REPLACE_OP);
         throwIfNullFieldValue(payload.get(FIELD_VALUE));
+        throwIfBlankFieldValue(payload.get(FIELD_VALUE));
+    }
+
+    private void throwIfBlankFieldValue(JsonNode valueNode) {
+        if (isBlank(valueNode.asText())) 
+            throw new ValidationException(Collections.singletonList(format("Field [%s] cannot be empty", FIELD_VALUE)));
     }
 
     private void validateNotifySettingsRequest(JsonNode payload) {
