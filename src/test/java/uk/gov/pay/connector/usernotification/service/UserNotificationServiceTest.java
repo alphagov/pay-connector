@@ -13,6 +13,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.app.NotifyConfiguration;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
@@ -104,6 +105,43 @@ public class UserNotificationServiceTest {
         personalisation.put("customParagraph", "^ template body");
         personalisation.put("amount", "5.00");
         personalisation.put("corporateCardSurcharge", "");
+        when(mockNotifyClient.sendEmail(mockNotifyConfiguration.getEmailTemplateId(),
+                charge.getEmail(),
+                personalisation,
+                null)).thenReturn(mockNotificationCreatedResponse);
+
+        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
+        Optional<String> maybeNotificationId = userNotificationService.sendPaymentConfirmedEmail(charge).get(1000, TimeUnit.SECONDS);
+        assertThat(maybeNotificationId.get(), is(notificationId.toString()));
+    }
+
+    @Test
+    public void shouldSendPaymentConfirmationEmailWithReferenceInCustomParagraphIfEmailNotifyIsEnabled() throws Exception {
+        UUID notificationId = randomUUID();
+        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
+        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(notificationId);
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+
+        GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
+        gatewayAccountEntity.getEmailNotifications().get(EmailNotificationType.PAYMENT_CONFIRMED)
+                .setTemplateBody("Here’s the ref: $reference. Here it is again: abc$referencedef. And to end: $reference");
+
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withReference(ServicePaymentReference.of("123$000"))
+                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+                .build();
+
+        Map<String, String> personalisation = new HashMap<>();
+        personalisation.put("serviceReference", "123$000");
+        personalisation.put("date", "1 January 2016 - 10:23:12");
+        personalisation.put("description", "This is a description");
+        personalisation.put("serviceName", "MyService");
+        personalisation.put("customParagraph", "^ Here’s the ref: 123$000. Here it is again: abc123$000def. And to end: 123$000");
+        personalisation.put("amount", "5.00");
+        personalisation.put("corporateCardSurcharge", "");
+
         when(mockNotifyClient.sendEmail(mockNotifyConfiguration.getEmailTemplateId(),
                 charge.getEmail(),
                 personalisation,
