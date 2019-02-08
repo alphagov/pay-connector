@@ -66,8 +66,7 @@ public class GatewayAccountService {
 
         return GatewayAccountObjectConverter.createResponseFrom(gatewayAccountEntity, uriInfo);
     }
-
-
+    
     private final Map<String, BiConsumer<PatchRequest, GatewayAccountEntity>> attributeUpdater =
             new HashMap<String, BiConsumer<PatchRequest, GatewayAccountEntity>>() {{
                 put(CREDENTIALS_GATEWAY_MERCHANT_ID,

@@ -82,7 +82,7 @@ public class GatewayAccountRequestValidator {
     }
 
     private void validateGatewayMerchantId(JsonNode payload) {
-        throwIfInvalidFieldOperation(payload, ADD_OP);
+        throwIfInvalidFieldOperation(payload, ADD_OP, REPLACE_OP);
         throwIfNullFieldValue(payload.get(FIELD_VALUE));
     }
 
