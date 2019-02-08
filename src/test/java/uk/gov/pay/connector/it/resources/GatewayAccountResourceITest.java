@@ -28,7 +28,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase {
     private DatabaseFixtures.TestAccount defaultTestAccount;
-
+    
     @Test
     public void getAccountShouldReturn404IfAccountIdIsUnknown() {
         String unknownAccountId = "92348739";
@@ -93,7 +93,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void getAccountShouldReturn3dsSetting() {
-        String gatewayAccountId = createAGatewayAccountFor("stripe", "desc", null, "true");
+        String gatewayAccountId = extractGatewayAccountId(
+                createAGatewayAccountFor(testContext.getPort(), "stripe", "desc", null, "true"));
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
                 .then()
@@ -656,5 +657,13 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(NOT_FOUND.getStatusCode());
+    }
+
+    private String createAGatewayAccountFor(String provider) {
+        return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider));
+    }
+
+    private String createAGatewayAccountFor(String provider, String desc, String id) {
+        return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider, desc, id));
     }
 }

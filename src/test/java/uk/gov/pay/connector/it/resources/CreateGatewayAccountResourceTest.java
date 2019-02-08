@@ -41,7 +41,12 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
     @Test
     @Parameters({"sandbox", "worldpay", "smartpay", "epdq"})
     public void createAGatewayAccount(String provider) {
-        createAGatewayAccountFor(provider, "my test service", "analytics");
+        String description = "my test service";
+        String analyticsId = "analytics";
+        ValidatableResponse validatableResponse = createAGatewayAccountFor(testContext.getPort(), provider, description, analyticsId);
+        assertCorrectCreateResponse(validatableResponse, GatewayAccountEntity.Type.TEST, description, analyticsId, null);
+        assertGettingAccountReturnsProviderName(testContext.getPort(), validatableResponse, provider, GatewayAccountEntity.Type.TEST);
+        assertGatewayAccountCredentialsAreEmptyInDB(validatableResponse, databaseTestHelper);
     }
 
     @Test
@@ -104,8 +109,8 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 .then()
                 .statusCode(201);
 
-        assertCorrectCreateResponse(response);
-        assertGettingAccountReturnsProviderName(response, "sandbox", TEST);
+        assertCorrectCreateResponse(response, TEST);
+        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "sandbox", TEST);
     }
 
     @Test
@@ -133,7 +138,7 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 .statusCode(201);
 
         assertCorrectCreateResponse(response, LIVE);
-        assertGettingAccountReturnsProviderName(response, "worldpay", LIVE);
+        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "worldpay", LIVE);
     }
 
     @Test
@@ -174,7 +179,7 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 .statusCode(201);
 
         assertCorrectCreateResponse(response, TEST, "desc", "analytics-id", "my service name");
-        assertGettingAccountReturnsProviderName(response, "sandbox", TEST);
+        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "sandbox", TEST);
     }
 
     @Test
@@ -187,6 +192,10 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 .statusCode(201);
 
         assertCorrectCreateResponse(response, TEST);
-        assertGettingAccountReturnsProviderName(response, "worldpay", TEST);
+        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "worldpay", TEST);
+    }
+
+    private void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type) {
+        assertCorrectCreateResponse(response, type, null, null, null);
     }
 }
