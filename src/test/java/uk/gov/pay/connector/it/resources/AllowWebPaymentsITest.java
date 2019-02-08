@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.resources;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import io.restassured.response.Response;
 import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,15 +14,13 @@ import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
-import java.util.Map;
-
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceTestBase.ACCOUNTS_FRONTEND_URL;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceTestBase.createAGatewayAccountFor;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
+import static uk.gov.pay.connector.it.util.gatewayaccount.GatewayAccountOperations.createAGatewayAccountFor;
+import static uk.gov.pay.connector.it.util.gatewayaccount.GatewayAccountOperations.updateGatewayAccountCredentialsWith;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -117,14 +114,7 @@ public class AllowWebPaymentsITest {
                 .statusCode(HttpStatus.SC_OK);
     }
     
-    //TODO move to utils
-    public static Response updateGatewayAccountCredentialsWith(int port, String accountId, Map<String, Object> credentials) {
-        return given().port(port).contentType(JSON).accept(JSON)
-                .body(credentials)
-                .patch(ACCOUNTS_FRONTEND_URL + accountId + "/credentials");
-    }
-    
-    public static String createCharge(int port, String accountId) {
+    private static String createCharge(int port, String accountId) {
         return given().port(port).contentType(JSON)
                 .contentType(JSON)
                 .body(createChargePostBody(accountId))

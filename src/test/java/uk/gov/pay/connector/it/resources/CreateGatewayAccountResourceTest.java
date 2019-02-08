@@ -9,9 +9,11 @@ import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.it.util.gatewayaccount.GatewayAccountAssertions;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
 
@@ -25,6 +27,7 @@ import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.it.util.gatewayaccount.GatewayAccountOperations.createAGatewayAccountFor;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -106,7 +109,9 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 .statusCode(201);
 
         assertCorrectCreateResponse(response);
-        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "sandbox", TEST);
+        GatewayAccountAssertions.assertGettingAccountReturnsProviderName.f(testContext.getPort(),
+                URI.create(response.extract().header("Location").replace("https", "http")), //Scheme on links back are forced to be https
+                "sandbox", TEST);
     }
 
     @Test
@@ -134,7 +139,9 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 .statusCode(201);
 
         assertCorrectCreateResponse(response, LIVE);
-        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "worldpay", LIVE);
+        GatewayAccountAssertions.assertGettingAccountReturnsProviderName.f(testContext.getPort(),
+                URI.create(response.extract().header("Location").replace("https", "http")), //Scheme on links back are forced to be https
+                "worldpay", LIVE);
     }
 
     @Test
@@ -174,8 +181,10 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 .then()
                 .statusCode(201);
 
-        assertCorrectCreateResponse(response, TEST, "desc", "analytics-id", "my service name");
-        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "sandbox", TEST);
+        GatewayAccountAssertions.assertGatewayAccountCreation.f(response, TEST, "desc", "analytics-id", "my service name");
+        GatewayAccountAssertions.assertGettingAccountReturnsProviderName.f(testContext.getPort(),
+                URI.create(response.extract().header("Location").replace("https", "http")), //Scheme on links back are forced to be https
+                "sandbox", TEST);
     }
 
     @Test
@@ -188,6 +197,8 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
                 .statusCode(201);
 
         assertCorrectCreateResponse(response, TEST);
-        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "worldpay", TEST);
+        GatewayAccountAssertions.assertGettingAccountReturnsProviderName.f(testContext.getPort(),
+                URI.create(response.extract().header("Location").replace("https", "http")), //Scheme on links back are forced to be https
+                "worldpay", TEST);
     }
 }

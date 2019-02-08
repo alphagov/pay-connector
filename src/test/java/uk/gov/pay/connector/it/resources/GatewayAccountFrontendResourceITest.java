@@ -39,6 +39,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
+import static uk.gov.pay.connector.it.util.gatewayaccount.GatewayAccountOperations.createAGatewayAccountFor;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -602,4 +603,10 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         return format("{\"card_types\": [%s]}", join(",", cardTypeIds));
     }
 
+    private DatabaseFixtures.TestAccount createAccountRecordWithCards(CardTypeEntity... cardTypes) {
+        return databaseFixtures
+                .aTestAccount()
+                .withCardTypeEntities(Arrays.asList(cardTypes))
+                .insert();
+    }
 }
