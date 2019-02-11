@@ -27,6 +27,7 @@ import uk.gov.service.notify.NotificationClientException;
 import uk.gov.service.notify.SendEmailResponse;
 
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +42,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.eq;
@@ -72,6 +74,18 @@ public class UserNotificationServiceTest {
     private Histogram mockHistogram;
     @Mock
     private Counter mockCounter;
+
+    private final UUID notificationId = randomUUID();
+
+    private final ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+            .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneOffset.UTC))
+            .build();
+
+    private final RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity()
+            .withAmount(100L)
+            .withCreatedDate(ZonedDateTime.of(2017, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
+            .withCharge(chargeEntity).build();
+
     private UserNotificationService userNotificationService;
 
     @Before
@@ -81,22 +95,21 @@ public class UserNotificationServiceTest {
         when(mockNotifyConfiguration.getRefundIssuedEmailTemplateId()).thenReturn("another-template");
         when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
 
+        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(notificationId);
+
         when(mockConfig.getExecutorServiceConfig()).thenReturn(mockExecutorConfiguration);
         when(mockExecutorConfiguration.getThreadsPerCpu()).thenReturn(2);
+
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
+
+        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
     }
 
     @Test
     public void shouldSendPaymentConfirmationEmailIfEmailNotifyIsEnabled() throws Exception {
-        UUID notificationId = randomUUID();
-        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(notificationId);
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
-
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
-                .build();
         HashMap<String, String> personalisation = new HashMap<>();
         personalisation.put("serviceReference", "This is a reference");
         personalisation.put("date", "1 January 2016 - 10:23:12");
@@ -106,23 +119,16 @@ public class UserNotificationServiceTest {
         personalisation.put("amount", "5.00");
         personalisation.put("corporateCardSurcharge", "");
         when(mockNotifyClient.sendEmail(mockNotifyConfiguration.getEmailTemplateId(),
-                charge.getEmail(),
+                chargeEntity.getEmail(),
                 personalisation,
                 null)).thenReturn(mockNotificationCreatedResponse);
 
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
-        Optional<String> maybeNotificationId = userNotificationService.sendPaymentConfirmedEmail(charge).get(1000, TimeUnit.SECONDS);
+        Optional<String> maybeNotificationId = userNotificationService.sendPaymentConfirmedEmail(chargeEntity).get(1000, TimeUnit.SECONDS);
         assertThat(maybeNotificationId.get(), is(notificationId.toString()));
     }
 
     @Test
     public void shouldSendPaymentConfirmationEmailWithReferenceInCustomParagraphIfEmailNotifyIsEnabled() throws Exception {
-        UUID notificationId = randomUUID();
-        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(notificationId);
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
-
         GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
         gatewayAccountEntity.getEmailNotifications().get(EmailNotificationType.PAYMENT_CONFIRMED)
                 .setTemplateBody("Here’s the ref: $reference. Here it is again: abc$referencedef. And to end: $reference");
@@ -147,27 +153,12 @@ public class UserNotificationServiceTest {
                 personalisation,
                 null)).thenReturn(mockNotificationCreatedResponse);
 
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
         Optional<String> maybeNotificationId = userNotificationService.sendPaymentConfirmedEmail(charge).get(1000, TimeUnit.SECONDS);
         assertThat(maybeNotificationId.get(), is(notificationId.toString()));
     }
 
     @Test
     public void shouldSendRefundIssuedEmailIfEmailNotifyIsEnabled() throws Exception {
-        UUID notificationId = randomUUID();
-        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(notificationId);
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
-
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
-                .build();
-        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity()
-                .withAmount(100L)
-                .withCreatedDate(ZonedDateTime.of(2017, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
-                .withCharge(charge).build();
-
         HashMap<String, String> personalisation = new HashMap<>();
         personalisation.put("serviceName", "MyService");
         personalisation.put("serviceReference", "This is a reference");
@@ -176,11 +167,10 @@ public class UserNotificationServiceTest {
         personalisation.put("amount", "1.00");
 
         when(mockNotifyClient.sendEmail(mockNotifyConfiguration.getRefundIssuedEmailTemplateId(),
-                charge.getEmail(),
+                chargeEntity.getEmail(),
                 personalisation,
                 null)).thenReturn(mockNotificationCreatedResponse);
 
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
         Optional<String> maybeNotificationId = userNotificationService.sendRefundIssuedEmail(refundEntity).get(1000, TimeUnit.SECONDS);
         assertThat(maybeNotificationId.get(), is(notificationId.toString()));
     }
@@ -234,9 +224,6 @@ public class UserNotificationServiceTest {
 
     @Test
     public void shouldNotSendPaymentConfirmedEmail_whenConfirmationEmailNotificationsAreDisabledForService() {
-        when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         chargeEntity.getGatewayAccount()
                 .getEmailNotifications()
                 .get(EmailNotificationType.PAYMENT_CONFIRMED)
@@ -249,18 +236,11 @@ public class UserNotificationServiceTest {
 
     @Test
     public void shouldRecordNotifyResponseTimesWhenSendPaymentConfirmationEmailSucceeds() throws Exception {
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
 
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
-                .build();
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
-
-        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge);
+        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(chargeEntity);
         idF.get(1000, TimeUnit.SECONDS);
+
         verify(mockMetricRegistry).histogram("notify-operations.response_time");
         verify(mockHistogram).update(anyLong());
         verifyNoMoreInteractions(mockCounter);
@@ -268,38 +248,19 @@ public class UserNotificationServiceTest {
 
     @Test
     public void shouldNotSendRefundIssuedEmail_whenConfirmationEmailNotificationsAreDisabledForService() throws Exception {
-        when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(true);
-
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         chargeEntity.getGatewayAccount()
                 .getEmailNotifications()
                 .get(EmailNotificationType.REFUND_ISSUED)
                 .setEnabled(false);
-        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity()
-                .withAmount(100L)
-                .withCreatedDate(ZonedDateTime.of(2017, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
-                .withCharge(chargeEntity).build();
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
+
         userNotificationService.sendRefundIssuedEmail(refundEntity);
         verifyZeroInteractions(mockNotifyClient);
     }
 
     @Test
     public void shouldRecordNotifyResponseTimesWhenSendRefundIssuedEmailSucceeds() throws Exception {
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
-
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
-                .build();
-        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity()
-                .withAmount(100L)
-                .withCreatedDate(ZonedDateTime.of(2017, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
-                .withCharge(charge).build();
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
-
+ 
         Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refundEntity);
         idF.get(1000, TimeUnit.SECONDS);
         verify(mockMetricRegistry).histogram("notify-operations.response_time");
@@ -309,18 +270,11 @@ public class UserNotificationServiceTest {
 
     @Test
     public void shouldRecordNotifyResponseTimesAndFailureWhenSendPaymentConfirmationEmailFails() throws Exception {
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenThrow(NotificationClientException.class);
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
-        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
-                .build();
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
-
-        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge);
+        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(chargeEntity);
         idF.get(1000, TimeUnit.SECONDS);
+
         verify(mockMetricRegistry).histogram("notify-operations.response_time");
         verify(mockHistogram).update(anyLong());
         verify(mockCounter).inc();
@@ -328,22 +282,11 @@ public class UserNotificationServiceTest {
 
     @Test
     public void shouldRecordNotifyResponseTimesAndFailureWhenSendRefundIssuedEmailFails() throws Exception {
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenThrow(NotificationClientException.class);
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
-        when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
-
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
-                .build();
-        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity()
-                .withAmount(100L)
-                .withCreatedDate(ZonedDateTime.of(2017, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
-                .withCharge(charge).build();
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
-
+ 
         Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refundEntity);
         idF.get(1000, TimeUnit.SECONDS);
+
         verify(mockMetricRegistry).histogram("notify-operations.response_time");
         verify(mockHistogram).update(anyLong());
         verify(mockCounter).inc();
@@ -351,22 +294,14 @@ public class UserNotificationServiceTest {
 
     @Test
     public void shouldSendBlankCustomParagraphIfNotSetInConfirmationEmail() throws Exception {
-        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
 
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
-                .build();
-        GatewayAccountEntity accountEntity = charge.getGatewayAccount();
+        GatewayAccountEntity accountEntity = chargeEntity.getGatewayAccount();
         EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(accountEntity);
         emailNotificationEntity.setTemplateBody(null);
         accountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, emailNotificationEntity);
 
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
-        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge);
+        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(chargeEntity);
         idF.get(1000, TimeUnit.SECONDS);
 
         HashMap<String, String> map = new HashMap<>();
@@ -381,29 +316,25 @@ public class UserNotificationServiceTest {
 
         verify(mockNotifyClient).sendEmail(
                 mockNotifyConfiguration.getEmailTemplateId(),
-                charge.getEmail(),
+                chargeEntity.getEmail(),
                 map, null
         );
     }
 
     @Test
     public void shouldSendCorporateCardSurchargeWithMessage_whenSurchargePresent() throws Exception {
-        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
                 .withCorporateSurcharge(250L)
                 .build();
+
         GatewayAccountEntity accountEntity = charge.getGatewayAccount();
         EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(accountEntity);
         emailNotificationEntity.setTemplateBody(null);
         accountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, emailNotificationEntity);
 
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
         Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge);
         idF.get(1000, TimeUnit.SECONDS);
 
@@ -426,11 +357,8 @@ public class UserNotificationServiceTest {
 
     @Test
     public void shouldUse_customNonGovUkBrandedEmail_whenAccountConfiguredToCustomBrandingForConfirmationEmail() throws Exception {
-        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
-        when(mockNotifyClientFactory.getInstance(any())).thenReturn(mockNotifyClient);
+        when(mockNotifyClientFactory.getInstance("my-api-key")).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
@@ -443,16 +371,13 @@ public class UserNotificationServiceTest {
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockNotifyClientFactory).getInstance("my-api-key");
-        verify(mockNotifyClient).sendEmail(eq("my-template-id"), anyString(), any(Map.class), any());
+        verify(mockNotifyClient).sendEmail(eq("my-template-id"), anyString(), anyMap(), any());
     }
 
     @Test
     public void shouldUse_customNonGovUkBrandedEmail_whenAccountConfiguredToCustomBrandingForRefundIssuedEmail() throws Exception {
-        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
-        when(mockNotifyClientFactory.getInstance(any())).thenReturn(mockNotifyClient);
+        when(mockNotifyClientFactory.getInstance("my-api-key")).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
@@ -462,70 +387,50 @@ public class UserNotificationServiceTest {
                 .withAmount(100L)
                 .withCreatedDate(ZonedDateTime.of(2017, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
                 .withCharge(charge).build();
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
 
         Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refundEntity);
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockNotifyClientFactory).getInstance("my-api-key");
-        verify(mockNotifyClient).sendEmail(eq("template_id2"), anyString(), any(Map.class), any());
+        verify(mockNotifyClient).sendEmail(eq("template_id2"), anyString(), anyMap(), any());
     }
 
     @Test
     public void shouldUse_GovUkBrandedEmails_whenNotifySettingsDoNotHaveApiToken_ForPaymentConfirmationEmail() throws Exception {
-        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
                 .withNotifySettings(ImmutableMap.of("template_id", "my-template-id"))
                 .build();
-
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
-
+ 
         Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge);
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockNotifyClientFactory).getInstance();
-        verify(mockNotifyClient).sendEmail(eq("some-template"), anyString(), any(Map.class), any());
+        verify(mockNotifyClient).sendEmail(eq("some-template"), anyString(), anyMap(), any());
     }
 
     @Test
     public void shouldUse_GovUkBrandedEmails_whenNotifySettingsDoNotHaveTemplate_ForPaymentConfirmationEmail() throws Exception {
-        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
                 .withNotifySettings(ImmutableMap.of("api_token", "my-api-key"))
                 .build();
-
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
-
+ 
         Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge);
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockNotifyClientFactory).getInstance();
-        verify(mockNotifyClient).sendEmail(eq("some-template"), anyString(), any(Map.class), any());
+        verify(mockNotifyClient).sendEmail(eq("some-template"), anyString(), anyMap(), any());
     }
 
     @Test
     public void shouldUse_GovUkBrandedEmails_whenNotifySettingsDoNotHaveApiToken_ForRefundIssuedEmail() throws Exception {
-        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
-
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
-
-
+ 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
                 .withNotifySettings(ImmutableMap.of("refund_issued_template_id", "my-template-id"))
@@ -533,21 +438,16 @@ public class UserNotificationServiceTest {
 
         RefundEntity refund = RefundEntityFixture.aValidRefundEntity().withCharge(charge).build();
 
-
         Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refund);
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockNotifyClientFactory).getInstance();
-        verify(mockNotifyClient).sendEmail(eq("another-template"), anyString(), any(Map.class), any());
+        verify(mockNotifyClient).sendEmail(eq("another-template"), anyString(), anyMap(), any());
     }
 
     @Test
     public void shouldUse_GovUkBrandedEmails_whenNotifySettingsDoNotHaveTemplate_ForRefundIssuedEmail() throws Exception {
-        when(mockConfig.getNotifyConfiguration().isEmailNotifyEnabled()).thenReturn(true);
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
-        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(randomUUID());
-        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
 
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
@@ -555,13 +455,11 @@ public class UserNotificationServiceTest {
                 .build();
 
         RefundEntity refund = RefundEntityFixture.aValidRefundEntity().withCharge(charge).build();
-
-        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
-
+ 
         Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refund);
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockNotifyClientFactory).getInstance();
-        verify(mockNotifyClient).sendEmail(eq("another-template"), anyString(), any(Map.class), any());
+        verify(mockNotifyClient).sendEmail(eq("another-template"), anyString(), anyMap(), any());
     }
 }
