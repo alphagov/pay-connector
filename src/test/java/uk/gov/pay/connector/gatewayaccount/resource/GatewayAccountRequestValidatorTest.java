@@ -38,6 +38,34 @@ public class GatewayAccountRequestValidatorTest {
         validator = new GatewayAccountRequestValidator(new RequestValidator());
         objectMapper = new ObjectMapper();
     }
+
+    @Test
+    @Parameters({
+            "bad, allow_apple_pay, true, Operation [bad] is not valid for path [allow_apple_pay]",
+            "bad, allow_google_pay, true, Operation [bad] is not valid for path [allow_google_pay]",
+            "replace, allow_apple_pay, null, Field [value] is required",
+            "replace, allow_google_pay, null, Field [value] is required",
+            "replace, allow_apple_pay, unfalse, Value [unfalse] is not valid for [allow_apple_pay]",
+            "replace, allow_google_pay, unfalse, Value [unfalse] is not valid for [allow_google_pay]",
+            "replace, allow_web_payments, unfalse, Value [unfalse] is not valid for [allow_web_payments]" //Deprecate when allow_web_payments is no longer used
+    })
+    public void shouldThrowWhenWebPaymentRequestsAreInvalid(String op, String path, @Nullable String flagValue, String expectedErrorMessage) {
+        Map<String, String> patch = new HashMap<String, String>(){{
+            put(FIELD_OPERATION, op);
+            put(FIELD_OPERATION_PATH, path);
+        }};
+        
+        if (flagValue != null) patch.put(FIELD_VALUE, flagValue);
+        
+        JsonNode jsonNode = new ObjectMapper().valueToTree(patch);
+        try {
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException validationException) {
+            assertThat(validationException.getErrors().size(), is(1));
+            assertThat(validationException.getErrors(), hasItems(expectedErrorMessage));
+        }
+    }
     
     @Test
     @Parameters({
@@ -172,21 +200,6 @@ public class GatewayAccountRequestValidatorTest {
                         FIELD_OPERATION_PATH, "notify_settings",
                         FIELD_VALUE, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "")));
         validator.validatePatchRequest(jsonNode);
-    }
-    
-    @Test
-    public void shouldThrow_whenAllowWebPaymentIsInvalid() {
-        JsonNode jsonNode = new ObjectMapper()
-                .valueToTree(ImmutableMap.of(FIELD_OPERATION, "replace",
-                        FIELD_OPERATION_PATH, "allow_web_payments",
-                        FIELD_VALUE, "unfalse"));
-        try {
-            validator.validatePatchRequest(jsonNode);
-            fail( "Expected ValidationException" );
-        } catch (ValidationException validationException) {
-            assertThat(validationException.getErrors().size(), is(1));
-            assertThat(validationException.getErrors(), hasItems("Value [unfalse] is not valid for [allow_web_payments]"));
-        }
     }
     
     @Test

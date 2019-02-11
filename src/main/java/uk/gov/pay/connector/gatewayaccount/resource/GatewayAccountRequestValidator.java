@@ -75,9 +75,13 @@ public class GatewayAccountRequestValidator {
                 validateEmailCollectionMode(payload);
                 break;
             case FIELD_ALLOW_GOOGLE_PAY:
+                validateAllowWebPayment(payload, FIELD_ALLOW_GOOGLE_PAY);
+                break;
             case FIELD_ALLOW_APPLE_PAY:
+                validateAllowWebPayment(payload, FIELD_ALLOW_APPLE_PAY);
+                break;
             case FIELD_ALLOW_WEB_PAYMENTS: //TODO deprecate
-                validateAllowWebPayment(payload);
+                validateAllowWebPayment(payload, FIELD_ALLOW_WEB_PAYMENTS);
                 break;
             case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT: 
             case FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT:
@@ -123,12 +127,12 @@ public class GatewayAccountRequestValidator {
         }
     }
 
-    private void validateAllowWebPayment(JsonNode payload) {
+    private void validateAllowWebPayment(JsonNode payload, String field) {
         throwIfInvalidFieldOperation(payload, REPLACE_OP);
         throwIfNullFieldValue(payload.get(FIELD_VALUE));
         String booleanString = payload.get(FIELD_VALUE).asText().toLowerCase();
         if (!booleanString.equals("false") && !booleanString.equals("true")) {
-            throw new ValidationException(Collections.singletonList(format("Value [%s] is not valid for [%s]", booleanString, FIELD_ALLOW_WEB_PAYMENTS)));
+            throw new ValidationException(Collections.singletonList(format("Value [%s] is not valid for [%s]", booleanString, field)));
         }
     }
     
