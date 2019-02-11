@@ -107,8 +107,15 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "requires_3ds")
     private boolean requires3ds;
 
+    //Deprecate when frontend no longer uses this
     @Column(name = "allow_web_payments")
     private boolean allowWebPayments;
+
+    @Column(name = "allow_google_pay")
+    private boolean allowGooglePay;
+
+    @Column(name = "allow_apple_pay")
+    private boolean allowApplePay;
 
     @Column(name = "corporate_credit_card_surcharge_amount")
     private long corporateCreditCardSurchargeAmount;
@@ -170,12 +177,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return credentials;
     }
 
-    @JsonProperty("gateway_merchant_id")
-    @JsonView(Views.FrontendView.class)
-    public String getGatewayMerchantId() {
-        return credentials.get("gateway_merchant_id");
-    }
-
     @JsonView(Views.ApiView.class)
     public String getDescription() {
         return description;
@@ -230,6 +231,26 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setAllowWebPayments(boolean allowWebPayments) {
         this.allowWebPayments = allowWebPayments;
+    }
+
+    @JsonProperty("allow_google_pay")
+    @JsonView(Views.FrontendView.class)
+    public boolean isAllowGooglePay() {
+        return allowGooglePay && isNotBlank(credentials.get("gateway_merchant_id"));
+    }
+
+    @JsonProperty("allow_apple_pay")
+    @JsonView(Views.FrontendView.class)
+    public boolean isAllowApplePay() {
+        return allowApplePay;
+    }
+
+    public void setAllowGooglePay(boolean allowGooglePay) {
+        this.allowGooglePay = allowGooglePay;
+    }
+
+    public void setAllowApplePay(boolean allowApplePay) {
+        this.allowApplePay = allowApplePay;
     }
 
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})

@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -39,7 +38,7 @@ import static org.junit.Assert.assertThat;
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceTestBase {
-
+    
     private static final String ACCOUNTS_CARD_TYPE_FRONTEND_URL = "v1/frontend/accounts/{accountId}/card-types";
     
     private Gson gson = new Gson();
@@ -189,7 +188,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault()
                 .withMerchantId("a-merchant-id");
 
-        updateGatewayAccountCredentialsWith(testContext.getPort(), accountId, gatewayAccountPayload.buildCredentialsPayload())
+        updateGatewayAccountCredentialsWith(accountId, gatewayAccountPayload.buildCredentialsPayload())
                 .then()
                 .statusCode(200);
 
@@ -203,7 +202,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
 
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault();
 
-        updateGatewayAccountCredentialsWith(testContext.getPort(), accountId, gatewayAccountPayload.buildCredentialsPayload())
+        updateGatewayAccountCredentialsWith(accountId, gatewayAccountPayload.buildCredentialsPayload())
                 .then()
                 .statusCode(200);
 
@@ -219,7 +218,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .withUsername("someone@some{[]where&^%>?\\/")
                 .withPassword("56g%%Bqv\\>/<wdUpi@#bh{[}]6JV+8w");
 
-        updateGatewayAccountCredentialsWith(testContext.getPort(), accountId, gatewayAccountPayload.buildCredentialsPayload())
+        updateGatewayAccountCredentialsWith(accountId, gatewayAccountPayload.buildCredentialsPayload())
                 .then()
                 .statusCode(200);
 
@@ -231,7 +230,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfMissingCredentials() {
         String accountId = createAGatewayAccountFor("worldpay");
 
-        updateGatewayAccountCredentialsWith(testContext.getPort(), accountId, new HashMap<>())
+        updateGatewayAccountCredentialsWith(accountId, new HashMap<>())
                 .then()
                 .statusCode(400)
                 .body("message", is("Field(s) missing: [credentials]"));
@@ -246,7 +245,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .withServiceName("a-service-name")
                 .buildCredentialsPayload();
 
-        updateGatewayAccountCredentialsWith(testContext.getPort(), accountId, credentials)
+        updateGatewayAccountCredentialsWith(accountId, credentials)
                 .then()
                 .statusCode(400)
                 .body("message", is("Field(s) missing: [password]"));
@@ -264,7 +263,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .withPassword("a-password")
                 .buildCredentialsPayload();
 
-        updateGatewayAccountCredentialsWith(testContext.getPort(), accountId, credentials)
+        updateGatewayAccountCredentialsWith(accountId, credentials)
                 .then()
                 .statusCode(400)
                 .body("message", is("Field(s) missing: [merchant_id]"));
@@ -279,7 +278,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .withServiceName("a-service-name")
                 .buildCredentialsPayload();
 
-        updateGatewayAccountCredentialsWith(testContext.getPort(), accountId, credentials)
+        updateGatewayAccountCredentialsWith(accountId, credentials)
                 .then()
                 .statusCode(400)
                 .body("message", is("Field(s) missing: [password, merchant_id]"));
@@ -288,7 +287,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
     @Test
     public void updateCredentials_shouldNotUpdateGatewayAccountCredentialsIfAccountIdIsNotNumeric() {
         Map<String, Object> credentials = GatewayAccountPayload.createDefault().buildCredentialsPayload();
-        updateGatewayAccountCredentialsWith(testContext.getPort(), "NO_NUMERIC_ACCOUNT_ID", credentials)
+        updateGatewayAccountCredentialsWith("NO_NUMERIC_ACCOUNT_ID", credentials)
                 .then()
                 .contentType(JSON)
                 .statusCode(NOT_FOUND.getStatusCode())
@@ -302,7 +301,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         createAGatewayAccountFor("smartpay");
 
         Map<String, Object> credentials = GatewayAccountPayload.createDefault().buildCredentialsPayload();
-        updateGatewayAccountCredentialsWith(testContext.getPort(), nonExistingAccountId, credentials)
+        updateGatewayAccountCredentialsWith(nonExistingAccountId, credentials)
                 .then()
                 .statusCode(404)
                 .body("message", is("The gateway account id '111111111' does not exist"));
@@ -462,9 +461,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         assertEquals(0, acceptedCardTypes.size());
     }
 
-    public static Response updateGatewayAccountCredentialsWith(int port, String accountId, Map<String, Object> credentials) {
-        return given().port(port)
-                .contentType(JSON).accept(JSON)
+    private Response updateGatewayAccountCredentialsWith(String accountId, Map<String, Object> credentials) {
+        return givenSetup().accept(JSON)
                 .body(credentials)
                 .patch(ACCOUNTS_FRONTEND_URL + accountId + "/credentials");
     }

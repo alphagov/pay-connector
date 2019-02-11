@@ -28,6 +28,8 @@ public class GatewayAccountRequestValidator {
     private static final String REMOVE_OP = "remove";
     public static final String CREDENTIALS_GATEWAY_MERCHANT_ID = "credentials/gateway_merchant_id";
     public static final String FIELD_ALLOW_WEB_PAYMENTS = "allow_web_payments";
+    public static final String FIELD_ALLOW_APPLE_PAY = "allow_apple_pay";
+    public static final String FIELD_ALLOW_GOOGLE_PAY = "allow_google_pay";
     public static final String FIELD_NOTIFY_SETTINGS = "notify_settings";
     public static final String FIELD_EMAIL_COLLECTION_MODE = "email_collection_mode";
     public static final String FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT = "corporate_credit_card_surcharge_amount";
@@ -39,6 +41,8 @@ public class GatewayAccountRequestValidator {
             FIELD_NOTIFY_SETTINGS, 
             FIELD_EMAIL_COLLECTION_MODE, 
             FIELD_ALLOW_WEB_PAYMENTS,
+            FIELD_ALLOW_APPLE_PAY,
+            FIELD_ALLOW_GOOGLE_PAY,
             FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT,
             FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT,
             FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT,
@@ -70,7 +74,9 @@ public class GatewayAccountRequestValidator {
             case FIELD_EMAIL_COLLECTION_MODE:
                 validateEmailCollectionMode(payload);
                 break;
-            case FIELD_ALLOW_WEB_PAYMENTS:
+            case FIELD_ALLOW_GOOGLE_PAY:
+            case FIELD_ALLOW_APPLE_PAY:
+            case FIELD_ALLOW_WEB_PAYMENTS: //TODO deprecate
                 validateAllowWebPayment(payload);
                 break;
             case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT: 
