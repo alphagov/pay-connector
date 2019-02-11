@@ -985,4 +985,27 @@
         </update>
     </changeSet>
 
+    <changeSet id="add gateway_accounts_stripe_setup table" author="">
+        <createTable tableName="gateway_accounts_stripe_setup">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="gateway_account_id" type="bigint">
+                <constraints foreignKeyName="fk__gateway_accounts_stripe_setup_gateway_accounts"
+                             referencedTableName="gateway_accounts" referencedColumnNames="id"
+                             nullable="false"/>
+            </column>
+            <column name="task" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="add index to gateway_account_id column in gateway_accounts_stripe_setup table" author="">
+        <createIndex tableName="gateway_accounts_stripe_setup"
+                     indexName="idx_gateway_accounts_stripe_setup_gateway_account_id" unique="false">
+            <column name="gateway_account_id" type="bigint"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
