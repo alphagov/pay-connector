@@ -957,4 +957,32 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add allow_apple_pay and allow_google_pay to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="allow_apple_pay" type="boolean">
+            </column>
+        </addColumn>
+        <addColumn tableName="gateway_accounts">
+            <column name="allow_google_pay" type="boolean">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add default to allow_apple_pay and allow_google_pay" author="">
+        <addDefaultValue tableName="gateway_accounts" columnName="allow_apple_pay" defaultValue="false"/>
+        <addDefaultValue tableName="gateway_accounts" columnName="allow_google_pay" defaultValue="false"/>
+    </changeSet>
+
+    <changeSet id="update allow_apple_pay with default value" author="">
+        <update tableName="gateway_accounts">
+            <column name="allow_apple_pay" value="false"/>
+        </update>
+    </changeSet>
+
+    <changeSet id="update allow_google_pay with default value" author="">
+        <update tableName="gateway_accounts">
+            <column name="allow_google_pay" value="false"/>
+        </update>
+    </changeSet>
+
 </databaseChangeLog>
