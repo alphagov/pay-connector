@@ -8,6 +8,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -17,7 +18,7 @@ public class ValidationExceptionMapper implements ExceptionMapper<ValidationExce
 
     @Override
     public Response toResponse(ValidationException exception) {
-        LOGGER.error(exception.getMessage());
+        LOGGER.error(exception.getErrors().stream().collect(Collectors.joining("\n")));
         Map<String, List<String>> entity = ImmutableMap.of("errors", exception.getErrors());
         return Response.status(400).entity(entity).type(APPLICATION_JSON).build();
     }

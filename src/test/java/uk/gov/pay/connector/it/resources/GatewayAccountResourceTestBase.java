@@ -1,18 +1,17 @@
 package uk.gov.pay.connector.it.resources;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.junit.After;
 import org.junit.Before;
-import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,15 +50,19 @@ public class GatewayAccountResourceTestBase {
                 .contentType(JSON);
     }
 
-    String createAGatewayAccountFor(String testProvider) {
-        return createAGatewayAccountFor(testProvider, null, null);
+    public static String extractGatewayAccountId(ValidatableResponse validatableResponse) {
+        return validatableResponse.extract().path("gateway_account_id");
+    }
+    
+    public static ValidatableResponse createAGatewayAccountFor(int port, String testProvider) {
+        return createAGatewayAccountFor(port, testProvider, null, null);
     }
 
-    String createAGatewayAccountFor(String testProvider, String description, String analyticsId) {
-        return createAGatewayAccountFor(testProvider, description, analyticsId, null);
+    public static ValidatableResponse createAGatewayAccountFor(int port, String testProvider, String description, String analyticsId) {
+        return createAGatewayAccountFor(port, testProvider, description, analyticsId, null);
     }
 
-    String createAGatewayAccountFor(String testProvider, String description, String analyticsId, String requires_3ds) {
+    public static ValidatableResponse createAGatewayAccountFor(int port, String testProvider, String description, String analyticsId, String requires_3ds) {
         Map<String, String> payload = Maps.newHashMap();
         payload.put("payment_provider", testProvider);
         if (description != null) {
@@ -71,23 +74,18 @@ public class GatewayAccountResourceTestBase {
         if (requires_3ds != null) {
             payload.put("requires_3ds", requires_3ds);
         }
-        ValidatableResponse response = givenSetup()
+        return given().port(port)
+                .contentType(JSON)
                 .body(toJson(payload))
                 .post(ACCOUNTS_API_URL)
                 .then()
                 .statusCode(201)
                 .contentType(JSON);
-
-        assertCorrectCreateResponse(response, GatewayAccountEntity.Type.TEST, description, analyticsId, null);
-        assertGettingAccountReturnsProviderName(response, testProvider, GatewayAccountEntity.Type.TEST);
-        assertGatewayAccountCredentialsAreEmptyInDB(response);
-        assertGatewayAccountCredentialsAreEmptyInDB(response);
-        assertGatewayAccountCredentialsAreEmptyInDB(response);
-        return response.extract().path("gateway_account_id");
     }
 
-    void assertGettingAccountReturnsProviderName(ValidatableResponse response, String providerName, GatewayAccountEntity.Type providerUrlType) {
-        givenSetup()
+    public static void assertGettingAccountReturnsProviderName(int port, ValidatableResponse response, String providerName, GatewayAccountEntity.Type providerUrlType) {
+        given().port(port)
+                .contentType(JSON)
                 .get(response.extract().header("Location").replace("https", "http")) //Scheme on links back are forced to be https
                 .then()
                 .statusCode(200)
@@ -96,16 +94,8 @@ public class GatewayAccountResourceTestBase {
                 .body("gateway_account_id", is(notNullValue()))
                 .body("type", is(providerUrlType.toString()));
     }
-
-    void assertCorrectCreateResponse(ValidatableResponse response) {
-        assertCorrectCreateResponse(response, GatewayAccountEntity.Type.TEST);
-    }
-
-    void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type) {
-        assertCorrectCreateResponse(response, type, null, null, null);
-    }
-
-    static void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type, String description, String analyticsId, String name) {
+    
+    public static void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type, String description, String analyticsId, String name) {
         String accountId = response.extract().path("gateway_account_id");
         String urlSlug = "api/accounts/" + accountId;
 
@@ -122,16 +112,87 @@ public class GatewayAccountResourceTestBase {
                 .body("links[0].method", is("GET"));
     }
 
-    private void assertGatewayAccountCredentialsAreEmptyInDB(ValidatableResponse response) {
+    public static void assertGatewayAccountCredentialsAreEmptyInDB(ValidatableResponse response, DatabaseTestHelper databaseTestHelper) {
         String gateway_account_id = response.extract().path("gateway_account_id");
         Map<String, String> accountCredentials = databaseTestHelper.getAccountCredentials(Long.valueOf(gateway_account_id));
         assertThat(accountCredentials, is(new HashMap<>()));
     }
+    
+    public static class GatewayAccountPayload {
+        String userName;
+        String password;
+        String merchantId;
+        String serviceName;
 
-    DatabaseFixtures.TestAccount createAccountRecordWithCards(CardTypeEntity... cardTypes) {
-        return databaseFixtures
-                .aTestAccount()
-                .withCardTypeEntities(Arrays.asList(cardTypes))
-                .insert();
+        static GatewayAccountPayload createDefault() {
+            return new GatewayAccountPayload()
+                    .withUsername("a-username")
+                    .withPassword("a-password")
+                    .withMerchantId("a-merchant-id")
+                    .withServiceName("a-service-name");
+        }
+
+        public GatewayAccountPayload withServiceName(String serviceName) {
+            this.serviceName = serviceName;
+            return this;
+        }
+
+        public GatewayAccountPayload withUsername(String userName) {
+            this.userName = userName;
+            return this;
+        }
+
+        public GatewayAccountPayload withPassword(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public GatewayAccountPayload withMerchantId(String merchantId) {
+            this.merchantId = merchantId;
+            return this;
+        }
+
+        public Map<String, String> getCredentials() {
+            HashMap<String, String> credentials = new HashMap<>();
+
+            if (this.userName != null) {
+                credentials.put("username", userName);
+            }
+
+            if (this.password != null) {
+                credentials.put("password", password);
+            }
+
+            if (this.merchantId != null) {
+                credentials.put("merchant_id", merchantId);
+            }
+
+            return credentials;
+        }
+
+        Map<String, Object> buildCredentialsPayload() {
+            return ImmutableMap.of("credentials", getCredentials());
+        }
+
+        Map buildServiceNamePayload() {
+            return ImmutableMap.of("service_name", serviceName);
+        }
+
+        String getServiceName() {
+            return serviceName;
+        }
+
+        String getPassword() {
+            return password;
+        }
+
+        String getUserName() {
+            return userName;
+        }
+
+        String getMerchantId() {
+            return merchantId;
+        }
+
     }
 }

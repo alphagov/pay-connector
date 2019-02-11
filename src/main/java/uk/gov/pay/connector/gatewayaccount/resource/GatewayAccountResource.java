@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -81,7 +80,7 @@ public class GatewayAccountResource {
     private final GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService;
     private final GatewayAccountRequestValidator validator;
     private final GatewayAccountServicesFactory gatewayAccountServicesFactory;
-    
+
     @Inject
     public GatewayAccountResource(GatewayAccountService gatewayAccountService, GatewayAccountDao gatewayDao, CardTypeDao cardTypeDao, ConnectorConfiguration conf,
                                   GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService,
@@ -252,13 +251,13 @@ public class GatewayAccountResource {
         return gatewayDao.findById(gatewayAccountId)
                 .map(gatewayAccount ->
                         {
-                            Map credentialsPayload = (Map) gatewayAccountPayload.get(CREDENTIALS_FIELD_NAME);
+                            Map<String, String> credentialsPayload = (Map) gatewayAccountPayload.get(CREDENTIALS_FIELD_NAME);
                             List<String> missingCredentialsFields = checkMissingCredentialsFields(credentialsPayload, gatewayAccount.getGatewayName());
                             if (!missingCredentialsFields.isEmpty()) {
                                 return fieldsMissingResponse(missingCredentialsFields);
                             }
 
-                            gatewayAccount.setCredentials(new ObjectMapper().convertValue(credentialsPayload, Map.class));
+                            gatewayAccount.setCredentials(credentialsPayload);
                             return Response.ok().build();
                         }
                 )
@@ -425,7 +424,7 @@ public class GatewayAccountResource {
         return charge;
     }
 
-    private List<String> checkMissingCredentialsFields(Map<String, Object> credentialsPayload, String provider) {
+    private List<String> checkMissingCredentialsFields(Map<String, String> credentialsPayload, String provider) {
         return providerCredentialFields.get(provider).stream()
                 .filter(requiredField -> !credentialsPayload.containsKey(requiredField))
                 .collect(Collectors.toList());

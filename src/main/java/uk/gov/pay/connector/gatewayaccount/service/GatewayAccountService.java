@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.CREDENTIALS_GATEWAY_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_WEB_PAYMENTS;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT;
@@ -62,13 +63,19 @@ public class GatewayAccountService {
         gatewayAccountEntity.setCardTypes(cardTypeDao.findAllNon3ds());
 
         gatewayAccountDao.persist(gatewayAccountEntity);
-        
+
         return GatewayAccountObjectConverter.createResponseFrom(gatewayAccountEntity, uriInfo);
     }
-
-
+    
     private final Map<String, BiConsumer<PatchRequest, GatewayAccountEntity>> attributeUpdater =
             new HashMap<String, BiConsumer<PatchRequest, GatewayAccountEntity>>() {{
+                put(CREDENTIALS_GATEWAY_MERCHANT_ID,
+                        (gatewayAccountRequest, gatewayAccountEntity) -> {
+                            Map<String, String> credentials = gatewayAccountEntity.getCredentials();
+                            Map<String, String> updatedCredentials = new HashMap<>(credentials);
+                            updatedCredentials.put("gateway_merchant_id", gatewayAccountRequest.valueAsString());
+                            gatewayAccountEntity.setCredentials(updatedCredentials);
+                        });
                 put(FIELD_ALLOW_WEB_PAYMENTS,
                         (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowWebPayments(Boolean.valueOf(gatewayAccountRequest.valueAsString())));
                 put(FIELD_NOTIFY_SETTINGS,

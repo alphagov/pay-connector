@@ -3,8 +3,12 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+import junitparams.converters.Nullable;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import uk.gov.pay.connector.common.exception.ValidationException;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 
@@ -22,6 +26,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_OPE
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_OPERATION_PATH;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_VALUE;
 
+@RunWith(JUnitParamsRunner.class)
 public class GatewayAccountRequestValidatorTest {
 
     private GatewayAccountRequestValidator validator;
@@ -32,6 +37,30 @@ public class GatewayAccountRequestValidatorTest {
     public void before() {
         validator = new GatewayAccountRequestValidator(new RequestValidator());
         objectMapper = new ObjectMapper();
+    }
+    
+    @Test
+    @Parameters({
+            "remove, gatewayMerchantId, Operation [remove] is not valid for path [credentials/gateway_merchant_id]", 
+            "add, , Field [value] cannot be empty",
+            "replace, null, Field [value] is required"
+    })
+    public void shouldThrowForInvalidMerchantGatewayIdPatchRequest(String op, @Nullable String gatewayMerchantId, String expectedErrorMessage) {
+        Map<String, String> patch = new HashMap<String, String>(){{
+            put(FIELD_OPERATION, op);
+            put(FIELD_OPERATION_PATH, "credentials/gateway_merchant_id");
+        }};
+        
+        if (gatewayMerchantId != null) patch.put(FIELD_VALUE, gatewayMerchantId);
+        
+        JsonNode jsonNode = new ObjectMapper().valueToTree(patch);   
+        try{
+            validator.validatePatchRequest(jsonNode);
+            fail( "Expected ValidationException" );
+        } catch (ValidationException e) {
+            assertThat(e.getErrors().size(), is(1));
+            assertThat(e.getErrors(), hasItems(expectedErrorMessage));
+        }
     }
 
     @Test
