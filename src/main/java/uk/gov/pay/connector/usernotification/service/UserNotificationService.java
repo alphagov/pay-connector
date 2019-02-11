@@ -10,10 +10,10 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
-import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.service.notify.NotificationClient;
 import uk.gov.service.notify.NotificationClientException;
@@ -29,6 +29,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.lang.Runtime.getRuntime;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -36,6 +38,8 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 
 public class UserNotificationService {
+
+    private static final Pattern LITERAL_DOLLAR_REFERENCE = Pattern.compile(Pattern.quote("$reference"));
 
     private String confirmationEmailTemplateId;
     private String refundIssuedEmailTemplateId;
@@ -158,7 +162,8 @@ public class UserNotificationService {
         map.put("date", DateTimeUtils.toUserFriendlyDate(charge.getCreatedDate()));
         map.put("amount", formatToPounds(CorporateCardSurchargeCalculator.getTotalAmountFor(charge)));
         map.put("description", charge.getDescription());
-        map.put("customParagraph", isBlank(customParagraph) ? "" : "^ " + customParagraph);
+        map.put("customParagraph", isBlank(customParagraph) ? "" : "^ " + LITERAL_DOLLAR_REFERENCE.matcher(customParagraph)
+                .replaceAll(Matcher.quoteReplacement(charge.getReference().toString())));
         map.put("serviceName", StringUtils.defaultString(gatewayAccount.getServiceName()));
         
         String corporateSurchargeMsg = charge.getCorporateSurcharge()
