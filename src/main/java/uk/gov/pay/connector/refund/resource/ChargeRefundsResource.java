@@ -52,7 +52,6 @@ public class ChargeRefundsResource {
         if (refundResponse.isSuccessful()) {
             return Response.accepted(RefundResponse.valueOf(refundServiceResponse.getRefundEntity(), uriInfo).serialize()).build();
         }
-
         return serviceErrorResponse(refundResponse.getError().map(GatewayError::getMessage).orElse("unknown error"));
     }
 

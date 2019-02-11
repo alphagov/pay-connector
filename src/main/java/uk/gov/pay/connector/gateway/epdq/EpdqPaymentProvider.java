@@ -1,25 +1,25 @@
 package uk.gov.pay.connector.gateway.epdq;
 
 import com.codahale.metrics.MetricRegistry;
-import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.gateway.epdq.model.response.EpdqQueryResponse;
-import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
-import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
-import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.epdq.model.response.EpdqQueryResponse;
+import uk.gov.pay.connector.gateway.model.Auth3dsDetails.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -27,12 +27,13 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
-import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
+import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -46,11 +47,13 @@ import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CANCEL;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CAPTURE;
 import static uk.gov.pay.connector.gateway.GatewayOperation.REFUND;
+import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdq3DsAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqQueryOrderRequestBuilder;
+import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
@@ -112,9 +115,15 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) {
-        Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(ROUTE_FOR_NEW_ORDER, request.getGatewayAccount(), buildAuthoriseOrder(request, frontendUrl));
-        return GatewayResponseGenerator.getEpdqGatewayResponse(authoriseClient, response, EpdqAuthorisationResponse.class);
+    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayErrorException {
+        GatewayClient.Response response = authoriseClient.postRequestFor(ROUTE_FOR_NEW_ORDER, request.getGatewayAccount(), buildAuthoriseOrder(request, frontendUrl));
+        return getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
+    }
+
+    private static GatewayResponse getEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayConnectionErrorException {
+        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
+        responseBuilder.withResponse(unmarshallResponse(response, responseClass));
+        return responseBuilder.build();
     }
 
     @Override
@@ -123,54 +132,72 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
-        Either<GatewayError, GatewayClient.Response> response = cancelClient.postRequestFor(ROUTE_FOR_MAINTENANCE_ORDER, request.getGatewayAccount(), buildCancelOrder(request));
-        return GatewayResponseGenerator.getEpdqGatewayResponse(cancelClient, response, EpdqCancelResponse.class);
+    public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayErrorException {
+        GatewayClient.Response response = cancelClient.postRequestFor(ROUTE_FOR_MAINTENANCE_ORDER, request.getGatewayAccount(), buildCancelOrder(request));
+        return getEpdqGatewayResponse(response, EpdqCancelResponse.class);
     }
 
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) {
         throw new UnsupportedOperationException("Wallets are not supported for ePDQ");
     }
-    
+
     public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) {
-        Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(
-                ROUTE_FOR_QUERY_ORDER,
-                charge.getGatewayAccount(),
-                buildQueryOrderRequestFor(charge)
-        );
-        GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = GatewayResponseGenerator.getEpdqGatewayResponse(authoriseClient, response, EpdqQueryResponse.class);
-        
-        return epdqGatewayResponse.getBaseResponse().map(EpdqQueryResponse::toChargeQueryResponse).orElseGet(() -> {
-            throw new  WebApplicationException("Things went wrong");
-        });
+        try {
+            GatewayClient.Response response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, charge.getGatewayAccount(), buildQueryOrderRequestFor(charge));
+            GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getEpdqGatewayResponse(response, EpdqQueryResponse.class);
+
+            return epdqGatewayResponse.getBaseResponse()
+                    .map(EpdqQueryResponse::toChargeQueryResponse)
+                    .orElseThrow(() -> new WebApplicationException("Things went wrong"));
+            
+        } catch (GatewayErrorException e) {
+            throw new WebApplicationException("Things went wrong");
+        }
     }
 
     @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
-        Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, request.getGatewayAccount(), buildQueryOrderRequestFor(request));
-        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = GatewayResponseGenerator.getEpdqGatewayResponse(authoriseClient, response, EpdqAuthorisationResponse.class);
-
-        BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse().map(epdqStatus -> ((EpdqAuthorisationResponse) epdqStatus).authoriseStatus()).orElse(BaseAuthoriseResponse.AuthoriseStatus.ERROR);
-        final Auth3dsDetails.Auth3dsResult auth3DResult = request.getAuth3DsDetails().getAuth3DsResult() == null ?
-                Auth3dsDetails.Auth3dsResult.ERROR : // we treat no result from frontend as an error
-                request.getAuth3DsDetails().getAuth3DsResult();
-
-        if (responseDoesNotMatchWithUserResult(authoriseStatus, auth3DResult)) {
-            LOGGER.warn("epdq.authorise-3ds.result.mismatch for chargeId={}, frontendstatus={}, gatewaystatus={}",
-                    request.getChargeExternalId(), request.getGatewayAccount().getId(), auth3DResult, authoriseStatus);
-            metricRegistry.counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s",
-                    request.getGatewayAccount().getGatewayName(),
-                    request.getAuth3DsDetails().getAuth3DsResult(),
-                    authoriseStatus.name()))
-                    .inc();
-            gatewayResponse = reconstructErrorBiasedGatewayResponse(gatewayResponse, authoriseStatus, auth3DResult);
+        Optional<String> transactionId = Optional.empty();
+        String stringifiedResponse = null;
+        BaseAuthoriseResponse.AuthoriseStatus authorisationStatus = null;
+        
+        try {
+            GatewayClient.Response response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, request.getGatewayAccount(), buildQueryOrderRequestFor(request));
+            GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
+            BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse()
+                    .map(epdqStatus -> epdqStatus.authoriseStatus()).orElse(ERROR);
+            Auth3dsResult auth3DResult = request.getAuth3DsDetails().getAuth3DsResult() == null ?
+                    Auth3dsResult.ERROR : // we treat no result from frontend as an error
+                    request.getAuth3DsDetails().getAuth3DsResult();
+            
+            if (responseDoesNotMatchWithUserResult(authoriseStatus, auth3DResult)) {
+                LOGGER.warn("epdq.authorise-3ds.result.mismatch for chargeId={}, frontendstatus={}, gatewaystatus={}",
+                        request.getChargeExternalId(), request.getGatewayAccount().getId(), auth3DResult, authoriseStatus);
+                metricRegistry.counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s",
+                        request.getGatewayAccount().getGatewayName(),
+                        request.getAuth3DsDetails().getAuth3DsResult(),
+                        authoriseStatus.name()))
+                        .inc();
+                gatewayResponse = reconstructErrorBiasedGatewayResponse(gatewayResponse, authoriseStatus, auth3DResult);
+            }
+            
+            if (!gatewayResponse.getBaseResponse().isPresent()) gatewayResponse.throwGatewayError();
+            
+            transactionId = Optional.ofNullable(gatewayResponse.getBaseResponse().get().getTransactionId());
+            stringifiedResponse = gatewayResponse.toString();
+            authorisationStatus = gatewayResponse.getBaseResponse().get().authoriseStatus();
+            
+        } catch (GatewayErrorException e) {
+            stringifiedResponse = e.getMessage();
+            authorisationStatus = BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION;
         }
         
-        String gatewayResponseString = gatewayResponse.toString();
-        return gatewayResponse.getBaseResponse()
-                .map(baseResponse -> Gateway3DSAuthorisationResponse.of(gatewayResponseString, baseResponse.authoriseStatus(), baseResponse.getTransactionId()))
-                .orElseGet(() -> Gateway3DSAuthorisationResponse.of(gatewayResponseString, BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION));
+        if (transactionId.isPresent()) {
+            return Gateway3DSAuthorisationResponse.of(stringifiedResponse, authorisationStatus, transactionId.get());
+        } else {
+            return Gateway3DSAuthorisationResponse.of(stringifiedResponse, authorisationStatus);
+        }
     }
 
     @Override
@@ -187,12 +214,16 @@ public class EpdqPaymentProvider implements PaymentProvider {
      * The outgoing response is error biased. Meaning, we have to make sure that the authorisation success can only happen if both frontend as well as epdq confirms its a success.
      * In all other combinations it is not authorised and the frontend error state take precedence followed by gateway error state for the resulting status.
      */
-    private GatewayResponse<BaseAuthoriseResponse> reconstructErrorBiasedGatewayResponse(GatewayResponse<BaseAuthoriseResponse> gatewayResponse, BaseAuthoriseResponse.AuthoriseStatus authoriseStatus, Auth3dsDetails.Auth3dsResult auth3DResult) {
+    private GatewayResponse<BaseAuthoriseResponse> reconstructErrorBiasedGatewayResponse(
+            GatewayResponse<BaseAuthoriseResponse> gatewayResponse,
+            BaseAuthoriseResponse.AuthoriseStatus authoriseStatus,
+            Auth3dsResult auth3DResult) throws GenericGatewayErrorException {
+
         GatewayResponse.GatewayResponseBuilder<EpdqAuthorisationResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
-        if (auth3DResult.equals(Auth3dsDetails.Auth3dsResult.ERROR)) {
-            return responseBuilder.withGatewayError(GatewayError.genericGatewayError(format("epdq.authorise-3ds.result.mismatch expected=%s, actual=%s", Auth3dsDetails.Auth3dsResult.ERROR, authoriseStatus.name())))
-                    .build();
-        } else if (auth3DResult.equals(Auth3dsDetails.Auth3dsResult.DECLINED)) {
+        if (auth3DResult.equals(Auth3dsResult.ERROR)) {
+            throw new GenericGatewayErrorException(
+                    format("epdq.authorise-3ds.result.mismatch expected=%s, actual=%s", Auth3dsResult.ERROR, authoriseStatus.name()));
+        } else if (auth3DResult.equals(Auth3dsResult.DECLINED)) {
             EpdqAuthorisationResponse epdqAuthorisationResponse = new EpdqAuthorisationResponse();
             epdqAuthorisationResponse.setStatusFromAuth3dsResult(auth3DResult);
             return responseBuilder
@@ -203,10 +234,10 @@ public class EpdqPaymentProvider implements PaymentProvider {
         }
     }
 
-    private boolean responseDoesNotMatchWithUserResult(BaseAuthoriseResponse.AuthoriseStatus authoriseStatus, Auth3dsDetails.Auth3dsResult auth3DResult) {
-        boolean respondMatches = (authoriseStatus.equals(BaseAuthoriseResponse.AuthoriseStatus.ERROR) && auth3DResult.equals(Auth3dsDetails.Auth3dsResult.ERROR)) ||
-                (authoriseStatus.equals(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED) && auth3DResult.equals(Auth3dsDetails.Auth3dsResult.AUTHORISED)) ||
-                (authoriseStatus.equals(BaseAuthoriseResponse.AuthoriseStatus.REJECTED) && auth3DResult.equals(Auth3dsDetails.Auth3dsResult.DECLINED));
+    private static boolean responseDoesNotMatchWithUserResult(BaseAuthoriseResponse.AuthoriseStatus authoriseStatus, Auth3dsResult auth3DResult) {
+        boolean respondMatches = (authoriseStatus.equals(ERROR) && auth3DResult.equals(Auth3dsResult.ERROR)) ||
+                (authoriseStatus.equals(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED) && auth3DResult.equals(Auth3dsResult.AUTHORISED)) ||
+                (authoriseStatus.equals(BaseAuthoriseResponse.AuthoriseStatus.REJECTED) && auth3DResult.equals(Auth3dsResult.DECLINED));
         return !respondMatches;
     }
 

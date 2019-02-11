@@ -12,6 +12,10 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionTimeoutErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -27,6 +31,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 
 public class CardAuthoriseService {
@@ -53,14 +60,59 @@ public class CardAuthoriseService {
 
     public AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
+            
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
-            GatewayResponse<BaseAuthoriseResponse> operationResponse = authorise(charge, authCardDetails);
-            processGatewayAuthorisationResponse(
-                    charge.getExternalId(),
-                    ChargeStatus.fromString(charge.getStatus()),
-                    authCardDetails,
-                    operationResponse);
+            GatewayResponse<BaseAuthoriseResponse> operationResponse = null;
+            ChargeStatus newStatus = null;
+            Optional<String> transactionId = Optional.empty();
+            Optional<String> sessionIdentifier = Optional.empty();
+            Optional<Auth3dsDetailsEntity> auth3dsDetailsEntity = Optional.empty();
+            
+            try {
+                operationResponse = authorise(charge, authCardDetails);
+                
+                if (!operationResponse.getBaseResponse().isPresent()) operationResponse.throwGatewayError();
+                    
+                newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
+                transactionId = cardAuthoriseBaseService.extractTransactionId(charge.getExternalId(), operationResponse);
+                auth3dsDetailsEntity = extractAuth3dsDetails(operationResponse);
+                sessionIdentifier = operationResponse.getSessionIdentifier();
+                
+            } catch (GatewayErrorException e) {
+                
+                if (e instanceof GenericGatewayErrorException) newStatus = AUTHORISATION_ERROR;
+                if (e instanceof GatewayConnectionTimeoutErrorException) newStatus = AUTHORISATION_TIMEOUT;
+                if (e instanceof GatewayConnectionErrorException) newStatus = AUTHORISATION_UNEXPECTED_ERROR;
+                
+                operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
+            }
 
+            ChargeEntity updatedCharge = chargeService.updateChargePostAuthorisation(
+                    charge.getExternalId(),
+                    newStatus,
+                    transactionId,
+                    auth3dsDetailsEntity,
+                    sessionIdentifier,
+                    authCardDetails);
+
+            boolean billingAddressSubmitted = updatedCharge.getCardDetails().getBillingAddress().isPresent();
+
+            // Used by Sumo Logic saved search
+            logger.info("Authorisation {} for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
+                    billingAddressSubmitted ? "with billing address" : "without billing address",
+                    updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
+                    transactionId.orElse("missing transaction ID"),
+                    updatedCharge.getGatewayAccount().getAnalyticsId(), updatedCharge.getGatewayAccount().getId(),
+                    operationResponse, ChargeStatus.fromString(charge.getStatus()), newStatus);
+
+            metricRegistry.counter(String.format(
+                    "gateway-operations.%s.%s.%s.authorise.%s.result.%s",
+                    updatedCharge.getGatewayAccount().getGatewayName(),
+                    updatedCharge.getGatewayAccount().getType(),
+                    updatedCharge.getGatewayAccount().getId(),
+                    billingAddressSubmitted ? "with-billing-address" : "without-billing-address",
+                    newStatus.toString())).inc();
+            
             return new AuthorisationResponse(operationResponse);
         });
     }
@@ -97,45 +149,8 @@ public class CardAuthoriseService {
         return cardTypes.stream().anyMatch(CardTypeEntity::isRequires3ds);
     }
 
-    public GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) {
-        return getPaymentProviderFor(charge)
-                .authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
-    }
-
-    private void processGatewayAuthorisationResponse(
-            String chargeExternalId,
-            ChargeStatus oldChargeStatus,
-            AuthCardDetails authCardDetails,
-            GatewayResponse<BaseAuthoriseResponse> operationResponse) {
-
-        Optional<String> transactionId = cardAuthoriseBaseService.extractTransactionId(chargeExternalId, operationResponse);
-        ChargeStatus status = cardAuthoriseBaseService.extractChargeStatus(operationResponse.getBaseResponse(), operationResponse.getGatewayError());
-
-        ChargeEntity updatedCharge = chargeService.updateChargePostAuthorisation(
-                chargeExternalId,
-                status,
-                transactionId,
-                extractAuth3dsDetails(operationResponse),
-                operationResponse.getSessionIdentifier(),
-                authCardDetails);
-
-        boolean billingAddressSubmitted = updatedCharge.getCardDetails().getBillingAddress().isPresent();
-
-        // Used by Sumo Logic saved search
-        logger.info("Authorisation {} for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
-                billingAddressSubmitted ? "with billing address" : "without billing address",
-                updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),
-                transactionId.orElse("missing transaction ID"),
-                updatedCharge.getGatewayAccount().getAnalyticsId(), updatedCharge.getGatewayAccount().getId(),
-                operationResponse, oldChargeStatus, status);
-
-        metricRegistry.counter(String.format(
-                "gateway-operations.%s.%s.%s.authorise.%s.result.%s",
-                updatedCharge.getGatewayAccount().getGatewayName(),
-                updatedCharge.getGatewayAccount().getType(),
-                updatedCharge.getGatewayAccount().getId(),
-                billingAddressSubmitted ? "with-billing-address" : "without-billing-address",
-                status.toString())).inc();
+    private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) throws GatewayErrorException {
+        return getPaymentProviderFor(charge).authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
     }
 
     private Optional<Auth3dsDetailsEntity> extractAuth3dsDetails(GatewayResponse<BaseAuthoriseResponse> operationResponse) {

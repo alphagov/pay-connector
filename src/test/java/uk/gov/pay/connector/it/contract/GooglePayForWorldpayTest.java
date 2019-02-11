@@ -1,19 +1,17 @@
 package uk.gov.pay.connector.it.contract;
 
 import com.google.common.collect.ImmutableMap;
-import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang.math.RandomUtils;
+import org.apache.http.HttpStatus;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
-import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
-import uk.gov.pay.connector.gateway.util.XMLUnmarshallerException;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -49,7 +47,7 @@ public class GooglePayForWorldpayTest {
             config("worldpay.urls.test", "https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp"));
     
     @Test
-    public void sendPaymentToWorldpay() throws XMLUnmarshallerException {
+    public void sendPaymentToWorldpay() throws Exception {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
         gatewayAccount.setCredentials(ImmutableMap.of(CREDENTIALS_USERNAME, worldpayUsername, CREDENTIALS_PASSWORD, worldpayPassword));
         gatewayAccount.setType(GatewayAccountEntity.Type.TEST);
@@ -65,9 +63,9 @@ public class GooglePayForWorldpayTest {
         GatewayClient authoriseClient = getGatewayClient();
         
         GatewayOrder gatewayOrder = new GatewayOrder(OrderRequestType.AUTHORISE, payload, "", APPLICATION_XML_TYPE);
-        Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, gatewayAccount, gatewayOrder);
-        assertThat(response.isRight()).isTrue();
-        String entity = response.right().value().getEntity();
+        GatewayClient.Response response = authoriseClient.postRequestFor(null, gatewayAccount, gatewayOrder);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        String entity = response.getEntity();
         System.out.println(entity);
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(entity, WorldpayOrderStatusResponse.class);
         assertThat(worldpayOrderStatusResponse.getLastEvent()).isEqualTo("AUTHORISED");

@@ -3,19 +3,18 @@ package uk.gov.pay.connector.service;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
-import fj.data.Either;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayOrder;
-import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.gateway.GatewayClient;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
@@ -31,8 +30,6 @@ import java.util.Map;
 import java.util.function.BiFunction;
 
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -83,7 +80,7 @@ public class GatewayClientTest {
         credentialMap.put(CREDENTIALS_PASSWORD, "password");
 
         gatewayClient = new GatewayClient(mockClient, urlMap,
-            mockSessionIdentifier, mockMetricRegistry);
+                mockSessionIdentifier, mockMetricRegistry);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         doAnswer(invocationOnMock -> null).when(mockCounter).inc();
@@ -105,40 +102,21 @@ public class GatewayClientTest {
         when(mockGatewayOrder.getMediaType()).thenReturn(mediaType);
     }
 
-    @Test
-    public void shouldReturnAGatewayResponseWhenProviderReturnsOk() {
-        when(mockResponse.getStatus()).thenReturn(200);
-
-        Either<GatewayError, GatewayClient.Response> gatewayResponse = gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder);
-
-        assertTrue(gatewayResponse.isRight());
-        assertFalse(gatewayResponse.isLeft());
-        verify(mockResponse).close();
-    }
-
-    @Test
-    public void shouldReturnGatewayErrorWhenProviderFails() {
+    @Test(expected = GatewayErrorException.GatewayConnectionErrorException.class)
+    public void shouldReturnGatewayErrorWhenProviderFails() throws Exception {
         when(mockResponse.getStatus()).thenReturn(500);
-
-        Either<GatewayError, GatewayClient.Response> gatewayResponse = gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder);
-
-        assertTrue(gatewayResponse.isLeft());
-        assertFalse(gatewayResponse.isRight());
+        gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder);
         verify(mockResponse).close();
     }
 
-    @Test
-    public void shouldReturnGatewayErrorWhenProviderFailsWithAProcessingException() {
+    @Test(expected = GatewayErrorException.GenericGatewayErrorException.class)
+    public void shouldReturnGatewayErrorWhenProviderFailsWithAProcessingException() throws Exception {
         when(mockBuilder.post(Entity.entity(orderPayload, mediaType))).thenThrow(new ProcessingException(new SocketException("socket failed")));
-
-        Either<GatewayError, GatewayClient.Response> gatewayResponse = gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder);
-
-        assertTrue(gatewayResponse.isLeft());
-        assertFalse(gatewayResponse.isRight());
+        gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder);
     }
 
     @Test
-    public void shouldIncludeCookieIfSessionIdentifierAvailableInOrder() {
+    public void shouldIncludeCookieIfSessionIdentifierAvailableInOrder() throws Exception {
         when(mockResponse.getStatus()).thenReturn(200);
 
         gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder);

@@ -1,20 +1,18 @@
 package uk.gov.pay.connector.gateway.worldpay.applepay;
 
-import fj.data.Either;
 import uk.gov.pay.connector.gateway.GatewayClient;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
-import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
-import uk.gov.pay.connector.wallets.WalletAuthorisationHandler;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayGatewayResponseGenerator;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.WalletAuthorisationHandler;
 
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseWalletOrderRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
-public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHandler {
+public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHandler, WorldpayGatewayResponseGenerator {
 
     private final GatewayClient authoriseClient;
 
@@ -23,9 +21,10 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise(WalletAuthorisationGatewayRequest request) {
-        Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildWalletAuthoriseOrder(request));
-        return GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
+    public GatewayResponse<BaseAuthoriseResponse> authorise(WalletAuthorisationGatewayRequest request) throws GatewayErrorException {
+        
+        GatewayClient.Response response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildWalletAuthoriseOrder(request));
+        return getWorldpayGatewayResponse(response);
     }
 
     private GatewayOrder buildWalletAuthoriseOrder(WalletAuthorisationGatewayRequest request) {

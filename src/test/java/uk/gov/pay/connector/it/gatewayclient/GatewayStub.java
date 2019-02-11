@@ -93,7 +93,7 @@ public class GatewayStub {
         respondWithStatusCodeAndPayloadWhenCardAuth(UNKNOWN_STATUS_CODE, AUTH_SUCCESS_PAYLOAD);
     }
 
-    public void respondWithMalformedBody_WhenCapture() {
+    public void respondWithMalformedBodyWhenCapture() {
         respondWithStatusCodeAndPayloadWhenCapture(OK_200, MALFORMED_XML_PAYLOAD);
     }
 

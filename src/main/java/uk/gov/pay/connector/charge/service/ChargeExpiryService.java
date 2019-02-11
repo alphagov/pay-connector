@@ -16,6 +16,7 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -24,6 +25,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -118,9 +120,20 @@ public class ChargeExpiryService {
         final List<ChargeEntity> expireCancelFailed = newArrayList();
 
         gatewayAuthorizedCharges.forEach(chargeEntity -> {
+
             ChargeEntity processedEntity = prepareForTermination(chargeEntity.getExternalId());
-            GatewayResponse<BaseCancelResponse> gatewayResponse = doGatewayCancel(processedEntity);
-            ChargeEntity expiredCharge = finishExpireCancel(processedEntity.getExternalId(), gatewayResponse);
+            ChargeStatus newStatus;
+
+            try {
+                GatewayResponse<BaseCancelResponse> gatewayResponse = doGatewayCancel(processedEntity);
+                newStatus = determineTerminalState(gatewayResponse);
+            } catch (GatewayErrorException e) {
+                newStatus= EXPIRE_FLOW.getFailureTerminalState();
+                logger.error("Gateway error while cancelling the Charge - charge_external_id={}, gateway_error={}",
+                        chargeEntity.getExternalId(), e.getMessage());
+            }
+
+            ChargeEntity expiredCharge = changeStatusTo(processedEntity.getExternalId(), newStatus);
 
             if (EXPIRED.getValue().equals(expiredCharge.getStatus())) {
                 expireCancelled.add(processedEntity);
@@ -135,11 +148,7 @@ public class ChargeExpiryService {
         );
     }
 
-    private ChargeStatus determineTerminalState(ChargeEntity chargeEntity, GatewayResponse<BaseCancelResponse> cancelResponse) {
-        if (!cancelResponse.isSuccessful()) {
-            logUnsuccessfulResponseReasons(chargeEntity, cancelResponse);
-        }
-
+    private ChargeStatus determineTerminalState(GatewayResponse<BaseCancelResponse> cancelResponse) {
         return cancelResponse.getBaseResponse().map(response -> {
             switch (response.cancelStatus()) {
                 case CANCELLED:
@@ -151,30 +160,15 @@ public class ChargeExpiryService {
             }
         }).orElse(EXPIRE_FLOW.getFailureTerminalState());
     }
-
-    @Transactional
-    @SuppressWarnings("WeakerAccess")
-    public ChargeEntity finishExpireCancel(String chargeExternalId, GatewayResponse<BaseCancelResponse> gatewayResponse) {
-        return chargeDao.findByExternalId(chargeExternalId).map(chargeEntity -> {
-            ChargeStatus status = determineTerminalState(chargeEntity, gatewayResponse);
-            logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
-                    chargeEntity.getExternalId(), chargeEntity.getStatus(), status);
-            chargeEntity.setStatus(status);
-            chargeEventDao.persistChargeEventOf(chargeEntity);
-            return chargeEntity;
-        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
-    }
     
     public GatewayResponse<BaseCancelResponse> forceCancelWithGateway(ChargeEntity charge) {
-        return doGatewayCancel(charge);
+        try {
+            return doGatewayCancel(charge);
+        } catch (GatewayErrorException e) {
+            throw new WebApplicationException("Things went wrong");
+        }
     }
-
-    private void logUnsuccessfulResponseReasons(ChargeEntity chargeEntity, GatewayResponse<BaseCancelResponse> gatewayResponse) {
-        gatewayResponse.getGatewayError().ifPresent(error ->
-                logger.error("Gateway error while cancelling the Charge - charge_external_id={}, gateway_error={}",
-                        chargeEntity.getExternalId(), error));
-    }
-
+    
     private ZonedDateTime getExpiryDateForRegularCharges() {
         int chargeExpiryWindowSeconds = chargeSweepConfig.getDefaultChargeExpiryThreshold();
         logger.debug("Charge expiry window size in seconds: [{}]", chargeExpiryWindowSeconds);
@@ -191,9 +185,8 @@ public class ChargeExpiryService {
         return legalStatuses.stream().map(ChargeStatus::toString).collect(Collectors.joining(", "));
     }
 
-    private GatewayResponse<BaseCancelResponse> doGatewayCancel(ChargeEntity chargeEntity) {
-        return providers.byName(chargeEntity.getPaymentGatewayName())
-                .cancel(CancelGatewayRequest.valueOf(chargeEntity));
+    private GatewayResponse<BaseCancelResponse> doGatewayCancel(ChargeEntity chargeEntity) throws GatewayErrorException {
+        return providers.byName(chargeEntity.getPaymentGatewayName()).cancel(CancelGatewayRequest.valueOf(chargeEntity));
     }
 
     // Only methods marked as public will be picked up by GuicePersist

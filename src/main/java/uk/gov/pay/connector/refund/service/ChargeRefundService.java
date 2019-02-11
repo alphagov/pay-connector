@@ -69,12 +69,8 @@ public class ChargeRefundService {
 
     public Response doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
         RefundEntity refundEntity = createRefund(accountId, chargeId, refundRequest);
-
-        GatewayRefundResponse gatewayRefundResponse =
-                providers.byName(refundEntity.getChargeEntity().getPaymentGatewayName()).refund(RefundGatewayRequest.valueOf(refundEntity));
-
+        GatewayRefundResponse gatewayRefundResponse = providers.byName(refundEntity.getChargeEntity().getPaymentGatewayName()).refund(RefundGatewayRequest.valueOf(refundEntity));
         RefundEntity refund = processRefund(gatewayRefundResponse, refundEntity.getId());
-
         return new Response(gatewayRefundResponse, refund);
     }
 

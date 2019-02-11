@@ -1,19 +1,17 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import fj.data.Either;
 import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.gateway.epdq.ChargeQueryResponse;
-import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
-import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.epdq.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -26,8 +24,8 @@ import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
-import uk.gov.pay.connector.gateway.util.GatewayResponseGenerator;
 import uk.gov.pay.connector.gateway.worldpay.applepay.WorldpayWalletAuthorisationHandler;
+import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Invocation.Builder;
@@ -38,21 +36,19 @@ import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CANCEL;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CAPTURE;
-import static uk.gov.pay.connector.gateway.GatewayOperation.REFUND;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
-public class WorldpayPaymentProvider implements PaymentProvider {
+public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGatewayResponseGenerator {
 
     public static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
 
     private final GatewayClient authoriseClient;
     private final GatewayClient cancelClient;
     private final GatewayClient captureClient;
-    private final GatewayClient refundClient;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
 
     private final WorldpayCaptureHandler worldpayCaptureHandler;
@@ -66,7 +62,6 @@ public class WorldpayPaymentProvider implements PaymentProvider {
         authoriseClient = gatewayClientFactory.createGatewayClient(WORLDPAY, AUTHORISE, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
         cancelClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CANCEL, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
         captureClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CAPTURE, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
-        refundClient = gatewayClientFactory.createGatewayClient(WORLDPAY, REFUND, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         worldpayCaptureHandler = new WorldpayCaptureHandler(captureClient);
         worldpayRefundHandler = new WorldpayRefundHandler(captureClient);
@@ -89,19 +84,24 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
     
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) {
-        Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrder(request));
-        return GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
+    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayErrorException {
+        GatewayClient.Response response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrder(request));
+        return getWorldpayGatewayResponse(response);
     }
 
     @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
-        Either<GatewayError, GatewayClient.Response> response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), build3dsResponseAuthOrder(request));
-        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = GatewayResponseGenerator.getWorldpayGatewayResponse(authoriseClient, response, WorldpayOrderStatusResponse.class);
-
-        return gatewayResponse.getBaseResponse().map(
-                baseResponse -> Gateway3DSAuthorisationResponse.of(gatewayResponse.toString(), baseResponse.authoriseStatus(), baseResponse.getTransactionId()))
-                .orElseGet(() -> Gateway3DSAuthorisationResponse.of(gatewayResponse.toString(), BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION));
+        try {
+            GatewayClient.Response response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), build3dsResponseAuthOrder(request));
+            GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getWorldpayGatewayResponse(response);
+            
+            if (!gatewayResponse.getBaseResponse().isPresent()) gatewayResponse.throwGatewayError();
+            
+            BaseAuthoriseResponse authoriseResponse = gatewayResponse.getBaseResponse().get();
+            return Gateway3DSAuthorisationResponse.of(gatewayResponse.toString(), authoriseResponse.authoriseStatus(), authoriseResponse.getTransactionId());
+        } catch (GatewayErrorException e) {
+            return Gateway3DSAuthorisationResponse.of(e.getMessage(), BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION);
+        }
     }
 
     @Override
@@ -110,7 +110,7 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) {
+    public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) throws GatewayErrorException {
         return worldpayWalletAuthorisationHandler.authorise(request);
     }
 
@@ -120,9 +120,9 @@ public class WorldpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
-        Either<GatewayError, GatewayClient.Response> response = cancelClient.postRequestFor(null, request.getGatewayAccount(), buildCancelOrder(request));
-        return GatewayResponseGenerator.getWorldpayGatewayResponse(cancelClient, response, WorldpayCancelResponse.class);
+    public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayErrorException {
+        GatewayClient.Response response = cancelClient.postRequestFor(null, request.getGatewayAccount(), buildCancelOrder(request));
+        return getWorldpayGatewayResponse(response);
     }
 
     @Override

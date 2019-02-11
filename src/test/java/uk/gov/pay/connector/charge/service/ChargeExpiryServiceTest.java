@@ -12,16 +12,16 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
-import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse.CancelStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayBaseResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
@@ -35,7 +35,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -84,7 +83,7 @@ public class ChargeExpiryServiceTest {
     }
 
     @Test
-    public void shouldExpireChargesWithStatus_authorisationSuccess_byCallingProviderToCancel() {
+    public void shouldExpireChargesWithStatus_authorisationSuccess_byCallingProviderToCancel() throws Exception {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
                 .withCreatedDate(ZonedDateTime.now())
@@ -108,7 +107,7 @@ public class ChargeExpiryServiceTest {
     }
 
     @Test
-    public void shouldExpireChargesWithStatus_awaitingCaptureRequest_byCallingProviderToCancel() {
+    public void shouldExpireChargesWithStatus_awaitingCaptureRequest_byCallingProviderToCancel() throws Exception {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
                 .withCreatedDate(ZonedDateTime.now())
@@ -132,7 +131,7 @@ public class ChargeExpiryServiceTest {
     }
 
     @Test
-    public void shouldExpireChargesWithoutCallingProviderToCancel() {
+    public void shouldExpireChargesWithoutCallingProviderToCancel() throws Exception {
         EXPIRABLE_REGULAR_STATUSES.stream()
                 .filter(status -> !GATEWAY_CANCELLABLE_STATUSES.contains(status))
                 .forEach(status -> {
@@ -149,13 +148,16 @@ public class ChargeExpiryServiceTest {
 
                     chargeExpiryService.expire(singletonList(chargeEntity));
 
-                    verify(mockPaymentProvider, never()).cancel(any());
+                    try {
+                        verify(mockPaymentProvider, never()).cancel(any());
+                    } catch (GatewayErrorException e) {}
+                    
                     assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
                 });
     }
 
     @Test
-    public void shouldUpdateStatusWhenCancellationFails() {
+    public void shouldUpdateStatusWhenCancellationFails() throws Exception {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
                 .withCreatedDate(ZonedDateTime.now())
@@ -163,14 +165,8 @@ public class ChargeExpiryServiceTest {
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
-        GatewayError mockGatewayError = mock(GatewayError.class);
-        GatewayResponseBuilder<WorldpayBaseResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse<BaseCancelResponse> gatewayErrorResponse = gatewayResponseBuilder
-                .withGatewayError(mockGatewayError)
-                .build();
-
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
-        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayErrorResponse);
+        when(mockPaymentProvider.cancel(any())).thenThrow(new GenericGatewayErrorException("something went wrong"));
         ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
         doNothing().when(mockChargeEventDao).persistChargeEventOf(captor.capture());
 
@@ -180,7 +176,7 @@ public class ChargeExpiryServiceTest {
     }
 
     @Test
-    public void shouldSweepAndExpireCharges() {
+    public void shouldSweepAndExpireCharges() throws Exception {
         ChargeEntity chargeEntityAwaitingCapture = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
                 .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))

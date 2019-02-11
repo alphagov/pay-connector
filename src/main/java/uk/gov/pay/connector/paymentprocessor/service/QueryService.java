@@ -15,7 +15,6 @@ public class QueryService {
     }
     
     public ChargeQueryResponse getChargeGatewayStatus(ChargeEntity charge) {
-        return providers.byName(charge.getPaymentGatewayName())
-                .queryPaymentStatus(charge);
+        return providers.byName(charge.getPaymentGatewayName()).queryPaymentStatus(charge);
     }
 }

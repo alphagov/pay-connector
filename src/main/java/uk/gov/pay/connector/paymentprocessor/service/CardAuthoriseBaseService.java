@@ -8,10 +8,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.exception.GenericGatewayRuntimeException;
-import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
@@ -20,9 +18,6 @@ import javax.inject.Inject;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus;
 
 public class CardAuthoriseBaseService {
@@ -49,17 +44,6 @@ public class CardAuthoriseBaseService {
                 throw new GenericGatewayRuntimeException("Exception occurred while doing authorisation");
         }
     }
-
-    
-    public ChargeStatus extractChargeStatus(Optional<BaseAuthoriseResponse> baseResponse,
-                                     Optional<GatewayError> gatewayError) {
-        return baseResponse
-                .map(BaseAuthoriseResponse::authoriseStatus)
-                .map(BaseAuthoriseResponse.AuthoriseStatus::getMappedChargeStatus)
-                .orElseGet(() -> gatewayError
-                        .map(this::mapError)
-                        .orElse(ChargeStatus.AUTHORISATION_ERROR));
-    }
     
     public Optional<String> extractTransactionId(String chargeExternalId, GatewayResponse<BaseAuthoriseResponse> operationResponse) {
         Optional<String> transactionId = operationResponse.getBaseResponse()
@@ -73,17 +57,6 @@ public class CardAuthoriseBaseService {
         return transactionId;
     }
 
-    private ChargeStatus mapError(GatewayError gatewayError) {
-        switch (gatewayError.getErrorType()) {
-            case GENERIC_GATEWAY_ERROR:
-                return AUTHORISATION_ERROR;
-            case GATEWAY_CONNECTION_TIMEOUT_ERROR:
-                return AUTHORISATION_TIMEOUT;
-            default:
-                return AUTHORISATION_UNEXPECTED_ERROR;
-        }
-    }
-    
     void emitAuthorisationMetric(ChargeEntity charge, String operation) {
         metricRegistry.counter(String.format("gateway-operations.%s.%s.%s.%s.result.%s",
                 charge.getGatewayAccount().getGatewayName(),

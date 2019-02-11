@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
 import com.google.common.collect.ImmutableMap;
-import fj.data.Either;
 import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,7 +11,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
-import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
@@ -21,7 +19,6 @@ import javax.ws.rs.core.Response;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static fj.data.Either.right;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -46,20 +43,14 @@ public class SmartpayCaptureHandlerTest {
     }
 
     @Test
-    public void shouldCaptureAPaymentSuccessfully() {
-        //mock client.postRequestFor
+    public void shouldCaptureAPaymentSuccessfully() throws Exception {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(successCaptureResponse());
-        Either<GatewayError, GatewayClient.Response> response = right(new TestResponse(this.response));
-        when(client.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(response);
+        TestResponse testResponse = new TestResponse(this.response);
+        when(client.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+                .thenReturn(testResponse);
         
-        //mock client.unmarshallResponse
-        Either<GatewayError, SmartpayCaptureResponse> unmarshalledResponse = right(new SmartpayCaptureResponse());
-        when(client.unmarshallResponse(any(TestResponse.class), any(Class.class))).thenReturn(unmarshalledResponse);
-        
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withGatewayAccountEntity(aServiceAccount())
-                .build();
+        ChargeEntity chargeEntity = aValidChargeEntity().withGatewayAccountEntity(aServiceAccount()).build();
 
         CaptureGatewayRequest request = CaptureGatewayRequest.valueOf(chargeEntity);
         CaptureResponse gatewayResponse = smartpayCaptureHandler.capture(request);
@@ -81,7 +72,6 @@ public class SmartpayCaptureHandlerTest {
                 "merchant_id", "theMerchantCode"
         ));
         gatewayAccount.setType(TEST);
-
         return gatewayAccount;
     }
     

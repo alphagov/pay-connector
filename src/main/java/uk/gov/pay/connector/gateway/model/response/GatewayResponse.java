@@ -3,6 +3,10 @@ package uk.gov.pay.connector.gateway.model.response;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionTimeoutErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 
 import java.util.Optional;
@@ -27,10 +31,12 @@ public class GatewayResponse<T extends BaseResponse> {
         this.gatewayError = error;
     }
 
+    @Deprecated
     public boolean isSuccessful() {
         return baseResponse != null;
     }
 
+    @Deprecated
     public boolean isFailed() {
         return gatewayError != null;
     }
@@ -46,14 +52,18 @@ public class GatewayResponse<T extends BaseResponse> {
     public Optional<GatewayError> getGatewayError() {
         return Optional.ofNullable(gatewayError);
     }
+    
+    public void throwGatewayError() throws GatewayErrorException {
+        switch (gatewayError.getErrorType()) {
+            case GENERIC_GATEWAY_ERROR: throw new GenericGatewayErrorException(gatewayError.getMessage());
+            case GATEWAY_CONNECTION_ERROR: throw new GatewayConnectionErrorException(gatewayError.getMessage());
+            case GATEWAY_CONNECTION_TIMEOUT_ERROR: throw new GatewayConnectionTimeoutErrorException(gatewayError.getMessage());
+        }
+    }
 
     @Override
     public String toString() {
-        if (isFailed()) {
-            return gatewayError.toString();
-        } else {
-            return baseResponse.toString();
-        }
+        return Optional.ofNullable(gatewayError).map(x -> x.toString()).orElse(baseResponse.toString());
     }
 
     public static GatewayResponse with(GatewayError gatewayError) {

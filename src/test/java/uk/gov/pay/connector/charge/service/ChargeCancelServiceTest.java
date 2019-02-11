@@ -95,7 +95,7 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doSystemCancel_shouldCancel_havingChargeStatusThatNeedsCancellationInGatewayProvider_withCancelledGatewayResponse() {
+    public void doSystemCancel_shouldCancel_havingChargeStatusThatNeedsCancellationInGatewayProvider_withCancelledGatewayResponse() throws Exception {
 
         String externalChargeId = "external-charge-id";
         Long gatewayAccountId = nextLong();
@@ -155,7 +155,7 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doUserCancel_shouldCancel_havingChargeStatusThatNeedsCancellationInGatewayProvider_withCancelledGatewayResponse() {
+    public void doUserCancel_shouldCancel_havingChargeStatusThatNeedsCancellationInGatewayProvider_withCancelledGatewayResponse() throws Exception {
 
         String externalChargeId = "external-charge-id";
         ChargeEntity chargeEntity = aValidChargeEntity()
@@ -196,7 +196,7 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doSystemCancel_shouldCancelWorldPayCharge_withStatus_awaitingCaptureRequest() {
+    public void doSystemCancel_shouldCancelWorldPayCharge_withStatus_awaitingCaptureRequest() throws Exception {
 
         String externalChargeId = "external-charge-id";
         Long gatewayAccountId = nextLong();
@@ -227,7 +227,7 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doSystemCancel_shouldCancelSmartPayCharge_withStatus_awaitingCaptureRequest() {
+    public void doSystemCancel_shouldCancelSmartPayCharge_withStatus_awaitingCaptureRequest() throws Exception {
 
         String externalChargeId = "external-charge-id";
         Long gatewayAccountId = nextLong();
@@ -258,7 +258,7 @@ public class ChargeCancelServiceTest {
     }
 
     @Test
-    public void doSystemCancel_shouldCancelEPDQCharge_withStatus_awaitingCaptureRequest() {
+    public void doSystemCancel_shouldCancelEPDQCharge_withStatus_awaitingCaptureRequest() throws Exception {
 
         String externalChargeId = "external-charge-id";
         Long gatewayAccountId = nextLong();

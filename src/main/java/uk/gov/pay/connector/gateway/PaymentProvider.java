@@ -23,19 +23,19 @@ public interface PaymentProvider {
 
     Optional<String> generateTransactionId();
 
-    GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request);
+    GatewayResponse authorise(CardAuthorisationGatewayRequest request) throws GatewayErrorException;
 
     ChargeQueryResponse queryPaymentStatus(ChargeEntity charge);
 
     Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request);
 
-    GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request);
+    GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) throws GatewayErrorException;
 
     CaptureResponse capture(CaptureGatewayRequest request);
 
     GatewayRefundResponse refund(RefundGatewayRequest request);
 
-    GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request);
+    GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayErrorException;
 
     ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity);
 }
