@@ -125,6 +125,12 @@ public class EpdqPaymentProvider implements PaymentProvider {
         responseBuilder.withResponse(unmarshallResponse(response, responseClass));
         return responseBuilder.build();
     }
+    
+    private static GatewayResponse getUninterpretedEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayConnectionErrorException {
+        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
+        responseBuilder.withResponse(unmarshallResponse(response, responseClass));
+        return responseBuilder.buildUninterpreted();
+    }
 
     @Override
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
@@ -144,7 +150,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
 
     public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) throws GatewayErrorException {
         GatewayClient.Response response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, charge.getGatewayAccount(), buildQueryOrderRequestFor(charge));
-        GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getEpdqGatewayResponse(response, EpdqQueryResponse.class);
+        GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getUninterpretedEpdqGatewayResponse(response, EpdqQueryResponse.class);
 
         return epdqGatewayResponse.getBaseResponse()
                 .map(EpdqQueryResponse::toChargeQueryResponse)
@@ -152,7 +158,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                         new WebApplicationException(String.format(
                                 "Unable to query charge %s - an error occurred: %s",
                                 charge.getExternalId(),
-                                epdqGatewayResponse.getGatewayError().toString()
+                                epdqGatewayResponse
                         )));
             
     }

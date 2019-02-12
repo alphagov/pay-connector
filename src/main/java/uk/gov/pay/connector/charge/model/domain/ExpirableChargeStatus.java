@@ -17,6 +17,7 @@ public enum ExpirableChargeStatus {
         this.authorisationStage = authorisationStage;
         this.expiryThresholdType = expiryThresholdType;
     }
+    
     private final AuthorisationStage authorisationStage;
     private final ChargeStatus chargeStatus;
     private final ExpiryThresholdType expiryThresholdType;
@@ -50,7 +51,7 @@ public enum ExpirableChargeStatus {
     }
 
     public enum ExpiryThresholdType {
-        REGULAR ,
+        REGULAR,
         DELAYED 
     }
     
