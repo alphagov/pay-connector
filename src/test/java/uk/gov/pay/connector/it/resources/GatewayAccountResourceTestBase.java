@@ -112,12 +112,6 @@ public class GatewayAccountResourceTestBase {
                 .body("links[0].method", is("GET"));
     }
 
-    public static void assertGatewayAccountCredentialsAreEmptyInDB(ValidatableResponse response, DatabaseTestHelper databaseTestHelper) {
-        String gateway_account_id = response.extract().path("gateway_account_id");
-        Map<String, String> accountCredentials = databaseTestHelper.getAccountCredentials(Long.valueOf(gateway_account_id));
-        assertThat(accountCredentials, is(new HashMap<>()));
-    }
-    
     public static class GatewayAccountPayload {
         String userName;
         String password;
