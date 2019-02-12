@@ -12,9 +12,9 @@ import uk.gov.pay.connector.gateway.epdq.ChargeQueryResponse;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class GatewayStatusComparison {
     private final ChargeStatus payStatus;
-    private final ChargeStatus gatewayStatus;
+    private ChargeStatus gatewayStatus;
     private final String chargeId;
-    private final String rawGatewayResponse;
+    private String rawGatewayResponse;
     private final ChargeEntity charge;
     private boolean processed = false;
 
@@ -22,11 +22,21 @@ public final class GatewayStatusComparison {
         return new GatewayStatusComparison(charge, reportedStatus);
     }
     
+    public static GatewayStatusComparison getEmpty(ChargeEntity charge) {
+        return new GatewayStatusComparison(charge);
+    }
+    
     private GatewayStatusComparison(ChargeEntity charge, ChargeQueryResponse gatewayQueryResponse) {
         chargeId = charge.getExternalId();
         payStatus = ChargeStatus.fromString(charge.getStatus());
         gatewayStatus = gatewayQueryResponse.getMappedStatus();
         rawGatewayResponse = gatewayQueryResponse.getRawGatewayResponse();
+        this.charge = charge;
+    }
+    
+    private GatewayStatusComparison(ChargeEntity charge) {
+        chargeId = charge.getExternalId();
+        payStatus = ChargeStatus.fromString(charge.getStatus());
         this.charge = charge;
     }
 

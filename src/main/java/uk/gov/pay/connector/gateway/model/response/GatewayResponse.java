@@ -108,5 +108,9 @@ public class GatewayResponse<T extends BaseResponse> {
             }
             return new GatewayResponse<>(response, sessionIdentifier);
         }
+
+        public GatewayResponse<T> buildUninterpreted() {
+            return new GatewayResponse<>(response, sessionIdentifier);
+        }
     }
 }
