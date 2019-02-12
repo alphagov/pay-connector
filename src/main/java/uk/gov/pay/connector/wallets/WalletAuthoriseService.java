@@ -83,7 +83,8 @@ public class WalletAuthoriseService {
                 Optional.empty(),
                 operationResponse.getSessionIdentifier(),
                 authCardDetailsToBePersisted,
-                walletAuthorisationData.getWalletType());
+                walletAuthorisationData.getWalletType(),
+                walletAuthorisationData.getPaymentInfo().getEmail());
 
         logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                 updatedCharge.getExternalId(), updatedCharge.getPaymentGatewayName().getName(),

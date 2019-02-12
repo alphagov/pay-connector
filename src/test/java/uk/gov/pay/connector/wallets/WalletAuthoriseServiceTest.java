@@ -129,6 +129,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getCardDetails(), is(notNullValue()));
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+        assertThat(charge.getEmail(), is(validApplePayDetails.getPaymentInfo().getEmail()));
     }
 
     @Test
@@ -151,6 +152,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getCardDetails(), is(notNullValue()));
         assertThat(charge.getWalletType(), is(WalletType.GOOGLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+        assertThat(charge.getEmail(), is(authorisationData.getPaymentInfo().getEmail()));
     }
 
     @Test
