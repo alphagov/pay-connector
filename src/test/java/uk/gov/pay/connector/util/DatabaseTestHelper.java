@@ -14,6 +14,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTask;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
@@ -706,5 +707,15 @@ public class DatabaseTestHelper {
         );
 
         return (Long.valueOf(chargeId));
+    }
+
+    public void addGatewayAccountsStripeSetupTask(long accountId, GatewayAccountStripeSetupTask task) {
+        jdbi.withHandle(handle ->
+                handle
+                        .createStatement("INSERT INTO gateway_accounts_stripe_setup(gateway_account_id, task) VALUES (:accountId, :task)")
+                        .bind("accountId", accountId)
+                        .bind("task", task)
+                        .execute()
+        );
     }
 }
