@@ -426,6 +426,13 @@ public class DatabaseTestHelper {
                         .first());
         return ret;
     }
+    
+    public Map<String, Object> getChargeByExternalId(String externalId) {
+        return jdbi.withHandle(h -> 
+                h.createQuery("SELECT * FROM charges WHERE external_id = :external_id")
+                .bind("external_id", externalId)
+                .first());
+    }
 
     public Map<String, Object> getEmailForAccountAndType(Long accountId, EmailNotificationType type) {
 
