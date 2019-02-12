@@ -72,12 +72,12 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
 
     @Test
     public void shouldAuthoriseCharge_ForApplePay() {
-        shouldAuthoriseChargeForApplePay(buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test"));
+        shouldAuthoriseChargeForApplePay("mr payment", "mr@payment.test");
     }
 
     @Test
     public void shouldAuthoriseCharge_ForApplePay_withMinData() {
-        shouldAuthoriseChargeForApplePay(buildJsonApplePayAuthorisationDetails(null, null));
+        shouldAuthoriseChargeForApplePay(null, null);
     }
     
     @Test
@@ -251,16 +251,18 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
         return chargeId;
     }
-    private String shouldAuthoriseChargeForApplePay(String cardDetails) {
+    private String shouldAuthoriseChargeForApplePay(String cardHolderName, String email) {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
 
         givenSetup()
-                .body(cardDetails)
+                .body(buildJsonApplePayAuthorisationDetails(cardHolderName, email))
                 .post(authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+        Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(chargeId);
+        assertThat(charge.get("email"), is(email));
         return chargeId;
     }
     @Test
