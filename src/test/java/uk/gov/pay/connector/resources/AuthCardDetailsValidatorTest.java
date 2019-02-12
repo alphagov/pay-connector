@@ -15,9 +15,10 @@ import static org.junit.Assert.assertTrue;
 public class AuthCardDetailsValidatorTest {
 
     private String sneakyCardNumber = "this12card3number4is5hidden6;7 89-0(1+2.";
+    private String over255LongString = "ThisLineIs_TooLong_cbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsa1234567899";
 
     @Test
-    public void validationSucceedForCorrectAuthorisationCardDetails() {
+    public void validationSucceedForWellFormattedAuthorisationCardDetails() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
 
         assertThat(AuthCardDetailsValidator.isWellFormatted(authCardDetails), is(true));
@@ -519,5 +520,52 @@ public class AuthCardDetailsValidatorTest {
                 .build();
 
         assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+    }
+
+    @Test
+    public void validationFailsIfCardHolderIsTooLong() {
+        AuthCardDetails details = AuthCardDetailsFixture.anAuthCardDetails().withCardHolder(over255LongString).build();
+        final boolean isWellFormatted = AuthCardDetailsValidator.isWellFormatted(details);
+        assertFalse(isWellFormatted);
+    }
+
+    @Test
+    public void validationFailsIfAddressLineOneIsTooLong() {
+        Address address = AddressFixture.anAddress().withLine1(over255LongString).build();
+        AuthCardDetails details = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
+        final boolean isWellFormatted = AuthCardDetailsValidator.isWellFormatted(details);
+        assertFalse(isWellFormatted);
+    }
+
+    @Test
+    public void validationFailsIfAddressLineTwoIsTooLong() {
+        Address address = AddressFixture.anAddress().withLine2(over255LongString).build();
+        AuthCardDetails details = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
+        final boolean isWellFormatted = AuthCardDetailsValidator.isWellFormatted(details);
+        assertFalse(isWellFormatted);
+    }
+
+    @Test
+    public void validationFailsIfAddressCountyIsTooLong() {
+        Address address = AddressFixture.anAddress().withCounty(over255LongString).build();
+        AuthCardDetails details = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
+        final boolean isWellFormatted = AuthCardDetailsValidator.isWellFormatted(details);
+        assertFalse(isWellFormatted);
+    }
+
+    @Test
+    public void validationFailsIfAddressCountryIsTooLong() {
+        Address address = AddressFixture.anAddress().withCountry(over255LongString).build();
+        AuthCardDetails details = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
+        final boolean isWellFormatted = AuthCardDetailsValidator.isWellFormatted(details);
+        assertFalse(isWellFormatted);
+    }
+
+    @Test
+    public void validationFailsIfAddressCityIsTooLong() {
+        Address address = AddressFixture.anAddress().withCity(over255LongString).build();
+        AuthCardDetails details = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
+        final boolean isWellFormatted = AuthCardDetailsValidator.isWellFormatted(details);
+        assertFalse(isWellFormatted);
     }
 }

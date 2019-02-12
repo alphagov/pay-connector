@@ -46,7 +46,7 @@ public class CardResource {
     private final ChargeCancelService chargeCancelService;
     private final ApplePayService applePayService;
     private final GooglePayService googlePayService;
-    
+
     @Inject
     public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
                         CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService, ApplePayService applePayService,
@@ -106,7 +106,7 @@ public class CardResource {
 
         return ResponseUtil.successResponseWithEntity(ImmutableMap.of("status", authoriseStatus.getMappedChargeStatus().toString()));
     }
-    
+
     @POST
     @Path("/v1/frontend/charges/{chargeId}/3ds")
     @Consumes(APPLICATION_JSON)
