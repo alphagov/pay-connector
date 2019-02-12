@@ -93,8 +93,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void getAccountShouldReturn3dsSetting() {
-        String gatewayAccountId = extractGatewayAccountId(
-                createAGatewayAccountFor(testContext.getPort(), "stripe", "desc", null, "true"));
+        String gatewayAccountId = extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), "stripe",  "desc", null,"true"));
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
                 .then()

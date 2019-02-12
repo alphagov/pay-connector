@@ -5,10 +5,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
-import uk.gov.pay.connector.usernotification.resource.EmailNotificationResource;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
+import uk.gov.pay.connector.usernotification.resource.EmailNotificationResource;
 
 import java.util.HashMap;
 import java.util.Map;

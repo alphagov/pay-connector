@@ -17,7 +17,7 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.it.resources.GatewayAccountFrontendResourceITest.updateGatewayAccountCredentialsWith;
+import static uk.gov.pay.connector.it.resources.ChargesApiResourceAllowWebPaymentsITest.updateGatewayAccountCredentialsWith;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceTestBase.createAGatewayAccountFor;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceTestBase.extractGatewayAccountId;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
