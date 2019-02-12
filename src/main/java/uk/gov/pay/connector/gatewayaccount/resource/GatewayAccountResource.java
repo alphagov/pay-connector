@@ -74,7 +74,6 @@ public class GatewayAccountResource {
     private static final String USERNAME_KEY = "username";
     private static final String PASSWORD_KEY = "password";
     private final GatewayAccountService gatewayAccountService;
-    private final GatewayAccountDao gatewayDao;
     private final CardTypeDao cardTypeDao;
     private final Map<String, List<String>> providerCredentialFields;
     private final GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService;
@@ -86,7 +85,6 @@ public class GatewayAccountResource {
                                   GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService,
                                   GatewayAccountRequestValidator validator, GatewayAccountServicesFactory gatewayAccountServicesFactory) {
         this.gatewayAccountService = gatewayAccountService;
-        this.gatewayDao = gatewayDao;
         this.cardTypeDao = cardTypeDao;
         this.gatewayAccountNotificationCredentialsService = gatewayAccountNotificationCredentialsService;
         this.validator = validator;
@@ -103,8 +101,8 @@ public class GatewayAccountResource {
     @JsonView(GatewayAccountEntity.Views.ApiView.class)
     public Response getGatewayAccount(@PathParam("accountId") Long accountId) {
         logger.debug("Getting gateway account for account id {}", accountId);
-        return gatewayDao
-                .findById(GatewayAccountEntity.class, accountId)
+        return gatewayAccountService
+                .getGatewayAccount(accountId)
                 .map(gatewayAccount -> Response.ok().entity(gatewayAccount.withoutCredentials()).build())
                 .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", accountId)));
 
@@ -135,9 +133,9 @@ public class GatewayAccountResource {
         List<GatewayAccountResourceDTO> gatewayAccountResourceDTOList;
 
         if (accountIds.isEmpty()) {
-            gatewayAccountResourceDTOList = gatewayDao.listAll();
+            gatewayAccountResourceDTOList = gatewayAccountService.getAllGatewayAccounts();
         } else {
-            gatewayAccountResourceDTOList = gatewayDao.list(accountIds);
+            gatewayAccountResourceDTOList = gatewayAccountService.getGatewayAccounts(accountIds);
         }
 
         logger.debug("Getting gateway accounts {}.", accountIdsArg);
@@ -183,7 +181,7 @@ public class GatewayAccountResource {
     @JsonView(GatewayAccountEntity.Views.ApiView.class)
     public Response getGatewayAccountWithCredentials(@PathParam("accountId") Long gatewayAccountId) {
 
-        return gatewayDao.findById(gatewayAccountId)
+        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(serviceAccount ->
                 {
                     serviceAccount.getCredentials().remove("password");
@@ -199,8 +197,7 @@ public class GatewayAccountResource {
     @JsonView(GatewayAccountEntity.Views.ApiView.class)
     public Response getGatewayAccountAcceptedCardTypes(@PathParam("accountId") Long accountId) {
         logger.info("Getting accepted card types for gateway account with account id {}", accountId);
-        return gatewayDao
-                .findById(GatewayAccountEntity.class, accountId)
+        return gatewayAccountService.getGatewayAccount(accountId)
                 .map(gatewayAccount -> successResponseWithEntity(ImmutableMap.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes())))
                 .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", accountId)));
 
@@ -248,7 +245,7 @@ public class GatewayAccountResource {
             return fieldsMissingResponse(Collections.singletonList(CREDENTIALS_FIELD_NAME));
         }
 
-        return gatewayDao.findById(gatewayAccountId)
+        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccount ->
                         {
                             Map<String, String> credentialsPayload = (Map) gatewayAccountPayload.get(CREDENTIALS_FIELD_NAME);
@@ -280,7 +277,7 @@ public class GatewayAccountResource {
             return fieldsInvalidSizeResponse(Collections.singletonList(SERVICE_NAME_FIELD_NAME));
         }
 
-        return gatewayDao.findById(gatewayAccountId)
+        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccount ->
                         {
                             gatewayAccount.setServiceName(serviceName);
@@ -301,7 +298,7 @@ public class GatewayAccountResource {
             return fieldsMissingResponse(Collections.singletonList(REQUIRES_3DS_FIELD_NAME));
         }
 
-        return gatewayDao.findById(gatewayAccountId)
+        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccount ->
                         {
                             boolean requires3ds = Boolean.parseBoolean(gatewayAccountPayload.get(REQUIRES_3DS_FIELD_NAME));
@@ -341,7 +338,7 @@ public class GatewayAccountResource {
             return badRequestResponse(errorMessage);
         }
 
-        return gatewayDao.findById(gatewayAccountId)
+        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccount -> {
                     if (!gatewayAccount.isRequires3ds() && hasAnyRequired3ds(cardTypeEntities)) {
                         return Response.status(Status.CONFLICT).build();
@@ -382,7 +379,7 @@ public class GatewayAccountResource {
             return fieldsMissingResponse(Collections.singletonList(PASSWORD_KEY));
         }
 
-        return gatewayDao.findById(gatewayAccountId)
+        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map((gatewayAccountEntity) -> {
                     try {
                         gatewayAccountNotificationCredentialsService.setCredentialsForAccount(notificationCredentials,
@@ -409,7 +406,7 @@ public class GatewayAccountResource {
         }
         Optional<String> descriptionMaybe = Optional.ofNullable(payload.get(DESCRIPTION_FIELD_NAME));
         Optional<String> analyticsIdMaybe = Optional.ofNullable(payload.get(ANALYTICS_ID_FIELD_NAME));
-        return gatewayDao.findById(gatewayAccountId)
+        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map((gatewayAccountEntity) -> {
                     descriptionMaybe.ifPresent(gatewayAccountEntity::setDescription);
                     analyticsIdMaybe.ifPresent(gatewayAccountEntity::setAnalyticsId);

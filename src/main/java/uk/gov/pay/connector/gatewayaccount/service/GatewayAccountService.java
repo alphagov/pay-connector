@@ -9,12 +9,14 @@ import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.PatchRequest;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriInfo;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -41,6 +43,18 @@ public class GatewayAccountService {
     public GatewayAccountService(GatewayAccountDao gatewayAccountDao, CardTypeDao cardTypeDao) {
         this.gatewayAccountDao = gatewayAccountDao;
         this.cardTypeDao = cardTypeDao;
+    }
+
+    public Optional<GatewayAccountEntity> getGatewayAccount(long gatewayAccountId) {
+        return gatewayAccountDao.findById(gatewayAccountId);
+    }
+
+    public List<GatewayAccountResourceDTO> getAllGatewayAccounts() {
+        return gatewayAccountDao.listAll();
+    }
+
+    public List<GatewayAccountResourceDTO> getGatewayAccounts(List<Long> gatewayAccountIds) {
+        return gatewayAccountDao.list(gatewayAccountIds);
     }
 
     @Transactional
