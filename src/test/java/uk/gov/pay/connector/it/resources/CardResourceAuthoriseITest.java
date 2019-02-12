@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
+import com.amazonaws.util.json.Jackson;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
@@ -12,6 +14,7 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -78,6 +82,23 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
     @Test
     public void shouldAuthoriseCharge_ForApplePay_withMinData() {
         shouldAuthoriseChargeForApplePay(null, null);
+    }
+
+
+    @Test
+    public void shouldAuthoriseCharge_ForGooglePay() throws IOException {
+        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        JsonNode googlePayload = Jackson.getObjectMapper().readTree(fixture("googlepay/example-auth-request.json"));
+
+        givenSetup()
+                .body(googlePayload)
+                .post(authoriseChargeUrlForGooglePay(chargeId))
+                .then()
+                .statusCode(200);
+
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+        Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(chargeId);
+        assertThat(charge.get("email"), is(googlePayload.get("payment_info").get("email").asText()));
     }
     
     @Test
