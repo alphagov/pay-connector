@@ -95,6 +95,7 @@ public class TestTemplateResourceLoader {
     public static final String EPDQ_AUTHORISATION_STATUS_REQUEST = EPDQ_BASE_NAME + "/authorisation-status-request.txt";
     public static final String EPDQ_AUTHORISATION_STATUS_DECLINED_RESPONSE = EPDQ_BASE_NAME + "/authorisation-status-declined-response.xml";
     public static final String EPDQ_AUTHORISATION_STATUS_ERROR_RESPONSE = EPDQ_BASE_NAME + "/authorisation-status-error-response.xml";
+    public static final String EPDQ_UNKNOWN_RESPONSE = EPDQ_BASE_NAME + "/unknown-status-response.xml";
 
 
     public static final String EPDQ_CAPTURE_REQUEST = EPDQ_BASE_NAME + "/capture-request.txt";

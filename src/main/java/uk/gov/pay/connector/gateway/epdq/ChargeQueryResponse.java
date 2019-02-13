@@ -2,8 +2,6 @@ package uk.gov.pay.connector.gateway.epdq;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
-import java.util.Optional;
-
 public class ChargeQueryResponse {
     private final ChargeStatus mappedStatus;
     private final String rawGatewayResponse;
@@ -13,8 +11,8 @@ public class ChargeQueryResponse {
         this.rawGatewayResponse = rawGatewayResponse;
     }
 
-    public Optional<ChargeStatus> getMappedStatus() {
-        return Optional.ofNullable(mappedStatus);
+    public ChargeStatus getMappedStatus() {
+        return mappedStatus;
     }
 
     public String getRawGatewayResponse() {

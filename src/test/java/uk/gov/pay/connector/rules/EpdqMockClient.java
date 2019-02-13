@@ -19,6 +19,10 @@ public class EpdqMockClient {
         paymentServiceResponse(ROUTE_FOR_NEW_ORDER, TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_SUCCESS_RESPONSE));
     }
 
+    public void mockUnknown() {
+        paymentServiceResponse(ROUTE_FOR_QUERY_ORDER, TestTemplateResourceLoader.load(EPDQ_UNKNOWN_RESPONSE));
+    }
+
     public void mockAuthorisationQuerySuccess() {
         paymentServiceResponse(ROUTE_FOR_QUERY_ORDER, TestTemplateResourceLoader.load(EPDQ_AUTHORISATION_SUCCESS_RESPONSE));
     }
