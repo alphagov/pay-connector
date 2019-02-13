@@ -38,5 +38,16 @@ public class GatewayAccountStripeSetupDao extends JpaDao<GatewayAccountStripeSet
         
         return count > 0;
     }
+    
+    public void removeCompletedTaskForGatewayAccount(long gatewayAccountId, GatewayAccountStripeSetupTask task) {
+        String query = "DELETE FROM GatewayAccountStripeSetupTaskEntity g WHERE g.gatewayAccount.id = :gatewayAccountId AND g.task = :task";
+        
+        entityManager
+                .get()
+                .createQuery(query)
+                .setParameter("gatewayAccountId", gatewayAccountId)
+                .setParameter("task", task)
+                .executeUpdate();
+    }
 
 }
