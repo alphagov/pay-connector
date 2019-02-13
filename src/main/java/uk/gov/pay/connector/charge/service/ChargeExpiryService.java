@@ -113,7 +113,10 @@ public class ChargeExpiryService {
             ChargeQueryResponse queryResponse = providers.byName(charge.getPaymentGatewayName())
                     .queryPaymentStatus(charge);
             
-            return !queryResponse.getMappedStatus().toExternal().isFinished();
+            return queryResponse.getMappedStatus()
+                    .map(chargeStatus -> !chargeStatus.toExternal().isFinished())
+                    .orElse(false);
+                    
             
         } catch (WebApplicationException | UnsupportedOperationException | GatewayErrorException e) {
             logger.info("Unable to retrieve status for charge {}: {}", charge.getExternalId(), e.getMessage());
