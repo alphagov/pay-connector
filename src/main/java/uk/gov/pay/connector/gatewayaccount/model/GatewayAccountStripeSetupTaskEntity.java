@@ -47,4 +47,11 @@ public class GatewayAccountStripeSetupTaskEntity {
         return task;
     }
 
+    public void setGatewayAccount(GatewayAccountEntity gatewayAccount) {
+        this.gatewayAccount = gatewayAccount;
+    }
+
+    public void setTask(GatewayAccountStripeSetupTask task) {
+        this.task = task;
+    }
 }

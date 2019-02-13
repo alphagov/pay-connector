@@ -55,4 +55,85 @@ public class GatewayAccountStripeSetupDaoITest extends DaoITestBase {
                         hasProperty("task", is(RESPONSIBLE_PERSON)))
         ));
     }
+
+    @Test
+    public void shouldReturnTrueIfGatewayAccountHasCompletedTask() {
+        long gatewayAccountId = 42;
+        databaseTestHelper.addGatewayAccount(gatewayAccountId, "stripe");
+
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
+
+        boolean result = gatewayAccountStripeSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, BANK_ACCOUNT);
+        
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnFalseIfGatewayAccountHasCompletedTask() {
+        long gatewayAccountId = 42;
+        databaseTestHelper.addGatewayAccount(gatewayAccountId, "stripe");
+
+        long anotherGatewayAccountId = 1;
+        databaseTestHelper.addGatewayAccount(anotherGatewayAccountId, "stripe");
+
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, BANK_ACCOUNT);
+
+        boolean result = gatewayAccountStripeSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, BANK_ACCOUNT);
+
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void shouldReturnTrueIfGatewayAccountHasCompletedTaskRecordedMoreThanOnce() {
+        long gatewayAccountId = 42;
+        databaseTestHelper.addGatewayAccount(gatewayAccountId, "stripe");
+        
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+
+        boolean result = gatewayAccountStripeSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, RESPONSIBLE_PERSON);
+
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldRemoveCompletedTaskForGatewayAccount() {
+        long gatewayAccountId = 42;
+        databaseTestHelper.addGatewayAccount(gatewayAccountId, "stripe");
+
+        long anotherGatewayAccountId = 1;
+        databaseTestHelper.addGatewayAccount(anotherGatewayAccountId, "stripe");
+
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, RESPONSIBLE_PERSON);
+        
+        gatewayAccountStripeSetupDao.removeCompletedTaskForGatewayAccount(gatewayAccountId, RESPONSIBLE_PERSON);
+
+        List<GatewayAccountStripeSetupTaskEntity> gatewayAccountTasks = gatewayAccountStripeSetupDao.findByGatewayAccountId(gatewayAccountId);
+
+        assertThat(gatewayAccountTasks, hasSize(1));
+        assertThat(gatewayAccountTasks, contains(hasProperty("task", is(BANK_ACCOUNT))));
+
+        List<GatewayAccountStripeSetupTaskEntity> otherGatewayAccountTasks = gatewayAccountStripeSetupDao.findByGatewayAccountId(anotherGatewayAccountId);
+        assertThat(otherGatewayAccountTasks, contains(hasProperty("task", is(RESPONSIBLE_PERSON))));
+    }
+
+    @Test
+    public void shouldRemoveCompletedTaskForGatewayAccountWhenHasCompletedTaskMoreThanOnce() {
+        long gatewayAccountId = 42;
+        databaseTestHelper.addGatewayAccount(gatewayAccountId, "stripe");
+
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
+
+        gatewayAccountStripeSetupDao.removeCompletedTaskForGatewayAccount(gatewayAccountId, RESPONSIBLE_PERSON);
+
+        List<GatewayAccountStripeSetupTaskEntity> gatewayAccountTasks = gatewayAccountStripeSetupDao.findByGatewayAccountId(gatewayAccountId);
+
+        assertThat(gatewayAccountTasks, hasSize(1));
+        assertThat(gatewayAccountTasks, contains(hasProperty("task", is(BANK_ACCOUNT))));
+    }
 }
