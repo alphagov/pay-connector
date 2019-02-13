@@ -264,10 +264,12 @@ public class ChargeService {
                                                             Optional<Auth3dsDetailsEntity> auth3dsDetails,
                                                             Optional<String> sessionIdentifier,
                                                             AuthCardDetails authCardDetails,
-                                                            WalletType walletType) {
-        ChargeEntity charge = updateChargePostAuthorisation(chargeExternalId, status, transactionId, auth3dsDetails, sessionIdentifier, authCardDetails);
-        charge.setWalletType(walletType);
-        return charge;
+                                                            WalletType walletType,
+                                                            String emailAddress) {
+        ChargeEntity chargeEntity = updateChargePostAuthorisation(chargeExternalId, status, transactionId, auth3dsDetails, sessionIdentifier, authCardDetails);
+        chargeEntity.setWalletType(walletType);
+        chargeEntity.setEmail(emailAddress);
+        return chargeEntity;
     }
 
     @Transactional
