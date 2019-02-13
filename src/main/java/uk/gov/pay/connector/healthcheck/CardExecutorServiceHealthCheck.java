@@ -27,7 +27,7 @@ public class CardExecutorServiceHealthCheck extends HealthCheck {
     }
 
     @Override
-    protected Result check() throws Exception {
+    protected Result check() {
         if (threadPoolExecutor.getQueue().size() <= 10) {
             return Result.healthy();
         }

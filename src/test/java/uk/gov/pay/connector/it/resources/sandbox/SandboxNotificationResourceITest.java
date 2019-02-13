@@ -21,7 +21,7 @@ public class SandboxNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturn200ForSandboxNotifications() throws Exception {
+    public void shouldReturn200ForSandboxNotifications() {
         given().port(testContext.getPort())
                 .body("sandbox-notification")
                 .contentType(APPLICATION_JSON)

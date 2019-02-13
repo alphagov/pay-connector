@@ -66,7 +66,7 @@ public class CardResourceCaptureITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnErrorWithoutChangingChargeState_IfChargeIsExpired() throws Exception {
+    public void shouldReturnErrorWithoutChangingChargeState_IfChargeIsExpired() {
         String chargeId = createNewChargeWithNoTransactionId(EXPIRED);
         String message = format("Charge not in correct state to be processed, %s", chargeId);
         captureAndVerifyFor(chargeId, 400, message);
@@ -74,7 +74,7 @@ public class CardResourceCaptureITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldPreserveCardDetails_IfCaptureReady() throws Exception {
+    public void shouldPreserveCardDetails_IfCaptureReady() {
         String externalChargeId = authoriseNewCharge();
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
 

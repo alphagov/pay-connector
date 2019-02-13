@@ -16,7 +16,7 @@ public class SchemeRewriteFilterTest {
     private SchemeRewriteFilter schemeRewriteFilter = new SchemeRewriteFilter();
 
     @Test
-    public void filter_shouldRewriteSchemeInBaseUriAndRequestUriToHttps() throws Exception {
+    public void filter_shouldRewriteSchemeInBaseUriAndRequestUriToHttps() {
 
         SecurityContext securityContextMock = Mockito.mock(SecurityContext.class);
         PropertiesDelegate propertiesDelegateMock = Mockito.mock(PropertiesDelegate.class);

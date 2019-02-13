@@ -62,7 +62,7 @@ public class DatabaseHealthCheck extends HealthCheck {
     }
 
     @Override
-    protected Result check() throws Exception {
+    protected Result check() {
         try (Connection connection = DriverManager.getConnection(
                 configuration.getDataSourceFactory().getUrl(),
                 configuration.getDataSourceFactory().getUser(),

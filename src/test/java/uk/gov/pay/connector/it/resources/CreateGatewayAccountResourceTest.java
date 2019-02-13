@@ -45,7 +45,7 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
     }
 
     @Test
-    public void createStripeGatewayAccountWithoutCredentials() throws Exception {
+    public void createStripeGatewayAccountWithoutCredentials() {
         Map<String, Object> payload = ImmutableMap.of(
                 "type", "test",
                 "payment_provider", "stripe",
@@ -66,7 +66,7 @@ public class CreateGatewayAccountResourceTest extends GatewayAccountResourceTest
     }
 
     @Test
-    public void createStripeGatewayAccountWithCredentials() throws Exception {
+    public void createStripeGatewayAccountWithCredentials() {
         Map<String, Object> payload = ImmutableMap.of(
                 "type", "test",
                 "payment_provider", "stripe",

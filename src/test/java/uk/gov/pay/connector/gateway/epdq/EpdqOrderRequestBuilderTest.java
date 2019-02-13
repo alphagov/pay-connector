@@ -63,7 +63,7 @@ public class EpdqOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidCaptureOrderRequest() throws Exception {
+    public void shouldGenerateValidCaptureOrderRequest() {
         GatewayOrder actualRequest = anEpdqCaptureOrderRequestBuilder()
                 .withPassword("password")
                 .withUserId("username")
@@ -77,7 +77,7 @@ public class EpdqOrderRequestBuilderTest {
     }
 
     @Test
-    public void shouldGenerateValidCancelOrderRequest() throws Exception {
+    public void shouldGenerateValidCancelOrderRequest() {
         GatewayOrder actualRequest = anEpdqCancelOrderRequestBuilder()
                 .withPassword("password")
                 .withUserId("username")

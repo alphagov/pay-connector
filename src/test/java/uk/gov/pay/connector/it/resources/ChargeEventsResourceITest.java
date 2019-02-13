@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.resources;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -14,7 +13,6 @@ import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.matcher.TransactionEventMatcher;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
@@ -59,7 +57,7 @@ public class ChargeEventsResourceITest {
     }
 
     @Test
-    public void shouldGetAllEventsForAGivenChargeWithoutRefunds() throws Exception {
+    public void shouldGetAllEventsForAGivenChargeWithoutRefunds() {
         ZonedDateTime createdDate = ZonedDateTime.now();
 
         DatabaseFixtures.TestCharge testCharge = createTestCharge().insert();
@@ -89,7 +87,7 @@ public class ChargeEventsResourceITest {
     }
 
     @Test
-    public void shouldGetAllEventsForAGivenChargeWithRefunds() throws Exception {
+    public void shouldGetAllEventsForAGivenChargeWithRefunds() {
 
         ZonedDateTime createdDate = ZonedDateTime.now();
 

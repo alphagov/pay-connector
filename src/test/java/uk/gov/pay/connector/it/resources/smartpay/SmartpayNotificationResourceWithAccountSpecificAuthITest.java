@@ -13,7 +13,6 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +55,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
     }
 
     @Test
-    public void shouldHandleASmartpayNotificationWithCorrectCredentials() throws Exception {
+    public void shouldHandleASmartpayNotificationWithCorrectCredentials() {
         givenSetup()
                 .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsnewbigsecret")))
                 .post("/v1/api/accounts/" + accountId + "/notification-credentials")
@@ -83,7 +82,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
     }
 
     @Test
-    public void shouldNotPermitASmartpayNotificationWithIncorrectCredentials() throws Exception {
+    public void shouldNotPermitASmartpayNotificationWithIncorrectCredentials() {
         givenSetup()
                 .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsnewbigsecret")))
                 .post("/v1/api/accounts/" + accountId + "/notification-credentials")
@@ -99,7 +98,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
     }
 
     @Test
-    public void shouldIgnoreAuthorisedNotification() throws Exception {
+    public void shouldIgnoreAuthorisedNotification() {
         givenSetup()
                 .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsbigsecret")))
                 .post("/v1/api/accounts/" + accountId + "/notification-credentials")
@@ -121,7 +120,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
 
 
     @Test
-    public void shouldHandleRefundNotificationsCorrectly() throws Exception {
+    public void shouldHandleRefundNotificationsCorrectly() {
 
         givenSetup()
                 .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsbigsecret")))
@@ -181,7 +180,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
     }
 
     @Test
-    public void shouldIgnoreASmartpayNotificationWithoutAuth() throws Exception {
+    public void shouldIgnoreASmartpayNotificationWithoutAuth() {
         String transactionId = randomId();
         createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
@@ -195,7 +194,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
     }
 
     @Test
-    public void shouldFailASmartpayNotificationWithAnUnexpectedContentType() throws Exception {
+    public void shouldFailASmartpayNotificationWithAnUnexpectedContentType() {
         String transactionId = randomId();
         createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
@@ -226,7 +225,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
                 .post(NOTIFICATION_PATH);
     }
 
-    private String notificationPayloadForTransaction(String merchantReference, String originalReference, String pspReference, String fileName) throws IOException {
+    private String notificationPayloadForTransaction(String merchantReference, String originalReference, String pspReference, String fileName) {
         return fixture("templates/smartpay/" + fileName + ".json")
                 .replace("{{merchantReference}}", merchantReference)
                 .replace("{{originalReference}}", originalReference)

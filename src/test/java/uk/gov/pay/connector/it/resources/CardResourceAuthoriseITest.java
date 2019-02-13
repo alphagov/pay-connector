@@ -126,7 +126,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
     }
 
     @Test
-    public void sanitizeCardDetails_shouldNotStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingRight10Numbers() throws Exception {
+    public void sanitizeCardDetails_shouldNotStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingRight10Numbers() {
 
         String valueWith10CharactersAsNumbers = "r-12-34-5  Ju&^6501-7m";
         String cardHolderName = valueWith10CharactersAsNumbers;
@@ -155,7 +155,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotAuthoriseCard_ForSpecificCardNumber1() throws Exception {
+    public void shouldNotAuthoriseCard_ForSpecificCardNumber1() {
         String cardDetailsToReject = buildJsonAuthorisationDetailsFor("4000000000000002", "visa");
 
         String expectedErrorMessage = "This transaction was declined.";
@@ -164,7 +164,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotAuthoriseCard_ForSpecificCardNumber2() throws Exception {
+    public void shouldNotAuthoriseCard_ForSpecificCardNumber2() {
         String cardDetailsToReject = buildJsonAuthorisationDetailsFor("4000000000000119", "visa");
 
         String expectedErrorMessage = "This transaction could be not be processed.";
@@ -173,19 +173,19 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldAuthoriseCharge_WithMinimalAddress() throws Exception {
+    public void shouldAuthoriseCharge_WithMinimalAddress() {
         String cardDetails = authorisationDetailsWithMinimalAddress(VALID_SANDBOX_CARD_LIST[0], "visa");
         shouldAuthoriseChargeFor(cardDetails);
     }
 
     @Test
-    public void shouldAuthoriseCharge_ForValidCardWithFullAddress() throws Exception {
+    public void shouldAuthoriseCharge_ForValidCardWithFullAddress() {
         String validCardDetails = buildJsonAuthorisationDetailsWithFullAddress();
         shouldAuthoriseChargeFor(validCardDetails);
     }
 
     @Test
-    public void shouldRejectRandomCardNumber() throws Exception {
+    public void shouldRejectRandomCardNumber() {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("1111111111111119234", "visa");
 
@@ -194,7 +194,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnError_WhenCardNumberLongerThanMaximumExpected() throws Exception {
+    public void shouldReturnError_WhenCardNumberLongerThanMaximumExpected() {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("11111111111111192345", "visa");
 
@@ -203,7 +203,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnError_WhenCvcIsMoreThan4Digits() throws Exception {
+    public void shouldReturnError_WhenCvcIsMoreThan4Digits() {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "12345", "11/99", "visa");
 
@@ -212,7 +212,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnError_WhenCvcIsLessThan3Digits() throws Exception {
+    public void shouldReturnError_WhenCvcIsLessThan3Digits() {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "12", "11/99", "visa");
 
@@ -221,7 +221,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnError_WhenCardNumberShorterThanMinimumExpected() throws Exception {
+    public void shouldReturnError_WhenCardNumberShorterThanMinimumExpected() {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("11111111111", "visa");
 
@@ -230,7 +230,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfCardDetailsAreInvalid() throws Exception {
+    public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfCardDetailsAreInvalid() {
         String chargeId = createNewCharge();
         String detailsWithInvalidExpiryDate = buildJsonAuthorisationDetailsFor("4242424242424242", "123", "1299");
 

@@ -59,7 +59,7 @@ public class JsonToMapConverterTest {
     }
 
     @Test
-    public void shouldReturnNullWhenEmptyMap() throws Exception {
+    public void shouldReturnNullWhenEmptyMap() {
         Map<String, String> values = ImmutableMap.of();
         pGobject = jsonToMapConverter.convertToDatabaseColumn(values);
         assertThat(pGobject.getValue(), is(nullValue()));

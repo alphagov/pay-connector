@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.smartpay.auth;
 
-import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.basic.BasicCredentials;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,7 +49,7 @@ public class SmartpayAccountSpecificAuthenticatorTest {
     }
 
     @Test
-    public void whenAccountMatchesCredentials_shouldReturnBasicAuthUser() throws AuthenticationException {
+    public void whenAccountMatchesCredentials_shouldReturnBasicAuthUser() {
 
         when(hashUtil.check(password, hashedPassword)).thenReturn(true);
 
@@ -60,7 +59,7 @@ public class SmartpayAccountSpecificAuthenticatorTest {
     }
 
     @Test
-    public void whenAccountExistsButCredentialsDontMatch_shouldReturnEmpty() throws AuthenticationException {
+    public void whenAccountExistsButCredentialsDontMatch_shouldReturnEmpty() {
 
         when(hashUtil.check(password, hashedPassword)).thenReturn(false);
 
@@ -70,7 +69,7 @@ public class SmartpayAccountSpecificAuthenticatorTest {
     }
 
     @Test
-    public void whenAccountDoesNotExist_shouldReturnEmpty() throws AuthenticationException {
+    public void whenAccountDoesNotExist_shouldReturnEmpty() {
         Optional<GatewayAccountEntity> gatewayAccountEntityMayBe = Optional.empty();
 
         when(gatewayAccountDao.findByNotificationCredentialsUsername(username)).thenReturn(gatewayAccountEntityMayBe);

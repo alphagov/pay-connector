@@ -247,7 +247,7 @@ public class UserNotificationServiceTest {
     }
 
     @Test
-    public void shouldNotSendRefundIssuedEmail_whenConfirmationEmailNotificationsAreDisabledForService() throws Exception {
+    public void shouldNotSendRefundIssuedEmail_whenConfirmationEmailNotificationsAreDisabledForService() {
         chargeEntity.getGatewayAccount()
                 .getEmailNotifications()
                 .get(EmailNotificationType.REFUND_ISSUED)

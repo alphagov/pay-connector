@@ -156,7 +156,7 @@ public class ChargeExpiryServiceTest {
     }
 
     @Test
-    public void shouldExpireChargesWithoutCallingProviderToCancel() throws Exception {
+    public void shouldExpireChargesWithoutCallingProviderToCancel() {
         EXPIRABLE_REGULAR_STATUSES.stream()
                 .filter(status -> !GATEWAY_CANCELLABLE_STATUSES.contains(status))
                 .forEach(status -> {

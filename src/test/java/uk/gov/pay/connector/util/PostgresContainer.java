@@ -88,7 +88,7 @@ public class PostgresContainer {
         Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
     }
 
-    private void waitForPostgresToStart() throws DockerException, InterruptedException, IOException {
+    private void waitForPostgresToStart() throws InterruptedException {
         Stopwatch timer = Stopwatch.createStarted();
         boolean succeeded = false;
         while (!succeeded && timer.elapsed(TimeUnit.SECONDS) < DB_TIMEOUT_SEC) {
@@ -101,7 +101,7 @@ public class PostgresContainer {
         logger.info("Postgres docker container started in {}.", timer.elapsed(TimeUnit.MILLISECONDS));
     }
 
-    private boolean checkPostgresConnection() throws IOException {
+    private boolean checkPostgresConnection() {
 
         Properties props = new Properties();
         props.setProperty("user", DB_USERNAME);

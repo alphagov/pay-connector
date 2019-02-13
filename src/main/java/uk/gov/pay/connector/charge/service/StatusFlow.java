@@ -4,8 +4,6 @@ import com.google.common.collect.ImmutableList;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus;
 
-import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 

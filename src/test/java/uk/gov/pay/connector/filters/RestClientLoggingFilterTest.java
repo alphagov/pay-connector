@@ -15,7 +15,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientResponseContext;
@@ -23,7 +22,6 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import java.net.URI;
 import java.util.List;
-import java.util.UUID;
 
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.containsString;
@@ -58,7 +56,7 @@ public class RestClientLoggingFilterTest {
     }
 
     @Test
-    public void shouldLogEntryAndExitPointsOfEndPoints() throws Exception {
+    public void shouldLogEntryAndExitPointsOfEndPoints() {
 
         URI requestUrl = URI.create("/connector-request");
         String requestMethod = "GET";
