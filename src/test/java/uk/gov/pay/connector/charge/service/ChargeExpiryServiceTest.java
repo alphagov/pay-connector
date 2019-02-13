@@ -175,7 +175,7 @@ public class ChargeExpiryServiceTest {
 
                     try {
                         verify(mockPaymentProvider, never()).cancel(any());
-                    } catch (GatewayErrorException e) {}
+                    } catch (GatewayErrorException ignored) {}
                     
                     assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
                 });
