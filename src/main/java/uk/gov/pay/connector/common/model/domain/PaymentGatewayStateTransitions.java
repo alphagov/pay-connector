@@ -43,22 +43,12 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
 
 public class PaymentGatewayStateTransitions {
-    private static PaymentGatewayStateTransitions instance;
 
-    public static PaymentGatewayStateTransitions getInstance() {
-        if (instance == null) {
-            instance = new PaymentGatewayStateTransitions();
-        }
-        return instance;
-    }
+    private static ImmutableValueGraph<ChargeStatus, String> graph;
 
-    private ImmutableValueGraph<ChargeStatus, String> graph;
+    private PaymentGatewayStateTransitions() { }
 
-    private PaymentGatewayStateTransitions() {
-        graph = buildGraph();
-    }
-
-    private static ImmutableValueGraph<ChargeStatus, String> buildGraph() {
+    static {
         MutableValueGraph<ChargeStatus, String> graph = ValueGraphBuilder
                 .directed()
                 .build();
@@ -135,14 +125,14 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(USER_CANCEL_SUBMITTED, USER_CANCEL_ERROR, "");
         graph.putEdgeValue(USER_CANCEL_SUBMITTED, USER_CANCELLED, "");
 
-        return ImmutableValueGraph.copyOf(graph);
+        PaymentGatewayStateTransitions.graph = ImmutableValueGraph.copyOf(graph);
     }
 
-    public Set<ChargeStatus> allStatuses() {
+    public static Set<ChargeStatus> allStatuses() {
         return graph.nodes();
     }
 
-    public Set<Triple<ChargeStatus, ChargeStatus, String>> allTransitions() {
+    public static Set<Triple<ChargeStatus, ChargeStatus, String>> allTransitions() {
         return graph
                 .edges()
                 .stream()
@@ -154,10 +144,6 @@ public class PaymentGatewayStateTransitions {
     }
 
     public static boolean isValidTransition(ChargeStatus state, ChargeStatus targetState) {
-        return getInstance().isValidTransitionImpl(state, targetState);
-    }
-
-    private boolean isValidTransitionImpl(ChargeStatus state, ChargeStatus targetState) {
         return graph.edgeValueOrDefault(state, targetState, null) != null;
     }
 }

@@ -11,12 +11,6 @@ import java.util.StringJoiner;
  * Render a graph - either install graphviz or use http://www.webgraphviz.com/
  */
 public class StateTransitionGraphVizRenderer {
-    private final PaymentGatewayStateTransitions transitions;
-
-    public StateTransitionGraphVizRenderer(PaymentGatewayStateTransitions transitions) {
-        this.transitions = transitions;
-    }
-
     public String toString() {
         StringJoiner s = new StringJoiner("\n", "", "\n");
         s.add("digraph PaymentGatewayStateTransitions {");
@@ -24,7 +18,7 @@ public class StateTransitionGraphVizRenderer {
         s.add("rankdir=TB overlap=false splines=true");
         s.add("node [style=filled shape=box color=\"0.650 0.200 1.000\"]");
 
-        transitions.allTransitions().forEach(edge ->
+        PaymentGatewayStateTransitions.allTransitions().forEach(edge ->
             s.add(formatEdge(edge))
         );
 
@@ -42,7 +36,7 @@ public class StateTransitionGraphVizRenderer {
     }
 
     private void nodeColours(StringJoiner s) {
-        transitions.allStatuses().forEach(c -> {
+        PaymentGatewayStateTransitions.allStatuses().forEach(c -> {
             s.add(String.format("%s [color=\"%s\" shape=%s] ;", nameFor(c), colourFor(c), shapeFor(c)));
         });
     }
