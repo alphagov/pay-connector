@@ -5,7 +5,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTask;
-import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
@@ -29,24 +28,24 @@ public class GatewayAccountStripeSetupResourceITest extends GatewayAccountResour
                 .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
                 .then()
                 .statusCode(200)
-                .body("bank_account_details", is(false))
+                .body("bank_account", is(false))
                 .body("responsible_person", is(false))
-                .body("organisation_vat_number_company_number", is(false));
+                .body("organisation_details", is(false));
     }
 
     @Test
     public void getStripeSetupWithSomeTasksCompletedReturnsAppopriateFlags() {
         long gatewayAccountId = Long.valueOf(createAGatewayAccountFor("stripe"));
-        addCompletedTask(gatewayAccountId, GatewayAccountStripeSetupTask.BANK_ACCOUNT_DETAILS);
-        addCompletedTask(gatewayAccountId, GatewayAccountStripeSetupTask.ORGANISATION_VAT_NUMBER_COMPANY_NUMBER);
+        addCompletedTask(gatewayAccountId, GatewayAccountStripeSetupTask.BANK_ACCOUNT);
+        addCompletedTask(gatewayAccountId, GatewayAccountStripeSetupTask.ORGANISATION_DETAILS);
 
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
                 .then()
                 .statusCode(200)
-                .body("bank_account_details", is(true))
+                .body("bank_account", is(true))
                 .body("responsible_person", is(false))
-                .body("organisation_vat_number_company_number", is(true));
+                .body("organisation_details", is(true));
     }
 
     @Test

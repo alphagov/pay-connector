@@ -9,21 +9,21 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class GatewayAccountStripeSetup {
 
-    @JsonProperty("bank_account_details")
-    private boolean bankDetailsCompleted = false;
+    @JsonProperty("bank_account")
+    private boolean bankAccountCompleted = false;
 
     @JsonProperty("responsible_person")
     private boolean responsiblePersonCompleted = false;
 
-    @JsonProperty("organisation_vat_number_company_number")
+    @JsonProperty("organisation_details")
     private boolean organisationDetailsCompleted = false;
     
-    public boolean isBankDetailsCompleted() {
-        return bankDetailsCompleted;
+    public boolean isBankAccountCompleted() {
+        return bankAccountCompleted;
     }
 
-    public void setBankDetailsCompleted(boolean bankDetailsCompleted) {
-        this.bankDetailsCompleted = bankDetailsCompleted;
+    public void setBankAccountCompleted(boolean bankAccountCompleted) {
+        this.bankAccountCompleted = bankAccountCompleted;
     }
 
     public boolean isResponsiblePersonCompleted() {

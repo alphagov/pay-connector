@@ -2,8 +2,8 @@ package uk.gov.pay.connector.gatewayaccount.model;
 
 public enum GatewayAccountStripeSetupTask {
 
-    BANK_ACCOUNT_DETAILS,
+    BANK_ACCOUNT,
     RESPONSIBLE_PERSON,
-    ORGANISATION_VAT_NUMBER_COMPANY_NUMBER
+    ORGANISATION_DETAILS
 
 }

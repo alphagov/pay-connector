@@ -14,8 +14,8 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTask.BANK_ACCOUNT_DETAILS;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTask.ORGANISATION_VAT_NUMBER_COMPANY_NUMBER;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTask.BANK_ACCOUNT;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTask.ORGANISATION_DETAILS;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTask.RESPONSIBLE_PERSON;
 
 public class GatewayAccountStripeSetupDaoITest extends DaoITestBase {
@@ -39,17 +39,17 @@ public class GatewayAccountStripeSetupDaoITest extends DaoITestBase {
         long anotherGatewayAccountId = 1;
         databaseTestHelper.addGatewayAccount(anotherGatewayAccountId, "stripe");
 
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT_DETAILS);
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
         databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, BANK_ACCOUNT_DETAILS);
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, ORGANISATION_VAT_NUMBER_COMPANY_NUMBER);
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, BANK_ACCOUNT);
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, ORGANISATION_DETAILS);
 
         List<GatewayAccountStripeSetupTaskEntity> tasks = gatewayAccountStripeSetupDao.findByGatewayAccountId(gatewayAccountId);
         assertThat(tasks, hasSize(2));
         assertThat(tasks, contains(
                 allOf(
                         hasProperty("gatewayAccount", hasProperty("id", is(gatewayAccountId))),
-                        hasProperty("task", is(BANK_ACCOUNT_DETAILS))),
+                        hasProperty("task", is(BANK_ACCOUNT))),
                 allOf(
                         hasProperty("gatewayAccount", hasProperty("id", is(gatewayAccountId))),
                         hasProperty("task", is(RESPONSIBLE_PERSON)))

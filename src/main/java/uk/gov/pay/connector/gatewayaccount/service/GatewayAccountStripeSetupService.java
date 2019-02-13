@@ -19,13 +19,13 @@ public class GatewayAccountStripeSetupService {
                 .stream()
                 .forEach(gatewayAccountStripeSetupTaskEntity -> {
                     switch(gatewayAccountStripeSetupTaskEntity.getTask()) {
-                        case BANK_ACCOUNT_DETAILS:
-                            gatewayAccountStripeSetup.setBankDetailsCompleted(true);
+                        case BANK_ACCOUNT:
+                            gatewayAccountStripeSetup.setBankAccountCompleted(true);
                             break;
                         case RESPONSIBLE_PERSON:
                             gatewayAccountStripeSetup.setResponsiblePersonCompleted(true);
                             break;
-                        case ORGANISATION_VAT_NUMBER_COMPANY_NUMBER:
+                        case ORGANISATION_DETAILS:
                             gatewayAccountStripeSetup.setOrganisationDetailsCompleted(true);
                             break;
                         default:

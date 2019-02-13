@@ -32,9 +32,9 @@ public class GatewayAccountStripeSetupServiceTest {
 
     @Before
     public void setUp() {
-        given(mockBankDetailsCompletedTaskEntity.getTask()).willReturn(GatewayAccountStripeSetupTask.BANK_ACCOUNT_DETAILS);
+        given(mockBankDetailsCompletedTaskEntity.getTask()).willReturn(GatewayAccountStripeSetupTask.BANK_ACCOUNT);
         given(mockResponsiblePersonCompletedTaskEntity.getTask()).willReturn(GatewayAccountStripeSetupTask.RESPONSIBLE_PERSON);
-        given(mockOrganisationDetailsCompletedTaskEntity.getTask()).willReturn(GatewayAccountStripeSetupTask.ORGANISATION_VAT_NUMBER_COMPANY_NUMBER);
+        given(mockOrganisationDetailsCompletedTaskEntity.getTask()).willReturn(GatewayAccountStripeSetupTask.ORGANISATION_DETAILS);
 
         this.gatewayAccountStripeSetupService = new GatewayAccountStripeSetupService(mockGatewayAccountStripeSetupDao);
     }
@@ -46,7 +46,7 @@ public class GatewayAccountStripeSetupServiceTest {
 
         GatewayAccountStripeSetup tasks = gatewayAccountStripeSetupService.getCompletedTasks(GATEWAY_ACCOUNT_ID);
 
-        assertThat(tasks.isBankDetailsCompleted(), is(false));
+        assertThat(tasks.isBankAccountCompleted(), is(false));
         assertThat(tasks.isResponsiblePersonCompleted(), is(false));
         assertThat(tasks.isOrganisationDetailsCompleted(), is(false));
     }
@@ -59,7 +59,7 @@ public class GatewayAccountStripeSetupServiceTest {
 
         GatewayAccountStripeSetup tasks = gatewayAccountStripeSetupService.getCompletedTasks(GATEWAY_ACCOUNT_ID);
 
-        assertThat(tasks.isBankDetailsCompleted(), is(true));
+        assertThat(tasks.isBankAccountCompleted(), is(true));
         assertThat(tasks.isResponsiblePersonCompleted(), is(true));
         assertThat(tasks.isOrganisationDetailsCompleted(), is(true));
     }
@@ -71,7 +71,7 @@ public class GatewayAccountStripeSetupServiceTest {
 
         GatewayAccountStripeSetup tasks = gatewayAccountStripeSetupService.getCompletedTasks(GATEWAY_ACCOUNT_ID);
 
-        assertThat(tasks.isBankDetailsCompleted(), is(false));
+        assertThat(tasks.isBankAccountCompleted(), is(false));
         assertThat(tasks.isResponsiblePersonCompleted(), is(true));
         assertThat(tasks.isOrganisationDetailsCompleted(), is(true));
     }
