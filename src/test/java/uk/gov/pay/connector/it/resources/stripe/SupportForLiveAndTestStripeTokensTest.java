@@ -95,7 +95,7 @@ public class SupportForLiveAndTestStripeTokensTest {
     private String addCharge() {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, Long.valueOf(100L), ENTERING_CARD_DETAILS, 
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, 100L, ENTERING_CARD_DETAILS,
                 "RETURN_URL", null, "a description");
         return externalChargeId;
     }
