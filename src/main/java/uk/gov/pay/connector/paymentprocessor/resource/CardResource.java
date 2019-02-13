@@ -32,7 +32,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.common.validator.AuthCardDetailsValidator.isWellFormatted;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
@@ -82,11 +81,8 @@ public class CardResource {
     @Path("/v1/frontend/charges/{chargeId}/cards")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authoriseCharge(@PathParam("chargeId") String chargeId, AuthCardDetails authCardDetails) {
-        if (!isWellFormatted(authCardDetails)) {
-            logger.error("Charge {}: Card details are not well formatted. Values do not match expected format/length.", chargeId);
-            return badRequestResponse("Values do not match expected format/length.");
-        }
+    public Response authoriseCharge(@PathParam("chargeId") String chargeId,
+                                    @Valid AuthCardDetails authCardDetails) {
         AuthorisationResponse response = cardAuthoriseService.doAuthorise(chargeId, authCardDetails);
 
         return response.getGatewayError().map(error -> handleError(chargeId, error))

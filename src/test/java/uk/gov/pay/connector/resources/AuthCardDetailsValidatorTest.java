@@ -1,27 +1,37 @@
 package uk.gov.pay.connector.resources;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.common.validator.AuthCardDetailsValidator;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.AddressFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
+import java.util.Set;
+
+import static junit.framework.TestCase.assertEquals;
 
 public class AuthCardDetailsValidatorTest {
 
     private String sneakyCardNumber = "this12card3number4is5hidden6;7 89-0(1+2.";
     private String over255LongString = "ThisLineIs_TooLong_cbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsa1234567899";
+    private static Validator validator;
+
+    @BeforeClass
+    public static void setUpValidator() {
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
+    }
 
     @Test
     public void validationSucceedForWellFormattedAuthorisationCardDetails() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-
-        assertThat(AuthCardDetailsValidator.isWellFormatted(authCardDetails), is(true));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -30,7 +40,8 @@ public class AuthCardDetailsValidatorTest {
                 .withCvc("1234")
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -39,7 +50,8 @@ public class AuthCardDetailsValidatorTest {
                 .withCardNo("12345678901234")
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -48,7 +60,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCvc(null)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -57,7 +71,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCardNo(null)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -66,7 +82,9 @@ public class AuthCardDetailsValidatorTest {
                 .withEndDate(null)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -75,7 +93,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCardBrand(null)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -87,7 +107,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCardBrand("")
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -96,7 +118,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCardNo("12345678901")
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -105,7 +129,8 @@ public class AuthCardDetailsValidatorTest {
                 .withCardNo("123456789012")
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -114,7 +139,8 @@ public class AuthCardDetailsValidatorTest {
                 .withCardNo("1234567890123456789")
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -123,7 +149,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCardNo("12345678901234567890")
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -132,7 +160,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCardNo("123456789012345A")
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -141,7 +171,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCvc("45A")
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -150,7 +182,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCvc("12345")
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -159,7 +193,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCvc("12")
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -168,7 +204,9 @@ public class AuthCardDetailsValidatorTest {
                 .withEndDate("1290")
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -181,7 +219,9 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -194,7 +234,9 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -207,7 +249,9 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -220,7 +264,9 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -229,7 +275,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCardHolder(sneakyCardNumber)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -238,7 +286,8 @@ public class AuthCardDetailsValidatorTest {
                 .withCardHolder("1 Mr John 123456789 Smith 0")
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -247,7 +296,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCardBrand(sneakyCardNumber)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -256,7 +307,8 @@ public class AuthCardDetailsValidatorTest {
                 .withCardBrand("12345678901")
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -269,7 +321,9 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -282,7 +336,8 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -295,7 +350,9 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -308,7 +365,8 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -321,7 +379,8 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -330,7 +389,8 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(null)
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -343,7 +403,9 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -356,7 +418,8 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -369,7 +432,9 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -382,7 +447,8 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -395,7 +461,9 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -408,7 +476,8 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -421,7 +490,8 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -434,7 +504,9 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -447,7 +519,8 @@ public class AuthCardDetailsValidatorTest {
                 .withAddress(address)
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -456,7 +529,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCardHolder("555")
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -465,7 +540,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCardHolder("5678")
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -474,7 +551,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCardHolder(" \t 321 ")
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -483,7 +562,9 @@ public class AuthCardDetailsValidatorTest {
                 .withCardHolder(" 1234 \t")
                 .build();
 
-        assertFalse(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -492,7 +573,8 @@ public class AuthCardDetailsValidatorTest {
                 .withCardHolder("Ms 333")
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -501,7 +583,8 @@ public class AuthCardDetailsValidatorTest {
                 .withCardHolder("1234 Jr.")
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -510,7 +593,8 @@ public class AuthCardDetailsValidatorTest {
                 .withCardHolder("22")
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
@@ -519,53 +603,60 @@ public class AuthCardDetailsValidatorTest {
                 .withCardHolder("12345")
                 .build();
 
-        assertTrue(AuthCardDetailsValidator.isWellFormatted(authCardDetails));
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(0, violations.size());
     }
 
     @Test
     public void validationFailsIfCardHolderIsTooLong() {
-        AuthCardDetails details = AuthCardDetailsFixture.anAuthCardDetails().withCardHolder(over255LongString).build();
-        final boolean isWellFormatted = AuthCardDetailsValidator.isWellFormatted(details);
-        assertFalse(isWellFormatted);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().withCardHolder(over255LongString).build();
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
     public void validationFailsIfAddressLineOneIsTooLong() {
         Address address = AddressFixture.anAddress().withLine1(over255LongString).build();
-        AuthCardDetails details = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
-        final boolean isWellFormatted = AuthCardDetailsValidator.isWellFormatted(details);
-        assertFalse(isWellFormatted);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
     public void validationFailsIfAddressLineTwoIsTooLong() {
         Address address = AddressFixture.anAddress().withLine2(over255LongString).build();
-        AuthCardDetails details = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
-        final boolean isWellFormatted = AuthCardDetailsValidator.isWellFormatted(details);
-        assertFalse(isWellFormatted);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
     public void validationFailsIfAddressCountyIsTooLong() {
         Address address = AddressFixture.anAddress().withCounty(over255LongString).build();
-        AuthCardDetails details = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
-        final boolean isWellFormatted = AuthCardDetailsValidator.isWellFormatted(details);
-        assertFalse(isWellFormatted);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
     public void validationFailsIfAddressCountryIsTooLong() {
         Address address = AddressFixture.anAddress().withCountry(over255LongString).build();
-        AuthCardDetails details = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
-        final boolean isWellFormatted = AuthCardDetailsValidator.isWellFormatted(details);
-        assertFalse(isWellFormatted);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 
     @Test
     public void validationFailsIfAddressCityIsTooLong() {
         Address address = AddressFixture.anAddress().withCity(over255LongString).build();
-        AuthCardDetails details = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
-        final boolean isWellFormatted = AuthCardDetailsValidator.isWellFormatted(details);
-        assertFalse(isWellFormatted);
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
+        Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
+        assertEquals(1, violations.size());
+        assertEquals("Values do not match expected format/length.", violations.iterator().next().getMessage());
     }
 }

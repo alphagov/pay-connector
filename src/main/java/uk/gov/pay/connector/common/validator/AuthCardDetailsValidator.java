@@ -2,15 +2,17 @@ package uk.gov.pay.connector.common.validator;
 
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.ValidAuthCardDetails;
 
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 import java.util.regex.Pattern;
 
 import static java.util.regex.Pattern.compile;
 import static org.apache.commons.lang3.StringUtils.isNoneBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
-public class AuthCardDetailsValidator {
-
+public class AuthCardDetailsValidator implements ConstraintValidator<ValidAuthCardDetails, AuthCardDetails> {
     private static final Pattern TWELVE_TO_NINETEEN_DIGITS = compile("[0-9]{12,19}");
     private static final Pattern THREE_TO_FOUR_DIGITS = compile("[0-9]{3,4}");
     private static final Pattern THREE_TO_FOUR_DIGITS_POSSIBLY_SURROUNDED_BY_WHITESPACE = compile("\\s*[0-9]{3,4}\\s*");
@@ -18,7 +20,19 @@ public class AuthCardDetailsValidator {
     private static final Pattern CONTAINS_MORE_THAN_11_NOT_NECESSARILY_CONTIGUOUS_DIGITS = compile(".*([0-9].*){12,}");
     private static final short MAX_LENGTH = 255;
 
-    public static boolean isWellFormatted(AuthCardDetails authCardDetails) {
+    @Override
+    public void initialize(ValidAuthCardDetails constraintAnnotation) {
+    }
+
+    @Override
+    public boolean isValid(AuthCardDetails value, ConstraintValidatorContext context) {
+        if (value == null) {
+            return true;
+        }
+        return isWellFormatted(value);
+    }
+
+    private static boolean isWellFormatted(AuthCardDetails authCardDetails) {
         return isValidCardNumberLength(authCardDetails.getCardNo()) &&
                 isBetween3To4Digits(authCardDetails.getCvc()) &&
                 hasExpiryDateFormat(authCardDetails.getEndDate()) &&
