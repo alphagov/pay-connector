@@ -55,4 +55,45 @@ public class GatewayAccountStripeSetupDaoITest extends DaoITestBase {
                         hasProperty("task", is(RESPONSIBLE_PERSON)))
         ));
     }
+
+    @Test
+    public void shouldReturnTrueIfGatewayAccountHasCompletedTask() {
+        long gatewayAccountId = 42;
+        databaseTestHelper.addGatewayAccount(gatewayAccountId, "stripe");
+
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT_DETAILS);
+
+        boolean result = gatewayAccountStripeSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, BANK_ACCOUNT_DETAILS);
+        
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnFalseIfGatewayAccountHasCompletedTask() {
+        long gatewayAccountId = 42;
+        databaseTestHelper.addGatewayAccount(gatewayAccountId, "stripe");
+
+        long anotherGatewayAccountId = 1;
+        databaseTestHelper.addGatewayAccount(anotherGatewayAccountId, "stripe");
+
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, BANK_ACCOUNT_DETAILS);
+
+        boolean result = gatewayAccountStripeSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, BANK_ACCOUNT_DETAILS);
+
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void shouldReturnTrueIfGatewayAccountHasCompletedTaskRecordedMoreThanOnce() {
+        long gatewayAccountId = 42;
+        databaseTestHelper.addGatewayAccount(gatewayAccountId, "stripe");
+        
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+
+        boolean result = gatewayAccountStripeSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, RESPONSIBLE_PERSON);
+
+        assertThat(result, is(true));
+    }
 }

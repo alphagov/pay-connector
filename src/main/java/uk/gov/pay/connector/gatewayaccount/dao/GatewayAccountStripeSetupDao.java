@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gatewayaccount.dao;
 
 import com.google.inject.Provider;
 import uk.gov.pay.connector.common.dao.JpaDao;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTask;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTaskEntity;
 
 import javax.inject.Inject;
@@ -23,6 +24,19 @@ public class GatewayAccountStripeSetupDao extends JpaDao<GatewayAccountStripeSet
                 .createQuery(query, GatewayAccountStripeSetupTaskEntity.class)
                 .setParameter("gatewayAccountId", gatewayAccountId)
                 .getResultList();
+    }
+
+    public boolean isTaskCompletedForGatewayAccount(long gatewayAccountId, GatewayAccountStripeSetupTask task) {
+        String query = "SELECT COUNT(g) FROM GatewayAccountStripeSetupTaskEntity g WHERE g.gatewayAccount.id = :gatewayAccountId AND g.task = :task";
+
+        long count = (long) entityManager
+                .get()
+                .createQuery(query)
+                .setParameter("gatewayAccountId", gatewayAccountId)
+                .setParameter("task", task)
+                .getSingleResult();
+        
+        return count > 0;
     }
 
 }
