@@ -3,8 +3,8 @@ package uk.gov.pay.connector.it.dao;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountStripeSetupDao;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTaskEntity;
+import uk.gov.pay.connector.gatewayaccount.dao.StripeAccountSetupDao;
+import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTaskEntity;
 
 import java.util.List;
 
@@ -14,16 +14,16 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTask.BANK_ACCOUNT;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTask.ORGANISATION_DETAILS;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTask.RESPONSIBLE_PERSON;
+import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.BANK_ACCOUNT;
+import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.ORGANISATION_DETAILS;
+import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.RESPONSIBLE_PERSON;
 
-public class GatewayAccountStripeSetupDaoITest extends DaoITestBase {
-    private GatewayAccountStripeSetupDao gatewayAccountStripeSetupDao;
+public class StripeAccountSetupDaoITest extends DaoITestBase {
+    private StripeAccountSetupDao stripeAccountSetupDao;
 
     @Before
     public void setUp() {
-        gatewayAccountStripeSetupDao = env.getInstance(GatewayAccountStripeSetupDao.class);
+        stripeAccountSetupDao = env.getInstance(StripeAccountSetupDao.class);
     }
 
     @After
@@ -44,7 +44,7 @@ public class GatewayAccountStripeSetupDaoITest extends DaoITestBase {
         databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, BANK_ACCOUNT);
         databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, ORGANISATION_DETAILS);
 
-        List<GatewayAccountStripeSetupTaskEntity> tasks = gatewayAccountStripeSetupDao.findByGatewayAccountId(gatewayAccountId);
+        List<StripeAccountSetupTaskEntity> tasks = stripeAccountSetupDao.findByGatewayAccountId(gatewayAccountId);
         assertThat(tasks, hasSize(2));
         assertThat(tasks, contains(
                 allOf(
@@ -63,7 +63,7 @@ public class GatewayAccountStripeSetupDaoITest extends DaoITestBase {
 
         databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
 
-        boolean result = gatewayAccountStripeSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, BANK_ACCOUNT);
+        boolean result = stripeAccountSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, BANK_ACCOUNT);
         
         assertThat(result, is(true));
     }
@@ -79,7 +79,7 @@ public class GatewayAccountStripeSetupDaoITest extends DaoITestBase {
         databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
         databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, BANK_ACCOUNT);
 
-        boolean result = gatewayAccountStripeSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, BANK_ACCOUNT);
+        boolean result = stripeAccountSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, BANK_ACCOUNT);
 
         assertThat(result, is(false));
     }
@@ -92,7 +92,7 @@ public class GatewayAccountStripeSetupDaoITest extends DaoITestBase {
         databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
         databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
 
-        boolean result = gatewayAccountStripeSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, RESPONSIBLE_PERSON);
+        boolean result = stripeAccountSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, RESPONSIBLE_PERSON);
 
         assertThat(result, is(true));
     }
@@ -109,14 +109,14 @@ public class GatewayAccountStripeSetupDaoITest extends DaoITestBase {
         databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
         databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, RESPONSIBLE_PERSON);
         
-        gatewayAccountStripeSetupDao.removeCompletedTaskForGatewayAccount(gatewayAccountId, RESPONSIBLE_PERSON);
+        stripeAccountSetupDao.removeCompletedTaskForGatewayAccount(gatewayAccountId, RESPONSIBLE_PERSON);
 
-        List<GatewayAccountStripeSetupTaskEntity> gatewayAccountTasks = gatewayAccountStripeSetupDao.findByGatewayAccountId(gatewayAccountId);
+        List<StripeAccountSetupTaskEntity> gatewayAccountTasks = stripeAccountSetupDao.findByGatewayAccountId(gatewayAccountId);
 
         assertThat(gatewayAccountTasks, hasSize(1));
         assertThat(gatewayAccountTasks, contains(hasProperty("task", is(BANK_ACCOUNT))));
 
-        List<GatewayAccountStripeSetupTaskEntity> otherGatewayAccountTasks = gatewayAccountStripeSetupDao.findByGatewayAccountId(anotherGatewayAccountId);
+        List<StripeAccountSetupTaskEntity> otherGatewayAccountTasks = stripeAccountSetupDao.findByGatewayAccountId(anotherGatewayAccountId);
         assertThat(otherGatewayAccountTasks, contains(hasProperty("task", is(RESPONSIBLE_PERSON))));
     }
 
@@ -129,9 +129,9 @@ public class GatewayAccountStripeSetupDaoITest extends DaoITestBase {
         databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
         databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
 
-        gatewayAccountStripeSetupDao.removeCompletedTaskForGatewayAccount(gatewayAccountId, RESPONSIBLE_PERSON);
+        stripeAccountSetupDao.removeCompletedTaskForGatewayAccount(gatewayAccountId, RESPONSIBLE_PERSON);
 
-        List<GatewayAccountStripeSetupTaskEntity> gatewayAccountTasks = gatewayAccountStripeSetupDao.findByGatewayAccountId(gatewayAccountId);
+        List<StripeAccountSetupTaskEntity> gatewayAccountTasks = stripeAccountSetupDao.findByGatewayAccountId(gatewayAccountId);
 
         assertThat(gatewayAccountTasks, hasSize(1));
         assertThat(gatewayAccountTasks, contains(hasProperty("task", is(BANK_ACCOUNT))));

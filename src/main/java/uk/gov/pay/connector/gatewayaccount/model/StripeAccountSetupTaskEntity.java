@@ -16,7 +16,7 @@ import javax.persistence.Table;
 @Table(name = "gateway_accounts_stripe_setup")
 @SequenceGenerator(name = "gateway_accounts_stripe_setup_id_seq",
         sequenceName = "gateway_accounts_stripe_setup_id_seq", allocationSize = 1)
-public class GatewayAccountStripeSetupTaskEntity {
+public class StripeAccountSetupTaskEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gateway_accounts_stripe_setup_id_seq")
@@ -28,14 +28,14 @@ public class GatewayAccountStripeSetupTaskEntity {
 
     @Column(name = "task")
     @Enumerated(EnumType.STRING)
-    private GatewayAccountStripeSetupTask task;
+    private StripeAccountSetupTask task;
 
-    public GatewayAccountStripeSetupTaskEntity(GatewayAccountEntity gatewayAccount, GatewayAccountStripeSetupTask task) {
+    public StripeAccountSetupTaskEntity(GatewayAccountEntity gatewayAccount, StripeAccountSetupTask task) {
         this.gatewayAccount = gatewayAccount;
         this.task = task;
     }
 
-    public GatewayAccountStripeSetupTaskEntity() {
+    public StripeAccountSetupTaskEntity() {
         // We ❤️ JPA
     }
 
@@ -43,7 +43,7 @@ public class GatewayAccountStripeSetupTaskEntity {
         return gatewayAccount;
     }
 
-    public GatewayAccountStripeSetupTask getTask() {
+    public StripeAccountSetupTask getTask() {
         return task;
     }
 
@@ -51,7 +51,7 @@ public class GatewayAccountStripeSetupTaskEntity {
         this.gatewayAccount = gatewayAccount;
     }
 
-    public void setTask(GatewayAccountStripeSetupTask task) {
+    public void setTask(StripeAccountSetupTask task) {
         this.task = task;
     }
 }

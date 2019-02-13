@@ -4,7 +4,7 @@ import io.restassured.specification.RequestSpecification;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTask;
+import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
@@ -14,7 +14,7 @@ import static org.hamcrest.Matchers.is;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class GatewayAccountStripeSetupResourceITest extends GatewayAccountResourceTestBase {
+public class StripeAccountSetupResourceITest extends GatewayAccountResourceTestBase {
  
     protected RequestSpecification givenSetup() {
         return given().port(testContext.getPort()).contentType(JSON);
@@ -36,8 +36,8 @@ public class GatewayAccountStripeSetupResourceITest extends GatewayAccountResour
     @Test
     public void getStripeSetupWithSomeTasksCompletedReturnsAppopriateFlags() {
         long gatewayAccountId = Long.valueOf(createAGatewayAccountFor("stripe"));
-        addCompletedTask(gatewayAccountId, GatewayAccountStripeSetupTask.BANK_ACCOUNT);
-        addCompletedTask(gatewayAccountId, GatewayAccountStripeSetupTask.ORGANISATION_DETAILS);
+        addCompletedTask(gatewayAccountId, StripeAccountSetupTask.BANK_ACCOUNT);
+        addCompletedTask(gatewayAccountId, StripeAccountSetupTask.ORGANISATION_DETAILS);
 
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
@@ -67,7 +67,7 @@ public class GatewayAccountStripeSetupResourceITest extends GatewayAccountResour
                 .statusCode(404);
     }
 
-    private void addCompletedTask(long gatewayAccountId, GatewayAccountStripeSetupTask task) {
+    private void addCompletedTask(long gatewayAccountId, StripeAccountSetupTask task) {
         databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, task);
     }
 }

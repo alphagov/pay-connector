@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @JsonInclude(Include.NON_NULL)
-public class GatewayAccountStripeSetup {
+public class StripeAccountSetup {
 
     @JsonProperty("bank_account")
     private boolean bankAccountCompleted = false;
