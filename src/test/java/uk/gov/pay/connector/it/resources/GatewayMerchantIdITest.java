@@ -60,6 +60,7 @@ public class GatewayMerchantIdITest {
                 .contentType(JSON)
                 .get("/v1/frontend/charges/" + chargeId)
                 .then()
+                .assertThat()
                 .body("gateway_account.gateway_merchant_id", is(nullValue()));
     }
 

@@ -90,6 +90,7 @@ public class ChargesApiResourceAllowWebPaymentsITest {
                 .body(payload)
                 .patch("/v1/api/accounts/" + accountIdWithoutGatewayAccountCredentials)
                 .then()
+                .assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
     }
 
