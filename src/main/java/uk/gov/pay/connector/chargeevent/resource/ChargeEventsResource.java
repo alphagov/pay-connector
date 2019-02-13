@@ -43,7 +43,7 @@ public class ChargeEventsResource {
     public Response getEvents(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
 
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(chargeEntity -> buildEventsResponse(chargeEntity))
+                .map(this::buildEventsResponse)
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
