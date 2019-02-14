@@ -90,7 +90,8 @@ public class ChargesApiResourceAllowWebPaymentsITest {
                 .body(payload)
                 .patch("/v1/api/accounts/" + accountIdWithoutGatewayAccountCredentials)
                 .then()
-                .assertThat()
+                .body("message", is("Account Credentials are required to set a Gateway Merchant ID"))
+                .and()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
     }
 
