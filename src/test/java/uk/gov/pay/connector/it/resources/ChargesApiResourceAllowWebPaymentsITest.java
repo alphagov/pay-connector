@@ -79,6 +79,21 @@ public class ChargesApiResourceAllowWebPaymentsITest {
                 .then()
                 .body("gateway_account.allow_google_pay", is(isGooglePayAllowed));
     }
+    
+    @Test
+    public void assertBadRequestResponseIfPatchingMerchantIdWithNoGatewayAccountCredentials() throws JsonProcessingException {
+        String accountIdWithoutGatewayAccountCredentials = extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), "worldpay"));
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "add",
+                "path", "credentials/gateway_merchant_id",
+                "value", "1234abc"));
+        given().port(testContext.getPort()).contentType(JSON)
+                .body(payload)
+                .patch("/v1/api/accounts/" + accountIdWithoutGatewayAccountCredentials)
+                .then()
+                .body("message", is("Account Credentials are required to set a Gateway Merchant ID"))
+                .and()
+                .statusCode(HttpStatus.SC_BAD_REQUEST);
+    }
 
     private void allowWebPaymentsOnGatewayAccount(String path) throws JsonProcessingException {
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",

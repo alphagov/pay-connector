@@ -17,6 +17,7 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.it.resources.ChargesApiResourceAllowWebPaymentsITest.updateGatewayAccountCredentialsWith;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceTestBase.createAGatewayAccountFor;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceTestBase.extractGatewayAccountId;
@@ -42,6 +43,24 @@ public class GatewayMerchantIdITest {
         String accountId = setUpAccount();
         addGatewayMerchantIdToAccount(accountId, "1234abc");
         assertGatewayMerchantIdOnCharge(accountId, "1234abc");
+    }
+
+    @Test
+    public void gatewayMerchantIdIsNullIfNotPopulated() {
+        String accountId = setUpAccount();
+        String chargeId = given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(createChargePostBody(accountId))
+                .post(format("/v1/api/accounts/%s/charges", accountId))
+                .then()
+                .extract()
+                .path("charge_id");
+        
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .get("/v1/frontend/charges/" + chargeId)
+                .then()
+                .body("gateway_account.gateway_merchant_id", is(nullValue()));
     }
 
     private void assertGatewayMerchantIdOnCharge(String accountId, String gatewayMerchantId) {

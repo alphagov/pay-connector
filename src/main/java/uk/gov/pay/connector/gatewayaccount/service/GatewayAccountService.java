@@ -12,6 +12,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
+import uk.gov.pay.connector.gatewayaccount.exception.MerchantIdWithoutCredentialsException;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriInfo;
@@ -88,6 +89,9 @@ public class GatewayAccountService {
                 put(CREDENTIALS_GATEWAY_MERCHANT_ID,
                         (gatewayAccountRequest, gatewayAccountEntity) -> {
                             Map<String, String> credentials = gatewayAccountEntity.getCredentials();
+                            if(credentials.isEmpty()) {
+                                throw new MerchantIdWithoutCredentialsException();
+                            }
                             Map<String, String> updatedCredentials = new HashMap<>(credentials);
                             updatedCredentials.put("gateway_merchant_id", gatewayAccountRequest.valueAsString());
                             gatewayAccountEntity.setCredentials(updatedCredentials);

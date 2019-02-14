@@ -17,7 +17,6 @@ import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -116,12 +115,6 @@ public class GatewayAccountResourceTestBase {
                 .body("links[0].method", is("GET"));
     }
 
-    public static void assertGatewayAccountCredentialsAreEmptyInDB(ValidatableResponse response, DatabaseTestHelper databaseTestHelper) {
-        String gateway_account_id = response.extract().path("gateway_account_id");
-        Map<String, String> accountCredentials = databaseTestHelper.getAccountCredentials(Long.valueOf(gateway_account_id));
-        assertThat(accountCredentials, is(new HashMap<>()));
-    }
-    
     public static class GatewayAccountPayload {
         String userName;
         String password;
