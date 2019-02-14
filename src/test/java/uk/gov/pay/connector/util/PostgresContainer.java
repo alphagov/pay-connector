@@ -34,7 +34,7 @@ public class PostgresContainer {
     private static final String DB_PASSWORD = "mysecretpassword";
     private static final String DB_USERNAME = "postgres";
     private static final int DB_TIMEOUT_SEC = 15;
-    private static final String GOVUK_POSTGRES_IMAGE = "govukpay/postgres:9.6.6";
+    private static final String GOVUK_POSTGRES_IMAGE = "govukpay/postgres:9.6.12";
     private static final String INTERNAL_PORT = "5432";
 
     public PostgresContainer(DockerClient docker) throws DockerException, InterruptedException, IOException, ClassNotFoundException {
