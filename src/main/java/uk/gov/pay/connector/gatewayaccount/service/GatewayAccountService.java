@@ -8,10 +8,10 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
-import uk.gov.pay.connector.gatewayaccount.model.PatchRequest;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriInfo;
@@ -58,7 +58,7 @@ public class GatewayAccountService {
     }
 
     @Transactional
-    public Optional<GatewayAccount> doPatch(Long gatewayAccountId, PatchRequest gatewayAccountRequest) {
+    public Optional<GatewayAccount> doPatch(Long gatewayAccountId, GatewayAccountPatchRequest gatewayAccountRequest) {
         return gatewayAccountDao.findById(gatewayAccountId)
                 .flatMap(gatewayAccountEntity -> {
                     attributeUpdater.get(gatewayAccountRequest.getPath())
@@ -83,8 +83,8 @@ public class GatewayAccountService {
         return GatewayAccountObjectConverter.createResponseFrom(gatewayAccountEntity, uriInfo);
     }
     
-    private final Map<String, BiConsumer<PatchRequest, GatewayAccountEntity>> attributeUpdater =
-            new HashMap<String, BiConsumer<PatchRequest, GatewayAccountEntity>>() {{
+    private final Map<String, BiConsumer<GatewayAccountPatchRequest, GatewayAccountEntity>> attributeUpdater =
+            new HashMap<String, BiConsumer<GatewayAccountPatchRequest, GatewayAccountEntity>>() {{
                 put(CREDENTIALS_GATEWAY_MERCHANT_ID,
                         (gatewayAccountRequest, gatewayAccountEntity) -> {
                             Map<String, String> credentials = gatewayAccountEntity.getCredentials();

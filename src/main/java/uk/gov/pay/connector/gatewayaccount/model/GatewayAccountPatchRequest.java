@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gatewayaccount.model;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
 
 import java.io.IOException;
 import java.util.List;
@@ -12,17 +13,17 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_OPERATION;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_OPERATION_PATH;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_VALUE;
+import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION;
+import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION_PATH;
+import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_VALUE;
 
-public class PatchRequest {
+public class GatewayAccountPatchRequest {
 
-    private String op;
+    private JsonPatchOp op;
     private String path;
     private JsonNode value;
 
-    public String getOp() {
+    public JsonPatchOp getOp() {
         return op;
     }
 
@@ -68,15 +69,15 @@ public class PatchRequest {
     }
 
 
-    private PatchRequest(String op, String path, JsonNode value) {
+    private GatewayAccountPatchRequest(JsonPatchOp op, String path, JsonNode value) {
         this.op = op;
         this.path = path;
         this.value = value;
     }
 
-    public static PatchRequest from(JsonNode payload) {
-        return new PatchRequest(
-                payload.get(FIELD_OPERATION).asText(),
+    public static GatewayAccountPatchRequest from(JsonNode payload) {
+        return new GatewayAccountPatchRequest(
+                JsonPatchOp.valueOf(payload.get(FIELD_OPERATION).asText().toUpperCase()),
                 payload.get(FIELD_OPERATION_PATH).asText(),
                 payload.get(FIELD_VALUE));
 
