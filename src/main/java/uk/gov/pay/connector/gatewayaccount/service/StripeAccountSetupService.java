@@ -1,8 +1,15 @@
 package uk.gov.pay.connector.gatewayaccount.service;
 
 import com.google.inject.Inject;
+import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.gatewayaccount.dao.StripeAccountSetupDao;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetup;
+import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
+import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTaskEntity;
+import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupUpdateRequest;
+
+import java.util.List;
 
 public class StripeAccountSetupService {
 
@@ -12,13 +19,12 @@ public class StripeAccountSetupService {
     public StripeAccountSetupService(StripeAccountSetupDao stripeAccountSetupDao) {
         this.stripeAccountSetupDao = stripeAccountSetupDao;
     }
-    
+
     public StripeAccountSetup getCompletedTasks(long gatewayAccountId) {
         StripeAccountSetup stripeAccountSetup = new StripeAccountSetup();
         stripeAccountSetupDao.findByGatewayAccountId(gatewayAccountId)
-                .stream()
                 .forEach(stripeAccountSetupTaskEntity -> {
-                    switch(stripeAccountSetupTaskEntity.getTask()) {
+                    switch (stripeAccountSetupTaskEntity.getTask()) {
                         case BANK_ACCOUNT:
                             stripeAccountSetup.setBankAccountCompleted(true);
                             break;
@@ -33,6 +39,22 @@ public class StripeAccountSetupService {
                     }
                 });
         return stripeAccountSetup;
+    }
+
+    @Transactional
+    public void update(GatewayAccountEntity gatewayAccountEntity, List<StripeAccountSetupUpdateRequest> updates) {
+        updates.forEach(stripeAccountSetupUpdateRequest -> {
+            long gatewayAccountId = gatewayAccountEntity.getId();
+            StripeAccountSetupTask task = stripeAccountSetupUpdateRequest.getTask();
+            if (stripeAccountSetupUpdateRequest.isCompleted()) {
+                if (!stripeAccountSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, task)) {
+                    StripeAccountSetupTaskEntity stripeAccountSetupTaskEntity = new StripeAccountSetupTaskEntity(gatewayAccountEntity, task);
+                    stripeAccountSetupDao.persist(stripeAccountSetupTaskEntity);
+                }
+            } else {
+                stripeAccountSetupDao.removeCompletedTaskForGatewayAccount(gatewayAccountId, task);
+            }
+        });
     }
 
 }
