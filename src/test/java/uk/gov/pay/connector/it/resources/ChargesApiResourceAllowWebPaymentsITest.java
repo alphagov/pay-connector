@@ -85,7 +85,7 @@ public class ChargesApiResourceAllowWebPaymentsITest {
         String accountIdWithoutGatewayAccountCredentials = extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), "worldpay"));
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "add",
                 "path", "credentials/gateway_merchant_id",
-                "value", "1234abc"));
+                "value", "94b53bf6b12b6c5"));
         given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + accountIdWithoutGatewayAccountCredentials)
@@ -110,7 +110,7 @@ public class ChargesApiResourceAllowWebPaymentsITest {
     private void addGatewayMerchantIdToGatewayAccount(String accountId) throws JsonProcessingException {
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "add",
                 "path", "credentials/gateway_merchant_id",
-                "value", "1234abc"));
+                "value", "94b53bf6b12b6c5"));
 
         given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)

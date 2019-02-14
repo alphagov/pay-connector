@@ -92,7 +92,7 @@ public class GatewayAccountRequestValidator {
                 break;
         }
     }
- 
+
     private void validateGatewayMerchantId(JsonNode payload, String field) {
         throwIfInvalidFieldOperation(payload, ADD, REPLACE);
         throwIfNullFieldValue(payload.get(FIELD_VALUE));
@@ -151,7 +151,7 @@ public class GatewayAccountRequestValidator {
         throwIfNotNumber(payload);
         throwIfNegativeNumber(payload);
     }
- 
+
     private void throwIfNullFieldValue(JsonNode valueNode) {
         if (null == valueNode || valueNode.isNull()) 
             throw new ValidationException(Collections.singletonList(format("Field [%s] is required", FIELD_VALUE)));
