@@ -115,7 +115,7 @@ public class ChargeExpiryService {
             
             return !queryResponse.getMappedStatus().toExternal().isFinished();
             
-        } catch (WebApplicationException | UnsupportedOperationException | GatewayErrorException e) {
+        } catch (WebApplicationException | UnsupportedOperationException | GatewayErrorException | IllegalArgumentException e) {
             logger.info("Unable to retrieve status for charge {}: {}", charge.getExternalId(), e.getMessage());
             return false;
         }

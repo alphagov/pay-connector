@@ -57,6 +57,30 @@ public class ChargeExpiryResourceEpdqITest  extends ChargingITestBase {
         verifyPostToPath(String.format("/epdq/%s", ROUTE_FOR_QUERY_ORDER));
     }
 
+    @Test
+    public void shouldHandleCaseWhereEpdqRespondsWithUnknownStatus() {
+        String chargeId = addCharge(ChargeStatus.AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        epdqMockClient.mockUnknown();
+
+        connectorRestApiClient
+                .postChargeExpiryTask()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("expiry-success", is(1))
+                .body("expiry-failed", is(0));
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(chargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("charge_id", is(chargeId))
+                .body("state.status", is(EXPIRED.toExternal().getStatus()));
+
+        verifyPostToPath(String.format("/epdq/%s", ROUTE_FOR_QUERY_ORDER));
+    }
+
     private void verifyPostToPath(String path) {
         verify(
             postRequestedFor(
