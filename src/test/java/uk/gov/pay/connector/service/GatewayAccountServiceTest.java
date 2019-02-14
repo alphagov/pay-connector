@@ -10,11 +10,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
+import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 
@@ -85,7 +85,7 @@ public class GatewayAccountServiceTest {
         Long gatewayAccountId = 100L;
         Map<String, String> settings = ImmutableMap.of("api_token", "anapitoken",
                 "template_id", "atemplateid");
-        GatewayAccountPatchRequest request = GatewayAccountPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
                 "path", "notify_settings",
                 "value", settings)));
         GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
@@ -102,7 +102,7 @@ public class GatewayAccountServiceTest {
     @Test
     public void shouldUpdateNotifySettingsWhenRemove() {
         Long gatewayAccountId = 100L;
-        GatewayAccountPatchRequest request = GatewayAccountPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
                 "path", "notify_settings")));
         GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
 
@@ -118,7 +118,7 @@ public class GatewayAccountServiceTest {
     @Test
     public void shouldUpdateEmailCollectionMode() {
         Long gatewayAccountId = 100L;
-        GatewayAccountPatchRequest request = GatewayAccountPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
                 "path", "email_collection_mode",
                 "value", "off")));
         GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
@@ -136,7 +136,7 @@ public class GatewayAccountServiceTest {
     @Test
     public void shouldUpdateCorporateCreditCardSurchargeAmount() {
         Long gatewayAccountId = 100L;
-        GatewayAccountPatchRequest request = GatewayAccountPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
                 "path", "corporate_credit_card_surcharge_amount",
                 "value", 100)));
         GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
@@ -151,7 +151,7 @@ public class GatewayAccountServiceTest {
     @Test
     public void shouldUpdateCorporateDebitCardSurchargeAmount() {
         Long gatewayAccountId = 100L;
-        GatewayAccountPatchRequest request = GatewayAccountPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
                 "path", "corporate_debit_card_surcharge_amount",
                 "value", 100)));
         GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
@@ -166,7 +166,7 @@ public class GatewayAccountServiceTest {
     @Test
     public void shouldUpdateCorporatePrepaidDebitCardSurchargeAmount() {
         Long gatewayAccountId = 100L;
-        GatewayAccountPatchRequest request = GatewayAccountPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
                 "path", "corporate_prepaid_debit_card_surcharge_amount",
                 "value", 100)));
         GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
@@ -181,7 +181,7 @@ public class GatewayAccountServiceTest {
     @Test
     public void shouldUpdateCorporatePrepaidCreditCardSurchargeAmount() {
         Long gatewayAccountId = 100L;
-        GatewayAccountPatchRequest request = GatewayAccountPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
                 "path", "corporate_prepaid_credit_card_surcharge_amount",
                 "value", 100)));
         GatewayAccountEntity entity = mock(GatewayAccountEntity.class);

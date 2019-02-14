@@ -1,9 +1,8 @@
-package uk.gov.pay.connector.gatewayaccount.model;
+package uk.gov.pay.connector.common.model.api.jsonpatch;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
 
 import java.io.IOException;
 import java.util.List;
@@ -17,7 +16,7 @@ import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIEL
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION_PATH;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_VALUE;
 
-public class GatewayAccountPatchRequest {
+public class JsonPatchRequest {
 
     private JsonPatchOp op;
     private String path;
@@ -61,7 +60,7 @@ public class GatewayAccountPatchRequest {
                 try {
                     return new ObjectMapper().readValue(value.traverse(), new TypeReference<Map<String, String>>() {});
                 } catch (IOException e) {
-                    throw new RuntimeException(format("Malformed JSON object in GatewayAccountRequest.value"), e);
+                    throw new RuntimeException(format("Malformed JSON object in value"), e);
                 }
             }
         }
@@ -69,14 +68,14 @@ public class GatewayAccountPatchRequest {
     }
 
 
-    private GatewayAccountPatchRequest(JsonPatchOp op, String path, JsonNode value) {
+    private JsonPatchRequest(JsonPatchOp op, String path, JsonNode value) {
         this.op = op;
         this.path = path;
         this.value = value;
     }
 
-    public static GatewayAccountPatchRequest from(JsonNode payload) {
-        return new GatewayAccountPatchRequest(
+    public static JsonPatchRequest from(JsonNode payload) {
+        return new JsonPatchRequest(
                 JsonPatchOp.valueOf(payload.get(FIELD_OPERATION).asText().toUpperCase()),
                 payload.get(FIELD_OPERATION_PATH).asText(),
                 payload.get(FIELD_VALUE));
