@@ -13,10 +13,10 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.exception.CredentialsException;
+import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
@@ -229,7 +229,7 @@ public class GatewayAccountResource {
         validator.validatePatchRequest(payload);
 
         return gatewayAccountServicesFactory.getUpdateService()
-                .doPatch(gatewayAccountId, GatewayAccountPatchRequest.from(payload))
+                .doPatch(gatewayAccountId, JsonPatchRequest.from(payload))
                 .map(gatewayAccount -> Response.ok().build())
                 .orElseGet(() -> Response.status(NOT_FOUND).build());
     }
