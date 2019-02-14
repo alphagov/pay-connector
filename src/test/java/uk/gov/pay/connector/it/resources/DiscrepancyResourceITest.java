@@ -54,6 +54,28 @@ public class DiscrepancyResourceITest extends ChargingITestBase {
         assertEquals( "EXTERNAL_SUBMITTED", results.get(1).get("gatewayExternalStatus").asText());
         assertEquals( "EXTERNAL_SUBMITTED", results.get(1).get("payExternalStatus").asText());
     }
+
+    @Test
+    public void shouldReportOnChargesThatAreInErrorStatesInGatewayAccount() {
+        String chargeId = addCharge(ChargeStatus.EXPIRED, "ref", ZonedDateTime.now().minusDays(8), "irrelevant");
+        epdqMockClient.mockAuthorisationQuerySuccessAuthFailed();
+        epdqMockClient.mockCancelSuccess();
+
+        List<JsonNode> results = connectorRestApiClient
+                .getDiscrepancyReport(toJson(Arrays.asList(chargeId)))
+                .statusCode(200)
+                .contentType(JSON)
+                .extract().body().jsonPath().getList(".", JsonNode.class);
+
+                assertEquals(1, results.size());
+
+        assertEquals( "AUTHORISATION REJECTED", results.get(0).get("gatewayStatus").asText());
+        assertEquals( "EXPIRED", results.get(0).get("payStatus").asText());
+        assertEquals( chargeId, results.get(0).get("chargeId").asText());
+        assertEquals( "ePDQ query response (PAYID: 3014644340, STATUS: 2, NCERROR: CARD REFUSED, NCERRORPLUS: CARD REFUSED)", results.get(0).get("rawGatewayResponse").asText());
+        assertEquals( "EXTERNAL_FAILED_REJECTED", results.get(0).get("gatewayExternalStatus").asText());
+        assertEquals( "EXTERNAL_FAILED_EXPIRED", results.get(0).get("payExternalStatus").asText());
+    }
     
 
     @Test
@@ -90,4 +112,6 @@ public class DiscrepancyResourceITest extends ChargingITestBase {
         assertEquals( "EXTERNAL_FAILED_EXPIRED", results.get(0).get("payExternalStatus").asText());
         assertEquals( true, results.get(0).get("processed").asBoolean());
     }
+    
+
 }

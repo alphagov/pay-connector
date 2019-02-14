@@ -4,18 +4,20 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
+import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
-import uk.gov.pay.connector.gatewayaccount.model.PatchRequest;
 import uk.gov.pay.connector.gatewayaccount.exception.MerchantIdWithoutCredentialsException;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriInfo;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -44,8 +46,20 @@ public class GatewayAccountService {
         this.cardTypeDao = cardTypeDao;
     }
 
+    public Optional<GatewayAccountEntity> getGatewayAccount(long gatewayAccountId) {
+        return gatewayAccountDao.findById(gatewayAccountId);
+    }
+
+    public List<GatewayAccountResourceDTO> getAllGatewayAccounts() {
+        return gatewayAccountDao.listAll();
+    }
+
+    public List<GatewayAccountResourceDTO> getGatewayAccounts(List<Long> gatewayAccountIds) {
+        return gatewayAccountDao.list(gatewayAccountIds);
+    }
+
     @Transactional
-    public Optional<GatewayAccount> doPatch(Long gatewayAccountId, PatchRequest gatewayAccountRequest) {
+    public Optional<GatewayAccount> doPatch(Long gatewayAccountId, JsonPatchRequest gatewayAccountRequest) {
         return gatewayAccountDao.findById(gatewayAccountId)
                 .flatMap(gatewayAccountEntity -> {
                     attributeUpdater.get(gatewayAccountRequest.getPath())
@@ -70,8 +84,8 @@ public class GatewayAccountService {
         return GatewayAccountObjectConverter.createResponseFrom(gatewayAccountEntity, uriInfo);
     }
     
-    private final Map<String, BiConsumer<PatchRequest, GatewayAccountEntity>> attributeUpdater =
-            new HashMap<String, BiConsumer<PatchRequest, GatewayAccountEntity>>() {{
+    private final Map<String, BiConsumer<JsonPatchRequest, GatewayAccountEntity>> attributeUpdater =
+            new HashMap<String, BiConsumer<JsonPatchRequest, GatewayAccountEntity>>() {{
                 put(CREDENTIALS_GATEWAY_MERCHANT_ID,
                         (gatewayAccountRequest, gatewayAccountEntity) -> {
                             Map<String, String> credentials = gatewayAccountEntity.getCredentials();

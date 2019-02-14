@@ -49,10 +49,14 @@ public class GatewayAccountResourceTestBase {
                 .contentType(JSON);
     }
 
+    protected String createAGatewayAccountFor(String provider) {
+        return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider));
+    }
+
     public static String extractGatewayAccountId(ValidatableResponse validatableResponse) {
         return validatableResponse.extract().path("gateway_account_id");
     }
-    
+
     public static ValidatableResponse createAGatewayAccountFor(int port, String testProvider) {
         return createAGatewayAccountFor(port, testProvider, null, null);
     }

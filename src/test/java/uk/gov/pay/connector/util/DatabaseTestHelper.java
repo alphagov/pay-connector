@@ -14,7 +14,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountStripeSetupTask;
+import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
@@ -427,6 +427,13 @@ public class DatabaseTestHelper {
                         .first());
         return ret;
     }
+    
+    public Map<String, Object> getChargeByExternalId(String externalId) {
+        return jdbi.withHandle(h -> 
+                h.createQuery("SELECT * FROM charges WHERE external_id = :external_id")
+                .bind("external_id", externalId)
+                .first());
+    }
 
     public Map<String, Object> getEmailForAccountAndType(Long accountId, EmailNotificationType type) {
 
@@ -709,7 +716,7 @@ public class DatabaseTestHelper {
         return (Long.valueOf(chargeId));
     }
 
-    public void addGatewayAccountsStripeSetupTask(long accountId, GatewayAccountStripeSetupTask task) {
+    public void addGatewayAccountsStripeSetupTask(long accountId, StripeAccountSetupTask task) {
         jdbi.withHandle(handle ->
                 handle
                         .createStatement("INSERT INTO gateway_accounts_stripe_setup(gateway_account_id, task) VALUES (:accountId, :task)")
@@ -718,4 +725,5 @@ public class DatabaseTestHelper {
                         .execute()
         );
     }
+
 }

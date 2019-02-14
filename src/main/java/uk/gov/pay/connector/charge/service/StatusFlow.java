@@ -2,8 +2,12 @@ package uk.gov.pay.connector.charge.service;
 
 import com.google.common.collect.ImmutableList;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus;
 
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
@@ -49,12 +53,9 @@ public class StatusFlow {
     );
 
     public static final StatusFlow EXPIRE_FLOW = new StatusFlow("Expiration",
-            ImmutableList.of(
-                    CREATED,
-                    ENTERING_CARD_DETAILS,
-                    AUTHORISATION_SUCCESS,
-                    AWAITING_CAPTURE_REQUEST
-            ),
+            ExpirableChargeStatus.getValuesAsStream()
+                    .map(ExpirableChargeStatus::getChargeStatus)
+                    .collect(Collectors.toList()), 
             EXPIRE_CANCEL_READY,
             EXPIRED,
             EXPIRE_CANCEL_SUBMITTED,

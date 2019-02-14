@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gatewayaccount.resource;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
 import uk.gov.pay.connector.common.exception.ValidationException;
+import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 
@@ -13,19 +14,19 @@ import java.util.List;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION;
+import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION_PATH;
+import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_VALUE;
+import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp.ADD;
+import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp.REMOVE;
+import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchOp.REPLACE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOTIFY_API_TOKEN;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_NOTIFY_REFUND_ISSUED_TEMPLATE_ID;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_OPERATION;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_OPERATION_PATH;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.FIELD_VALUE;
 
 
 public class GatewayAccountRequestValidator {
 
-    private static final String REPLACE_OP = "replace";
-    private static final String ADD_OP = "add";
-    private static final String REMOVE_OP = "remove";
     public static final String CREDENTIALS_GATEWAY_MERCHANT_ID = "credentials/gateway_merchant_id";
     public static final String FIELD_ALLOW_WEB_PAYMENTS = "allow_web_payments";
     public static final String FIELD_ALLOW_APPLE_PAY = "allow_apple_pay";
@@ -93,7 +94,7 @@ public class GatewayAccountRequestValidator {
     }
 
     private void validateGatewayMerchantId(JsonNode payload) {
-        throwIfInvalidFieldOperation(payload, ADD_OP, REPLACE_OP);
+        throwIfInvalidFieldOperation(payload, ADD, REPLACE);
         throwIfNullFieldValue(payload.get(FIELD_VALUE));
         throwIfBlankFieldValue(payload.get(FIELD_VALUE));
     }
@@ -104,7 +105,7 @@ public class GatewayAccountRequestValidator {
     }
 
     private void validateNotifySettingsRequest(JsonNode payload) {
-        throwIfInvalidFieldOperation(payload, REPLACE_OP, REMOVE_OP);
+        throwIfInvalidFieldOperation(payload, REPLACE, REMOVE);
         String op = payload.get(FIELD_OPERATION).asText();
         if (!op.equalsIgnoreCase("remove")) {
             JsonNode valueNode = payload.get(FIELD_VALUE);
@@ -117,7 +118,7 @@ public class GatewayAccountRequestValidator {
     }
 
     private void validateEmailCollectionMode(JsonNode payload) {
-        throwIfInvalidFieldOperation(payload, REPLACE_OP);
+        throwIfInvalidFieldOperation(payload, REPLACE);
         JsonNode valueNode = payload.get(FIELD_VALUE);
         throwIfNullFieldValue(valueNode);
         try {
@@ -128,7 +129,7 @@ public class GatewayAccountRequestValidator {
     }
 
     private void validateAllowWebPayment(JsonNode payload, String field) {
-        throwIfInvalidFieldOperation(payload, REPLACE_OP);
+        throwIfInvalidFieldOperation(payload, REPLACE);
         throwIfNullFieldValue(payload.get(FIELD_VALUE));
         String booleanString = payload.get(FIELD_VALUE).asText().toLowerCase();
         if (!booleanString.equals("false") && !booleanString.equals("true")) {
@@ -137,7 +138,7 @@ public class GatewayAccountRequestValidator {
     }
     
     private void validateCorporateCardSurchargePayload(JsonNode payload) {
-        throwIfInvalidFieldOperation(payload, REPLACE_OP);
+        throwIfInvalidFieldOperation(payload, REPLACE);
         throwIfNullFieldValue(payload.get(FIELD_VALUE));
         throwIfNotNumber(payload);
         throwIfNegativeNumber(payload);
@@ -148,10 +149,10 @@ public class GatewayAccountRequestValidator {
             throw new ValidationException(Collections.singletonList(format("Field [%s] is required", FIELD_VALUE)));
     }
 
-    private void throwIfInvalidFieldOperation(JsonNode payload, String... allowedOps) {
+    private void throwIfInvalidFieldOperation(JsonNode payload, JsonPatchOp... allowedOps) {
         String path = payload.get(FIELD_OPERATION_PATH).asText();
         String op = payload.get(FIELD_OPERATION).asText();
-        if (Arrays.stream(allowedOps).noneMatch(x -> x.equalsIgnoreCase(op))) {
+        if (Arrays.stream(allowedOps).noneMatch(x -> x.name().toLowerCase().equals(op))) {
             throw new ValidationException(Collections.singletonList(format("Operation [%s] is not valid for path [%s]", op, path)));
         }
     }

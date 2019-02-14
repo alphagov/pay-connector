@@ -658,10 +658,6 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .statusCode(NOT_FOUND.getStatusCode());
     }
 
-    private String createAGatewayAccountFor(String provider) {
-        return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider));
-    }
-
     private String createAGatewayAccountFor(String provider, String desc, String id) {
         return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider, desc, id));
     }
