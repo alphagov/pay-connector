@@ -67,7 +67,7 @@ public class GatewayAccountRequestValidator {
         
         switch (path) {
             case CREDENTIALS_GATEWAY_MERCHANT_ID:
-                validateGatewayMerchantId(payload);
+                validateGatewayMerchantId(payload, CREDENTIALS_GATEWAY_MERCHANT_ID);
                 break;
             case FIELD_NOTIFY_SETTINGS: 
                 validateNotifySettingsRequest(payload);
@@ -93,10 +93,11 @@ public class GatewayAccountRequestValidator {
         }
     }
 
-    private void validateGatewayMerchantId(JsonNode payload) {
+    private void validateGatewayMerchantId(JsonNode payload, String field) {
         throwIfInvalidFieldOperation(payload, ADD, REPLACE);
         throwIfNullFieldValue(payload.get(FIELD_VALUE));
         throwIfBlankFieldValue(payload.get(FIELD_VALUE));
+        throwIfNotValidMerchantId(payload.get(FIELD_VALUE), field);
     }
 
     private void throwIfBlankFieldValue(JsonNode valueNode) {
@@ -104,6 +105,13 @@ public class GatewayAccountRequestValidator {
             throw new ValidationException(Collections.singletonList(format("Field [%s] cannot be empty", FIELD_VALUE)));
     }
 
+    private void throwIfNotValidMerchantId(JsonNode valueNode, String field) {
+        boolean isValidWorldpayMerchantId = valueNode.textValue().matches("[0-9a-f]{15}");
+        if(!isValidWorldpayMerchantId) {
+            throw new ValidationException(Collections.singletonList(format("Field [%s] value [%s] does not match that expected for a Worldpay Merchant ID; should be 15 characters and within range [0-9a-f]", field, valueNode.asText())));
+        }
+    }
+    
     private void validateNotifySettingsRequest(JsonNode payload) {
         throwIfInvalidFieldOperation(payload, REPLACE, REMOVE);
         String op = payload.get(FIELD_OPERATION).asText();

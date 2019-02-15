@@ -33,16 +33,16 @@ public class GatewayMerchantIdITest {
     @Test
     public void replaceGatewayMerchantId() throws Exception {
         String accountId = setUpAccount();
-        addGatewayMerchantIdToAccount(accountId, "1234abc");
-        replaceGatewayMerchantId(accountId, "abc1234");
-        assertGatewayMerchantIdOnCharge(accountId, "abc1234");
+        addGatewayMerchantIdToAccount(accountId, "4d6ea2a35ab089c");
+        replaceGatewayMerchantId(accountId, "94b53bf6b12b6c5");
+        assertGatewayMerchantIdOnCharge(accountId, "94b53bf6b12b6c5");
     }
     
     @Test
     public void addGatewayMerchantIdToGatewayAccount() throws Exception {
         String accountId = setUpAccount();
-        addGatewayMerchantIdToAccount(accountId, "1234abc");
-        assertGatewayMerchantIdOnCharge(accountId, "1234abc");
+        addGatewayMerchantIdToAccount(accountId, "94b53bf6b12b6c5");
+        assertGatewayMerchantIdOnCharge(accountId, "94b53bf6b12b6c5");
     }
 
     @Test

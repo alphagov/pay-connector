@@ -71,6 +71,7 @@ public class GatewayAccountRequestValidatorTest {
     @Parameters({
             "remove, gatewayMerchantId, Operation [remove] is not valid for path [credentials/gateway_merchant_id]", 
             "add, , Field [value] cannot be empty",
+            "add, zzzzz, Field [credentials/gateway_merchant_id] value [zzzzz] does not match that expected for a Worldpay Merchant ID; should be 15 characters and within range [0-9a-f]",
             "replace, null, Field [value] is required"
     })
     public void shouldThrowForInvalidMerchantGatewayIdPatchRequest(String op, @Nullable String gatewayMerchantId, String expectedErrorMessage) {
