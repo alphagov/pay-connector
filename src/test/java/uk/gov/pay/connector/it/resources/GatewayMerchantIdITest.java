@@ -34,8 +34,8 @@ public class GatewayMerchantIdITest {
     public void replaceGatewayMerchantId() throws Exception {
         String accountId = setUpAccount();
         addGatewayMerchantIdToAccount(accountId, "4d6ea2a35ab089c");
-        replaceGatewayMerchantId(accountId, "4d6ea2a35ab089c");
-        assertGatewayMerchantIdOnCharge(accountId, "4d6ea2a35ab089c");
+        replaceGatewayMerchantId(accountId, "94b53bf6b12b6c5");
+        assertGatewayMerchantIdOnCharge(accountId, "94b53bf6b12b6c5");
     }
     
     @Test
