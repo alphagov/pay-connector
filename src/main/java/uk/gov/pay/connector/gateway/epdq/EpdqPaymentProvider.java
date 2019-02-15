@@ -173,7 +173,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
             GatewayClient.Response response = authoriseClient.postRequestFor(ROUTE_FOR_QUERY_ORDER, request.getGatewayAccount(), buildQueryOrderRequestFor(request));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
             BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse()
-                    .map(epdqStatus -> epdqStatus.authoriseStatus()).orElse(ERROR);
+                    .map(BaseAuthoriseResponse::authoriseStatus).orElse(ERROR);
             Auth3dsResult auth3DResult = request.getAuth3DsDetails().getAuth3DsResult() == null ?
                     Auth3dsResult.ERROR : // we treat no result from frontend as an error
                     request.getAuth3DsDetails().getAuth3DsResult();

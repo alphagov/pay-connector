@@ -67,7 +67,7 @@ public class PerformanceReportResource {
     @Path("/v1/api/reports/gateway-account-performance-report")
     @Produces(APPLICATION_JSON)
     public Response getGatewayAccountPerformanceReport() {
-        HashMap<String, ImmutableMap<String, Object>> response = new HashMap<String, ImmutableMap<String, Object>>();
+        HashMap<String, ImmutableMap<String, Object>> response = new HashMap<>();
 
          performanceReportDao
            .aggregateNumberAndValueOfPaymentsByGatewayAccount()

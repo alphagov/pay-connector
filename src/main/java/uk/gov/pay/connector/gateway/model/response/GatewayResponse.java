@@ -63,7 +63,9 @@ public class GatewayResponse<T extends BaseResponse> {
 
     @Override
     public String toString() {
-        return Optional.ofNullable(gatewayError).map(x -> x.toString()).orElse(baseResponse.toString());
+        return gatewayError == null
+                ? baseResponse.toString()
+                : gatewayError.toString();
     }
 
     public static GatewayResponse with(GatewayError gatewayError) {
