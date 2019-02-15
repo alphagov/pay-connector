@@ -5,12 +5,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION_PATH;
@@ -34,24 +31,14 @@ public class JsonPatchRequest {
         if (value != null && value.isTextual()) {
             return value.asText();
         }
-        return null;
+        throw new JsonNodeNotCorrectTypeException("JSON node " + value + " is not of type string");
     }
     
-    public Long valueAsLong() {
+    public long valueAsLong() {
         if (value != null && value.isNumber()) {
-            return new Long(value.asText());
+            return Long.valueOf(value.asText());
         }
-        return null;
-    }
-
-    public List<String> valueAsList() {
-        if (value != null && value.isArray()) {
-            return newArrayList(value.elements())
-                    .stream()
-                    .map(JsonNode::textValue)
-                    .collect(toList());
-        }
-        return null;
+        throw new JsonNodeNotCorrectTypeException("JSON node " + value + " is not of type number");
     }
 
     public Map<String, String> valueAsObject() {
@@ -80,5 +67,11 @@ public class JsonPatchRequest {
                 payload.get(FIELD_OPERATION_PATH).asText(),
                 payload.get(FIELD_VALUE));
 
+    }
+    
+    public class JsonNodeNotCorrectTypeException extends RuntimeException {
+        public JsonNodeNotCorrectTypeException(String message) {
+            super(message);
+        }
     }
 }
