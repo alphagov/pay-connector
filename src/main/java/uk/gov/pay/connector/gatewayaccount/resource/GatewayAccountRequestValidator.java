@@ -106,7 +106,7 @@ public class GatewayAccountRequestValidator {
     }
 
     private void throwIfNotValidMerchantId(JsonNode valueNode, String field) {
-        boolean isValidWorldpayMerchantId = valueNode.textValue().matches("[0-9a-f]{15,50}");
+        boolean isValidWorldpayMerchantId = valueNode.textValue().matches("[0-9a-f]{15}");
         if(!isValidWorldpayMerchantId) {
             throw new ValidationException(Collections.singletonList(format("Field [%s] value [%s] does not match that expected for a Worldpay Merchant ID; characters should be within range [0-9a-f]", field, valueNode.asText())));
         }
