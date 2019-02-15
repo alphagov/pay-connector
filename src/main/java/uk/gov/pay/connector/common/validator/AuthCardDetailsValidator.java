@@ -2,38 +2,54 @@ package uk.gov.pay.connector.common.validator;
 
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.ValidAuthCardDetails;
 
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 import java.util.regex.Pattern;
 
 import static java.util.regex.Pattern.compile;
 import static org.apache.commons.lang3.StringUtils.isNoneBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
-public class AuthCardDetailsValidator {
-
+public class AuthCardDetailsValidator implements ConstraintValidator<ValidAuthCardDetails, AuthCardDetails> {
     private static final Pattern TWELVE_TO_NINETEEN_DIGITS = compile("[0-9]{12,19}");
     private static final Pattern THREE_TO_FOUR_DIGITS = compile("[0-9]{3,4}");
     private static final Pattern THREE_TO_FOUR_DIGITS_POSSIBLY_SURROUNDED_BY_WHITESPACE = compile("\\s*[0-9]{3,4}\\s*");
     private static final Pattern EXPIRY_DATE = compile("[0-9]{2}/[0-9]{2}");
     private static final Pattern CONTAINS_MORE_THAN_11_NOT_NECESSARILY_CONTIGUOUS_DIGITS = compile(".*([0-9].*){12,}");
+    private static final short MAX_LENGTH = 255;
 
-    public static boolean isWellFormatted(AuthCardDetails authCardDetails) {
+    @Override
+    public void initialize(ValidAuthCardDetails constraintAnnotation) {
+    }
+
+    @Override
+    public boolean isValid(AuthCardDetails value, ConstraintValidatorContext context) {
+        if (value == null) {
+            return true;
+        }
+        return isWellFormatted(value);
+    }
+
+    private static boolean isWellFormatted(AuthCardDetails authCardDetails) {
         return isValidCardNumberLength(authCardDetails.getCardNo()) &&
                 isBetween3To4Digits(authCardDetails.getCvc()) &&
                 hasExpiryDateFormat(authCardDetails.getEndDate()) &&
                 hasCardBrand(authCardDetails.getCardBrand()) &&
-                unlikelyToBeCvc(authCardDetails.getCardHolder()) &&
-                unlikelyToContainACardNumber(authCardDetails.getCardHolder()) &&
                 unlikelyToContainACardNumber(authCardDetails.getCardBrand()) &&
-                isAddressValid(authCardDetails);
+                isAddressValid(authCardDetails) &&
+                isCardholderValid(authCardDetails.getCardHolder());
     }
 
     private static boolean isAddressValid(AuthCardDetails authCardDetails) {
         if (!authCardDetails.getAddress().isPresent())
             return true;
 
-        return isAddressComplete(authCardDetails.getAddress().get()) &&
-                addressUnlikelyToContainACardNumber(authCardDetails.getAddress().get());
+        final Address address = authCardDetails.getAddress().get();
+        return isAddressComplete(address) &&
+                addressUnlikelyToContainACardNumber(address) &&
+                addressHasValidFieldLengths(address);
     }
 
     private static boolean isAddressComplete(Address address) {
@@ -41,6 +57,12 @@ public class AuthCardDetailsValidator {
                 isNotBlank(address.getLine1()) &&
                 isNotBlank(address.getPostcode()) &&
                 isNotBlank(address.getCountry());
+    }
+
+    private static boolean isCardholderValid(String cardholder) {
+        return unlikelyToBeCvc(cardholder) &&
+                unlikelyToContainACardNumber(cardholder) &&
+                isUpToMaxLength(cardholder);
     }
 
     private static boolean hasCardBrand(String cardBrand) {
@@ -84,4 +106,18 @@ public class AuthCardDetailsValidator {
         return string == null || !regex.matcher(string).matches();
     }
 
+    private static boolean isUpToMaxLength(String value) {
+        if (null == value) {
+            return true;
+        }
+        return value.length() <= MAX_LENGTH;
+    }
+
+    private static boolean addressHasValidFieldLengths(Address address) {
+        return isUpToMaxLength(address.getLine1()) &&
+                isUpToMaxLength(address.getLine2()) &&
+                isUpToMaxLength(address.getCounty()) &&
+                isUpToMaxLength(address.getCountry()) &&
+                isUpToMaxLength(address.getCity());
+    }
 }

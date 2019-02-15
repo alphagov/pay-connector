@@ -27,6 +27,7 @@ import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
@@ -100,7 +101,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(chargeId);
         assertThat(charge.get("email"), is(googlePayload.get("payment_info").get("email").asText()));
     }
-    
+
     @Test
     public void shouldAuthoriseCharge_ForAValidAmericanExpress() {
         shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("371449635398431", "1234", "11/99", "american-express"));
@@ -121,16 +122,13 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
     public void sanitizeCardDetails_shouldStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingMoreThan10Numbers() {
         String sanitizedValue = "r-**-**-*  Ju&^****-**";
         String valueWithMoreThan10CharactersAsNumbers = "r-12-34-5  Ju&^6501-76";
-        String cardHolderName = valueWithMoreThan10CharactersAsNumbers;
-        String addressLine1 = valueWithMoreThan10CharactersAsNumbers;
-        String addressLine2 = valueWithMoreThan10CharactersAsNumbers;
-        String city = valueWithMoreThan10CharactersAsNumbers;
-        String county = valueWithMoreThan10CharactersAsNumbers;
-        String postcode = valueWithMoreThan10CharactersAsNumbers;
-        String country = valueWithMoreThan10CharactersAsNumbers;
-        String cardBrand = valueWithMoreThan10CharactersAsNumbers;
 
-        String externalChargeId = shouldAuthoriseChargeFor(buildDetailedJsonAuthorisationDetailsFor("4444333322221111", "123", "11/30", cardBrand, cardHolderName, addressLine1, addressLine2, city, county, postcode, country));
+        String externalChargeId = shouldAuthoriseChargeFor(buildDetailedJsonAuthorisationDetailsFor(
+                "4444333322221111", "123", "11/30",
+                valueWithMoreThan10CharactersAsNumbers, valueWithMoreThan10CharactersAsNumbers,
+                valueWithMoreThan10CharactersAsNumbers, valueWithMoreThan10CharactersAsNumbers,
+                valueWithMoreThan10CharactersAsNumbers, valueWithMoreThan10CharactersAsNumbers,
+                valueWithMoreThan10CharactersAsNumbers, valueWithMoreThan10CharactersAsNumbers));
 
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
         Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
@@ -150,16 +148,12 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
     public void sanitizeCardDetails_shouldNotStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingRight10Numbers() {
 
         String valueWith10CharactersAsNumbers = "r-12-34-5  Ju&^6501-7m";
-        String cardHolderName = valueWith10CharactersAsNumbers;
-        String addressLine1 = valueWith10CharactersAsNumbers;
-        String addressLine2 = valueWith10CharactersAsNumbers;
-        String city = valueWith10CharactersAsNumbers;
-        String county = valueWith10CharactersAsNumbers;
-        String postcode = valueWith10CharactersAsNumbers;
-        String country = valueWith10CharactersAsNumbers;
-        String cardBrand = valueWith10CharactersAsNumbers;
 
-        String externalChargeId = shouldAuthoriseChargeFor(buildDetailedJsonAuthorisationDetailsFor("4444333322221111", "123", "11/30", cardBrand, cardHolderName, addressLine1, addressLine2, city, county, postcode, country));
+        String externalChargeId = shouldAuthoriseChargeFor(buildDetailedJsonAuthorisationDetailsFor(
+                "4444333322221111", "123", "11/30",
+                valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers,
+                valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers,
+                valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers));
 
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
         Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
@@ -210,7 +204,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("1111111111111119234", "visa");
 
-        shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Unsupported card details.");
+        shouldReturn_unsupportedCardDetails_errorFor(chargeId, randomCardNumberDetails);
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_ERROR.getValue());
     }
 
@@ -219,7 +213,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("11111111111111192345", "visa");
 
-        shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
+        shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(chargeId, randomCardNumberDetails);
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
     }
 
@@ -228,7 +222,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "12345", "11/99", "visa");
 
-        shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
+        shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(chargeId, randomCardNumberDetails);
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
     }
 
@@ -237,7 +231,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "12", "11/99", "visa");
 
-        shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
+        shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(chargeId, randomCardNumberDetails);
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
     }
 
@@ -246,7 +240,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("11111111111", "visa");
 
-        shouldReturnErrorFor(chargeId, randomCardNumberDetails, "Values do not match expected format/length.");
+        shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(chargeId, randomCardNumberDetails);
         assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
     }
 
@@ -255,7 +249,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         String chargeId = createNewCharge();
         String detailsWithInvalidExpiryDate = buildJsonAuthorisationDetailsFor("4242424242424242", "123", "1299");
 
-        shouldReturnErrorFor(chargeId, detailsWithInvalidExpiryDate, "Values do not match expected format/length.");
+        shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(chargeId, detailsWithInvalidExpiryDate);
 
         assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
     }
@@ -272,6 +266,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
         return chargeId;
     }
+
     private String shouldAuthoriseChargeForApplePay(String cardHolderName, String email) {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
 
@@ -286,13 +281,14 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         assertThat(charge.get("email"), is(email));
         return chargeId;
     }
+
     @Test
     public void shouldPersistCorporateSurcharge() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         long corporateCreditCardSurchargeAmount = 2222L;
         databaseTestHelper.addGatewayAccount(accountId, "sandbox", "description", "",
                 corporateCreditCardSurchargeAmount, 0, 0, 0);
-        
+
         String externalChargeId = createNewChargeWithAccountId(ENTERING_CARD_DETAILS, randomId(), accountId, databaseTestHelper).toString();
         String cardDetails = buildCorporateJsonAuthorisationDetailsFor(PayersCardType.CREDIT);
 
@@ -308,7 +304,13 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
     @Test
     public void shouldReturnAuthError_IfChargeExpired() {
         String chargeId = createNewChargeWithNoTransactionId(EXPIRED);
-        authoriseAndVerifyFor(chargeId, validCardDetails, format("Charge not in correct state to be processed, %s", chargeId), 400);
+        givenSetup()
+                .body(validCardDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .statusCode(400)
+                .contentType(JSON)
+                .body("message", is(format("Charge not in correct state to be processed, %s", chargeId)));
         assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
     }
 
@@ -331,7 +333,13 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
 
         String msg = format("Charge not in correct state to be processed, %s", chargeId);
-        authoriseAndVerifyFor(chargeId, validCardDetails, msg, 400);
+        givenSetup()
+                .body(validCardDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .statusCode(400)
+                .contentType(JSON)
+                .body("message", is(msg));
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
@@ -340,7 +348,13 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
     public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfAuthorisationAlreadyInProgress() {
         String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_READY);
         String message = format("Authorisation for charge already in progress, %s", chargeId);
-        authoriseAndVerifyFor(chargeId, validCardDetails, message, 202);
+        givenSetup()
+                .body(validCardDetails)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .statusCode(202)
+                .contentType(JSON)
+                .body("message", is(message));
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_READY.getValue());
     }
 
@@ -438,17 +452,24 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
                 .collect(Collectors.toList());
     }
 
-    private void shouldReturnErrorFor(String chargeId, String randomCardNumber, String expectedMessage) {
-        authoriseAndVerifyFor(chargeId, randomCardNumber, expectedMessage, 400);
-    }
-
-    private void authoriseAndVerifyFor(String chargeId, String randomCardNumber, String expectedMessage, int statusCode) {
+    private void shouldReturn_unsupportedCardDetails_errorFor(String chargeId, String randomCardNumber) {
         givenSetup()
                 .body(randomCardNumber)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .statusCode(statusCode)
+                .statusCode(400)
                 .contentType(JSON)
-                .body("message", is(expectedMessage));
+                .body("message", is("Unsupported card details."));
     }
+
+    private void shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(String chargeId, String randomCardNumber) {
+        givenSetup()
+                .body(randomCardNumber)
+                .post(authoriseChargeUrlFor(chargeId))
+                .then()
+                .statusCode(400)
+                .contentType(JSON)
+                .body("message", containsInAnyOrder("Values do not match expected format/length."));
+    }
+
 }

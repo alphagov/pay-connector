@@ -32,7 +32,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.common.validator.AuthCardDetailsValidator.isWellFormatted;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
@@ -46,7 +45,7 @@ public class CardResource {
     private final ChargeCancelService chargeCancelService;
     private final ApplePayService applePayService;
     private final GooglePayService googlePayService;
-    
+
     @Inject
     public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
                         CardCaptureService cardCaptureService, ChargeCancelService chargeCancelService, ApplePayService applePayService,
@@ -82,11 +81,8 @@ public class CardResource {
     @Path("/v1/frontend/charges/{chargeId}/cards")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authoriseCharge(@PathParam("chargeId") String chargeId, AuthCardDetails authCardDetails) {
-        if (!isWellFormatted(authCardDetails)) {
-            logger.error("Charge {}: Card details are not well formatted. Values do not match expected format/length.", chargeId);
-            return badRequestResponse("Values do not match expected format/length.");
-        }
+    public Response authoriseCharge(@PathParam("chargeId") String chargeId,
+                                    @Valid AuthCardDetails authCardDetails) {
         AuthorisationResponse response = cardAuthoriseService.doAuthorise(chargeId, authCardDetails);
 
         return response.getGatewayError().map(error -> handleError(chargeId, error))
@@ -106,7 +102,7 @@ public class CardResource {
 
         return ResponseUtil.successResponseWithEntity(ImmutableMap.of("status", authoriseStatus.getMappedChargeStatus().toString()));
     }
-    
+
     @POST
     @Path("/v1/frontend/charges/{chargeId}/3ds")
     @Consumes(APPLICATION_JSON)

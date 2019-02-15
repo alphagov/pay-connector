@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import static uk.gov.pay.connector.gateway.model.PayersCardType.CREDIT_OR_DEBIT;
 
+@ValidAuthCardDetails
 public class AuthCardDetails implements AuthorisationDetails {
 
     private String cardNo;
