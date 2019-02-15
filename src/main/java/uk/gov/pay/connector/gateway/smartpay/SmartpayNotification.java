@@ -62,7 +62,7 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
         return eventCode;
     }
 
-    public Boolean isSuccessFull() {
+    public Boolean isSuccessFul() {
         return "true".equals(success);
     }
 
@@ -75,8 +75,8 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
         return this.eventDate.compareTo(other.eventDate);
     }
 
-    public Pair<String, Boolean> getStatus() {
-        return Pair.of(eventCode, isSuccessFull());
+    public Pair<String, Boolean> getStatus(){
+        return Pair.of(eventCode, isSuccessFul());
     }
 
     public String getOriginalReference() {

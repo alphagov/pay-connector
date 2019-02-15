@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.util;
 
-import org.postgresql.ssl.WrappedFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

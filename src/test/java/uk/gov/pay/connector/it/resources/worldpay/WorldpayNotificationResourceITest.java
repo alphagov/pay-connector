@@ -11,7 +11,6 @@ import uk.gov.pay.connector.util.DnsUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import java.io.IOException;
 import java.time.ZonedDateTime;
 
 import static io.restassured.RestAssured.given;
@@ -115,7 +114,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnForbiddenIfRequestComesFromUnexpectedIp() throws Exception {
+    public void shouldReturnForbiddenIfRequestComesFromUnexpectedIp() {
         given().port(testContext.getPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
                 .header("X-Forwarded-For", "8.8.8.8, 123.1.23.32")
@@ -126,7 +125,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnForbiddenIfXForwardedForHeaderIsMalformed() throws Exception {
+    public void shouldReturnForbiddenIfXForwardedForHeaderIsMalformed() {
         given().port(testContext.getPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
                 .header("X-Forwarded-For", "something is wrong, 8.8.8.8")
@@ -137,7 +136,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnForbiddenIfXForwardedForHeaderIsMissing() throws Exception {
+    public void shouldReturnForbiddenIfXForwardedForHeaderIsMissing() {
         given().port(testContext.getPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
                 .contentType(TEXT_XML)
@@ -147,7 +146,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldFailWhenUnexpectedContentType() throws Exception {
+    public void shouldFailWhenUnexpectedContentType() {
         given().port(testContext.getPort())
                 .body(notificationPayloadForTransaction("any", "WHATEVER"))
                 .contentType(APPLICATION_JSON)
@@ -164,7 +163,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
         return notifyConnector(notificationPayloadForTransaction(transactionId, status, reference));
     }
 
-    private ValidatableResponse notifyConnector(String payload) throws Exception {
+    private ValidatableResponse notifyConnector(String payload) {
         String validIp = new DnsUtils().dnsLookup("build.ci.pymnt.uk").get();
         String xForwardedForHeader = format("%s, %s", validIp, "8.8.8.8");
         return given().port(testContext.getPort())
@@ -175,7 +174,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
                 .then();
     }
 
-    private String notificationPayloadForTransaction(String transactionId, String status) throws IOException {
+    private String notificationPayloadForTransaction(String transactionId, String status) {
         return TestTemplateResourceLoader.load(WORLDPAY_NOTIFICATION)
                 .replace("{{transactionId}}", transactionId)
                 .replace("{{status}}", status)
@@ -184,7 +183,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
                 .replace("{{bookingDateYear}}", "2017");
     }
 
-    private String notificationPayloadForTransaction(String transactionId, String status, String reference) throws IOException {
+    private String notificationPayloadForTransaction(String transactionId, String status, String reference) {
         String payload = notificationPayloadForTransaction(transactionId, status);
         return payload.replace("{{refund-ref}}", reference);
     }

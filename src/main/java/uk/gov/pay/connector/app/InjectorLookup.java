@@ -33,12 +33,12 @@ public final class InjectorLookup {
         INJECTORS.put(application, injector);
         return new Managed() {
             @Override
-            public void start() throws Exception {
+            public void start() {
                 // not used
             }
 
             @Override
-            public void stop() throws Exception {
+            public void stop() {
                 INJECTORS.remove(application);
             }
         };

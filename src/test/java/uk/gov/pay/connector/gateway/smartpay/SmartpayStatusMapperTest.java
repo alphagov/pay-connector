@@ -17,7 +17,7 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR
 public class SmartpayStatusMapperTest {
 
     @Test
-    public void shouldReturnAStatusForCaptureTrue() throws Exception {
+    public void shouldReturnAStatusForCaptureTrue() {
         Pair<String, Boolean> value = Pair.of("CAPTURE", true);
         InterpretedStatus status = SmartpayStatusMapper.from(value, CAPTURE_SUBMITTED);
 
@@ -26,7 +26,7 @@ public class SmartpayStatusMapperTest {
     }
 
     @Test
-    public void shouldReturnAStatusForCaptureFalse() throws Exception {
+    public void shouldReturnAStatusForCaptureFalse() {
         Pair<String, Boolean> value = Pair.of("CAPTURE", false);
         InterpretedStatus status = SmartpayStatusMapper.from(value, CAPTURE_SUBMITTED);
 
@@ -35,7 +35,7 @@ public class SmartpayStatusMapperTest {
     }
 
     @Test
-    public void shouldReturnAStatusForRefundedTrue() throws Exception {
+    public void shouldReturnAStatusForRefundedTrue() {
         Pair<String, Boolean> value = Pair.of("REFUND", true);
         InterpretedStatus status = SmartpayStatusMapper.from(value, CAPTURED);
 
@@ -44,7 +44,7 @@ public class SmartpayStatusMapperTest {
     }
 
     @Test
-    public void shouldReturnAStatusForRefundedFalse() throws Exception {
+    public void shouldReturnAStatusForRefundedFalse() {
         Pair<String, Boolean> value = Pair.of("REFUND", false);
         InterpretedStatus status = SmartpayStatusMapper.from(value, CAPTURED);
 
@@ -53,7 +53,7 @@ public class SmartpayStatusMapperTest {
     }
 
     @Test
-    public void shouldReturnAStatusForRefundFailedTrue() throws Exception {
+    public void shouldReturnAStatusForRefundFailedTrue() {
         Pair<String, Boolean> value = Pair.of("REFUND_FAILED", true);
         InterpretedStatus status = SmartpayStatusMapper.from(value, CAPTURED);
 
@@ -62,7 +62,7 @@ public class SmartpayStatusMapperTest {
     }
 
     @Test
-    public void shouldReturnAStatusForRefundFailedFalse() throws Exception {
+    public void shouldReturnAStatusForRefundFailedFalse() {
         Pair<String, Boolean> value = Pair.of("REFUND_FAILED", false);
         InterpretedStatus status = SmartpayStatusMapper.from(value, CAPTURED);
 
@@ -71,14 +71,14 @@ public class SmartpayStatusMapperTest {
     }
 
     @Test
-    public void shouldReturnEmptyWhenStatusIsUnknown() throws Exception {
+    public void shouldReturnEmptyWhenStatusIsUnknown() {
         InterpretedStatus status = SmartpayStatusMapper.from(Pair.of("UNKNOWN", true), AUTHORISATION_SUCCESS);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.UNKNOWN));
     }
 
     @Test
-    public void shouldReturnEmptyWhenStatusIsIgnored() throws Exception {
+    public void shouldReturnEmptyWhenStatusIsIgnored() {
         InterpretedStatus status = SmartpayStatusMapper.from(Pair.of("AUTHORISATION", true), AUTHORISATION_SUCCESS);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.IGNORED));

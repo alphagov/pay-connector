@@ -21,19 +21,19 @@ public class PaymentGatewayStateTransitionsTest {
     PaymentGatewayStateTransitions transitions = PaymentGatewayStateTransitions.getInstance();
 
     @Test
-    public void allStatuses_hasEveryValidChargeStatus() throws Exception {
+    public void allStatuses_hasEveryValidChargeStatus() {
         Set<ChargeStatus> expected = new HashSet<>(Arrays.asList(ChargeStatus.values()));
         assertThat(transitions.allStatuses(), is(expected));
     }
 
     @Test
-    public void allTransitions_containsAValidTransitionAnnotatedWithEventDescription() throws Exception {
+    public void allTransitions_containsAValidTransitionAnnotatedWithEventDescription() {
         Set<Triple<ChargeStatus, ChargeStatus, String>> actual = transitions.allTransitions();
         assertThat(actual, hasItem(Triple.of(CREATED, EXPIRED, "ChargeExpiryService")));
     }
 
     @Test
-    public void isValidTransition_indicatesValidAndInvalidTransition() throws Exception {
+    public void isValidTransition_indicatesValidAndInvalidTransition() {
         assertThat(transitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED), is(true));
         assertThat(transitions.isValidTransition(CREATED, AUTHORISATION_READY), is(false));
     }

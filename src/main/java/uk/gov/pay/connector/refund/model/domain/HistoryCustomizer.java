@@ -3,7 +3,6 @@ package uk.gov.pay.connector.refund.model.domain;
 import org.eclipse.persistence.config.DescriptorCustomizer;
 import org.eclipse.persistence.descriptors.ClassDescriptor;
 import org.eclipse.persistence.history.HistoryPolicy;
-import org.eclipse.persistence.internal.helper.DatabaseTable;
 
 public class HistoryCustomizer implements DescriptorCustomizer {
 

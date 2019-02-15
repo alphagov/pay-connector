@@ -93,7 +93,7 @@ public class GuiceAppRule<C extends Configuration> extends ExternalResource impl
     }
 
     @Override
-    protected void before() throws Throwable {
+    protected void before() {
         startIfRequired();
     }
 

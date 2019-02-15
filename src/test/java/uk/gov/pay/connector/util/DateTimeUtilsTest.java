@@ -17,7 +17,7 @@ import static org.junit.Assert.assertTrue;
 public class DateTimeUtilsTest {
 
     @Test
-    public void shouldConvertUTCZonedISO_8601StringToADateTime() throws Exception {
+    public void shouldConvertUTCZonedISO_8601StringToADateTime() {
         String aDate = "2010-01-01T12:00:00Z";
         Optional<ZonedDateTime> result = DateTimeUtils.toUTCZonedDateTime(aDate);
         assertTrue(result.isPresent());
@@ -30,7 +30,7 @@ public class DateTimeUtilsTest {
     }
 
     @Test
-    public void shouldConvertNonUTCZonedISO_8601StringToADateTime() throws Exception {
+    public void shouldConvertNonUTCZonedISO_8601StringToADateTime() {
         String aDate = "2010-01-01T12:00:00+01:00[Europe/Paris]";
         Optional<ZonedDateTime> result = DateTimeUtils.toUTCZonedDateTime(aDate);
         assertTrue(result.isPresent());
@@ -45,7 +45,7 @@ public class DateTimeUtilsTest {
     }
 
     @Test
-    public void shouldConvertAn_UTCOffsetDateStringToADateTime() throws Exception {
+    public void shouldConvertAn_UTCOffsetDateStringToADateTime() {
         String aDate = "2010-01-01T12:10:10+01:00";
         Optional<ZonedDateTime> result = DateTimeUtils.toUTCZonedDateTime(aDate);
         assertTrue(result.isPresent());

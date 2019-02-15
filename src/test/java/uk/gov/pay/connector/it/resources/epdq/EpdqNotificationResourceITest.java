@@ -49,7 +49,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
             "CAPTURE_SUBMITTED",
             "CAPTURE_APPROVED_RETRY"
     })
-    public void shouldHandleACaptureNotification(ChargeStatus chargeStatus) throws Exception {
+    public void shouldHandleACaptureNotification(ChargeStatus chargeStatus) {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(chargeStatus, transactionId);
 
@@ -64,7 +64,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldHandleAnAuthorisedNotification_whenChargeIsInAuthorisationSubmittedState() throws Exception {
+    public void shouldHandleAnAuthorisedNotification_whenChargeIsInAuthorisationSubmittedState() {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(AUTHORISATION_SUBMITTED, transactionId);
         String epdqAuthorisedNotificationCode = EPDQ_AUTHORISED.getCode();
@@ -82,7 +82,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldHandleAnAuthorisedCancelledNotification_whenChargeIsInUserCancelSubmittedState() throws Exception {
+    public void shouldHandleAnAuthorisedCancelledNotification_whenChargeIsInUserCancelSubmittedState() {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(USER_CANCEL_SUBMITTED, transactionId);
         String epdqAuthorisedCancelledNotificationCode = EPDQ_AUTHORISED_CANCELLED.getCode();
@@ -100,7 +100,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldHandleARefundNotification() throws Exception {
+    public void shouldHandleARefundNotification() {
         String transactionId = "123456";
         String payIdSub = "2";
         String refundExternalId = "999999";
@@ -121,7 +121,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotAddUnknownStatusToDatabaseFromANotification() throws Exception {
+    public void shouldNotAddUnknownStatusToDatabaseFromANotification() {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
@@ -136,7 +136,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotUpdateStatusToDatabaseIfGatewayAccountIsNotFound() throws Exception {
+    public void shouldNotUpdateStatusToDatabaseIfGatewayAccountIsNotFound() {
         String chargeId = createNewCharge(AUTHORISATION_SUCCESS);
 
         notifyConnector("unknown-transation-id", "GARBAGE", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
@@ -148,7 +148,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotUpdateStatusToDatabaseIfShaSignatureIsIncorrect() throws Exception {
+    public void shouldNotUpdateStatusToDatabaseIfShaSignatureIsIncorrect() {
         String transactionId = "transaction-id";
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 

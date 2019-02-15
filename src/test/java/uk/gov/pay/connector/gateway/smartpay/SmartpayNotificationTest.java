@@ -38,7 +38,7 @@ public class SmartpayNotificationTest {
         assertThat(smartpayNotification.getOriginalReference(), is("originalReference"));
         assertThat(smartpayNotification.getPspReference(), is("pspReference"));
         assertThat(smartpayNotification.getEventCode(), is("eventCode"));
-        assertThat(smartpayNotification.isSuccessFull(), is(true));
+        assertThat(smartpayNotification.isSuccessFul(), is(true));
 
         assertThat(smartpayNotification.getEventDate(), is(ZonedDateTime.of(2015, 10, 8, 13, 48, 30, 0, ZoneOffset.ofHours(2))));
     }
@@ -46,7 +46,7 @@ public class SmartpayNotificationTest {
     @Test
     public void successValuesThatArentTrueShouldBeFalse() {
         SmartpayNotification smartpayNotification = aNotificationWith("success", "sausages");
-        assertThat(smartpayNotification.isSuccessFull(), is(false));
+        assertThat(smartpayNotification.isSuccessFul(), is(false));
     }
 
     @Test

@@ -156,7 +156,7 @@ public class ChargeExpiryServiceTest {
     }
 
     @Test
-    public void shouldExpireChargesWithoutCallingProviderToCancel() throws Exception {
+    public void shouldExpireChargesWithoutCallingProviderToCancel() {
         EXPIRABLE_REGULAR_STATUSES.stream()
                 .filter(status -> !GATEWAY_CANCELLABLE_STATUSES.contains(status))
                 .forEach(status -> {
@@ -175,7 +175,7 @@ public class ChargeExpiryServiceTest {
 
                     try {
                         verify(mockPaymentProvider, never()).cancel(any());
-                    } catch (GatewayErrorException e) {}
+                    } catch (GatewayErrorException ignored) {}
                     
                     assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
                 });

@@ -42,7 +42,7 @@ public class GooglePayServiceTest {
     }
     
     @Test
-    public void shouldAuthoriseAValidCharge() throws IOException {
+    public void shouldAuthoriseAValidCharge() {
         String externalChargeId = "external-charge-id";
 
         WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);

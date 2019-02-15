@@ -11,7 +11,6 @@ import java.net.InetAddress;
 import java.util.*;
 
 import static java.lang.String.*;
-import static java.lang.String.join;
 
 public class DnsUtils {
     private static final Logger logger = LoggerFactory.getLogger(DnsUtils.class);
@@ -39,7 +38,7 @@ public class DnsUtils {
         }
     }
 
-    public Optional<String> dnsLookup(String hostName) throws Exception {
+    public Optional<String> dnsLookup(String hostName) {
         try {
             InetAddress inetAddress = InetAddress.getByName(hostName);
             return Optional.ofNullable(inetAddress.getHostAddress());
@@ -48,7 +47,7 @@ public class DnsUtils {
         }
     }
 
-    public Optional<String> reverseDnsLookup(String hostIp) throws Exception {
+    public Optional<String> reverseDnsLookup(String hostIp) {
         List<String> components = Arrays.asList(hostIp.split("\\."));
         Collections.reverse(components);
         String reverseIp = join(".", components.toArray(new String[0])) + ".in-addr.arpa";

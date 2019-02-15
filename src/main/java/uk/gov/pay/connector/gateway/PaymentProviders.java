@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway;
 
 import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
-import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayPaymentProvider;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;

@@ -194,7 +194,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotAuthorise_AWorldpayErrorCard() throws Exception {
+    public void shouldNotAuthorise_AWorldpayErrorCard() {
         String cardDetailsRejectedByWorldpay = buildJsonAuthorisationDetailsFor("REFUSED", "4444333322221111", "visa");
 
         worldpayMockClient.mockAuthorisationFailure();

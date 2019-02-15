@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway.smartpay.auth;
 
 import com.google.inject.Inject;
-import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentials;
 import org.slf4j.Logger;
@@ -27,7 +26,7 @@ public class SmartpayAccountSpecificAuthenticator implements Authenticator<Basic
     }
 
     @Override
-    public Optional<BasicAuthUser> authenticate(BasicCredentials basicCredentials) throws AuthenticationException {
+    public Optional<BasicAuthUser> authenticate(BasicCredentials basicCredentials) {
 
         return gatewayAccountDao.findByNotificationCredentialsUsername(basicCredentials.getUsername())
                 .filter((gatewayAccountEntity) -> matchCredentials(basicCredentials, gatewayAccountEntity))
