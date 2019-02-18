@@ -9,15 +9,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
-import javax.ws.rs.client.Invocation.Builder;
-import java.util.Map;
-import java.util.function.BiFunction;
-
+import static java.util.Collections.emptyMap;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 
@@ -33,12 +28,7 @@ public class GatewayClientFactoryTest {
     MetricRegistry mockMetricRegistry;
     @Test
     public void shouldBuildGatewayClient() {
-        Map<String, String> gatewayUrlMap = mock(Map.class);
-        Builder mockBuilder = mock(Builder.class);
-        BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier = (GatewayOrder o, Builder b) -> mockBuilder;
-
-        GatewayClient gatewayClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, AUTHORISE,
-                gatewayUrlMap, sessionIdentifier, mockMetricRegistry);
+        GatewayClient gatewayClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, AUTHORISE, emptyMap(), mockMetricRegistry);
 
         assertNotNull(gatewayClient);
         verify(mockClientFactory).createWithDropwizardClient(PaymentGatewayName.WORLDPAY, AUTHORISE, mockMetricRegistry);

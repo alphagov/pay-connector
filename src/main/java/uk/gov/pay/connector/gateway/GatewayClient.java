@@ -13,13 +13,15 @@ import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
+import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
 
 import static java.lang.String.format;
+import static java.util.Collections.emptyList;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.Response.Status.OK;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.encode;
@@ -32,19 +34,22 @@ public class GatewayClient {
     private final Client client;
     private final Map<String, String> gatewayUrlMap;
     private final MetricRegistry metricRegistry;
-    private final BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier;
 
-    public GatewayClient(Client client, 
-                         Map<String, String> gatewayUrlMap,
-                         BiFunction<GatewayOrder, Builder, Builder> sessionIdentifier, 
-                         MetricRegistry metricRegistry) {
+    public GatewayClient(Client client, Map<String, String> gatewayUrlMap, MetricRegistry metricRegistry) {
         this.gatewayUrlMap = gatewayUrlMap;
         this.client = client;
         this.metricRegistry = metricRegistry;
-        this.sessionIdentifier = sessionIdentifier;
     }
 
     public GatewayClient.Response postRequestFor(String route, GatewayAccountEntity account, GatewayOrder request) 
+            throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
+        return postRequestFor(route, account, request, emptyList());
+    }
+    
+    public GatewayClient.Response postRequestFor(String route,
+                                                 GatewayAccountEntity account,
+                                                 GatewayOrder request,
+                                                 List<HttpCookie> cookies) 
             throws GenericGatewayErrorException, GatewayConnectionTimeoutErrorException, GatewayConnectionErrorException {
         String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
         javax.ws.rs.core.Response response = null;
@@ -57,15 +62,12 @@ public class GatewayClient {
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
             logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
-            Builder requestBuilder = client.target(gatewayUrl)
-                    .request()
-                    .header(AUTHORIZATION, encode(
+            Builder requestBuilder = client.target(gatewayUrl).request().header(AUTHORIZATION, encode(
                             account.getCredentials().get(CREDENTIALS_USERNAME),
                             account.getCredentials().get(CREDENTIALS_PASSWORD)));
-
-            response = sessionIdentifier.apply(request, requestBuilder)
-                    .post(Entity.entity(request.getPayload(), request.getMediaType()));
-
+            
+            cookies.forEach(cookie -> requestBuilder.cookie(cookie.getName(), cookie.getValue()));
+            response = requestBuilder.post(Entity.entity(request.getPayload(), request.getMediaType()));
             int statusCode = response.getStatus();
             Response gatewayResponse = new Response(response);
             if (statusCode == OK.getStatusCode()) {

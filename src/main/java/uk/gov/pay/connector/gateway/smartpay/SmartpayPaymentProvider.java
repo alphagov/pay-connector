@@ -32,9 +32,7 @@ import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
-import javax.ws.rs.client.Invocation;
 import java.util.Optional;
-import java.util.function.BiFunction;
 
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
@@ -53,7 +51,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                                    GatewayClientFactory gatewayClientFactory,
                                    Environment environment) {
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
-        client = gatewayClientFactory.createGatewayClient(SMARTPAY, configuration.getGatewayConfigFor(SMARTPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
+        client = gatewayClientFactory.createGatewayClient(SMARTPAY, configuration.getGatewayConfigFor(SMARTPAY).getUrls(), environment.metrics());
         this.smartpayCaptureHandler = new SmartpayCaptureHandler(client);
         this.smartpayRefundHandler = new SmartpayRefundHandler(client);
     }
@@ -169,9 +167,5 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     private String getMerchantCode(GatewayRequest request) {
         return request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID);
-    }
-
-    public static BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> includeSessionIdentifier() {
-        return (order, builder) -> builder;
     }
 }

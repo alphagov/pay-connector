@@ -28,10 +28,12 @@ import uk.gov.pay.connector.gateway.worldpay.applepay.WorldpayWalletAuthorisatio
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
-import javax.ws.rs.client.Invocation.Builder;
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Optional;
-import java.util.function.BiFunction;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CANCEL;
@@ -59,9 +61,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     public WorldpayPaymentProvider(ConnectorConfiguration configuration,
                                    GatewayClientFactory gatewayClientFactory,
                                    Environment environment) {
-        authoriseClient = gatewayClientFactory.createGatewayClient(WORLDPAY, AUTHORISE, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
-        cancelClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CANCEL, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
-        captureClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CAPTURE, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), includeSessionIdentifier(), environment.metrics());
+        authoriseClient = gatewayClientFactory.createGatewayClient(WORLDPAY, AUTHORISE, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), environment.metrics());
+        cancelClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CANCEL, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), environment.metrics());
+        captureClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CAPTURE, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), environment.metrics());
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         worldpayCaptureHandler = new WorldpayCaptureHandler(captureClient);
         worldpayRefundHandler = new WorldpayRefundHandler(captureClient);
@@ -85,19 +87,27 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayErrorException {
-        GatewayClient.Response response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrder(request));
+        GatewayOrder gatewayOrder = buildAuthoriseOrder(request);
+        GatewayClient.Response response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), gatewayOrder);
         return getWorldpayGatewayResponse(response);
     }
 
     @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         try {
-            GatewayClient.Response response = authoriseClient.postRequestFor(null, request.getGatewayAccount(), build3dsResponseAuthOrder(request));
+            List<HttpCookie> cookies = request.getProviderSessionId()
+                    .map(providerSessionId -> singletonList(new HttpCookie(WORLDPAY_MACHINE_COOKIE_NAME, providerSessionId)))
+                    .orElse(emptyList());
+            
+            GatewayClient.Response response = authoriseClient.postRequestFor(
+                    null, request.getGatewayAccount(), build3dsResponseAuthOrder(request), cookies);
+            
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getWorldpayGatewayResponse(response);
             
             if (!gatewayResponse.getBaseResponse().isPresent()) gatewayResponse.throwGatewayError();
             
             BaseAuthoriseResponse authoriseResponse = gatewayResponse.getBaseResponse().get();
+            
             return Gateway3DSAuthorisationResponse.of(gatewayResponse.toString(), authoriseResponse.authoriseStatus(), authoriseResponse.getTransactionId());
         } catch (GatewayErrorException e) {
             return Gateway3DSAuthorisationResponse.of(e.getMessage(), BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION);
@@ -130,13 +140,6 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return externalRefundAvailabilityCalculator.calculate(chargeEntity);
     }
 
-    public static BiFunction<GatewayOrder, Builder, Builder> includeSessionIdentifier() {
-        return (order, builder) ->
-                order.getProviderSessionId()
-                        .map(sessionId -> builder.cookie(WORLDPAY_MACHINE_COOKIE_NAME, sessionId))
-                        .orElse(builder);
-    }
-
     private GatewayOrder buildAuthoriseOrder(CardAuthorisationGatewayRequest request) {
         return aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId(request.getChargeExternalId())
@@ -154,7 +157,6 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 .withPaResponse3ds(request.getAuth3DsDetails().getPaResponse())
                 .withSessionId(request.getChargeExternalId())
                 .withTransactionId(request.getTransactionId().orElse(""))
-                .withProviderSessionId(request.getProviderSessionId().orElse(""))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .build();
     }

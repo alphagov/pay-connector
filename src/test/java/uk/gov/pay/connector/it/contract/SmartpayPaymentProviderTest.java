@@ -42,7 +42,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
-import java.util.function.BiFunction;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -246,10 +245,10 @@ public class SmartpayPaymentProviderTest {
         Client client = TestClientFactory.createJerseyClient();
 
         GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
-                SmartpayPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
+                mockMetricRegistry);
 
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
-        when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(Map.class), any(BiFunction.class), any(MetricRegistry.class))).thenReturn(gatewayClient);
+        when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(Map.class), any(MetricRegistry.class))).thenReturn(gatewayClient);
 
         GatewayConfig gatewayConfig = mock(GatewayConfig.class);
         when(gatewayConfig.getUrls()).thenReturn(Collections.EMPTY_MAP);
