@@ -8,7 +8,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
 import uk.gov.pay.connector.gateway.exception.GenericGatewayRuntimeException;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -18,11 +20,15 @@ import javax.inject.Inject;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus;
 
 public class CardAuthoriseBaseService {
+    
     private final CardExecutorService cardExecutorService;
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final MetricRegistry metricRegistry;
 
     @Inject
@@ -30,7 +36,6 @@ public class CardAuthoriseBaseService {
         this.cardExecutorService = cardExecutorService;
         this.metricRegistry = environment.metrics();
     }
-
  
     public <T> T executeAuthorise(String chargeId, Supplier<T> authorisationSupplier) {
         Pair<ExecutionStatus, T> executeResult = cardExecutorService.execute(authorisationSupplier);
@@ -65,5 +70,12 @@ public class CardAuthoriseBaseService {
                 operation,
                 charge.getStatus())
         ).inc();
+    }
+    
+    public static ChargeStatus mapFromGatewayErrorException(GatewayErrorException e) {
+        if (e instanceof GatewayErrorException.GenericGatewayErrorException) return AUTHORISATION_ERROR;
+        if (e instanceof GatewayErrorException.GatewayConnectionTimeoutErrorException) return AUTHORISATION_TIMEOUT;
+        if (e instanceof GatewayErrorException.GatewayConnectionErrorException) return AUTHORISATION_UNEXPECTED_ERROR;
+        throw new RuntimeException("Unrecognised GatewayErrorException instance " + e.getClass());
     }
 }

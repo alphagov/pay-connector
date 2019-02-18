@@ -10,9 +10,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionTimeoutErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -24,10 +21,6 @@ import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
-
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 
 public class WalletAuthoriseService {
     private static final DateTimeFormatter EXPIRY_DATE_FORMAT = DateTimeFormatter.ofPattern("MM/yy");
@@ -69,11 +62,7 @@ public class WalletAuthoriseService {
                 } else operationResponse.throwGatewayError();
 
             } catch (GatewayErrorException e) {
-
-                if (e instanceof GenericGatewayErrorException) chargeStatus = AUTHORISATION_ERROR;
-                if (e instanceof GatewayConnectionTimeoutErrorException) chargeStatus = AUTHORISATION_TIMEOUT;
-                if (e instanceof GatewayConnectionErrorException) chargeStatus = AUTHORISATION_UNEXPECTED_ERROR;
-                
+                chargeStatus = CardAuthoriseBaseService.mapFromGatewayErrorException(e);
                 responseFromPaymentGateway = e.getMessage();
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
