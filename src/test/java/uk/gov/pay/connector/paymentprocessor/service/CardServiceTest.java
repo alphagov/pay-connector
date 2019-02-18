@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
 import com.codahale.metrics.MetricRegistry;
+import org.mockito.Mock;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -19,6 +20,7 @@ public abstract class CardServiceTest {
 
     protected final PaymentProvider mockedPaymentProvider = mock(PaymentProvider.class);
     protected PaymentProviders mockedProviders = mock(PaymentProviders.class);
+    @Mock
     protected MetricRegistry mockMetricRegistry;
     protected ChargeDao mockedChargeDao = mock(ChargeDao.class);
     protected ChargeService chargeService;

@@ -94,7 +94,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
     @Before
     public void beforeTest() {
         Environment mockEnvironment = mock(Environment.class);
-        mockMetricRegistry = mock(MetricRegistry.class);
         Counter mockCounter = mock(Counter.class);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);

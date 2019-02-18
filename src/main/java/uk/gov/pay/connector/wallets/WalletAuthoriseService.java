@@ -22,6 +22,8 @@ import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
+import static java.lang.String.format;
+
 public class WalletAuthoriseService {
     private static final DateTimeFormatter EXPIRY_DATE_FORMAT = DateTimeFormatter.ofPattern("MM/yy");
     private final CardAuthoriseBaseService cardAuthoriseBaseService;
@@ -49,23 +51,29 @@ public class WalletAuthoriseService {
             Optional<String> sessionIdentifier = Optional.empty();
             ChargeStatus chargeStatus = null;
             String responseFromPaymentGateway = null;
-
+            String requestStatus = "failure";
+            
             try {
                 operationResponse = authorise(charge, walletAuthorisationData);
                 Optional<BaseAuthoriseResponse> baseResponse = operationResponse.getBaseResponse();
-
+                
                 if (baseResponse.isPresent()) {
+                    requestStatus = "success";
                     chargeStatus = baseResponse.get().authoriseStatus().getMappedChargeStatus();
                     transactionId = cardAuthoriseBaseService.extractTransactionId(charge.getExternalId(), operationResponse);
                     sessionIdentifier = operationResponse.getSessionIdentifier();
                     responseFromPaymentGateway = baseResponse.toString();
-                } else operationResponse.throwGatewayError();
+                } else {
+                    operationResponse.throwGatewayError();
+                }
 
             } catch (GatewayErrorException e) {
                 chargeStatus = CardAuthoriseBaseService.mapFromGatewayErrorException(e);
                 responseFromPaymentGateway = e.getMessage();
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
+                
+            logMetrics(charge, operationResponse, requestStatus, walletAuthorisationData.getWalletType());
 
             processGatewayAuthorisationResponse(
                     charge.getExternalId(),
@@ -78,6 +86,21 @@ public class WalletAuthoriseService {
 
             return operationResponse;
         });
+    }
+
+    private void logMetrics(ChargeEntity chargeEntity,
+                            GatewayResponse<BaseAuthoriseResponse> operationResponse,
+                            String successOrFailure,
+                            WalletType walletType) {
+        
+        logger.info("{} authorisation {} - charge_external_id={}, payment provider response={}", 
+                walletType.toString(), successOrFailure, chargeEntity.getExternalId(), operationResponse.toString());
+        metricRegistry.counter(format("gateway-operations.%s.%s.%s.authorise.%s.result.%s", 
+                chargeEntity.getGatewayAccount().getGatewayName(), 
+                chargeEntity.getGatewayAccount().getType(),
+                chargeEntity.getGatewayAccount().getId(),
+                walletType.equals(WalletType.GOOGLE_PAY)? "google-pay" : "apple-pay",
+                successOrFailure));
     }
 
     @Transactional
