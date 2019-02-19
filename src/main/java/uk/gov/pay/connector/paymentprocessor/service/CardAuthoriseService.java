@@ -13,9 +13,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionTimeoutErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -31,9 +28,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 
 public class CardAuthoriseService {
@@ -79,11 +73,7 @@ public class CardAuthoriseService {
                 sessionIdentifier = operationResponse.getSessionIdentifier();
                 
             } catch (GatewayErrorException e) {
-                
-                if (e instanceof GenericGatewayErrorException) newStatus = AUTHORISATION_ERROR;
-                if (e instanceof GatewayConnectionTimeoutErrorException) newStatus = AUTHORISATION_TIMEOUT;
-                if (e instanceof GatewayConnectionErrorException) newStatus = AUTHORISATION_UNEXPECTED_ERROR;
-                
+                newStatus = CardAuthoriseBaseService.mapFromGatewayErrorException(e);
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
 
