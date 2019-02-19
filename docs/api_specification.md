@@ -1826,6 +1826,110 @@ Content-Type: application/json
 }
 ```
 -----------------------------------------------------------------------------------------------------------
+## GET /v1/api/accounts/{accountId}/stripe-setup
+
+Retrieves which Stripe Connect account setup tasks have been completed for a given `accountId`
+
+### Request example
+
+```
+GET /v1/api/accounts/123/stripe-setup
+```
+
+### Response example
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+    "bank_account": true,
+    "responsible_person": false,
+    "organisation_details": false
+}
+```
+
+### Response field description
+
+| Field | Always present | Description |
+| ------|:--------------:| ------------|
+| `bank_account` | X     | Whether bank account details have been submitted to Stripe (`true` or `false`) |
+| `responsible_person` | X | Whether a nominated responsible person has been submitted to Stripe  (`true` or `false`) |
+| `organisation_details` | X | Whether the organisation address, VAT number and company number have been submitted to Stripe  (`true` or `false`) |
+
+### Response errors
+
+#### Specified `accountId` does not exist
+
+```
+HTTP/1.1 404 Not Found
+```
+
+#### Specified `accountId` is not a Stripe gateway account
+
+```
+HTTP/1.1 404 Not Found
+```
+
+## POST /v1/api/accounts/{accountId}/stripe-setup
+
+Updates which Stripe Connect account setup tasks have been completed for a given `accountId`
+
+### Request example
+
+```
+POST /v1/api/accounts/123/stripe-setup
+[
+    {
+        "op": "replace",
+        "path": "bank_account",
+        "value": true
+    },
+    {
+        "op": "replace",
+        "path": "responsible_person",
+        "value": false
+    }
+]
+```
+
+### Request field description
+| Field  | Required | Description                               |
+| ------ |:--------:|------------- |
+| `op`    | X | Must be `"replace"` |
+| `path`  | X | The task (`"bank_account"`, `"responsible_person"` or `"organisation_details"`) |
+| `value` | X | Whether the task has been completed (`true` or `false`) |
+
+### Response example
+
+```
+HTTP/1.1 200 OK
+```
+
+### Response errors
+
+#### Syntax error
+```
+HTTP/1.1 400 Bad Request
+{
+    "errors": [
+        "Operation [add] not supported for path [bank_account]"
+    ]
+}
+```
+
+#### Specified `accountId` does not exist
+
+```
+HTTP/1.1 404 Not Found
+```
+
+#### Specified `accountId` is not a Stripe gateway account
+
+```
+HTTP/1.1 404 Not Found
+```
+-----------------------------------------------------------------------------------------------------------
 ## GET /v1/api/accounts/{accountId}/transactions-summary
 
 Retrieves payment summary totals for a given `accountId`
