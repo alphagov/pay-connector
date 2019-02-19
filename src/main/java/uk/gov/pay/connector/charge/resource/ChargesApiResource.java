@@ -234,7 +234,7 @@ public class ChargesApiResource {
             @Context UriInfo uriInfo
     ) {
         logger.info("Creating new charge - {}", chargeRequest.toStringWithoutPersonalIdentifiableInformation());
-
+        logger.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> shalalala");
         return chargeService.create(chargeRequest, accountId, uriInfo)
                 .map(response -> created(response.getLink("self")).entity(response).build())
                 .orElseGet(() -> notFoundResponse("Unknown gateway account: " + accountId));

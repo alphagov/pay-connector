@@ -99,29 +99,35 @@ public class CardCaptureProcess {
     }
 
     public synchronized void loadCaptureQueue() {
+        logger.error("just checking: ++++++++++++++++++++++++++++++++++");
         if (captureQueue.isEmpty()) {
-            runCaptureId = RandomIdGenerator.newId();
-            MDC.put(HEADER_REQUEST_ID, format("runCapture-%s", runCaptureId));
+            logger.error("just checking: capture queue is not empty");
+            try {
+                runCaptureId = RandomIdGenerator.newId();
+                MDC.put(HEADER_REQUEST_ID, format("runCapture-%s", runCaptureId));
 
-            waitingCaptureQueueSize = chargeDao.countChargesAwaitingCaptureRetry(captureConfig.getRetryFailuresEveryAsJavaDuration());
+                waitingCaptureQueueSize = chargeDao.countChargesAwaitingCaptureRetry(captureConfig.getRetryFailuresEveryAsJavaDuration());
 
-            List<ChargeEntity> chargesToCapture = chargeDao.findChargesForCapture(captureConfig.getBatchSize(),
-                    captureConfig.getRetryFailuresEveryAsJavaDuration());
+                List<ChargeEntity> chargesToCapture = chargeDao.findChargesForCapture(captureConfig.getBatchSize(),
+                        captureConfig.getRetryFailuresEveryAsJavaDuration());
 
-            chargesToCaptureSize = chargesToCapture.size();
+                chargesToCaptureSize = chargesToCapture.size();
 
-            if (chargesToCaptureSize < captureConfig.getBatchSize()) {
-                readyCaptureQueueSize = chargesToCaptureSize;
-            } else {
-                readyCaptureQueueSize = chargeDao.countChargesForImmediateCapture(captureConfig.getRetryFailuresEveryAsJavaDuration());
+                if (chargesToCaptureSize < captureConfig.getBatchSize()) {
+                    readyCaptureQueueSize = chargesToCaptureSize;
+                } else {
+                    readyCaptureQueueSize = chargeDao.countChargesForImmediateCapture(captureConfig.getRetryFailuresEveryAsJavaDuration());
+                }
+
+                if (chargesToCaptureSize > 0) {
+                    logger.info("Capturing: {} of {} charges", chargesToCaptureSize, (waitingCaptureQueueSize + readyCaptureQueueSize));
+                }
+
+                captureQueue.addAll(chargesToCapture);
+                MDC.remove(HEADER_REQUEST_ID);
+            } catch (Throwable ex) {
+                logger.error("Exception while running loadCaptureQueue:", ex);
             }
-
-            if (chargesToCaptureSize > 0) {
-                logger.info("Capturing: {} of {} charges", chargesToCaptureSize, (waitingCaptureQueueSize + readyCaptureQueueSize));
-            }
-
-            captureQueue.addAll(chargesToCapture);
-            MDC.remove(HEADER_REQUEST_ID);
         }
     }
 

@@ -3,6 +3,8 @@ package uk.gov.pay.connector.charge.dao;
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -34,6 +36,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     private static final String REFERENCE = "reference";
     private static final String EMAIL = "email";
     private static final String SQL_ESCAPE_SEQ = "\\\\";
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Inject
     public ChargeDao(final Provider<EntityManager> entityManager) {
@@ -211,6 +214,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     }
 
     public int countChargesAwaitingCaptureRetry(Duration notAttemptedWithin) {
+        logger.error("just checking: ============================");
         String query = "SELECT count(c) FROM ChargeEntity c WHERE c.status=:captureApprovedRetryStatus " +
                 "AND EXISTS (" +
                 "  SELECT ce FROM ChargeEventEntity ce WHERE " +
@@ -219,13 +223,19 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 "    ce.updated >= :cutoffDate " +
                 ") ";
 
-        Number count = (Number) entityManager.get()
-                .createQuery(query)
-                .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY.getValue())
-                .setParameter("eventStatus", CAPTURE_APPROVED_RETRY)
-                .setParameter("cutoffDate", ZonedDateTime.now().minus(notAttemptedWithin))
-                .getSingleResult();
-        return count.intValue();
+        try {
+
+            Number count = (Number) entityManager.get()
+                    .createQuery(query)
+                    .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY.getValue())
+                    .setParameter("eventStatus", CAPTURE_APPROVED_RETRY)
+                    .setParameter("cutoffDate", ZonedDateTime.now().minus(notAttemptedWithin))
+                    .getSingleResult();
+            return count.intValue();
+        } catch (Throwable ex) {
+            logger.error("Exception while countChargesAwaitingCaptureRetry: ", ex);
+        }
+        return 0;
     }
 
     public int countCaptureRetriesForCharge(long chargeId) {

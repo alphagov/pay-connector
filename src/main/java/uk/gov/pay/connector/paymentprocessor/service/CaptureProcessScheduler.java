@@ -74,6 +74,8 @@ public class CaptureProcessScheduler implements Managed {
                 try {
                     xrayUtils.beginSegment();
                     cardCaptureProcess.runCapture(finalThreadNumber);
+                } catch (RuntimeException e) {
+                    logger.error("Unexpected RuntimeException running capture operations", e);
                 } catch (Exception e) {
                     logger.error("Unexpected error running capture operations", e);
                 } finally {
