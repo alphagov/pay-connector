@@ -26,7 +26,8 @@ import java.util.concurrent.ThreadLocalRandom;
 @Provider("connector")
 @PactBroker(scheme = "https", host = "pact-broker-test.cloudapps.digital", tags = {"${PACT_CONSUMER_TAG}", "test", "staging", "production"},
         authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"),
-        consumers = {"frontend"})
+        consumers = {"frontend"},
+        failIfNoPactsFound = false)
 public class WalletApiContractTest {
 
     @ClassRule
@@ -63,19 +64,15 @@ public class WalletApiContractTest {
         }
     }
 
-    private void setUpCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, ZonedDateTime createdDate, boolean delayedCapture) {
-        dbHelper.addCharge(chargeId, chargeExternalId, accountId, 100L, chargeStatus, "aReturnUrl",
-                chargeExternalId, ServicePaymentReference.of("aReference"), createdDate, "test@test.com", delayedCapture);
-    }
-
-    @State("a charge exists and is awaiting authorisation.")
+    @State("a charge exists with id testChargeId and is in state ENTERING_CARD_DETAILS.")
     public void aChangeExistsAwaitingAuthorisation(Map<String, String> params) {
-        Long gatewayAccountId = 666L;
+        long gatewayAccountId = 666L;
         setUpGatewayAccount(gatewayAccountId);
 
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = "testChargeId";
 
-        setUpCharge(gatewayAccountId.toString(), chargeId, chargeExternalId, ChargeStatus.ENTERING_CARD_DETAILS, ZonedDateTime.now(), false);
+        dbHelper.addCharge(chargeId, chargeExternalId, String.valueOf(gatewayAccountId), 100L, ChargeStatus.ENTERING_CARD_DETAILS, "aReturnUrl",
+                chargeExternalId, ServicePaymentReference.of("aReference"), ZonedDateTime.now(), "test@test.com", false);
     }
 }
