@@ -44,7 +44,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
-import java.util.function.BiFunction;
 
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -105,12 +104,11 @@ public class EpdqPaymentProviderTest {
 
         Client client = TestClientFactory.createJerseyClient();
         GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
-                EpdqPaymentProvider.includeSessionIdentifier(), mockMetricRegistry);
+                mockMetricRegistry);
 
         when(mockGatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class),
                 any(GatewayOperation.class),
                 any(Map.class),
-                any(BiFunction.class),
                 any())).thenReturn(gatewayClient);
 
         paymentProvider = new EpdqPaymentProvider(mockConnectorConfiguration, mockGatewayClientFactory, mockEnvironment);

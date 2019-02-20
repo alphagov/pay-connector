@@ -37,10 +37,8 @@ import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Invocation;
 import java.nio.charset.Charset;
 import java.util.Optional;
-import java.util.function.BiFunction;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
@@ -92,10 +90,10 @@ public class EpdqPaymentProvider implements PaymentProvider {
     public EpdqPaymentProvider(ConnectorConfiguration configuration,
                                GatewayClientFactory gatewayClientFactory,
                                Environment environment) {
-        authoriseClient = gatewayClientFactory.createGatewayClient(EPDQ, AUTHORISE, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
-        cancelClient = gatewayClientFactory.createGatewayClient(EPDQ, CANCEL, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
-        captureClient = gatewayClientFactory.createGatewayClient(EPDQ, CAPTURE, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
-        refundClient = gatewayClientFactory.createGatewayClient(EPDQ, REFUND, configuration.getGatewayConfigFor(EPDQ).getUrls(), includeSessionIdentifier(), environment.metrics());
+        authoriseClient = gatewayClientFactory.createGatewayClient(EPDQ, AUTHORISE, configuration.getGatewayConfigFor(EPDQ).getUrls(), environment.metrics());
+        cancelClient = gatewayClientFactory.createGatewayClient(EPDQ, CANCEL, configuration.getGatewayConfigFor(EPDQ).getUrls(), environment.metrics());
+        captureClient = gatewayClientFactory.createGatewayClient(EPDQ, CAPTURE, configuration.getGatewayConfigFor(EPDQ).getUrls(), environment.metrics());
+        refundClient = gatewayClientFactory.createGatewayClient(EPDQ, REFUND, configuration.getGatewayConfigFor(EPDQ).getUrls(), environment.metrics());
         this.frontendUrl = configuration.getLinks().getFrontendUrl();
         this.metricRegistry = environment.metrics();
         this.externalRefundAvailabilityCalculator = new EpdqExternalRefundAvailabilityCalculator();
@@ -298,9 +296,5 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
                 .build();
-    }
-
-    public static BiFunction<GatewayOrder, Invocation.Builder, Invocation.Builder> includeSessionIdentifier() {
-        return (order, builder) -> builder;
     }
 }

@@ -36,7 +36,6 @@ import javax.ws.rs.client.ClientBuilder;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
-import java.util.function.BiFunction;
 
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.not;
@@ -285,7 +284,6 @@ public class WorldpayPaymentProviderTest {
         GatewayClient gatewayClient = new GatewayClient(
                 ClientBuilder.newClient(),
                 getWorldpayConfig().getUrls(),
-                WorldpayPaymentProvider.includeSessionIdentifier(),
                 mockMetricRegistry
         );
 
@@ -298,7 +296,6 @@ public class WorldpayPaymentProviderTest {
                 any(PaymentGatewayName.class),
                 any(GatewayOperation.class),
                 any(Map.class),
-                any(BiFunction.class),
                 any(MetricRegistry.class))).thenReturn(gatewayClient);
 
         return new WorldpayPaymentProvider(configuration, gatewayClientFactory, mockEnvironment);
