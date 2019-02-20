@@ -33,7 +33,8 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 @RunWith(PactRunner.class)
 @Provider("connector")
 @PactBroker(scheme = "https", host = "pact-broker-test.cloudapps.digital", tags = {"${PACT_CONSUMER_TAG}", "test", "staging", "production"},
-        authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"))
+        authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"),
+        consumers = {"selfservice", "publicapi"})
 public class TransactionsApiContractTest {
 
     @ClassRule
