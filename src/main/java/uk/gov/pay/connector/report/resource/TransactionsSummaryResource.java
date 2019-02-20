@@ -90,8 +90,8 @@ public class TransactionsSummaryResource {
                 .summaryStatistics();
 
         TransactionsSummaryResponse response = new TransactionsSummaryResponse(
-                (int) successfulPaymentStats.getCount(), successfulPaymentStats.getSum(),
-                (int) successfulRefundStats.getCount(), successfulRefundStats.getSum(),
+                successfulPaymentStats.getCount(), successfulPaymentStats.getSum(),
+                successfulRefundStats.getCount(), successfulRefundStats.getSum(),
                 successfulPaymentStats.getSum() - successfulRefundStats.getSum());
 
         return Response.ok(response).build();

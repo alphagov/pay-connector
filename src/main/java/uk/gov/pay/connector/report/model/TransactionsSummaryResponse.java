@@ -12,17 +12,17 @@ public class TransactionsSummaryResponse {
     public static class SuccessfulPayments {
 
         @JsonProperty("count")
-        private int count;
+        private long count;
 
         @JsonProperty("total_in_pence")
         private long totalInPence;
 
-        SuccessfulPayments(int count, long totalInPence) {
+        SuccessfulPayments(long count, long totalInPence) {
             this.count = count;
             this.totalInPence = totalInPence;
         }
 
-        public int getCount() {
+        public long getCount() {
             return count;
         }
 
@@ -36,17 +36,17 @@ public class TransactionsSummaryResponse {
     public static class RefundedPayments {
 
         @JsonProperty("count")
-        private int count;
+        private long count;
 
         @JsonProperty("total_in_pence")
         private long totalInPence;
 
-        RefundedPayments(int count, long totalInPence) {
+        RefundedPayments(long count, long totalInPence) {
             this.count = count;
             this.totalInPence = totalInPence;
         }
 
-        public int getCount() {
+        public long getCount() {
             return count;
         }
 
@@ -81,8 +81,8 @@ public class TransactionsSummaryResponse {
     @JsonProperty("net_income")
     private NetIncome netIncome;
 
-    public TransactionsSummaryResponse(int successfulPaymentsCount, long successfulPaymentsTotalInPence,
-                                       int refundedPaymentsCount, long refundedPaymentsTotalInPence,
+    public TransactionsSummaryResponse(long successfulPaymentsCount, long successfulPaymentsTotalInPence,
+                                       long refundedPaymentsCount, long refundedPaymentsTotalInPence,
                                        long netIncomeTotalInPence) {
         this.successfulPayments = new SuccessfulPayments(successfulPaymentsCount, successfulPaymentsTotalInPence);
         this.refundedPayments = new RefundedPayments(refundedPaymentsCount, refundedPaymentsTotalInPence);

@@ -168,10 +168,10 @@ public class TransactionsSummaryResourceITest {
                 .getTransactionsSummary()
                 .statusCode(Response.Status.OK.getStatusCode())
                 .body("successful_payments.count", is(2))
-                .body("successful_payments.total_in_pence", is(30000))
+                .body("successful_payments.total_in_pence", is(300_00L))
                 .body("refunded_payments.count", is(2))
-                .body("refunded_payments.total_in_pence", is(1500))
-                .body("net_income.total_in_pence", is(28500));
+                .body("refunded_payments.total_in_pence", is(15_00L))
+                .body("net_income.total_in_pence", is(285_00L));
     }
 
 }

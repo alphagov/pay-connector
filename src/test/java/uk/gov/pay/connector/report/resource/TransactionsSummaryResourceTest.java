@@ -106,13 +106,13 @@ public class TransactionsSummaryResourceTest {
 
         TransactionsSummaryResponse response = (TransactionsSummaryResponse) result.getEntity();
 
-        assertThat(response.getSuccessfulPayments().getCount(), is(3));
+        assertThat(response.getSuccessfulPayments().getCount(), is(3L));
         assertThat(response.getSuccessfulPayments().getTotalInPence(),
                 is(GBP_25_00
                         + GBP_50_00
                         + GBP_100_00));
 
-        assertThat(response.getRefundedPayments().getCount(), is(2));
+        assertThat(response.getRefundedPayments().getCount(), is(2L));
         assertThat(response.getRefundedPayments().getTotalInPence(),
                 is(GBP_10_00
                         + GBP_2_50));
