@@ -35,6 +35,7 @@ public class SearchRefundsResource {
     private final SearchRefundsService searchRefundsService;
     private final GatewayAccountDao gatewayAccountDao;
     private final ConnectorConfiguration configuration;
+
     @Inject
     public SearchRefundsResource(ConnectorConfiguration configuration, SearchRefundsService searchRefundsService, GatewayAccountDao gatewayAccountDao) {
         this.searchRefundsService = searchRefundsService;
@@ -59,15 +60,11 @@ public class SearchRefundsResource {
                 .withDisplaySize(displaySize != null ? displaySize : configuration.getTransactionsPaginationConfig().getDisplayPageSize())
                 .withPage(pageNumber != null ? pageNumber : 1);
 
-        
         return gatewayAccountDao.findById(accountId)
                 .map(gatewayAccount -> searchRefundsService.getAllRefunds(uriInfo, refundSearchParams))
                 .orElseGet(() -> notFoundResponse(format("Gateway account with id %s does not exist", accountId)));
-
-
     }
 
-    //todo do not do this
     private ZonedDateTime parseDate(String date) {
         ZonedDateTime parse = null;
         if (isNotBlank(date)) {
