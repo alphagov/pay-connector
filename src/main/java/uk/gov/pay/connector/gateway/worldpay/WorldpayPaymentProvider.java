@@ -28,6 +28,7 @@ import uk.gov.pay.connector.gateway.worldpay.applepay.WorldpayWalletAuthorisatio
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.util.List;
@@ -41,10 +42,12 @@ import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CANCEL;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CAPTURE;
+import static uk.gov.pay.connector.gateway.GatewayOperation.QUERY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
 public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGatewayResponseGenerator {
@@ -54,6 +57,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private final GatewayClient authoriseClient;
     private final GatewayClient cancelClient;
     private final GatewayClient captureClient;
+    private final GatewayClient inquiryClient;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final WorldpayCaptureHandler worldpayCaptureHandler;
     private final WorldpayRefundHandler worldpayRefundHandler;
@@ -69,6 +73,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 .collect(Collectors.toMap(Map.Entry::getKey, v -> URI.create(v.getValue())));
         authoriseClient = gatewayClientFactory.createGatewayClient(WORLDPAY, AUTHORISE, environment.metrics());
         cancelClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CANCEL, environment.metrics());
+        inquiryClient = gatewayClientFactory.createGatewayClient(WORLDPAY, QUERY, environment.metrics());
         captureClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CAPTURE, environment.metrics());
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         worldpayCaptureHandler = new WorldpayCaptureHandler(captureClient, gatewayUrlMap);
@@ -87,10 +92,27 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
-    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) {
-        throw new UnsupportedOperationException("Querying payment status not currently supported by Worldpay");
+    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge)  throws GatewayErrorException {
+        GatewayClient.Response response = inquiryClient.postRequestFor(gatewayUrlMap.get(charge.getGatewayAccount().getType()), charge.getGatewayAccount(), buildQuery(charge));
+        GatewayResponse<WorldpayQueryResponse> worldpayGatewayResponse = getWorldpayGatewayResponse(response, WorldpayQueryResponse.class);
+
+        return worldpayGatewayResponse.getBaseResponse()
+                .map(ChargeQueryResponse::from)
+                .orElseThrow(() ->
+                        new WebApplicationException(String.format(
+                                "Unable to query charge %s - an error occurred: %s",
+                                charge.getExternalId(),
+                                worldpayGatewayResponse
+                        )));
     }
-    
+
+    private GatewayOrder buildQuery(ChargeEntity charge) {
+        return aWorldpayInquiryRequestBuilder()
+                .withTransactionId(charge.getGatewayTransactionId())
+                .withMerchantCode(charge.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .build();
+    }
+
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayErrorException {
         GatewayOrder gatewayOrder = buildAuthoriseOrder(request);
