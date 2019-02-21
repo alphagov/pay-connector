@@ -150,6 +150,16 @@ public class TransactionsApiContractTest {
         setUpCharges(2, Long.toString(accountId), ZonedDateTime.of(2018, 5, 14, 1, 1, 1, 1, ZoneId.systemDefault()));
     }
 
+    @State("a stripe gateway account with external id 42 exists in the database")
+    public void stripeAccountExists() {
+        DatabaseFixtures
+                .withDatabaseTestHelper(dbHelper)
+                .aTestAccount()
+                .withAccountId(42L)
+                .withPaymentProvider("stripe")
+                .insert();
+    }
+
     @State({"default", "Card types exist in the database"})
     public void defaultCase() {
     }
