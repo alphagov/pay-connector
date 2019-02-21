@@ -4,6 +4,7 @@ public enum GatewayOperation {
     AUTHORISE("auth"),
     CAPTURE("capture"),
     REFUND("refund"),
+    QUERY("query"),
     CANCEL("cancel");
 
     private final String description;

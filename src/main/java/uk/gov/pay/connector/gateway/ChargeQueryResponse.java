@@ -3,6 +3,8 @@ package uk.gov.pay.connector.gateway;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.epdq.EpdqStatusMapper;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqQueryResponse;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderInquiryResponse;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayStatus;
 
 import java.util.Optional;
 
@@ -15,12 +17,27 @@ public class ChargeQueryResponse {
         this.rawGatewayResponse = rawGatewayResponse;
     }
 
+    public ChargeQueryResponse(WorldpayStatus worldpayStatus, String rawGatewayResponse) {
+        if (worldpayStatus != null) {
+            this.mappedStatus = worldpayStatus.getPayStatus();
+        }
+        
+        this.rawGatewayResponse = rawGatewayResponse;
+    }
+
     public Optional<ChargeStatus> getMappedStatus() {
         return Optional.ofNullable(mappedStatus);
     }
 
     public String getRawGatewayResponse() {
         return rawGatewayResponse;
+    }
+
+    public static ChargeQueryResponse from(WorldpayOrderInquiryResponse worldpayInquiryStatusResponse) {
+        return new ChargeQueryResponse(
+                WorldpayStatus.fromString(worldpayInquiryStatusResponse.getLastEvent()).orElse(null),
+                worldpayInquiryStatusResponse.toString()
+        );
     }
 
     public static ChargeQueryResponse from(EpdqQueryResponse epdqQueryResponse) {

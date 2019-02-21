@@ -13,6 +13,7 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -24,15 +25,19 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse.CancelStat
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayStatus;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static java.util.Collections.singletonList;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -63,7 +68,10 @@ public class ChargeExpiryServiceTest {
     private PaymentProviders mockPaymentProviders;
 
     @Mock
-    private PaymentProvider mockPaymentProvider;
+    private PaymentProvider mockPaymentProvider; 
+    
+    @Mock
+    private QueryService mockQueryService;
 
     @Mock
     private WorldpayCancelResponse mockWorldpayCancelResponse;
@@ -99,7 +107,7 @@ public class ChargeExpiryServiceTest {
     @Before
     public void setup() {
         when(mockedConfig.getChargeSweepConfig()).thenReturn(mockedChargeSweepConfig);
-        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, mockedConfig);
+        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, mockQueryService, mockedConfig);
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
         gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayCancelResponse).build();
@@ -230,5 +238,31 @@ public class ChargeExpiryServiceTest {
 
         assertThat(chargeEntityAwaitingCapture.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
         assertThat(chargeEntityAuthorisationSuccess.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
+    }
+
+    @Test
+    public void shouCancelChargeWithGatewayWhenChargeInPreAuthorisedStateAndExistsWithGateway() throws Exception {
+        ChargeEntity preAuthorisationCharge = ChargeEntityFixture.aValidChargeEntity()
+                .withAmount(200L)
+                .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
+                .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+
+
+        when(mockQueryService.getChargeGatewayStatus(preAuthorisationCharge)).thenReturn(new ChargeQueryResponse(ChargeStatus.AUTHORISATION_SUCCESS, "Raw response"));
+        when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
+
+        when(mockChargeDao.findByExternalId(preAuthorisationCharge.getExternalId())).thenReturn(Optional.of(preAuthorisationCharge));
+        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
+
+        doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class));
+        when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS))).thenReturn(singletonList(preAuthorisationCharge));
+
+        Map<String, Integer> sweepResult = chargeExpiryService.sweepAndExpireCharges();
+
+        assertThat(sweepResult.get("expiry-success"), is(1));
+        assertNull(sweepResult.get("expiry-failure"));
+        assertThat(preAuthorisationCharge.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
     }
 }
