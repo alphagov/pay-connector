@@ -588,6 +588,83 @@ ref2,500.00,IN PROGRESS,DFG98-FG8J-R78HJ-8JUG9,1,05/02/2016 14:17:00
 
 -----------------------------------------------------------------------------------------------------------
 
+## GET /v1/api/accounts/{accountId}/refunds
+
+Returns all the refunds.
+
+### Request example
+
+```
+GET /v1/api/accounts/1/refunds
+Content-Type: application/json
+```
+
+### Request query param description
+
+| Field                    | Description                         |
+| ------------------------ | ----------------------------------------- |
+| `from_date`              | The initial date to search refunds        |
+| `to_date`                | The end date we should search refunds     |
+
+### Refunds response
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+{
+    "results": [
+        {
+            "refund_id": "7vnpc56fed7b63n3soqm15e3cr",
+            "created_date": "2019-02-20T14:26:21.429Z",
+            "payment_id": "bnoljgur1f9kcbpltua9fqn0sf",
+            "amount": 2000,
+            "_links": {
+                "self": {
+                    "href": "http://publicapi:9100/v1/payments/bnoljgur1f9kcbpltua9fqn0sf/refunds/7vnpc56fed7b63n3soqm15e3cr",
+                    "method": "GET"
+                },
+                "payment": {
+                    "href": "http://publicapi:9100/v1/payments/bnoljgur1f9kcbpltua9fqn0sf",
+                    "method": "GET"
+                }
+            },
+            "status": "success"
+        },
+        {
+            "refund_id": "9b196g0oqu2k50q4ofo6tg5s49",
+            "created_date": "2019-02-20T14:26:01.227Z",
+            "payment_id": "bnoljgur1f9kcbpltua9fqn0sf",
+            "amount": 5000,
+            "_links": {
+                "self": {
+                    "href": "http://publicapi:9100/v1/payments/bnoljgur1f9kcbpltua9fqn0sf/refunds/9b196g0oqu2k50q4ofo6tg5s49",
+                    "method": "GET"
+                },
+                "payment": {
+                    "href": "http://publicapi:9100/v1/payments/bnoljgur1f9kcbpltua9fqn0sf",
+                    "method": "GET"
+                }
+            },
+            "status": "success"
+        }
+    ]
+}
+```
+
+#### Response field description
+
+| Field                  | Description                                 |
+| ---------------------- | --------------------------------------------|
+| `refund_id`            | The ID of the refund                        |
+| `payment_id`           | The ID of the payment this refund relates to|
+| `created_date`         | Date when the refund was created            |
+| `amount`               | The amount (in minor units) of the refund   |
+| `_links.self`          | Link to the refund                          |
+| `_links.payment`       | Link to the payment this refund relates to  |
+| `status`               | The refund status                           |
+
+------------------------------------------------------------------------------------------------
+
 ## GET /v1/api/accounts/{accountId}/charges/{chargeId}/events
 
 This endpoint retrieves the transaction history for a given `chargeId` associated to account `accountId`

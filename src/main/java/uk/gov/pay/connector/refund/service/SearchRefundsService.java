@@ -19,8 +19,6 @@ public class SearchRefundsService {
 
     public Response getAllRefunds(UriInfo uriInfo, SearchParams searchParams) {
         refundSearchStrategy = new RefundSearchStrategy(refundDao);
-        
-        //todo defaults?
         return refundSearchStrategy.search(searchParams, uriInfo);
     }
 }
