@@ -3,7 +3,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.GatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
-import uk.gov.pay.connector.gateway.epdq.ChargeQueryResponse;
+import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 
 import javax.inject.Inject;
 

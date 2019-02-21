@@ -62,7 +62,9 @@ public class DiscrepancyService {
     private boolean canBeCancelled(GatewayStatusComparison gatewayStatusComparison) {
         ExternalChargeState payExternalChargeStatus = gatewayStatusComparison.getPayStatus().toExternal();
         return gatewayStatusComparison.hasExternalStatusMismatch() &&
-                !gatewayStatusComparison.getGatewayStatus().toExternal().isFinished() &&
+                gatewayStatusComparison.getGatewayStatus()
+                        .map(chargeStatus -> !chargeStatus.toExternal().isFinished())
+                        .orElse(false) &&
                 payExternalChargeStatus.isFinished() &&
                 !payExternalChargeStatus.equals(ExternalChargeState.EXTERNAL_SUCCESS) &&
                 chargeAgeInDaysIsGreaterThan(gatewayStatusComparison.getCharge(), 7);

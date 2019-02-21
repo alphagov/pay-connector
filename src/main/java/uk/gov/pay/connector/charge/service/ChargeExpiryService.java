@@ -20,7 +20,6 @@ import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.GatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
-import uk.gov.pay.connector.gateway.epdq.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -110,11 +109,11 @@ public class ChargeExpiryService {
 
     private boolean isExpirableWithGateway(ChargeEntity charge) {
         try {
-            ChargeQueryResponse queryResponse = providers.byName(charge.getPaymentGatewayName())
-                    .queryPaymentStatus(charge);
-            
-            return !queryResponse.getMappedStatus().toExternal().isFinished();
-            
+            return providers.byName(charge.getPaymentGatewayName())
+                    .queryPaymentStatus(charge)
+                    .getMappedStatus()
+                    .map(chargeStatus -> !chargeStatus.toExternal().isFinished())
+                    .orElse(false);
         } catch (WebApplicationException | UnsupportedOperationException | GatewayErrorException | IllegalArgumentException e) {
             logger.info("Unable to retrieve status for charge {}: {}", charge.getExternalId(), e.getMessage());
             return false;

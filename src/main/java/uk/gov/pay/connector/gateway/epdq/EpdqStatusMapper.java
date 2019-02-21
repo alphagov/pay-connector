@@ -37,7 +37,7 @@ public class EpdqStatusMapper {
         if (epdqStatusMap.containsKey(epdqStatus)) {
             return epdqStatusMap.get(epdqStatus);
         }
-
-        throw new IllegalArgumentException(String.format("Unknown ePDQ status %s", epdqStatus));
+        
+        return null;
     }
 }
