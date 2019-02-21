@@ -65,7 +65,7 @@ public class WalletApiContractTest {
         }
     }
 
-    @State("a charge exists with id testChargeId and is in state ENTERING_CARD_DETAILS.")
+    @State("a sandbox account exists with a charge with id testChargeId that is in state ENTERING_CARD_DETAILS.")
     public void aChangeExistsAwaitingAuthorisation(Map<String, String> params) {
         long gatewayAccountId = 666L;
         setUpGatewayAccount(gatewayAccountId);
