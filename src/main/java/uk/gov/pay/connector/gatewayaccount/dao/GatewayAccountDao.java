@@ -34,28 +34,27 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
                 .getResultList().stream().findFirst();
     }
 
-    public List<GatewayAccountResourceDTO> list(List<Long> accountIds) {
-        String query = "SELECT NEW uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO"
-                       + " (gae.id, gae.gatewayName, gae.type, gae.description, gae.serviceName, gae.analyticsId, gae.corporateCreditCardSurchargeAmount, gae.corporateDebitCardSurchargeAmount, gae.allowWebPayments, gae.allowApplePay, gae.allowGooglePay, gae.corporatePrepaidCreditCardSurchargeAmount, gae.corporatePrepaidDebitCardSurchargeAmount)"
+    public List<GatewayAccountEntity> list(List<Long> accountIds) {
+        String query = "SELECT gae"
                        + " FROM GatewayAccountEntity gae"
                        + " WHERE gae.id IN :accountIds"
                        + " ORDER BY gae.id";
 
         return entityManager
                 .get()
-                .createQuery(query, GatewayAccountResourceDTO.class)
+                .createQuery(query, GatewayAccountEntity.class)
                 .setParameter("accountIds", accountIds)
                 .getResultList();
     }
 
-    public List<GatewayAccountResourceDTO> listAll() {
-        String query = "SELECT NEW uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO" +
-                "(gae.id, gae.gatewayName, gae.type, gae.description, gae.serviceName, gae.analyticsId, gae.corporateCreditCardSurchargeAmount, gae.corporateDebitCardSurchargeAmount, gae.allowWebPayments, gae.allowApplePay, gae.allowGooglePay, gae.corporatePrepaidCreditCardSurchargeAmount, gae.corporatePrepaidDebitCardSurchargeAmount) " +
-                "FROM GatewayAccountEntity gae order by gae.id";
+    public List<GatewayAccountEntity> listAll() {
+        String query = "SELECT gae " +
+                "FROM GatewayAccountEntity gae " +
+                "ORDER BY gae.id";
 
         return entityManager
                 .get()
-                .createQuery(query, GatewayAccountResourceDTO.class)
+                .createQuery(query, GatewayAccountEntity.class)
                 .getResultList();
     }
 }

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.CREDENTIALS_GATEWAY_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_APPLE_PAY;
@@ -51,11 +52,15 @@ public class GatewayAccountService {
     }
 
     public List<GatewayAccountResourceDTO> getAllGatewayAccounts() {
-        return gatewayAccountDao.listAll();
+        return gatewayAccountDao.listAll().stream()
+                .map(GatewayAccountResourceDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 
     public List<GatewayAccountResourceDTO> getGatewayAccounts(List<Long> gatewayAccountIds) {
-        return gatewayAccountDao.list(gatewayAccountIds);
+        return gatewayAccountDao.list(gatewayAccountIds).stream()
+                .map(GatewayAccountResourceDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @Transactional
