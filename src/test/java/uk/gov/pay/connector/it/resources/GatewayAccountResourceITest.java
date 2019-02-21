@@ -162,7 +162,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("email_notifications.REFUND_ISSUED.enabled", is(true))
                 .body("service_name", is("service_name"))
                 .body("corporate_credit_card_surcharge_amount", is(0))
-                .body("corporate_debit_card_surcharge_amount", is(0));
+                .body("allow_google_pay", is(false))
+                .body("allow_apple_pay", is(false));
     }
 
     @Test
