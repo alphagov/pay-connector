@@ -357,6 +357,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         account.put("corporate_prepaid_credit_card_surcharge_amount", getCorporatePrepaidCreditCardSurchargeAmount());
         account.put("corporate_prepaid_debit_card_surcharge_amount", getCorporatePrepaidDebitCardSurchargeAmount());
         account.put("allow_web_payments", String.valueOf(allowWebPayments));
+        account.put("allow_apple_pay", isAllowApplePay());
+        account.put("allow_google_pay", isAllowGooglePay());
         return account;
     }
 
