@@ -81,8 +81,8 @@ public class GatewayResponse<T extends BaseResponse> {
         private GatewayResponseBuilder() {
         }
 
-        public static GatewayResponseBuilder responseBuilder() {
-            return new GatewayResponseBuilder();
+        public static <T extends BaseResponse> GatewayResponseBuilder<T> responseBuilder() {
+            return new GatewayResponseBuilder<>();
         }
 
         public GatewayResponseBuilder withResponse(T response) {

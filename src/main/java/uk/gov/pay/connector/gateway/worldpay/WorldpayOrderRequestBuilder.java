@@ -98,13 +98,13 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     public static final TemplateBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayCaptureOrderTemplate.xml");
     public static final TemplateBuilder CANCEL_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayCancelOrderTemplate.xml");
     public static final TemplateBuilder REFUND_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayRefundOrderTemplate.xml");
+    public static final TemplateBuilder INQUIRY_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayInquiryOrderTemplate.xml");
 
     private final WorldpayTemplateData worldpayTemplateData;
 
     public static WorldpayOrderRequestBuilder aWorldpayAuthoriseOrderRequestBuilder() {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE);
     }
-    
     public static WorldpayOrderRequestBuilder aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType walletType) {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), walletType.getWorldPayTemplate(), walletType.getOrderRequestType());
     }
@@ -123,6 +123,10 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public static WorldpayOrderRequestBuilder aWorldpayRefundOrderRequestBuilder() {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), REFUND_ORDER_TEMPLATE_BUILDER, OrderRequestType.REFUND);
+    }
+
+    public static WorldpayOrderRequestBuilder aWorldpayInquiryRequestBuilder() {
+        return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), INQUIRY_TEMPLATE_BUILDER, OrderRequestType.QUERY);
     }
 
     private WorldpayOrderRequestBuilder(WorldpayTemplateData worldpayTemplateData, PayloadBuilder payloadBuilder, OrderRequestType orderRequestType) {

@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.base;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
@@ -12,6 +13,7 @@ import org.hamcrest.TypeSafeMatcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
@@ -77,8 +79,8 @@ public class ChargingITestBase {
 
     protected DatabaseTestHelper databaseTestHelper;
 
-    @ClassRule
-    public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
+    @Rule
+    public WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
 
     public ChargingITestBase(String paymentProvider) {
         this.paymentProvider = paymentProvider;
@@ -101,6 +103,7 @@ public class ChargingITestBase {
 
     @After
     public void tearDown() {
+        WireMock.reset();
         databaseTestHelper.truncateAllData();
     }
 

@@ -91,14 +91,20 @@ public class WorldpayMockClient {
                         )
         );
     }
-    
+
+    public void mockAuthorisationQuerySuccess(String gatewayTransactionId) {
+        String authSuccessResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
+        String bodyMatchXpath = "//orderInquiry[@orderCode]";
+        bodyMatchingPaymentServiceResponse(bodyMatchXpath, authSuccessResponse);    
+    }
+
     public void mockServerFault() {
         stubFor(
                 post(urlPathEqualTo("/jsp/merchant/xml/paymentService.jsp"))
                         .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
         );
     }
-    
+
     private void paymentServiceResponse(String responseBody) {
         //FIXME - This mocking approach is very poor. Needs to be revisited. Story PP-900 created.
         stubFor(
