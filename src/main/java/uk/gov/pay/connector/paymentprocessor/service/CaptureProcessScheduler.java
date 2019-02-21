@@ -62,8 +62,12 @@ public class CaptureProcessScheduler implements Managed {
         logger.info("Scheduling CardCaptureProcess to run every {} seconds (will start in {} seconds)", interval, initialDelayInSeconds);
 
         scheduledExecutorService.scheduleAtFixedRate(() -> {
-            cardCaptureProcess.loadCaptureQueue();
-            scheduleCaptureThreads();
+            try {
+                cardCaptureProcess.loadCaptureQueue();
+                scheduleCaptureThreads();
+            } catch (Exception ex) {
+                logger.error("An exception was caught while running Capture Process: " + ex.getMessage());
+            }
         }, initialDelayInSeconds, interval, TimeUnit.SECONDS);
     }
 
