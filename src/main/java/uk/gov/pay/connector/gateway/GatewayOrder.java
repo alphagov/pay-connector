@@ -9,15 +9,11 @@ public class GatewayOrder {
 
     private OrderRequestType orderRequestType;
     private String payload;
-    // Wordldpay specific property, not needed for everyone
-    private String providerSessionId;
     private MediaType mediaType;
 
-    public GatewayOrder(OrderRequestType orderRequestType, String payload, String providerSessionId,
-        MediaType mediaType) {
+    public GatewayOrder(OrderRequestType orderRequestType, String payload, MediaType mediaType) {
         this.orderRequestType = orderRequestType;
         this.payload = payload;
-        this.providerSessionId = providerSessionId;
         this.mediaType = mediaType;
     }
 
@@ -27,10 +23,6 @@ public class GatewayOrder {
 
     public String getPayload() {
         return payload;
-    }
-
-    public Optional<String> getProviderSessionId() {
-        return Optional.ofNullable(providerSessionId);
     }
 
     public MediaType getMediaType() {

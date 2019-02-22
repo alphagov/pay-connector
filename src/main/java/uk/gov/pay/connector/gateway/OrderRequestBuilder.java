@@ -81,7 +81,6 @@ public abstract class OrderRequestBuilder {
 
     private PayloadBuilder payloadBuilder;
     private OrderRequestType orderRequestType;
-    private String providerSessionId;
 
     public OrderRequestBuilder(TemplateData templateData, PayloadBuilder payloadBuilder, OrderRequestType orderRequestType) {
         this.templateData = templateData;
@@ -122,14 +121,9 @@ public abstract class OrderRequestBuilder {
         return this;
     }
 
-    public OrderRequestBuilder withProviderSessionId(String providerSessionId) {
-        this.providerSessionId = providerSessionId;
-        return this;
-    }
-
     public GatewayOrder build() {
         return new GatewayOrder(
                 orderRequestType,
-                payloadBuilder.buildWith(templateData), providerSessionId, getMediaType());
+                payloadBuilder.buildWith(templateData), getMediaType());
     }
 }
