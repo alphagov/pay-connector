@@ -17,6 +17,7 @@ import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -54,22 +55,6 @@ public class TransactionsApiContractTest {
     @Before
     public void refreshDatabase() {
         dbHelper.truncateAllData();
-    }
-
-    private void setUpGatewayAccount(long accountId) {
-        if (dbHelper.getAccountCredentials(accountId) == null) {
-            DatabaseFixtures
-                    .withDatabaseTestHelper(dbHelper)
-                    .aTestAccount()
-                    .withAccountId(accountId)
-                    .withPaymentProvider("sandbox")
-                    .withDescription("aDescription")
-                    .withAnalyticsId("8b02c7e542e74423aa9e6d0f0628fd58")
-                    .withServiceName("a cool service")
-                    .insert();
-        } else {
-            dbHelper.deleteAllChargesOnAccount(accountId);
-        }
     }
 
     private void setUpCharges(int numberOfCharges, String accountId, ZonedDateTime createdDate) {
@@ -110,7 +95,7 @@ public class TransactionsApiContractTest {
         String gatewayAccountId = params.get("gateway_account_id");
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
-        setUpGatewayAccount(Long.valueOf(gatewayAccountId));
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, ZonedDateTime.now(), false);
         cancelCharge(gatewayAccountId, chargeExternalId);
     }
@@ -119,34 +104,34 @@ public class TransactionsApiContractTest {
     @State("User 666 exists in the database")
     public void account666Exists() {
         long accountId = 666L;
-        setUpGatewayAccount(accountId);
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
     }
 
     @State("User 666 exists in the database and has 5 transactions available")
     public void account666WithTransactions() {
         long accountId = 666L;
-        setUpGatewayAccount(accountId);
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
         setUpCharges(5, Long.toString(accountId), ZonedDateTime.now());
     }
 
     @State("User 666 exists in the database and has 2 available transactions occurring after 2018-05-03T00:00:00.000Z")
     public void accountWithTransactionsAfterMay2018() {
         long accountId = 666L;
-        setUpGatewayAccount(accountId);
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
         setUpCharges(2, Long.toString(accountId), ZonedDateTime.now());
     }
 
     @State("User 666 exists in the database and has 2 available transactions occurring before 2018-05-03T00:00:01.000Z")
     public void accountWithTransactionsBeforeMay2018() {
         long accountId = 666L;
-        setUpGatewayAccount(accountId);
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
         setUpCharges(2, Long.toString(accountId), ZonedDateTime.of(2018, 1, 1, 1, 1, 1, 1, ZoneId.systemDefault()));
     }
 
     @State("User 666 exists in the database and has 2 available transactions between 2018-05-14T00:00:00 and 2018-05-15T00:00:00")
     public void accountWithTransactionsOnMay_5_2018() {
         long accountId = 666L;
-        setUpGatewayAccount(accountId);
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
         setUpCharges(2, Long.toString(accountId), ZonedDateTime.of(2018, 5, 14, 1, 1, 1, 1, ZoneId.systemDefault()));
     }
 
@@ -174,7 +159,7 @@ public class TransactionsApiContractTest {
         String gatewayAccountId = params.get("gateway_account_id");
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
-        setUpGatewayAccount(Long.valueOf(gatewayAccountId));
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, ZonedDateTime.now(), true);
     }
 
@@ -183,7 +168,7 @@ public class TransactionsApiContractTest {
         String gatewayAccountId = params.get("gateway_account_id");
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
-        setUpGatewayAccount(Long.valueOf(gatewayAccountId));
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.AWAITING_CAPTURE_REQUEST, ZonedDateTime.now(), true);
     }
 
@@ -195,7 +180,7 @@ public class TransactionsApiContractTest {
         String cardHolderName = params.get("cardholder_name");
         String lastDigitsCardNumber = params.get("last_digits_card_number");
         String firstDigitsCardNumber = params.get("first_digits_card_number");
-        setUpGatewayAccount(Long.valueOf(gatewayAccountId));
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, ZonedDateTime.parse("2018-09-22T10:13:16.067Z"), true, cardHolderName, lastDigitsCardNumber, firstDigitsCardNumber);
     }
 
@@ -205,21 +190,21 @@ public class TransactionsApiContractTest {
         ZonedDateTime createdDate = Optional.ofNullable(params.get("created_date"))
                 .map(ZonedDateTime::parse)
                 .orElse(ZonedDateTime.now());
-        setUpGatewayAccount(accountId);
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
         setUpChargeAndRefunds(2, params.get("account_id"), createdDate);
     }
 
     @State("Account exists")
     public void accountExists(Map<String, String> params) {
         Long accountId = Long.valueOf(params.get("account_id"));
-        setUpGatewayAccount(accountId);
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
         setUpCharges(1, params.get("account_id"), ZonedDateTime.now().minusHours(12));
     }
 
     @State("a charge with corporate surcharge exists")
     public void createChargeWithCorporateCardSurcharge(Map<String, String> params) {
         long accountId = Long.parseLong(params.get("account_id"));
-        setUpGatewayAccount(accountId);
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
         String chargeExternalId = params.get("charge_id");
         dbHelper.addChargeWithCorporateCardSurcharge(1234L, chargeExternalId, Long.toString(accountId), 2000L,
                 ChargeStatus.CAPTURED, "https://someurl.example", chargeExternalId, ServicePaymentReference.of("My reference"),

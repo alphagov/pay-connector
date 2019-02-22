@@ -15,7 +15,7 @@ import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -49,26 +49,10 @@ public class WalletApiContractTest {
         dbHelper.truncateAllData();
     }
 
-    private void setUpGatewayAccount(long accountId) {
-        if (dbHelper.getAccountCredentials(accountId) == null) {
-            DatabaseFixtures
-                    .withDatabaseTestHelper(dbHelper)
-                    .aTestAccount()
-                    .withAccountId(accountId)
-                    .withPaymentProvider("sandbox")
-                    .withDescription("aDescription")
-                    .withAnalyticsId("8b02c7e542e74423aa9e6d0f0628fd58")
-                    .withServiceName("a cool service")
-                    .insert();
-        } else {
-            dbHelper.deleteAllChargesOnAccount(accountId);
-        }
-    }
-
     @State("a sandbox account exists with a charge with id testChargeId that is in state ENTERING_CARD_DETAILS.")
     public void aChangeExistsAwaitingAuthorisation(Map<String, String> params) {
         long gatewayAccountId = 666L;
-        setUpGatewayAccount(gatewayAccountId);
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, gatewayAccountId);
 
         long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = "testChargeId";
