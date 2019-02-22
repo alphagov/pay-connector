@@ -8,7 +8,6 @@ import org.junit.Test;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 
 import java.util.Arrays;
@@ -302,10 +301,10 @@ public class GatewayAccountDaoITest extends DaoITestBase {
                 TEST,
                 "description-1",
                 "analytics-id-1",
-                0,
-                0,
-                0,
-                0);
+                100,
+                200,
+                300,
+                400);
         final long gatewayAccountId_2 = nextLong();
         databaseTestHelper.addGatewayAccount(String.valueOf(gatewayAccountId_2),
                 "provider-2",
@@ -331,41 +330,42 @@ public class GatewayAccountDaoITest extends DaoITestBase {
                 0,
                 0);
 
-        List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountDao.listAll();
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.listAll();
 
         assertEquals(3, gatewayAccounts.size());
 
-        List<GatewayAccountResourceDTO> gatewayAccountWithId_1 = gatewayAccounts.stream().filter(ga -> ga.getAccountId() == gatewayAccountId_1).collect(Collectors.toList());
+        List<GatewayAccountEntity> gatewayAccountWithId_1 = gatewayAccounts.stream().filter(ga -> ga.getId() == gatewayAccountId_1).collect(Collectors.toList());
         assertEquals(gatewayAccountWithId_1.size(), 1);
-        GatewayAccountResourceDTO gatewayAccountResourceDTO = gatewayAccountWithId_1.get(0);
-        assertThat(gatewayAccountResourceDTO.getAccountId(), is(gatewayAccountId_1));
-        assertEquals("provider-1", gatewayAccountResourceDTO.getPaymentProvider());
-        assertEquals("description-1", gatewayAccountResourceDTO.getDescription());
-        assertEquals("service-name-1", gatewayAccountResourceDTO.getServiceName());
-        assertEquals(TEST.toString(), gatewayAccountResourceDTO.getType());
-        assertEquals("analytics-id-1", gatewayAccountResourceDTO.getAnalyticsId());
-        assertEquals(0L, gatewayAccountResourceDTO.getCorporateCreditCardSurchargeAmount());
-        assertEquals(0L, gatewayAccountResourceDTO.getCorporateDebitCardSurchargeAmount());
-        assertEquals(0L, gatewayAccountResourceDTO.getCorporatePrepaidCreditCardSurchargeAmount());
-        assertEquals(0L, gatewayAccountResourceDTO.getCorporatePrepaidDebitCardSurchargeAmount());
+        GatewayAccountEntity gatewayAccountEntity = gatewayAccountWithId_1.get(0);
+        assertThat(gatewayAccountEntity.getId(), is(gatewayAccountId_1));
+        assertEquals("provider-1", gatewayAccountEntity.getGatewayName());
+        assertEquals("description-1", gatewayAccountEntity.getDescription());
+        assertEquals("service-name-1", gatewayAccountEntity.getServiceName());
+        assertEquals(TEST.toString(), gatewayAccountEntity.getType());
+        assertEquals("analytics-id-1", gatewayAccountEntity.getAnalyticsId());
+        assertEquals(100L, gatewayAccountEntity.getCorporateNonPrepaidCreditCardSurchargeAmount());
+        assertEquals(200L, gatewayAccountEntity.getCorporateNonPrepaidDebitCardSurchargeAmount());
+        assertEquals(300L, gatewayAccountEntity.getCorporatePrepaidCreditCardSurchargeAmount());
+        assertEquals(400L, gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount());
 
-        List<GatewayAccountResourceDTO> gatewayAccountWithId_2 = gatewayAccounts.stream().filter(ga -> ga.getAccountId() == gatewayAccountId_2).collect(Collectors.toList());
+        List<GatewayAccountEntity> gatewayAccountWithId_2 = gatewayAccounts.stream().filter(ga -> ga.getId() == gatewayAccountId_2).collect(Collectors.toList());
         assertEquals(gatewayAccountWithId_2.size(), 1);
-        gatewayAccountResourceDTO = gatewayAccountWithId_2.get(0);
-        assertEquals("provider-2", gatewayAccountResourceDTO.getPaymentProvider());
-        assertEquals(250L, gatewayAccountResourceDTO.getCorporateCreditCardSurchargeAmount());
-        assertEquals(50L, gatewayAccountResourceDTO.getCorporateDebitCardSurchargeAmount());
-        assertThat(gatewayAccountResourceDTO.getAccountId(), is(gatewayAccountId_2));
+        gatewayAccountEntity = gatewayAccountWithId_2.get(0);
+        assertEquals("provider-2", gatewayAccountEntity.getGatewayName());
+        assertEquals(250L, gatewayAccountEntity.getCorporateNonPrepaidCreditCardSurchargeAmount());
+        assertEquals(50L, gatewayAccountEntity.getCorporateNonPrepaidDebitCardSurchargeAmount());
+        assertThat(gatewayAccountEntity.getId(), is(gatewayAccountId_2));
 
-        List<GatewayAccountResourceDTO> gatewayAccountWithId_3 = gatewayAccounts.stream().filter(ga -> ga.getAccountId() == gatewayAccountId_3).collect(Collectors.toList());
+        List<GatewayAccountEntity> gatewayAccountWithId_3 = gatewayAccounts.stream().filter(ga -> ga.getId() == gatewayAccountId_3).collect(Collectors.toList());
         assertEquals(gatewayAccountWithId_3.size(), 1);
-        gatewayAccountResourceDTO = gatewayAccountWithId_3.get(0);
-        assertEquals("provider-3", gatewayAccountResourceDTO.getPaymentProvider());
-        assertEquals(0L, gatewayAccountResourceDTO.getCorporatePrepaidCreditCardSurchargeAmount());
-        assertEquals(0L, gatewayAccountResourceDTO.getCorporatePrepaidDebitCardSurchargeAmount());
-        assertThat(gatewayAccountResourceDTO.getAccountId(), is(gatewayAccountId_3));
+        gatewayAccountEntity = gatewayAccountWithId_3.get(0);
+        assertEquals("provider-3", gatewayAccountEntity.getGatewayName());
+        assertEquals(0L, gatewayAccountEntity.getCorporatePrepaidCreditCardSurchargeAmount());
+        assertEquals(0L, gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount());
+        assertThat(gatewayAccountEntity.getId(), is(gatewayAccountId_3));
     }
-
+    
+    
     @Test
     public void shouldListASubsetOfAccountsSingle() {
         long gatewayAccountId_1 = nextLong();
@@ -401,11 +401,11 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         );
 
         List<Long> accountIds = Collections.singletonList(gatewayAccountId_2);
-        List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountDao.list(accountIds);
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.list(accountIds);
 
         assertEquals(1, gatewayAccounts.size());
-        assertThat(gatewayAccounts.get(0).getAccountId(), is(gatewayAccountId_2));
-        assertEquals("provider-2", gatewayAccounts.get(0).getPaymentProvider());
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+        assertEquals("provider-2", gatewayAccounts.get(0).getGatewayName());
         assertEquals("description-2", gatewayAccounts.get(0).getDescription());
         assertEquals("service-name-2", gatewayAccounts.get(0).getServiceName());
         assertEquals(TEST.toString(), gatewayAccounts.get(0).getType());
@@ -441,10 +441,10 @@ public class GatewayAccountDaoITest extends DaoITestBase {
                 TEST,
                 "description-2",
                 "analytics-id-2",
-                250,
-                50,
-                250,
-                50
+                100,
+                200,
+                300,
+                400
         );
         final long gatewayAccountId_3 = gatewayAccountId_2 + 1;
 
@@ -463,23 +463,23 @@ public class GatewayAccountDaoITest extends DaoITestBase {
         );
 
         List<Long> accountIds = Arrays.asList(gatewayAccountId_2, gatewayAccountId_3);
-        List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountDao.list(accountIds);
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.list(accountIds);
 
         assertEquals(2, gatewayAccounts.size());
 
-        assertThat(gatewayAccounts.get(0).getAccountId(), is(gatewayAccountId_2));
-        assertEquals("provider-2", gatewayAccounts.get(0).getPaymentProvider());
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+        assertEquals("provider-2", gatewayAccounts.get(0).getGatewayName());
         assertEquals("description-2", gatewayAccounts.get(0).getDescription());
         assertEquals("service-name-2", gatewayAccounts.get(0).getServiceName());
         assertEquals(TEST.toString(), gatewayAccounts.get(0).getType());
         assertEquals("analytics-id-2", gatewayAccounts.get(0).getAnalyticsId());
-        assertEquals(250L, gatewayAccounts.get(0).getCorporateCreditCardSurchargeAmount());
-        assertEquals(50L, gatewayAccounts.get(0).getCorporateDebitCardSurchargeAmount());
-        assertEquals(250L, gatewayAccounts.get(0).getCorporateCreditCardSurchargeAmount());
-        assertEquals(50L, gatewayAccounts.get(0).getCorporateDebitCardSurchargeAmount());
+        assertEquals(100, gatewayAccounts.get(0).getCorporateNonPrepaidCreditCardSurchargeAmount());
+        assertEquals(200L, gatewayAccounts.get(0).getCorporateNonPrepaidDebitCardSurchargeAmount());
+        assertEquals(300L, gatewayAccounts.get(0).getCorporatePrepaidCreditCardSurchargeAmount());
+        assertEquals(400L, gatewayAccounts.get(0).getCorporatePrepaidDebitCardSurchargeAmount());
 
-        assertThat(gatewayAccounts.get(1).getAccountId(), is(gatewayAccountId_3));
-        assertEquals("provider-3", gatewayAccounts.get(1).getPaymentProvider());
+        assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_3));
+        assertEquals("provider-3", gatewayAccounts.get(1).getGatewayName());
         assertEquals("description-3", gatewayAccounts.get(1).getDescription());
         assertEquals("service-name-3", gatewayAccounts.get(1).getServiceName());
         assertEquals(TEST.toString(), gatewayAccounts.get(1).getType());

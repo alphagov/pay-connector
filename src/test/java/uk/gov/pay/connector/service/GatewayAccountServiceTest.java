@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -40,13 +40,19 @@ public class GatewayAccountServiceTest {
     @Mock
     private GatewayAccountEntity mockGatewayAccountEntity;
     @Mock
-    private GatewayAccountResourceDTO mockGatewayAccountResourceDto1, mockGatewayAccountResourceDto2;
+    private GatewayAccountEntity getMockGatewayAccountEntity1;
+    @Mock
+    private GatewayAccountEntity getMockGatewayAccountEntity2;
 
     private GatewayAccountService gatewayAccountService;
 
     @Before
     public void setUp() {
         gatewayAccountService = new GatewayAccountService(mockGatewayAccountDao, mockCardTypeDao);
+        when(getMockGatewayAccountEntity1.getType()).thenReturn("test");
+        when(getMockGatewayAccountEntity1.getServiceName()).thenReturn("service one");
+        when(getMockGatewayAccountEntity2.getType()).thenReturn("test");
+        when(getMockGatewayAccountEntity2.getServiceName()).thenReturn("service two");
     }
 
     @Test
@@ -62,22 +68,24 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldGetAllGatewayAccounts() {
-        when(mockGatewayAccountDao.listAll()).thenReturn(Arrays.asList(mockGatewayAccountResourceDto1, mockGatewayAccountResourceDto2));
-
+        when(mockGatewayAccountDao.listAll()).thenReturn(Arrays.asList(getMockGatewayAccountEntity1, getMockGatewayAccountEntity2));
         List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountService.getAllGatewayAccounts();
 
-        assertThat(gatewayAccounts, contains(mockGatewayAccountResourceDto1, mockGatewayAccountResourceDto2));
+        assertThat(gatewayAccounts, hasSize(2));
+        assertThat(gatewayAccounts.get(0).getServiceName(), is("service one"));
+        assertThat(gatewayAccounts.get(1).getServiceName(), is("service two"));
     }
 
     @Test
     public void shouldGetGatewayAccountsByIds() {
         List<Long> accountIds = Arrays.asList(1L, 2L);
-
-        when(mockGatewayAccountDao.list(accountIds)).thenReturn(Arrays.asList(mockGatewayAccountResourceDto1, mockGatewayAccountResourceDto2));
+        when(mockGatewayAccountDao.list(accountIds)).thenReturn(Arrays.asList(getMockGatewayAccountEntity1, getMockGatewayAccountEntity2));
 
         List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountService.getGatewayAccounts(accountIds);
 
-        assertThat(gatewayAccounts, contains(mockGatewayAccountResourceDto1, mockGatewayAccountResourceDto2));
+        assertThat(gatewayAccounts, hasSize(2));
+        assertThat(gatewayAccounts.get(0).getServiceName(), is("service one"));
+        assertThat(gatewayAccounts.get(1).getServiceName(), is("service two"));
     }
 
     @Test

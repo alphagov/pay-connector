@@ -83,6 +83,24 @@ public class GatewayAccountResourceDTO {
         this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
         this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
     }
+    
+    public static GatewayAccountResourceDTO fromEntity(GatewayAccountEntity gatewayAccountEntity) {
+        return new GatewayAccountResourceDTO(
+            gatewayAccountEntity.getId(),
+            gatewayAccountEntity.getGatewayName(),
+            GatewayAccountEntity.Type.fromString(gatewayAccountEntity.getType()),
+            gatewayAccountEntity.getDescription(),
+            gatewayAccountEntity.getServiceName(),
+            gatewayAccountEntity.getAnalyticsId(),
+            gatewayAccountEntity.getCorporateNonPrepaidCreditCardSurchargeAmount(),
+            gatewayAccountEntity.getCorporateNonPrepaidDebitCardSurchargeAmount(),
+            gatewayAccountEntity.isAllowWebPayments(),
+            gatewayAccountEntity.isAllowApplePay(),
+            gatewayAccountEntity.isAllowGooglePay(),
+            gatewayAccountEntity.getCorporatePrepaidCreditCardSurchargeAmount(),
+            gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount()
+        );
+    }
 
     public long getAccountId() {
         return accountId;
@@ -130,5 +148,17 @@ public class GatewayAccountResourceDTO {
 
     public long getCorporatePrepaidDebitCardSurchargeAmount() {
         return corporatePrepaidDebitCardSurchargeAmount;
+    }
+
+    public boolean isAllowWebPayments() {
+        return allowWebPayments;
+    }
+
+    public boolean isAllowApplePay() {
+        return allowApplePay;
+    }
+
+    public boolean isAllowGooglePay() {
+        return allowGooglePay;
     }
 }
