@@ -598,6 +598,14 @@ public class DatabaseTestHelper {
                         .bind("corporateDebitCardSurchargeAmount", corporateDebitCardSurchargeAmount)
                         .execute()
         );
+    }    
+    
+    public void allowApplePay(long accountId) {
+        jdbi.withHandle(handle ->
+                handle.createStatement("UPDATE gateway_accounts set allow_apple_pay=true WHERE id=:gatewayAccountId")
+                        .bind("gatewayAccountId", accountId)
+                        .execute()
+        );
     }
 
     public void enable3dsForGatewayAccount(long accountId) {
