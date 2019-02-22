@@ -32,7 +32,10 @@ import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
+import java.net.URI;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
@@ -42,18 +45,21 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final GatewayClient client;
-
     private final SmartpayCaptureHandler smartpayCaptureHandler;
     private final SmartpayRefundHandler smartpayRefundHandler;
+    private final Map<String, URI> gatewayUrlMap;
 
     @Inject
     public SmartpayPaymentProvider(ConnectorConfiguration configuration,
                                    GatewayClientFactory gatewayClientFactory,
                                    Environment environment) {
+
+        gatewayUrlMap = configuration.getGatewayConfigFor(SMARTPAY).getUrls().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, v -> URI.create(v.getValue())));
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
-        client = gatewayClientFactory.createGatewayClient(SMARTPAY, configuration.getGatewayConfigFor(SMARTPAY).getUrls(), environment.metrics());
-        this.smartpayCaptureHandler = new SmartpayCaptureHandler(client);
-        this.smartpayRefundHandler = new SmartpayRefundHandler(client);
+        client = gatewayClientFactory.createGatewayClient(SMARTPAY, environment.metrics());
+        this.smartpayCaptureHandler = new SmartpayCaptureHandler(client, gatewayUrlMap);
+        this.smartpayRefundHandler = new SmartpayRefundHandler(client, gatewayUrlMap);
     }
 
     @Override
@@ -68,7 +74,8 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayErrorException {
-        GatewayClient.Response response = client.postRequestFor(null, request.getGatewayAccount(), buildAuthoriseOrderFor(request));
+        GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
+                request.getGatewayAccount(), buildAuthoriseOrderFor(request));
         return getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
     }
 
@@ -85,7 +92,8 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         BaseAuthoriseResponse.AuthoriseStatus authorisationStatus = null;
         
         try {
-            GatewayClient.Response response = client.postRequestFor(null, request.getGatewayAccount(), build3dsResponseAuthOrderFor(request));
+            GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
+                    request.getGatewayAccount(), build3dsResponseAuthOrderFor(request));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
             
             if (!gatewayResponse.getBaseResponse().isPresent())
@@ -118,7 +126,8 @@ public class SmartpayPaymentProvider implements PaymentProvider {
 
     @Override
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
-        GatewayClient.Response response = client.postRequestFor(null, request.getGatewayAccount(), buildCancelOrderFor(request));
+        GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
+                request.getGatewayAccount(), buildCancelOrderFor(request));
         return getSmartpayGatewayResponse(response, SmartpayCancelResponse.class);
     }
 

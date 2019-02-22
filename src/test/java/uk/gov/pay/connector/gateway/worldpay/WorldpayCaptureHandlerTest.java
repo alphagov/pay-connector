@@ -17,6 +17,8 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.ws.rs.core.Response;
 
+import java.net.URI;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
@@ -44,7 +46,7 @@ public class WorldpayCaptureHandlerTest {
 
     @Before
     public void setup() {
-        worldpayCaptureHandler = new WorldpayCaptureHandler(client);
+        worldpayCaptureHandler = new WorldpayCaptureHandler(client, ImmutableMap.of(TEST.toString(), URI.create("http://worldpay.test")));
     }
 
     @Test
@@ -52,7 +54,7 @@ public class WorldpayCaptureHandlerTest {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(load("templates/worldpay/capture-success-response.xml"));
         GatewayClient.Response response = new TestResponse(this.response);
-        when(client.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(response);
+        when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(response);
         
         CaptureResponse gatewayResponse = worldpayCaptureHandler.capture(getCaptureRequest());
         assertTrue(gatewayResponse.isSuccessful());
@@ -71,7 +73,7 @@ public class WorldpayCaptureHandlerTest {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(load("templates/worldpay/error-response.xml"));
         TestResponse testResponse = new TestResponse(this.response);
-        when(client.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(testResponse);
+        when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(testResponse);
 
         CaptureResponse gatewayResponse = worldpayCaptureHandler.capture(getCaptureRequest());
 
@@ -83,7 +85,7 @@ public class WorldpayCaptureHandlerTest {
 
     @Test
     public void shouldErrorIfWorldpayResponseIsNot200() throws Exception {
-        when(client.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+        when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
                 .thenThrow(new GatewayErrorException.GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
         
         CaptureResponse gatewayResponse = worldpayCaptureHandler.capture(getCaptureRequest());
@@ -98,34 +100,6 @@ public class WorldpayCaptureHandlerTest {
                 .withGatewayAccountEntity(aServiceAccount())
                 .build();
         return CaptureGatewayRequest.valueOf(chargeEntity);
-    }
-
-    private String successCaptureResponse() {
-        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<!DOCTYPE paymentService PUBLIC \"-//WorldPay//DTD WorldPay PaymentService v1//EN\"\n" +
-                "        \"http://dtd.worldpay.com/paymentService_v1.dtd\">\n" +
-                "<paymentService version=\"1.4\" merchantCode=\"MERCHANTCODE\">\n" +
-                "    <reply>\n" +
-                "        <ok>\n" +
-                "            <captureReceived orderCode=\"MyUniqueTransactionId!\">\n" +
-                "                <amount value=\"500\" currencyCode=\"GBP\" exponent=\"2\" debitCreditIndicator=\"credit\"/>\n" +
-                "            </captureReceived>\n" +
-                "        </ok>\n" +
-                "    </reply>\n" +
-                "</paymentService>";
-    }
-
-    private String errorResponse() {
-        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<!DOCTYPE paymentService PUBLIC \"-//WorldPay//DTD WorldPay PaymentService v1//EN\"\n" +
-                "        \"http://dtd.worldpay.com/paymentService_v1.dtd\">\n" +
-                "<paymentService version=\"1.4\" merchantCode=\"MERCHANTCODE\">\n" +
-                "    <reply>\n" +
-                "        <error code=\"5\">\n" +
-                "            <![CDATA[Order has already been paid]]>\n" +
-                "        </error>\n" +
-                "    </reply>\n" +
-                "</paymentService>";
     }
 
     private GatewayAccountEntity aServiceAccount() {

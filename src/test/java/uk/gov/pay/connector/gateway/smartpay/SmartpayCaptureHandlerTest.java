@@ -16,12 +16,12 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.core.Response;
+import java.net.URI;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -39,7 +39,7 @@ public class SmartpayCaptureHandlerTest {
 
     @Before
     public void setup() {
-        smartpayCaptureHandler = new SmartpayCaptureHandler(client);
+        smartpayCaptureHandler = new SmartpayCaptureHandler(client, ImmutableMap.of(TEST.toString(), URI.create("http://worldpay.test")));
     }
 
     @Test
@@ -47,7 +47,7 @@ public class SmartpayCaptureHandlerTest {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(successCaptureResponse());
         TestResponse testResponse = new TestResponse(this.response);
-        when(client.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+        when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
                 .thenReturn(testResponse);
         
         ChargeEntity chargeEntity = aValidChargeEntity().withGatewayAccountEntity(aServiceAccount()).build();

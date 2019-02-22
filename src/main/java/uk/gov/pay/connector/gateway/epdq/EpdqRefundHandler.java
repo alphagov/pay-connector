@@ -10,6 +10,9 @@ import uk.gov.pay.connector.gateway.epdq.model.response.EpdqRefundResponse;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 
+import java.net.URI;
+import java.util.Map;
+
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider.ROUTE_FOR_MAINTENANCE_ORDER;
@@ -22,15 +25,18 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 public class EpdqRefundHandler implements RefundHandler {
 
     private final GatewayClient client;
+    private final Map<String, String> gatewayUrlMap;
 
-    public EpdqRefundHandler(GatewayClient client) {
+    public EpdqRefundHandler(GatewayClient client, Map<String, String> gatewayUrlMap) {
         this.client = client;
+        this.gatewayUrlMap = gatewayUrlMap;
     }
 
     @Override
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
         try {
-            GatewayClient.Response response = client.postRequestFor(ROUTE_FOR_MAINTENANCE_ORDER, request.getGatewayAccount(), buildRefundOrder(request));
+            URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_MAINTENANCE_ORDER));
+            GatewayClient.Response response = client.postRequestFor(url, request.getGatewayAccount(), buildRefundOrder(request));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, EpdqRefundResponse.class), PENDING);
         } catch (GenericGatewayErrorException | GatewayConnectionTimeoutErrorException | GatewayConnectionErrorException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());

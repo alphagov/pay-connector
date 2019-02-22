@@ -5,7 +5,6 @@ import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
-import java.util.Map;
 
 public class GatewayClientFactory {
 
@@ -24,16 +23,14 @@ public class GatewayClientFactory {
 
     public GatewayClient createGatewayClient(PaymentGatewayName gateway,
                                              GatewayOperation operation,
-                                             Map<String, String> gatewayUrlMap,
                                              MetricRegistry metricRegistry) {
         Client client = clientFactory.createWithDropwizardClient(gateway, operation, metricRegistry);
-        return new GatewayClient(client, gatewayUrlMap, metricRegistry);
+        return new GatewayClient(client, metricRegistry);
     }
 
     public GatewayClient createGatewayClient(PaymentGatewayName gateway,
-                                             Map<String, String> gatewayUrlMap,
                                              MetricRegistry metricRegistry) {
         Client client = clientFactory.createWithDropwizardClient(gateway, metricRegistry);
-        return new GatewayClient(client, gatewayUrlMap, metricRegistry);
+        return new GatewayClient(client, metricRegistry);
     }
 }

@@ -15,6 +15,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,37 +33,29 @@ public class GatewayClient {
     private static final Logger logger = LoggerFactory.getLogger(GatewayClient.class);
 
     private final Client client;
-    private final Map<String, String> gatewayUrlMap;
     private final MetricRegistry metricRegistry;
 
-    public GatewayClient(Client client, Map<String, String> gatewayUrlMap, MetricRegistry metricRegistry) {
-        this.gatewayUrlMap = gatewayUrlMap;
+    public GatewayClient(Client client, MetricRegistry metricRegistry) {
         this.client = client;
         this.metricRegistry = metricRegistry;
     }
 
-    public GatewayClient.Response postRequestFor(String route, GatewayAccountEntity account, GatewayOrder request) 
+    public GatewayClient.Response postRequestFor(URI url, GatewayAccountEntity account, GatewayOrder request) 
             throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
-        return postRequestFor(route, account, request, emptyList());
+        return postRequestFor(url, account, request, emptyList());
     }
     
-    public GatewayClient.Response postRequestFor(String route,
-                                                 GatewayAccountEntity account,
-                                                 GatewayOrder request,
-                                                 List<HttpCookie> cookies) 
+    public GatewayClient.Response postRequestFor(URI url, GatewayAccountEntity account, GatewayOrder request, List<HttpCookie> cookies) 
             throws GenericGatewayErrorException, GatewayConnectionTimeoutErrorException, GatewayConnectionErrorException {
+        
         String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
         javax.ws.rs.core.Response response = null;
-
-        String gatewayUrl = gatewayUrlMap.get(account.getType());
-        if (route != null) {
-            gatewayUrl = String.format("%s/%s", gatewayUrl, route);
-        }
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
             logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
-            Builder requestBuilder = client.target(gatewayUrl).request().header(AUTHORIZATION, encode(
+            
+            Builder requestBuilder = client.target(url).request().header(AUTHORIZATION, encode(
                             account.getCredentials().get(CREDENTIALS_USERNAME),
                             account.getCredentials().get(CREDENTIALS_PASSWORD)));
             
@@ -73,7 +66,7 @@ public class GatewayClient {
             if (statusCode == OK.getStatusCode()) {
                 return gatewayResponse;
             } else {
-                logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}", statusCode, gatewayUrl, account.getType());
+                logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}", statusCode, url, account.getType());
                 incrementFailureCounter(metricRegistry, metricsPrefix);
                 throw new GatewayConnectionErrorException("Unexpected HTTP status code " + statusCode + " from gateway");
             }
@@ -81,17 +74,17 @@ public class GatewayClient {
             incrementFailureCounter(metricRegistry, metricsPrefix);
             if (pe.getCause() != null) {
                 if (pe.getCause() instanceof SocketTimeoutException) {
-                    logger.error(format("Connection timed out error for gateway url=%s", gatewayUrl), pe);
+                    logger.error(format("Connection timed out error for gateway url=%s", url), pe);
                     throw new GatewayConnectionTimeoutErrorException("Gateway connection timeout error");
                 }
             }
-            logger.error(format("Exception for gateway url=%s, error message: %s", gatewayUrl, pe.getMessage()), pe);
+            logger.error(format("Exception for gateway url=%s, error message: %s", url, pe.getMessage()), pe);
             throw new GenericGatewayErrorException(pe.getMessage());
         } catch(GatewayConnectionErrorException e) {
             throw e;
         } catch (Exception e) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
-            logger.error(format("Exception for gateway url=%s", gatewayUrl), e);
+            logger.error(format("Exception for gateway url=%s", url), e);
             throw new GenericGatewayErrorException(e.getMessage());
         } finally {
             responseTimeStopwatch.stop();

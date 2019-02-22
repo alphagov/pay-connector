@@ -16,12 +16,13 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.ws.rs.core.Response;
+import java.net.URI;
 
+import static java.util.Collections.emptyMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
@@ -44,7 +45,7 @@ public class EpdqCaptureHandlerTest {
 
     @Before
     public void setup() {
-        epdqCaptureHandler = new EpdqCaptureHandler(client);
+        epdqCaptureHandler = new EpdqCaptureHandler(client, emptyMap());
     }
 
     @Test
@@ -52,7 +53,7 @@ public class EpdqCaptureHandlerTest {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(load("templates/epdq/capture-success-response.xml"));
         TestResponse testResponse = new TestResponse(this.response);
-        when(client.postRequestFor(anyString(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+        when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
                 .thenReturn(testResponse);
 
         CaptureResponse gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
@@ -74,7 +75,7 @@ public class EpdqCaptureHandlerTest {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(load("templates/epdq/capture-error-response.xml"));
         TestResponse testResponse = new TestResponse(this.response);
-        when(client.postRequestFor(anyString(), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(testResponse);
+        when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class))).thenReturn(testResponse);
         
         CaptureResponse gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
         assertThat(gatewayResponse.isSuccessful(), is(false));
@@ -83,7 +84,7 @@ public class EpdqCaptureHandlerTest {
 
     @Test
     public void shouldNotCaptureIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
-        when(client.postRequestFor(anyString(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+        when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
                 .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
         
         CaptureResponse gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());

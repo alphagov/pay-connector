@@ -23,16 +23,17 @@ import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.io.IOException;
+import java.net.URI;
 import java.time.LocalDate;
-import java.util.Map;
+import java.util.HashMap;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST;
 
@@ -41,23 +42,20 @@ public class WorldpayWalletAuthorisationHandlerTest {
 
     @Mock
     private GatewayClient mockGatewayClient;
-    @Mock
-    private GatewayAccountEntity mockGatewayAccountEntity;
+    private GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("worldpay", new HashMap<>(), TEST);
     private WorldpayWalletAuthorisationHandler worldpayApplePayAuthorisationHandler;
     private ChargeEntity chargeEntity;
-
+    
+    private static final URI WORLDPAY_URL = URI.create("http://worldpay.test");
 
     @Before
     public void setUp() throws Exception {
-        worldpayApplePayAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient);
-        chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-                .withDescription("This is the description").build();
+        worldpayApplePayAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient, ImmutableMap.of(TEST.toString(), WORLDPAY_URL));
+        chargeEntity = ChargeEntityFixture.aValidChargeEntity().withDescription("This is the description").build();
         chargeEntity.setGatewayTransactionId("MyUniqueTransactionId!");
-        chargeEntity.setGatewayAccount(mockGatewayAccountEntity);
-
-        Map<String, String> credentialsMap = ImmutableMap.of("merchant_id", "MERCHANTCODE");
-        when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialsMap);
-        when(mockGatewayClient.postRequestFor(isNull(), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
+        chargeEntity.setGatewayAccount(gatewayAccountEntity);
+        gatewayAccountEntity.setCredentials(ImmutableMap.of("merchant_id", "MERCHANTCODE"));
+        when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class)))
                 .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
     }
 
@@ -67,7 +65,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
             worldpayApplePayAuthorisationHandler.authorise(getApplePayAuthorisationRequest());
         } catch (GatewayConnectionErrorException e) {
             ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-            verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
+            verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
         }
     }
@@ -78,7 +76,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
             worldpayApplePayAuthorisationHandler.authorise(getGooglePayAuthorisationRequest());
         } catch (GatewayConnectionErrorException e) {
             ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-            verify(mockGatewayClient).postRequestFor(eq(null), eq(mockGatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
+            verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
         }
     }

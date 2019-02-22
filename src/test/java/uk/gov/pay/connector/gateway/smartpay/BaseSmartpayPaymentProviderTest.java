@@ -19,6 +19,8 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
+import java.net.URI;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -73,7 +75,7 @@ public abstract class BaseSmartpayPaymentProviderTest {
 
     void mockSmartpayResponse(int httpStatus, String responsePayload) {
         WebTarget mockTarget = mock(WebTarget.class);
-        when(mockClient.target(anyString())).thenReturn(mockTarget);
+        when(mockClient.target(any(URI.class))).thenReturn(mockTarget);
         Invocation.Builder mockBuilder = mock(Invocation.Builder.class);
         when(mockTarget.request()).thenReturn(mockBuilder);
         when(mockBuilder.header(anyString(), any(Object.class))).thenReturn(mockBuilder);

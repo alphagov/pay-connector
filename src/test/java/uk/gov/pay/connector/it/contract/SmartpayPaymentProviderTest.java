@@ -244,11 +244,11 @@ public class SmartpayPaymentProviderTest {
     private PaymentProvider getSmartpayPaymentProvider() {
         Client client = TestClientFactory.createJerseyClient();
 
-        GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
+        GatewayClient gatewayClient = new GatewayClient(client,
                 mockMetricRegistry);
 
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
-        when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(Map.class), any(MetricRegistry.class))).thenReturn(gatewayClient);
+        when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(MetricRegistry.class))).thenReturn(gatewayClient);
 
         GatewayConfig gatewayConfig = mock(GatewayConfig.class);
         when(gatewayConfig.getUrls()).thenReturn(Collections.EMPTY_MAP);

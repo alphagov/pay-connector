@@ -35,6 +35,8 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import java.net.URI;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
@@ -115,7 +117,7 @@ public abstract class BaseEpdqPaymentProviderTest {
 
         WebTarget mockTarget = mock(WebTarget.class);
         when(mockTarget.request()).thenReturn(mockClientInvocationBuilder);
-        when(mockClient.target(anyString())).thenReturn(mockTarget);
+        when(mockClient.target(any(URI.class))).thenReturn(mockTarget);
 
         return mockClientInvocationBuilder;
     }

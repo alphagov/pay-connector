@@ -7,7 +7,6 @@ import org.apache.http.HttpStatus;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
@@ -22,7 +21,6 @@ import javax.ws.rs.client.ClientBuilder;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.it.contract.TrustStoreLoader.getSSLContext;
@@ -72,8 +70,7 @@ public class GooglePayForWorldpayTest {
 
     private GatewayClient getGatewayClient() {
         Client client = ClientBuilder.newBuilder().sslContext(getSSLContext()).build();
-        ConnectorConfiguration configuration = app.getInstanceFromGuiceContainer(ConnectorConfiguration.class);
         Environment environment = app.getInstanceFromGuiceContainer(Environment.class);
-        return new GatewayClient(client, configuration.getGatewayConfigFor(WORLDPAY).getUrls(), environment.metrics());
+        return new GatewayClient(client, environment.metrics());
     }
 }
