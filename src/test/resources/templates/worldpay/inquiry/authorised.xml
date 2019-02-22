@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE paymentService PUBLIC "-//WorldPay//DTD WorldPay PaymentService v1//EN"
+        "http://dtd.worldpay.com/paymentService_v1.dtd">
+<paymentService version="1.4" merchantCode="ExampleCode1"> <!--The merchantCode you supplied in the inquiry-->
+    <reply>
+        <orderStatus orderCode="ExampleOrder1"> <!--The orderCode you supplied in the inquiry-->
+            <payment>
+                <paymentMethod>VISA-SSL</paymentMethod>
+                <paymentMethodDetail> <!--Not returned by default - contact us to enable-->
+                    <card number="444433******1111" type="creditcard">
+                        <expiryDate> <!--Not returned by default - contact us to enable-->
+                            <date month="01" year="2020"/>
+                        </expiryDate>
+                    </card>
+                </paymentMethodDetail>
+                <amount value="4000" currencyCode="EUR" exponent="2" debitCreditIndicator="credit"/>
+                <lastEvent>AUTHORISED</lastEvent>
+                <AuthorisationId id="622206"/>
+                <CVCResultCode description="A"/>
+                <AVSResultCode description="A"/>
+                <AAVAddressResultCode description="A"/>
+                <AAVPostcodeResultCode description="A"/>
+                <AAVCardholderNameResultCode description="A"/>
+                <AAVTelephoneResultCode description="A"/>
+                <AAVEmailResultCode description="A"/>
+                <ThreeDSecureResult description="Cardholder authenticated">
+                    <eci>05</eci> <!--Not returned by default - contact us to enable-->
+                    <cavv>MAAAAAAAAAAAAAAAAAAAAAAAAAA=</cavv> <!--Not returned by default - contact us to enable-->
+                </ThreeDSecureResult>
+                <balance accountType="IN_PROCESS_AUTHORISED">
+                    <amount value="4000" currencyCode="EUR" exponent="2"  debitCreditIndicator="credit"/>
+                </balance>
+                <cardNumber>4444********1111</cardNumber>
+                <riskScore value="0"/>
+            </payment>
+        </orderStatus>
+    </reply>
+</paymentService>

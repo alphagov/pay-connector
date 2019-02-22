@@ -43,6 +43,11 @@ public class TestTemplateResourceLoader {
 
     public static final String WORLDPAY_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/error-response.xml";
     public static final String WORLDPAY_NOTIFICATION = WORLDPAY_BASE_NAME + "/notification.xml";
+    
+    public static final String WORLDPAY_AUTHORISED_INQUIRY_RESPONSE = WORLDPAY_BASE_NAME + "/inquiry/authorised.xml";
+    public static final String WORLDPAY_CAPTURED_INQUIRY_RESPONSE = WORLDPAY_BASE_NAME + "/inquiry/captured.xml";
+    public static final String WORLDPAY_CANCELLED_INQUIRY_RESPONSE = WORLDPAY_BASE_NAME + "/inquiry/cancelled.xml";
+    public static final String WORLDPAY_REJECTED_INQUIRY_RESPONSE = WORLDPAY_BASE_NAME + "/inquiry/rejected.xml";
 
     // SMARTPAY
 
