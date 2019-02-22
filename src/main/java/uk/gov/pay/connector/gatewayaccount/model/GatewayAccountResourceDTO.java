@@ -39,7 +39,13 @@ public class GatewayAccountResourceDTO {
     private Map<String, Map<String, URI>> links = new HashMap<>();
     
     @JsonProperty("allow_web_payments")
-    private boolean allowWebPayments;
+    private boolean allowWebPayments;    
+    
+    @JsonProperty("allow_apple_pay")
+    private boolean allowApplePay;    
+    
+    @JsonProperty("allow_google_pay")
+    private boolean allowGooglePay;
 
     @JsonProperty("corporate_prepaid_credit_card_surcharge_amount")
     private long corporatePrepaidCreditCardSurchargeAmount;
@@ -59,6 +65,8 @@ public class GatewayAccountResourceDTO {
                                      long corporateCreditCardSurchargeAmount,
                                      long corporateDebitCardSurchargeAmount, 
                                      boolean allowWebPayments,
+                                     boolean allowApplePay,
+                                     boolean allowGooglePay,
                                      long corporatePrepaidCreditCardSurchargeAmount,
                                      long corporatePrepaidDebitCardSurchargeAmount) {
         this.accountId = accountId;
@@ -70,6 +78,8 @@ public class GatewayAccountResourceDTO {
         this.corporateCreditCardSurchargeAmount = corporateCreditCardSurchargeAmount;
         this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
         this.allowWebPayments = allowWebPayments;
+        this.allowApplePay = allowApplePay;
+        this.allowGooglePay = allowGooglePay;
         this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
         this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
     }
@@ -113,11 +123,7 @@ public class GatewayAccountResourceDTO {
     public void addLink(String key, URI uri) {
         links.put(key, ImmutableMap.of("href", uri));
     }
-
-    public boolean isAllowWebPayments() {
-        return allowWebPayments;
-    }
-
+    
     public long getCorporatePrepaidCreditCardSurchargeAmount() {
         return corporatePrepaidCreditCardSurchargeAmount;
     }
