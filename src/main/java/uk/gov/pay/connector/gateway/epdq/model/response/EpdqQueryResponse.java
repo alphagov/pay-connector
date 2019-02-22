@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.gateway.epdq.model.response;
 
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.gateway.epdq.ChargeQueryResponse;
-import uk.gov.pay.connector.gateway.epdq.EpdqStatusMapper;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -64,9 +62,5 @@ public class EpdqQueryResponse extends EpdqBaseResponse implements BaseResponse 
             joiner.add("NCERRORPLUS: " + getErrorMessage());
         }
         return joiner.toString();
-    }
-
-    public static ChargeQueryResponse toChargeQueryResponse(EpdqQueryResponse epdqQueryResponse) {
-        return new ChargeQueryResponse(EpdqStatusMapper.map(epdqQueryResponse.getStatus()), epdqQueryResponse.toString());
     }
 }
