@@ -12,9 +12,7 @@ import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseWalletOrderRequestBuilder;
@@ -161,12 +159,10 @@ public class WorldpayOrderRequestBuilderTest {
                 .withSessionId("uniqueSessionId")
                 .withTransactionId("MyUniqueTransactionId!")
                 .withMerchantCode("MERCHANTCODE")
-                .withProviderSessionId(providerSessionId)
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE_3DS, actualRequest.getOrderRequestType());
-        assertThat(actualRequest.getProviderSessionId().get(), is(providerSessionId));
     }
 
     @Test

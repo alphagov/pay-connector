@@ -61,7 +61,7 @@ public class GooglePayForWorldpayTest {
 
         GatewayClient authoriseClient = getGatewayClient();
         
-        GatewayOrder gatewayOrder = new GatewayOrder(OrderRequestType.AUTHORISE, payload, "", APPLICATION_XML_TYPE);
+        GatewayOrder gatewayOrder = new GatewayOrder(OrderRequestType.AUTHORISE, payload, APPLICATION_XML_TYPE);
         GatewayClient.Response response = authoriseClient.postRequestFor(null, gatewayAccount, gatewayOrder);
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
         String entity = response.getEntity();
