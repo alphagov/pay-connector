@@ -57,6 +57,16 @@ public class TransactionsApiContractTest {
         dbHelper.truncateAllData();
     }
 
+    @State("a charge with a gateway transaction id exists")
+    public void aChargeWithGatewayTxIdExists(Map<String, String> params) {
+        String gatewayAccountId = params.get("gateway_account_id");
+        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        String chargeExternalId = params.get("charge_id");
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
+        dbHelper.addCharge(chargeId, chargeExternalId, gatewayAccountId, 100L, ChargeStatus.CAPTURED, "aReturnUrl",
+                params.get("gateway_transaction_id"), ServicePaymentReference.of("aReference"), ZonedDateTime.now(), "test@test.com", false);
+    }
+    
     private void setUpCharges(int numberOfCharges, String accountId, ZonedDateTime createdDate) {
         for (int i = 0; i < numberOfCharges; i++) {
             long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
@@ -64,15 +74,17 @@ public class TransactionsApiContractTest {
         }
     }
 
-    private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, ZonedDateTime createdDate, boolean delayedCapture, String cardHolderName, String lastDigitsCardNumber, String firstDigitsCardNumber) {
+    private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, 
+                                   ZonedDateTime createdDate, boolean delayedCapture, String cardHolderName, 
+                                   String lastDigitsCardNumber, String firstDigitsCardNumber, String gatewayTransactionId) {
         dbHelper.addCharge(chargeId, chargeExternalId, accountId, 100L, chargeStatus, "aReturnUrl",
-                chargeExternalId, ServicePaymentReference.of("aReference"), createdDate, "test@test.com", delayedCapture);
+                gatewayTransactionId, ServicePaymentReference.of("aReference"), createdDate, "test@test.com", delayedCapture);
         dbHelper.updateChargeCardDetails(chargeId, "visa", lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, "08/23",
                 "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
     }
 
     private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, ZonedDateTime createdDate, boolean delayedCapture) {
-        setUpSingleCharge(accountId, chargeId, chargeExternalId, chargeStatus, createdDate, delayedCapture, "aName", "0001", "123456");
+        setUpSingleCharge(accountId, chargeId, chargeExternalId, chargeStatus, createdDate, delayedCapture, "aName", "0001", "123456", "aGatewayTransactionId");
     }
 
     private void setUpChargeAndRefunds(int numberOfRefunds, String accountID, ZonedDateTime createdDate) {
@@ -181,7 +193,9 @@ public class TransactionsApiContractTest {
         String lastDigitsCardNumber = params.get("last_digits_card_number");
         String firstDigitsCardNumber = params.get("first_digits_card_number");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, ZonedDateTime.parse("2018-09-22T10:13:16.067Z"), true, cardHolderName, lastDigitsCardNumber, firstDigitsCardNumber);
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, 
+                ZonedDateTime.parse("2018-09-22T10:13:16.067Z"), true, cardHolderName, lastDigitsCardNumber, 
+                firstDigitsCardNumber, params.get("gateway_transaction_id"));
     }
 
     @State("Refunds exist")
