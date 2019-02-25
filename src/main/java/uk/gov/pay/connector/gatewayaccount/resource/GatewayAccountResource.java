@@ -103,9 +103,9 @@ public class GatewayAccountResource {
         logger.debug("Getting gateway account for account id {}", accountId);
         return gatewayAccountService
                 .getGatewayAccount(accountId)
-                .map(gatewayAccount -> Response.ok().entity(gatewayAccount.withoutCredentials()).build())
+                .map(GatewayAccountResourceDTO::fromEntity)
+                .map(gatewayAccountDTO -> Response.ok().entity(gatewayAccountDTO).build())
                 .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", accountId)));
-
     }
 
     // This private method, instead of using a regex Path is due to, as far as

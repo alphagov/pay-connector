@@ -98,7 +98,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
                 .then()
                 .statusCode(200)
-                .body("toggle_3ds", is("true"));
+                .body("toggle_3ds", is(true));
     }
 
     @Test
@@ -151,7 +151,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .then()
                 .statusCode(200)
                 .body("payment_provider", is("sandbox"))
-                .body("gateway_account_id", is(String.valueOf(defaultTestAccount.getAccountId())))
+                .body("gateway_account_id", is(Math.toIntExact(defaultTestAccount.getAccountId())))
                 .body("type", is(TEST.toString()))
                 .body("description", is("a description"))
                 .body("analytics_id", is("an analytics id"))
@@ -341,7 +341,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
-                .body("toggle_3ds", is("true"));
+                .body("toggle_3ds", is(true));
     }
 
     @Test
@@ -356,7 +356,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
-                .body("toggle_3ds", is("false"));
+                .body("toggle_3ds", is(false));
     }
 
     @Test
@@ -517,7 +517,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
-                .body("allow_web_payments", is("false"));
+                .body("allow_web_payments", is(false));
     }
 
     @Test
@@ -535,7 +535,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
-                .body("allow_web_payments", is("true"));
+                .body("allow_web_payments", is(true));
     }
 
     @Test
