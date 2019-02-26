@@ -12,9 +12,8 @@ import uk.gov.pay.connector.report.resource.PerformanceReportResource;
 
 import javax.ws.rs.core.Response;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.stream.Stream;
 
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.core.Is.is;
@@ -27,10 +26,7 @@ public class GatewayAccountPerformanceReportResourceTest {
     @Mock
     private PerformanceReportDao mockPerformanceReportDao;
 
-    @Mock
-    private List<GatewayAccountPerformanceReportEntity> noTransactionsPerformanceReportEntity;
-    @Mock
-    private List<GatewayAccountPerformanceReportEntity> someTransactionsPerformanceReportEntity;
+    private Stream<GatewayAccountPerformanceReportEntity> someTransactionsPerformanceReportEntity;
 
     private final Long totalVolume = 10000L;
     private final BigDecimal totalAmount = new BigDecimal("10000000");
@@ -42,25 +38,22 @@ public class GatewayAccountPerformanceReportResourceTest {
 
     @Before
     public void setUp() {
-        noTransactionsPerformanceReportEntity = new ArrayList<>();
-        someTransactionsPerformanceReportEntity = new ArrayList<>();
-
-        GatewayAccountPerformanceReportEntity mockedGatewayAccountPerformanceReport = new GatewayAccountPerformanceReportEntity(
+        someTransactionsPerformanceReportEntity = Stream.of(new GatewayAccountPerformanceReportEntity(
             totalVolume,
             totalAmount,
             averageAmount,
             minAmount,
             maxAmount,
             3L
-        );
-
-        someTransactionsPerformanceReportEntity.add(mockedGatewayAccountPerformanceReport);
+        ));
 
         resource = new PerformanceReportResource(mockPerformanceReportDao);
     }
 
     @Test
     public void noTransactionsPerformanceReportEntitySerializesCorrectly() {
+        Stream<GatewayAccountPerformanceReportEntity> noTransactionsPerformanceReportEntity
+                = Stream.empty();
         given(mockPerformanceReportDao.aggregateNumberAndValueOfPaymentsByGatewayAccount())
                 .willReturn(noTransactionsPerformanceReportEntity);
 

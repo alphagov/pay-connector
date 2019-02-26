@@ -11,6 +11,7 @@ import javax.persistence.EntityManager;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
@@ -42,7 +43,7 @@ public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {
       .getSingleResult();
   }
 
-  public List<GatewayAccountPerformanceReportEntity> aggregateNumberAndValueOfPaymentsByGatewayAccount() {
+  public Stream<GatewayAccountPerformanceReportEntity> aggregateNumberAndValueOfPaymentsByGatewayAccount() {
     return entityManager
       .get()
       .createQuery(
@@ -61,10 +62,11 @@ public class PerformanceReportDao extends JpaDao<PerformanceReportEntity> {
         + " AND   g.type = :type"
         + " GROUP BY g.id"
         + " ORDER BY g.id ASC"
+              , GatewayAccountPerformanceReportEntity.class
       )
       .setParameter("status", CAPTURED.toString())
       .setParameter("type", LIVE)
-      .getResultList();
+      .getResultStream();
   }
 
   public PerformanceReportEntity aggregateNumberAndValueOfPaymentsForAGivenDay(ZonedDateTime date) {
