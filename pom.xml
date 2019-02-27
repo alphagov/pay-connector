@@ -18,6 +18,7 @@
         <javax.persistence.version>2.2.1</javax.persistence.version>
         <jooq.version>3.11.9</jooq.version>
         <postgresql.version>42.2.5</postgresql.version>
+        <commons-lang3.version>3.8.1</commons-lang3.version>
     </properties>
     <repositories>
         <repository>
@@ -118,7 +119,7 @@
         <dependency>
             <groupId>uk.gov.service.notify</groupId>
             <artifactId>notifications-java-client</artifactId>
-            <version>3.1.3-RELEASE</version>
+            <version>3.14.0-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -140,6 +141,12 @@
             <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.moxy</artifactId>
             <version>${eclipselink.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${commons-lang3.version}</version>
             <scope>compile</scope>
         </dependency>
         <!--
