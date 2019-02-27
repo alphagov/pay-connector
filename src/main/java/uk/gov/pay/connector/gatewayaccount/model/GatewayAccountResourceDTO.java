@@ -3,6 +3,8 @@ package uk.gov.pay.connector.gatewayaccount.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -37,13 +39,13 @@ public class GatewayAccountResourceDTO {
 
     @JsonProperty("_links")
     private Map<String, Map<String, URI>> links = new HashMap<>();
-    
+
     @JsonProperty("allow_web_payments")
-    private boolean allowWebPayments;    
-    
+    private boolean allowWebPayments;
+
     @JsonProperty("allow_apple_pay")
-    private boolean allowApplePay;    
-    
+    private boolean allowApplePay;
+
     @JsonProperty("allow_google_pay")
     private boolean allowGooglePay;
 
@@ -52,6 +54,15 @@ public class GatewayAccountResourceDTO {
 
     @JsonProperty("corporate_prepaid_debit_card_surcharge_amount")
     private long corporatePrepaidDebitCardSurchargeAmount;
+
+    @JsonProperty("email_notifications")
+    private Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
+
+    @JsonProperty("email_collection_mode")
+    private EmailCollectionMode emailCollectionMode = EmailCollectionMode.MANDATORY;
+
+    @JsonProperty("toggle_3ds")
+    private boolean requires3ds;
 
     public GatewayAccountResourceDTO() {
     }
@@ -63,12 +74,15 @@ public class GatewayAccountResourceDTO {
                                      String serviceName,
                                      String analyticsId,
                                      long corporateCreditCardSurchargeAmount,
-                                     long corporateDebitCardSurchargeAmount, 
+                                     long corporateDebitCardSurchargeAmount,
                                      boolean allowWebPayments,
                                      boolean allowApplePay,
                                      boolean allowGooglePay,
                                      long corporatePrepaidCreditCardSurchargeAmount,
-                                     long corporatePrepaidDebitCardSurchargeAmount) {
+                                     long corporatePrepaidDebitCardSurchargeAmount,
+                                     Map<EmailNotificationType, EmailNotificationEntity> emailNotifications,
+                                     EmailCollectionMode emailCollectionMode,
+                                     boolean requires3ds) {
         this.accountId = accountId;
         this.paymentProvider = paymentProvider;
         this.type = type;
@@ -82,23 +96,29 @@ public class GatewayAccountResourceDTO {
         this.allowGooglePay = allowGooglePay;
         this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
         this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
+        this.emailNotifications = emailNotifications;
+        this.emailCollectionMode = emailCollectionMode;
+        this.requires3ds = requires3ds;
     }
-    
+
     public static GatewayAccountResourceDTO fromEntity(GatewayAccountEntity gatewayAccountEntity) {
         return new GatewayAccountResourceDTO(
-            gatewayAccountEntity.getId(),
-            gatewayAccountEntity.getGatewayName(),
-            GatewayAccountEntity.Type.fromString(gatewayAccountEntity.getType()),
-            gatewayAccountEntity.getDescription(),
-            gatewayAccountEntity.getServiceName(),
-            gatewayAccountEntity.getAnalyticsId(),
-            gatewayAccountEntity.getCorporateNonPrepaidCreditCardSurchargeAmount(),
-            gatewayAccountEntity.getCorporateNonPrepaidDebitCardSurchargeAmount(),
-            gatewayAccountEntity.isAllowWebPayments(),
-            gatewayAccountEntity.isAllowApplePay(),
-            gatewayAccountEntity.isAllowGooglePay(),
-            gatewayAccountEntity.getCorporatePrepaidCreditCardSurchargeAmount(),
-            gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount()
+                gatewayAccountEntity.getId(),
+                gatewayAccountEntity.getGatewayName(),
+                GatewayAccountEntity.Type.fromString(gatewayAccountEntity.getType()),
+                gatewayAccountEntity.getDescription(),
+                gatewayAccountEntity.getServiceName(),
+                gatewayAccountEntity.getAnalyticsId(),
+                gatewayAccountEntity.getCorporateNonPrepaidCreditCardSurchargeAmount(),
+                gatewayAccountEntity.getCorporateNonPrepaidDebitCardSurchargeAmount(),
+                gatewayAccountEntity.isAllowWebPayments(),
+                gatewayAccountEntity.isAllowApplePay(),
+                gatewayAccountEntity.isAllowGooglePay(),
+                gatewayAccountEntity.getCorporatePrepaidCreditCardSurchargeAmount(),
+                gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount(),
+                gatewayAccountEntity.getEmailNotifications(),
+                gatewayAccountEntity.getEmailCollectionMode(),
+                gatewayAccountEntity.isRequires3ds()
         );
     }
 
@@ -141,7 +161,7 @@ public class GatewayAccountResourceDTO {
     public void addLink(String key, URI uri) {
         links.put(key, ImmutableMap.of("href", uri));
     }
-    
+
     public long getCorporatePrepaidCreditCardSurchargeAmount() {
         return corporatePrepaidCreditCardSurchargeAmount;
     }
@@ -160,5 +180,17 @@ public class GatewayAccountResourceDTO {
 
     public boolean isAllowGooglePay() {
         return allowGooglePay;
+    }
+
+    public Map<EmailNotificationType, EmailNotificationEntity> getEmailNotifications() {
+        return emailNotifications;
+    }
+
+    public EmailCollectionMode getEmailCollectionMode() {
+        return emailCollectionMode;
+    }
+
+    public boolean isRequires3ds() {
+        return requires3ds;
     }
 }

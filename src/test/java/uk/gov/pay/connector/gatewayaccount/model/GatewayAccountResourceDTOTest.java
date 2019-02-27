@@ -1,8 +1,12 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
 import org.junit.Test;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -27,6 +31,12 @@ public class GatewayAccountResourceDTOTest {
         entity.setAllowApplePay(false);
         entity.setAllowGooglePay(true);
         entity.setCredentials(Collections.emptyMap());
+        entity.setEmailCollectionMode(EmailCollectionMode.MANDATORY);
+        entity.setRequires3ds(true);
+
+        Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
+        emailNotifications.put(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(new GatewayAccountEntity(), "testTemplate", true));
+        entity.setEmailNotifications(emailNotifications);
         
         GatewayAccountResourceDTO dto = GatewayAccountResourceDTO.fromEntity(entity);
         assertThat(dto.getAccountId(), is(entity.getId()));
@@ -42,5 +52,9 @@ public class GatewayAccountResourceDTOTest {
         assertThat(dto.isAllowWebPayments(), is(entity.isAllowWebPayments()));
         assertThat(dto.isAllowApplePay(), is(entity.isAllowApplePay()));
         assertThat(dto.isAllowGooglePay(), is(entity.isAllowGooglePay()));
+        assertThat(dto.isRequires3ds(), is(entity.isRequires3ds()));
+        assertThat(dto.getEmailCollectionMode(), is(entity.getEmailCollectionMode()));
+        assertThat(dto.getEmailNotifications().size(), is(1));
+        assertThat(dto.getEmailNotifications().get(EmailNotificationType.PAYMENT_CONFIRMED).getTemplateBody(), is("testTemplate"));
     }
 }

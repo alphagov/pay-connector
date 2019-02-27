@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Maps.newHashMap;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Entity
@@ -331,35 +330,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         this.emailCollectionMode = emailCollectionMode;
     }
 
-    public Map<String, String> getNotifySettings() {
-        return notifySettings;
+    public void setEmailNotifications(Map<EmailNotificationType, EmailNotificationEntity> emailNotifications) {
+        this.emailNotifications = emailNotifications;
     }
 
-    public Map<String, Object> withoutCredentials() {
-        Map<String, Object> account = newHashMap();
-        account.put("gateway_account_id", String.valueOf(getId()));
-        account.put("payment_provider", getGatewayName());
-        account.put("email_notifications", getEmailNotifications());
-        account.put("email_collection_mode", getEmailCollectionMode().toString());
-        account.put("type", getType());
-        if (isNotBlank(getDescription())) {
-            account.put("description", getDescription());
-        }
-        if (isNotBlank(getAnalyticsId())) {
-            account.put("analytics_id", getAnalyticsId());
-        }
-        if (isNotBlank(getServiceName())) {
-            account.put("service_name", getServiceName());
-        }
-        account.put("toggle_3ds", String.valueOf(isRequires3ds()));
-        account.put("corporate_credit_card_surcharge_amount", getCorporateNonPrepaidCreditCardSurchargeAmount());
-        account.put("corporate_debit_card_surcharge_amount", getCorporateNonPrepaidDebitCardSurchargeAmount());
-        account.put("corporate_prepaid_credit_card_surcharge_amount", getCorporatePrepaidCreditCardSurchargeAmount());
-        account.put("corporate_prepaid_debit_card_surcharge_amount", getCorporatePrepaidDebitCardSurchargeAmount());
-        account.put("allow_web_payments", String.valueOf(allowWebPayments));
-        account.put("allow_apple_pay", isAllowApplePay());
-        account.put("allow_google_pay", isAllowGooglePay());
-        return account;
+    public Map<String, String> getNotifySettings() {
+        return notifySettings;
     }
 
     public boolean hasAnyAcceptedCardType3dsRequired() {
