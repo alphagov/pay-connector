@@ -26,6 +26,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.HttpCookie;
 import java.net.SocketException;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,7 +44,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 @RunWith(MockitoJUnitRunner.class)
 public class GatewayClientTest {
 
-    private static final String WORLDPAY_API_ENDPOINT = "http://www.example.com/worldpay/order";
+    private static final URI WORLDPAY_API_ENDPOINT = URI.create("http://www.example.com/worldpay/order");
     private GatewayClient gatewayClient;
 
     private String orderPayload = "a-sample-payload";
@@ -72,12 +73,11 @@ public class GatewayClientTest {
 
     @Before
     public void setup() {
-        Map<String, String> urlMap = Collections.singletonMap("worldpay", WORLDPAY_API_ENDPOINT);
         Map<String, String> credentialMap = new HashMap<>();
         credentialMap.put(CREDENTIALS_USERNAME, "user");
         credentialMap.put(CREDENTIALS_PASSWORD, "password");
 
-        gatewayClient = new GatewayClient(mockClient, urlMap,
+        gatewayClient = new GatewayClient(mockClient,
                 mockMetricRegistry);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
@@ -102,21 +102,21 @@ public class GatewayClientTest {
     @Test(expected = GatewayErrorException.GatewayConnectionErrorException.class)
     public void shouldReturnGatewayErrorWhenProviderFails() throws Exception {
         when(mockResponse.getStatus()).thenReturn(500);
-        gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder);
+        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder);
         verify(mockResponse).close();
     }
 
     @Test(expected = GatewayErrorException.GenericGatewayErrorException.class)
     public void shouldReturnGatewayErrorWhenProviderFailsWithAProcessingException() throws Exception {
         when(mockBuilder.post(Entity.entity(orderPayload, mediaType))).thenThrow(new ProcessingException(new SocketException("socket failed")));
-        gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder);
+        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder);
     }
 
     @Test
     public void shouldIncludeCookieIfSessionIdentifierAvailableInOrder() throws Exception {
         when(mockResponse.getStatus()).thenReturn(200);
 
-        gatewayClient.postRequestFor(null, mockGatewayAccountEntity, mockGatewayOrder, ImmutableList.of(new HttpCookie("machine", "value")));
+        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder, ImmutableList.of(new HttpCookie("machine", "value")));
 
         InOrder inOrder = Mockito.inOrder(mockBuilder);
         inOrder.verify(mockBuilder).cookie("machine", "value");

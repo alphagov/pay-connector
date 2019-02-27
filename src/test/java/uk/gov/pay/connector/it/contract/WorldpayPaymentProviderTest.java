@@ -283,7 +283,6 @@ public class WorldpayPaymentProviderTest {
     private WorldpayPaymentProvider getValidWorldpayPaymentProvider() {
         GatewayClient gatewayClient = new GatewayClient(
                 ClientBuilder.newClient(),
-                getWorldpayConfig().getUrls(),
                 mockMetricRegistry
         );
 
@@ -295,7 +294,6 @@ public class WorldpayPaymentProviderTest {
         when(gatewayClientFactory.createGatewayClient(
                 any(PaymentGatewayName.class),
                 any(GatewayOperation.class),
-                any(Map.class),
                 any(MetricRegistry.class))).thenReturn(gatewayClient);
 
         return new WorldpayPaymentProvider(configuration, gatewayClientFactory, mockEnvironment);

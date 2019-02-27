@@ -103,12 +103,11 @@ public class EpdqPaymentProviderTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
 
         Client client = TestClientFactory.createJerseyClient();
-        GatewayClient gatewayClient = new GatewayClient(client, ImmutableMap.of(TEST.toString(), url),
+        GatewayClient gatewayClient = new GatewayClient(client,
                 mockMetricRegistry);
 
         when(mockGatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class),
                 any(GatewayOperation.class),
-                any(Map.class),
                 any())).thenReturn(gatewayClient);
 
         paymentProvider = new EpdqPaymentProvider(mockConnectorConfiguration, mockGatewayClientFactory, mockEnvironment);

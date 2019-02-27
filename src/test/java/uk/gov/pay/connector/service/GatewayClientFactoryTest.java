@@ -28,7 +28,7 @@ public class GatewayClientFactoryTest {
     MetricRegistry mockMetricRegistry;
     @Test
     public void shouldBuildGatewayClient() {
-        GatewayClient gatewayClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, AUTHORISE, emptyMap(), mockMetricRegistry);
+        GatewayClient gatewayClient = gatewayClientFactory.createGatewayClient(PaymentGatewayName.WORLDPAY, AUTHORISE, mockMetricRegistry);
 
         assertNotNull(gatewayClient);
         verify(mockClientFactory).createWithDropwizardClient(PaymentGatewayName.WORLDPAY, AUTHORISE, mockMetricRegistry);
