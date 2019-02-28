@@ -1008,4 +1008,10 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="drop column `allow_web_payments` from gateway_accounts" author="">
+        <sql>
+            alter table gateway_accounts drop column allow_web_payments;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
