@@ -17,18 +17,12 @@ import java.util.Map;
 public class FrontendChargeResponse extends ChargeResponse {
     public static class FrontendChargeResponseBuilder extends AbstractChargeResponseBuilder<FrontendChargeResponseBuilder, FrontendChargeResponse> {
         private String status;
-        private PersistedCard persistedCard;
         private GatewayAccountEntity gatewayAccount;
 
         public FrontendChargeResponseBuilder withStatus(String status) {
             this.status = status;
             ExternalChargeState externalChargeState = ChargeStatus.fromString(status).toExternal();
             super.withState(new ExternalTransactionState(externalChargeState.getStatus(), externalChargeState.isFinished(), externalChargeState.getCode(), externalChargeState.getMessage()));
-            return this;
-        }
-
-        public FrontendChargeResponseBuilder withChargeCardDetails(PersistedCard persistedCard) {
-            this.persistedCard = persistedCard;
             return this;
         }
 
@@ -46,7 +40,7 @@ public class FrontendChargeResponse extends ChargeResponse {
         public FrontendChargeResponse build() {
             return new FrontendChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl,
                     email, description, reference, providerName, createdDate, links, status, refundSummary,
-                    settlementSummary, persistedCard, auth3dsData, gatewayAccount, language, delayedCapture,
+                    settlementSummary, cardDetails, auth3dsData, gatewayAccount, language, delayedCapture,
                     corporateCardSurcharge, totalAmount);
         }
     }

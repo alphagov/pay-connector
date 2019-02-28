@@ -161,7 +161,7 @@ public class ChargesFrontendResource {
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
-                .withChargeCardDetails(persistedCard)
+                .withCardDetails(persistedCard)
                 .withAuth3dsData(auth3dsData)
                 .withGatewayAccount(charge.getGatewayAccount())
                 .withLanguage(charge.getLanguage())
