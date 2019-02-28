@@ -27,7 +27,6 @@ public class GatewayAccountResourceDTOTest {
         entity.setCorporateCreditCardSurchargeAmount(300L);
         entity.setCorporatePrepaidCreditCardSurchargeAmount(400L);
         entity.setCorporatePrepaidDebitCardSurchargeAmount(500L);
-        entity.setAllowWebPayments(true);
         entity.setAllowApplePay(false);
         entity.setAllowGooglePay(true);
         entity.setCredentials(Collections.emptyMap());
@@ -49,7 +48,6 @@ public class GatewayAccountResourceDTOTest {
         assertThat(dto.getCorporateDebitCardSurchargeAmount(), is(entity.getCorporateNonPrepaidDebitCardSurchargeAmount()));
         assertThat(dto.getCorporatePrepaidCreditCardSurchargeAmount(), is(entity.getCorporatePrepaidCreditCardSurchargeAmount()));
         assertThat(dto.getCorporatePrepaidDebitCardSurchargeAmount(), is(entity.getCorporatePrepaidDebitCardSurchargeAmount()));
-        assertThat(dto.isAllowWebPayments(), is(entity.isAllowWebPayments()));
         assertThat(dto.isAllowApplePay(), is(entity.isAllowApplePay()));
         assertThat(dto.isAllowGooglePay(), is(entity.isAllowGooglePay()));
         assertThat(dto.isRequires3ds(), is(entity.isRequires3ds()));
