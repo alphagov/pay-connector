@@ -43,15 +43,16 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Typ
 
 public abstract class WorldpayBasePaymentProviderTest {
 
+    protected static final URI WORLDPAY_URL = URI.create("http://worldpay.url");
+    
     protected WorldpayPaymentProvider provider;
-    private Map<String, String> urlMap = ImmutableMap.of(TEST.toString(), "http://worldpay.url");
+    private Map<String, String> urlMap = ImmutableMap.of(TEST.toString(), WORLDPAY_URL.toString());
 
     @Mock
     private Client mockClient;
     @Mock
-    protected GatewayClient mockGatewayClient;
-    @Mock
-    protected GatewayAccountEntity mockGatewayAccountEntity;
+    GatewayClient mockGatewayClient;
+    protected GatewayAccountEntity gatewayAccountEntity;
     @Mock
     private MetricRegistry mockMetricRegistry;
     @Mock
@@ -69,6 +70,9 @@ public abstract class WorldpayBasePaymentProviderTest {
 
     @Before
     public void setup() {
+        gatewayAccountEntity = aServiceAccount();
+        gatewayAccountEntity.setCredentials(ImmutableMap.of("merchant_id", "MERCHANTCODE"));
+        
         GatewayClientFactory gatewayClientFactory = new GatewayClientFactory(mockClientFactory);
 
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
@@ -114,7 +118,7 @@ public abstract class WorldpayBasePaymentProviderTest {
         when(mockClient.target(any(URI.class))).thenReturn(mockTarget);
         Invocation.Builder mockBuilder = mock(Invocation.Builder.class);
         when(mockTarget.request()).thenReturn(mockBuilder);
-        when(mockBuilder.header(anyString(), any(Object.class))).thenReturn(mockBuilder);
+        when(mockBuilder.header(anyString(), anyString())).thenReturn(mockBuilder);
 
         Map<String, NewCookie> responseCookies =
                 Collections.singletonMap(WORLDPAY_MACHINE_COOKIE_NAME, NewCookie.valueOf("value-from-worldpay"));

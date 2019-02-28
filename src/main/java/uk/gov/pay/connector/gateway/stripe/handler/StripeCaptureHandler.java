@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +15,7 @@ import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.StripeGatewayClientResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeCaptureResponse;
-import uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil;
+import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
@@ -24,7 +23,6 @@ import java.net.URI;
 import java.util.Map;
 
 import static java.lang.String.format;
-import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
 import static uk.gov.pay.connector.gateway.CaptureResponse.fromBaseCaptureResponse;
@@ -57,7 +55,7 @@ public class StripeCaptureHandler implements CaptureHandler {
             String captureResponse = client.postRequest(
                     URI.create(url),
                     StringUtils.EMPTY,
-                    ImmutableMap.of(AUTHORIZATION, StripeAuthUtil.getAuthHeaderValue(stripeGatewayConfig, gatewayAccount.isLive())),
+                    AuthUtil.getStripeAuthHeader(stripeGatewayConfig, gatewayAccount.isLive()),
                     APPLICATION_FORM_URLENCODED_TYPE,
                     format("gateway-operations.%s.%s.capture",
                             gatewayAccount.getGatewayName(),

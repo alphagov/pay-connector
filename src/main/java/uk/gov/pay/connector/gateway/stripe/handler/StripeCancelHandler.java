@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
@@ -26,11 +25,10 @@ import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
-import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
-import static uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil.getAuthHeaderValue;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getStripeAuthHeader;
 
 public class StripeCancelHandler {
 
@@ -54,11 +52,8 @@ public class StripeCancelHandler {
 
         try {
             String payload = URLEncodedUtils.format(singletonList(new BasicNameValuePair("charge", request.getTransactionId())), UTF_8);
-            client.postRequest(
-                    URI.create(url),
-                    payload,
-                    ImmutableMap.of(AUTHORIZATION, getAuthHeaderValue(stripeGatewayConfig, gatewayAccount.isLive())),
-                    APPLICATION_FORM_URLENCODED_TYPE,
+            client.postRequest(URI.create(url), payload, getStripeAuthHeader(stripeGatewayConfig, gatewayAccount.isLive()),
+                    APPLICATION_FORM_URLENCODED_TYPE, 
                     format("gateway-operations.%s.%s.cancel", gatewayAccount.getGatewayName(), gatewayAccount.getType()));
 
             return responseBuilder.withResponse(new BaseCancelResponse() {

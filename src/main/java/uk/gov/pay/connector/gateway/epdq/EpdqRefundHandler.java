@@ -17,6 +17,7 @@ import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshal
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider.ROUTE_FOR_MAINTENANCE_ORDER;
 import static uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse.RefundState.PENDING;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
@@ -36,7 +37,11 @@ public class EpdqRefundHandler implements RefundHandler {
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
         try {
             URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_MAINTENANCE_ORDER));
-            GatewayClient.Response response = client.postRequestFor(url, request.getGatewayAccount(), buildRefundOrder(request));
+            GatewayClient.Response response = client.postRequestFor(
+                    url, 
+                    request.getGatewayAccount(), 
+                    buildRefundOrder(request),
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, EpdqRefundResponse.class), PENDING);
         } catch (GenericGatewayErrorException | GatewayConnectionTimeoutErrorException | GatewayConnectionErrorException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());

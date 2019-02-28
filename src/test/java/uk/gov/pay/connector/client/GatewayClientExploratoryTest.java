@@ -3,6 +3,7 @@ package uk.gov.pay.connector.client;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.util.PortFactory;
 
@@ -14,16 +15,18 @@ import javax.ws.rs.core.Response;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static uk.gov.pay.connector.gateway.util.AuthUtil.encode;
 import static uk.gov.pay.connector.util.TestClientFactory.createClientWithApacheConnectorAndTimeout;
 import static uk.gov.pay.connector.util.TestClientFactory.createJerseyClient;
 
+@Ignore //this should be run manaully
 public class GatewayClientExploratoryTest {
 
     @Test
@@ -88,7 +91,6 @@ public class GatewayClientExploratoryTest {
     public Response postXMLRequestFor(Client client, String gatewayUrl, String requestBody) {
         return client.target(gatewayUrl)
                 .request(APPLICATION_XML)
-                .header(AUTHORIZATION, encode("user", "pass"))
                 .post(Entity.xml(requestBody));
     }
 }

@@ -17,10 +17,12 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import java.net.URI;
 
 import static io.dropwizard.testing.ConfigOverride.config;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.it.contract.TrustStoreLoader.getSSLContext;
@@ -60,7 +62,11 @@ public class GooglePayForWorldpayTest {
         GatewayClient authoriseClient = getGatewayClient();
         
         GatewayOrder gatewayOrder = new GatewayOrder(OrderRequestType.AUTHORISE, payload, APPLICATION_XML_TYPE);
-        GatewayClient.Response response = authoriseClient.postRequestFor(null, gatewayAccount, gatewayOrder);
+        GatewayClient.Response response = authoriseClient.postRequestFor(
+                URI.create("https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp"), 
+                gatewayAccount, 
+                gatewayOrder, 
+                getGatewayAccountCredentialsAsAuthHeader(gatewayAccount));
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
         String entity = response.getEntity();
         System.out.println(entity);

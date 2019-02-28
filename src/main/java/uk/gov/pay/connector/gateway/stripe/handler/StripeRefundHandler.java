@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
@@ -26,11 +25,10 @@ import java.util.Map;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse.fromBaseRefundResponse;
-import static uk.gov.pay.connector.gateway.stripe.util.StripeAuthUtil.getAuthHeaderValue;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getStripeAuthHeader;
 
 public class StripeRefundHandler {
     private static final Logger logger = LoggerFactory.getLogger(StripeRefundHandler.class);
@@ -50,11 +48,9 @@ public class StripeRefundHandler {
 
         try {
             String payload = URLEncodedUtils.format(buildPayload(request.getTransactionId(), request.getAmount()), UTF_8);
-            final String response = client.postRequest(
-                    URI.create(url),
+            final String response = client.postRequest(URI.create(url), 
                     payload,
-                    ImmutableMap.of(AUTHORIZATION, getAuthHeaderValue(stripeGatewayConfig, gatewayAccount.isLive())),
-                    APPLICATION_FORM_URLENCODED_TYPE,
+                    getStripeAuthHeader(stripeGatewayConfig, gatewayAccount.isLive()), APPLICATION_FORM_URLENCODED_TYPE,
                     format("gateway-operations.%s.%s.refund", gatewayAccount.getGatewayName(), gatewayAccount.getType()));
             String reference = jsonObjectMapper.getObject(response, Map.class).get("id").toString();
             return fromBaseRefundResponse(StripeRefundResponse.of(reference), GatewayRefundResponse.RefundState.COMPLETE);
