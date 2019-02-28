@@ -248,9 +248,7 @@ public class ChargeResponse {
 
         @Override
         public ChargeResponse build() {
-            return new ChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email,
-                    description, reference, providerName, createdDate, links, refundSummary, settlementSummary,
-                    cardDetails, auth3dsData, language, delayedCapture, corporateCardSurcharge, totalAmount);
+            return new ChargeResponse(this);
         }
     }
 
@@ -322,31 +320,27 @@ public class ChargeResponse {
     private Long totalAmount;
 
 
-    ChargeResponse(String chargeId, Long amount, ExternalTransactionState state, String cardBrand, String gatewayTransactionId, String returnUrl,
-                   String email, String description, ServicePaymentReference reference, String providerName, ZonedDateTime createdDate,
-                   List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails,
-                   Auth3dsData auth3dsData, SupportedLanguage language, boolean delayedCapture,
-                   Long corporateCardSurcharge, Long totalAmount) {
-        this.dataLinks = dataLinks;
-        this.chargeId = chargeId;
-        this.amount = amount;
-        this.state = state;
-        this.cardBrand = cardBrand;
-        this.gatewayTransactionId = gatewayTransactionId;
-        this.returnUrl = returnUrl;
-        this.description = description;
-        this.reference = reference;
-        this.providerName = providerName;
-        this.createdDate = createdDate;
-        this.email = email;
-        this.refundSummary = refundSummary;
-        this.settlementSummary = settlementSummary;
-        this.cardDetails = cardDetails;
-        this.auth3dsData = auth3dsData;
-        this.language = language;
-        this.delayedCapture = delayedCapture;
-        this.corporateCardSurcharge = corporateCardSurcharge;
-        this.totalAmount = totalAmount;
+    ChargeResponse(AbstractChargeResponseBuilder<?, ? extends ChargeResponse> builder) {
+        this.dataLinks = builder.getLinks();
+        this.chargeId = builder.getChargeId();
+        this.amount = builder.getAmount();
+        this.state = builder.getState();
+        this.cardBrand = builder.getCardBrand();
+        this.gatewayTransactionId = builder.getGatewayTransactionId();
+        this.returnUrl = builder.getReturnUrl();
+        this.description = builder.getDescription();
+        this.reference = builder.getReference();
+        this.providerName = builder.getProviderName();
+        this.createdDate = builder.getCreatedDate();
+        this.email = builder.getEmail();
+        this.refundSummary = builder.getRefundSummary();
+        this.settlementSummary = builder.getSettlementSummary();
+        this.cardDetails = builder.getCardDetails();
+        this.auth3dsData = builder.getAuth3dsData();
+        this.language = builder.getLanguage();
+        this.delayedCapture = builder.isDelayedCapture();
+        this.corporateCardSurcharge = builder.getCorporateCardSurcharge();
+        this.totalAmount = builder.getTotalAmount();
     }
 
     public List<Map<String, Object>> getDataLinks() {

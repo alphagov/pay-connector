@@ -148,5 +148,85 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
 
+    public String getChargeId() {
+        return chargeId;
+    }
+
+    public Long getAmount() {
+        return amount;
+    }
+
+    public ExternalTransactionState getState() {
+        return state;
+    }
+
+    public String getCardBrand() {
+        return cardBrand;
+    }
+
+    public String getGatewayTransactionId() {
+        return gatewayTransactionId;
+    }
+
+    public String getReturnUrl() {
+        return returnUrl;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public ZonedDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public List<Map<String, Object>> getLinks() {
+        return links;
+    }
+
+    public ServicePaymentReference getReference() {
+        return reference;
+    }
+
+    public String getProviderName() {
+        return providerName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public ChargeResponse.RefundSummary getRefundSummary() {
+        return refundSummary;
+    }
+
+    public ChargeResponse.SettlementSummary getSettlementSummary() {
+        return settlementSummary;
+    }
+
+    public PersistedCard getCardDetails() {
+        return cardDetails;
+    }
+
+    public ChargeResponse.Auth3dsData getAuth3dsData() {
+        return auth3dsData;
+    }
+
+    public SupportedLanguage getLanguage() {
+        return language;
+    }
+
+    public boolean isDelayedCapture() {
+        return delayedCapture;
+    }
+
+    public Long getCorporateCardSurcharge() {
+        return corporateCardSurcharge;
+    }
+
+    public Long getTotalAmount() {
+        return totalAmount;
+    }
+
     public abstract R build();
 }

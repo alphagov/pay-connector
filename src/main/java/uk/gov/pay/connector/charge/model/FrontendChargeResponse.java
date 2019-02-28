@@ -2,17 +2,11 @@ package uk.gov.pay.connector.charge.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
 
 public class FrontendChargeResponse extends ChargeResponse {
     public static class FrontendChargeResponseBuilder extends AbstractChargeResponseBuilder<FrontendChargeResponseBuilder, FrontendChargeResponse> {
@@ -38,10 +32,7 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         @Override
         public FrontendChargeResponse build() {
-            return new FrontendChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl,
-                    email, description, reference, providerName, createdDate, links, status, refundSummary,
-                    settlementSummary, cardDetails, auth3dsData, gatewayAccount, language, delayedCapture,
-                    corporateCardSurcharge, totalAmount);
+            return new FrontendChargeResponse(this);
         }
     }
 
@@ -55,19 +46,10 @@ public class FrontendChargeResponse extends ChargeResponse {
     @JsonProperty(value = "gateway_account")
     private GatewayAccountEntity gatewayAccount;
 
-    private FrontendChargeResponse(String chargeId, Long amount, ExternalTransactionState state, String cardBrand,
-                                   String gatewayTransactionId, String returnUrl, String email, String description,
-                                   ServicePaymentReference reference, String providerName, ZonedDateTime createdDate,
-                                   List<Map<String, Object>> dataLinks, String status, RefundSummary refundSummary,
-                                   SettlementSummary settlementSummary, PersistedCard chargeCardDetails,
-                                   Auth3dsData auth3dsData, GatewayAccountEntity gatewayAccount,
-                                   SupportedLanguage language, boolean delayedCapture,
-                                   Long corporateCardSurcharge, Long totalAmount) {
-        super(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email, description, reference,
-                providerName, createdDate, dataLinks, refundSummary, settlementSummary, chargeCardDetails, auth3dsData,
-                language, delayedCapture, corporateCardSurcharge, totalAmount);
-        this.status = status;
-        this.gatewayAccount = gatewayAccount;
+    private FrontendChargeResponse(FrontendChargeResponseBuilder builder) {
+        super(builder);
+        this.status = builder.status;
+        this.gatewayAccount = builder.gatewayAccount;
     }
 
     @Override
