@@ -168,7 +168,8 @@ public class ChargesFrontendResource {
                 .withDelayedCapture(charge.isDelayedCapture())
                 .withLink("self", GET, locationUriFor("/v1/frontend/charges/{chargeId}", uriInfo, chargeId))
                 .withLink("cardAuth", POST, locationUriFor("/v1/frontend/charges/{chargeId}/cards", uriInfo, chargeId))
-                .withLink("cardCapture", POST, locationUriFor("/v1/frontend/charges/{chargeId}/capture", uriInfo, chargeId));
+                .withLink("cardCapture", POST, locationUriFor("/v1/frontend/charges/{chargeId}/capture", uriInfo, chargeId))
+                .withWalletType(charge.getWalletType());
         charge.getCorporateSurcharge().ifPresent(surcharge -> {
             if (surcharge > 0) {
                 responseBuilder
