@@ -1,16 +1,22 @@
 package uk.gov.pay.connector.wallets;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.amazonaws.util.json.Jackson;
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -32,6 +38,7 @@ import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -47,6 +54,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -88,9 +96,10 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
                             anApplePayPaymentInfo().build())
                     .build();
 
+    private Appender<ILoggingEvent> mockAppender;
+
     @Before
-    public void setUpAppleAuthorisationService() {
-        mockMetricRegistry = mock(MetricRegistry.class);
+    public void setUp() {
         when(mockedProviders.byName(any())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
@@ -107,6 +116,28 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
                 chargeService,
                 cardAuthoriseBaseService,
                 mockEnvironment);
+
+        setUpLogging();
+    }
+
+    private void setUpLogging() {
+        Logger root = (Logger) LoggerFactory.getLogger(WalletAuthoriseService.class);
+        mockAppender = mock(Appender.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
+    }
+
+    @Test
+    public void verifyLogging() throws Exception {
+        GatewayResponse gatewayResponse = providerWillAuthorise();
+        walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
+
+        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
+        verify(mockAppender, times(4)).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+        assertThat(loggingEvents.stream().anyMatch(le -> le.getFormattedMessage().contains(
+                format("APPLE_PAY authorisation success - charge_external_id=%s, payment provider response=%s", charge.getExternalId(), gatewayResponse.toString()))
+        ), is(true));
     }
 
     @Test
@@ -324,9 +355,10 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
                 .when(mockExecutorService).execute(any(Supplier.class));
     }
     
-    private void providerWillAuthorise() throws Exception {
+    private GatewayResponse providerWillAuthorise() throws Exception {
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null);
         when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
+        return authResponse;
     }
 
     private void providerWillReject() throws Exception {

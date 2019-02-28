@@ -93,7 +93,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Before
     public void setUpCardAuthorisationService() {
-        mockMetricRegistry = mock(MetricRegistry.class);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
 

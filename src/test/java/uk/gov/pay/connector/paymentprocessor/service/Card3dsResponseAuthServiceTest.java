@@ -58,7 +58,6 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     @Before
     public void setUpCardAuthorisationService() {
         Environment mockEnvironment = mock(Environment.class);
-        mockMetricRegistry = mock(MetricRegistry.class);
         Counter mockCounter = mock(Counter.class);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
