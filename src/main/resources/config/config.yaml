@@ -101,7 +101,7 @@ captureProcessConfig:
   # the initial attempt. See PP-2627 or commit
   # e931b4dab25284acedeb6d59d4bfd3d29e454b82 for more details.
   retryFailuresEvery: ${CAPTURE_PROCESS_RETRY_FAILURES_EVERY:-60 minutes}
-  maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-48}
+  maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-96}
 
 transactionsPaginationServiceConfig:
   displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}
