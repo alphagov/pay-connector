@@ -13,6 +13,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+import uk.gov.pay.connector.wallets.WalletType;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.time.ZoneId;
@@ -240,6 +241,39 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[1]." + JSON_CHARGE_KEY, is(externalChargeId))
                 .body("results[1]", not(hasKey(JSON_CORPORATE_CARD_SURCHARGE_KEY)))
                 .body("results[1]", not(hasKey(JSON_TOTAL_AMOUNT_KEY)));
+    }
+
+    @Test
+    public void shouldReturnWalletTypeWhenNotNull() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        createCharge(externalChargeId, chargeId);
+        databaseTestHelper.addWalletType(chargeId, WalletType.APPLE_PAY);
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .getChargesV1()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results[0].charge_id", is(externalChargeId))
+                .body("results[0].wallet_type", is(WalletType.APPLE_PAY.toString()));
+    }
+
+    @Test
+    public void shouldReturnWalletTypeAsNullWhenNull() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        createCharge(externalChargeId, chargeId);
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .getChargesV1()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results[0].charge_id", is(externalChargeId))
+                .body("results[0].wallet_type", is(nullValue()));
     }
 
     @Test

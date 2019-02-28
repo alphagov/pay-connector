@@ -67,6 +67,7 @@ public class ChargeEntityFixture {
 
             chargeEntity.set3dsDetails(auth3dsDetailsEntity);
         }
+        chargeEntity.setWalletType(walletType);
         return chargeEntity;
     }
 

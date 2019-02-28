@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.util.DateTimeUtils;
+import uk.gov.pay.connector.wallets.WalletType;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
@@ -318,6 +319,9 @@ public class ChargeResponse {
 
     @JsonProperty("total_amount")
     private Long totalAmount;
+    
+    @JsonProperty("wallet_type")
+    private WalletType walletType;
 
 
     ChargeResponse(AbstractChargeResponseBuilder<?, ? extends ChargeResponse> builder) {
@@ -341,6 +345,7 @@ public class ChargeResponse {
         this.delayedCapture = builder.isDelayedCapture();
         this.corporateCardSurcharge = builder.getCorporateCardSurcharge();
         this.totalAmount = builder.getTotalAmount();
+        this.walletType = builder.getWalletType();
     }
 
     public List<Map<String, Object>> getDataLinks() {
@@ -419,6 +424,10 @@ public class ChargeResponse {
         return totalAmount;
     }
 
+    public WalletType getWalletType() {
+        return walletType;
+    }
+
     public URI getLink(String rel) {
         return dataLinks.stream()
                 .filter(map -> rel.equals(map.get("rel")))
@@ -449,16 +458,17 @@ public class ChargeResponse {
                 Objects.equals(settlementSummary, that.settlementSummary) &&
                 Objects.equals(auth3dsData, that.auth3dsData) &&
                 Objects.equals(cardDetails, that.cardDetails) &&
+                language == that.language &&
                 Objects.equals(corporateCardSurcharge, that.corporateCardSurcharge) &&
                 Objects.equals(totalAmount, that.totalAmount) &&
-                language == that.language;
+                walletType == that.walletType;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(dataLinks, chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email,
                 description, reference, providerName, createdDate, refundSummary, settlementSummary, auth3dsData,
-                cardDetails, language, delayedCapture, corporateCardSurcharge, totalAmount);
+                cardDetails, language, delayedCapture, corporateCardSurcharge, totalAmount, walletType);
     }
 
     @Override
@@ -482,6 +492,7 @@ public class ChargeResponse {
                 ", delayedCapture=" + delayedCapture +
                 ", corporateCardSurcharge=" + corporateCardSurcharge +
                 ", totalAmount=" + totalAmount +
+                ", walletType=" + walletType.toString() +
                 '}';
     }
 

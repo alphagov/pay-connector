@@ -6,6 +6,7 @@ import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
+import uk.gov.pay.connector.wallets.WalletType;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
@@ -34,6 +35,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected boolean delayedCapture;
     protected Long corporateCardSurcharge;
     protected Long totalAmount;
+    protected WalletType walletType;
 
     protected abstract T thisObject();
 
@@ -147,6 +149,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         this.totalAmount = totalAmount;
         return thisObject();
     }
+    
+    public T withWalletType(WalletType walletType) {
+        this.walletType = walletType;
+        return thisObject();
+    }
 
     public String getChargeId() {
         return chargeId;
@@ -226,6 +233,10 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public Long getTotalAmount() {
         return totalAmount;
+    }
+
+    public WalletType getWalletType() {
+        return walletType;
     }
 
     public abstract R build();
