@@ -127,7 +127,6 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .body("accounts[0].service_name", is(gatewayAccountPayload.getServiceName()))
                 .body("accounts[0].corporate_credit_card_surcharge_amount", is(250))
                 .body("accounts[0].corporate_debit_card_surcharge_amount", is(50))
-                .body("accounts[0].allow_web_payments", is(false))
                 .body("accounts[0].allow_apple_pay", is(false))
                 .body("accounts[0].allow_google_pay", is(false));
     }

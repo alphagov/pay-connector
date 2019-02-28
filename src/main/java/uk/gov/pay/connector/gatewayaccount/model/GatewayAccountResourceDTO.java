@@ -40,9 +40,6 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("_links")
     private Map<String, Map<String, URI>> links = new HashMap<>();
 
-    @JsonProperty("allow_web_payments")
-    private boolean allowWebPayments;
-
     @JsonProperty("allow_apple_pay")
     private boolean allowApplePay;
 
@@ -75,7 +72,6 @@ public class GatewayAccountResourceDTO {
                                      String analyticsId,
                                      long corporateCreditCardSurchargeAmount,
                                      long corporateDebitCardSurchargeAmount,
-                                     boolean allowWebPayments,
                                      boolean allowApplePay,
                                      boolean allowGooglePay,
                                      long corporatePrepaidCreditCardSurchargeAmount,
@@ -91,7 +87,6 @@ public class GatewayAccountResourceDTO {
         this.analyticsId = analyticsId;
         this.corporateCreditCardSurchargeAmount = corporateCreditCardSurchargeAmount;
         this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
-        this.allowWebPayments = allowWebPayments;
         this.allowApplePay = allowApplePay;
         this.allowGooglePay = allowGooglePay;
         this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
@@ -111,7 +106,6 @@ public class GatewayAccountResourceDTO {
                 gatewayAccountEntity.getAnalyticsId(),
                 gatewayAccountEntity.getCorporateNonPrepaidCreditCardSurchargeAmount(),
                 gatewayAccountEntity.getCorporateNonPrepaidDebitCardSurchargeAmount(),
-                gatewayAccountEntity.isAllowWebPayments(),
                 gatewayAccountEntity.isAllowApplePay(),
                 gatewayAccountEntity.isAllowGooglePay(),
                 gatewayAccountEntity.getCorporatePrepaidCreditCardSurchargeAmount(),
@@ -168,10 +162,6 @@ public class GatewayAccountResourceDTO {
 
     public long getCorporatePrepaidDebitCardSurchargeAmount() {
         return corporatePrepaidDebitCardSurchargeAmount;
-    }
-
-    public boolean isAllowWebPayments() {
-        return allowWebPayments;
     }
 
     public boolean isAllowApplePay() {

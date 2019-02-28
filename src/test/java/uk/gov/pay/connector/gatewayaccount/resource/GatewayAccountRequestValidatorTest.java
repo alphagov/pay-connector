@@ -46,8 +46,7 @@ public class GatewayAccountRequestValidatorTest {
             "replace, allow_apple_pay, null, Field [value] is required",
             "replace, allow_google_pay, null, Field [value] is required",
             "replace, allow_apple_pay, unfalse, Value [unfalse] is not valid for [allow_apple_pay]",
-            "replace, allow_google_pay, unfalse, Value [unfalse] is not valid for [allow_google_pay]",
-            "replace, allow_web_payments, unfalse, Value [unfalse] is not valid for [allow_web_payments]" //Deprecate when allow_web_payments is no longer used
+            "replace, allow_google_pay, unfalse, Value [unfalse] is not valid for [allow_google_pay]"
     })
     public void shouldThrowWhenWebPaymentRequestsAreInvalid(String op, String path, @Nullable String flagValue, String expectedErrorMessage) {
         Map<String, String> patch = new HashMap<String, String>(){{

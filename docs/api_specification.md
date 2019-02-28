@@ -796,7 +796,7 @@ Content-Type: application/json
 
 ## PATCH /v1/api/accounts/{accountId}
 
-A generic endpoint that allows the patching of `allow_web_payments`, `notify_settings`, `email_collection_mode`, 
+A generic endpoint that allows the patching of `allow_apple_pay`, `allow_google_pay`, `notify_settings`, `email_collection_mode`, 
 `corporate_credit_card_surcharge_amount`, `corporate_debit_card_surcharge_amount`, `corporate_prepaid_credit_card_surcharge_amount`
 or `corporate_prepaid_debit_card_surcharge_amount`.
 
@@ -806,7 +806,7 @@ or `corporate_prepaid_debit_card_surcharge_amount`.
 PATCH /v1/api/accounts/123
 Content-Type: application/json
 {
-    "op":"replace", "path":"allow_web_payments", "value": true
+    "op":"replace", "path":"allow_apple_pay", "value": true
 }
 
 PATCH /v1/api/accounts/123

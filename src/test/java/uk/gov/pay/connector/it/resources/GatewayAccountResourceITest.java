@@ -512,33 +512,6 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
     }
 
     @Test
-    public void allow_web_payments_shouldBeFalseByDefault() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
-        givenSetup()
-                .get("/v1/api/accounts/" + gatewayAccountId)
-                .then()
-                .body("allow_web_payments", is(false));
-    }
-
-    @Test
-    public void patchGatewayAccountToAllowWebPayments() throws JsonProcessingException {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
-        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
-                "path", "allow_web_payments",
-                "value", "true"));
-        givenSetup()
-                .body(payload)
-                .patch("/v1/api/accounts/" + gatewayAccountId)
-                .then()
-                .statusCode(OK.getStatusCode());
-
-        givenSetup()
-                .get("/v1/api/accounts/" + gatewayAccountId)
-                .then()
-                .body("allow_web_payments", is(true));
-    }
-
-    @Test
     public void patchGatewayAccount_forCorporateCreditCardSurcharge() throws JsonProcessingException {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",

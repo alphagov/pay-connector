@@ -106,10 +106,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "requires_3ds")
     private boolean requires3ds;
 
-    //Deprecate when frontend no longer uses this
-    @Column(name = "allow_web_payments")
-    private boolean allowWebPayments;
-
     @Column(name = "allow_google_pay")
     private boolean allowGooglePay;
 
@@ -228,14 +224,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public boolean isRequires3ds() {
         return requires3ds;
-    }
-
-    public boolean isAllowWebPayments() {
-        return allowWebPayments;
-    }
-
-    public void setAllowWebPayments(boolean allowWebPayments) {
-        this.allowWebPayments = allowWebPayments;
     }
 
     @JsonProperty("allow_google_pay")
