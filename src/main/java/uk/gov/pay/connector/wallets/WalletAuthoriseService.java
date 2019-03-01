@@ -100,7 +100,7 @@ public class WalletAuthoriseService {
                 chargeEntity.getGatewayAccount().getType(),
                 chargeEntity.getGatewayAccount().getId(),
                 walletType.equals(WalletType.GOOGLE_PAY)? "google-pay" : "apple-pay",
-                successOrFailure));
+                successOrFailure)).inc();
     }
 
     @Transactional
