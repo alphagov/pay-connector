@@ -17,6 +17,7 @@ import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
+import uk.gov.pay.connector.wallets.WalletType;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.util.List;
@@ -135,6 +136,19 @@ public class ChargesFrontendResourceITest {
                 .body("links", containsLink("self", GET, expectedLocation))
                 .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))
                 .body("links", containsLink("cardCapture", POST, expectedLocation + "/capture"));
+    }
+    
+    @Test
+    public void getChargeShouldIncludeWalletType() {
+        String externalChargeId = postToCreateACharge(expectedAmount);
+        final long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
+        databaseTestHelper.addWalletType(chargeId, WalletType.APPLE_PAY);
+        
+        getChargeFromResource(externalChargeId)
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("charge_id", is(externalChargeId))
+                .body("wallet_type", is(WalletType.APPLE_PAY.toString()));
     }
 
     @Test

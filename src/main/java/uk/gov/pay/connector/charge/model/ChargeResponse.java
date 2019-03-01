@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.util.DateTimeUtils;
+import uk.gov.pay.connector.wallets.WalletType;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
@@ -248,9 +249,7 @@ public class ChargeResponse {
 
         @Override
         public ChargeResponse build() {
-            return new ChargeResponse(chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email,
-                    description, reference, providerName, createdDate, links, refundSummary, settlementSummary,
-                    cardDetails, auth3dsData, language, delayedCapture, corporateCardSurcharge, totalAmount);
+            return new ChargeResponse(this);
         }
     }
 
@@ -320,33 +319,33 @@ public class ChargeResponse {
 
     @JsonProperty("total_amount")
     private Long totalAmount;
+    
+    @JsonProperty("wallet_type")
+    private WalletType walletType;
 
 
-    ChargeResponse(String chargeId, Long amount, ExternalTransactionState state, String cardBrand, String gatewayTransactionId, String returnUrl,
-                   String email, String description, ServicePaymentReference reference, String providerName, ZonedDateTime createdDate,
-                   List<Map<String, Object>> dataLinks, RefundSummary refundSummary, SettlementSummary settlementSummary, PersistedCard cardDetails,
-                   Auth3dsData auth3dsData, SupportedLanguage language, boolean delayedCapture,
-                   Long corporateCardSurcharge, Long totalAmount) {
-        this.dataLinks = dataLinks;
-        this.chargeId = chargeId;
-        this.amount = amount;
-        this.state = state;
-        this.cardBrand = cardBrand;
-        this.gatewayTransactionId = gatewayTransactionId;
-        this.returnUrl = returnUrl;
-        this.description = description;
-        this.reference = reference;
-        this.providerName = providerName;
-        this.createdDate = createdDate;
-        this.email = email;
-        this.refundSummary = refundSummary;
-        this.settlementSummary = settlementSummary;
-        this.cardDetails = cardDetails;
-        this.auth3dsData = auth3dsData;
-        this.language = language;
-        this.delayedCapture = delayedCapture;
-        this.corporateCardSurcharge = corporateCardSurcharge;
-        this.totalAmount = totalAmount;
+    ChargeResponse(AbstractChargeResponseBuilder<?, ? extends ChargeResponse> builder) {
+        this.dataLinks = builder.getLinks();
+        this.chargeId = builder.getChargeId();
+        this.amount = builder.getAmount();
+        this.state = builder.getState();
+        this.cardBrand = builder.getCardBrand();
+        this.gatewayTransactionId = builder.getGatewayTransactionId();
+        this.returnUrl = builder.getReturnUrl();
+        this.description = builder.getDescription();
+        this.reference = builder.getReference();
+        this.providerName = builder.getProviderName();
+        this.createdDate = builder.getCreatedDate();
+        this.email = builder.getEmail();
+        this.refundSummary = builder.getRefundSummary();
+        this.settlementSummary = builder.getSettlementSummary();
+        this.cardDetails = builder.getCardDetails();
+        this.auth3dsData = builder.getAuth3dsData();
+        this.language = builder.getLanguage();
+        this.delayedCapture = builder.isDelayedCapture();
+        this.corporateCardSurcharge = builder.getCorporateCardSurcharge();
+        this.totalAmount = builder.getTotalAmount();
+        this.walletType = builder.getWalletType();
     }
 
     public List<Map<String, Object>> getDataLinks() {
@@ -425,6 +424,10 @@ public class ChargeResponse {
         return totalAmount;
     }
 
+    public WalletType getWalletType() {
+        return walletType;
+    }
+
     public URI getLink(String rel) {
         return dataLinks.stream()
                 .filter(map -> rel.equals(map.get("rel")))
@@ -455,16 +458,17 @@ public class ChargeResponse {
                 Objects.equals(settlementSummary, that.settlementSummary) &&
                 Objects.equals(auth3dsData, that.auth3dsData) &&
                 Objects.equals(cardDetails, that.cardDetails) &&
+                language == that.language &&
                 Objects.equals(corporateCardSurcharge, that.corporateCardSurcharge) &&
                 Objects.equals(totalAmount, that.totalAmount) &&
-                language == that.language;
+                walletType == that.walletType;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(dataLinks, chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email,
                 description, reference, providerName, createdDate, refundSummary, settlementSummary, auth3dsData,
-                cardDetails, language, delayedCapture, corporateCardSurcharge, totalAmount);
+                cardDetails, language, delayedCapture, corporateCardSurcharge, totalAmount, walletType);
     }
 
     @Override
@@ -488,6 +492,7 @@ public class ChargeResponse {
                 ", delayedCapture=" + delayedCapture +
                 ", corporateCardSurcharge=" + corporateCardSurcharge +
                 ", totalAmount=" + totalAmount +
+                ", walletType=" + walletType.toString() +
                 '}';
     }
 

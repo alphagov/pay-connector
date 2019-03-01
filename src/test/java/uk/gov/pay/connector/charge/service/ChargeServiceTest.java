@@ -32,6 +32,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
+import uk.gov.pay.connector.wallets.WalletType;
 
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
@@ -309,6 +310,7 @@ public class ChargeServiceTest {
                 .withId(chargeId)
                 .withGatewayAccountEntity(gatewayAccount)
                 .withStatus(status)
+                .withWalletType(WalletType.APPLE_PAY)
                 .build();
 
         Optional<ChargeEntity> chargeEntity = Optional.of(newCharge);
@@ -326,6 +328,7 @@ public class ChargeServiceTest {
         assertThat(tokenEntity.getToken(), is(notNullValue()));
 
         ChargeResponseBuilder chargeResponseWithoutCorporateCardSurcharge = chargeResponseBuilderOf(chargeEntity.get());
+        chargeResponseWithoutCorporateCardSurcharge.withWalletType(WalletType.APPLE_PAY);
         chargeResponseWithoutCorporateCardSurcharge.withLink("self", GET, new URI(SERVICE_HOST + "/v1/api/accounts/10/charges/" + externalId));
         chargeResponseWithoutCorporateCardSurcharge.withLink("refunds", GET, new URI(SERVICE_HOST + "/v1/api/accounts/10/charges/" + externalId + "/refunds"));
         chargeResponseWithoutCorporateCardSurcharge.withLink("next_url", GET, new URI("http://payments.com/secure/" + tokenEntity.getToken()));
@@ -338,6 +341,7 @@ public class ChargeServiceTest {
         assertThat(chargeResponse.getCorporateCardSurcharge(), is(nullValue()));
         assertThat(chargeResponse.getTotalAmount(), is(nullValue()));
         assertThat(chargeResponse, is(chargeResponseWithoutCorporateCardSurcharge.build()));
+        assertThat(chargeResponse.getWalletType(), is(WalletType.APPLE_PAY));
     }
 
     @Test

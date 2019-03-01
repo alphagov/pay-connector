@@ -17,6 +17,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
+import uk.gov.pay.connector.wallets.WalletType;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -604,6 +605,15 @@ public class DatabaseTestHelper {
         jdbi.withHandle(handle ->
                 handle.createStatement("UPDATE gateway_accounts set allow_apple_pay=true WHERE id=:gatewayAccountId")
                         .bind("gatewayAccountId", accountId)
+                        .execute()
+        );
+    }
+
+    public void addWalletType(long chargeId, WalletType walletType) {
+        jdbi.withHandle(handle ->
+                handle.createStatement("UPDATE CHARGES set wallet=:walletType WHERE id=:chargeId")
+                        .bind("chargeId", chargeId)
+                        .bind("walletType", walletType)
                         .execute()
         );
     }

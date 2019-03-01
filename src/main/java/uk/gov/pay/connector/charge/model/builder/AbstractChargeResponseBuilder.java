@@ -6,6 +6,7 @@ import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
+import uk.gov.pay.connector.wallets.WalletType;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
@@ -34,6 +35,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected boolean delayedCapture;
     protected Long corporateCardSurcharge;
     protected Long totalAmount;
+    protected WalletType walletType;
 
     protected abstract T thisObject();
 
@@ -146,6 +148,95 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     public T withTotalAmount(Long totalAmount) {
         this.totalAmount = totalAmount;
         return thisObject();
+    }
+    
+    public T withWalletType(WalletType walletType) {
+        this.walletType = walletType;
+        return thisObject();
+    }
+
+    public String getChargeId() {
+        return chargeId;
+    }
+
+    public Long getAmount() {
+        return amount;
+    }
+
+    public ExternalTransactionState getState() {
+        return state;
+    }
+
+    public String getCardBrand() {
+        return cardBrand;
+    }
+
+    public String getGatewayTransactionId() {
+        return gatewayTransactionId;
+    }
+
+    public String getReturnUrl() {
+        return returnUrl;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public ZonedDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public List<Map<String, Object>> getLinks() {
+        return links;
+    }
+
+    public ServicePaymentReference getReference() {
+        return reference;
+    }
+
+    public String getProviderName() {
+        return providerName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public ChargeResponse.RefundSummary getRefundSummary() {
+        return refundSummary;
+    }
+
+    public ChargeResponse.SettlementSummary getSettlementSummary() {
+        return settlementSummary;
+    }
+
+    public PersistedCard getCardDetails() {
+        return cardDetails;
+    }
+
+    public ChargeResponse.Auth3dsData getAuth3dsData() {
+        return auth3dsData;
+    }
+
+    public SupportedLanguage getLanguage() {
+        return language;
+    }
+
+    public boolean isDelayedCapture() {
+        return delayedCapture;
+    }
+
+    public Long getCorporateCardSurcharge() {
+        return corporateCardSurcharge;
+    }
+
+    public Long getTotalAmount() {
+        return totalAmount;
+    }
+
+    public WalletType getWalletType() {
+        return walletType;
     }
 
     public abstract R build();
