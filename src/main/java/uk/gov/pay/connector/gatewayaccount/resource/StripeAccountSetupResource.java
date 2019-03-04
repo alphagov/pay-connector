@@ -4,10 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
 import io.dropwizard.jersey.PATCH;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetup;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupUpdateRequest;
+import uk.gov.pay.connector.gatewayaccount.resource.support.StripeAccountUtils;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.StripeAccountSetupService;
 
@@ -44,7 +43,7 @@ public class StripeAccountSetupResource {
     @Produces(APPLICATION_JSON)
     public StripeAccountSetup getStripeAccountSetup(@PathParam("accountId") Long accountId) {
         return gatewayAccountService.getGatewayAccount(accountId)
-                .filter(this::isStripeGatewayAccount)
+                .filter(StripeAccountUtils::isStripeGatewayAccount)
                 .map(gatewayAccountEntity -> stripeAccountSetupService.getCompletedTasks(gatewayAccountEntity.getId()))
                 .orElseThrow(NotFoundException::new);
     }
@@ -54,7 +53,7 @@ public class StripeAccountSetupResource {
     @Consumes(APPLICATION_JSON)
     public Response patchStripeAccountSetup(@PathParam("accountId") Long accountId, JsonNode payload) {
         return gatewayAccountService.getGatewayAccount(accountId)
-                .filter(this::isStripeGatewayAccount)
+                .filter(StripeAccountUtils::isStripeGatewayAccount)
                 .map(gatewayAccountEntity -> {
                     stripeAccountSetupRequestValidator.validatePatchRequest(payload);
                     List<StripeAccountSetupUpdateRequest> updateRequests = StreamSupport
@@ -68,7 +67,4 @@ public class StripeAccountSetupResource {
                 }).orElseThrow(NotFoundException::new);
     }
 
-    private boolean isStripeGatewayAccount(GatewayAccountEntity gatewayAccountEntity) {
-        return PaymentGatewayName.STRIPE.getName().equals(gatewayAccountEntity.getGatewayName());
-    }
 }
