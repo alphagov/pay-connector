@@ -13,6 +13,7 @@ import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse.RefundState.PENDING;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
 public class SmartpayRefundHandler implements RefundHandler {
@@ -28,8 +29,11 @@ public class SmartpayRefundHandler implements RefundHandler {
     @Override
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
         try {
-            GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                    request.getGatewayAccount(), buildRefundOrderFor(request));
+            GatewayClient.Response response = client.postRequestFor(
+                    gatewayUrlMap.get(request.getGatewayAccount().getType()), 
+                    request.getGatewayAccount(), 
+                    buildRefundOrderFor(request),
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, SmartpayRefundResponse.class), PENDING);
         } catch (GatewayErrorException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());

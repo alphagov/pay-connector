@@ -42,6 +42,7 @@ import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CANCEL;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CAPTURE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
@@ -95,7 +96,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayErrorException {
         GatewayOrder gatewayOrder = buildAuthoriseOrder(request);
         GatewayClient.Response response = authoriseClient.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                request.getGatewayAccount(), gatewayOrder);
+                request.getGatewayAccount(), gatewayOrder, getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
         return getWorldpayGatewayResponse(response);
     }
 
@@ -107,7 +108,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     .orElse(emptyList());
             
             GatewayClient.Response response = authoriseClient.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                    request.getGatewayAccount(), build3dsResponseAuthOrder(request), cookies);
+                    request.getGatewayAccount(), build3dsResponseAuthOrder(request), cookies, 
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getWorldpayGatewayResponse(response);
             
@@ -139,7 +141,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     @Override
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayErrorException {
         GatewayClient.Response response = cancelClient.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                request.getGatewayAccount(), buildCancelOrder(request));
+                request.getGatewayAccount(), buildCancelOrder(request), 
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
         return getWorldpayGatewayResponse(response);
     }
 

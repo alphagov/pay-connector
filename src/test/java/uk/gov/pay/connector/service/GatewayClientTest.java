@@ -27,17 +27,15 @@ import javax.ws.rs.core.Response;
 import java.net.HttpCookie;
 import java.net.SocketException;
 import java.net.URI;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static java.util.Collections.emptyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.util.AuthUtil.encode;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 
@@ -73,10 +71,6 @@ public class GatewayClientTest {
 
     @Before
     public void setup() {
-        Map<String, String> credentialMap = new HashMap<>();
-        credentialMap.put(CREDENTIALS_USERNAME, "user");
-        credentialMap.put(CREDENTIALS_PASSWORD, "password");
-
         gatewayClient = new GatewayClient(mockClient,
                 mockMetricRegistry);
         when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
@@ -87,12 +81,10 @@ public class GatewayClientTest {
 
         when(mockClient.target(WORLDPAY_API_ENDPOINT)).thenReturn(mockWebTarget);
         when(mockWebTarget.request()).thenReturn(mockBuilder).thenReturn(mockBuilder);
-        when(mockBuilder.header(AUTHORIZATION, encode("user", "password"))).thenReturn(mockBuilder);
         when(mockBuilder.post(Entity.entity(orderPayload, mediaType))).thenReturn(mockResponse);
 
         when(mockGatewayAccountEntity.getGatewayName()).thenReturn("worldpay");
         when(mockGatewayAccountEntity.getType()).thenReturn("worldpay");
-        when(mockGatewayAccountEntity.getCredentials()).thenReturn(credentialMap);
 
         when(mockGatewayOrder.getOrderRequestType()).thenReturn(OrderRequestType.AUTHORISE);
         when(mockGatewayOrder.getPayload()).thenReturn(orderPayload);
@@ -102,21 +94,22 @@ public class GatewayClientTest {
     @Test(expected = GatewayErrorException.GatewayConnectionErrorException.class)
     public void shouldReturnGatewayErrorWhenProviderFails() throws Exception {
         when(mockResponse.getStatus()).thenReturn(500);
-        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder);
+        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder, emptyMap());
         verify(mockResponse).close();
     }
 
     @Test(expected = GatewayErrorException.GenericGatewayErrorException.class)
     public void shouldReturnGatewayErrorWhenProviderFailsWithAProcessingException() throws Exception {
         when(mockBuilder.post(Entity.entity(orderPayload, mediaType))).thenThrow(new ProcessingException(new SocketException("socket failed")));
-        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder);
+        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder, emptyMap());
     }
 
     @Test
     public void shouldIncludeCookieIfSessionIdentifierAvailableInOrder() throws Exception {
         when(mockResponse.getStatus()).thenReturn(200);
 
-        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder, ImmutableList.of(new HttpCookie("machine", "value")));
+        gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder, 
+                ImmutableList.of(new HttpCookie("machine", "value")), emptyMap());
 
         InOrder inOrder = Mockito.inOrder(mockBuilder);
         inOrder.verify(mockBuilder).cookie("machine", "value");

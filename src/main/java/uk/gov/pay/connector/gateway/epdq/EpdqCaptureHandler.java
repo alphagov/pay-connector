@@ -15,6 +15,7 @@ import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqCaptureOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider.ROUTE_FOR_MAINTENANCE_ORDER;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
@@ -34,7 +35,11 @@ public class EpdqCaptureHandler implements CaptureHandler {
     public CaptureResponse capture(CaptureGatewayRequest request) {
         try {
             URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_MAINTENANCE_ORDER));
-            GatewayClient.Response response = client.postRequestFor(url, request.getGatewayAccount(), buildCaptureOrder(request));
+            GatewayClient.Response response = client.postRequestFor(
+                    url, 
+                    request.getGatewayAccount(), 
+                    buildCaptureOrder(request),
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, EpdqCaptureResponse.class), PENDING);
         } catch (GatewayErrorException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());

@@ -44,8 +44,7 @@ public class ChargeEntityFixture {
     private SupportedLanguage language = SupportedLanguage.ENGLISH;
     private boolean delayedCapture = false;
     private Long corporateSurcharge = null;
-    private WalletType walletType = null;
-    
+
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
     }
@@ -157,7 +156,6 @@ public class ChargeEntityFixture {
     }
     
     public ChargeEntityFixture withWalletType(WalletType walletType) {
-        this.walletType = walletType;
         return this;
     }
 

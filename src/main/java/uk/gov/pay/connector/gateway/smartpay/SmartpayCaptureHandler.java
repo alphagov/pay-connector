@@ -12,6 +12,7 @@ import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
 public class SmartpayCaptureHandler implements CaptureHandler {
@@ -27,8 +28,11 @@ public class SmartpayCaptureHandler implements CaptureHandler {
     @Override
     public CaptureResponse capture(CaptureGatewayRequest request) {
         try {
-            GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                    request.getGatewayAccount(), buildCaptureOrderFor(request));
+            GatewayClient.Response response = client.postRequestFor(
+                    gatewayUrlMap.get(request.getGatewayAccount().getType()), 
+                    request.getGatewayAccount(), 
+                    buildCaptureOrderFor(request),
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, SmartpayCaptureResponse.class), PENDING);
         } catch (GatewayErrorException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());

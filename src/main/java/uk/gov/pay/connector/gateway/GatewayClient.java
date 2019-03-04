@@ -23,11 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
-import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.Response.Status.OK;
-import static uk.gov.pay.connector.gateway.util.AuthUtil.encode;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 
 public class GatewayClient {
     private static final Logger logger = LoggerFactory.getLogger(GatewayClient.class);
@@ -40,12 +36,16 @@ public class GatewayClient {
         this.metricRegistry = metricRegistry;
     }
 
-    public GatewayClient.Response postRequestFor(URI url, GatewayAccountEntity account, GatewayOrder request) 
+    public GatewayClient.Response postRequestFor(URI url, GatewayAccountEntity account, GatewayOrder request, Map<String, String> headers) 
             throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
-        return postRequestFor(url, account, request, emptyList());
+        return postRequestFor(url, account, request, emptyList(), headers);
     }
-    
-    public GatewayClient.Response postRequestFor(URI url, GatewayAccountEntity account, GatewayOrder request, List<HttpCookie> cookies) 
+
+    public GatewayClient.Response postRequestFor(URI url, 
+                                                 GatewayAccountEntity account, 
+                                                 GatewayOrder request, 
+                                                 List<HttpCookie> cookies, 
+                                                 Map<String, String> headers) 
             throws GenericGatewayErrorException, GatewayConnectionTimeoutErrorException, GatewayConnectionErrorException {
         
         String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
@@ -55,10 +55,8 @@ public class GatewayClient {
         try {
             logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
             
-            Builder requestBuilder = client.target(url).request().header(AUTHORIZATION, encode(
-                            account.getCredentials().get(CREDENTIALS_USERNAME),
-                            account.getCredentials().get(CREDENTIALS_PASSWORD)));
-            
+            Builder requestBuilder = client.target(url).request();
+            headers.keySet().forEach(headerKey -> requestBuilder.header(headerKey, headers.get(headerKey)));
             cookies.forEach(cookie -> requestBuilder.cookie(cookie.getName(), cookie.getValue()));
             response = requestBuilder.post(Entity.entity(request.getPayload(), request.getMediaType()));
             int statusCode = response.getStatus();

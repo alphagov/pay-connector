@@ -12,6 +12,7 @@ import uk.gov.pay.connector.wallets.WalletAuthorisationHandler;
 import java.net.URI;
 import java.util.Map;
 
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseWalletOrderRequestBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
@@ -28,8 +29,12 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(WalletAuthorisationGatewayRequest request) throws GatewayErrorException {
         
-        GatewayClient.Response response = authoriseClient.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                request.getGatewayAccount(), buildWalletAuthoriseOrder(request));
+        GatewayClient.Response response = authoriseClient.postRequestFor(
+                gatewayUrlMap.get(request.getGatewayAccount().getType()), 
+                request.getGatewayAccount(), 
+                buildWalletAuthoriseOrder(request),
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+        
         return getWorldpayGatewayResponse(response);
     }
 

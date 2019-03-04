@@ -55,6 +55,7 @@ import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqAu
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.anEpdqQueryOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.ERROR;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
@@ -119,7 +120,8 @@ public class EpdqPaymentProvider implements PaymentProvider {
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayErrorException {
         URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_NEW_ORDER));
-        GatewayClient.Response response = authoriseClient.postRequestFor(url, request.getGatewayAccount(), buildAuthoriseOrder(request, frontendUrl));
+        GatewayClient.Response response = authoriseClient.postRequestFor(url, request.getGatewayAccount(), 
+                buildAuthoriseOrder(request, frontendUrl), getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
         return getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
     }
 
@@ -143,7 +145,8 @@ public class EpdqPaymentProvider implements PaymentProvider {
     @Override
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayErrorException {
         URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_MAINTENANCE_ORDER));
-        GatewayClient.Response response = cancelClient.postRequestFor(url, request.getGatewayAccount(), buildCancelOrder(request));
+        GatewayClient.Response response = cancelClient.postRequestFor(url, request.getGatewayAccount(), buildCancelOrder(request),
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
         return getEpdqGatewayResponse(response, EpdqCancelResponse.class);
     }
 
@@ -154,7 +157,8 @@ public class EpdqPaymentProvider implements PaymentProvider {
 
     public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) throws GatewayErrorException {
         URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(charge.getGatewayAccount().getType()), ROUTE_FOR_QUERY_ORDER));
-        GatewayClient.Response response = authoriseClient.postRequestFor(url, charge.getGatewayAccount(), buildQueryOrderRequestFor(charge));
+        GatewayClient.Response response = authoriseClient.postRequestFor(url, charge.getGatewayAccount(), buildQueryOrderRequestFor(charge),
+                getGatewayAccountCredentialsAsAuthHeader(charge.getGatewayAccount()));
         GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getUninterpretedEpdqGatewayResponse(response, EpdqQueryResponse.class);
 
         return epdqGatewayResponse.getBaseResponse()
@@ -176,7 +180,8 @@ public class EpdqPaymentProvider implements PaymentProvider {
         
         try {
             URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_QUERY_ORDER));
-            GatewayClient.Response response = authoriseClient.postRequestFor(url, request.getGatewayAccount(), buildQueryOrderRequestFor(request));
+            GatewayClient.Response response = authoriseClient.postRequestFor(url, request.getGatewayAccount(), buildQueryOrderRequestFor(request),
+                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
             BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse()
                     .map(BaseAuthoriseResponse::authoriseStatus).orElse(ERROR);
