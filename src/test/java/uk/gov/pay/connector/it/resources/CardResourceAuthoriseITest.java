@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import com.amazonaws.util.json.Jackson;
-import com.fasterxml.jackson.databind.JsonNode;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
@@ -14,7 +12,6 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +20,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -40,7 +36,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildCorporateJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildDetailedJsonAuthorisationDetailsFor;
-import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithFullAddress;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
@@ -73,33 +68,6 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         for (String cardNo : VALID_SANDBOX_CARD_LIST) {
             shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor(cardNo, "visa"));
         }
-    }
-
-    @Test
-    public void shouldAuthoriseCharge_ForApplePay() {
-        shouldAuthoriseChargeForApplePay("mr payment", "mr@payment.test");
-    }
-
-    @Test
-    public void shouldAuthoriseCharge_ForApplePay_withMinData() {
-        shouldAuthoriseChargeForApplePay(null, null);
-    }
-
-
-    @Test
-    public void shouldAuthoriseCharge_ForGooglePay() throws IOException {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        JsonNode googlePayload = Jackson.getObjectMapper().readTree(fixture("googlepay/example-auth-request.json"));
-
-        givenSetup()
-                .body(googlePayload)
-                .post(authoriseChargeUrlForGooglePay(chargeId))
-                .then()
-                .statusCode(200);
-
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
-        Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(chargeId);
-        assertThat(charge.get("email"), is(googlePayload.get("payment_info").get("email").asText()));
     }
 
     @Test
@@ -266,22 +234,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
         return chargeId;
     }
-
-    private String shouldAuthoriseChargeForApplePay(String cardHolderName, String email) {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-
-        givenSetup()
-                .body(buildJsonApplePayAuthorisationDetails(cardHolderName, email))
-                .post(authoriseChargeUrlForApplePay(chargeId))
-                .then()
-                .statusCode(200);
-
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
-        Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(chargeId);
-        assertThat(charge.get("email"), is(email));
-        return chargeId;
-    }
-
+    
     @Test
     public void shouldPersistCorporateSurcharge() {
         String accountId = String.valueOf(RandomUtils.nextInt());

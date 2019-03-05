@@ -62,7 +62,8 @@ public class CardResource {
     @Path("/v1/frontend/charges/{chargeId}/wallets/apple")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response authoriseCharge(@PathParam("chargeId") String chargeId, ApplePayAuthRequest applePayAuthRequest) {
+    public Response authoriseCharge(@PathParam("chargeId") String chargeId, 
+                                    @NotNull @Valid ApplePayAuthRequest applePayAuthRequest) {
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
         return applePayService.authorise(chargeId, applePayAuthRequest);
     }

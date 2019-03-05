@@ -6,9 +6,12 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class ApplePayAuthRequest implements WalletAuthorisationRequest {
-    private WalletPaymentInfo paymentInfo;
+    @NotNull @Valid private WalletPaymentInfo paymentInfo;
     private EncryptedPaymentData encryptedPaymentData;
 
     @JsonProperty("payment_info")
