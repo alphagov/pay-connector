@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
@@ -616,7 +615,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void doAuthorise_shouldReportUnexpectedError_whenProviderError() throws Exception {
 
-        providerWillRespondWithError(new GatewayErrorException.GatewayConnectionErrorException("Malformed response received"));
+        providerWillRespondWithError(new GatewayErrorException.GatewayConnectionErrorException("Malformed response received", 200, "{"));
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);

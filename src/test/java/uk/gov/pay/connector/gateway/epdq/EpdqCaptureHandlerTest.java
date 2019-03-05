@@ -86,7 +86,7 @@ public class EpdqCaptureHandlerTest {
     @Test
     public void shouldNotCaptureIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
         when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
-                .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
+                .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway", 400, ""));
         
         CaptureResponse gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
         assertThat(gatewayResponse.isSuccessful(), is(false));

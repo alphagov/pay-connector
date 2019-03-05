@@ -61,7 +61,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
         chargeEntity.setGatewayAccount(gatewayAccountEntity);
         gatewayAccountEntity.setCredentials(ImmutableMap.of("merchant_id", "MERCHANTCODE"));
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
-                .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
+                .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway", 400, ""));
     }
 
     @Test

@@ -56,7 +56,7 @@ public class GatewayResponse<T extends BaseResponse> {
     public void throwGatewayError() throws GatewayErrorException {
         switch (gatewayError.getErrorType()) {
             case GENERIC_GATEWAY_ERROR: throw new GenericGatewayErrorException(gatewayError.getMessage());
-            case GATEWAY_CONNECTION_ERROR: throw new GatewayConnectionErrorException(gatewayError.getMessage());
+            case GATEWAY_CONNECTION_ERROR: throw new GatewayConnectionErrorException(gatewayError.getMessage(), null, "");
             case GATEWAY_CONNECTION_TIMEOUT_ERROR: throw new GatewayConnectionTimeoutErrorException(gatewayError.getMessage());
         }
     }

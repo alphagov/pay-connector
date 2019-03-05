@@ -11,11 +11,9 @@ import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.validator.RequestValidator;
-import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
-import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
@@ -97,12 +95,7 @@ public class ConnectorModule extends AbstractModule {
     public SignatureGenerator signatureGenerator() {
         return new EpdqSha512SignatureGenerator();
     }
-
-    @Provides
-    public StripeGatewayClient stripeGatewayClient(GatewayClientFactory gatewayClientFactory) {
-        return gatewayClientFactory.createStripeGatewayClient(STRIPE, environment.metrics());
-    }
-
+    
     @Provides
     public StripeGatewayConfig stripeGatewayConfig(ConnectorConfiguration connectorConfiguration) {
         return connectorConfiguration.getStripeConfig();

@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gateway.stripe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import org.eclipse.jetty.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,26 +11,27 @@ import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
+import uk.gov.pay.connector.gateway.GatewayClient;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import javax.ws.rs.core.MediaType;
 import java.net.URI;
-import java.util.Map;
 
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CAPTURE_SUCCESS_RESPONSE;
@@ -47,7 +47,7 @@ public class StripeCaptureHandlerTest {
     @Mock
     private StripeGatewayConfig stripeGatewayConfig;
     @Mock
-    private StripeGatewayClient stripeGatewayClient;
+    private GatewayClient gatewayClient;
     @Mock
     private StripeGatewayClientResponse response;
 
@@ -58,7 +58,7 @@ public class StripeCaptureHandlerTest {
     public void setup() {
         when(stripeGatewayConfig.getUrl()).thenReturn("http://stripe.url");
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(mock(StripeAuthTokens.class));
-        stripeCaptureHandler = new StripeCaptureHandler(stripeGatewayClient, stripeGatewayConfig, objectMapper);
+        stripeCaptureHandler = new StripeCaptureHandler(gatewayClient, stripeGatewayConfig, objectMapper);
 
         GatewayAccountEntity gatewayAccount = buildGatewayAccountEntity();
 
@@ -74,8 +74,15 @@ public class StripeCaptureHandlerTest {
 
     @Test
     public void shouldCapture() throws Exception {
-        final String jsonResponse = load(STRIPE_CAPTURE_SUCCESS_RESPONSE);
-        when(stripeGatewayClient.postRequest(eq(captureUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(jsonResponse);
+        GatewayClient.Response captureResponse = mock(GatewayClient.Response.class);
+        when(captureResponse.getStatus()).thenReturn(SC_OK);
+        when(captureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));
+        
+        when(gatewayClient.postRequestFor(
+                eq(captureUri), 
+                eq(captureGatewayRequest.getGatewayAccount()), 
+                any(GatewayOrder.class), 
+                anyMap())).thenReturn(captureResponse);
 
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
         assertTrue(response.isSuccessful());
@@ -85,31 +92,19 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldNotCaptureIfPaymentProviderReturns4xxHttpStatusCode() throws Exception {
-        final String jsonResponse = load(STRIPE_ERROR_RESPONSE);
-        when(response.getPayload()).thenReturn(jsonResponse);
-
-        GatewayClientException gatewayClientException = new GatewayClientException("Unexpected HTTP status code 402 from gateway", response);
-        when(stripeGatewayClient.postRequest(eq(captureUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(gatewayClientException);
+    public void shouldNotCaptureIfGatewayClientThrowsGatewayErrorException() throws Exception {
+        when(gatewayClient.postRequestFor(
+                eq(captureUri),
+                eq(captureGatewayRequest.getGatewayAccount()),
+                any(GatewayOrder.class),
+                anyMap())).thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 402 from gateway", 402, load(STRIPE_ERROR_RESPONSE)));
+        
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
         assertThat(response.isSuccessful(), is(false));
         assertThat(response.getError().isPresent(), is(true));
         assertThat(response.state(), is(nullValue()));
         assertThat(response.toString(), containsString("error: No such charge: ch_123456 or something similar"));
         assertThat(response.toString(), containsString("error code: resource_missing"));
-    }
-
-    @Test
-    public void shouldNotCaptureIfPaymentProviderReturns5xxHttpStatusCode() throws Exception {
-        DownstreamException downstreamException = new DownstreamException(HttpStatus.INTERNAL_SERVER_ERROR_500, "Problem with Stripe servers");
-        when(stripeGatewayClient.postRequest(eq(captureUri), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(downstreamException);
-
-        CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
-        assertThat(response.isSuccessful(), is(false));
-        assertThat(response.getError().isPresent(), is(true));
-        assertThat(response.state(), is(nullValue()));
-        assertThat(response.getError().get().getMessage(), containsString("An internal server error occurred when capturing charge_external_id: " + captureGatewayRequest.getExternalId()));
-        assertThat(response.getError().get().getErrorType(), is(GATEWAY_CONNECTION_ERROR));
     }
 
     private GatewayAccountEntity buildGatewayAccountEntity() {

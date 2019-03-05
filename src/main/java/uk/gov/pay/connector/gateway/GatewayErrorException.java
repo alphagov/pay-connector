@@ -4,6 +4,8 @@ import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 
 public abstract class GatewayErrorException extends Exception {
+    
+    private GatewayErrorException() {}
 
     private GatewayErrorException(String message) {
         super(message);
@@ -35,8 +37,21 @@ public abstract class GatewayErrorException extends Exception {
 
     public static class GatewayConnectionErrorException extends GatewayErrorException {
 
-        public GatewayConnectionErrorException(String message) {
+        private final Integer statusCode;
+        private final String responseEntity;
+
+        public GatewayConnectionErrorException(String message, Integer statusCode, String responseEntity) {
             super(message);
+            this.statusCode = statusCode;
+            this.responseEntity = responseEntity;
+        }
+
+        public Integer getStatusCode() {
+            return statusCode;
+        }
+
+        public String getResponseEntity() {
+            return responseEntity;
         }
 
         public GatewayError toGatewayError() {

@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.gateway;
 
 import com.codahale.metrics.MetricRegistry;
-import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
-
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 
@@ -13,12 +11,6 @@ public class GatewayClientFactory {
     @Inject
     public GatewayClientFactory(ClientFactory clientFactory) {
         this.clientFactory = clientFactory;
-    }
-
-    public StripeGatewayClient createStripeGatewayClient(PaymentGatewayName gateway,
-                                                         MetricRegistry metricRegistry) {
-        Client client = clientFactory.createWithDropwizardClient(gateway, metricRegistry);
-        return new StripeGatewayClient(client, metricRegistry);
     }
 
     public GatewayClient createGatewayClient(PaymentGatewayName gateway,

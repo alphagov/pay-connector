@@ -19,6 +19,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
@@ -36,25 +37,48 @@ public class GatewayClient {
         this.metricRegistry = metricRegistry;
     }
 
-    public GatewayClient.Response postRequestFor(URI url, GatewayAccountEntity account, GatewayOrder request, Map<String, String> headers) 
+    public GatewayClient.Response postRequestFor(URI url, GatewayAccountEntity account, GatewayOrder request, Map<String, String> headers)
             throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
         return postRequestFor(url, account, request, emptyList(), headers);
     }
 
-    public GatewayClient.Response postRequestFor(URI url, 
-                                                 GatewayAccountEntity account, 
-                                                 GatewayOrder request, 
-                                                 List<HttpCookie> cookies, 
-                                                 Map<String, String> headers) 
+    public GatewayClient.Response postRequestFor(URI url,
+                                                 GatewayAccountEntity account,
+                                                 GatewayOrder request,
+                                                 List<HttpCookie> cookies,
+                                                 Map<String, String> headers)
+            throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
+        return postRequestFor(url, account, request, cookies, headers, Optional.empty());
+    }
+
+    public GatewayClient.Response postRequestFor(URI url,
+                                                 GatewayAccountEntity account,
+                                                 GatewayOrder request,
+                                                 List<HttpCookie> cookies,
+                                                 Map<String, String> headers,
+                                                 String appendMetricsPrefix)
+            throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
+        return postRequestFor(url, account, request, cookies, headers, Optional.of(appendMetricsPrefix));
+    }
+
+    private GatewayClient.Response postRequestFor(URI url,
+                                                  GatewayAccountEntity account,
+                                                  GatewayOrder request,
+                                                  List<HttpCookie> cookies,
+                                                  Map<String, String> headers,
+                                                  Optional<String> extraMetricsPrefix)
             throws GenericGatewayErrorException, GatewayConnectionTimeoutErrorException, GatewayConnectionErrorException {
-        
+
         String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
+
+        if (extraMetricsPrefix.isPresent()) metricsPrefix = metricsPrefix + "." + extraMetricsPrefix.get();
+
         javax.ws.rs.core.Response response = null;
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
             logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
-            
+
             Builder requestBuilder = client.target(url).request();
             headers.keySet().forEach(headerKey -> requestBuilder.header(headerKey, headers.get(headerKey)));
             cookies.forEach(cookie -> requestBuilder.cookie(cookie.getName(), cookie.getValue()));
@@ -64,9 +88,11 @@ public class GatewayClient {
             if (statusCode == OK.getStatusCode()) {
                 return gatewayResponse;
             } else {
-                logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}", statusCode, url, account.getType());
+                String entity = gatewayResponse.getEntity();
+                logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}\nResponse from gateway: {}",
+                        statusCode, url, account.getType(), entity);
                 incrementFailureCounter(metricRegistry, metricsPrefix);
-                throw new GatewayConnectionErrorException("Unexpected HTTP status code " + statusCode + " from gateway");
+                throw new GatewayConnectionErrorException("Unexpected HTTP status code " + statusCode + " from gateway", statusCode, entity);
             }
         } catch (ProcessingException pe) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
@@ -78,7 +104,7 @@ public class GatewayClient {
             }
             logger.error(format("Exception for gateway url=%s, error message: %s", url, pe.getMessage()), pe);
             throw new GenericGatewayErrorException(pe.getMessage());
-        } catch(GatewayConnectionErrorException e) {
+        } catch (GatewayConnectionErrorException e) {
             throw e;
         } catch (Exception e) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
@@ -92,11 +118,11 @@ public class GatewayClient {
             }
         }
     }
-    
+
     private void incrementFailureCounter(MetricRegistry metricRegistry, String metricsPrefix) {
         metricRegistry.counter(metricsPrefix + ".failures").inc();
     }
-    
+
     public static class Response {
         private final int status;
         private final String entity;

@@ -85,7 +85,7 @@ public class WorldpayCaptureHandlerTest {
     @Test
     public void shouldErrorIfWorldpayResponseIsNot200() throws Exception {
         when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
-                .thenThrow(new GatewayErrorException.GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
+                .thenThrow(new GatewayErrorException.GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway", 400, ""));
         
         CaptureResponse gatewayResponse = worldpayCaptureHandler.capture(getCaptureRequest());
         assertThat(gatewayResponse.isSuccessful(), is(false));

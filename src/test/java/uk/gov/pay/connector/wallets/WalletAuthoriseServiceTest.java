@@ -331,7 +331,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void doAuthorise_shouldReportUnexpectedError_whenProviderError() throws Exception {
-        providerWillRespondWithError(new GatewayConnectionErrorException("Malformed response received"));
+        providerWillRespondWithError(new GatewayConnectionErrorException("Malformed response received", 200, "{"));
 
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 

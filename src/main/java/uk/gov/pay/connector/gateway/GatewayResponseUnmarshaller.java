@@ -20,7 +20,7 @@ public class GatewayResponseUnmarshaller {
         } catch (XMLUnmarshallerException e) {
             String error = format("Could not unmarshall response %s.", payload);
             logger.error(error, e);
-            throw new GatewayConnectionErrorException("Invalid Response Received From Gateway");
+            throw new GatewayConnectionErrorException("Invalid Response Received From Gateway", response.getStatus(), payload);
         }
     }
 }
