@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumberConverter;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
+import uk.gov.pay.connector.wallets.WalletType;
 
 import javax.persistence.ColumnResult;
 import javax.persistence.ConstructorResult;
@@ -50,7 +51,8 @@ import java.util.Optional;
                         @ColumnResult(name = "amount", type = Long.class),
                         @ColumnResult(name = "language", type = String.class),
                         @ColumnResult(name = "delayed_capture", type = Boolean.class),
-                        @ColumnResult(name = "corporate_surcharge", type = Long.class)}))
+                        @ColumnResult(name = "corporate_surcharge", type = Long.class),
+                        @ColumnResult(name = "wallet", type = String.class)}))
 @Entity
 @ReadOnly
 public class Transaction {
@@ -87,6 +89,7 @@ public class Transaction {
     private String addressPostcode;
     private long amount;
     private Long corporateSurcharge;
+    private WalletType walletType;
 
     public Transaction() {
     }
@@ -117,7 +120,8 @@ public class Transaction {
                        long amount,
                        String language,
                        boolean delayedCapture,
-                       Long corporateSurcharge) {
+                       Long corporateSurcharge,
+                       String walletType) {
         this.chargeId = chargeId;
         this.externalId = externalId;
         this.reference = reference;
@@ -145,6 +149,7 @@ public class Transaction {
         this.language = SupportedLanguage.fromIso639AlphaTwoCode(language);
         this.delayedCapture = delayedCapture;
         this.corporateSurcharge = corporateSurcharge;
+        this.walletType = walletType == null ? null : WalletType.valueOf(walletType);
     }
 
     public Long getChargeId() {
@@ -253,5 +258,9 @@ public class Transaction {
 
     public Optional<Long> getCorporateCardSurcharge() {
         return Optional.ofNullable(corporateSurcharge);
+    }
+
+    public WalletType getWalletType() {
+        return walletType;
     }
 }

@@ -74,7 +74,8 @@ public class TransactionDao {
                         field("amount"),
                         field("language"),
                         field("delayed_capture"),
-                        field("corporate_surcharge"))
+                        field("corporate_surcharge"),
+                        field("wallet"))
                 .from(buildQueryFor(gatewayAccountId, QueryType.SELECT, params))
                 .orderBy(field("date_created").desc());
 
@@ -209,7 +210,8 @@ public class TransactionDao {
                 field("c.amount"),
                 field("c.language"),
                 field("c.delayed_capture"),
-                field("c.corporate_surcharge"))
+                field("c.corporate_surcharge"),
+                field("c.wallet"))
                 .from(table("charges").as("c").leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
                 .where(queryFiltersForCharges);
 
@@ -240,7 +242,8 @@ public class TransactionDao {
                 field("r.amount"),
                 field("c.language"),
                 field("c.delayed_capture"),
-                field("c.corporate_surcharge"))
+                field("c.corporate_surcharge"),
+                field("c.wallet"))
                 .from(table("charges").as("c").leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
                 .join(table("refunds").as("r"))
                 .on(field("c.id").eq(field("r.charge_id")))
