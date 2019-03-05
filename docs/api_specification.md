@@ -2007,6 +2007,53 @@ HTTP/1.1 404 Not Found
 HTTP/1.1 404 Not Found
 ```
 -----------------------------------------------------------------------------------------------------------
+## GET /v1/api/accounts/{accountId}/stripe-account
+
+Retrieves Stripe Connect account information for a given gateway `accountId`
+
+### Request example
+
+```
+GET /v1/api/accounts/123/stripe-account
+```
+
+### Response example
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+    "stripe_account_id": "acct_123example123"
+}
+```
+
+### Response field description
+
+| Field               | Always present  | Description               |
+| ------------------- | --------------- | --------------------------|
+| `stripe_account_id` | X               | Stripe account ID         |
+
+### Response errors
+
+#### Specified `accountId` does not exist
+
+```
+HTTP/1.1 404 Not Found
+```
+
+#### Specified `accountId` is not a Stripe gateway account
+
+```
+HTTP/1.1 404 Not Found
+```
+
+#### Specified `accountId` does not have Stripe account credentials
+
+```
+HTTP/1.1 404 Not Found
+```
+-----------------------------------------------------------------------------------------------------------
 ## GET /v1/api/accounts/{accountId}/transactions-summary
 
 Retrieves payment summary totals for a given `accountId`
