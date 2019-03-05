@@ -23,6 +23,7 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
@@ -66,7 +67,7 @@ public class TransactionsApiContractTest {
         dbHelper.addCharge(chargeId, chargeExternalId, gatewayAccountId, 100L, ChargeStatus.CAPTURED, "aReturnUrl",
                 params.get("gateway_transaction_id"), ServicePaymentReference.of("aReference"), ZonedDateTime.now(), "test@test.com", false);
     }
-    
+
     private void setUpCharges(int numberOfCharges, String accountId, ZonedDateTime createdDate) {
         for (int i = 0; i < numberOfCharges; i++) {
             long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
@@ -74,8 +75,8 @@ public class TransactionsApiContractTest {
         }
     }
 
-    private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, 
-                                   ZonedDateTime createdDate, boolean delayedCapture, String cardHolderName, 
+    private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus,
+                                   ZonedDateTime createdDate, boolean delayedCapture, String cardHolderName,
                                    String lastDigitsCardNumber, String firstDigitsCardNumber, String gatewayTransactionId) {
         dbHelper.addCharge(chargeId, chargeExternalId, accountId, 100L, chargeStatus, "aReturnUrl",
                 gatewayTransactionId, ServicePaymentReference.of("aReference"), createdDate, "test@test.com", delayedCapture);
@@ -154,6 +155,7 @@ public class TransactionsApiContractTest {
                 .aTestAccount()
                 .withAccountId(42L)
                 .withPaymentProvider("stripe")
+                .withCredentials(Collections.singletonMap("stripe_account_id", "acct_123example123"))
                 .insert();
     }
 
@@ -193,8 +195,8 @@ public class TransactionsApiContractTest {
         String lastDigitsCardNumber = params.get("last_digits_card_number");
         String firstDigitsCardNumber = params.get("first_digits_card_number");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, 
-                ZonedDateTime.parse("2018-09-22T10:13:16.067Z"), true, cardHolderName, lastDigitsCardNumber, 
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED,
+                ZonedDateTime.parse("2018-09-22T10:13:16.067Z"), true, cardHolderName, lastDigitsCardNumber,
                 firstDigitsCardNumber, params.get("gateway_transaction_id"));
     }
 
