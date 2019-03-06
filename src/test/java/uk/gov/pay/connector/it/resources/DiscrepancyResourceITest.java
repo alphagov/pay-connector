@@ -76,6 +76,25 @@ public class DiscrepancyResourceITest extends ChargingITestBase {
         assertEquals( "EXTERNAL_FAILED_REJECTED", results.get(0).get("gatewayExternalStatus").asText());
         assertEquals( "EXTERNAL_FAILED_EXPIRED", results.get(0).get("payExternalStatus").asText());
     }
+
+    @Test
+    public void shouldHandleCaseWhereChargeIsInUnknownState() {
+        String chargeId = addCharge(ChargeStatus.EXPIRED, "ref", ZonedDateTime.now().minusDays(8), "irrelevant");
+        epdqMockClient.mockUnknown();
+
+        List<JsonNode> results = connectorRestApiClient
+                .getDiscrepancyReport(toJson(Arrays.asList(chargeId)))
+                .statusCode(200)
+                .contentType(JSON)
+                .extract().body().jsonPath().getList(".", JsonNode.class);
+
+        assertEquals(1, results.size());
+
+        assertEquals( null, results.get(0).get("gatewayStatus"));
+        assertEquals( "EXPIRED", results.get(0).get("payStatus").asText());
+        assertEquals( chargeId, results.get(0).get("chargeId").asText());
+        assertEquals( "EXTERNAL_FAILED_EXPIRED", results.get(0).get("payExternalStatus").asText());
+    }
     
 
     @Test

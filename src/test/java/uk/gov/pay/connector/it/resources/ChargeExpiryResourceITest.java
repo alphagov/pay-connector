@@ -1,9 +1,12 @@
 package uk.gov.pay.connector.it.resources;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -14,6 +17,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static io.restassured.http.ContentType.JSON;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -286,5 +292,32 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
 
         assertThat(asList(CREATED.getValue(), EXPIRED.getValue()), is(events1));
         assertThat(asList(AWAITING_CAPTURE_REQUEST.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()), is(events2));
+    }
+
+    @Test
+    public void shouldExpireWithGatewayIfExistsInCancellableStateWithGatewayEvenIfChargeIsPreAuthorisation() {
+        String chargeId = addCharge(ChargeStatus.AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+
+        WireMock.reset();
+        worldpayMockClient.mockCancelSuccess();
+        worldpayMockClient.mockAuthorisationQuerySuccess(chargeId);
+
+        connectorRestApiClient
+                .postChargeExpiryTask()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("expiry-success", is(1))
+                .body("expiry-failed", is(0));
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(chargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("charge_id", is(chargeId))
+                .body("state.status", is(EXPIRED.toExternal().getStatus()));
+
+        verify(exactly(2), postRequestedFor(UrlPattern.fromOneOf(null, null, "/jsp/merchant/xml/paymentService.jsp", null)));
     }
 }

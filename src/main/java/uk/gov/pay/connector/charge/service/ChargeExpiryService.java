@@ -25,6 +25,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
+import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -56,6 +57,7 @@ public class ChargeExpiryService {
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
     private final PaymentProviders providers;
+    private final QueryService queryService;
     
     private final ChargeSweepConfig chargeSweepConfig;
 
@@ -63,11 +65,13 @@ public class ChargeExpiryService {
     public ChargeExpiryService(ChargeDao chargeDao,
                                ChargeEventDao chargeEventDao,
                                PaymentProviders providers,
+                               QueryService queryService,
                                ConnectorConfiguration config) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.providers = providers;
         this.chargeSweepConfig = config.getChargeSweepConfig();
+        this.queryService = queryService;
     }
 
     Map<String, Integer> expire(List<ChargeEntity> charges) {
@@ -109,8 +113,8 @@ public class ChargeExpiryService {
 
     private boolean isExpirableWithGateway(ChargeEntity charge) {
         try {
-            return providers.byName(charge.getPaymentGatewayName())
-                    .queryPaymentStatus(charge)
+            return queryService
+                    .getChargeGatewayStatus(charge)
                     .getMappedStatus()
                     .map(chargeStatus -> !chargeStatus.toExternal().isFinished())
                     .orElse(false);

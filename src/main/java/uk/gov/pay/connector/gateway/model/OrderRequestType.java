@@ -7,7 +7,8 @@ public enum OrderRequestType {
     AUTHORISE_GOOGLE_PAY("authoriseGooglePay"),
     CAPTURE("capture"),
     CANCEL("cancel"),
-    REFUND("refund");
+    REFUND("refund"),
+    QUERY("query");
 
     private final String name;
 
