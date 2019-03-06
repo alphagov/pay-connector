@@ -94,7 +94,12 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     @Override
     public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge)  throws GatewayErrorException {
-        GatewayClient.Response response = inquiryClient.postRequestFor(gatewayUrlMap.get(charge.getGatewayAccount().getType()), charge.getGatewayAccount(), buildQuery(charge));
+        GatewayClient.Response response = inquiryClient.postRequestFor(
+                gatewayUrlMap.get(charge.getGatewayAccount().getType()),
+                charge.getGatewayAccount(),
+                buildQuery(charge),
+                getGatewayAccountCredentialsAsAuthHeader(charge.getGatewayAccount())
+        );
         GatewayResponse<WorldpayQueryResponse> worldpayGatewayResponse = getWorldpayGatewayResponse(response, WorldpayQueryResponse.class);
 
         return worldpayGatewayResponse.getBaseResponse()
