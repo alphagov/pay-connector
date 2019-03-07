@@ -65,7 +65,6 @@ public class CardResource {
     public Response authoriseCharge(@PathParam("chargeId") String chargeId, 
                                     @NotNull @Valid ApplePayAuthRequest applePayAuthRequest) {
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
-        logger.info("ApplePayAuthRequest.EncryptedPaymentData: ", applePayAuthRequest.getEncryptedPaymentData().toString());
         return applePayService.authorise(chargeId, applePayAuthRequest);
     }
 
