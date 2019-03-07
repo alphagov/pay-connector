@@ -2,6 +2,7 @@ package uk.gov.pay.connector.wallets.model;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import org.hibernate.validator.constraints.Length;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
@@ -10,7 +11,9 @@ public class WalletPaymentInfo {
     private String lastDigitsCardNumber;
     private String brand;
     private PayersCardType cardType;
+    @Length(max = 255, message = "Card holder name must be a maximum of 255 chars") 
     private String cardholderName;
+    @Length(max = 254, message = "Email must be a maximum of 254 chars")
     private String email;
 
     public WalletPaymentInfo() {

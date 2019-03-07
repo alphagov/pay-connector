@@ -13,7 +13,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class GooglePayAuthRequestTest {
 
-
     @Test
     public void shouldDeserializeFromJsonCorrectly() throws IOException {
         ObjectMapper objectMapper = Jackson.getObjectMapper();
