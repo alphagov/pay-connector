@@ -16,7 +16,7 @@
         <surefire.version>2.22.1</surefire.version>
         <dependency-check.skip>true</dependency-check.skip>
         <javax.persistence.version>2.2.1</javax.persistence.version>
-        <jooq.version>3.11.9</jooq.version>
+        <jooq.version>3.11.10</jooq.version>
         <postgresql.version>42.2.5</postgresql.version>
         <commons-lang3.version>3.8.1</commons-lang3.version>
     </properties>
