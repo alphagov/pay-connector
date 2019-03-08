@@ -5,7 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.exception.DigitalWalletNotSupportedGatewayException;
 import uk.gov.pay.connector.gatewayaccount.exception.MerchantIdWithoutCredentialsException;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
@@ -96,14 +98,21 @@ public class GatewayAccountService {
                             if(credentials.isEmpty()) {
                                 throw new MerchantIdWithoutCredentialsException();
                             }
+                            throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
                             Map<String, String> updatedCredentials = new HashMap<>(credentials);
                             updatedCredentials.put("gateway_merchant_id", gatewayAccountRequest.valueAsString());
                             gatewayAccountEntity.setCredentials(updatedCredentials);
                         });
                 put(FIELD_ALLOW_GOOGLE_PAY,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowGooglePay(Boolean.valueOf(gatewayAccountRequest.valueAsString())));
+                        (gatewayAccountRequest, gatewayAccountEntity) -> {
+                            throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
+                            gatewayAccountEntity.setAllowGooglePay(Boolean.valueOf(gatewayAccountRequest.valueAsString()));
+                        });
                 put(FIELD_ALLOW_APPLE_PAY,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowApplePay(Boolean.valueOf(gatewayAccountRequest.valueAsString())));
+                        (gatewayAccountRequest, gatewayAccountEntity) -> {
+                            throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
+                            gatewayAccountEntity.setAllowApplePay(Boolean.valueOf(gatewayAccountRequest.valueAsString()));
+                        });
                 put(FIELD_NOTIFY_SETTINGS,
                         (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setNotifySettings(gatewayAccountRequest.valueAsObject()));
                 put(FIELD_EMAIL_COLLECTION_MODE,
@@ -118,4 +127,9 @@ public class GatewayAccountService {
                         (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporatePrepaidDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong()));
             }};
 
+    private void throwIfNotDigitalWalletSupportedGateway(GatewayAccountEntity gatewayAccountEntity) {
+        if (!PaymentGatewayName.WORLDPAY.getName().equals(gatewayAccountEntity.getGatewayName())) {
+            throw new DigitalWalletNotSupportedGatewayException();
+        }
+    }
 }

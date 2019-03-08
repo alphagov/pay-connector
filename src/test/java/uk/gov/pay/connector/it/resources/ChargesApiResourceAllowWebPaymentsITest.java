@@ -93,6 +93,20 @@ public class ChargesApiResourceAllowWebPaymentsITest {
                 .body("message", is("Account Credentials are required to set a Gateway Merchant ID"))
                 .and()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
+    }    
+    @Test
+    public void assertBadRequestResponseIfPatchingDigitalWalletWithNonSupportedGateway() throws JsonProcessingException {
+        String accountIdWithNotDigitalWalletSupportedGateway = extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), "epdq"));
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "allow_apple_pay",
+                "value", "true"));
+        given().port(testContext.getPort()).contentType(JSON)
+                .body(payload)
+                .patch("/v1/api/accounts/" + accountIdWithNotDigitalWalletSupportedGateway)
+                .then()
+                .body("message", is("This gateway does not support digital wallets."))
+                .and()
+                .statusCode(HttpStatus.SC_BAD_REQUEST);
     }
 
     private void allowWebPaymentsOnGatewayAccount(String path) throws JsonProcessingException {

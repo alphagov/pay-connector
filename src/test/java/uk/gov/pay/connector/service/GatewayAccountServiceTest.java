@@ -12,6 +12,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.exception.DigitalWalletNotSupportedGatewayException;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -199,5 +200,18 @@ public class GatewayAccountServiceTest {
         assertThat(optionalGatewayAcc.isPresent(), is(true));
         verify(entity).setCorporatePrepaidCreditCardSurchargeAmount(100L);
         verify(mockGatewayAccountDao).merge(entity);
+    }
+
+    @Test(expected = DigitalWalletNotSupportedGatewayException.class)
+    public void shouldNotAllowDigitalWalletForUnsupportedGateways() {
+        Long gatewayAccountId = 100L;
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "add",
+                "path", "allow_apple_pay",
+                "value", "true")));
+        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
+        when(entity.getGatewayName()).thenReturn("epdq");
+        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
+        Optional<GatewayAccount> optionalGatewayAcc = gatewayAccountService.doPatch(gatewayAccountId, request);
+        assertThat(optionalGatewayAcc.isPresent(), is(false));
     }
 }
