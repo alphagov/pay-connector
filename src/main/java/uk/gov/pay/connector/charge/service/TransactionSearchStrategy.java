@@ -82,7 +82,8 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
                         .build(transaction.getGatewayAccountId(), transaction.getExternalId()))
                 .withLink("refunds", GET, uriInfo.getBaseUriBuilder()
                         .path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
-                        .build(transaction.getGatewayAccountId(), transaction.getExternalId()));
+                        .build(transaction.getGatewayAccountId(), transaction.getExternalId()))
+                .withWalletType(transaction.getWalletType());
 
         if (ChargeStatus.AWAITING_CAPTURE_REQUEST.getValue().equals(transaction.getStatus())) {
             transactionResponseBuilder

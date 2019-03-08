@@ -261,7 +261,24 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnWalletTypeAsNullWhenNull() {
+    public void shouldReturnWalletTypeWhenNotNull_v2() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        createCharge(externalChargeId, chargeId);
+        databaseTestHelper.addWalletType(chargeId, WalletType.APPLE_PAY);
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .getChargesV2()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results[0].charge_id", is(externalChargeId))
+                .body("results[0].wallet_type", is(WalletType.APPLE_PAY.toString()));
+    }
+
+    @Test
+    public void shouldNotReturnWalletTypeWhenNull() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 

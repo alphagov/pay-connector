@@ -16,6 +16,7 @@ import uk.gov.pay.connector.charge.model.domain.TransactionType;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DateTimeUtils;
+import uk.gov.pay.connector.wallets.WalletType;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -154,6 +155,20 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactions.get(1).getAmount(), is(testCharge.getAmount()));
         assertThat(transactions.get(1).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(1).getUserExternalId(), is(nullValue()));
+    }
+    
+    @Test
+    public void shouldReturnWalletType() {
+        TestCharge testCharge = withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .insert();
+        databaseTestHelper.addWalletType(testCharge.getChargeId(), WalletType.APPLE_PAY);
+        
+
+        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), new SearchParams());
+        assertThat(transactions.get(0).getWalletType(), is(WalletType.APPLE_PAY));
+        
     }
 
     @Test
