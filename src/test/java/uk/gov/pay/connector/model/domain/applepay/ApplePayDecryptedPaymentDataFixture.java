@@ -118,7 +118,7 @@ public final class ApplePayDecryptedPaymentDataFixture {
                 paymentDataType,
                 new AppleDecryptedPaymentData.PaymentData(
                         onlinePaymentCryptogram,
-                        eciIndicator
+                        null
                 )
         );
     }
