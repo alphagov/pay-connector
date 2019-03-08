@@ -110,7 +110,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null);
+                null, null, mockConfiguration, null, null);
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,

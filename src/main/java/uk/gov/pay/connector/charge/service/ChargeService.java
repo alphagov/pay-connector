@@ -16,6 +16,7 @@ import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.charge.model.ChargeStatusChangeEvent;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -40,6 +41,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
+import uk.gov.pay.connector.queue.QueueService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -93,11 +95,12 @@ public class ChargeService {
     private final GatewayAccountDao gatewayAccountDao;
     private final LinksConfig linksConfig;
     private final PaymentProviders providers;
+    private final QueueService queueService;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
-                         ConnectorConfiguration config, PaymentProviders providers) {
+                         ConnectorConfiguration config, PaymentProviders providers, QueueService queueService) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -105,6 +108,7 @@ public class ChargeService {
         this.gatewayAccountDao = gatewayAccountDao;
         this.linksConfig = config.getLinks();
         this.providers = providers;
+        this.queueService = queueService;
     }
 
     @Transactional
@@ -312,6 +316,8 @@ public class ChargeService {
     @Transactional
     public ChargeEntity lockChargeForProcessing(String chargeId, OperationType operationType) {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
+            queueService.push(ChargeStatusChangeEvent.from(chargeEntity));
+
             try {
 
                 GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
@@ -345,6 +351,7 @@ public class ChargeService {
     }
 
     private ChargeEntity updateChargeStatus(ChargeEntity chargeEntity, ChargeStatus chargeStatus) {
+
         if (chargeStatus == CAPTURED) {
             chargeEntity.setStatus(CAPTURE_SUBMITTED);
             chargeEventDao.persistChargeEventOf(chargeEntity);
@@ -358,8 +365,10 @@ public class ChargeService {
     }
 
     public ChargeEntity updateChargeStatus(String chargeId, ChargeStatus chargeStatus) {
-        return chargeDao.findByExternalId(chargeId).map(chargeEntity ->
-                updateChargeStatus(chargeEntity, chargeStatus)
+        return chargeDao.findByExternalId(chargeId).map(chargeEntity -> {
+                    return updateChargeStatus(chargeEntity, chargeStatus);
+                }
+               
         ).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
