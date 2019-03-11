@@ -10,6 +10,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -68,6 +69,13 @@ public class WalletAuthoriseService {
                 }
 
             } catch (GatewayErrorException e) {
+                
+                logger.error("Error occurred authorising charge. Charge external id: {}; message: {}", charge.getExternalId(), e.getMessage());
+                
+                if (e instanceof GatewayConnectionErrorException) {
+                    logger.error("Response from gateway: {}", ((GatewayConnectionErrorException) e).getResponseFromGateway());
+                }
+                
                 chargeStatus = CardAuthoriseBaseService.mapFromGatewayErrorException(e);
                 responseFromPaymentGateway = e.getMessage();
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
@@ -83,6 +91,13 @@ public class WalletAuthoriseService {
                     transactionId,
                     sessionIdentifier,
                     chargeStatus);
+
+            // Used by Sumo Logic saved search
+            logger.info("Authorisation for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
+                    charge.getExternalId(), charge.getPaymentGatewayName().getName(),
+                    transactionId.orElse("missing transaction ID"),
+                    charge.getGatewayAccount().getAnalyticsId(), charge.getGatewayAccount().getId(),
+                    operationResponse, ChargeStatus.fromString(charge.getStatus()), chargeStatus);
 
             return operationResponse;
         });
