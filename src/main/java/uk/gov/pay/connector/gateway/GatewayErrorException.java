@@ -35,8 +35,20 @@ public abstract class GatewayErrorException extends Exception {
 
     public static class GatewayConnectionErrorException extends GatewayErrorException {
 
+        private final String responseFromGateway;
+
+        public GatewayConnectionErrorException(String message, String responseFromGateway) {
+            super(message);
+            this.responseFromGateway = responseFromGateway;
+        }
+
         public GatewayConnectionErrorException(String message) {
             super(message);
+            this.responseFromGateway = "null";
+        }
+
+        public String getResponseFromGateway() {
+            return responseFromGateway;
         }
 
         public GatewayError toGatewayError() {
