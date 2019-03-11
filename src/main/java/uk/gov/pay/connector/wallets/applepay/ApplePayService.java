@@ -25,9 +25,10 @@ public class ApplePayService extends WalletService {
     
     @Override
     public WalletAuthorisationData getWalletAuthorisationData(String chargeId, WalletAuthorisationRequest applePayAuthRequest) {
-        LOGGER.info("Decrypting apple pay payload for charge with id {} ", chargeId);
+        LOGGER.info("Decrypting apple pay payload for charge with id {}", chargeId);
         AppleDecryptedPaymentData result = applePayDecrypter.performDecryptOperation((ApplePayAuthRequest) applePayAuthRequest);
         result.setPaymentInfo(applePayAuthRequest.getPaymentInfo());
+        LOGGER.info("Finished decryption for id {}", chargeId);
         return result;
     }
 }
