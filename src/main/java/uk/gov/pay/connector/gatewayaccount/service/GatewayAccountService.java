@@ -129,7 +129,7 @@ public class GatewayAccountService {
 
     private void throwIfNotDigitalWalletSupportedGateway(GatewayAccountEntity gatewayAccountEntity) {
         if (!PaymentGatewayName.WORLDPAY.getName().equals(gatewayAccountEntity.getGatewayName())) {
-            throw new DigitalWalletNotSupportedGatewayException();
+            throw new DigitalWalletNotSupportedGatewayException(gatewayAccountEntity.getGatewayName());
         }
     }
 }

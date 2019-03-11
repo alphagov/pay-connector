@@ -104,7 +104,7 @@ public class ChargesApiResourceAllowWebPaymentsITest {
                 .body(payload)
                 .patch("/v1/api/accounts/" + accountIdWithNotDigitalWalletSupportedGateway)
                 .then()
-                .body("message", is("This gateway does not support digital wallets."))
+                .body("message", is("Gateway epdq does not support digital wallets."))
                 .and()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
     }
