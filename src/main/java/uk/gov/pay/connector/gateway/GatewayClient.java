@@ -66,7 +66,7 @@ public class GatewayClient {
             } else {
                 logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}", statusCode, url, account.getType());
                 incrementFailureCounter(metricRegistry, metricsPrefix);
-                throw new GatewayConnectionErrorException("Unexpected HTTP status code " + statusCode + " from gateway", gatewayResponse.getEntity());
+                throw new GatewayConnectionErrorException("Unexpected HTTP status code " + statusCode + " from gateway");
             }
         } catch (ProcessingException pe) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
