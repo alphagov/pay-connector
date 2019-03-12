@@ -57,15 +57,21 @@ public class ApplePayDecrypter {
 
     public AppleDecryptedPaymentData performDecryptOperation(ApplePayAuthRequest applePayAuthRequest)  {
         try {
+            LOGGER.info("ApplePayDecrypter: decoding data...");
             byte[] data = BASE64_DECODER.decode(applePayAuthRequest.getEncryptedPaymentData().getData().getBytes(UTF_8));
+            LOGGER.info("ApplePayDecrypter: decoding ephemeral public key...");
             byte[] ephemeralPublicKey = BASE64_DECODER.decode(applePayAuthRequest.getEncryptedPaymentData().getHeader().getEphemeralPublicKey().getBytes(UTF_8));
+            LOGGER.info("ApplePayDecrypter: generating private key...");
             PrivateKey privateKey = generatePrivateKey();
+            LOGGER.info("ApplePayDecrypter: generating certificate...");
             Certificate certificate = generateCertificate();
 
             AsymmetricKeyVerifier verifier = new AsymmetricKeyVerifier(privateKey, certificate.getPublicKey());
+            LOGGER.info("ApplePayDecrypter: Verifying asymmetric key verifier...");
             if (!verifier.verify()) {
                 throw new InvalidKeyException("Asymmetric keys do not match!");
             }
+            LOGGER.info("ApplePayDecrypter: decrypting...");
             byte[] rawData = decrypt(certificate, privateKey, ephemeralPublicKey, data);
             return objectMapper.readValue(new String(rawData, UTF_8), AppleDecryptedPaymentData.class);
         } catch (Exception e) {
@@ -76,19 +82,23 @@ public class ApplePayDecrypter {
 
     private byte[] decrypt(Certificate certificate, PrivateKey merchantPrivateKey, byte[] ephemeralPublicKeyBytes, byte[] data) throws Exception {
         // Reconstitute Ephemeral Public Key
+        LOGGER.info("ApplePayDecrypter: Reconstitute Ephemeral Public Key...");
         KeyFactory keyFactory = KeyFactory.getInstance("EC");
         X509EncodedKeySpec encodedKeySpec = new X509EncodedKeySpec(ephemeralPublicKeyBytes);
         ECPublicKey ephemeralPublicKey = (ECPublicKey) keyFactory.generatePublic(encodedKeySpec);
         // Perform KeyAgreement
+        LOGGER.info("ApplePayDecrypter: Perform KeyAgreement...");
         KeyAgreement agreement = KeyAgreement.getInstance("ECDH");
         agreement.init(merchantPrivateKey);
         agreement.doPhase(ephemeralPublicKey, true);
         byte[] sharedSecret = agreement.generateSecret();
 
         // Perform KDF
+        LOGGER.info("ApplePayDecrypter: Perform KDF...");
         byte[] derivedSecret = performKeyDerivationFunction(((X509Certificate) certificate), sharedSecret);
 
         // Use the derived secret to decrypt the data
+        LOGGER.info("ApplePayDecrypter: Use the derived secret to decrypt the data...");
         Cipher aesCipher = Cipher.getInstance("AES/GCM/NoPadding");
         SecretKeySpec key = new SecretKeySpec(derivedSecret, "AES");
         aesCipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, new byte[16]));
@@ -97,12 +107,14 @@ public class ApplePayDecrypter {
 
     private byte[] performKeyDerivationFunction(X509Certificate certificate, byte[] sharedSecret) throws Exception {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        LOGGER.info("ApplePayDecrypter: Writing stuff...");
         byteArrayOutputStream.write(COUNTER);
         byteArrayOutputStream.write(sharedSecret);
         byteArrayOutputStream.write(ALG_IDENTIFIER_BYTES.length);
         byteArrayOutputStream.write(ALG_IDENTIFIER_BYTES);
         byteArrayOutputStream.write(APPLE_OEM);
         // Add Merchant Id
+        LOGGER.info("ApplePayDecrypter: Add merchant id...");
         byteArrayOutputStream.write(Hex.decodeHex(new String((certificate.getExtensionValue(MERCHANT_ID_CERTIFICATE_OID)), UTF_8).substring(4).toCharArray()));
         return MessageDigest.getInstance("SHA-256")
                 .digest(byteArrayOutputStream.toByteArray());
