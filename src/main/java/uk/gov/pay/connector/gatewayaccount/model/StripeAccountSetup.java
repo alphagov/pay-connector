@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -15,9 +14,9 @@ public class StripeAccountSetup {
     @JsonProperty("responsible_person")
     private boolean responsiblePersonCompleted = false;
 
-    @JsonProperty("organisation_details")
-    private boolean organisationDetailsCompleted = false;
-    
+    @JsonProperty("vat_number_company_number")
+    private boolean vatNumberCompanyNumberCompleted = false;
+
     public boolean isBankAccountCompleted() {
         return bankAccountCompleted;
     }
@@ -34,12 +33,12 @@ public class StripeAccountSetup {
         this.responsiblePersonCompleted = responsiblePersonCompleted;
     }
 
-    public boolean isOrganisationDetailsCompleted() {
-        return organisationDetailsCompleted;
+    public boolean isVatNumberCompanyNumberCompleted() {
+        return vatNumberCompanyNumberCompleted;
     }
 
-    public void setOrganisationDetailsCompleted(boolean organisationDetailsCompleted) {
-        this.organisationDetailsCompleted = organisationDetailsCompleted;
+    public void setVatNumberCompanyNumberCompleted(boolean vatNumberCompanyNumberCompleted) {
+        this.vatNumberCompanyNumberCompleted = vatNumberCompanyNumberCompleted;
     }
 
 }

@@ -25,8 +25,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.BANK_ACCOUNT;
-import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.VAT_NUMBER_COMPANY_NUMBER;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.RESPONSIBLE_PERSON;
+import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.VAT_NUMBER_COMPANY_NUMBER;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripeAccountSetupServiceTest {
@@ -68,7 +68,7 @@ public class StripeAccountSetupServiceTest {
 
         assertThat(tasks.isBankAccountCompleted(), is(false));
         assertThat(tasks.isResponsiblePersonCompleted(), is(false));
-        assertThat(tasks.isOrganisationDetailsCompleted(), is(false));
+        assertThat(tasks.isVatNumberCompanyNumberCompleted(), is(false));
     }
 
     @Test
@@ -81,7 +81,7 @@ public class StripeAccountSetupServiceTest {
 
         assertThat(tasks.isBankAccountCompleted(), is(true));
         assertThat(tasks.isResponsiblePersonCompleted(), is(true));
-        assertThat(tasks.isOrganisationDetailsCompleted(), is(true));
+        assertThat(tasks.isVatNumberCompanyNumberCompleted(), is(true));
     }
 
     @Test
@@ -93,7 +93,7 @@ public class StripeAccountSetupServiceTest {
 
         assertThat(tasks.isBankAccountCompleted(), is(false));
         assertThat(tasks.isResponsiblePersonCompleted(), is(true));
-        assertThat(tasks.isOrganisationDetailsCompleted(), is(true));
+        assertThat(tasks.isVatNumberCompanyNumberCompleted(), is(true));
     }
 
     @Test
