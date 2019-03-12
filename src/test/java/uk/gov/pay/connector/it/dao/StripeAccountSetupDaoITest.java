@@ -15,7 +15,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.BANK_ACCOUNT;
-import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.ORGANISATION_DETAILS;
+import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.VAT_NUMBER_COMPANY_NUMBER;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.RESPONSIBLE_PERSON;
 
 public class StripeAccountSetupDaoITest extends DaoITestBase {
@@ -42,7 +42,7 @@ public class StripeAccountSetupDaoITest extends DaoITestBase {
         databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
         databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
         databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, BANK_ACCOUNT);
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, ORGANISATION_DETAILS);
+        databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, VAT_NUMBER_COMPANY_NUMBER);
 
         List<StripeAccountSetupTaskEntity> tasks = stripeAccountSetupDao.findByGatewayAccountId(gatewayAccountId);
         assertThat(tasks, hasSize(2));

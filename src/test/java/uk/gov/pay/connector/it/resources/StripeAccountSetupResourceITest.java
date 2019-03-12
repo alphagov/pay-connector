@@ -40,10 +40,10 @@ public class StripeAccountSetupResourceITest extends GatewayAccountResourceTestB
     }
 
     @Test
-    public void getStripeSetupWithSomeTasksCompletedReturnsAppopriateFlags() {
+    public void getStripeSetupWithSomeTasksCompletedReturnsAppropriateFlags() {
         long gatewayAccountId = Long.valueOf(createAGatewayAccountFor("stripe"));
         addCompletedTask(gatewayAccountId, StripeAccountSetupTask.BANK_ACCOUNT);
-        addCompletedTask(gatewayAccountId, StripeAccountSetupTask.ORGANISATION_DETAILS);
+        addCompletedTask(gatewayAccountId, StripeAccountSetupTask.VAT_NUMBER_COMPANY_NUMBER);
 
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")

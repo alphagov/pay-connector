@@ -31,7 +31,7 @@ public class StripeAccountSetupService {
                         case RESPONSIBLE_PERSON:
                             stripeAccountSetup.setResponsiblePersonCompleted(true);
                             break;
-                        case ORGANISATION_DETAILS:
+                        case VAT_NUMBER_COMPANY_NUMBER:
                             stripeAccountSetup.setOrganisationDetailsCompleted(true);
                             break;
                         default:
