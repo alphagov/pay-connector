@@ -304,8 +304,7 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
     }
 
     private String expectedChargesLocationFor(String accountId, String queryParams) {
-        return "https://localhost:" + testContext.getPort()
-                + "/v2/api/accounts/{accountId}/charges".replace("{accountId}", accountId)
+        return "/v2/api/accounts/{accountId}/charges".replace("{accountId}", accountId)
                 + queryParams;
     }
 }
