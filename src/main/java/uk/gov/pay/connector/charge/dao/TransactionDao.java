@@ -87,6 +87,7 @@ public class TransactionDao {
 
         // Extract the SQL statement from the jOOQ query:
         String sql = query.getSQL();
+        
         Query result = entityManager.get().createNativeQuery(sql, "TransactionMapping");
 
         // Extract the bind values from the jOOQ query:

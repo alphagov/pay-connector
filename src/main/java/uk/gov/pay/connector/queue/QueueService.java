@@ -2,7 +2,6 @@ package uk.gov.pay.connector.queue;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
@@ -30,8 +29,7 @@ public class QueueService {
         try {
             SendMessageRequest sendMessageRequest =  new SendMessageRequest()
                     .withQueueUrl("http://queue:9324/queue/default")
-                    .withMessageBody("hello world");
-
+                    .withMessageBody(chargeStatusChangeEvent.getChargeStatus().toString());
 
             SendMessageResult result = sqs.sendMessage(sendMessageRequest);
             logger.info("Pushed message onto queue {}", result);
