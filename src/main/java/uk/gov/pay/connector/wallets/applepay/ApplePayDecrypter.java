@@ -21,6 +21,7 @@ import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -31,6 +32,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
+import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ApplePayDecrypter {
@@ -46,31 +48,35 @@ public class ApplePayDecrypter {
 
     private final ObjectMapper objectMapper;
     private final static Base64.Decoder BASE64_DECODER = Base64.getDecoder();
+
+    private PrivateKey privateKey;
+    private Certificate certificate;
+    private AsymmetricKeyVerifier verifier;
     
     @Inject
-    public ApplePayDecrypter(ConnectorConfiguration configuration, ObjectMapper objectMapper) {
+    public ApplePayDecrypter(ConnectorConfiguration configuration, ObjectMapper objectMapper) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException, CertificateException, SignatureException, java.security.InvalidKeyException {
         ApplePayConfig applePayConfig = configuration.getWorldpayConfig().getApplePayConfig();
         this.privateKeyBytes = BASE64_DECODER.decode(applePayConfig.getPrivateKey());
         this.publicCertificate = BASE64_DECODER.decode(applePayConfig.getPublicCertificate());
         this.objectMapper = objectMapper;
+        privateKey = generatePrivateKey();
+        certificate = generateCertificate();
+
+        verifier = new AsymmetricKeyVerifier(privateKey, certificate.getPublicKey());
+        if (!verifier.verify()) {
+            throw new InvalidKeyException("Asymmetric keys do not match!");
+        }
     }
 
     public AppleDecryptedPaymentData performDecryptOperation(ApplePayAuthRequest applePayAuthRequest)  {
         try {
             byte[] data = BASE64_DECODER.decode(applePayAuthRequest.getEncryptedPaymentData().getData().getBytes(UTF_8));
             byte[] ephemeralPublicKey = BASE64_DECODER.decode(applePayAuthRequest.getEncryptedPaymentData().getHeader().getEphemeralPublicKey().getBytes(UTF_8));
-            PrivateKey privateKey = generatePrivateKey();
-            Certificate certificate = generateCertificate();
-
-            AsymmetricKeyVerifier verifier = new AsymmetricKeyVerifier(privateKey, certificate.getPublicKey());
-            if (!verifier.verify()) {
-                throw new InvalidKeyException("Asymmetric keys do not match!");
-            }
             byte[] rawData = decrypt(certificate, privateKey, ephemeralPublicKey, data);
             return objectMapper.readValue(new String(rawData, UTF_8), AppleDecryptedPaymentData.class);
         } catch (Exception e) {
-            LOGGER.error("Error while trying to decrypt apple pay payload: " + e.getMessage());
-            throw new InvalidKeyException("Error while trying to decrypt apple pay payload: " + e.getMessage());
+            LOGGER.error("Error while trying to decrypt apple pay payload", e);
+            throw new InvalidKeyException("Error while trying to decrypt apple pay payload");
         }
     }
 

@@ -11,7 +11,6 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 
-import java.io.IOException;
 import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.is;
@@ -38,7 +37,7 @@ public class ApplePayDecrypterTest {
     private ApplePayDecrypter applePayDecrypter;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws Exception {
         applePayAuthRequest = anApplePayToken().build();
         when(mockConfig.getWorldpayConfig()).thenReturn(mockWorldpayConfig);
         when(mockWorldpayConfig.getApplePayConfig()).thenReturn(mockApplePayConfig);
@@ -60,29 +59,29 @@ public class ApplePayDecrypterTest {
         assertThat(appleDecryptedPaymentData.getPaymentData().getEciIndicator(), is("5"));
     }
 
-    @Test(expected = InvalidKeyException.class)
-    public void shouldThrowException_whenPublicCertificateIsInvalid() {
+    @Test(expected = java.security.cert.CertificateException.class)
+    public void shouldThrowException_whenPublicCertificateIsInvalid() throws Exception {
         when(mockApplePayConfig.getPublicCertificate()).thenReturn("nope");
         applePayDecrypter = new ApplePayDecrypter(mockConfig, objectMapper);
         applePayDecrypter.performDecryptOperation(applePayAuthRequest);
     }
 
-    @Test(expected = InvalidKeyException.class)
-    public void shouldThrowException_whenPrivateKeyIsInvalid() {
+    @Test(expected = java.security.spec.InvalidKeySpecException.class)
+    public void shouldThrowException_whenPrivateKeyIsInvalid() throws Exception {
         when(mockApplePayConfig.getPrivateKey()).thenReturn("nope");
         applePayDecrypter = new ApplePayDecrypter(mockConfig, objectMapper);
         applePayDecrypter.performDecryptOperation(applePayAuthRequest);
     }
 
     @Test(expected = InvalidKeyException.class)
-    public void shouldThrowException_whenEphemeralKeyIsInvalid() throws IOException {
+    public void shouldThrowException_whenEphemeralKeyIsInvalid() throws Exception {
         ApplePayAuthRequest applePayAuthRequest = anApplePayToken().withEphemeralPublicKey("nope").build();
         applePayDecrypter = new ApplePayDecrypter(mockConfig, objectMapper);
         applePayDecrypter.performDecryptOperation(applePayAuthRequest);
     }
 
     @Test(expected = InvalidKeyException.class)
-    public void shouldThrowException_whenDataIsInvalid() throws IOException {
+    public void shouldThrowException_whenDataIsInvalid() throws Exception {
         ApplePayAuthRequest applePayAuthRequest = anApplePayToken().withData("nope").build();
         applePayDecrypter = new ApplePayDecrypter(mockConfig, objectMapper);
         applePayDecrypter.performDecryptOperation(applePayAuthRequest);
