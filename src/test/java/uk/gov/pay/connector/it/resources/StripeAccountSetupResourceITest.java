@@ -21,7 +21,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class StripeAccountSetupResourceITest extends GatewayAccountResourceTestBase {
- 
+
     protected RequestSpecification givenSetup() {
         return given().port(testContext.getPort()).contentType(JSON);
     }
@@ -36,14 +36,14 @@ public class StripeAccountSetupResourceITest extends GatewayAccountResourceTestB
                 .statusCode(200)
                 .body("bank_account", is(false))
                 .body("responsible_person", is(false))
-                .body("organisation_details", is(false));
+                .body("vat_number_company_number", is(false));
     }
 
     @Test
-    public void getStripeSetupWithSomeTasksCompletedReturnsAppopriateFlags() {
+    public void getStripeSetupWithSomeTasksCompletedReturnsAppropriateFlags() {
         long gatewayAccountId = Long.valueOf(createAGatewayAccountFor("stripe"));
         addCompletedTask(gatewayAccountId, StripeAccountSetupTask.BANK_ACCOUNT);
-        addCompletedTask(gatewayAccountId, StripeAccountSetupTask.ORGANISATION_DETAILS);
+        addCompletedTask(gatewayAccountId, StripeAccountSetupTask.VAT_NUMBER_COMPANY_NUMBER);
 
         givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
@@ -51,13 +51,13 @@ public class StripeAccountSetupResourceITest extends GatewayAccountResourceTestB
                 .statusCode(200)
                 .body("bank_account", is(true))
                 .body("responsible_person", is(false))
-                .body("organisation_details", is(true));
+                .body("vat_number_company_number", is(true));
     }
 
     @Test
     public void getStripeSetupGatewayAccountDoesNotExist() {
         long notFoundGatewayAccountId = 13;
-        
+
         givenSetup()
                 .get("/v1/api/accounts/" + notFoundGatewayAccountId + "/stripe-setup")
                 .then()
@@ -91,7 +91,7 @@ public class StripeAccountSetupResourceITest extends GatewayAccountResourceTestB
                 .statusCode(200)
                 .body("bank_account", is(true))
                 .body("responsible_person", is(false))
-                .body("organisation_details", is(false));
+                .body("vat_number_company_number", is(false));
     }
 
     @Test
@@ -109,7 +109,7 @@ public class StripeAccountSetupResourceITest extends GatewayAccountResourceTestB
                                 "value", true),
                         ImmutableMap.of(
                                 "op", "replace",
-                                "path", "organisation_details",
+                                "path", "vat_number_company_number",
                                 "value", true)
                 )))
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
@@ -122,7 +122,7 @@ public class StripeAccountSetupResourceITest extends GatewayAccountResourceTestB
                 .statusCode(200)
                 .body("bank_account", is(true))
                 .body("responsible_person", is(true))
-                .body("organisation_details", is(true));
+                .body("vat_number_company_number", is(true));
     }
 
     @Test

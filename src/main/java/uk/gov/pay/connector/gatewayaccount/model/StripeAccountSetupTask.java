@@ -4,6 +4,6 @@ public enum StripeAccountSetupTask {
 
     BANK_ACCOUNT,
     RESPONSIBLE_PERSON,
-    ORGANISATION_DETAILS
+    VAT_NUMBER_COMPANY_NUMBER
 
 }

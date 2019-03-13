@@ -17,7 +17,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasProperty;
 
 public class StripeAccountSetupRequestValidatorTest {
-    
+
     private final StripeAccountSetupRequestValidator validator = new StripeAccountSetupRequestValidator(new RequestValidator());
 
     @Rule
@@ -29,7 +29,7 @@ public class StripeAccountSetupRequestValidatorTest {
                 "op", "replace",
                 "path", "bank_account",
                 "value", true)));
-        
+
         validator.validatePatchRequest(jsonNode);
     }
 
@@ -54,6 +54,36 @@ public class StripeAccountSetupRequestValidatorTest {
     }
 
     @Test
+    public void replaceResponsiblePersonFalseIsValid() {
+        JsonNode jsonNode = new ObjectMapper().valueToTree(Collections.singletonList(ImmutableMap.of(
+                "op", "replace",
+                "path", "responsible_person",
+                "value", false)));
+
+        validator.validatePatchRequest(jsonNode);
+    }
+
+    @Test
+    public void replaceVatNumberCompanyNumberTrueIsValid() {
+        JsonNode jsonNode = new ObjectMapper().valueToTree(Collections.singletonList(ImmutableMap.of(
+                "op", "replace",
+                "path", "vat_number_company_number",
+                "value", true)));
+
+        validator.validatePatchRequest(jsonNode);
+    }
+
+    @Test
+    public void replaceVatNumberCompanyNumberFalseIsValid() {
+        JsonNode jsonNode = new ObjectMapper().valueToTree(Collections.singletonList(ImmutableMap.of(
+                "op", "replace",
+                "path", "vat_number_company_number",
+                "value", false)));
+
+        validator.validatePatchRequest(jsonNode);
+    }
+
+    @Test
     public void multipleUpdatesAreValid() {
         JsonNode jsonNode = new ObjectMapper().valueToTree(Arrays.asList(
                 ImmutableMap.of(
@@ -66,40 +96,9 @@ public class StripeAccountSetupRequestValidatorTest {
                         "value", false),
                 ImmutableMap.of(
                         "op", "replace",
-                        "path", "organisation_details",
+                        "path", "vat_number_company_number",
                         "value", true)
-                ));
-
-        validator.validatePatchRequest(jsonNode);
-
-    }
-
-    @Test
-    public void replaceResponsiblePersonFalseIsValid() {
-        JsonNode jsonNode = new ObjectMapper().valueToTree(Collections.singletonList(ImmutableMap.of(
-                "op", "replace",
-                "path", "responsible_person",
-                "value", false)));
-
-        validator.validatePatchRequest(jsonNode);
-    }
-
-    @Test
-    public void replaceOrganisationDetailsTrueIsValid() {
-        JsonNode jsonNode = new ObjectMapper().valueToTree(Collections.singletonList(ImmutableMap.of(
-                "op", "replace",
-                "path", "organisation_details",
-                "value", true)));
-
-        validator.validatePatchRequest(jsonNode);
-    }
-
-    @Test
-    public void replaceOrganisationDetailsFalseIsValid() {
-        JsonNode jsonNode = new ObjectMapper().valueToTree(Collections.singletonList(ImmutableMap.of(
-                "op", "replace",
-                "path", "organisation_details",
-                "value", false)));
+        ));
 
         validator.validatePatchRequest(jsonNode);
     }
@@ -113,7 +112,7 @@ public class StripeAccountSetupRequestValidatorTest {
 
         expectedException.expect(ValidationException.class);
         expectedException.expect(hasProperty("errors", contains("Operation [add] not supported for path [bank_account]")));
-        
+
         validator.validatePatchRequest(jsonNode);
     }
 
@@ -177,7 +176,7 @@ public class StripeAccountSetupRequestValidatorTest {
                 "value", true)));
 
         expectedException.expect(ValidationException.class);
-        expectedException.expect(hasProperty("errors", contains("Field [path] must be one of [bank_account, organisation_details, responsible_person]")));
+        expectedException.expect(hasProperty("errors", contains("Field [path] must be one of [bank_account, responsible_person, vat_number_company_number]")));
 
         validator.validatePatchRequest(jsonNode);
     }
@@ -233,7 +232,7 @@ public class StripeAccountSetupRequestValidatorTest {
 
         validator.validatePatchRequest(jsonNode);
     }
-    
+
     @Test
     public void valueIsNotBooleanIsInvalid() {
         JsonNode jsonNode = new ObjectMapper().valueToTree(Collections.singletonList(ImmutableMap.of(
@@ -246,7 +245,7 @@ public class StripeAccountSetupRequestValidatorTest {
 
         validator.validatePatchRequest(jsonNode);
     }
-    
+
     @Test
     public void valueIsNullIsInvalid() {
         JsonNode jsonNode = new ObjectMapper().valueToTree(Collections.singletonList(new HashMap<String, Object>() {{
