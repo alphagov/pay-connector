@@ -317,6 +317,9 @@ public class ChargeResponse {
     @JsonProperty("corporate_card_surcharge")
     private Long corporateCardSurcharge;
 
+    @JsonProperty("fee")
+    private Long fee;
+
     @JsonProperty("total_amount")
     private Long totalAmount;
     
@@ -344,6 +347,7 @@ public class ChargeResponse {
         this.language = builder.getLanguage();
         this.delayedCapture = builder.isDelayedCapture();
         this.corporateCardSurcharge = builder.getCorporateCardSurcharge();
+        this.fee = builder.getFee();
         this.totalAmount = builder.getTotalAmount();
         this.walletType = builder.getWalletType();
     }
@@ -418,6 +422,9 @@ public class ChargeResponse {
 
     public Long getCorporateCardSurcharge() {
         return corporateCardSurcharge;
+    }
+    public Long getFee() {
+        return fee;
     }
 
     public Long getTotalAmount() {

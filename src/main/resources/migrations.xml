@@ -1016,12 +1016,17 @@
 
     <changeSet id="add column fee, processing detals to charges" author="">
         <addColumn tableName="charges">
-            <column name="fee" type="integer">
+            <column name="fee_due" type="bigint">
                 <constraints nullable="true" unique="false"/>
             </column>
         </addColumn>
         <addColumn tableName="charges">
-            <column name="processing_details" type="jsonb">
+            <column name="fee_collected" type="bigint">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="charges">
+            <column name="gateway_processing_details" type="jsonb">
                 <constraints nullable="true" unique="false"/>
             </column>
         </addColumn>

@@ -85,6 +85,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Column(name = "corporate_surcharge")
     private Long corporateSurcharge;
 
+    @Column(name = "fee_collected")
+    private Long fee;
+
     @Embedded
     private CardDetailsEntity cardDetails;
 
@@ -324,5 +327,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public void setCorporateSurcharge(Long corporateSurcharge) {
         this.corporateSurcharge = corporateSurcharge;
+    }
+
+    public Long getFee() {
+        return fee;
     }
 }

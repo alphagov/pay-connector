@@ -163,6 +163,7 @@ public class ChargesFrontendResource {
                 .withEmail(charge.getEmail())
                 .withCardDetails(persistedCard)
                 .withAuth3dsData(auth3dsData)
+                .withFee(charge.getFee())
                 .withGatewayAccount(charge.getGatewayAccount())
                 .withLanguage(charge.getLanguage())
                 .withDelayedCapture(charge.isDelayedCapture())
