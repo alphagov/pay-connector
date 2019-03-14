@@ -1014,4 +1014,12 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add column gateway_processing_details to charges" author="">
+        <addColumn tableName="charges">
+            <column name="gateway_processing_details" type="jsonb">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
