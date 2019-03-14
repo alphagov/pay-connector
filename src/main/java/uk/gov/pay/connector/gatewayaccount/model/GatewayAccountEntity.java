@@ -94,7 +94,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Convert(converter = CredentialsConverter.class)
     private Map<String, String> credentials;
 
-    @Deprecated
     @Column(name = "service_name")
     private String serviceName;
 
