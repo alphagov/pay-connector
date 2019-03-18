@@ -12,7 +12,6 @@ import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
 import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -125,13 +124,13 @@ public class EpdqPaymentProvider implements PaymentProvider {
         return getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
     }
 
-    private static GatewayResponse getEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayConnectionErrorException {
+    private static GatewayResponse getEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GenericGatewayErrorException {
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         responseBuilder.withResponse(unmarshallResponse(response, responseClass));
         return responseBuilder.build();
     }
     
-    private static GatewayResponse getUninterpretedEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayConnectionErrorException {
+    private static GatewayResponse getUninterpretedEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GenericGatewayErrorException {
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         responseBuilder.withResponse(unmarshallResponse(response, responseClass));
         return responseBuilder.buildUninterpreted();

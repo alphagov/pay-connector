@@ -47,8 +47,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.model.ErrorType.DOWNSTREAM_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_ERROR;
+import static uk.gov.pay.connector.gateway.model.ErrorType.CLIENT_ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_SUCCESS_RESPONSE;
@@ -163,7 +164,7 @@ public class StripePaymentProviderTest {
         assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
         assertThat(authoriseResponse.getGatewayError().get().getMessage(),
                 containsString("There was an internal server error"));
-        assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_CONNECTION_ERROR));
+        assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(DOWNSTREAM_ERROR));
     }
 
     @Test

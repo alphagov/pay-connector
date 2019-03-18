@@ -26,7 +26,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
-import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
+import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayDownstreamError;
 import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getStripeAuthHeader;
 
@@ -95,7 +95,7 @@ public class StripeCancelHandler {
         } catch (DownstreamException e) {
             logger.error("Cancel failed for transaction id {}. Reason: {}. Status code from Stripe: {}. Charge External Id: {}",
                     request.getTransactionId(), e.getMessage(), e.getStatusCode(), request.getExternalChargeId());
-            GatewayError gatewayError = gatewayConnectionError("An internal server error occurred while cancelling external charge id: " + request.getExternalChargeId());
+            GatewayError gatewayError = gatewayDownstreamError("An internal server error occurred while cancelling external charge id: " + request.getExternalChargeId());
             return responseBuilder.withGatewayError(gatewayError).build();
         }
     }

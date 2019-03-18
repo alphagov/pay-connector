@@ -33,18 +33,18 @@ public abstract class GatewayErrorException extends Exception {
         }
     }
 
-    public static class GatewayConnectionErrorException extends GatewayErrorException {
+    public static class ClientErrorException extends GatewayErrorException {
 
         private final String responseFromGateway;
 
-        public GatewayConnectionErrorException(String message, String responseFromGateway) {
+        public ClientErrorException(String message, String responseFromGateway) {
             super(message);
             this.responseFromGateway = responseFromGateway;
         }
 
-        public GatewayConnectionErrorException(String message) {
+        public ClientErrorException(String message) {
             super(message);
-            this.responseFromGateway = "null";
+            responseFromGateway = "null";
         }
 
         public String getResponseFromGateway() {
@@ -52,7 +52,30 @@ public abstract class GatewayErrorException extends Exception {
         }
 
         public GatewayError toGatewayError() {
-            return new GatewayError(getMessage(), ErrorType.GATEWAY_CONNECTION_ERROR);
+            return new GatewayError(getMessage(), ErrorType.CLIENT_ERROR);
+        }
+    }
+
+    public static class DownstreamErrorException extends GatewayErrorException {
+
+        private final String responseFromGateway;
+
+        public DownstreamErrorException(String message, String responseFromGateway) {
+            super(message);
+            this.responseFromGateway = responseFromGateway;
+        }
+
+        public DownstreamErrorException(String message) {
+            super(message);
+            responseFromGateway = "null";
+        }
+
+        public String getResponseFromGateway() {
+            return responseFromGateway;
+        }
+
+        public GatewayError toGatewayError() {
+            return new GatewayError(getMessage(), ErrorType.DOWNSTREAM_ERROR);
         }
     }
 }

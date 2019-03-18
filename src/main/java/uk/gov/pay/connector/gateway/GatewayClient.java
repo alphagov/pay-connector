@@ -4,7 +4,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.ClientErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.DownstreamErrorException;
 import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionTimeoutErrorException;
 import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -13,6 +14,7 @@ import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.core.Response.Status.Family;
 import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -36,38 +38,31 @@ public class GatewayClient {
         this.metricRegistry = metricRegistry;
     }
 
-    public GatewayClient.Response postRequestFor(URI url, GatewayAccountEntity account, GatewayOrder request, Map<String, String> headers) 
-            throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
+    public GatewayClient.Response postRequestFor(URI url, GatewayAccountEntity account, GatewayOrder request, Map<String, String> headers)
+            throws GenericGatewayErrorException, ClientErrorException, GatewayConnectionTimeoutErrorException, DownstreamErrorException {
         return postRequestFor(url, account, request, emptyList(), headers);
     }
 
-    public GatewayClient.Response postRequestFor(URI url, 
-                                                 GatewayAccountEntity account, 
-                                                 GatewayOrder request, 
-                                                 List<HttpCookie> cookies, 
-                                                 Map<String, String> headers) 
-            throws GenericGatewayErrorException, GatewayConnectionTimeoutErrorException, GatewayConnectionErrorException {
-        
+    public GatewayClient.Response postRequestFor(URI url,
+                                                 GatewayAccountEntity account,
+                                                 GatewayOrder request,
+                                                 List<HttpCookie> cookies,
+                                                 Map<String, String> headers)
+            throws GenericGatewayErrorException, GatewayConnectionTimeoutErrorException, ClientErrorException, DownstreamErrorException {
+
         String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
         javax.ws.rs.core.Response response = null;
+        Response gatewayResponse = null;
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
             logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
-            
+
             Builder requestBuilder = client.target(url).request();
             headers.keySet().forEach(headerKey -> requestBuilder.header(headerKey, headers.get(headerKey)));
             cookies.forEach(cookie -> requestBuilder.cookie(cookie.getName(), cookie.getValue()));
             response = requestBuilder.post(Entity.entity(request.getPayload(), request.getMediaType()));
-            int statusCode = response.getStatus();
-            Response gatewayResponse = new Response(response);
-            if (statusCode == OK.getStatusCode()) {
-                return gatewayResponse;
-            } else {
-                logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}", statusCode, url, account.getType());
-                incrementFailureCounter(metricRegistry, metricsPrefix);
-                throw new GatewayConnectionErrorException("Unexpected HTTP status code " + statusCode + " from gateway", gatewayResponse.getEntity());
-            }
+            gatewayResponse = new Response(response);
         } catch (ProcessingException pe) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
             if (pe.getCause() != null) {
@@ -78,8 +73,6 @@ public class GatewayClient {
             }
             logger.error(format("Exception for gateway url=%s, error message: %s", url, pe.getMessage()), pe);
             throw new GenericGatewayErrorException(pe.getMessage());
-        } catch(GatewayConnectionErrorException e) {
-            throw e;
         } catch (Exception e) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
             logger.error(format("Exception for gateway url=%s", url), e);
@@ -91,12 +84,25 @@ public class GatewayClient {
                 response.close();
             }
         }
+
+        int statusCode = response.getStatus();
+        if (statusCode == OK.getStatusCode()) {
+            return gatewayResponse;
+        } else {
+            incrementFailureCounter(metricRegistry, metricsPrefix);
+            logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}", statusCode, url, account.getType());
+            if (Family.familyOf(statusCode) == Family.CLIENT_ERROR) {
+                throw new ClientErrorException("Unexpected HTTP status code " + statusCode + " from gateway", gatewayResponse.getEntity());
+            } else {
+                throw new DownstreamErrorException("Unexpected HTTP status code " + statusCode + " from gateway", gatewayResponse.getEntity());
+            }
+        }
     }
-    
+
     private void incrementFailureCounter(MetricRegistry metricRegistry, String metricsPrefix) {
         metricRegistry.counter(metricsPrefix + ".failures").inc();
     }
-    
+
     public static class Response {
         private final int status;
         private final String entity;

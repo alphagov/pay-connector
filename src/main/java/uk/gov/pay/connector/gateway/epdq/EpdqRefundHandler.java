@@ -1,9 +1,7 @@
 package uk.gov.pay.connector.gateway.epdq;
 
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionTimeoutErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.RefundHandler;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqRefundResponse;
@@ -43,7 +41,7 @@ public class EpdqRefundHandler implements RefundHandler {
                     buildRefundOrder(request),
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, EpdqRefundResponse.class), PENDING);
-        } catch (GenericGatewayErrorException | GatewayConnectionTimeoutErrorException | GatewayConnectionErrorException e) {
+        } catch (GatewayErrorException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());
         }
     }

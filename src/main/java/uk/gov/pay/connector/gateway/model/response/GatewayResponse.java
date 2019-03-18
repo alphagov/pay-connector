@@ -4,7 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.ClientErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.DownstreamErrorException;
 import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionTimeoutErrorException;
 import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -56,7 +57,8 @@ public class GatewayResponse<T extends BaseResponse> {
     public void throwGatewayError() throws GatewayErrorException {
         switch (gatewayError.getErrorType()) {
             case GENERIC_GATEWAY_ERROR: throw new GenericGatewayErrorException(gatewayError.getMessage());
-            case GATEWAY_CONNECTION_ERROR: throw new GatewayConnectionErrorException(gatewayError.getMessage());
+            case CLIENT_ERROR: throw new ClientErrorException(gatewayError.getMessage());
+            case DOWNSTREAM_ERROR: throw new DownstreamErrorException(gatewayError.getMessage());
             case GATEWAY_CONNECTION_TIMEOUT_ERROR: throw new GatewayConnectionTimeoutErrorException(gatewayError.getMessage());
         }
     }

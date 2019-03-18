@@ -53,7 +53,8 @@ public abstract class WalletService {
 
     protected Response handleError(String chargeId, GatewayError error) {
         switch (error.getErrorType()) {
-            case GATEWAY_CONNECTION_ERROR:
+            case CLIENT_ERROR:
+            case DOWNSTREAM_ERROR:
             case GATEWAY_CONNECTION_TIMEOUT_ERROR:
                 return serviceErrorResponse(error.getMessage());
             default:

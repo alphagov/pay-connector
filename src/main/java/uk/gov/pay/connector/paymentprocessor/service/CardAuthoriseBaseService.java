@@ -75,7 +75,8 @@ public class CardAuthoriseBaseService {
     public static ChargeStatus mapFromGatewayErrorException(GatewayErrorException e) {
         if (e instanceof GatewayErrorException.GenericGatewayErrorException) return AUTHORISATION_ERROR;
         if (e instanceof GatewayErrorException.GatewayConnectionTimeoutErrorException) return AUTHORISATION_TIMEOUT;
-        if (e instanceof GatewayErrorException.GatewayConnectionErrorException) return AUTHORISATION_UNEXPECTED_ERROR;
+        if (e instanceof GatewayErrorException.ClientErrorException) return AUTHORISATION_UNEXPECTED_ERROR;
+        if (e instanceof GatewayErrorException.DownstreamErrorException) return AUTHORISATION_UNEXPECTED_ERROR;
         throw new RuntimeException("Unrecognised GatewayErrorException instance " + e.getClass());
     }
 }

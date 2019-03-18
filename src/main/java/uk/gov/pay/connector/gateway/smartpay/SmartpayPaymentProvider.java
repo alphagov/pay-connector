@@ -9,7 +9,8 @@ import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.ClientErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.DownstreamErrorException;
 import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionTimeoutErrorException;
 import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
@@ -81,7 +82,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
         return getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
     }
 
-    private static GatewayResponse getSmartpayGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayConnectionErrorException {
+    private static GatewayResponse getSmartpayGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GenericGatewayErrorException {
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         responseBuilder.withResponse(unmarshallResponse(response, responseClass));
         return responseBuilder.build();
@@ -128,7 +129,8 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
+    public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) 
+            throws GenericGatewayErrorException, ClientErrorException, GatewayConnectionTimeoutErrorException, DownstreamErrorException {
         GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                 request.getGatewayAccount(), buildCancelOrderFor(request),
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));

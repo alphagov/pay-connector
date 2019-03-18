@@ -26,7 +26,7 @@ import java.util.Map;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
-import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
+import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayDownstreamError;
 import static uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse.fromBaseRefundResponse;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getStripeAuthHeader;
 
@@ -70,7 +70,7 @@ public class StripeRefundHandler {
             return GatewayRefundResponse.fromGatewayError(GatewayError.of(e));
         } catch (DownstreamException e) {
             logger.error("Refund failed for refund gateway request {}. Reason: {}. Status code from Stripe: {}.", request, e.getMessage(), e.getStatusCode());
-            GatewayError gatewayError = gatewayConnectionError("An internal server error occurred while refunding Transaction id: " + request.getTransactionId());
+            GatewayError gatewayError = gatewayDownstreamError("An internal server error occurred while refunding Transaction id: " + request.getTransactionId());
             return GatewayRefundResponse.fromGatewayError(gatewayError);
         }
     }

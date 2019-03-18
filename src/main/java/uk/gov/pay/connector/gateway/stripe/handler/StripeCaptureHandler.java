@@ -26,7 +26,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
 import static uk.gov.pay.connector.gateway.CaptureResponse.fromBaseCaptureResponse;
-import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
+import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayDownstreamError;
 
 public class StripeCaptureHandler implements CaptureHandler {
 
@@ -81,7 +81,7 @@ public class StripeCaptureHandler implements CaptureHandler {
         } catch (DownstreamException e) {
             logger.error("Capture failed for transaction id {}. Reason: {}. Status code from Stripe: {}. Charge External Id: {}",
                     transactionId, e.getMessage(), e.getStatusCode(), request.getExternalId());
-            GatewayError gatewayError = gatewayConnectionError("An internal server error occurred when capturing charge_external_id: " + request.getExternalId());
+            GatewayError gatewayError = gatewayDownstreamError("An internal server error occurred when capturing charge_external_id: " + request.getExternalId());
             return CaptureResponse.fromGatewayError(gatewayError);
         }
     }

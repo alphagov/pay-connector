@@ -9,7 +9,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.ClientErrorException;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -84,7 +84,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         chargeEntity.setGatewayAccount(gatewayAccountEntity);
 
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
-                .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
+                .thenThrow(new ClientErrorException("Unexpected HTTP status code 400 from gateway"));
 
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
         when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any()))
@@ -122,7 +122,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         chargeEntity.setGatewayAccount(gatewayAccountEntity);
 
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
-                .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
+                .thenThrow(new ClientErrorException("Unexpected HTTP status code 400 from gateway"));
 
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
         when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any())).thenReturn(mockGatewayClient);
@@ -130,7 +130,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         try {
             WorldpayPaymentProvider worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
             worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity));
-        } catch (GatewayConnectionErrorException e) {
+        } catch (ClientErrorException e) {
             ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), anyMap());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS), gatewayOrderArgumentCaptor.getValue().getPayload());
@@ -152,7 +152,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
 
         gatewayAccountEntity.setRequires3ds(true);
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
-                .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
+                .thenThrow(new ClientErrorException("Unexpected HTTP status code 400 from gateway"));
 
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
         when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any()))
@@ -162,7 +162,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
 
         try {
             worldpayPaymentProvider.authorise(getCardAuthorisationRequest(mockChargeEntity));
-        } catch (GatewayConnectionErrorException e) {
+        } catch (ClientErrorException e) {
             ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), anyMap());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS), gatewayOrderArgumentCaptor.getValue().getPayload());
@@ -178,7 +178,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         when(mockChargeEntity.getGatewayTransactionId()).thenReturn("MyUniqueTransactionId!");
 
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
-                .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 401 from gateway"));
+                .thenThrow(new ClientErrorException("Unexpected HTTP status code 401 from gateway"));
 
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
         when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any())).thenReturn(mockGatewayClient);
@@ -212,7 +212,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         when(mockChargeEntity.getProviderSessionId()).thenReturn(providerSessionId);
 
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
-                .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
+                .thenThrow(new ClientErrorException("Unexpected HTTP status code 400 from gateway"));
 
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
         when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any()))
@@ -247,7 +247,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         when(mockChargeEntity.getProviderSessionId()).thenReturn(providerSessionId);
 
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
-                .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
+                .thenThrow(new ClientErrorException("Unexpected HTTP status code 400 from gateway"));
 
         GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
         when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any()))
@@ -284,8 +284,8 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         mockWorldpayErrorResponse(401);
         try {
             provider.authorise(getCardAuthorisationRequest());
-        } catch (GatewayConnectionErrorException e) {
-            assertEquals(e.toGatewayError(), new GatewayError("Unexpected HTTP status code 401 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
+        } catch (ClientErrorException e) {
+            assertEquals(e.toGatewayError(), new GatewayError("Unexpected HTTP status code 401 from gateway", ErrorType.CLIENT_ERROR));
         }
     }
 

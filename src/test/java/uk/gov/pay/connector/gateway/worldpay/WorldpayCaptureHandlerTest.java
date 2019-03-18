@@ -24,7 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_ERROR;
+import static uk.gov.pay.connector.gateway.model.ErrorType.CLIENT_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -85,13 +85,13 @@ public class WorldpayCaptureHandlerTest {
     @Test
     public void shouldErrorIfWorldpayResponseIsNot200() throws Exception {
         when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
-                .thenThrow(new GatewayErrorException.GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
+                .thenThrow(new GatewayErrorException.ClientErrorException("Unexpected HTTP status code 400 from gateway"));
         
         CaptureResponse gatewayResponse = worldpayCaptureHandler.capture(getCaptureRequest());
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.getError().isPresent(), is(true));
         assertThat(gatewayResponse.getError().get().getMessage(), is("Unexpected HTTP status code 400 from gateway"));
-        assertThat(gatewayResponse.getError().get().getErrorType(), is(GATEWAY_CONNECTION_ERROR));
+        assertThat(gatewayResponse.getError().get().getErrorType(), is(CLIENT_ERROR));
     }
 
     private CaptureGatewayRequest getCaptureRequest() {

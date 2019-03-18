@@ -10,7 +10,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.ClientErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.DownstreamErrorException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -72,8 +73,11 @@ public class WalletAuthoriseService {
                 
                 logger.error("Error occurred authorising charge. Charge external id: {}; message: {}", charge.getExternalId(), e.getMessage());
                 
-                if (e instanceof GatewayConnectionErrorException) {
-                    logger.error("Response from gateway: {}", ((GatewayConnectionErrorException) e).getResponseFromGateway());
+                if (e instanceof ClientErrorException) {
+                    logger.error("Response from gateway: {}", ((ClientErrorException) e).getResponseFromGateway());
+                }
+                if (e instanceof DownstreamErrorException) {
+                    logger.error("Response from gateway: {}", ((DownstreamErrorException) e).getResponseFromGateway());
                 }
                 
                 chargeStatus = CardAuthoriseBaseService.mapFromGatewayErrorException(e);

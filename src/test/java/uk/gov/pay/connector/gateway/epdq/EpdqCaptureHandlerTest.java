@@ -10,7 +10,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayErrorException.ClientErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -25,7 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_ERROR;
+import static uk.gov.pay.connector.gateway.model.ErrorType.CLIENT_ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
@@ -86,13 +86,13 @@ public class EpdqCaptureHandlerTest {
     @Test
     public void shouldNotCaptureIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
         when(client.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
-                .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
+                .thenThrow(new ClientErrorException("Unexpected HTTP status code 400 from gateway"));
         
         CaptureResponse gatewayResponse = epdqCaptureHandler.capture(buildTestCaptureRequest());
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.getError().isPresent(), is(true));
         assertThat(gatewayResponse.getError().get().getMessage(), is("Unexpected HTTP status code 400 from gateway"));
-        assertThat(gatewayResponse.getError().get().getErrorType(), is(GATEWAY_CONNECTION_ERROR));
+        assertThat(gatewayResponse.getError().get().getErrorType(), is(CLIENT_ERROR));
     }
 
     private CaptureGatewayRequest buildTestCaptureRequest() {

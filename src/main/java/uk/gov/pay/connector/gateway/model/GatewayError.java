@@ -7,9 +7,10 @@ import uk.gov.pay.connector.gateway.stripe.GatewayException;
 import java.net.SocketTimeoutException;
 
 import static java.lang.String.format;
+import static uk.gov.pay.connector.gateway.model.ErrorType.DOWNSTREAM_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_ERROR;
+import static uk.gov.pay.connector.gateway.model.ErrorType.CLIENT_ERROR;
 
 public class GatewayError {
     private String message;
@@ -22,8 +23,12 @@ public class GatewayError {
         this.errorType = errorType;
     }
 
-    public static GatewayError gatewayConnectionError(String msg) {
-        return new GatewayError(msg, GATEWAY_CONNECTION_ERROR);
+    public static GatewayError gatewayDownstreamError(String msg) {
+        return new GatewayError(msg, DOWNSTREAM_ERROR);
+    }
+
+    public static GatewayError gatewayClientError(String msg) {
+        return new GatewayError(msg, CLIENT_ERROR);
     }
 
     public static GatewayError genericGatewayError(String msg) {
