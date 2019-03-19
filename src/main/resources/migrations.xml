@@ -1014,4 +1014,86 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add payouts table" author="">
+        <createTable tableName="payouts">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="external_id" type="char(26)" />
+            <column name="created_date" type="timestamp without timezone" />
+            <column name="payout_date" type="timestamp without timezone" />
+            <column name="gateway_account_id" type="bigint">
+                <constraints foreignKeyName="fk__gateway_accounts_payouts"
+                             referencedTableName="gateway_accounts" referencedColumnNames="id"
+                             nullable="false"/>
+            </column>
+            <column name="sum_charges" type="bigint"/>
+            <column name="sum_fees" type="bigint"/>
+            <column name="sum_refunds" type="bigint"/>
+            <column name="gateway_processing_details" type="jsonb"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="createIndex payouts.external_id" author="">
+        <createIndex indexName="idx_payouts_external_id"
+                     tableName="payouts"
+                     unique="true">
+            <column name="external_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="createIndex payouts.gateway_account_id" author="">
+        <createIndex indexName="idx_payouts_gateway_account_id"
+                     tableName="payouts"
+                     unique="true">
+            <column name="gateway_account_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="createIndex payouts.created_date" author="">
+        <createIndex indexName="idx_payoutss_created_date"
+                     tableName="payouts"
+                     unique="false">
+            <column name="created_date"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="createIndex payouts.paid_date" author="">
+        <createIndex indexName="idx_payouts_paid_date"
+                     tableName="payouts"
+                     unique="false">
+            <column name="paid_date"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="add payout_id column to charges" author="">
+        <addColumn tableName="charges">
+            <column name="payout_id" type="bigserial">
+            <constraints foreignKeyName="fk__charges_payouts" referencedTableName="payouts"
+                         referencedColumnNames="id" nullable="false"/>
+        </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add index to charges.payout_id" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_charges_payout_id ON charges(payout_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add payout_id column to refunds" author="">
+        <addColumn tableName="refunds">
+            <column name="payout_id" type="bigserial">
+            <constraints foreignKeyName="fk__refunds_payouts" referencedTableName="payouts"
+                         referencedColumnNames="id" nullable="false"/>
+        </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add index to refunds.payout_id" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_refunds_payout_id ON refunds(payout_id);
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
