@@ -1014,4 +1014,23 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add column and index for refunds gateway transaction ID" author="">
+        <addColumn tableName="refunds">
+            <column name="gateway_transaction_id" type="text">
+                <constraints nullable="true" unique="true" />
+            </column>
+        </addColumn>
+        <createIndex tableName="refunds" indexName="idx_refunds_gateway_transaction_id" unique="true">
+            <column name="gateway_transaction_id" type="text" />
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="add generic gateway processing details column" author="">
+        <addColumn tableName="refunds">
+            <column name="gateway_processing_details" type="jsonb">
+                <constraints nullable="true" unique="false" />
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
