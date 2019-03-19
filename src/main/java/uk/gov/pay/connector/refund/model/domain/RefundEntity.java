@@ -75,6 +75,9 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     @Column(name = "user_external_id")
     private String userExternalId;
+    
+    @Column(name = "gateway_transaction_id")
+    private String gatewayTransactionId;
 
     @Column(name = "created_date")
     @Convert(converter = UTCDateTimeConverter.class)
@@ -95,6 +98,10 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     public String getExternalId() {
         return externalId;
+    }
+    
+    public String getGatewayTransactionId() { 
+        return gatewayTransactionId;
     }
 
     public String getReference() {
@@ -139,6 +146,10 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     public void setExternalId(String externalId) {
         this.externalId = externalId;
+    }
+    
+    public void setGatewayTransactionId(String gatewayTransactionId) { 
+        this.gatewayTransactionId = gatewayTransactionId;
     }
 
     public void setCreatedDate(ZonedDateTime createdDate) {

@@ -16,6 +16,7 @@ public abstract class AbstractRefundsResponseBuilder<T extends AbstractRefundsRe
     protected RefundEntity refundEntity;
     protected String status;
     protected String extChargeId;
+    protected String gatewayTransactionId;
     protected Long amountSubmitted;
 
     protected abstract T thisObject();
@@ -42,6 +43,11 @@ public abstract class AbstractRefundsResponseBuilder<T extends AbstractRefundsRe
 
     public T withAmountSubmitted(Long amountSubmitted) {
         this.amountSubmitted = amountSubmitted;
+        return thisObject();
+    }
+    
+    public T withGatewayTransactionId(String gatewayTransactionId) { 
+        this.gatewayTransactionId = gatewayTransactionId;
         return thisObject();
     }
 
