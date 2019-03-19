@@ -1020,9 +1020,12 @@
                 <constraints nullable="true" unique="true" />
             </column>
         </addColumn>
-        <createIndex tableName="refunds" indexName="idx_refunds_gateway_transaction_id" unique="true">
-            <column name="gateway_transaction_id" type="text" />
-        </createIndex>
+    </changeSet>
+    
+    <changeSet id="add index concurrently to new refunds gateway_transaction_id column" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_refunds_gateway_transaction_id on refunds(gateway_transaction_id);
+        </sql>
     </changeSet>
 
     <changeSet id="add generic gateway processing details column" author="">
