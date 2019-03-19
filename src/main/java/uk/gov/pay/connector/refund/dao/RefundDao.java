@@ -145,9 +145,11 @@ public class RefundDao extends JpaDao<RefundEntity> {
         Query query = entityManager.get().createQuery(cq);
 
         if (params.getPage() != null && params.getDisplaySize() != null) {
-            Long firstResult = (params.getPage() - 1) * params.getDisplaySize();
-            query.setFirstResult(firstResult.intValue());
-            query.setMaxResults(params.getDisplaySize().intValue());
+            long displaySize = params.getDisplaySize();
+            long firstResult = (params.getPage() - 1) * displaySize;
+
+            query.setFirstResult((int) firstResult);
+            query.setMaxResults((int) displaySize);
         }
         return query.getResultList();
     }
