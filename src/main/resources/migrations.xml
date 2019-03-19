@@ -1013,5 +1013,33 @@
             alter table gateway_accounts drop column allow_web_payments;
         </sql>
     </changeSet>
+    
+    <changeSet id="add fee table" author="">
+        <createTable tableName="fees">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="external_id" type="char(26)" />
+            <column name="charge_id" type="bigserial">
+                <constraints foreignKeyName="fk__charge_fees"
+                             referencedTableName="charges"
+                             referencedColumnNames="id"
+                             nullable="false" />
+            </column>
+            <column name="fee_due" type="bigint" />
+            <column name="fee_collected" type="bigint" />
+            <column name="created" type="timestamp without timezone" />
+            <column name="gateway_transaction_id"  type="text">
+                <constraints nullable="true" />
+            </column>
+            <column name="gateway_processing_details" type="jsonb" />
+        </createTable>
+    </changeSet>
+    
+    <changeSet id="index gateway_transaction_id for fee table" author="">
+        <createIndex tableName="fees" indexName="itx_fees_gateway_transaction_id">
+            <column name="gateway_transaction_id"></column>
+        </createIndex>
+    </changeSet>
 
 </databaseChangeLog>
