@@ -52,9 +52,9 @@ public class CardResourceAuthoriseApplePayITest extends ChargingITestBase {
     public void shouldAuthoriseCharge_ForApplePay() {
         shouldAuthoriseChargeForApplePay("mr payment", "mr@payment.test");
 
-//        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-//        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
-//        assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Received encrypted payload for charge with id")), is(true));
+        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
+        assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Received encrypted payload for charge with id")), is(true));
     }
 
     @Test
