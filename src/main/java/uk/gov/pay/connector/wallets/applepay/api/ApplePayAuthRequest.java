@@ -38,7 +38,16 @@ public class ApplePayAuthRequest implements WalletAuthorisationRequest {
         private Header header;
         private String signature;
 
-
+        @Override
+        public String toString() {
+            return "EncryptedPaymentData{" +
+                    "data='" + data + '\'' +
+                    ", version='" + version + '\'' +
+                    ", header=" + header +
+                    ", signature='" + signature + '\'' +
+                    '}';
+        }
+        
         public String getSignature() {
             return signature;
         }
@@ -73,6 +82,17 @@ public class ApplePayAuthRequest implements WalletAuthorisationRequest {
             private String applicationData;
             private String wrappedKey;
 
+            @Override
+            public String toString() {
+                return "Header{" +
+                        "publicKeyHash='" + publicKeyHash + '\'' +
+                        ", ephemeralPublicKey='" + ephemeralPublicKey + '\'' +
+                        ", transactionId='" + transactionId + '\'' +
+                        ", applicationData='" + applicationData + '\'' +
+                        ", wrappedKey='" + wrappedKey + '\'' +
+                        '}';
+            }
+            
             public Header() {
             }
 
