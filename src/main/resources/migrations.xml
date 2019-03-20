@@ -1013,6 +1013,48 @@
             alter table gateway_accounts drop column allow_web_payments;
         </sql>
     </changeSet>
+    
+    <changeSet id="add fee table" author="">
+        <createTable tableName="fees">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="external_id" type="char(26)" />
+            <column name="charge_id" type="bigserial">
+                <constraints foreignKeyName="fk__charge_fees"
+                             referencedTableName="charges"
+                             referencedColumnNames="id"
+                             unique="true"
+                             nullable="false" />
+            </column>
+            <column name="amount_due" type="bigint">
+                <constraints nullable="false" />
+            </column>
+            <column name="amount_collected" type="bigint">
+                <constraints nullable="false" />
+            </column>
+            <column name="created_date" type="timestamp without timezone" />
+            <column name="collected_date" type="timestamp without timezone" />
+            <column name="gateway_transaction_id"  type="text">
+                <constraints nullable="true" />
+            </column>
+            <column name="gateway_processing_details" type="jsonb" />
+        </createTable>
+    </changeSet>
+    
+    <changeSet id="index gateway_transaction_id, external_id and charge_id columns for fee table" author="">
+        <createIndex tableName="fees" indexName="idx_fees_gateway_transaction_id">
+            <column name="gateway_transaction_id" />
+        </createIndex>
+
+        <createIndex tableName="fees" indexName="idx_fees_external_id">
+            <column name="external_id" />
+        </createIndex>
+
+        <createIndex tableName="fees" indexName="idx_fees_charge_id">
+            <column name="charge_id" />
+        </createIndex>
+    </changeSet>
 
     <changeSet id="add column and index for refunds gateway transaction ID" author="">
         <addColumn tableName="refunds">
