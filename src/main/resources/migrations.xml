@@ -1024,11 +1024,17 @@
                 <constraints foreignKeyName="fk__charge_fees"
                              referencedTableName="charges"
                              referencedColumnNames="id"
+                             unique="true"
                              nullable="false" />
             </column>
-            <column name="fee_due" type="bigint" />
-            <column name="fee_collected" type="bigint" />
+            <column name="amount_due" type="bigint">
+                <constraints nullable="false" />
+            </column>
+            <column name="amount_collected" type="bigint">
+                <constraints nullable="false" />
+            </column>
             <column name="created_date" type="timestamp without timezone" />
+            <column name="collected_date" type="timestamp without timezone" />
             <column name="gateway_transaction_id"  type="text">
                 <constraints nullable="true" />
             </column>
@@ -1036,7 +1042,7 @@
         </createTable>
     </changeSet>
     
-    <changeSet id="index columns for fee table" author="">
+    <changeSet id="index gateway_transaction_id, external_id and charge_id columns for fee table" author="">
         <createIndex tableName="fees" indexName="idx_fees_gateway_transaction_id">
             <column name="gateway_transaction_id" />
         </createIndex>
