@@ -1028,7 +1028,7 @@
             </column>
             <column name="fee_due" type="bigint" />
             <column name="fee_collected" type="bigint" />
-            <column name="created" type="timestamp without timezone" />
+            <column name="created_date" type="timestamp without timezone" />
             <column name="gateway_transaction_id"  type="text">
                 <constraints nullable="true" />
             </column>
@@ -1036,9 +1036,17 @@
         </createTable>
     </changeSet>
     
-    <changeSet id="index gateway_transaction_id for fee table" author="">
-        <createIndex tableName="fees" indexName="itx_fees_gateway_transaction_id">
-            <column name="gateway_transaction_id"></column>
+    <changeSet id="index columns for fee table" author="">
+        <createIndex tableName="fees" indexName="idx_fees_gateway_transaction_id">
+            <column name="gateway_transaction_id" />
+        </createIndex>
+
+        <createIndex tableName="fees" indexName="idx_fees_external_id">
+            <column name="external_id" />
+        </createIndex>
+
+        <createIndex tableName="fees" indexName="idx_fees_charge_id">
+            <column name="charge_id" />
         </createIndex>
     </changeSet>
 
