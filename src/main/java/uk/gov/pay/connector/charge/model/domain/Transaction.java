@@ -52,7 +52,8 @@ import java.util.Optional;
                         @ColumnResult(name = "language", type = String.class),
                         @ColumnResult(name = "delayed_capture", type = Boolean.class),
                         @ColumnResult(name = "corporate_surcharge", type = Long.class),
-                        @ColumnResult(name = "wallet", type = String.class)}))
+                        @ColumnResult(name = "wallet", type = String.class),
+                        @ColumnResult(name = "fee_amount", type = Long.class)}))
 @Entity
 @ReadOnly
 public class Transaction {
@@ -90,6 +91,7 @@ public class Transaction {
     private long amount;
     private Long corporateSurcharge;
     private WalletType walletType;
+    private Long feeAmount;
 
     public Transaction() {
     }
@@ -121,7 +123,8 @@ public class Transaction {
                        String language,
                        boolean delayedCapture,
                        Long corporateSurcharge,
-                       String walletType) {
+                       String walletType,
+                       Long feeAmount) {
         this.chargeId = chargeId;
         this.externalId = externalId;
         this.reference = reference;
@@ -150,6 +153,7 @@ public class Transaction {
         this.delayedCapture = delayedCapture;
         this.corporateSurcharge = corporateSurcharge;
         this.walletType = walletType == null ? null : WalletType.valueOf(walletType);
+        this.feeAmount = feeAmount;
     }
 
     public Long getChargeId() {
@@ -255,12 +259,15 @@ public class Transaction {
     public String getUserExternalId() {
         return userExternalId;
     }
-
     public Optional<Long> getCorporateCardSurcharge() {
         return Optional.ofNullable(corporateSurcharge);
     }
 
     public WalletType getWalletType() {
         return walletType;
+    }
+    
+    public Optional<Long> getFeeAmount() {
+        return Optional.ofNullable(feeAmount);
     }
 }

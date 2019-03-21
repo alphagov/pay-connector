@@ -133,6 +133,32 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactionCharge.getCorporateCardSurcharge().isPresent(), is(true));
         assertThat(transactionCharge.getCorporateCardSurcharge().get(), is(250L));
     }
+    
+    @Test
+    public void searchChargesWithFeeByGatewayAccount() {
+
+        // given
+        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now());
+
+        withDatabaseTestHelper(databaseTestHelper)
+                .aTestFee()
+                .withFeeCollected(100)
+                .withTestCharge(testCharge)
+                .insert();
+        
+        SearchParams params = new SearchParams();
+
+        // when
+        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+
+        // then
+        assertThat(transactions.size(), is(1));
+
+        Transaction transactionCharge = transactions.get(0);
+        assertThat(transactionCharge.getTransactionType(), is(TransactionType.CHARGE));
+        assertThat(transactionCharge.getChargeId(), is(testCharge.getChargeId()));
+        assertThat(transactionCharge.getFeeAmount().get(), is(100L));
+    }
 
     @Test
     public void searchChargesByFullEmailMatch() {
