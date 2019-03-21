@@ -15,7 +15,6 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
-import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import java.net.URI;
 
@@ -25,7 +24,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
-import static uk.gov.pay.connector.it.contract.TrustStoreLoader.getSSLContext;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @Ignore
@@ -75,8 +73,7 @@ public class GooglePayForWorldpayTest {
     }
 
     private GatewayClient getGatewayClient() {
-        Client client = ClientBuilder.newBuilder().sslContext(getSSLContext()).build();
         Environment environment = app.getInstanceFromGuiceContainer(Environment.class);
-        return new GatewayClient(client, environment.metrics());
+        return new GatewayClient(ClientBuilder.newClient(), environment.metrics());
     }
 }

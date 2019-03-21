@@ -5,19 +5,14 @@ import uk.gov.pay.connector.app.NotifyConfiguration;
 import uk.gov.service.notify.NotificationClient;
 
 import javax.inject.Inject;
-import javax.net.ssl.SSLContext;
-
-import static uk.gov.pay.connector.util.TrustStoreLoader.getSSLContext;
 
 public class NotifyClientFactory {
 
     private final NotifyConfiguration configuration;
-    private final SSLContext sslContext;
 
     @Inject
     public NotifyClientFactory(ConnectorConfiguration configuration) {
         this.configuration = configuration.getNotifyConfiguration();
-        this.sslContext = getSSLContext();
     }
 
     public NotificationClient getInstance() {
@@ -29,6 +24,6 @@ public class NotifyClientFactory {
     }
 
     private NotificationClient newInstance(String apiKey, String notificationBaseURL) {
-        return new NotificationClient(apiKey, notificationBaseURL, null, sslContext);
+        return new NotificationClient(apiKey, notificationBaseURL, null);
     }
 }
