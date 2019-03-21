@@ -63,6 +63,10 @@ public class  DatabaseFixtures {
     public TestRefund aTestRefund() {
         return new TestRefund();
     }
+    
+    public TestFee aTestFee() {
+        return new TestFee();
+    }
 
     public TestCardDetails aTestCardDetails() {
         return new TestCardDetails();
@@ -728,6 +732,42 @@ public class  DatabaseFixtures {
 
         public String getSubmittedByUserExternalId() {
             return submittedByUserExternalId;
+        }
+    }
+
+    public class TestFee {
+        String externalId = RandomIdGenerator.newId();
+        ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        TestCharge testCharge;
+        private long feeDue = 100L;
+        private long feeCollected = 100L;
+        private String gatewayTransactionId = "transaction_id";
+
+        public TestFee withTestCharge(TestCharge charge) {
+            this.testCharge = charge;
+            return this;
+        }
+        
+        public TestFee withFeeDue(long feeDue) {
+            this.feeDue = feeDue;
+            return this;
+        }
+
+        public TestFee withFeeCollected(long feeCollected) {
+            this.feeCollected = feeCollected;
+            return this;
+        }
+
+        public TestFee withGatewayTransactionId(String gatewayTransactionId) {
+            this.gatewayTransactionId = gatewayTransactionId;
+            return this;
+        }
+        
+        public TestFee insert() {
+            if (testCharge == null)
+                throw new IllegalStateException("Test charge must be provided.");
+            databaseTestHelper.addFee(externalId, testCharge.getChargeId(), feeDue, feeCollected, createdDate, gatewayTransactionId);
+            return this;
         }
     }
 

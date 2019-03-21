@@ -42,6 +42,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -94,6 +95,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", updatable = false)
     private GatewayAccountEntity gatewayAccount;
+
+    @OneToMany(mappedBy = "chargeEntity", fetch = FetchType.EAGER)
+    private List<FeeEntity> fees = Collections.emptyList();
 
     @OneToMany(mappedBy = "chargeEntity", fetch = FetchType.EAGER)
     @OrderBy("createdDate")
@@ -324,5 +328,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public void setCorporateSurcharge(Long corporateSurcharge) {
         this.corporateSurcharge = corporateSurcharge;
+    }
+
+    public Optional<Long> getFeeAmount() {
+        return fees.stream()
+                .findFirst()
+                .map(FeeEntity::getAmountCollected);
     }
 }
