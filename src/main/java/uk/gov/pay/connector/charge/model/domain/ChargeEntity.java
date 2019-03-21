@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.SupportedLanguageJpaConverter;
-import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
@@ -19,6 +18,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+import uk.gov.pay.connector.wallets.WalletType;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
@@ -35,6 +35,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -42,7 +43,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -96,8 +96,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @JoinColumn(name = "gateway_account_id", updatable = false)
     private GatewayAccountEntity gatewayAccount;
 
-    @OneToMany(mappedBy = "chargeEntity", fetch = FetchType.EAGER)
-    private List<FeeEntity> fees = Collections.emptyList();
+    @OneToOne(mappedBy = "chargeEntity", fetch = FetchType.EAGER)
+    private FeeEntity fee;
 
     @OneToMany(mappedBy = "chargeEntity", fetch = FetchType.EAGER)
     @OrderBy("createdDate")
@@ -331,8 +331,6 @@ public class ChargeEntity extends AbstractVersionedEntity {
     }
 
     public Optional<Long> getFeeAmount() {
-        return fees.stream()
-                .findFirst()
-                .map(FeeEntity::getAmountCollected);
+        return Optional.ofNullable(fee).map(FeeEntity::getAmountCollected);
     }
 }
