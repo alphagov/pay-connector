@@ -34,6 +34,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected SupportedLanguage language;
     protected boolean delayedCapture;
     protected Long corporateCardSurcharge;
+    protected Long fee;
     protected Long totalAmount;
     protected WalletType walletType;
 
@@ -145,6 +146,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
     
+    public T withFee(Long fee) {
+        this.fee = fee;
+        return thisObject();
+    }
+    
     public T withTotalAmount(Long totalAmount) {
         this.totalAmount = totalAmount;
         return thisObject();
@@ -240,4 +246,8 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     }
 
     public abstract R build();
+
+    public Long getFee() {
+        return fee;
+    }
 }

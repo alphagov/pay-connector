@@ -20,6 +20,7 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import javax.ws.rs.core.HttpHeaders;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import static io.restassured.http.ContentType.JSON;
@@ -149,6 +150,20 @@ public class ChargesFrontendResourceITest {
                 .contentType(JSON)
                 .body("charge_id", is(externalChargeId))
                 .body("wallet_type", is(WalletType.APPLE_PAY.toString()));
+    }
+    
+    @Test
+    public void getChargeShouldIncludeFeeIfItExists() {
+        String externalChargeId = postToCreateACharge(expectedAmount);
+        final long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
+        final long feeCollected = 100L;
+        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
+        
+        getChargeFromResource(externalChargeId)
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("charge_id", is(externalChargeId))
+                .body("fee", is(100));
     }
 
     @Test

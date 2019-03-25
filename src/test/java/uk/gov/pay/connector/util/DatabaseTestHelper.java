@@ -744,4 +744,17 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void addFee(String externalId, long chargeId, long feeDue, long feeCollected, ZonedDateTime createdDate, String gatewayTransactionId) {
+        jdbi.withHandle(handle ->
+                handle
+                        .createStatement("INSERT INTO fees(external_id, charge_id, amount_due, amount_collected, created_date, gateway_transaction_id) VALUES (:external_id, :charge_id, :amount_due, :amount_collected, :created_date, :gateway_transaction_id)")
+                        .bind("external_id", externalId)
+                        .bind("charge_id", chargeId)
+                        .bind("amount_due", feeDue)
+                        .bind("amount_collected", feeCollected)
+                        .bind("created_date", Timestamp.from(createdDate.toInstant()))
+                        .bind("gateway_transaction_id", gatewayTransactionId)
+                        .execute()
+        );
+    }
 }

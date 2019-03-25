@@ -1536,6 +1536,26 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(chargeDao.findByIdAndLimit(0L, 2).size(), is(2));
     }
 
+    @Test
+    public void getChargeWithAFee_shouldReturnFeeOnCharge() {
+        insertTestCharge();
+        
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestFee()
+                .withFeeDue(100L)
+                .withFeeCollected(10L)
+                .withTestCharge(defaultTestCharge)
+                .insert();
+
+        assertThat(chargeDao
+                .findById(defaultTestCharge.getChargeId())
+                .flatMap(ChargeEntity::getFeeAmount)
+                .get(), 
+                is(10L)
+        );
+    }
+
     private void insertTestAccount() {
         this.defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
