@@ -338,7 +338,8 @@ public class StripeResourceAuthorizeITest {
         params.add(new BasicNameValuePair("description", DESCRIPTION));
         params.add(new BasicNameValuePair("source", "src_1DT9bn2eZvKYlo2Cg5okt8WC")); //This comes from resources/stripe/create_sources_response.json
         params.add(new BasicNameValuePair("capture", "false"));
-        params.add(new BasicNameValuePair("destination[account]", stripeAccountId));
+        params.add(new BasicNameValuePair("on_behalf_of", stripeAccountId));
+        params.add(new BasicNameValuePair("transfer_data[destination]", stripeAccountId));
         return URLEncodedUtils.format(params, UTF_8);
     }
 
