@@ -259,27 +259,8 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[0].charge_id", is(externalChargeId))
                 .body("results[0].wallet_type", is(WalletType.APPLE_PAY.toString()));
     }
-
+    
     @Test
-    public void shouldReturnFeeIfItExists() {
-        long chargeId = nextInt();
-        String externalChargeId = RandomIdGenerator.newId();
-        long feeCollected = 100;
-
-        createCharge(externalChargeId, chargeId);
-        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
-
-        connectorRestApiClient
-                .withAccountId(accountId)
-                .withChargeId(externalChargeId)
-                .getCharge()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("fee", is(100));
-    }
-
-
-        @Test
     public void shouldReturnWalletTypeWhenNotNull_v2() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
@@ -310,6 +291,60 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body("results[0].charge_id", is(externalChargeId))
                 .body("results[0].wallet_type", is(nullValue()));
+    }
+
+    @Test
+    public void shouldReturnFeeIfItExists() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+        long feeCollected = 100;
+
+        createCharge(externalChargeId, chargeId);
+        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("fee", is(100));
+    }
+
+    @Test
+    public void shouldReturnFeeInSearchResultsV1IfFeeExists() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+        long feeCollected = 100;
+
+        createCharge(externalChargeId, chargeId);
+        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .getChargesV1()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results[0].charge_id", is(externalChargeId))
+                .body("results[0].fee", is(100));
+    }
+
+    @Test
+    public void shouldReturnFeeInSearchResultsV2IfFeeExists() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+        long feeCollected = 100;
+
+        createCharge(externalChargeId, chargeId);
+        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .getChargesV2()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results[0].charge_id", is(externalChargeId))
+                .body("results[0].fee", is(100));
     }
 
     @Test

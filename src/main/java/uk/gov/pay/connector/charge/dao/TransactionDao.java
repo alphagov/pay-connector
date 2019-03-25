@@ -75,7 +75,8 @@ public class TransactionDao {
                         field("language"),
                         field("delayed_capture"),
                         field("corporate_surcharge"),
-                        field("wallet"))
+                        field("wallet"),
+                        field("fee_amount"))
                 .from(buildQueryFor(gatewayAccountId, QueryType.SELECT, params))
                 .orderBy(field("date_created").desc());
 
@@ -211,8 +212,11 @@ public class TransactionDao {
                 field("c.language"),
                 field("c.delayed_capture"),
                 field("c.corporate_surcharge"),
-                field("c.wallet"))
-                .from(table("charges").as("c").leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
+                field("c.wallet"),
+                field("f.amount_collected").as("fee_amount"))
+                .from(table("charges").as("c")
+                        .leftJoin(table("fees").asTable("f")).on("c.id = f.charge_id")
+                        .leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
                 .where(queryFiltersForCharges);
 
         SelectConditionStep queryForRefunds = DSL.select(
@@ -243,8 +247,11 @@ public class TransactionDao {
                 field("c.language"),
                 field("c.delayed_capture"),
                 field("c.corporate_surcharge"),
-                field("c.wallet"))
-                .from(table("charges").as("c").leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
+                field("c.wallet"),
+                field("f.amount_collected").as("fee_amount"))
+                .from(table("charges").as("c")
+                        .leftJoin(table("fees").asTable("f")).on("c.id = f.charge_id")
+                        .leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
                 .join(table("refunds").as("r"))
                 .on(field("c.id").eq(field("r.charge_id")))
                 .where(queryFiltersForRefunds);
