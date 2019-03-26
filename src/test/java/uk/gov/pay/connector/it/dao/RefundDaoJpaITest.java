@@ -60,6 +60,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestRefund()
                 .withReference(randomAlphanumeric(10))
+                .withGatewayTransactionId(randomAlphanumeric(10))
                 .withTestCharge(testCharge);
 
         this.sandboxAccount = testAccount.insert();
@@ -81,6 +82,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
         assertThat(refundEntity.getStatus(), is(refundTestRecord.getStatus()));
         assertNotNull(refundEntity.getChargeEntity());
         assertThat(refundEntity.getChargeEntity().getId(), is(refundTestRecord.getTestCharge().getChargeId()));
+        assertThat(refundEntity.getGatewayTransactionId(), is(refundTestRecord.getGatewayTransactionId()));
         assertThat(refundEntity.getCreatedDate(), is(refundTestRecord.getCreatedDate()));
         assertNotNull(refundEntity.getVersion());
     }

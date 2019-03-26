@@ -261,21 +261,22 @@ public class DatabaseTestHelper {
                         .bind("accountId", accountId).execute());
     }
 
-    public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId, ZonedDateTime createdDate) {
-        return addRefund(externalId, reference, amount, status, chargeId, createdDate, null);
+    public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId, String gatewayTransactionId, ZonedDateTime createdDate) {
+        return addRefund(externalId, reference, amount, status, chargeId, gatewayTransactionId, createdDate, null);
     }
 
-    public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId, ZonedDateTime createdDate, String submittedByUserExternalId) {
+    public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId, String gatewayTransactionId, ZonedDateTime createdDate, String submittedByUserExternalId) {
         int refundId = RandomUtils.nextInt();
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO refunds(id, external_id, reference, amount, status, charge_id, created_date, user_external_id) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :user_external_id)")
+                        .createStatement("INSERT INTO refunds(id, external_id, reference, amount, status, charge_id, gateway_transaction_id, created_date, user_external_id) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :gateway_transaction_id, :created_date, :user_external_id)")
                         .bind("id", refundId)
                         .bind("external_id", externalId)
                         .bind("reference", reference)
                         .bind("amount", amount)
                         .bind("status", status.getValue())
                         .bind("charge_id", chargeId)
+                        .bind("gateway_transaction_id", gatewayTransactionId)
                         .bind("created_date", Timestamp.from(createdDate.toInstant()))
                         .bind("user_external_id", submittedByUserExternalId)
                         .bind("version", 1)

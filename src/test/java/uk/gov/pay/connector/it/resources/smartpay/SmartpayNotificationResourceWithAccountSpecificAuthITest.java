@@ -24,6 +24,7 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
@@ -133,7 +134,7 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthITest extends Ch
         String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
         Long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge-"));
         String externalRefundId = "refund-" + RandomUtils.nextInt();
-        int refundId = databaseTestHelper.addRefund(externalRefundId, reference, 10L, REFUND_SUBMITTED, chargeId, ZonedDateTime.now());
+        int refundId = databaseTestHelper.addRefund(externalRefundId, reference, 10L, REFUND_SUBMITTED, chargeId, randomAlphanumeric(10), ZonedDateTime.now());
 
         String response = notifyConnector(notificationPayloadForTransaction(externalRefundId, transactionId, reference, "notification-refund"))
                 .then()

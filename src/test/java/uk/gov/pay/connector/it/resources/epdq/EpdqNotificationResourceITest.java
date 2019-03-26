@@ -19,6 +19,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
@@ -107,7 +108,7 @@ public class EpdqNotificationResourceITest extends ChargingITestBase {
         int refundAmount = 1000;
 
         ChargeUtils.ExternalChargeId externalChargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper);
-        databaseTestHelper.addRefund(refundExternalId, transactionId + "/" + payIdSub, 1000,  REFUND_SUBMITTED, externalChargeId.chargeId, ZonedDateTime.now());
+        databaseTestHelper.addRefund(refundExternalId, transactionId + "/" + payIdSub, 1000,  REFUND_SUBMITTED, externalChargeId.chargeId, randomAlphanumeric(10), ZonedDateTime.now());
         
         String response = notifyConnector(transactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
                 .statusCode(200)

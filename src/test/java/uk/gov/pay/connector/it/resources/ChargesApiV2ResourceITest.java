@@ -91,8 +91,8 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         String externalChargeId2 = addChargeAndCardDetails(chargeId2, CAPTURED, ServicePaymentReference.of("ref-3"), transactionIdCharge2, now().minusDays(2),
                 "visa", returnUrl, email);
 
-        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId2, now().minusHours(2));
-        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-2-provider-reference", 2L, REFUNDED, chargeId2, now().minusHours(3));
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId2, randomAlphanumeric(10), now().minusHours(2));
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-2-provider-reference", 2L, REFUNDED, chargeId2, randomAlphanumeric(10), now().minusHours(3));
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -169,8 +169,8 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         String externalChargeId2 = addChargeAndCardDetails(chargeId2, CAPTURED, referenceCharge2, transactionIdCharge2, now().minusDays(2), "visa",
                 returnUrl, email);
 
-        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId2, now().minusHours(2));
-        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-2-provider-reference", 2L, REFUNDED, chargeId2, now().minusHours(3));
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId2, randomAlphanumeric(10), now().minusHours(2));
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-2-provider-reference", 2L, REFUNDED, chargeId2, randomAlphanumeric(10), now().minusHours(3));
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -258,8 +258,8 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         String externalChargeId2 = addChargeAndCardDetails(chargeId2, CAPTURED, ServicePaymentReference.of("ref-3"), transactionIdCharge2, now().minusDays(2),
                 "visa", returnUrl, email);
 
-        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId2, now().minusHours(2));
-        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-2-provider-reference", 2L, REFUNDED, chargeId2, now().minusHours(3));
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId2, randomAlphanumeric(10), now().minusHours(2));
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-2-provider-reference", 2L, REFUNDED, chargeId2, randomAlphanumeric(10), now().minusHours(3));
 
         connectorRestApiClient
                 .withAccountId(accountId)

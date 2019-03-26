@@ -30,6 +30,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -81,7 +82,7 @@ public class SendRefundEmailTest {
         String refundExternalId = "999999";
 
         long chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper).chargeId;
-        databaseTestHelper.addRefund(refundExternalId, transactionId + "/" + payIdSub, 100,  REFUND_SUBMITTED, chargeId, ZonedDateTime.now());
+        databaseTestHelper.addRefund(refundExternalId, transactionId + "/" + payIdSub, 100,  REFUND_SUBMITTED, chargeId, randomAlphanumeric(10), ZonedDateTime.now());
 
         given().port(testContext.getPort())
                 .body(epdqNotificationPayload(transactionId, payIdSub, "8", credentials.get(CREDENTIALS_SHA_OUT_PASSPHRASE)))

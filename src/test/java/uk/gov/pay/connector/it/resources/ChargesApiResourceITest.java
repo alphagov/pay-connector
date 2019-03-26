@@ -231,7 +231,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         String externalChargeId = RandomIdGenerator.newId();
 
         createCharge(externalChargeId, chargeId);
-        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-2-provider-reference", AMOUNT + 150L, REFUNDED, chargeId, now().minusHours(3));
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-2-provider-reference", AMOUNT + 150L, REFUNDED, chargeId, randomAlphanumeric(10), now().minusHours(3));
 
         connectorRestApiClient
                 .withAccountId(accountId)
