@@ -316,7 +316,7 @@
         <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
-            <version>8.0.2</version>
+            <version>8.1.0</version>
         </dependency>
         <!-- testing -->
         <dependency>
