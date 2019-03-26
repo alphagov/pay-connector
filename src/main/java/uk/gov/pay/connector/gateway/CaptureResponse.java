@@ -52,8 +52,14 @@ public class CaptureResponse {
         return gatewayError == null;
     }
 
+    public FeeResponse getFeeResponse() {
+        return feeResponse;
+    }
+    
+    
+
     public enum ChargeState {
-        COMPLETE, PENDING
+        COMPLETE, PENDING, 
     }
 
     @Override

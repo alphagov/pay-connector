@@ -2,11 +2,13 @@ package uk.gov.pay.connector.paymentprocessor.service;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
+import com.stripe.model.BalanceTransaction;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.gateway.CaptureResponse;
@@ -56,6 +58,12 @@ public class CardCaptureService {
             throw new ConflictRuntimeException(externalId);
         }
         CaptureResponse operationResponse = capture(charge);
+        
+        if (operationResponse.state() == FEE_REQUIRED) {
+            BalanceTransaction.Fee fee = operationResponse.getFeeResponse()
+                    .toFeeEntity()
+                    .merge();
+        }
         processGatewayCaptureResponse(externalId, charge.getStatus(), operationResponse);
         return operationResponse;
     }
