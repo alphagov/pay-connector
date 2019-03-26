@@ -45,9 +45,9 @@ public class StripeRefundHandler {
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
         String url = stripeGatewayConfig.getUrl() + "/v1/refunds";
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
-
+        
         try {
-            String payload = URLEncodedUtils.format(buildPayload(request.getTransactionId(), request.getAmount()), UTF_8);
+            String payload = URLEncodedUtils.format(buildPayload(request.getTransactionId(), request.getAmount(), gatewayAccount.getCredentials().get("stripe_account_id")), UTF_8);
             final String response = client.postRequest(URI.create(url), 
                     payload,
                     getStripeAuthHeader(stripeGatewayConfig, gatewayAccount.isLive()), APPLICATION_FORM_URLENCODED_TYPE,
@@ -75,12 +75,14 @@ public class StripeRefundHandler {
         }
     }
 
-    private List<BasicNameValuePair> buildPayload(String chargeGatewayId, String amount) {
+    private List<BasicNameValuePair> buildPayload(String chargeGatewayId, String amount, String stripeConnectAccountId) {
         List<BasicNameValuePair> payload = new ArrayList<>();
         payload.add(new BasicNameValuePair("charge", chargeGatewayId));
         payload.add(new BasicNameValuePair("amount", amount));
-        payload.add(new BasicNameValuePair("refund_application_fee", "true"));
         payload.add(new BasicNameValuePair("reverse_transfer", "true"));
+        
+        // the refund will be made against a charge on the Platform account, include metadata reference to Connect account for support follow up
+        payload.add(new BasicNameValuePair("metadata[account]", stripeConnectAccountId));
 
         return payload;
     }
