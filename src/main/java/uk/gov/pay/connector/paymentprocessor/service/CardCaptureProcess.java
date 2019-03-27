@@ -130,7 +130,7 @@ public class CardCaptureProcess {
     }
 
     private boolean shouldRetry(ChargeEntity charge) {
-        return chargeDao.countCaptureRetriesForCharge(charge.getId()) < captureConfig.getMaximumRetries();
+            return chargeDao.countCaptureRetriesForCharge(charge.getId()) < captureConfig.getMaximumRetries();
     }
 
     int getReadyCaptureQueueSize() {

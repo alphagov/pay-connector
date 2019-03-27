@@ -10,6 +10,7 @@ import uk.gov.pay.connector.it.service.CardCaptureProcessBaseITest;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.rules.StripeMockClient;
 
+import static org.hamcrest.CoreMatchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
@@ -25,18 +26,20 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
     public void shouldCapture() {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(PAYMENT_PROVIDER, CAPTURE_APPROVED);
 
-        new StripeMockClient().mockCaptureSuccess(testCharge.getTransactionId());
+        new StripeMockClient().mockCaptureSuccess(testCharge.getTransactionId(), testCharge.getExternalChargeId());
+        new StripeMockClient().mockTransferSuccess(testCharge.getExternalChargeId());
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURED.getValue()));
+        Assert.assertThat(app.getDatabaseTestHelper().getFeeByChargeId(testCharge.getChargeId()).get("amount_collected"), is(51L));
     }
 
     @Test
     public void shouldNotCaptureWhenChargeIsNotInCorrectState() {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(PAYMENT_PROVIDER, ENTERING_CARD_DETAILS);
 
-        new StripeMockClient().mockCaptureSuccess(testCharge.getTransactionId());
+        new StripeMockClient().mockCaptureSuccess(testCharge.getTransactionId(), testCharge.getExternalChargeId());
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(ENTERING_CARD_DETAILS.getValue()));
@@ -47,6 +50,18 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(PAYMENT_PROVIDER, CAPTURE_APPROVED);
 
         new StripeMockClient().mockCaptureError(testCharge.getTransactionId());
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
+
+        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));
+    }
+
+    @Test
+    public void shouldGoToCaptureRetry_whenNetTransferFails() {
+        DatabaseFixtures.TestCharge testCharge = createTestCharge(PAYMENT_PROVIDER, CAPTURE_APPROVED);
+
+        new StripeMockClient().mockCaptureSuccess(testCharge.getTransactionId(), testCharge.getExternalChargeId());
+        new StripeMockClient().mockTransferFailure();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 

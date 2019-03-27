@@ -141,7 +141,7 @@ public class CardCaptureProcessTest {
     }
 
     @Test
-    public void shouldRunCaptureForAllCharges() {
+    public void shouldRunCaptureForAllCharges() throws Exception {
         ChargeEntity mockCharge1 = mock(ChargeEntity.class);
         ChargeEntity mockCharge2 = mock(ChargeEntity.class);
 
@@ -157,7 +157,7 @@ public class CardCaptureProcessTest {
     }
 
     @Test
-    public void shouldNotCaptureAChargeIfRetriesExceeded() {
+    public void shouldNotCaptureAChargeIfRetriesExceeded() throws Exception {
         ChargeEntity mockCharge1 = mock(ChargeEntity.class);
         ChargeEntity mockCharge2 = mock(ChargeEntity.class);
 

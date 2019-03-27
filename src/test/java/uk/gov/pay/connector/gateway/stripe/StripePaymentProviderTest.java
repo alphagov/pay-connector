@@ -128,6 +128,7 @@ public class StripePaymentProviderTest {
         when(threeDsSourceResponse.getEntity()).thenReturn(success3dsSourceResponse());
         when(gatewayClient.postRequestFor(eq(sourcesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
                 .thenReturn(sourceResponseWith3dsRequired, threeDsSourceResponse);
+        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(chargeResponse);
 
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
 

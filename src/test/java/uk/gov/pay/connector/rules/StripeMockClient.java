@@ -7,6 +7,7 @@ import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
@@ -14,6 +15,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSFER_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_FAILED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CANCEL_CHARGE_RESPONSE;
@@ -47,9 +49,11 @@ public class StripeMockClient {
         setupResponse(payload, "/v1/charges", 200);
     }
 
-    public void mockCaptureSuccess(String gatewayTransactionId) {
+    public void mockCaptureSuccess(String gatewayTransactionId, String idempotencyKey) {
         String payload = TestTemplateResourceLoader.load(STRIPE_CAPTURE_SUCCESS_RESPONSE);
-        setupResponse(payload, "/v1/charges/" + gatewayTransactionId + "/capture", 200);
+        stubFor(post(urlPathEqualTo("/v1/charges/" + gatewayTransactionId + "/capture")).withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
+                .withHeader("Idempotency-Key", equalTo(idempotencyKey))
+                .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON).withStatus(200).withBody(payload)));
     }
 
     public void mockCaptureError(String gatewayTransactionId) {
@@ -89,5 +93,17 @@ public class StripeMockClient {
     public void mockCancelCharge() {
         String payload = TestTemplateResourceLoader.load(STRIPE_CANCEL_CHARGE_RESPONSE);
         setupResponse(payload, "/v1/refunds", 200);
+    }
+
+    public void mockTransferSuccess(String idempotencyKey) {
+        String payload = TestTemplateResourceLoader.load(STRIPE_TRANSFER_RESPONSE);
+        stubFor(post(urlPathEqualTo("/v1/transfers")).withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
+                .withHeader("Idempotency-Key", equalTo(idempotencyKey))
+                .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON).withStatus(200).withBody(payload)));
+    }
+
+    public void mockTransferFailure() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_FAILED_RESPONSE);
+        setupResponse(payload, "/v1/transfers", 400);
     }
 }
