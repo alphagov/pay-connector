@@ -8,7 +8,7 @@ public class StripeGatewayClientResponse {
     private String payload;
     private int status;
 
-    StripeGatewayClientResponse(Response response) {
+    public StripeGatewayClientResponse(Response response) {
         this.payload = response.readEntity(String.class);
         this.statusFamily = response.getStatusInfo().getFamily();
         this.status = response.getStatus();

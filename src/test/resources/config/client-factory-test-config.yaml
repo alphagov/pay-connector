@@ -55,6 +55,7 @@ stripe:
   webhookSigningSecrets:
       test: ${GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET:-whtest}
       live: ${GDS_CONNECTOR_STRIPE_WEBHOOK_LIVE_SIGN_SECRET:-whlive}
+  feePercentage: ${STRIPE_FEE_PERCENTAGE:-0.08}
 
 jerseyClient:
   timeout: 500ms

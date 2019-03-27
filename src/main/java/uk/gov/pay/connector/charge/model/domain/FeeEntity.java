@@ -2,6 +2,7 @@ package uk.gov.pay.connector.charge.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
@@ -15,6 +16,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -23,6 +25,17 @@ import java.time.ZonedDateTime;
 @SequenceGenerator(name = "charges_charge_id_seq",
         sequenceName = "charges_charge_id_seq", allocationSize = 1)
 public class FeeEntity {
+    public FeeEntity() {
+        
+    }
+    
+    public FeeEntity(ChargeEntity chargeEntity, Long amountDue) {
+        this.externalId = RandomIdGenerator.newId();
+        this.chargeEntity = chargeEntity;
+        this.amountDue = amountDue;
+        this.amountCollected = 0L;
+        this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "charges_charge_id_seq")
@@ -38,10 +51,10 @@ public class FeeEntity {
     private ChargeEntity chargeEntity;
 
     @Column(name = "amount_due")
-    private long amountDue;
+    private Long amountDue;
 
     @Column(name = "amount_collected")
-    private long amountCollected;
+    private Long amountCollected;
 
     @Column(name = "created_date")
     @Convert(converter = UTCDateTimeConverter.class)
@@ -57,4 +70,13 @@ public class FeeEntity {
     public long getAmountCollected() {
         return amountCollected;
     }
+
+    public Long getAmountDue() {
+        return amountDue;
+    }
+
+    public void setAmountCollected(Long amountCollected) {
+        this.amountCollected = amountCollected;
+    }
+
 }
