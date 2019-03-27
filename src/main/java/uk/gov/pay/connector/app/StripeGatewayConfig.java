@@ -18,6 +18,10 @@ public class StripeGatewayConfig extends Configuration {
     @Valid
     @NotNull
     private StripeWebhookSigningSecrets webhookSigningSecrets;
+    
+    @Valid
+    @NotNull
+    private Double feePercentage;
 
     public String getUrl() {
         return url;
@@ -29,5 +33,9 @@ public class StripeGatewayConfig extends Configuration {
 
     public StripeWebhookSigningSecrets getWebhookSigningSecrets() {
         return webhookSigningSecrets;
+    }
+
+    public Double getFeePercentage() {
+        return feePercentage;
     }
 }

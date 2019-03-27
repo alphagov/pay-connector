@@ -5,7 +5,8 @@ public enum GatewayOperation {
     CAPTURE("capture"),
     REFUND("refund"),
     QUERY("query"),
-    CANCEL("cancel");
+    CANCEL("cancel"), 
+    RECOUP_FEE("recoup_fee");
 
     private final String description;
 

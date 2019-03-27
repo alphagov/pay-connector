@@ -21,6 +21,13 @@ public class GatewayClientFactory {
         return new StripeGatewayClient(client, metricRegistry);
     }
 
+    public StripeGatewayClient createStripeGatewayClient(PaymentGatewayName gateway,
+                                                         GatewayOperation operation,
+                                                         MetricRegistry metricRegistry) {
+        Client client = clientFactory.createWithDropwizardClient(gateway, operation, metricRegistry);
+        return new StripeGatewayClient(client, metricRegistry);
+    }
+
     public GatewayClient createGatewayClient(PaymentGatewayName gateway,
                                              GatewayOperation operation,
                                              MetricRegistry metricRegistry) {
