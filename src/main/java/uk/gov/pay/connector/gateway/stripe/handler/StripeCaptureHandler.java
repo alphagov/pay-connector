@@ -60,8 +60,10 @@ public class StripeCaptureHandler implements CaptureHandler {
                     format("gateway-operations.%s.%s.capture",
                             gatewayAccount.getGatewayName(),
                             gatewayAccount.getType()));
-            String stripeTransactionId = jsonObjectMapper.getObject(captureResponse, Map.class).get("id").toString();
-            return fromBaseCaptureResponse(new StripeCaptureResponse(stripeTransactionId), COMPLETE);
+            uk.gov.pay.connector.gateway.stripe.json.StripeCaptureResponse stripeCaptureResponse = 
+                    jsonObjectMapper.getObject(captureResponse, uk.gov.pay.connector.gateway.stripe.json.StripeCaptureResponse.class);
+            
+            return stripeCaptureResponse.toCaptureResponse();
 
         } catch (GatewayClientException e) {
 

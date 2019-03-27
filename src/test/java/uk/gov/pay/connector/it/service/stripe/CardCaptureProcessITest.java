@@ -10,6 +10,7 @@ import uk.gov.pay.connector.it.service.CardCaptureProcessBaseITest;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.rules.StripeMockClient;
 
+import static org.hamcrest.CoreMatchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
@@ -26,10 +27,12 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         DatabaseFixtures.TestCharge testCharge = createTestCharge(PAYMENT_PROVIDER, CAPTURE_APPROVED);
 
         new StripeMockClient().mockCaptureSuccess(testCharge.getTransactionId());
+        new StripeMockClient().mockAccountDebitSuccess();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURED.getValue()));
+        //Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURED.getValue()));
+        Assert.assertThat(app.getDatabaseTestHelper().getFeeByChargeId(testCharge.getChargeId()).get("amount_collected"), is(50L));
     }
 
     @Test
@@ -65,4 +68,18 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
 
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_ERROR.getValue()));
     }
+
+//    @Test
+//    public void shouldSetCaptureApprovedRetryIfFeeRecoupFails() {
+//        DatabaseFixtures.TestCharge testCharge = createTestCharge(PAYMENT_PROVIDER, CAPTURE_APPROVED);
+//
+//        new StripeMockClient().mockCaptureError(testCharge.getTransactionId());
+//        new StripeMockClient().mockFeeRecoupError(testCharge.getTransactionId());
+//        for (int i = 0; i < CAPTURE_MAX_RETRIES + 1; i++) {
+//            app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
+//            app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
+//        }
+//
+//        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_ERROR.getValue()));
+//    }
 }

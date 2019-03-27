@@ -14,6 +14,7 @@ public class CaptureResponse {
     private final ChargeState chargeState;
     private final GatewayError gatewayError;
     private final String stringified;
+    private Long feeAmount;
 
     private CaptureResponse(String transactionId, ChargeState chargeState, GatewayError gatewayError, String stringified) {
         this.transactionId = transactionId;
@@ -22,9 +23,18 @@ public class CaptureResponse {
         this.stringified = stringified;
     }
 
+    public CaptureResponse(String transactionId, ChargeState chargeState, GatewayError gatewayError, String stringified, Long feeAmount) {
+        this.transactionId = transactionId;
+        this.chargeState = chargeState;
+        this.gatewayError = gatewayError;
+        this.stringified = stringified;
+        this.feeAmount = feeAmount;
+    }
+
     public static CaptureResponse fromGatewayError(GatewayError gatewayError) {
         return new CaptureResponse(null, null, gatewayError, gatewayError.toString());
     }
+
 
     public static CaptureResponse fromBaseCaptureResponse(BaseCaptureResponse captureResponse, ChargeState chargeState) {
         if (isNotBlank(captureResponse.getErrorCode())) {
@@ -51,6 +61,12 @@ public class CaptureResponse {
     public boolean isSuccessful() {
         return gatewayError == null;
     }
+
+    public Optional<Long> getFeeAmount() {
+        return Optional.ofNullable(feeAmount);
+    }
+    
+    
 
     public enum ChargeState {
         COMPLETE, PENDING

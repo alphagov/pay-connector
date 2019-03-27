@@ -133,6 +133,7 @@ public class TestTemplateResourceLoader {
     public static final String STRIPE_REFUND_FULL_CHARGE_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/refund_full_charge.json";
     public static final String STRIPE_REFUND_ERROR_GREATER_AMOUNT_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/refund_error_greater_amount.json";
     public static final String STRIPE_REFUND_ERROR_ALREADY_REFUNDED_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/refund_error_charge_already_refunded.json";
+    public static final String STRIPE_ACCOUNT_DEBIT_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/account_debit_response.json";
 
     public static final String STRIPE_NOTIFICATION_3DS_SOURCE = TEMPLATE_BASE_NAME + "/stripe/notification_3ds_source.json";
 

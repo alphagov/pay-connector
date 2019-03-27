@@ -78,11 +78,11 @@ public class CardCaptureProcessTest {
         when(mockCaptureConfiguration.getRetryFailuresEveryAsJavaDuration()).thenReturn(Duration.ofMinutes(60));
         when(mockCaptureConfiguration.getMaximumRetries()).thenReturn(MAXIMUM_RETRIES);
         when(mockConnectorConfiguration.getCaptureProcessConfig()).thenReturn(mockCaptureConfiguration);
-        when(mockCardCaptureService.doCapture(anyString())).thenReturn(
-                CaptureResponse.fromBaseCaptureResponse(
-                        BaseCaptureResponse.fromTransactionId(UUID.randomUUID().toString(), SMARTPAY),
-                        PENDING)
-        );
+//        when(mockCardCaptureService.doCapture(anyString())).thenReturn(
+//                CaptureResponse.fromBaseCaptureResponse(
+//                        BaseCaptureResponse.fromTransactionId(UUID.randomUUID().toString(), SMARTPAY),
+//                        PENDING)
+//        );
         cardCaptureProcess = new CardCaptureProcess(mockEnvironment, mockChargeDao, mockCardCaptureService, mockConnectorConfiguration, queue);
     }
 
@@ -141,7 +141,7 @@ public class CardCaptureProcessTest {
     }
 
     @Test
-    public void shouldRunCaptureForAllCharges() {
+    public void shouldRunCaptureForAllCharges() throws Exception {
         ChargeEntity mockCharge1 = mock(ChargeEntity.class);
         ChargeEntity mockCharge2 = mock(ChargeEntity.class);
 
@@ -157,7 +157,7 @@ public class CardCaptureProcessTest {
     }
 
     @Test
-    public void shouldNotCaptureAChargeIfRetriesExceeded() {
+    public void shouldNotCaptureAChargeIfRetriesExceeded() throws Exception {
         ChargeEntity mockCharge1 = mock(ChargeEntity.class);
         ChargeEntity mockCharge2 = mock(ChargeEntity.class);
 

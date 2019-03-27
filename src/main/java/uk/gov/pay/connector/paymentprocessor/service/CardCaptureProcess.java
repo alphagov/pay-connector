@@ -12,6 +12,8 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.gateway.CaptureResponse;
+import uk.gov.pay.connector.paymentprocessor.exception.ChargeCaptureException;
+import uk.gov.pay.connector.paymentprocessor.exception.FeeRecoupException;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.inject.Inject;
@@ -61,14 +63,9 @@ public class CardCaptureProcess {
                 if (shouldRetry(charge)) {
                     try {
                         logger.info("Capturing [{} of {}] [chargeId={}]", total, chargesToCaptureSize, charge.getExternalId());
-                        CaptureResponse gatewayResponse = captureService.doCapture(charge.getExternalId());
-                        if (gatewayResponse.isSuccessful()) {
-                            captured++;
-                        } else {
-                            logger.info("Failed to capture [chargeId={}] due to: {}", charge.getExternalId(),
-                                    gatewayResponse.getError().get().getMessage());
-                            failedCapture++;
-                        }
+                        captureService.doCapture(charge.getExternalId());
+                    } catch (ChargeCaptureException e) {
+                        
                     } catch (ConflictRuntimeException e) {
                         logger.info("Another process has already attempted to capture [chargeId={}]. Skipping.", charge.getExternalId());
                         skipped++;

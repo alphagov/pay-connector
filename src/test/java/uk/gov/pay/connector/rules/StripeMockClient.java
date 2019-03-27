@@ -14,6 +14,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ACCOUNT_DEBIT_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_FAILED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CANCEL_CHARGE_RESPONSE;
@@ -89,5 +90,10 @@ public class StripeMockClient {
     public void mockCancelCharge() {
         String payload = TestTemplateResourceLoader.load(STRIPE_CANCEL_CHARGE_RESPONSE);
         setupResponse(payload, "/v1/refunds", 200);
+    }
+
+    public void mockAccountDebitSuccess() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_ACCOUNT_DEBIT_RESPONSE);
+        setupResponse(payload, "/v1/transfers", 200);
     }
 }
