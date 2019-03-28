@@ -118,7 +118,7 @@ public class StripeNotificationService {
                 logger.info("Updating charge for notification - " +
                                 "charge_external_id={}, status={}, status_to={}, transaction_id={}, " +
                                 "account_id={}, provider={}, provider_type={}",
-                        charge.getExternalId(), charge.getStatus(), charge.getStatus(), charge.getGatewayTransactionId(),
+                        charge.getExternalId(), charge.getStatus(), AUTHORISATION_3DS_READY, charge.getGatewayTransactionId(),
                         charge.getGatewayAccount().getId(), charge.getGatewayAccount().getGatewayName(), charge.getGatewayAccount().getType());
                 chargeService.lockChargeForProcessing(charge.getExternalId(), AUTHORISATION_3DS);
             }
