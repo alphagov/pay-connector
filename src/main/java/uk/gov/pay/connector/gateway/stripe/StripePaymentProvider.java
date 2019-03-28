@@ -343,7 +343,8 @@ public class StripePaymentProvider implements PaymentProvider {
         params.add(new BasicNameValuePair("capture", "false"));
         String stripeAccountId = getStripeAccountId(externalId, gatewayAccount);
 
-        params.add(new BasicNameValuePair("destination[account]", stripeAccountId));
+        params.add(new BasicNameValuePair("on_behalf_of", stripeAccountId));
+        params.add(new BasicNameValuePair("transfer_data[destination]", stripeAccountId));
         return URLEncodedUtils.format(params, UTF_8);
     }
 
