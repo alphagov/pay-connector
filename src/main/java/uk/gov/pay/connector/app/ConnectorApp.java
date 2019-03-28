@@ -53,7 +53,6 @@ import uk.gov.pay.connector.report.resource.TransactionsSummaryResource;
 import uk.gov.pay.connector.token.resource.SecurityTokensResource;
 import uk.gov.pay.connector.usernotification.resource.EmailNotificationResource;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
-import uk.gov.pay.connector.util.TrustingSSLSocketFactory;
 import uk.gov.pay.connector.util.XrayUtils;
 import uk.gov.pay.connector.webhook.resource.NotificationResource;
 
@@ -135,8 +134,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
         environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
-
-        HttpsURLConnection.setDefaultSSLSocketFactory(new TrustingSSLSocketFactory());
 
         if (configuration.isXrayEnabled())
             Xray.init(environment, "pay-connector", Optional.empty(), "/v1/*");

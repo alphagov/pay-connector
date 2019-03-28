@@ -12,18 +12,18 @@ import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.conn.ManagedHttpClientConnectionFactory;
 import org.apache.http.impl.conn.SystemDefaultDnsResolver;
-import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientProperties;
 import uk.gov.pay.commons.utils.xray.XRayHttpClientFilter;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.OperationOverrides;
 import uk.gov.pay.connector.filters.RestClientLoggingFilter;
-import uk.gov.pay.connector.util.TrustStoreLoader;
 
 import javax.inject.Inject;
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import javax.ws.rs.client.Client;
+import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -87,21 +87,24 @@ public class ClientFactory {
     }
 
     private HttpClientConnectionManager createConnectionManager(String gatewayName, String operation, MetricRegistry metricRegistry) {
+
+        SSLConnectionSocketFactory sslConnectionSocketFactory;
+        try {
+            sslConnectionSocketFactory = new SSLConnectionSocketFactory(
+                    SSLContext.getDefault(),
+                    new String[]{"TLSv1.2"},
+                    null,
+                    (HostnameVerifier) null
+            );
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Unable to create SSL connection socket factory", e);
+        }
+
         return new InstrumentedHttpClientConnectionManager(
                 metricRegistry,
                 RegistryBuilder.<ConnectionSocketFactory>create()
                         .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                        .register("https",
-                                new SSLConnectionSocketFactory(
-                                        SslConfigurator
-                                                .newInstance()
-                                                .trustStore(TrustStoreLoader.getTrustStore())
-                                                .createSSLContext(),
-                                        new String[]{"TLSv1.2"},
-                                        null,
-                                        (HostnameVerifier) null
-                                )
-                        )
+                        .register("https", sslConnectionSocketFactory)
                         .build(),
                 new ManagedHttpClientConnectionFactory(),
                 null,
