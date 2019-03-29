@@ -20,6 +20,7 @@ pipeline {
     DOCKER_HOST = "unix:///var/run/docker.sock"
     RUN_END_TO_END_ON_PR = "${params.runEndToEndTestsOnPR}"
     RUN_ZAP_ON_PR = "${params.runZapTestsOnPR}"
+    JAVA_HOME="/usr/lib/jvm/java-1.11.0-openjdk-amd64"
   }
   stages {
     stage('Maven Build') {
@@ -28,6 +29,7 @@ pipeline {
           long stepBuildTime = System.currentTimeMillis()
 
           sh 'docker pull govukpay/postgres:9.6.12'
+          sh 'mvn -version'
           sh 'mvn clean package'
           runProviderContractTests()
           postSuccessfulMetrics("connector.maven-build", stepBuildTime)
