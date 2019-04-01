@@ -5,6 +5,7 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
@@ -53,7 +54,6 @@ public class ChargeCancelService {
         this.providers = providers;
     }
 
-    @Transactional
     public Optional<ChargeEntity> doSystemCancel(String chargeId, Long accountId) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> {
@@ -62,7 +62,6 @@ public class ChargeCancelService {
                 });
     }
 
-    @Transactional
     public Optional<ChargeEntity> doUserCancel(String chargeId) {
         return chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
@@ -103,8 +102,7 @@ public class ChargeCancelService {
                 chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
                 stringifiedResponse, chargeEntity.getStatus(), chargeStatus);
 
-        chargeEntity.setStatus(chargeStatus);
-        chargeEventDao.persistChargeEventOf(chargeEntity);
+        setChargeStatusTo(chargeEntity.getExternalId(), chargeStatus);
     }
 
     private GatewayResponse<BaseCancelResponse> doGatewayCancel(ChargeEntity chargeEntity) throws GatewayErrorException {
@@ -127,8 +125,8 @@ public class ChargeCancelService {
 
         logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                 chargeEntity.getExternalId(), chargeEntity.getStatus(), completeStatus);
-        chargeEntity.setStatus(completeStatus);
-        chargeEventDao.persistChargeEventOf(chargeEntity);
+
+        setChargeStatusTo(chargeEntity.getExternalId(), completeStatus);
     }
 
     private boolean gatewayIsNotAwareOfCharge(ChargeEntity chargeEntity) {
@@ -140,7 +138,6 @@ public class ChargeCancelService {
         ChargeStatus currentStatus = ChargeStatus.fromString(chargeEntity.getStatus());
 
         validateChargeStatus(statusFlow, chargeEntity, newStatus, currentStatus);
-        chargeEntity.setStatus(newStatus);
 
         // Used by Sumo Logic saved search
         logger.info("Card cancel request sent - charge_external_id={}, charge_status={}, account_id={}, transaction_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
@@ -154,7 +151,18 @@ public class ChargeCancelService {
                 chargeEntity.getGatewayAccount().getType(),
                 newStatus);
 
-        chargeEventDao.persistChargeEventOf(chargeEntity);
+        setChargeStatusTo(chargeEntity.getExternalId(), newStatus);
+    }
+
+    @Transactional
+    @SuppressWarnings("WeakerAccess") // Guice requires @Transactional methods to be public
+    public void setChargeStatusTo(String chargeEntityExternalId, ChargeStatus chargeStatus) {
+        chargeDao.findByExternalId(chargeEntityExternalId).ifPresentOrElse(chargeEntity -> {
+            chargeEntity.setStatus(chargeStatus);
+            chargeEventDao.persistChargeEventOf(chargeEntity);
+        }, () -> {
+            throw new ChargeNotFoundRuntimeException(chargeEntityExternalId);
+        });
     }
 
     private void validateChargeStatus(StatusFlow statusFlow, ChargeEntity chargeEntity, ChargeStatus newStatus, ChargeStatus oldStatus) {
