@@ -10,7 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
@@ -61,14 +61,14 @@ public class WorldpayWalletAuthorisationHandlerTest {
         chargeEntity.setGatewayAccount(gatewayAccountEntity);
         gatewayAccountEntity.setCredentials(ImmutableMap.of("merchant_id", "MERCHANTCODE"));
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
-                .thenThrow(new GatewayConnectionErrorException("Unexpected HTTP status code 400 from gateway"));
+                .thenThrow(new GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
     }
 
     @Test
     public void shouldSendApplePayRequestWhenApplePayDetailsArePresent() throws Exception {
         try {
             worldpayApplePayAuthorisationHandler.authorise(getApplePayAuthorisationRequest());
-        } catch (GatewayConnectionErrorException e) {
+        } catch (GatewayErrorException e) {
             ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
             ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), headers.capture());
@@ -82,7 +82,7 @@ public class WorldpayWalletAuthorisationHandlerTest {
     public void shouldSendGooglePayRequestWhenGooglePayDetailsArePresent() throws Exception {
         try {
             worldpayApplePayAuthorisationHandler.authorise(getGooglePayAuthorisationRequest());
-        } catch (GatewayConnectionErrorException e) {
+        } catch (GatewayErrorException e) {
             ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
             ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), headers.capture());

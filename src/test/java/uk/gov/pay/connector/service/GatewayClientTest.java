@@ -12,7 +12,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -27,8 +27,6 @@ import javax.ws.rs.core.Response;
 import java.net.HttpCookie;
 import java.net.SocketException;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 
 import static java.util.Collections.emptyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -36,8 +34,6 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GatewayClientTest {
@@ -91,14 +87,14 @@ public class GatewayClientTest {
         when(mockGatewayOrder.getMediaType()).thenReturn(mediaType);
     }
 
-    @Test(expected = GatewayErrorException.GatewayConnectionErrorException.class)
+    @Test(expected = GatewayException.GatewayErrorException.class)
     public void shouldReturnGatewayErrorWhenProviderFails() throws Exception {
         when(mockResponse.getStatus()).thenReturn(500);
         gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder, emptyMap());
         verify(mockResponse).close();
     }
 
-    @Test(expected = GatewayErrorException.GenericGatewayErrorException.class)
+    @Test(expected = GatewayException.GenericGatewayException.class)
     public void shouldReturnGatewayErrorWhenProviderFailsWithAProcessingException() throws Exception {
         when(mockBuilder.post(Entity.entity(orderPayload, mediaType))).thenThrow(new ProcessingException(new SocketException("socket failed")));
         gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, mockGatewayAccountEntity, mockGatewayOrder, emptyMap());

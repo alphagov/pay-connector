@@ -4,9 +4,9 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionTimeoutErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
+import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.ws.rs.ProcessingException;
@@ -37,7 +37,7 @@ public class GatewayClient {
     }
 
     public GatewayClient.Response postRequestFor(URI url, GatewayAccountEntity account, GatewayOrder request, Map<String, String> headers) 
-            throws GenericGatewayErrorException, GatewayConnectionErrorException, GatewayConnectionTimeoutErrorException {
+            throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
         return postRequestFor(url, account, request, emptyList(), headers);
     }
 
@@ -46,7 +46,7 @@ public class GatewayClient {
                                                  GatewayOrder request, 
                                                  List<HttpCookie> cookies, 
                                                  Map<String, String> headers) 
-            throws GenericGatewayErrorException, GatewayConnectionTimeoutErrorException, GatewayConnectionErrorException {
+            throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayErrorException {
         
         String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
         javax.ws.rs.core.Response response = null;
@@ -66,24 +66,24 @@ public class GatewayClient {
             } else {
                 logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}", statusCode, url, account.getType());
                 incrementFailureCounter(metricRegistry, metricsPrefix);
-                throw new GatewayConnectionErrorException("Unexpected HTTP status code " + statusCode + " from gateway", gatewayResponse.getEntity());
+                throw new GatewayErrorException("Unexpected HTTP status code " + statusCode + " from gateway", gatewayResponse.getEntity(), statusCode);
             }
         } catch (ProcessingException pe) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
             if (pe.getCause() != null) {
                 if (pe.getCause() instanceof SocketTimeoutException) {
                     logger.error(format("Connection timed out error for gateway url=%s", url), pe);
-                    throw new GatewayConnectionTimeoutErrorException("Gateway connection timeout error");
+                    throw new GatewayException.GatewayConnectionTimeoutException("Gateway connection timeout error");
                 }
             }
             logger.error(format("Exception for gateway url=%s, error message: %s", url, pe.getMessage()), pe);
-            throw new GenericGatewayErrorException(pe.getMessage());
-        } catch(GatewayConnectionErrorException e) {
+            throw new GenericGatewayException(pe.getMessage());
+        } catch(GatewayErrorException e) {
             throw e;
         } catch (Exception e) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
             logger.error(format("Exception for gateway url=%s", url), e);
-            throw new GenericGatewayErrorException(e.getMessage());
+            throw new GatewayException.GenericGatewayException(e.getMessage());
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram(metricsPrefix + ".response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));

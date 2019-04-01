@@ -12,7 +12,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -72,7 +72,7 @@ public class CardAuthoriseService {
                 auth3dsDetailsEntity = extractAuth3dsDetails(operationResponse);
                 sessionIdentifier = operationResponse.getSessionIdentifier();
                 
-            } catch (GatewayErrorException e) {
+            } catch (GatewayException e) {
                 newStatus = CardAuthoriseBaseService.mapFromGatewayErrorException(e);
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
@@ -139,7 +139,7 @@ public class CardAuthoriseService {
         return cardTypes.stream().anyMatch(CardTypeEntity::isRequires3ds);
     }
 
-    private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) throws GatewayErrorException {
+    private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity charge, AuthCardDetails authCardDetails) throws GatewayException {
         return getPaymentProviderFor(charge).authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails));
     }
 

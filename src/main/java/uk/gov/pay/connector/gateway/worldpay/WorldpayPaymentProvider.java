@@ -4,14 +4,8 @@ import io.dropwizard.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.gateway.CaptureResponse;
-import uk.gov.pay.connector.gateway.ChargeQueryResponse;
-import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayOrder;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.*;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -93,7 +87,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
-    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge)  throws GatewayErrorException {
+    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge)  throws GatewayException {
         GatewayClient.Response response = inquiryClient.postRequestFor(
                 gatewayUrlMap.get(charge.getGatewayAccount().getType()),
                 charge.getGatewayAccount(),
@@ -120,7 +114,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayErrorException {
+    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayException {
         GatewayOrder gatewayOrder = buildAuthoriseOrder(request);
         GatewayClient.Response response = authoriseClient.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                 request.getGatewayAccount(), gatewayOrder, getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
@@ -145,7 +139,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
             BaseAuthoriseResponse authoriseResponse = gatewayResponse.getBaseResponse().get();
             
             return Gateway3DSAuthorisationResponse.of(gatewayResponse.toString(), authoriseResponse.authoriseStatus(), authoriseResponse.getTransactionId());
-        } catch (GatewayErrorException e) {
+        } catch (GatewayException e) {
             return Gateway3DSAuthorisationResponse.of(e.getMessage(), BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION);
         }
     }
@@ -156,7 +150,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) throws GatewayErrorException {
+    public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) throws GatewayException {
         return worldpayWalletAuthorisationHandler.authorise(request);
     }
 
@@ -166,7 +160,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
-    public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayErrorException {
+    public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException {
         GatewayClient.Response response = cancelClient.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
                 request.getGatewayAccount(), buildCancelOrder(request), 
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));

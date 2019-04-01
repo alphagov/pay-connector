@@ -4,7 +4,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.report.model.GatewayStatusComparison;
 
 import javax.inject.Inject;
@@ -44,7 +44,7 @@ public class DiscrepancyService {
                 .map(charge -> {
                     try {
                         return GatewayStatusComparison.from(charge, queryService.getChargeGatewayStatus(charge));
-                    } catch(GatewayErrorException e) {
+                    } catch(GatewayException e) {
                         return GatewayStatusComparison.getEmpty(charge);
                     }
                 });

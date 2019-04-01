@@ -3,10 +3,8 @@ package uk.gov.pay.connector.gateway.model.response;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionTimeoutErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 
 import java.util.Optional;
@@ -53,11 +51,11 @@ public class GatewayResponse<T extends BaseResponse> {
         return Optional.ofNullable(gatewayError);
     }
     
-    public void throwGatewayError() throws GatewayErrorException {
+    public void throwGatewayError() throws GatewayException {
         switch (gatewayError.getErrorType()) {
-            case GENERIC_GATEWAY_ERROR: throw new GenericGatewayErrorException(gatewayError.getMessage());
-            case GATEWAY_CONNECTION_ERROR: throw new GatewayConnectionErrorException(gatewayError.getMessage());
-            case GATEWAY_CONNECTION_TIMEOUT_ERROR: throw new GatewayConnectionTimeoutErrorException(gatewayError.getMessage());
+            case GENERIC_GATEWAY_ERROR: throw new GatewayException.GenericGatewayException(gatewayError.getMessage());
+            case GATEWAY_CONNECTION_ERROR: throw new GatewayException.GatewayErrorException(gatewayError.getMessage());
+            case GATEWAY_CONNECTION_TIMEOUT_ERROR: throw new GatewayConnectionTimeoutException(gatewayError.getMessage());
         }
     }
 
