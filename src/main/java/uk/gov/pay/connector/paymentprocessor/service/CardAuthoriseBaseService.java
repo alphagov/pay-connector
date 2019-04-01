@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.exception.GenericGatewayRuntimeException;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -72,10 +72,10 @@ public class CardAuthoriseBaseService {
         ).inc();
     }
     
-    public static ChargeStatus mapFromGatewayErrorException(GatewayErrorException e) {
-        if (e instanceof GatewayErrorException.GenericGatewayErrorException) return AUTHORISATION_ERROR;
-        if (e instanceof GatewayErrorException.GatewayConnectionTimeoutErrorException) return AUTHORISATION_TIMEOUT;
-        if (e instanceof GatewayErrorException.GatewayConnectionErrorException) return AUTHORISATION_UNEXPECTED_ERROR;
-        throw new RuntimeException("Unrecognised GatewayErrorException instance " + e.getClass());
+    public static ChargeStatus mapFromGatewayErrorException(GatewayException e) {
+        if (e instanceof GatewayException.GenericGatewayException) return AUTHORISATION_ERROR;
+        if (e instanceof GatewayException.GatewayConnectionTimeoutException) return AUTHORISATION_TIMEOUT;
+        if (e instanceof GatewayException.GatewayErrorException) return AUTHORISATION_UNEXPECTED_ERROR;
+        throw new RuntimeException("Unrecognised GatewayException instance " + e.getClass());
     }
 }

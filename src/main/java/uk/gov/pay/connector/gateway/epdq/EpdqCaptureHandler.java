@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.epdq;
 import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -41,7 +41,7 @@ public class EpdqCaptureHandler implements CaptureHandler {
                     buildCaptureOrder(request),
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, EpdqCaptureResponse.class), PENDING);
-        } catch (GatewayErrorException e) {
+        } catch (GatewayException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());
         }
     }

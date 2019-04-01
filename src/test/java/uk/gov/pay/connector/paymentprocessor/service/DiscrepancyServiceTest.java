@@ -8,7 +8,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
@@ -42,7 +42,7 @@ public class DiscrepancyServiceTest {
     }
     
     @Test
-    public void aChargeShouldBeCancellable_whenPayAndGatewayStatusesAllowItAndIsOlderThan7Days() throws GatewayErrorException {
+    public void aChargeShouldBeCancellable_whenPayAndGatewayStatusesAllowItAndIsOlderThan7Days() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.now().minusDays(8))
                 .withStatus(EXPIRED)
@@ -57,7 +57,7 @@ public class DiscrepancyServiceTest {
     }
 
     @Test
-    public void aChargeShouldNotBeCancellable_whenPayAndGatewayStatusesMatch() throws GatewayErrorException{
+    public void aChargeShouldNotBeCancellable_whenPayAndGatewayStatusesMatch() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.now().minusDays(8))
                 .withStatus(AUTHORISATION_SUCCESS)
@@ -68,7 +68,7 @@ public class DiscrepancyServiceTest {
     }
 
     @Test
-    public void aChargeShouldNotBeCancellable_whenPayStatusIsSuccess() throws GatewayErrorException{
+    public void aChargeShouldNotBeCancellable_whenPayStatusIsSuccess() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.now().minusDays(8))
                 .withStatus(CAPTURED)
@@ -79,7 +79,7 @@ public class DiscrepancyServiceTest {
     }
 
     @Test
-    public void aChargeShouldNotBeCancellable_whenPayStatusIsUnfinished() throws GatewayErrorException{
+    public void aChargeShouldNotBeCancellable_whenPayStatusIsUnfinished() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.now().minusDays(8))
                 .withStatus(AUTHORISATION_3DS_READY)
@@ -90,7 +90,7 @@ public class DiscrepancyServiceTest {
     }
 
     @Test
-    public void aChargeShouldNotBeCancellable_whenGatewayStatusIsFinished() throws GatewayErrorException {
+    public void aChargeShouldNotBeCancellable_whenGatewayStatusIsFinished() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.now().minusDays(8))
                 .withStatus(EXPIRED)
@@ -101,7 +101,7 @@ public class DiscrepancyServiceTest {
     }
 
     @Test
-    public void aChargeShouldNotBeCancellable_whenChargeIsLessThan7DaysOld() throws GatewayErrorException{
+    public void aChargeShouldNotBeCancellable_whenChargeIsLessThan7DaysOld() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.now().minusDays(6))
                 .withStatus(EXPIRED)
@@ -111,7 +111,7 @@ public class DiscrepancyServiceTest {
         assertChargeIsNotCancelled(charge, chargeQueryResponse);
     }
 
-    private void assertChargeIsNotCancelled(ChargeEntity charge, ChargeQueryResponse chargeQueryResponse) throws GatewayErrorException {
+    private void assertChargeIsNotCancelled(ChargeEntity charge, ChargeQueryResponse chargeQueryResponse) throws GatewayException {
         when(chargeService.findChargeById(charge.getExternalId())).thenReturn(charge);
         when(queryService.getChargeGatewayStatus(charge)).thenReturn(chargeQueryResponse);
 

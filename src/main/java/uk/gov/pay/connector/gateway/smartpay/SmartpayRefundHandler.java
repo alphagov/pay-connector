@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.RefundHandler;
 import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
@@ -35,7 +35,7 @@ public class SmartpayRefundHandler implements RefundHandler {
                     buildRefundOrderFor(request),
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, SmartpayRefundResponse.class), PENDING);
-        } catch (GatewayErrorException e) {
+        } catch (GatewayException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());
         }
     }

@@ -7,16 +7,10 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.gateway.CaptureResponse;
-import uk.gov.pay.connector.gateway.ChargeQueryResponse;
-import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayOrder;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.*;
+import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqQueryResponse;
@@ -118,20 +112,20 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayErrorException {
+    public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayException {
         URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_NEW_ORDER));
         GatewayClient.Response response = authoriseClient.postRequestFor(url, request.getGatewayAccount(), 
                 buildAuthoriseOrder(request, frontendUrl), getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
         return getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
     }
 
-    private static GatewayResponse getEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayConnectionErrorException {
+    private static GatewayResponse getEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayErrorException {
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         responseBuilder.withResponse(unmarshallResponse(response, responseClass));
         return responseBuilder.build();
     }
     
-    private static GatewayResponse getUninterpretedEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayConnectionErrorException {
+    private static GatewayResponse getUninterpretedEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayErrorException {
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         responseBuilder.withResponse(unmarshallResponse(response, responseClass));
         return responseBuilder.buildUninterpreted();
@@ -143,7 +137,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayErrorException {
+    public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException {
         URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_MAINTENANCE_ORDER));
         GatewayClient.Response response = cancelClient.postRequestFor(url, request.getGatewayAccount(), buildCancelOrder(request),
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
@@ -155,7 +149,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
         throw new UnsupportedOperationException("Wallets are not supported for ePDQ");
     }
 
-    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) throws GatewayErrorException {
+    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) throws GatewayException {
         URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(charge.getGatewayAccount().getType()), ROUTE_FOR_QUERY_ORDER));
         GatewayClient.Response response = authoriseClient.postRequestFor(url, charge.getGatewayAccount(), buildQueryOrderRequestFor(charge),
                 getGatewayAccountCredentialsAsAuthHeader(charge.getGatewayAccount()));
@@ -206,7 +200,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
             stringifiedResponse = gatewayResponse.toString();
             authorisationStatus = gatewayResponse.getBaseResponse().get().authoriseStatus();
             
-        } catch (GatewayErrorException e) {
+        } catch (GatewayException e) {
             stringifiedResponse = e.getMessage();
             authorisationStatus = BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION;
         }
@@ -235,11 +229,11 @@ public class EpdqPaymentProvider implements PaymentProvider {
     private GatewayResponse<BaseAuthoriseResponse> reconstructErrorBiasedGatewayResponse(
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse,
             BaseAuthoriseResponse.AuthoriseStatus authoriseStatus,
-            Auth3dsResult auth3DResult) throws GenericGatewayErrorException {
+            Auth3dsResult auth3DResult) throws GenericGatewayException {
 
         GatewayResponse.GatewayResponseBuilder<EpdqAuthorisationResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         if (auth3DResult.equals(Auth3dsResult.ERROR)) {
-            throw new GenericGatewayErrorException(
+            throw new GenericGatewayException(
                     format("epdq.authorise-3ds.result.mismatch expected=%s, actual=%s", Auth3dsResult.ERROR, authoriseStatus.name()));
         } else if (auth3DResult.equals(Auth3dsResult.DECLINED)) {
             EpdqAuthorisationResponse epdqAuthorisationResponse = new EpdqAuthorisationResponse();
