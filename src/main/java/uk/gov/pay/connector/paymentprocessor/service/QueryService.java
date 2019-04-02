@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 
@@ -15,7 +15,7 @@ public class QueryService {
         this.providers = providers;
     }
     
-    public ChargeQueryResponse getChargeGatewayStatus(ChargeEntity charge) throws GatewayErrorException {
+    public ChargeQueryResponse getChargeGatewayStatus(ChargeEntity charge) throws GatewayException {
         return providers.byName(charge.getPaymentGatewayName()).queryPaymentStatus(charge);
     }
 }

@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.RefundHandler;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
@@ -35,7 +35,7 @@ public class WorldpayRefundHandler implements RefundHandler {
                     buildRefundOrder(request), 
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, WorldpayRefundResponse.class), PENDING);
-        } catch (GatewayErrorException e) {
+        } catch (GatewayException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());
         }
     }

@@ -18,7 +18,7 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -118,7 +118,7 @@ public class ChargeExpiryService {
                     .getMappedStatus()
                     .map(chargeStatus -> !chargeStatus.toExternal().isFinished())
                     .orElse(false);
-        } catch (WebApplicationException | UnsupportedOperationException | GatewayErrorException | IllegalArgumentException e) {
+        } catch (WebApplicationException | UnsupportedOperationException | GatewayException | IllegalArgumentException e) {
             logger.info("Unable to retrieve status for charge {}: {}", charge.getExternalId(), e.getMessage());
             return false;
         }
@@ -173,7 +173,7 @@ public class ChargeExpiryService {
             try {
                 GatewayResponse<BaseCancelResponse> gatewayResponse = doGatewayCancel(processedEntity);
                 newStatus = determineTerminalState(gatewayResponse);
-            } catch (GatewayErrorException e) {
+            } catch (GatewayException e) {
                 newStatus= EXPIRE_FLOW.getFailureTerminalState();
                 logger.error("Gateway error while cancelling the Charge - charge_external_id={}, gateway_error={}",
                         chargeEntity.getExternalId(), e.getMessage());
@@ -210,7 +210,7 @@ public class ChargeExpiryService {
     public GatewayResponse<BaseCancelResponse> forceCancelWithGateway(ChargeEntity charge) {
         try {
             return doGatewayCancel(charge);
-        } catch (GatewayErrorException e) {
+        } catch (GatewayException e) {
             throw new WebApplicationException(String.format(
                     "Unable to cancel charge %s with gateway: %s",
                     charge.getExternalId(),
@@ -234,7 +234,7 @@ public class ChargeExpiryService {
         return legalStatuses.stream().map(ChargeStatus::toString).collect(Collectors.joining(", "));
     }
 
-    private GatewayResponse<BaseCancelResponse> doGatewayCancel(ChargeEntity chargeEntity) throws GatewayErrorException {
+    private GatewayResponse<BaseCancelResponse> doGatewayCancel(ChargeEntity chargeEntity) throws GatewayException {
         return providers.byName(chargeEntity.getPaymentGatewayName()).cancel(CancelGatewayRequest.valueOf(chargeEntity));
     }
 

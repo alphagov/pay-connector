@@ -25,8 +25,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionTimeoutErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -321,7 +321,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void doAuthorise_shouldReportAuthorisationTimeout_whenProviderTimeout() throws Exception {
-        providerWillRespondWithError(new GatewayConnectionTimeoutErrorException("Connection timed out"));
+        providerWillRespondWithError(new GatewayConnectionTimeoutException("Connection timed out"));
 
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 
@@ -331,7 +331,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void doAuthorise_shouldReportUnexpectedError_whenProviderError() throws Exception {
-        providerWillRespondWithError(new GatewayConnectionErrorException("Malformed response received"));
+        providerWillRespondWithError(new GatewayException.GatewayErrorException("Malformed response received"));
 
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 

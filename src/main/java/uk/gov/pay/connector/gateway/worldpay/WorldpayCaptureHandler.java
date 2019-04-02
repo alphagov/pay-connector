@@ -2,11 +2,8 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import uk.gov.pay.connector.gateway.CaptureHandler;
-import uk.gov.pay.connector.gateway.CaptureResponse;
-import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.*;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 
 import java.net.URI;
@@ -37,7 +34,7 @@ public class WorldpayCaptureHandler implements CaptureHandler {
                     buildCaptureOrder(request),
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, WorldpayCaptureResponse.class), PENDING);
-        } catch (GatewayErrorException e) {
+        } catch (GatewayException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());
         }
      }

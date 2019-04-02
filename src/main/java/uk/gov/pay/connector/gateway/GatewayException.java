@@ -3,17 +3,19 @@ package uk.gov.pay.connector.gateway;
 import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 
-public abstract class GatewayErrorException extends Exception {
+import java.util.Optional;
 
-    private GatewayErrorException(String message) {
+public abstract class GatewayException extends Exception {
+
+    private GatewayException(String message) {
         super(message);
     }
 
     public abstract GatewayError toGatewayError();
 
-    public static class GenericGatewayErrorException extends GatewayErrorException {
+    public static class GenericGatewayException extends GatewayException {
 
-        public GenericGatewayErrorException(String message) {
+        public GenericGatewayException(String message) {
             super(message);
         }
 
@@ -22,9 +24,9 @@ public abstract class GatewayErrorException extends Exception {
         }
     }
 
-    public static class GatewayConnectionTimeoutErrorException extends GatewayErrorException {
+    public static class GatewayConnectionTimeoutException extends GatewayException {
 
-        public GatewayConnectionTimeoutErrorException(String message) {
+        public GatewayConnectionTimeoutException(String message) {
             super(message);
         }
 
@@ -33,18 +35,25 @@ public abstract class GatewayErrorException extends Exception {
         }
     }
 
-    public static class GatewayConnectionErrorException extends GatewayErrorException {
+    public static class GatewayErrorException extends GatewayException {
 
         private final String responseFromGateway;
+        private final Integer status;
 
-        public GatewayConnectionErrorException(String message, String responseFromGateway) {
+        public GatewayErrorException(String message, String responseFromGateway, int status) {
             super(message);
             this.responseFromGateway = responseFromGateway;
+            this.status = status;
         }
 
-        public GatewayConnectionErrorException(String message) {
+        public GatewayErrorException(String message) {
             super(message);
             this.responseFromGateway = "null";
+            this.status = null;
+        }
+
+        public Optional<Integer> getStatus() {
+            return Optional.ofNullable(status);
         }
 
         public String getResponseFromGateway() {

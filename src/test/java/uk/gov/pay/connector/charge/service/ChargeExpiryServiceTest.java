@@ -14,8 +14,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GenericGatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -182,7 +181,7 @@ public class ChargeExpiryServiceTest {
 
                     try {
                         verify(mockPaymentProvider, never()).cancel(any());
-                    } catch (GatewayErrorException ignored) {}
+                    } catch (GatewayException ignored) {}
                     
                     assertThat(chargeEntity.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
                 });
@@ -198,7 +197,7 @@ public class ChargeExpiryServiceTest {
                 .build();
 
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
-        when(mockPaymentProvider.cancel(any())).thenThrow(new GenericGatewayErrorException("something went wrong"));
+        when(mockPaymentProvider.cancel(any())).thenThrow(new GatewayException.GenericGatewayException("something went wrong"));
         ArgumentCaptor<ChargeEntity> captor = ArgumentCaptor.forClass(ChargeEntity.class);
         doNothing().when(mockChargeEventDao).persistChargeEventOf(captor.capture());
 

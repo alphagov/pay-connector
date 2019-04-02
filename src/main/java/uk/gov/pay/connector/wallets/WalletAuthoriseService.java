@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayErrorException.GatewayConnectionErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -68,12 +68,12 @@ public class WalletAuthoriseService {
                     operationResponse.throwGatewayError();
                 }
 
-            } catch (GatewayErrorException e) {
+            } catch (GatewayException e) {
                 
                 logger.error("Error occurred authorising charge. Charge external id: {}; message: {}", charge.getExternalId(), e.getMessage());
                 
-                if (e instanceof GatewayConnectionErrorException) {
-                    logger.error("Response from gateway: {}", ((GatewayConnectionErrorException) e).getResponseFromGateway());
+                if (e instanceof GatewayErrorException) {
+                    logger.error("Response from gateway: {}", ((GatewayErrorException) e).getResponseFromGateway());
                 }
                 
                 chargeStatus = CardAuthoriseBaseService.mapFromGatewayErrorException(e);
@@ -163,7 +163,7 @@ public class WalletAuthoriseService {
     }
 
     private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, WalletAuthorisationData walletAuthorisationData)
-            throws GatewayErrorException {
+            throws GatewayException {
 
         logger.info("Authorising charge for {}", walletAuthorisationData.getWalletType().toString());
         WalletAuthorisationGatewayRequest authorisationGatewayRequest =

@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.gateway.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -58,7 +58,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
         try {
             mockPaymentProviderResponse(400, errorAuthResponse());
             provider.authorise(buildTestAuthorisationRequest());
-        } catch (GatewayErrorException.GatewayConnectionErrorException e) {
+        } catch (GatewayException.GatewayErrorException e) {
             assertEquals(e.toGatewayError(), new GatewayError("Unexpected HTTP status code 400 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
         }
     }
@@ -85,7 +85,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
         try {
             mockPaymentProviderResponse(400, errorCancelResponse());
             provider.cancel(buildTestCancelRequest());
-        } catch (GatewayErrorException.GatewayConnectionErrorException e) {
+        } catch (GatewayException.GatewayErrorException e) {
             assertEquals(e.toGatewayError(), new GatewayError("Unexpected HTTP status code 400 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
         }
     }
