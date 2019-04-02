@@ -281,7 +281,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         try {
             provider.authorise(getCardAuthorisationRequest());
         } catch (GatewayException.GatewayErrorException e) {
-            assertEquals(e.toGatewayError(), new GatewayError("Unexpected HTTP status code 401 from gateway", ErrorType.GATEWAY_CONNECTION_ERROR));
+            assertEquals(e.toGatewayError(), new GatewayError("Unexpected HTTP status code 401 from gateway", ErrorType.GATEWAY_ERROR));
         }
     }
 
