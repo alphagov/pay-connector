@@ -11,6 +11,8 @@ import org.junit.Test;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
+import uk.gov.pay.connector.gateway.GatewayClientFactory;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -21,14 +23,12 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.stripe.StripeGatewayClient;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.JsonObjectMapper;
-import uk.gov.pay.connector.util.TestClientFactory;
 
 import static java.util.UUID.randomUUID;
 import static junit.framework.TestCase.assertTrue;
@@ -60,8 +60,9 @@ public class StripePaymentProviderTest {
     public void setup() {
         ConnectorConfiguration connectorConfig = app.getInstanceFromGuiceContainer(ConnectorConfiguration.class);
         MetricRegistry metricRegistry = app.getInstanceFromGuiceContainer(Environment.class).metrics();
-        StripeGatewayClient stripeGatewayClient = new StripeGatewayClient(TestClientFactory.createJerseyClient(), metricRegistry);
-        stripePaymentProvider = new StripePaymentProvider(stripeGatewayClient, connectorConfig, objectMapper);
+        GatewayClientFactory gatewayClientFactory = app.getInstanceFromGuiceContainer(GatewayClientFactory.class);
+        Environment environment = app.getInstanceFromGuiceContainer(Environment.class);
+        stripePaymentProvider = new StripePaymentProvider(gatewayClientFactory, connectorConfig, objectMapper, environment);
     }
 
     @Test
@@ -83,7 +84,7 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void cancelCharge() {
+    public void cancelCharge() throws GatewayException {
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
         ChargeEntity chargeEntity = getCharge();
         chargeEntity.setGatewayTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId());

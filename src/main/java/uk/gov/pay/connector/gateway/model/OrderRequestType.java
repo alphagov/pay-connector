@@ -8,7 +8,11 @@ public enum OrderRequestType {
     CAPTURE("capture"),
     CANCEL("cancel"),
     REFUND("refund"),
-    QUERY("query");
+    QUERY("query"), 
+    STRIPE_TOKEN("authorise.create_token"), 
+    STRIPE_CREATE_SOURCE("authorise.create_source"), 
+    STRIPE_CREATE_CHARGE("authorise.create_charge"), 
+    STRIPE_CREATE_3DS_SOURCE("authorise.create_3ds_source");
 
     private final String name;
 

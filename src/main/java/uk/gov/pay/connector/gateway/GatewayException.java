@@ -3,6 +3,10 @@ package uk.gov.pay.connector.gateway;
 import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 
+import javax.ws.rs.core.Response.Status.Family;
+
+import static javax.ws.rs.core.Response.Status.Family.*;
+
 public abstract class GatewayException extends Exception {
 
     private GatewayException(String message) {
@@ -59,7 +63,13 @@ public abstract class GatewayException extends Exception {
         }
 
         public GatewayError toGatewayError() {
-            return new GatewayError(getMessage(), ErrorType.GATEWAY_CONNECTION_ERROR);
+            return new GatewayError(getMessage(), ErrorType.GATEWAY_ERROR);
+        }
+        
+        public Family getFamily() {
+            if (Family.familyOf(status) == CLIENT_ERROR) return CLIENT_ERROR;
+            if (Family.familyOf(status) == SERVER_ERROR) return SERVER_ERROR;
+            return OTHER;
         }
     }
 }

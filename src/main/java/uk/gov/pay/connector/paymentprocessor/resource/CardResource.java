@@ -167,7 +167,7 @@ public class CardResource {
     private Response handleError(String chargeId, GatewayError error) {
         switch (error.getErrorType()) {
             case GATEWAY_CONNECTION_TIMEOUT_ERROR:
-            case GATEWAY_CONNECTION_ERROR:
+            case GATEWAY_ERROR:
                 return serviceErrorResponse(error.getMessage());
             default:
                 logger.error("Charge {}: error {}", chargeId, error.getMessage());

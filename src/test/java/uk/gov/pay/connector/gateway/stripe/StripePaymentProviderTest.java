@@ -1,10 +1,13 @@
 package uk.gov.pay.connector.gateway.stripe;
 
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import io.dropwizard.setup.Environment;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.apache.http.HttpStatus;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,6 +19,12 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.gateway.GatewayClient;
+import uk.gov.pay.connector.gateway.GatewayClientFactory;
+import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
@@ -30,7 +39,6 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -43,12 +51,13 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR;
+import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHORISATION_SUCCESS_RESPONSE;
@@ -61,16 +70,23 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @RunWith(JUnitParamsRunner.class)
 public class StripePaymentProviderTest {
-    protected StripePaymentProvider provider;
-    StripeGatewayClient mockGatewayClient = mock(StripeGatewayClient.class);
-    ConnectorConfiguration configuration = mock(ConnectorConfiguration.class);
-    StripeGatewayConfig gatewayConfig = mock(StripeGatewayConfig.class);
-    LinksConfig linksConfig = mock(LinksConfig.class);
+    
+    private StripePaymentProvider provider;
+    private GatewayClient gatewayClient = mock(GatewayClient.class);
+    private GatewayClientFactory gatewayClientFactory = mock(GatewayClientFactory.class);
+    private Environment environment = mock(Environment.class);
+    private MetricRegistry metricRegistry = mock(MetricRegistry.class);
+    private ConnectorConfiguration configuration = mock(ConnectorConfiguration.class);
+    private StripeGatewayConfig gatewayConfig = mock(StripeGatewayConfig.class);
+    private LinksConfig linksConfig = mock(LinksConfig.class);
     private URI tokensUrl;
     private URI sourcesUrl;
     private URI chargesUrl;
     private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
-    List<String> threeDSecureRequiredOptions = ImmutableList.of("required", "recommended", "optional");
+    private List<String> threeDSecureRequiredOptions = ImmutableList.of("required", "recommended", "optional");
+    private GatewayClient.Response tokenResponse = mock(GatewayClient.Response.class);
+    private GatewayClient.Response chargeResponse = mock(GatewayClient.Response.class);
+    private GatewayClient.Response sourceResponse = mock(GatewayClient.Response.class);
 
     @Before
     public void before() {
@@ -80,11 +96,19 @@ public class StripePaymentProviderTest {
 
         when(configuration.getLinks()).thenReturn(linksConfig);
         when(linksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
+        
+        when(gatewayClientFactory.createGatewayClient(eq(STRIPE), any(MetricRegistry.class))).thenReturn(gatewayClient);
+        
+        when(environment.metrics()).thenReturn(metricRegistry);
 
-        provider = new StripePaymentProvider(mockGatewayClient, configuration, objectMapper);
+        provider = new StripePaymentProvider(gatewayClientFactory, configuration, objectMapper, environment);
         tokensUrl = URI.create(gatewayConfig.getUrl() + "/v1/tokens");
         sourcesUrl = URI.create(gatewayConfig.getUrl() + "/v1/sources");
         chargesUrl = URI.create(gatewayConfig.getUrl() + "/v1/charges");
+
+        when(tokenResponse.getEntity()).thenReturn(successTokenResponse());
+        when(chargeResponse.getEntity()).thenReturn(successChargeResponse());
+        when(sourceResponse.getEntity()).thenReturn(successSourceResponse());
     }
 
     @Test
@@ -99,11 +123,16 @@ public class StripePaymentProviderTest {
 
     @Test
     @Parameters({"recommended", "required", "optional"})
-    public void shouldAuthoriseAs3dsRequired_whenStripeSourceSupports3ds(String threeDSecureOption) throws GatewayClientException, GatewayException, DownstreamException {
+    public void shouldAuthoriseAs3dsRequired_whenStripeSourceSupports3ds(String threeDSecureOption) throws Exception {
 
-        when(mockGatewayClient.postRequest(eq(tokensUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(successTokenResponse());
-        when(mockGatewayClient.postRequest(eq(sourcesUrl), anyString(), any(Map.class), any(MediaType.class), anyString()))
-                .thenReturn(successSourceResponseWith3dsRequired(threeDSecureOption), success3dsSourceResponse());
+        when(gatewayClient.postRequestFor(eq(tokensUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(tokenResponse);
+        
+        GatewayClient.Response sourceResponseWith3dsRequired = mock(GatewayClient.Response.class);
+        when(sourceResponseWith3dsRequired.getEntity()).thenReturn(successSourceResponseWith3dsRequired(threeDSecureOption));
+        GatewayClient.Response threeDsSourceResponse = mock(GatewayClient.Response.class);
+        when(threeDsSourceResponse.getEntity()).thenReturn(success3dsSourceResponse());
+        when(gatewayClient.postRequestFor(eq(sourcesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
+                .thenReturn(sourceResponseWith3dsRequired, threeDsSourceResponse);
 
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
 
@@ -117,12 +146,18 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldAuthoriseChargeImmediately_whenStripe3dsSourceIsChargeable() throws GatewayClientException, GatewayException, DownstreamException {
+    public void shouldAuthoriseChargeImmediately_whenStripe3dsSourceIsChargeable() throws Exception {
 
-        when(mockGatewayClient.postRequest(eq(tokensUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(successTokenResponse());
-        when(mockGatewayClient.postRequest(eq(sourcesUrl), anyString(), any(Map.class), any(MediaType.class), anyString()))
-                .thenReturn(successSourceResponseWith3dsRequired("recommended"), success3dsSourceResponse("chargeable"));
-        when(mockGatewayClient.postRequest(eq(chargesUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(successChargeResponse());
+        when(gatewayClient.postRequestFor(eq(tokensUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(tokenResponse);
+
+        GatewayClient.Response sourceResponseWith3dsRequired = mock(GatewayClient.Response.class);
+        when(sourceResponseWith3dsRequired.getEntity()).thenReturn(successSourceResponseWith3dsRequired("recommended"));
+        GatewayClient.Response threeDsSourceResponse = mock(GatewayClient.Response.class);
+        when(threeDsSourceResponse.getEntity()).thenReturn(success3dsSourceResponse("chargeable"));
+        when(gatewayClient.postRequestFor(eq(sourcesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
+                .thenReturn(sourceResponseWith3dsRequired, threeDsSourceResponse);
+
+        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(chargeResponse);
 
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
 
@@ -132,11 +167,13 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldNotAuthorise_whenProcessingExceptionIsThrown() throws GatewayClientException, GatewayException, DownstreamException {
-        when(mockGatewayClient.postRequest(eq(tokensUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(successTokenResponse());
-        when(mockGatewayClient.postRequest(eq(sourcesUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(successSourceResponse());
-        when(mockGatewayClient.postRequest(eq(chargesUrl), anyString(), any(Map.class), any(MediaType.class), anyString()))
-                .thenThrow(new GatewayException(chargesUrl.toString(), new ProcessingException(new IOException())));
+    public void shouldNotAuthorise_whenProcessingExceptionIsThrown() throws Exception {
+        
+        when(gatewayClient.postRequestFor(eq(tokensUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(tokenResponse);
+        when(gatewayClient.postRequestFor(eq(sourcesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(sourceResponse);
+        
+        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
+                .thenThrow(new GatewayConnectionTimeoutException("javax.ws.rs.ProcessingException: java.io.IOException"));
 
         GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
 
@@ -144,7 +181,7 @@ public class StripePaymentProviderTest {
         assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
         assertEquals("javax.ws.rs.ProcessingException: java.io.IOException",
                 authoriseResponse.getGatewayError().get().getMessage());
-        assertEquals(GENERIC_GATEWAY_ERROR, authoriseResponse.getGatewayError().get().getErrorType());
+        assertEquals(GATEWAY_CONNECTION_TIMEOUT_ERROR, authoriseResponse.getGatewayError().get().getErrorType());
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -153,22 +190,23 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldNotAuthorise_whenPaymentProviderReturnsUnexpectedStatusCode() throws GatewayClientException, GatewayException, DownstreamException {
-        when(mockGatewayClient.postRequest(eq(tokensUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(successTokenResponse());
-        when(mockGatewayClient.postRequest(eq(sourcesUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(successSourceResponse());
-        when(mockGatewayClient.postRequest(eq(chargesUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenThrow(new DownstreamException(500, errorResponse()));
+    public void shouldNotAuthorise_whenPaymentProviderReturnsUnexpectedStatusCode() throws Exception {
+        when(gatewayClient.postRequestFor(eq(tokensUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(tokenResponse);
+        when(gatewayClient.postRequestFor(eq(sourcesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(sourceResponse);
+        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
+                .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
         GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
 
         assertThat(authoriseResponse.isFailed(), is(true));
         assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
         assertThat(authoriseResponse.getGatewayError().get().getMessage(),
                 containsString("There was an internal server error"));
-        assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_CONNECTION_ERROR));
+        assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
     }
 
     @Test
-    public void shouldAuthorise3DSSource_when3DSAuthDetailsStatusIsAuthorised() throws GatewayClientException, GatewayException, DownstreamException {
-        when(mockGatewayClient.postRequest(eq(chargesUrl), anyString(), any(Map.class), any(MediaType.class), anyString())).thenReturn(successChargeResponse());
+    public void shouldAuthorise3DSSource_when3DSAuthDetailsStatusIsAuthorised() throws Exception {
+        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(chargeResponse);
 
         Auth3dsResponseGatewayRequest request = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.AUTHORISED);
 
@@ -211,41 +249,33 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void shouldMark3DSChargeAsError_whenGatewayOperationResultedInUnauthorisedException() throws GatewayClientException, GatewayException, DownstreamException {
-        Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.AUTHORISED);
+    public void shouldMark3DSChargeAsError_whenGatewayOperationResultedInUnauthorisedException() throws Exception {
+        Auth3dsResponseGatewayRequest request = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.AUTHORISED);
 
-        StripeGatewayClientResponse mockedResponse = mock(StripeGatewayClientResponse.class);
-        when(mockedResponse.getStatus()).thenReturn(401);
-        when(mockGatewayClient.postRequest(eq(chargesUrl), anyString(), any(Map.class), any(MediaType.class), anyString()))
-                .thenThrow(new GatewayClientException("Unexpected HTTP status code 401 from gateway", mockedResponse));
+        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
+                .thenThrow(new GatewayErrorException("Unexpected HTTP status code 401 from gateway", "", HttpStatus.SC_UNAUTHORIZED));
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
         assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_ERROR));
     }
 
     @Test
-    public void shouldMark3DSChargeAsRejected_whenGatewayOperationResultedIn4xxHttpStatus() throws GatewayClientException, GatewayException, DownstreamException {
-        Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.AUTHORISED);
+    public void shouldMark3DSChargeAsRejected_whenGatewayOperationResultedIn4xxHttpStatus() throws Exception {
+        Auth3dsResponseGatewayRequest request = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.AUTHORISED);
 
-        StripeGatewayClientResponse mockedResponse = mock(StripeGatewayClientResponse.class);
-        when(mockedResponse.getStatus()).thenReturn(403);
-        when(mockedResponse.getPayload()).thenReturn(errorResponse());
-        when(mockGatewayClient.postRequest(eq(chargesUrl), anyString(), any(Map.class), any(MediaType.class), anyString()))
-                .thenThrow(new GatewayClientException("Unexpected HTTP status code 403 from gateway", mockedResponse));
+        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
+                .thenThrow(new GatewayErrorException("Unexpected HTTP status code 403 from gateway", errorResponse(), HttpStatus.SC_FORBIDDEN));
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
         assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_REJECTED));
     }
 
     @Test
-    public void shouldMark3DSChargeAsError_whenGatewayOperationResultedInException() throws GatewayClientException, GatewayException, DownstreamException {
-        Auth3dsResponseGatewayRequest request
-                = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.AUTHORISED);
+    public void shouldMark3DSChargeAsError_whenGatewayOperationResultedInException() throws Exception {
+        Auth3dsResponseGatewayRequest request = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.AUTHORISED);
 
-        when(mockGatewayClient.postRequest(eq(chargesUrl), anyString(), any(Map.class), any(MediaType.class), anyString()))
-                .thenThrow(new DownstreamException(501, errorResponse()));
+        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
+                .thenThrow(new GatewayErrorException("server error", errorResponse(), 501));
 
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
