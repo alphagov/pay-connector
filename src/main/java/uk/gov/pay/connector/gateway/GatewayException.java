@@ -5,6 +5,14 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 
 import java.util.Optional;
 
+import javax.ws.rs.core.Response.Status.Family;
+
+import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
+import static javax.ws.rs.core.Response.Status.Family.OTHER;
+import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.Family.familyOf;
+
+
 public abstract class GatewayException extends Exception {
 
     private GatewayException(String message) {
@@ -61,7 +69,13 @@ public abstract class GatewayException extends Exception {
         }
 
         public GatewayError toGatewayError() {
-            return new GatewayError(getMessage(), ErrorType.GATEWAY_CONNECTION_ERROR);
+            return new GatewayError(getMessage(), ErrorType.GATEWAY_ERROR);
+        }
+        
+        public Family getFamily() {
+            if (familyOf(status) == CLIENT_ERROR) return CLIENT_ERROR;
+            if (familyOf(status) == SERVER_ERROR) return SERVER_ERROR;
+            return OTHER;
         }
     }
 }

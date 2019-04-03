@@ -46,7 +46,7 @@ public class GatewayClient {
                                                  GatewayOrder request, 
                                                  List<HttpCookie> cookies, 
                                                  Map<String, String> headers) 
-            throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayErrorException {
+            throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
         
         String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
         javax.ws.rs.core.Response response = null;
@@ -73,7 +73,7 @@ public class GatewayClient {
             if (pe.getCause() != null) {
                 if (pe.getCause() instanceof SocketTimeoutException) {
                     logger.error(format("Connection timed out error for gateway url=%s", url), pe);
-                    throw new GatewayException.GatewayConnectionTimeoutException("Gateway connection timeout error");
+                    throw new GatewayConnectionTimeoutException("Gateway connection timeout error");
                 }
             }
             logger.error(format("Exception for gateway url=%s, error message: %s", url, pe.getMessage()), pe);
