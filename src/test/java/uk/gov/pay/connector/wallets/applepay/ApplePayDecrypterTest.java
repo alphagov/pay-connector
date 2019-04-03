@@ -60,14 +60,14 @@ public class ApplePayDecrypterTest {
         assertThat(appleDecryptedPaymentData.getPaymentData().getEciIndicator(), is("5"));
     }
 
-    @Test(expected = InvalidKeyException.class)
+    @Test(expected = RuntimeException.class)
     public void shouldThrowException_whenPublicCertificateIsInvalid() {
         when(mockApplePayConfig.getPublicCertificate()).thenReturn("nope");
         applePayDecrypter = new ApplePayDecrypter(mockConfig, objectMapper);
         applePayDecrypter.performDecryptOperation(applePayAuthRequest);
     }
 
-    @Test(expected = InvalidKeyException.class)
+    @Test(expected = RuntimeException.class)
     public void shouldThrowException_whenPrivateKeyIsInvalid() {
         when(mockApplePayConfig.getPrivateKey()).thenReturn("nope");
         applePayDecrypter = new ApplePayDecrypter(mockConfig, objectMapper);

@@ -34,6 +34,7 @@ import java.util.Base64;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ApplePayDecrypter {
+    
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplePayDecrypter.class);
 
     private static final byte[] COUNTER = {0x00, 0x00, 0x00, 0x01};
@@ -41,26 +42,28 @@ public class ApplePayDecrypter {
     private static final byte[] ALG_IDENTIFIER_BYTES = "id-aes256-GCM".getBytes(UTF_8);
     private static final String MERCHANT_ID_CERTIFICATE_OID = "1.2.840.113635.100.6.32";
 
-    private final byte[] privateKeyBytes;
-    private final byte[] publicCertificate;
+    private PrivateKey privateKey;
+    private Certificate certificate;
 
     private final ObjectMapper objectMapper;
     private final static Base64.Decoder BASE64_DECODER = Base64.getDecoder();
     
     @Inject
     public ApplePayDecrypter(ConnectorConfiguration configuration, ObjectMapper objectMapper) {
-        ApplePayConfig applePayConfig = configuration.getWorldpayConfig().getApplePayConfig();
-        this.privateKeyBytes = BASE64_DECODER.decode(applePayConfig.getPrivateKey());
-        this.publicCertificate = BASE64_DECODER.decode(applePayConfig.getPublicCertificate());
         this.objectMapper = objectMapper;
+        ApplePayConfig applePayConfig = configuration.getWorldpayConfig().getApplePayConfig();
+        try {
+            this.privateKey = generatePrivateKey(BASE64_DECODER.decode(applePayConfig.getPrivateKey()));
+            this.certificate = generateCertificate(BASE64_DECODER.decode(applePayConfig.getPublicCertificate()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public AppleDecryptedPaymentData performDecryptOperation(ApplePayAuthRequest applePayAuthRequest)  {
         try {
             byte[] data = BASE64_DECODER.decode(applePayAuthRequest.getEncryptedPaymentData().getData().getBytes(UTF_8));
             byte[] ephemeralPublicKey = BASE64_DECODER.decode(applePayAuthRequest.getEncryptedPaymentData().getHeader().getEphemeralPublicKey().getBytes(UTF_8));
-            PrivateKey privateKey = generatePrivateKey();
-            Certificate certificate = generateCertificate();
             byte[] rawData = decrypt(certificate, privateKey, ephemeralPublicKey, data);
             return objectMapper.readValue(new String(rawData, UTF_8), AppleDecryptedPaymentData.class);
         } catch (Exception e) {
@@ -102,14 +105,14 @@ public class ApplePayDecrypter {
         return MessageDigest.getInstance("SHA-256").digest(byteArrayOutputStream.toByteArray());
     }
 
-    private Certificate generateCertificate() throws IOException, CertificateException {
-        try (InputStream stream = new ByteArrayInputStream(publicCertificate)) {
+    private Certificate generateCertificate(byte[] publicCertificateBytes) throws IOException, CertificateException {
+        try (InputStream stream = new ByteArrayInputStream(publicCertificateBytes)) {
             CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
             return certificateFactory.generateCertificate(stream);
         }
     }
 
-    private PrivateKey generatePrivateKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    private PrivateKey generatePrivateKey(byte[] privateKeyBytes) throws NoSuchAlgorithmException, InvalidKeySpecException {
         return KeyFactory.getInstance("EC").generatePrivate(new PKCS8EncodedKeySpec(privateKeyBytes));
     }
 
