@@ -78,7 +78,7 @@ public class ChargeRefundService {
     @SuppressWarnings("WeakerAccess")
     public RefundEntity createRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId).map(chargeEntity -> {
-            Long availableAmount = validateRefundAndGetAvailableAmount(chargeEntity, refundRequest);
+            long availableAmount = validateRefundAndGetAvailableAmount(chargeEntity, refundRequest);
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
             RefundEntity refundEntity = createRefundEntity(refundRequest, chargeEntity);
 

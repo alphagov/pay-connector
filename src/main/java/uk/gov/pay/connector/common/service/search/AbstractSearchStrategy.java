@@ -16,7 +16,7 @@ public abstract class AbstractSearchStrategy<T, R> implements SearchStrategy, Bu
 
     @Override
     public Response search(SearchParams searchParams, UriInfo uriInfo) {
-        Long totalCount = getTotalFor(searchParams);
+        long totalCount = getTotalFor(searchParams);
         Long size = searchParams.getDisplaySize();
         if (totalCount > 0 && size > 0) {
             long lastPage = (totalCount + size - 1) / size;

@@ -80,8 +80,7 @@ public class GatewayAccountService {
 
         GatewayAccountEntity gatewayAccountEntity = GatewayAccountObjectConverter.createEntityFrom(gatewayAccountRequest);
 
-        logger.info("Setting the new account to accept all card types by default", gatewayAccountRequest.getPaymentProvider(),
-                gatewayAccountRequest.getProviderAccountType());
+        logger.info("Setting the new account to accept all card types by default");
 
         gatewayAccountEntity.setCardTypes(cardTypeDao.findAllNon3ds());
 

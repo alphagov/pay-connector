@@ -121,9 +121,11 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         Query query = entityManager.get().createQuery(cq);
 
         if (params.getPage() != null && params.getDisplaySize() != null) {
-            Long firstResult = (params.getPage() - 1) * params.getDisplaySize(); // page coming from params is 1 based, so -1
-            query.setFirstResult(firstResult.intValue());
-            query.setMaxResults(params.getDisplaySize().intValue());
+            long displaySize = params.getDisplaySize();
+            long firstResult = (params.getPage() - 1) * displaySize; // page coming from params is 1 based, so -1
+
+            query.setFirstResult((int) firstResult);
+            query.setMaxResults((int) displaySize);
         }
         return query.getResultList();
     }
