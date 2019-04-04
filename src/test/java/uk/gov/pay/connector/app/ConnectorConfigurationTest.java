@@ -13,8 +13,7 @@ public class ConnectorConfigurationTest {
 
     @Rule
     public final DropwizardAppRule<ConnectorConfiguration> RULE =
-            new DropwizardAppRule<>(ConnectorApp.class,
-                    ResourceHelpers.resourceFilePath("config/test-config.yaml"));
+            new DropwizardAppRule<>(ConnectorApp.class, ResourceHelpers.resourceFilePath("config/test-config.yaml"));
 
 
     @Test
