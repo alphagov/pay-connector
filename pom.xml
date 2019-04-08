@@ -14,7 +14,6 @@
         <jackson.version>2.9.8</jackson.version>
         <pay-java-commons.version>1.0.20190318074858</pay-java-commons.version>
         <surefire.version>2.22.1</surefire.version>
-        <dependency-check.skip>true</dependency-check.skip>
         <javax.persistence.version>2.2.1</javax.persistence.version>
         <jooq.version>3.11.10</jooq.version>
         <postgresql.version>42.2.5</postgresql.version>
@@ -545,34 +544,6 @@
                         <argument>src/main/resources/config/config.yaml</argument>
                     </arguments>
                 </configuration>
-            </plugin>
-            <!--
-                https://jeremylong.github.io/DependencyCheck/dependency-check-maven/
-                By default, the dependency-check plugin is tied to the verify phase
-                (when used as a build plugin). We don’t want this; we just want to
-                run it manually when required. So we define a property called
-                dependency-check.skip, set it to true, and use this property’s value
-                to set the dependency-check plugin’s own skip property. To execute
-                the plugin manually, override the dependency-check.skip property:
-                $ mvn dependency-check:check -Ddependency-check.skip=false
-            -->
-            <plugin>
-                <groupId>org.owasp</groupId>
-                <artifactId>dependency-check-maven</artifactId>
-                <version>4.0.2</version>
-                <configuration>
-                    <suppressionFiles>
-                        <suppressionFile>project-suppression.xml</suppressionFile>
-                    </suppressionFiles>
-                    <skip>${dependency-check.skip}</skip>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
