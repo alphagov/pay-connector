@@ -1086,4 +1086,13 @@
         </addColumn>
     </changeSet>
 
+
+    <changeSet id="add version to fees table" author="">
+        <addColumn tableName="fees">
+            <column name="version" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
