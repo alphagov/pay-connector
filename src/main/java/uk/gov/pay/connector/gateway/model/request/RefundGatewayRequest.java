@@ -7,23 +7,33 @@ import uk.gov.pay.connector.gateway.GatewayOperation;
 public class RefundGatewayRequest implements GatewayRequest {
 
     private final GatewayAccountEntity gatewayAccountEntity;
-    private final String amount;
+    private final Long amount;
     private final String transactionId;
     private final String refundExternalId;
+    private final String chargeExternalId;
 
-    private RefundGatewayRequest(String transactionId, GatewayAccountEntity gatewayAccount, String amount, String refundExternalId) {
+    private RefundGatewayRequest(String transactionId, GatewayAccountEntity gatewayAccount, Long amount, String refundExternalId, String chargeExternalId) {
         this.transactionId = transactionId;
         this.gatewayAccountEntity = gatewayAccount;
         this.amount = amount;
         this.refundExternalId = refundExternalId;
+        this.chargeExternalId = chargeExternalId;
     }
 
-    public String getAmount() {
+    public String getAmountAsString() {
+        return String.valueOf(amount);
+    }
+
+    public Long getAmount() {
         return amount;
     }
 
     public String getTransactionId() {
         return transactionId;
+    }
+
+    public String getChargeExternalId() {
+        return chargeExternalId;
     }
 
     @Override
@@ -62,8 +72,10 @@ public class RefundGatewayRequest implements GatewayRequest {
         return new RefundGatewayRequest(
                 refundEntity.getChargeEntity().getGatewayTransactionId(),
                 refundEntity.getChargeEntity().getGatewayAccount(),
-                String.valueOf(refundEntity.getAmount()),
-                refundEntity.getExternalId());
+                refundEntity.getAmount(),
+                refundEntity.getExternalId(),
+                refundEntity.getChargeEntity().getExternalId()
+        );
     }
     
     @Override

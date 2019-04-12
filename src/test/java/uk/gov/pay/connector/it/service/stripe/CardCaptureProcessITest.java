@@ -10,6 +10,11 @@ import uk.gov.pay.connector.it.service.CardCaptureProcessBaseITest;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.rules.StripeMockClient;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.hamcrest.CoreMatchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
@@ -28,8 +33,18 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
 
         new StripeMockClient().mockCaptureSuccess(testCharge.getTransactionId(), testCharge.getExternalChargeId());
         new StripeMockClient().mockTransferSuccess(testCharge.getExternalChargeId());
+        
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
+        
+        verify(postRequestedFor(urlEqualTo("/v1/charges/" + testCharge.getTransactionId() + "/capture"))
+                .withHeader("Idempotency-Key", equalTo(testCharge.getExternalChargeId())));
+        
+        verify(postRequestedFor(urlEqualTo("/v1/transfers"))
+                .withHeader("Idempotency-Key", equalTo(testCharge.getExternalChargeId()))
+                .withRequestBody(containing("destination=stripe_account_id"))
+                .withRequestBody(containing("source_transaction=" + testCharge.getTransactionId()))
+                .withRequestBody(containing("amount=" + (testCharge.getAmount() - 51))));
 
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURED.getValue()));
         Assert.assertThat(app.getDatabaseTestHelper().getFeeByChargeId(testCharge.getChargeId()).get("amount_collected"), is(51L));

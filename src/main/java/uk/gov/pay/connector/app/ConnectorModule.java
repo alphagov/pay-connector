@@ -13,6 +13,7 @@ import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
+import uk.gov.pay.connector.gateway.stripe.request.StripeTransferRequest;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;

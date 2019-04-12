@@ -24,6 +24,9 @@ public class StripeGatewayConfig extends Configuration {
     private Double feePercentage;
 
     @Valid
+    private String platformAccountId;
+
+    @Valid
     @NotNull
     private Boolean collectFee;
 
@@ -47,5 +50,9 @@ public class StripeGatewayConfig extends Configuration {
 
     public Boolean isCollectFee() {
         return collectFee;
+    }
+
+    public String getPlatformAccountId() {
+        return platformAccountId;
     }
 }

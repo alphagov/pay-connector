@@ -158,7 +158,7 @@ public class StripeResourceAuthorizeITest {
 
         List<LoggedRequest> requests = findAll(postRequestedFor(urlMatching("/v1/charges")));
         assertThat(requests).hasSize(1);
-        assertThat(requests.get(0).getBodyAsString()).isEqualTo(constructExpectedAuthoriseRequestBody());
+        assertThat(requests.get(0).getBodyAsString()).isEqualTo(constructExpectedAuthoriseRequestBody(externalChargeId));
     }
 
     @Test
@@ -188,7 +188,7 @@ public class StripeResourceAuthorizeITest {
 
         List<LoggedRequest> requests = findAll(postRequestedFor(urlMatching("/v1/charges")));
         assertThat(requests).hasSize(1);
-        assertThat(requests.get(0).getBodyAsString()).isEqualTo(constructExpectedAuthoriseRequestBody());
+        assertThat(requests.get(0).getBodyAsString()).isEqualTo(constructExpectedAuthoriseRequestBody(externalChargeId));
     }
 
     @Test
@@ -331,13 +331,14 @@ public class StripeResourceAuthorizeITest {
         return "/v1/frontend/charges/{chargeId}/capture".replace("{chargeId}", chargeId);
     }
 
-    private String constructExpectedAuthoriseRequestBody() {
+    private String constructExpectedAuthoriseRequestBody(String chargeExternalId) {
         List<BasicNameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("amount", AMOUNT));
         params.add(new BasicNameValuePair("currency", "GBP"));
         params.add(new BasicNameValuePair("description", DESCRIPTION));
         params.add(new BasicNameValuePair("source", "src_1DT9bn2eZvKYlo2Cg5okt8WC")); //This comes from resources/stripe/create_sources_response.json
         params.add(new BasicNameValuePair("capture", "false"));
+        params.add(new BasicNameValuePair("transfer_group", chargeExternalId));
         params.add(new BasicNameValuePair("on_behalf_of", stripeAccountId));
         return URLEncodedUtils.format(params, UTF_8);
     }

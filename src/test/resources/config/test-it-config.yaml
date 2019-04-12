@@ -60,6 +60,7 @@ stripe:
     live: ${GDS_CONNECTOR_STRIPE_WEBHOOK_LIVE_SIGN_SECRET:-whlive}
   feePercentage: ${STRIPE_TRANSACTION_FEE_PERCENTAGE:-0.08}
   collectFee: ${COLLECT_FEE_FEATURE_FLAG:-true}
+  platformAccountId: ${STRIPE_PLATFORM_ACCOUNT_ID:-stripe_platform_account_id}
 
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-2}

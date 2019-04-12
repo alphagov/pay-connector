@@ -44,7 +44,7 @@ public class WorldpayRefundHandler implements RefundHandler {
         return aWorldpayRefundOrderRequestBuilder()
                 .withReference(request.getRefundExternalId())
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .withAmount(request.getAmount())
+                .withAmount(request.getAmountAsString())
                 .withTransactionId(request.getTransactionId())
                 .build();
     }

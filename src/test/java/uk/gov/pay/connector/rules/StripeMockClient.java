@@ -1,12 +1,15 @@
 package uk.gov.pay.connector.rules;
 
+import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.google.common.collect.ImmutableMap;
 import org.json.JSONObject;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.util.Map;
+import java.util.Optional;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
@@ -80,7 +83,7 @@ public class StripeMockClient {
 
     public void mockCreateSourceWithThreeDSecureRequired() {
         String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE)
-                .replace("{{three_d_secure_option}}","required");
+                .replace("{{three_d_secure_option}}", "required");
         setupResponse(payload, "/v1/sources", 200);
     }
 
@@ -95,10 +98,20 @@ public class StripeMockClient {
         setupResponse(payload, "/v1/refunds", 200);
     }
 
+
     public void mockTransferSuccess(String idempotencyKey) {
         String payload = TestTemplateResourceLoader.load(STRIPE_TRANSFER_RESPONSE);
-        stubFor(post(urlPathEqualTo("/v1/transfers")).withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
-                .withHeader("Idempotency-Key", equalTo(idempotencyKey))
+        MappingBuilder builder = post(urlPathEqualTo("/v1/transfers"))
+                .withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
+                .withHeader("Idempotency-Key", equalTo(idempotencyKey));
+
+        Optional.ofNullable(idempotencyKey)
+                .ifPresentOrElse(
+                        key -> builder.withHeader("Idempotency-Key", equalTo(key)),
+                        () -> builder.withHeader("Idempotency-Key", matching(".*"))
+                );
+
+        stubFor(builder
                 .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON).withStatus(200).withBody(payload)));
     }
 

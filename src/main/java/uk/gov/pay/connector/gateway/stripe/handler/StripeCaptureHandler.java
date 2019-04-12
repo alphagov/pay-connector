@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
@@ -10,26 +9,18 @@ import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCaptureResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
-import uk.gov.pay.connector.gateway.util.AuthUtil;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gateway.stripe.json.StripeTransferResponse;
+import uk.gov.pay.connector.gateway.stripe.request.StripeCaptureRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripeTransferOutRequest;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
@@ -43,6 +34,7 @@ public class StripeCaptureHandler implements CaptureHandler {
     private final StripeGatewayConfig stripeGatewayConfig;
     private final JsonObjectMapper jsonObjectMapper;
 
+    @Inject
     public StripeCaptureHandler(GatewayClient client,
                                 StripeGatewayConfig stripeGatewayConfig,
                                 JsonObjectMapper jsonObjectMapper) {
@@ -53,19 +45,20 @@ public class StripeCaptureHandler implements CaptureHandler {
 
     @Override
     public CaptureResponse capture(CaptureGatewayRequest request) {
-
         String transactionId = request.getTransactionId();
-        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
-
         try {
-            StripeCaptureResponse stripeCaptureResponse = capture(transactionId, gatewayAccount, request.getExternalId());
+            StripeCaptureResponse stripeCaptureResponse = captureWithPlatform(request);
             Optional<Long> maybeFee = calculateFee(request.getAmount(), stripeCaptureResponse);
             Long netTransferAmount = maybeFee
                     .map(fee -> calculateNetTransferAmount(request.getAmount(), fee))
                     .orElse(request.getAmount());
-            transferNetAmount(request, gatewayAccount, netTransferAmount);
+            transferToConnectAccount(request, netTransferAmount);
 
-            return new CaptureResponse(stripeCaptureResponse.getId(), COMPLETE, maybeFee.orElse(null));
+            return new CaptureResponse(
+                    stripeCaptureResponse.getId(),
+                    COMPLETE,
+                    maybeFee.orElse(null)
+            );
         } catch (GatewayErrorException e) {
 
             if (e.getFamily() == CLIENT_ERROR) {
@@ -92,21 +85,27 @@ public class StripeCaptureHandler implements CaptureHandler {
         } 
     }
 
-    private void transferNetAmount(CaptureGatewayRequest request, GatewayAccountEntity gatewayAccount, Long netTransferAmount) throws GatewayException {
-        postToStripe(
-                "/v1/transfers",
-                getTransferPayload(netTransferAmount, request),
-                gatewayAccount,
-                request.getExternalId());
+    private StripeCaptureResponse captureWithPlatform(CaptureGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
+        String captureResponse = client.postRequestFor(StripeCaptureRequest.of(request, stripeGatewayConfig)).getEntity();
+        StripeCaptureResponse stripeCaptureResponse = jsonObjectMapper.getObject(captureResponse, StripeCaptureResponse.class);
+        logger.info("Captured charge id {} with platform account - stripe capture id {}",
+                request.getExternalId(),
+                stripeCaptureResponse.getId()
+        );
+        
+        return stripeCaptureResponse;
     }
 
-    private StripeCaptureResponse capture(String stripeChargeId, GatewayAccountEntity gatewayAccount, String payChargeId) throws GatewayException {
-        String captureResponse = postToStripe(
-                "/v1/charges/" + stripeChargeId + "/capture",
-                getCapturePayload(),
-                gatewayAccount,
-                payChargeId);
-        return jsonObjectMapper.getObject(captureResponse, StripeCaptureResponse.class);
+    private void transferToConnectAccount(CaptureGatewayRequest request, Long netTransferAmount) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
+        String transferResponse = client.postRequestFor(StripeTransferOutRequest.of(netTransferAmount, request, stripeGatewayConfig)).getEntity();
+        StripeTransferResponse stripeTransferResponse = jsonObjectMapper.getObject(transferResponse, StripeTransferResponse.class);
+        logger.info("In capturing charge id {}, transferred net amount {} - transfer id {} -  to Stripe Connect account id {} in transfer group {}",
+                request.getExternalId(),
+                stripeTransferResponse.getAmount(),
+                stripeTransferResponse.getId(),
+                stripeTransferResponse.getDestinationStripeAccountId(),
+                stripeTransferResponse.getStripeTransferGroup()
+        );
     }
 
     private Optional<Long> calculateFee(Long grossChargeAmount, StripeCaptureResponse stripeCaptureResponse) {
@@ -120,41 +119,5 @@ public class StripeCaptureHandler implements CaptureHandler {
     
     private Long calculateNetTransferAmount(Long captureAmount, Long fee) {
         return captureAmount - fee;
-    }
-
-    private String getTransferPayload(Long netTransferAmount, CaptureGatewayRequest request) {
-        List<BasicNameValuePair> params = new ArrayList<>();
-        params.add(new BasicNameValuePair("amount", String.valueOf(netTransferAmount)));
-        params.add(new BasicNameValuePair("destination", request.getGatewayAccount().getCredentials().get("stripe_account_id")));
-        params.add(new BasicNameValuePair("currency", "gbp"));
-        params.add(new BasicNameValuePair("source_transaction", request.getTransactionId()));
-        params.add(new BasicNameValuePair("source_transaction", request.getTransactionId()));
-        params.add(new BasicNameValuePair("expand[]", "balance_transaction"));
-        params.add(new BasicNameValuePair("expand[]", "destination_payment"));
-
-        return URLEncodedUtils.format(params, UTF_8);
-    }
-    
-    private String getCapturePayload() {
-        List<BasicNameValuePair> params = new ArrayList<>();
-        params.add(new BasicNameValuePair("expand[]", "balance_transaction"));
-
-        return URLEncodedUtils.format(params, UTF_8);
-    }
-
-    private String postToStripe(String path, String payload, GatewayAccountEntity gatewayAccount, String idempotencyKey)
-            throws GatewayException {
-        
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Idempotency-Key", idempotencyKey);
-        headers.putAll(AuthUtil.getStripeAuthHeader(stripeGatewayConfig, gatewayAccount.isLive()));
-                
-        return client.postRequestFor(
-
-                URI.create(stripeGatewayConfig.getUrl() + path),
-                gatewayAccount,
-                new GatewayOrder(OrderRequestType.CAPTURE, payload, APPLICATION_FORM_URLENCODED_TYPE),
-                headers)
-                .getEntity();
     }
 }

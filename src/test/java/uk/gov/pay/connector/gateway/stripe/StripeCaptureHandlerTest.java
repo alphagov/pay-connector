@@ -11,7 +11,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
@@ -20,6 +19,8 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
+import uk.gov.pay.connector.gateway.stripe.request.StripeCaptureRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripeTransferOutRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
@@ -68,7 +69,6 @@ public class StripeCaptureHandlerTest {
     @Before
     public void setup() {
         when(stripeGatewayConfig.getUrl()).thenReturn("http://stripe.url");
-        when(stripeGatewayConfig.getAuthTokens()).thenReturn(mock(StripeAuthTokens.class));
         stripeCaptureHandler = new StripeCaptureHandler(gatewayClient, stripeGatewayConfig, objectMapper);
         when(stripeGatewayConfig.getFeePercentage()).thenReturn(0.08);
         when(stripeGatewayConfig.isCollectFee()).thenReturn(true);
@@ -94,8 +94,8 @@ public class StripeCaptureHandlerTest {
         GatewayClient.Response gatewayTransferResponse = mock(GatewayClient.Response.class);
         when(gatewayTransferResponse.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
 
-        when(gatewayClient.postRequestFor(eq(captureUri), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(gatewayCaptureResponse);
-        when(gatewayClient.postRequestFor(eq(transferUri), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(gatewayTransferResponse);
+        when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
+        when(gatewayClient.postRequestFor(any(StripeTransferOutRequest.class))).thenReturn(gatewayTransferResponse);
 
         CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
         assertTrue(captureResponse.isSuccessful());
@@ -112,8 +112,8 @@ public class StripeCaptureHandlerTest {
         GatewayClient.Response gatewayTransferResponse = mock(GatewayClient.Response.class);
         when(gatewayTransferResponse.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
 
-        when(gatewayClient.postRequestFor(eq(captureUri), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(gatewayCaptureResponse);
-        when(gatewayClient.postRequestFor(eq(transferUri), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(gatewayTransferResponse);
+        when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
+        when(gatewayClient.postRequestFor(any(StripeTransferOutRequest.class))).thenReturn(gatewayTransferResponse);
         
         CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
 
@@ -148,8 +148,8 @@ public class StripeCaptureHandlerTest {
         GatewayClient.Response gatewayTransferResponse = mock(GatewayClient.Response.class);
         when(gatewayTransferResponse.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
 
-        when(gatewayClient.postRequestFor(eq(captureUri), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(gatewayCaptureResponse);
-        when(gatewayClient.postRequestFor(eq(transferUri), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(gatewayTransferResponse);
+        when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
+        when(gatewayClient.postRequestFor(any(StripeTransferOutRequest.class))).thenReturn(gatewayTransferResponse);
 
         CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
         
@@ -172,20 +172,24 @@ public class StripeCaptureHandlerTest {
         GatewayClient.Response gatewayTransferResponse = mock(GatewayClient.Response.class);
         when(gatewayTransferResponse.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
 
-        when(gatewayClient.postRequestFor(eq(captureUri), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(gatewayCaptureResponse);
-        when(gatewayClient.postRequestFor(eq(transferUri), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(gatewayTransferResponse);
+        when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
+        when(gatewayClient.postRequestFor(any(StripeTransferOutRequest.class))).thenReturn(gatewayTransferResponse);
 
         CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
 
-        verify(gatewayClient).postRequestFor(eq(captureUri), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class));
-        verify(gatewayClient).postRequestFor(eq(transferUri), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class));
         assertTrue(captureResponse.isSuccessful());
         assertThat(captureResponse.getFee().get(), is(51L));
     }
     
     public void shouldCaptureWithoutFee_ifCollectFeeSetToFalse() throws Exception {
-        final String jsonResponse = load(STRIPE_CAPTURE_SUCCESS_RESPONSE);
-        verify(gatewayClient).postRequestFor(eq(captureUri), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class));
+        GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
+        when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));
+        when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
+        
+        GatewayClient.Response gatewayTransferResponse = mock(GatewayClient.Response.class);
+        when(gatewayTransferResponse.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
+        when(gatewayClient.postRequestFor(any(StripeTransferOutRequest.class))).thenReturn(gatewayTransferResponse);
+
         when(stripeGatewayConfig.isCollectFee()).thenReturn(false);
 
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
@@ -200,7 +204,7 @@ public class StripeCaptureHandlerTest {
     @Test
     public void shouldNotCaptureIfPaymentProviderReturns4xxHttpStatusCode() throws Exception {
         GatewayErrorException exception = new GatewayErrorException("Unexpected HTTP status code 402 from gateway", load(STRIPE_ERROR_RESPONSE), SC_UNAUTHORIZED);
-        when(gatewayClient.postRequestFor(eq(captureUri), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenThrow(exception);
+        when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenThrow(exception);
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
         assertThat(response.isSuccessful(), is(false));
         assertThat(response.getError().isPresent(), is(true));
@@ -212,7 +216,41 @@ public class StripeCaptureHandlerTest {
     @Test
     public void shouldNotCaptureIfPaymentProviderReturns5xxHttpStatusCode() throws Exception {
         GatewayErrorException exception = new GatewayErrorException("uh oh", "Problem with Stripe servers", INTERNAL_SERVER_ERROR_500);
-        when(gatewayClient.postRequestFor(eq(captureUri), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenThrow(exception);
+        when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenThrow(exception);
+        CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
+        assertThat(response.isSuccessful(), is(false));
+        assertThat(response.getError().isPresent(), is(true));
+        assertThat(response.state(), is(nullValue()));
+        assertThat(response.getError().get().getMessage(), containsString("An internal server error occurred when capturing charge_external_id: " + captureGatewayRequest.getExternalId()));
+        assertThat(response.getError().get().getErrorType(), is(GATEWAY_ERROR));
+    }
+
+    @Test
+    public void shouldNotCaptureIfPaymentProviderReturns4XXOnTransfer() throws Exception {
+        GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
+        when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));
+        when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
+
+        GatewayErrorException exception = new GatewayErrorException("Unexpected HTTP status code 402 from gateway", load(STRIPE_ERROR_RESPONSE), SC_UNAUTHORIZED);
+        when(gatewayClient.postRequestFor(any(StripeTransferOutRequest.class))).thenThrow(exception);
+
+        CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
+        assertThat(response.isSuccessful(), is(false));
+        assertThat(response.getError().isPresent(), is(true));
+        assertThat(response.state(), is(nullValue()));
+        assertThat(response.toString(), containsString("No such charge: ch_123456 or something similar"));
+        assertThat(response.toString(), containsString("error code: resource_missing"));
+    }
+
+
+    @Test
+    public void shouldNotCaptureIfPaymentProviderReturns5XXOnTransfer() throws Exception {
+        GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
+        when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));
+        when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
+        
+        GatewayErrorException exception = new GatewayErrorException("uh oh", "Problem with Stripe servers", INTERNAL_SERVER_ERROR_500);
+        when(gatewayClient.postRequestFor(any(StripeTransferOutRequest.class))).thenThrow(exception);
 
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
         assertThat(response.isSuccessful(), is(false));
@@ -221,6 +259,7 @@ public class StripeCaptureHandlerTest {
         assertThat(response.getError().get().getMessage(), containsString("An internal server error occurred when capturing charge_external_id: " + captureGatewayRequest.getExternalId()));
         assertThat(response.getError().get().getErrorType(), is(GATEWAY_ERROR));
     }
+
 
     private GatewayAccountEntity buildGatewayAccountEntity() {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
