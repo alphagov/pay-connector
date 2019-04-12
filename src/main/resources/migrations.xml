@@ -1095,4 +1095,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add column external_metadata to charges" author="">
+        <addColumn tableName="charges">
+            <column name="external_metadata" type="jsonb">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
