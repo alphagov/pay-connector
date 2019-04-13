@@ -34,7 +34,7 @@ public class GatewayInvalidUrlITest extends BaseGatewayITest {
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
-        assertLastGatewayClientLoggingEventContains("Exception for gateway url=http://gobbledygook.invalid.url, error message: java.net.UnknownHostException");
+        assertLastGatewayClientLoggingEventContains("Exception for gateway url=http://gobbledygook.invalid.url");
         Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));
     }
 }
