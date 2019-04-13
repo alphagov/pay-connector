@@ -14,6 +14,7 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
+import uk.gov.pay.connector.gateway.stripe.request.StripeCaptureRequest;
 import uk.gov.pay.connector.gateway.stripe.response.StripeCaptureResponse;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -47,17 +48,10 @@ public class StripeCaptureHandler implements CaptureHandler {
 
     @Override
     public CaptureResponse capture(CaptureGatewayRequest request) {
-
         String transactionId = request.getTransactionId();
-        String url = stripeGatewayConfig.getUrl() + "/v1/charges/" + transactionId + "/capture";
-        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
 
         try {
-            String captureResponse = client.postRequestFor(
-                    URI.create(url),
-                    gatewayAccount, 
-                    new GatewayOrder(OrderRequestType.CAPTURE, StringUtils.EMPTY, APPLICATION_FORM_URLENCODED_TYPE),
-                    AuthUtil.getStripeAuthHeader(stripeGatewayConfig, gatewayAccount.isLive())).getEntity();
+            String captureResponse = client.postRequestFor(StripeCaptureRequest.of(request, stripeGatewayConfig)).getEntity();
             String stripeTransactionId = jsonObjectMapper.getObject(captureResponse, Map.class).get("id").toString();
             return fromBaseCaptureResponse(new StripeCaptureResponse(stripeTransactionId), COMPLETE);
 

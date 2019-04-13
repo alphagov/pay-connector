@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
 import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
+import uk.gov.pay.connector.gateway.model.request.GatewayClientRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.ws.rs.ProcessingException;
@@ -39,6 +40,11 @@ public class GatewayClient {
     public GatewayClient.Response postRequestFor(URI url, GatewayAccountEntity account, GatewayOrder request, Map<String, String> headers) 
             throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
         return postRequestFor(url, account, request, emptyList(), headers);
+    }
+    
+    public GatewayClient.Response postRequestFor(GatewayClientRequest request)
+            throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
+        return postRequestFor(request.getUrl(), request.getGatewayAccount(), request.getGatewayOrder(), request.getHeaders());
     }
 
     public GatewayClient.Response postRequestFor(URI url, 

@@ -26,7 +26,8 @@ abstract public class CardCaptureProcessBaseITest {
                     CREDENTIALS_MERCHANT_ID, "merchant-id",
                     CREDENTIALS_USERNAME, "test-user",
                     CREDENTIALS_PASSWORD, "test-password",
-                CREDENTIALS_SHA_IN_PASSPHRASE, "sha-passphraser"
+                CREDENTIALS_SHA_IN_PASSPHRASE, "sha-passphraser",
+                    "stripe_account_id", "stripe_account_id"
             );
 
     protected int port = PortFactory.findFreePort();
