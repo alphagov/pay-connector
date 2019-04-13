@@ -19,6 +19,9 @@ public class StripeGatewayConfig extends Configuration {
     @NotNull
     private StripeWebhookSigningSecrets webhookSigningSecrets;
 
+    @Valid
+    private String platformAccountId;
+
     public String getUrl() {
         return url;
     }
@@ -29,5 +32,9 @@ public class StripeGatewayConfig extends Configuration {
 
     public StripeWebhookSigningSecrets getWebhookSigningSecrets() {
         return webhookSigningSecrets;
+    }
+
+    public String getPlatformAccountId() {
+        return platformAccountId;
     }
 }

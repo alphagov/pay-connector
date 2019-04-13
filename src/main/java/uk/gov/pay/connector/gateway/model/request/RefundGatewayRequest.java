@@ -10,12 +10,14 @@ public class RefundGatewayRequest implements GatewayRequest {
     private final String amount;
     private final String transactionId;
     private final String refundExternalId;
+    private final String chargeExternalId;
 
-    private RefundGatewayRequest(String transactionId, GatewayAccountEntity gatewayAccount, String amount, String refundExternalId) {
+    private RefundGatewayRequest(String transactionId, GatewayAccountEntity gatewayAccount, String amount, String refundExternalId, String chargeExternalId) {
         this.transactionId = transactionId;
         this.gatewayAccountEntity = gatewayAccount;
         this.amount = amount;
         this.refundExternalId = refundExternalId;
+        this.chargeExternalId = chargeExternalId;
     }
 
     public String getAmount() {
@@ -24,6 +26,10 @@ public class RefundGatewayRequest implements GatewayRequest {
 
     public String getTransactionId() {
         return transactionId;
+    }
+
+    public String getChargeExternalId() {
+        return chargeExternalId;
     }
 
     @Override
@@ -63,7 +69,9 @@ public class RefundGatewayRequest implements GatewayRequest {
                 refundEntity.getChargeEntity().getGatewayTransactionId(),
                 refundEntity.getChargeEntity().getGatewayAccount(),
                 String.valueOf(refundEntity.getAmount()),
-                refundEntity.getExternalId());
+                refundEntity.getExternalId(),
+                refundEntity.getChargeEntity().getExternalId()
+        );
     }
     
     @Override
