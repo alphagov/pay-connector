@@ -21,6 +21,10 @@ public class CaptureResponse {
         this.gatewayError = gatewayError;
         this.stringified = stringified;
     }
+    
+    public static CaptureResponse of(String transactionId, ChargeState chargeState) {
+        return new CaptureResponse(transactionId, chargeState, null, null);
+    }
 
     public static CaptureResponse fromGatewayError(GatewayError gatewayError) {
         return new CaptureResponse(null, null, gatewayError, gatewayError.toString());

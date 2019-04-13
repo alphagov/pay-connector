@@ -39,4 +39,9 @@ public class StripeErrorResponse {
             return message;
         }
     }
+    
+    @Override
+    public String toString() {
+        return "error code: " + error.code + " error message: " + error.message;
+    }
 }

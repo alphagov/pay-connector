@@ -1,12 +1,15 @@
 package uk.gov.pay.connector.rules;
 
+import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.google.common.collect.ImmutableMap;
 import org.json.JSONObject;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.util.Map;
+import java.util.Optional;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
@@ -23,6 +26,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_SOURCES_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSFER_RESPONSE;
 
 public class StripeMockClient {
     public void mockCreateToken() {
@@ -89,5 +93,27 @@ public class StripeMockClient {
     public void mockCancelCharge() {
         String payload = TestTemplateResourceLoader.load(STRIPE_CANCEL_CHARGE_RESPONSE);
         setupResponse(payload, "/v1/refunds", 200);
+    }
+
+
+    public void mockTransferSuccess(String idempotencyKey) {
+        String payload = TestTemplateResourceLoader.load(STRIPE_TRANSFER_RESPONSE);
+        MappingBuilder builder = post(urlPathEqualTo("/v1/transfers"))
+                .withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
+                .withHeader("Idempotency-Key", equalTo(idempotencyKey));
+
+        Optional.ofNullable(idempotencyKey)
+                .ifPresentOrElse(
+                        key -> builder.withHeader("Idempotency-Key", equalTo(key)),
+                        () -> builder.withHeader("Idempotency-Key", matching(".*"))
+                );
+
+        stubFor(builder
+                .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON).withStatus(200).withBody(payload)));
+    }
+
+    public void mockTransferFailure() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_FAILED_RESPONSE);
+        setupResponse(payload, "/v1/transfers", 400);
     }
 }
