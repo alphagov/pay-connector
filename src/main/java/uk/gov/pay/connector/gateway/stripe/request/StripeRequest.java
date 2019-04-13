@@ -5,6 +5,7 @@ import uk.gov.pay.connector.gateway.model.request.GatewayClientRequest;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -38,9 +39,11 @@ public abstract class StripeRequest implements GatewayClientRequest {
 
     public Map<String, String> getHeaders() {
         Map<String, String> headers = new HashMap<>();
-        Optional.ofNullable(idempotencyKey).ifPresent(key -> headers.put("Idempotency-Key", key));
+        Optional.ofNullable(idempotencyKey).ifPresent(idempotencyKey -> headers.put("Idempotency-Key", getIdempotencyKeyType() + idempotencyKey));
         headers.putAll(AuthUtil.getStripeAuthHeader(stripeGatewayConfig, gatewayAccount.isLive()));
 
         return headers;
     }
+    
+    protected abstract  String getIdempotencyKeyType();
 }

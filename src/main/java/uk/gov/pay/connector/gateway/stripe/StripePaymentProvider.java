@@ -37,7 +37,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCancelHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
-import uk.gov.pay.connector.gateway.stripe.json.StripeCreateChargeResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTokenResponse;
@@ -247,7 +247,7 @@ public class StripePaymentProvider implements PaymentProvider {
                 gatewayAccount.isLive(),
                 gatewayAccount,
                 OrderRequestType.STRIPE_CREATE_CHARGE).getEntity();
-        final StripeCreateChargeResponse createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCreateChargeResponse.class);
+        final StripeCharge createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCharge.class);
         return new StripeAuthorisationResponse(createChargeResponse);
     }
 
@@ -260,7 +260,7 @@ public class StripePaymentProvider implements PaymentProvider {
                 gatewayAccount.isLive(),
                 gatewayAccount, 
                 OrderRequestType.STRIPE_CREATE_CHARGE).getEntity();
-        final StripeCreateChargeResponse createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCreateChargeResponse.class);
+        final StripeCharge createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCharge.class);
         return new StripeAuthorisationResponse(createChargeResponse);
     }
 
@@ -361,10 +361,9 @@ public class StripePaymentProvider implements PaymentProvider {
         params.add(new BasicNameValuePair("description", description));
         params.add(new BasicNameValuePair("source", sourceId));
         params.add(new BasicNameValuePair("capture", "false"));
+        params.add(new BasicNameValuePair("transfer_group", externalId));
         String stripeAccountId = getStripeAccountId(externalId, gatewayAccount);
-
         params.add(new BasicNameValuePair("on_behalf_of", stripeAccountId));
-        params.add(new BasicNameValuePair("transfer_data[destination]", stripeAccountId));
         return URLEncodedUtils.format(params, UTF_8);
     }
 

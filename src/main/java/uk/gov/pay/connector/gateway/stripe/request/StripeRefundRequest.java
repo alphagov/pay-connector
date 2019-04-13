@@ -53,6 +53,7 @@ public class StripeRefundRequest extends StripeRequest {
         params.add(new BasicNameValuePair("amount", amount));
         params.add(new BasicNameValuePair("refund_application_fee", "true"));
         params.add(new BasicNameValuePair("reverse_transfer", "true"));
+        params.add(new BasicNameValuePair("expand[]", "charge"));
         String payload = URLEncodedUtils.format(params, UTF_8);
 
         return new GatewayOrder(
@@ -60,5 +61,10 @@ public class StripeRefundRequest extends StripeRequest {
                 payload,
                 APPLICATION_FORM_URLENCODED_TYPE
         );    
+    }
+
+    @Override
+    protected String getIdempotencyKeyType() {
+        return "refund";
     }
 }

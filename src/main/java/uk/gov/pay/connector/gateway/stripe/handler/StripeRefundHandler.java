@@ -10,10 +10,14 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeRefund;
+import uk.gov.pay.connector.gateway.stripe.json.StripeTransferResponse;
 import uk.gov.pay.connector.gateway.stripe.request.StripeRefundRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
 import uk.gov.pay.connector.gateway.stripe.response.StripeRefundResponse;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
+import javax.inject.Inject;
 import java.util.Map;
 
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
@@ -27,6 +31,7 @@ public class StripeRefundHandler {
     private final StripeGatewayConfig stripeGatewayConfig;
     private JsonObjectMapper jsonObjectMapper;
 
+    @Inject
     public StripeRefundHandler(
             GatewayClient client,
             StripeGatewayConfig stripeGatewayConfig,
@@ -39,8 +44,12 @@ public class StripeRefundHandler {
 
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
         try {
-            String reference = refundCharge(request);
-            return fromBaseRefundResponse(StripeRefundResponse.of(reference), GatewayRefundResponse.RefundState.COMPLETE);
+            StripeRefund refundResponse = refundCharge(request);
+            if (refundResponse.isPlatformRefund()) {
+                transferFromConnectAccount(request);
+            }
+
+            return fromBaseRefundResponse(StripeRefundResponse.of(refundResponse.getId()), GatewayRefundResponse.RefundState.COMPLETE);
         } catch (GatewayErrorException e) {
 
             if (e.getFamily() == CLIENT_ERROR) {
@@ -69,20 +78,29 @@ public class StripeRefundHandler {
         }
     }
 
-    private String refundCharge(RefundGatewayRequest request)
-            throws
-            GatewayException.GenericGatewayException,
-            GatewayErrorException,
-            GatewayException.GatewayConnectionTimeoutException {
-        final GatewayClient.Response refundResponse = client.postRequestFor(
-                StripeRefundRequest.of(request, stripeGatewayConfig)
+
+    private void transferFromConnectAccount(RefundGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
+        String transferResponse = client.postRequestFor(StripeTransferInRequest.of(request, stripeGatewayConfig)).getEntity();
+        StripeTransferResponse stripeTransferResponse = jsonObjectMapper.getObject(transferResponse, StripeTransferResponse.class);
+        logger.info("As part of refund {} refunding charge id {}, transferred net amount {} - transfer id {} -  from Stripe Connect account id {} in transfer group {}",
+                request.getRefundExternalId(),
+                request.getChargeExternalId(),
+                stripeTransferResponse.getAmount(),
+                stripeTransferResponse.getId(),
+                stripeTransferResponse.getDestinationStripeAccountId(),
+                stripeTransferResponse.getStripeTransferGroup()
         );
-        String reference = jsonObjectMapper.getObject(refundResponse.getEntity(), Map.class).get("id").toString();
-        logger.info("As part of refund {} refunded stripe charge id {}",
+    }
+    
+    private StripeRefund refundCharge(RefundGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
+        final String refundResponse = client.postRequestFor(StripeRefundRequest.of(request, stripeGatewayConfig)).getEntity();
+        StripeRefund refund = jsonObjectMapper.getObject(refundResponse, StripeRefund.class);
+        logger.info("As part of refund {} to refund charge id {} refunded stripe charge id {}",
                 request.getTransactionId(),
+                request.getChargeExternalId(),
                 request.getRefundExternalId()
         );
-
-        return reference;
+        
+        return refund;
     }
 }

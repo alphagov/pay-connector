@@ -71,12 +71,13 @@ public class StripeRefundRequestTest {
         assertThat(payload, containsString("amount=" + refundAmount));
         assertThat(payload, containsString("refund_application_fee=true"));
         assertThat(payload, containsString("reverse_transfer=true"));
+        assertThat(payload, containsString("expand%5B%5D=charge"));
     }
     
     @Test
     public void createsCorrectIdempotencyKey() {
         assertThat(
                 stripeRefundRequest.getHeaders().get("Idempotency-Key"), 
-                is(refundExternalId));
+                is("refund" + refundExternalId));
     }
 }

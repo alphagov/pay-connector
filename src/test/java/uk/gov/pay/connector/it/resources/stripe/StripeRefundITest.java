@@ -68,10 +68,12 @@ public class StripeRefundITest extends ChargingITestBase {
 
     @Test
     public void stripeRefund() {
+        String platformAccountId = "stripe_platform_account_id";
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         long amount = 10L;
         
         stripeMockClient.mockCancelCharge();
+        stripeMockClient.mockTransferSuccess(null);
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());
         String refundPayload = new Gson().toJson(refundData);
@@ -95,10 +97,16 @@ public class StripeRefundITest extends ChargingITestBase {
         String refundId = response.extract().path("refund_id");
 
         verify(postRequestedFor(urlEqualTo("/v1/refunds"))
-                .withHeader("Idempotency-Key", equalTo(refundId))
+                .withHeader("Idempotency-Key", equalTo("refund" + refundId))
                 .withRequestBody(containing("charge=" + defaultTestCharge.getTransactionId()))
                 .withRequestBody(containing("amount=" + amount))
                 .withRequestBody(containing("reverse_transfer=true"))
                 .withRequestBody(containing("refund_application_fee=true")));
+
+        verify(postRequestedFor(urlEqualTo("/v1/transfers"))
+                .withHeader("Idempotency-Key", equalTo("transfer_in" + refundId))
+                .withHeader("Stripe-Account", equalTo(stripeAccountId))
+                .withRequestBody(containing("transfer_group=" + defaultTestCharge.getExternalChargeId()))
+                .withRequestBody(containing("destination=" + platformAccountId)));
     }
 }

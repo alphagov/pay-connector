@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
 import uk.gov.pay.connector.gateway.stripe.request.StripeRefundRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -28,6 +29,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
@@ -35,6 +38,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_REFUND_ERROR_ALREADY_REFUNDED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_REFUND_ERROR_GREATER_AMOUNT_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_REFUND_FULL_CHARGE_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_REFUND_FULL_DESTINATION_CHARGE_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSFER_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -72,6 +77,26 @@ public class StripeRefundHandlerTest {
         GatewayClient.Response response = mock(GatewayClient.Response.class);
         when(response.getEntity()).thenReturn(load(STRIPE_REFUND_FULL_CHARGE_RESPONSE));
         when(gatewayClient.postRequestFor(any(StripeRefundRequest.class))).thenReturn(response);
+
+
+        GatewayClient.Response gatewayTransferResponse = mock(GatewayClient.Response.class);
+        when(gatewayTransferResponse.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
+        when(gatewayClient.postRequestFor(any(StripeTransferInRequest.class))).thenReturn(gatewayTransferResponse);
+        
+        final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
+        assertNotNull(refund);
+        assertTrue(refund.isSuccessful());
+        assertThat(refund.state(), is(GatewayRefundResponse.RefundState.COMPLETE));
+        assertThat(refund.getReference().get(), is("re_1DRiccHj08j21DRiccHj08j2_test"));
+    }
+
+    @Test
+    public void shouldNotDoPostRefundTransferIfOriginalChargeIsDestinationCharge() throws Exception {
+        GatewayClient.Response response = mock(GatewayClient.Response.class);
+        when(response.getEntity()).thenReturn(load(STRIPE_REFUND_FULL_DESTINATION_CHARGE_RESPONSE));
+        when(gatewayClient.postRequestFor(any(StripeRefundRequest.class))).thenReturn(response);
+        
+        verify(gatewayClient, never()).postRequestFor(any(StripeTransferInRequest.class));
 
         final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
         assertNotNull(refund);

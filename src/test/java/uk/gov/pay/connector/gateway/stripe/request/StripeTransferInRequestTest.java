@@ -93,7 +93,7 @@ public class StripeTransferInRequestTest {
     public void shouldHaveIdempotencyKeySetToRefundExternalId() {
         assertThat(
                 stripeTransferInRequest.getHeaders().get("Idempotency-Key"),
-                is(refundExternalId)
+                is("transfer_in" + refundExternalId)
         );
     }
 }

@@ -55,4 +55,9 @@ public class StripeCaptureRequest extends StripeRequest {
                 APPLICATION_FORM_URLENCODED_TYPE
         );    
     }
+
+    @Override
+    protected String getIdempotencyKeyType() {
+        return "capture";
+    }
 }

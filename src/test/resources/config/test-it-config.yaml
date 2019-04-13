@@ -58,6 +58,7 @@ stripe:
   webhookSigningSecrets:
     test: ${GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET:-whtest}
     live: ${GDS_CONNECTOR_STRIPE_WEBHOOK_LIVE_SIGN_SECRET:-whlive}
+  platformAccountId: ${STRIPE_PLATFORM_ACCOUNT_ID:-stripe_platform_account_id}
 
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-2}
