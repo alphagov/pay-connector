@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class StripeTransferOutRequestTest {
     
-    private final String netTransferAmount = "200";
+    private final Long netTransferAmount = 200L;
     private final String chargeExternalId = "payChargeExternalId";
     private final String stripeBaseUrl = "stripeUrl";
     private final String stripeConnectAccountId = "stripe_account_id";

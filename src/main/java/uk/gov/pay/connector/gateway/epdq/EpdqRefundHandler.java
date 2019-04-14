@@ -56,7 +56,7 @@ public class EpdqRefundHandler implements RefundHandler {
                         CREDENTIALS_SHA_IN_PASSPHRASE))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withTransactionId(request.getTransactionId())
-                .withAmount(request.getAmount())
+                .withAmount(request.getAmountAsString())
                 .build();
     }
 }

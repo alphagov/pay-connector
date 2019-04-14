@@ -514,7 +514,7 @@ public class ChargeRefundServiceTest {
             RefundGatewayRequest refundGatewayRequest = ((RefundGatewayRequest) object);
             return refundGatewayRequest.getGatewayAccount().equals(capturedCharge.getGatewayAccount()) &&
                     refundGatewayRequest.getTransactionId().equals(capturedCharge.getGatewayTransactionId()) &&
-                    refundGatewayRequest.getAmount().equals(String.valueOf(amountInPence));
+                    refundGatewayRequest.getAmountAsString().equals(String.valueOf(amountInPence));
         };
     }
 

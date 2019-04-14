@@ -22,7 +22,7 @@ public class StripeTransferInRequest extends StripeTransferRequest {
     private final String transferGroup;
 
     private StripeTransferInRequest(
-            String amount,
+            Long amount,
             GatewayAccountEntity gatewayAccount,
             String stripeChargeId,
             String idempotencyKey,

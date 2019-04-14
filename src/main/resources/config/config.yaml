@@ -82,6 +82,9 @@ stripe:
   webhookSigningSecrets:
     test: ${GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET}
     live: ${GDS_CONNECTOR_STRIPE_WEBHOOK_LIVE_SIGN_SECRET}
+  platformAccountId: ${STRIPE_PLATFORM_ACCOUNT_ID}
+  feePercentage: ${STRIPE_TRANSACTION_FEE_PERCENTAGE}
+  collectFee: ${COLLECT_FEE_FEATURE_FLAG:-false}
 
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}

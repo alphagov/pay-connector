@@ -18,6 +18,8 @@ import uk.gov.pay.connector.gateway.stripe.request.StripeCaptureRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferOutRequest;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
+import java.util.Optional;
+
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
@@ -45,9 +47,17 @@ public class StripeCaptureHandler implements CaptureHandler {
 
         try {
             StripeCaptureResponse stripeCaptureResponse = captureWithPlatform(request);
-            transferToConnectAccount(request);
+            Optional<Long> maybeFee = calculateFee(request.getAmount(), stripeCaptureResponse);
+            Long netTransferAmount = maybeFee
+                    .map(fee -> calculateNetTransferAmount(request.getAmount(), fee))
+                    .orElse(request.getAmount());
+            transferToConnectAccount(request, netTransferAmount);
 
-            return CaptureResponse.of(stripeCaptureResponse.getId(), COMPLETE);
+            return new CaptureResponse(
+                    stripeCaptureResponse.getId(),
+                    COMPLETE,
+                    maybeFee.orElse(null)
+            );
         } catch (GatewayErrorException e) {
 
             if (e.getFamily() == CLIENT_ERROR) {
@@ -55,7 +65,7 @@ public class StripeCaptureHandler implements CaptureHandler {
                 logger.error("Capture failed for transaction id {}. Failure code from Stripe: {}, failure message from Stripe: {}. External Charge id: {}. Response code from Stripe: {}",
                         transactionId, stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), request.getExternalId(), e.getStatus());
 
-                return CaptureResponse.fromGatewayError(new GatewayError(stripeErrorResponse.toString(), ErrorType.GENERIC_GATEWAY_ERROR));
+                return new CaptureResponse(new GatewayError(stripeErrorResponse.toString(), ErrorType.GENERIC_GATEWAY_ERROR), stripeErrorResponse.toString());
             }
 
             if (e.getFamily() == SERVER_ERROR) {
@@ -85,8 +95,8 @@ public class StripeCaptureHandler implements CaptureHandler {
         return stripeCaptureResponse;
     }
 
-    private void transferToConnectAccount(CaptureGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
-        String transferResponse = client.postRequestFor(StripeTransferOutRequest.of(request.getAmount(), request, stripeGatewayConfig)).getEntity();
+    private void transferToConnectAccount(CaptureGatewayRequest request, Long netTransferAmount) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
+        String transferResponse = client.postRequestFor(StripeTransferOutRequest.of(netTransferAmount, request, stripeGatewayConfig)).getEntity();
         StripeTransferResponse stripeTransferResponse = jsonObjectMapper.getObject(transferResponse, StripeTransferResponse.class);
         logger.info("In capturing charge id {}, transferred net amount {} - transfer id {} -  to Stripe Connect account id {} in transfer group {}",
                 request.getExternalId(),
@@ -95,5 +105,18 @@ public class StripeCaptureHandler implements CaptureHandler {
                 stripeTransferResponse.getDestinationStripeAccountId(),
                 stripeTransferResponse.getStripeTransferGroup()
         );
+    }
+
+    private Optional<Long> calculateFee(Long grossChargeAmount, StripeCaptureResponse stripeCaptureResponse) {
+        if (stripeGatewayConfig.isCollectFee()) {
+            Double additionalFee = Math.ceil((stripeGatewayConfig.getFeePercentage()/100) * grossChargeAmount);
+            return Optional.of(stripeCaptureResponse.getFee() + additionalFee.longValue());
+        }
+        
+        return Optional.empty();
+    }
+    
+    private Long calculateNetTransferAmount(Long captureAmount, Long fee) {
+        return captureAmount - fee;
     }
 }

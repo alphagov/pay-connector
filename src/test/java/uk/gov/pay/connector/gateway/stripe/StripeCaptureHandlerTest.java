@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
@@ -28,6 +29,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
@@ -49,24 +51,60 @@ public class StripeCaptureHandlerTest {
 
     private CaptureGatewayRequest captureGatewayRequest;
     private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
+    private GatewayAccountEntity gatewayAccount;
 
     @Before
     public void setup() {
         stripeCaptureHandler = new StripeCaptureHandler(gatewayClient, stripeGatewayConfig, objectMapper);
+        when(stripeGatewayConfig.getFeePercentage()).thenReturn(0.08);
+        when(stripeGatewayConfig.isCollectFee()).thenReturn(true);
 
-        GatewayAccountEntity gatewayAccount = buildGatewayAccountEntity();
+        gatewayAccount = buildGatewayAccountEntity();
 
         final String transactionId = "ch_1231231123123";
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
                 .withTransactionId(transactionId)
+                .withAmount(10000L)
                 .build();
 
         captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
     }
+    
+    public void shouldCaptureWithFeeAndTransferCorrectAmountToConnectAccount() throws Exception {
+        GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
+        when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));
+        GatewayClient.Response gatewayTransferResponse = mock(GatewayClient.Response.class);
+        when(gatewayTransferResponse.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
+
+        when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
+        when(gatewayClient.postRequestFor(any(StripeTransferOutRequest.class))).thenReturn(gatewayTransferResponse);
+        
+        CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
+
+        ArgumentCaptor<StripeTransferOutRequest> transferRequestCaptor = ArgumentCaptor.forClass(StripeTransferOutRequest.class);
+        verify(gatewayClient).postRequestFor(transferRequestCaptor.capture());
+        
+        assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9942"));
+        
+        assertTrue(captureResponse.isSuccessful());
+        assertThat(captureResponse.state(), is(CaptureResponse.ChargeState.COMPLETE));
+        assertThat(captureResponse.getTransactionId().isPresent(), is(true));
+        assertThat(captureResponse.getTransactionId().get(), is("ch_123456"));
+        assertThat(captureResponse.getFee().isPresent(), is(true));
+        assertThat(captureResponse.getFee().get(), is(58L));
+    }
 
     @Test
-    public void shouldCapture() throws Exception {
+    public void shouldCaptureWithFee_feeCalculationShouldAlwaysRoundUp() throws Exception {
+        final String transactionId = "ch_1231231123123";
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withTransactionId(transactionId)
+                .withAmount(10001L)
+                .build();
+
+        captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
         GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
         when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));
         GatewayClient.Response gatewayTransferResponse = mock(GatewayClient.Response.class);
@@ -76,10 +114,53 @@ public class StripeCaptureHandlerTest {
         when(gatewayClient.postRequestFor(any(StripeTransferOutRequest.class))).thenReturn(gatewayTransferResponse);
 
         CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
+        
         assertTrue(captureResponse.isSuccessful());
-        assertThat(captureResponse.state(), is(CaptureResponse.ChargeState.COMPLETE));
-        assertThat(captureResponse.getTransactionId().isPresent(), is(true));
-        assertThat(captureResponse.getTransactionId().get(), is("ch_123456"));
+        assertThat(captureResponse.getFee().get(), is(59L));
+    }
+
+    @Test
+    public void shouldCaptureWithFee_feeCalculationShouldRoundUpTo1() throws Exception {
+        final String transactionId = "ch_1231231123123";
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withTransactionId(transactionId)
+                .withAmount(1L)
+                .build();
+
+        captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
+        GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
+        when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));
+        GatewayClient.Response gatewayTransferResponse = mock(GatewayClient.Response.class);
+        when(gatewayTransferResponse.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
+
+        when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
+        when(gatewayClient.postRequestFor(any(StripeTransferOutRequest.class))).thenReturn(gatewayTransferResponse);
+
+        CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
+
+        assertTrue(captureResponse.isSuccessful());
+        assertThat(captureResponse.getFee().get(), is(51L));
+    }
+    
+    public void shouldCaptureWithoutFee_ifCollectFeeSetToFalse() throws Exception {
+        GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
+        when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));
+        when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
+        
+        GatewayClient.Response gatewayTransferResponse = mock(GatewayClient.Response.class);
+        when(gatewayTransferResponse.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
+        when(gatewayClient.postRequestFor(any(StripeTransferOutRequest.class))).thenReturn(gatewayTransferResponse);
+
+        when(stripeGatewayConfig.isCollectFee()).thenReturn(false);
+
+        CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
+        assertTrue(response.isSuccessful());
+        assertThat(response.state(), is(CaptureResponse.ChargeState.COMPLETE));
+        assertThat(response.getTransactionId().isPresent(), is(true));
+        assertThat(response.getTransactionId().get(), is("ch_123456"));
+        assertThat(response.getFee().isPresent(), is(true));
+        assertThat(response.getFee().get(), is(0L));
     }
 
     @Test

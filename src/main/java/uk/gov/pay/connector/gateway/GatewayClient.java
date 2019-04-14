@@ -4,8 +4,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -127,6 +127,5 @@ public class GatewayClient {
         public Map<String, String> getResponseCookies() {
             return responseCookies;
         }
-
     }
 }

@@ -15,7 +15,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 
 public class StripeTransferOutRequest extends StripeTransferRequest {
 
-    public StripeTransferOutRequest(String amount,
+    private StripeTransferOutRequest(Long amount,
                                     GatewayAccountEntity gatewayAccount,
                                     String sourceTransactionId,
                                     String idempotencyKey,
@@ -24,7 +24,7 @@ public class StripeTransferOutRequest extends StripeTransferRequest {
         super(amount, gatewayAccount, sourceTransactionId, idempotencyKey, stripeGatewayConfig);
     }
     
-    public static StripeTransferOutRequest of(String amount, CaptureGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
+    public static StripeTransferOutRequest of(Long amount, CaptureGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
         return new StripeTransferOutRequest(
                 amount,
                 request.getGatewayAccount(),

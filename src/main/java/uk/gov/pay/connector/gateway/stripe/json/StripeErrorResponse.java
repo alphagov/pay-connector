@@ -2,6 +2,9 @@ package uk.gov.pay.connector.gateway.stripe.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.StringJoiner;
 
 /** Example response from Stripe:
 {
@@ -42,6 +45,13 @@ public class StripeErrorResponse {
     
     @Override
     public String toString() {
-        return "error code: " + error.code + " error message: " + error.message;
+        StringJoiner joiner = new StringJoiner(", ", "Stripe capture response (", ")");
+        if (StringUtils.isNotBlank(error.getCode())) {
+            joiner.add("error code: " + error.getCode());
+        }
+        if (StringUtils.isNotBlank(error.getMessage())) {
+            joiner.add("error: " + error.getMessage());
+        }
+        return joiner.toString();
     }
 }

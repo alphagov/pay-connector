@@ -9,7 +9,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -18,7 +17,7 @@ import java.net.URI;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)

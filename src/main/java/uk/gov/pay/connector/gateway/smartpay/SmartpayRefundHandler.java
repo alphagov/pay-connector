@@ -45,7 +45,7 @@ public class SmartpayRefundHandler implements RefundHandler {
                 .withReference(request.getRefundExternalId())
                 .withTransactionId(request.getTransactionId())
                 .withMerchantCode(getMerchantCode(request))
-                .withAmount(request.getAmount())
+                .withAmount(request.getAmountAsString())
                 .build();
     }
 

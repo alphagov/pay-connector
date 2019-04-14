@@ -6,7 +6,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -32,6 +31,7 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.fee.dao.FeeDao;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
@@ -84,7 +84,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
     @Mock
     private UserNotificationService mockUserNotificationService;
     private CardCaptureService cardCaptureService;
-
+    @Mock
+    private FeeDao feeDao;
     @Mock
     private Appender<ILoggingEvent> mockAppender;
 
@@ -102,7 +103,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null);
         
-        cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService, mockEnvironment);
+        cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService, mockEnvironment);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.setLevel(Level.INFO);

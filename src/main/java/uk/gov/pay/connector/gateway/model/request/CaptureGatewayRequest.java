@@ -12,10 +12,14 @@ public class CaptureGatewayRequest implements GatewayRequest {
         this.charge = charge;
     }
 
-    public String getAmount() {
+    public String getAmountAsString() {
         return String.valueOf(charge.getAmount());
     }
-
+    
+    public Long getAmount() {
+        return charge.getAmount();
+    }
+    
     public String getTransactionId() {
         return charge.getGatewayTransactionId();
     }

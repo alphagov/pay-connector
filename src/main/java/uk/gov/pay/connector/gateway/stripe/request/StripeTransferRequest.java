@@ -10,11 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class StripeTransferRequest extends StripeRequest {
-    protected String amount;
+    protected Long amount;
     protected String stripeChargeId;
 
     protected StripeTransferRequest(
-            String amount,
+            Long amount,
             GatewayAccountEntity gatewayAccount,
             String stripeChargeId,
             String idempotencyKey,
@@ -34,7 +34,7 @@ public abstract class StripeTransferRequest extends StripeRequest {
 
     protected List<BasicNameValuePair> getCommonPayloadParameters() {
         List<BasicNameValuePair> params = new ArrayList<>();
-        params.add(new BasicNameValuePair("amount", amount));
+        params.add(new BasicNameValuePair("amount", String.valueOf(amount)));
         params.add(new BasicNameValuePair("currency", "GBP"));
         params.add(new BasicNameValuePair("expand[]", "balance_transaction"));
         params.add(new BasicNameValuePair("expand[]", "destination_payment"));

@@ -17,10 +17,10 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 
 public class StripeRefundRequest extends StripeRequest {
     private final String stripeChargeId;
-    private final String amount;
+    private final Long amount;
     
     private StripeRefundRequest(
-            String amount,
+            Long amount,
             GatewayAccountEntity gatewayAccount,
             String idempotencyKey,
             String stripeChargeId,
@@ -50,7 +50,7 @@ public class StripeRefundRequest extends StripeRequest {
     public GatewayOrder getGatewayOrder() {
         List<BasicNameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("charge", stripeChargeId));
-        params.add(new BasicNameValuePair("amount", amount));
+        params.add(new BasicNameValuePair("amount", String.valueOf(amount)));
         params.add(new BasicNameValuePair("refund_application_fee", "true"));
         String payload = URLEncodedUtils.format(params, UTF_8);
 
