@@ -127,7 +127,8 @@ public class ChargeService {
                     gatewayAccount,
                     chargeRequest.getEmail(),
                     language,
-                    chargeRequest.isDelayedCapture());
+                    chargeRequest.isDelayedCapture(),
+                    null);
             chargeDao.persist(chargeEntity);
 
             chargeEventDao.persistChargeEventOf(chargeEntity);

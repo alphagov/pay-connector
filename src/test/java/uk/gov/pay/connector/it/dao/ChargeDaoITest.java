@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.it.dao;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.RandomStringUtils;
 import org.junit.After;
@@ -29,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static java.time.ZonedDateTime.now;
@@ -64,6 +67,8 @@ public class ChargeDaoITest extends DaoITestBase {
     private static final String FROM_DATE = "2016-01-01T01:00:00Z";
     private static final String TO_DATE = "2026-01-08T01:00:00Z";
     private static final String DESCRIPTION = "Test description";
+
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Rule
     public ExpectedException expectedEx = ExpectedException.none();
@@ -955,6 +960,30 @@ public class ChargeDaoITest extends DaoITestBase {
         Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
 
         assertThat(charge.get().getProviderSessionId(), is(providerSessionId));
+    }
+
+    @Test
+    public void shouldCreateANewChargeWithExternalMetadata() {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
+        gatewayAccount.setId(defaultTestAccount.getAccountId());
+
+        JsonNode externalMetadata = mapper.convertValue(
+                Map.of("key1", "string1", "key2", true, "key3", 123),
+                JsonNode.class);
+
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withId(null)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withExternalMetadata(externalMetadata)
+                .build();
+
+        assertThat(chargeEntity.getId(), is(nullValue()));
+
+        chargeDao.persist(chargeEntity);
+
+        Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
+
+        assertThat(charge.get().getExternalMetadata(), is(externalMetadata));
     }
 
     @Test

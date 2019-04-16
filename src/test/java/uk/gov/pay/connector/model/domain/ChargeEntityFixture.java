@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -45,6 +46,7 @@ public class ChargeEntityFixture {
     private boolean delayedCapture = false;
     private Long corporateSurcharge = null;
     private WalletType walletType = null;
+    private JsonNode externalMetadata = null;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -52,7 +54,7 @@ public class ChargeEntityFixture {
 
     public ChargeEntity build() {
         ChargeEntity chargeEntity = new ChargeEntity(amount, status, returnUrl, description, reference,
-                gatewayAccountEntity, email, createdDate, language, delayedCapture);
+                gatewayAccountEntity, email, createdDate, language, delayedCapture, externalMetadata);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
         chargeEntity.setGatewayTransactionId(transactionId);
@@ -158,6 +160,11 @@ public class ChargeEntityFixture {
     
     public ChargeEntityFixture withWalletType(WalletType walletType) {
         this.walletType = walletType;
+        return this;
+    }
+
+    public ChargeEntityFixture withExternalMetadata(JsonNode externalMetadata) {
+        this.externalMetadata = externalMetadata;
         return this;
     }
 
