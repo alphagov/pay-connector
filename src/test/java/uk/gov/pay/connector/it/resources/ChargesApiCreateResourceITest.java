@@ -331,6 +331,58 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                         "Field [amount] can be between 1 and 10_000_000"
                 ));
     }
+    
+    @Test
+    public void shouldReturn400WhenCardHolderNameIsLongerThan255() {
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, "Reference")
+                .put(JSON_DESCRIPTION_KEY, "Description")
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, RETURN_URL)
+                .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, ImmutableMap.builder().put(JSON_CARDHOLDER_NAME_KEY, randomAlphanumeric(256)).build())
+                .build());
+
+        connectorRestApiClient.postCreateCharge(postBody)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .header("Location", is(nullValue()))
+                .body(JSON_CHARGE_KEY, is(nullValue()))
+                .body(JSON_MESSAGE_KEY, containsInAnyOrder("Field [cardholder_name] can have a size between 0 and 255"));
+    }
+
+    @Test
+    public void shouldReturn400WhenAddressFieldsAreLongerThanMaximum() {
+        ImmutableMap billingAddress = ImmutableMap.builder()
+                .put(JSON_BILLING_ADDRESS_KEY, ImmutableMap.builder()
+                        .put(JSON_ADDRESS_LINE_1_KEY, randomAlphanumeric(256))
+                        .put(JSON_ADDRESS_LINE_2_KEY, randomAlphanumeric(256))
+                        .put(JSON_ADDRESS_LINE_CITY, randomAlphanumeric(256))
+                        .put(JSON_ADDRESS_POST_CODE_KEY, randomAlphanumeric(26))
+                        .put(JSON_ADDRESS_LINE_COUNTRY_CODE, randomAlphanumeric(3))
+                        .build())
+                .build();
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, "Reference")
+                .put(JSON_DESCRIPTION_KEY, "Description")
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, RETURN_URL)
+                .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, billingAddress)
+                .build());
+
+        connectorRestApiClient.postCreateCharge(postBody)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .header("Location", is(nullValue()))
+                .body(JSON_CHARGE_KEY, is(nullValue()))
+                .body(JSON_MESSAGE_KEY, containsInAnyOrder(
+                        "Field [line1] can have a size between 0 and 255",
+                        "Field [line2] can have a size between 0 and 255",
+                        "Field [postcode] can have a size between 0 and 25",
+                        "Field [country] can have an exact size of 2",
+                        "Field [city] can have a size between 0 and 255"));
+    }
 
     @Test
     public void shouldReturn400WhenPrefilledFilledCardHolderDetailsFieldsAreLongerThanMaximum() {
