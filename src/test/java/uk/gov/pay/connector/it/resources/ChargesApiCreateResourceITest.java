@@ -51,6 +51,14 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     private static final String JSON_CORPORATE_CARD_SURCHARGE_KEY = "corporate_card_surcharge";
     private static final String JSON_TOTAL_AMOUNT_KEY = "total_amount";
     private static final String PROVIDER_NAME = "sandbox";
+    private static final String JSON_PREFILLED_CARDHOLDER_DETAILS_KEY = "prefilled_cardholder_details";
+    private static final String JSON_BILLING_ADDRESS_KEY = "billing_address";
+    private static final String JSON_ADDRESS_LINE_1_KEY = "line1";
+    private static final String JSON_ADDRESS_LINE_2_KEY = "line2";
+    private static final String JSON_ADDRESS_POST_CODE_KEY = "postcode";
+    private static final String JSON_CARDHOLDER_NAME_KEY = "cardholder_name";
+    private static final String JSON_ADDRESS_LINE_CITY = "city";
+    private static final String JSON_ADDRESS_LINE_COUNTRY_CODE = "country";
 
     public ChargesApiCreateResourceITest() {
         super(PROVIDER_NAME);
@@ -322,6 +330,77 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                         "Field [description] cannot be null",
                         "Field [amount] can be between 1 and 10_000_000"
                 ));
+    }
+
+    @Test
+    public void shouldReturn400WhenPrefilledFilledCardHolderDetailsFieldsAreLongerThanMaximum() {
+        ImmutableMap preFilledBillingAddress = ImmutableMap.builder()
+                .put(JSON_CARDHOLDER_NAME_KEY, randomAlphanumeric(256))
+                .put(JSON_BILLING_ADDRESS_KEY, ImmutableMap.builder()
+                        .put(JSON_ADDRESS_LINE_1_KEY, randomAlphanumeric(256))
+                        .put(JSON_ADDRESS_LINE_2_KEY, randomAlphanumeric(256))
+                        .put(JSON_ADDRESS_LINE_CITY, randomAlphanumeric(256))
+                        .put(JSON_ADDRESS_POST_CODE_KEY, randomAlphanumeric(26))
+                        .put(JSON_ADDRESS_LINE_COUNTRY_CODE, randomAlphanumeric(3))
+                        .build())
+                .build();
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, "Reference")
+                .put(JSON_DESCRIPTION_KEY, "Description")
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, RETURN_URL)
+                .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, preFilledBillingAddress)
+                .build());
+
+        connectorRestApiClient.postCreateCharge(postBody)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .contentType(JSON)
+                .header("Location", is(nullValue()))
+                .body(JSON_CHARGE_KEY, is(nullValue()))
+                .body(JSON_MESSAGE_KEY, containsInAnyOrder(
+                        "Field [line1] can have a size between 0 and 255",
+                        "Field [line2] can have a size between 0 and 255",
+                        "Field [postcode] can have a size between 0 and 25",
+                        "Field [country] can have an exact size of 2",
+                        "Field [city] can have a size between 0 and 255",
+                        "Field [cardholder_name] can have a size between 0 and 255"));
+    }
+
+    @Test
+    public void shouldReturn201WhenPrefilledFilledCardHolderDetailsFieldsAreMaximum() {
+        String line1 = randomAlphanumeric(255);
+        String city = randomAlphanumeric(255);
+        String postCode = randomAlphanumeric(25);
+        String countryCode = "GB";
+        ImmutableMap billingAddress = ImmutableMap.builder()
+                .put(JSON_CARDHOLDER_NAME_KEY, randomAlphanumeric(255))
+                .put(JSON_BILLING_ADDRESS_KEY, ImmutableMap.builder()
+                        .put(JSON_ADDRESS_LINE_1_KEY, line1)
+                        .put(JSON_ADDRESS_LINE_CITY, city)
+                        .put(JSON_ADDRESS_POST_CODE_KEY, postCode)
+                        .put(JSON_ADDRESS_LINE_COUNTRY_CODE, countryCode)
+                        .build())
+                .build();
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, "Reference")
+                .put(JSON_DESCRIPTION_KEY, "Description")
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, RETURN_URL)
+                .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, billingAddress)
+                .build());
+
+        connectorRestApiClient.postCreateCharge(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .contentType(JSON)
+                .log().body()
+                .body(JSON_CHARGE_KEY, is(notNullValue()))
+                .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
+                .body(JSON_REFERENCE_KEY, is("Reference"))
+                .body(JSON_DESCRIPTION_KEY, is("Description"))
+                .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
+                .body(JSON_RETURN_URL_KEY, is(RETURN_URL));
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {
