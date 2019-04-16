@@ -30,4 +30,15 @@ public abstract class JpaDao<T> {
     public T merge(final T object) {
         return entityManager.get().merge(object);
     }
+
+    public void forceRefresh(final T object) {
+        EntityManager anEntityManager = entityManager.get();
+
+        if (anEntityManager.contains(object)) {
+            anEntityManager.refresh(object);
+        } else {
+            T mergedObject = anEntityManager.merge(object);
+            anEntityManager.refresh(mergedObject);
+        }
+    }
 }
