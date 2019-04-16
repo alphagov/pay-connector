@@ -14,15 +14,18 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
+import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -219,7 +222,106 @@ public class ChargeServiceTest {
 
         service.updateCharge(chargeEntityExternalId, patchRequest);
     }
+    
+    @Test
+    public void shouldCreateAChargeWithAllPrefilledCardHolderDetails() {
+        PrefilledCardHolderDetails cardHolderDetails = new PrefilledCardHolderDetails();
+        cardHolderDetails.setCardHolderName("Joe Bogs");
+        Address address = new Address("Line1", "Line2", "AB1 CD2", "London", null, "GB");
+        cardHolderDetails.setAddress(address);
+        final ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        assertThat(createdChargeEntity.getCardDetails(), is(notNullValue()));
+        assertThat(createdChargeEntity.getCardDetails().getBillingAddress().isPresent(), is(true));
+        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Joe Bogs"));
+        AddressEntity addressEntity = createdChargeEntity.getCardDetails().getBillingAddress().get();
+        assertThat(addressEntity.getCity(), is("London"));
+        assertThat(addressEntity.getCountry(), is("GB"));
+        assertThat(addressEntity.getLine1(), is("Line1"));
+        assertThat(addressEntity.getLine2(), is("Line2"));
+        assertThat(addressEntity.getPostcode(), is("AB1 CD2"));
+        assertThat(addressEntity.getCounty(), is(nullValue()));
+    }
+    
+    @Test
+    public void shouldCreateAChargeWithPrefilledCardHolderDetailsAndSomeAddressMissing() {
+        PrefilledCardHolderDetails cardHolderDetails = new PrefilledCardHolderDetails();
+        cardHolderDetails.setCardHolderName("Joe Bogs");
+        Address address = new Address("Line1", null, "AB1 CD2", "London", null, null);
+        cardHolderDetails.setAddress(address);
+
+        ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        
+        assertThat(createdChargeEntity.getCardDetails(), is(notNullValue()));
+        assertThat(createdChargeEntity.getCardDetails().getBillingAddress().isPresent(), is(true));
+        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Joe Bogs"));
+        AddressEntity addressEntity = createdChargeEntity.getCardDetails().getBillingAddress().get();
+        assertThat(addressEntity.getLine1(), is("Line1"));
+        assertThat(addressEntity.getLine2(), is(nullValue()));
+        assertThat(addressEntity.getPostcode(), is("AB1 CD2"));
+        assertThat(addressEntity.getCity(), is("London"));
+        assertThat(addressEntity.getCounty(), is(nullValue()));
+        assertThat(addressEntity.getCountry(), is(nullValue()));
+    }
+
+    @Test
+    public void shouldCreateAChargeWithPrefilledCardHolderDetailsCardholderNameOnly() {
+        PrefilledCardHolderDetails cardHolderDetails = new PrefilledCardHolderDetails();
+        cardHolderDetails.setCardHolderName("Joe Bogs");
+
+        ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+
+        assertThat(createdChargeEntity.getCardDetails(), is(notNullValue()));
+        assertThat(createdChargeEntity.getCardDetails().getBillingAddress().isPresent(), is(false));
+        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Joe Bogs"));
+    }
+
+    @Test
+    public void shouldCreateAChargeWhenPrefilledCardHolderDetailsCardholderNameAndSomeAddressNotPresent() {
+        PrefilledCardHolderDetails cardHolderDetails = new PrefilledCardHolderDetails();
+        Address address = new Address("Line1", null, "AB1 CD2", "London", null, null);
+        cardHolderDetails.setAddress(address);
+
+        ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+
+        assertThat(createdChargeEntity.getCardDetails(), is(notNullValue()));
+        assertThat(createdChargeEntity.getCardDetails().getBillingAddress().isPresent(), is(true));
+        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is(nullValue()));
+        AddressEntity addressEntity = createdChargeEntity.getCardDetails().getBillingAddress().get();
+        assertThat(addressEntity.getLine1(), is("Line1"));
+        assertThat(addressEntity.getLine2(), is(nullValue()));
+        assertThat(addressEntity.getPostcode(), is("AB1 CD2"));
+        assertThat(addressEntity.getCity(), is("London"));
+        assertThat(addressEntity.getCounty(), is(nullValue()));
+        assertThat(addressEntity.getCountry(), is(nullValue()));
+    }
+
+    @Test
+    public void shouldCreateAChargeWhenPrefilledCardHolderDetailsAreNotPresent() {
+        ChargeCreateRequest request = requestBuilder.build();
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        assertThat(createdChargeEntity.getCardDetails(), is(nullValue()));
+    }
+    
     @Test
     public void shouldCreateAToken() {
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
