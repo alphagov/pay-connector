@@ -7,9 +7,11 @@ import org.hibernate.validator.constraints.Length;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.SupportedLanguageJsonDeserializer;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ChargeCreateRequest {
@@ -44,6 +46,10 @@ public class ChargeCreateRequest {
     @JsonDeserialize(using = SupportedLanguageJsonDeserializer.class)
     @JsonProperty("language")
     private SupportedLanguage language = SupportedLanguage.ENGLISH;
+    
+    @JsonProperty("prefilled_cardholder_details")
+    @Valid
+    private PrefilledCardHolderDetails prefilledCardHolderDetails;
 
     public ChargeCreateRequest() {
         // for Jackson
@@ -55,7 +61,8 @@ public class ChargeCreateRequest {
                         String returnUrl,
                         String email,
                         boolean delayedCapture,
-                        SupportedLanguage language) {
+                        SupportedLanguage language,
+                        PrefilledCardHolderDetails prefilledCardHolderDetails) {
         this.amount = amount;
         this.description = description;
         this.reference = reference;
@@ -63,6 +70,7 @@ public class ChargeCreateRequest {
         this.email = email;
         this.delayedCapture = delayedCapture;
         this.language = language;
+        this.prefilledCardHolderDetails = prefilledCardHolderDetails;
     }
 
     public long getAmount() {
@@ -91,6 +99,10 @@ public class ChargeCreateRequest {
 
     public SupportedLanguage getLanguage() {
         return language;
+    }
+    
+    public Optional<PrefilledCardHolderDetails> getPrefilledCardHolderDetails() {
+        return Optional.ofNullable(prefilledCardHolderDetails);
     }
 
     public String toStringWithoutPersonalIdentifiableInformation() {

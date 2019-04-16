@@ -1,12 +1,21 @@
 package uk.gov.pay.connector.common.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.hibernate.validator.constraints.Length;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Address {
 
+    @Length(max = 255, message = "Field [line1] can have a size between 0 and 255")
     private String line1;
+    @Length(max = 255, message = "Field [line2] can have a size between 0 and 255")
     private String line2;
+    @Length(max = 25, message = "Field [postcode] can have a size between 0 and 25")
     private String postcode;
+    @Length(max = 255, message = "Field [city] can have a size between 0 and 255")
     private String city;
     private String county;
+    @Length(min = 2, max = 2, message = "Field [country] can have an exact size of 2")
     private String country;
 
     public Address() {
