@@ -163,7 +163,8 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .body("service_name", is("service_name"))
                 .body("corporate_credit_card_surcharge_amount", is(0))
                 .body("allow_google_pay", is(false))
-                .body("allow_apple_pay", is(false));
+                .body("allow_apple_pay", is(false))
+                .body("allow_zero_amount", is(false));
     }
 
     @Test

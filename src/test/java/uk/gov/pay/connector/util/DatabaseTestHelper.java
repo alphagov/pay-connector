@@ -608,6 +608,14 @@ public class DatabaseTestHelper {
                         .execute()
         );
     }
+    
+    public void allowZeroAmount(long accountId) {
+        jdbi.withHandle(handle ->
+                handle.createStatement("UPDATE gateway_accounts set allow_zero_amount=true WHERE id=:gatewayAccountId")
+                        .bind("gatewayAccountId", accountId)
+                        .execute()
+        );
+    }
 
     public void addWalletType(long chargeId, WalletType walletType) {
         jdbi.withHandle(handle ->

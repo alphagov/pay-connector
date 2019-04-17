@@ -61,6 +61,9 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("toggle_3ds")
     private boolean requires3ds;
 
+    @JsonProperty("allow_zero_amount")
+    private boolean allowZeroAmount;
+    
     public GatewayAccountResourceDTO() {
     }
 
@@ -78,7 +81,8 @@ public class GatewayAccountResourceDTO {
                                      long corporatePrepaidDebitCardSurchargeAmount,
                                      Map<EmailNotificationType, EmailNotificationEntity> emailNotifications,
                                      EmailCollectionMode emailCollectionMode,
-                                     boolean requires3ds) {
+                                     boolean requires3ds,
+                                     boolean allowZeroAmount) {
         this.accountId = accountId;
         this.paymentProvider = paymentProvider;
         this.type = type;
@@ -94,6 +98,7 @@ public class GatewayAccountResourceDTO {
         this.emailNotifications = emailNotifications;
         this.emailCollectionMode = emailCollectionMode;
         this.requires3ds = requires3ds;
+        this.allowZeroAmount = allowZeroAmount;
     }
 
     public static GatewayAccountResourceDTO fromEntity(GatewayAccountEntity gatewayAccountEntity) {
@@ -112,7 +117,8 @@ public class GatewayAccountResourceDTO {
                 gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount(),
                 gatewayAccountEntity.getEmailNotifications(),
                 gatewayAccountEntity.getEmailCollectionMode(),
-                gatewayAccountEntity.isRequires3ds()
+                gatewayAccountEntity.isRequires3ds(),
+                gatewayAccountEntity.isAllowZeroAmount()
         );
     }
 
@@ -182,5 +188,9 @@ public class GatewayAccountResourceDTO {
 
     public boolean isRequires3ds() {
         return requires3ds;
+    }
+    
+    public boolean isAllowZeroAmount() {
+        return allowZeroAmount;
     }
 }

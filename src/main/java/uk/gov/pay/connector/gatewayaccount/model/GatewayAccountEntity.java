@@ -42,41 +42,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 @SequenceGenerator(name = "gateway_accounts_gateway_account_id_seq",
         sequenceName = "gateway_accounts_gateway_account_id_seq", allocationSize = 1)
 public class GatewayAccountEntity extends AbstractVersionedEntity {
-
-    public class Views {
-        public class ApiView {
-        }
-
-        public class FrontendView {
-        }
-    }
-
-    public enum Type {
-        TEST("test"), LIVE("live");
-
-        private final String value;
-
-        Type(String value) {
-            this.value = value;
-        }
-
-        public String toString() {
-            return value;
-        }
-
-        public static Type fromString(String type) {
-            for (Type typeEnum : Type.values()) {
-                if (typeEnum.toString().equalsIgnoreCase(type)) {
-                    return typeEnum;
-                }
-            }
-            throw new IllegalArgumentException("gateway account type has to be one of (test, live)");
-        }
-    }
-
-    public GatewayAccountEntity() {
-    }
-
+    
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gateway_accounts_gateway_account_id_seq")
     @JsonIgnore
@@ -124,6 +90,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "corporate_prepaid_debit_card_surcharge_amount")
     private long corporatePrepaidDebitCardSurchargeAmount;
 
+    @Column(name = "allow_zero_amount")
+    private boolean allowZeroAmount;
+
     @Column(name = "notify_settings", columnDefinition = "json")
     @Convert(converter = JsonToMapConverter.class)
     private Map<String, String> notifySettings;
@@ -149,6 +118,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     )
     private List<CardTypeEntity> cardTypes = newArrayList();
 
+    public GatewayAccountEntity() {
+    }
+    
     public GatewayAccountEntity(String gatewayName, Map<String, String> credentials, Type type) {
         this.gatewayName = gatewayName;
         this.credentials = credentials;
@@ -238,12 +210,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return allowApplePay;
     }
 
-    public void setAllowGooglePay(boolean allowGooglePay) {
-        this.allowGooglePay = allowGooglePay;
-    }
-
-    public void setAllowApplePay(boolean allowApplePay) {
-        this.allowApplePay = allowApplePay;
+    @JsonProperty("allow_zero_amount")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public boolean isAllowZeroAmount() {
+        return allowZeroAmount;
     }
 
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
@@ -353,5 +323,48 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setCorporatePrepaidDebitCardSurchargeAmount(long corporatePrepaidDebitCardSurchargeAmount) {
         this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
+    }
+
+    public void setAllowGooglePay(boolean allowGooglePay) {
+        this.allowGooglePay = allowGooglePay;
+    }
+
+    public void setAllowApplePay(boolean allowApplePay) {
+        this.allowApplePay = allowApplePay;
+    }
+
+    public void setAllowZeroAmount(boolean allowZeroAmount) {
+        this.allowZeroAmount = allowZeroAmount;
+    }
+
+    public class Views {
+        public class ApiView {
+        }
+
+        public class FrontendView {
+        }
+    }
+
+    public enum Type {
+        TEST("test"), LIVE("live");
+
+        private final String value;
+
+        Type(String value) {
+            this.value = value;
+        }
+
+        public String toString() {
+            return value;
+        }
+
+        public static Type fromString(String type) {
+            for (Type typeEnum : Type.values()) {
+                if (typeEnum.toString().equalsIgnoreCase(type)) {
+                    return typeEnum;
+                }
+            }
+            throw new IllegalArgumentException("gateway account type has to be one of (test, live)");
+        }
     }
 }
