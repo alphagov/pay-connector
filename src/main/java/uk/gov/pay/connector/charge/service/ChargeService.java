@@ -18,6 +18,7 @@ import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
@@ -128,6 +129,20 @@ public class ChargeService {
                     chargeRequest.getEmail(),
                     language,
                     chargeRequest.isDelayedCapture());
+            
+            if (chargeRequest.getPrefilledCardHolderDetails().isPresent()) {
+                PrefilledCardHolderDetails cardHolderDetails = chargeRequest.getPrefilledCardHolderDetails().get();
+                CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
+                if (cardHolderDetails.getCardHolderName().isPresent()) {
+                    cardDetailsEntity.setCardHolderName(cardHolderDetails.getCardHolderName().get());
+                }
+                if (cardHolderDetails.getAddress().isPresent()) {
+                    AddressEntity addressEntity = new AddressEntity(cardHolderDetails.getAddress().get());
+                    cardDetailsEntity.setBillingAddress(addressEntity);
+                }
+                chargeEntity.setCardDetails(cardDetailsEntity);
+            }
+            
             chargeDao.persist(chargeEntity);
 
             chargeEventDao.persistChargeEventOf(chargeEntity);
