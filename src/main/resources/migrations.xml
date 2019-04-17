@@ -1103,4 +1103,22 @@
         </addColumn>
     </changeSet>
 
+
+    <changeSet id="add allow_zero_amount to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="allow_zero_amount" type="boolean">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add default to allow_zero_amount" author="">
+        <addDefaultValue tableName="gateway_accounts" columnName="allow_zero_amount" defaultValue="false"/>
+    </changeSet>
+
+    <changeSet id="update allow_zero_amount with default value" author="">
+        <update tableName="gateway_accounts">
+            <column name="allow_zero_amount" value="false"/>
+        </update>
+    </changeSet>
+
 </databaseChangeLog>
