@@ -333,7 +333,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturn400WhenPrefilledFilledCardHolderDetailsFieldsAreLongerThanMaximum() {
+    public void shouldReturn400WhenPrefilledCardHolderDetailsFieldsAreLongerThanMaximum() {
         ImmutableMap preFilledBillingAddress = ImmutableMap.builder()
                 .put(JSON_CARDHOLDER_NAME_KEY, randomAlphanumeric(256))
                 .put(JSON_BILLING_ADDRESS_KEY, ImmutableMap.builder()
@@ -368,7 +368,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturn201WhenPrefilledFilledCardHolderDetailsFieldsAreMaximum() {
+    public void shouldReturn201WhenPrefilledCardHolderDetailsFieldsAreMaximum() {
         String line1 = randomAlphanumeric(255);
         String city = randomAlphanumeric(255);
         String postCode = randomAlphanumeric(25);
@@ -401,6 +401,132 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .body(JSON_DESCRIPTION_KEY, is("Description"))
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(RETURN_URL));
+    }
+
+    @Test
+    public void shouldReturn201WithAllPrefilledCardHolderDetailsFields() {
+        String cardholderName = "Joe Bogs";
+        String line1 = "Line 1";
+        String city = "City";
+        String postCode = "AB1 CD2";
+        String countryCode = "GB";
+        ImmutableMap billingAddress = ImmutableMap.builder()
+                .put(JSON_CARDHOLDER_NAME_KEY, cardholderName)
+                .put(JSON_BILLING_ADDRESS_KEY, ImmutableMap.builder()
+                        .put(JSON_ADDRESS_LINE_1_KEY, line1)
+                        .put(JSON_ADDRESS_LINE_CITY, city)
+                        .put(JSON_ADDRESS_POST_CODE_KEY, postCode)
+                        .put(JSON_ADDRESS_LINE_COUNTRY_CODE, countryCode)
+                        .build())
+                .build();
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, "Reference")
+                .put(JSON_DESCRIPTION_KEY, "Description")
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, RETURN_URL)
+                .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, billingAddress)
+                .build());
+
+        connectorRestApiClient.postCreateCharge(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(notNullValue()))
+                .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
+                .body(JSON_REFERENCE_KEY, is("Reference"))
+                .body(JSON_DESCRIPTION_KEY, is("Description"))
+                .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
+                .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
+                .body("card_details." + JSON_CARDHOLDER_NAME_KEY, is(cardholderName))
+                .body("card_details.billing_address." + JSON_ADDRESS_LINE_1_KEY, is(line1))
+                .body("card_details.billing_address." + JSON_ADDRESS_LINE_2_KEY, is(nullValue()))
+                .body("card_details.billing_address." + JSON_ADDRESS_LINE_CITY, is(city))
+                .body("card_details.billing_address." + JSON_ADDRESS_POST_CODE_KEY, is(postCode))
+                .body("card_details.billing_address." + JSON_ADDRESS_LINE_COUNTRY_CODE, is(countryCode));
+    }
+
+    @Test
+    public void shouldReturn201WithSomePrefilledCardHolderDetailsFields() {
+        String cardholderName = "Joe Bogs";
+        String line1 = "Line 1";
+        String postCode = "AB1 CD2";
+        ImmutableMap billingAddress = ImmutableMap.builder()
+                .put(JSON_CARDHOLDER_NAME_KEY, cardholderName)
+                .put(JSON_BILLING_ADDRESS_KEY, ImmutableMap.builder()
+                        .put(JSON_ADDRESS_LINE_1_KEY, line1)
+                        .put(JSON_ADDRESS_POST_CODE_KEY, postCode)
+                        .build())
+                .build();
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, "Reference")
+                .put(JSON_DESCRIPTION_KEY, "Description")
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, RETURN_URL)
+                .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, billingAddress)
+                .build());
+        connectorRestApiClient.postCreateCharge(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(notNullValue()))
+                .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
+                .body(JSON_REFERENCE_KEY, is("Reference"))
+                .body(JSON_DESCRIPTION_KEY, is("Description"))
+                .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
+                .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
+                .body("card_details." + JSON_CARDHOLDER_NAME_KEY, is(cardholderName))
+                .body("card_details.billing_address." + JSON_ADDRESS_LINE_1_KEY, is(line1))
+                .body("card_details.billing_address." + JSON_ADDRESS_LINE_2_KEY, is(nullValue()))
+                .body("card_details.billing_address." + JSON_ADDRESS_POST_CODE_KEY, is(postCode))
+                .body("card_details.billing_address." + JSON_ADDRESS_LINE_CITY, is(nullValue()))
+                .body("card_details.billing_address." + JSON_ADDRESS_LINE_COUNTRY_CODE, is(nullValue()));
+        
+    }
+
+    @Test
+    public void shouldReturn201WithNoCardDetailsWhenPrefilledCardHolderDetailsFieldsAreNotPresent() {
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, "Reference")
+                .put(JSON_DESCRIPTION_KEY, "Description")
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, RETURN_URL)
+                .build());
+        connectorRestApiClient.postCreateCharge(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(notNullValue()))
+                .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
+                .body(JSON_REFERENCE_KEY, is("Reference"))
+                .body(JSON_DESCRIPTION_KEY, is("Description"))
+                .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
+                .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
+                .body("containsKey('card_details')", is(false));
+    }
+
+    @Test
+    public void shouldReturn201WithBillingAddresssWhenPrefilledCardHolderDetailsFieldsContainsCardHolderNameOnly() {
+        String cardholderName = "Joe Bogs";
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, "Reference")
+                .put(JSON_DESCRIPTION_KEY, "Description")
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, RETURN_URL)
+                .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, ImmutableMap.builder()
+                        .put(JSON_CARDHOLDER_NAME_KEY, cardholderName).build())
+                .build());
+        connectorRestApiClient.postCreateCharge(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(notNullValue()))
+                .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
+                .body(JSON_REFERENCE_KEY, is("Reference"))
+                .body(JSON_DESCRIPTION_KEY, is("Description"))
+                .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
+                .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
+                .body("card_details." + JSON_CARDHOLDER_NAME_KEY, is(cardholderName))
+                .body("containsKey('billing_address')", is(false));
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {
