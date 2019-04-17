@@ -46,15 +46,22 @@ public class GatewayAccountRequestValidatorTest {
             "replace, allow_apple_pay, null, Field [value] is required",
             "replace, allow_google_pay, null, Field [value] is required",
             "replace, allow_apple_pay, unfalse, Value [unfalse] is not valid for [allow_apple_pay]",
-            "replace, allow_google_pay, unfalse, Value [unfalse] is not valid for [allow_google_pay]"
+            "replace, allow_google_pay, unfalse, Value [unfalse] is not valid for [allow_google_pay]",
+            "bad, allow_zero_amount, true, Operation [bad] is not valid for path [allow_zero_amount]",
+            "replace, allow_zero_amount, null, Field [value] is required",
+            "replace, allow_zero_amount, unfalse, Value [unfalse] is not valid for [allow_zero_amount]",
+            "remove, credentials/gateway_merchant_id, gatewayMerchantId, Operation [remove] is not valid for path [credentials/gateway_merchant_id]",
+            "add, credentials/gateway_merchant_id, , Field [value] cannot be empty",
+            "add, credentials/gateway_merchant_id, zzzzz, Field [credentials/gateway_merchant_id] value [zzzzz] does not match that expected for a Worldpay Merchant ID; should be 15 characters and within range [0-9a-f]",
+            "replace, credentials/gateway_merchant_id, null, Field [value] is required"
     })
-    public void shouldThrowWhenWebPaymentRequestsAreInvalid(String op, String path, @Nullable String flagValue, String expectedErrorMessage) {
+    public void shouldThrowWhenRequestsAreInvalid(String op, String path, @Nullable String value, String expectedErrorMessage) {
         Map<String, String> patch = new HashMap<String, String>(){{
             put(FIELD_OPERATION, op);
             put(FIELD_OPERATION_PATH, path);
         }};
         
-        if (flagValue != null) patch.put(FIELD_VALUE, flagValue);
+        if (value != null) patch.put(FIELD_VALUE, value);
         
         JsonNode jsonNode = new ObjectMapper().valueToTree(patch);
         try {
@@ -63,31 +70,6 @@ public class GatewayAccountRequestValidatorTest {
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(1));
             assertThat(validationException.getErrors(), hasItems(expectedErrorMessage));
-        }
-    }
-    
-    @Test
-    @Parameters({
-            "remove, gatewayMerchantId, Operation [remove] is not valid for path [credentials/gateway_merchant_id]", 
-            "add, , Field [value] cannot be empty",
-            "add, zzzzz, Field [credentials/gateway_merchant_id] value [zzzzz] does not match that expected for a Worldpay Merchant ID; should be 15 characters and within range [0-9a-f]",
-            "replace, null, Field [value] is required"
-    })
-    public void shouldThrowForInvalidMerchantGatewayIdPatchRequest(String op, @Nullable String gatewayMerchantId, String expectedErrorMessage) {
-        Map<String, String> patch = new HashMap<String, String>(){{
-            put(FIELD_OPERATION, op);
-            put(FIELD_OPERATION_PATH, "credentials/gateway_merchant_id");
-        }};
-        
-        if (gatewayMerchantId != null) patch.put(FIELD_VALUE, gatewayMerchantId);
-        
-        JsonNode jsonNode = new ObjectMapper().valueToTree(patch);   
-        try{
-            validator.validatePatchRequest(jsonNode);
-            fail( "Expected ValidationException" );
-        } catch (ValidationException e) {
-            assertThat(e.getErrors().size(), is(1));
-            assertThat(e.getErrors(), hasItems(expectedErrorMessage));
         }
     }
 

@@ -28,10 +28,7 @@ public class JsonPatchRequest {
     }
 
     public String valueAsString() {
-        if (value != null && value.isTextual()) {
-            return value.asText();
-        }
-        throw new JsonNodeNotCorrectTypeException("JSON node " + value + " is not of type string");
+        return value.asText();
     }
     
     public long valueAsLong() {

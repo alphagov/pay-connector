@@ -36,6 +36,8 @@ public class GatewayAccountRequestValidator {
     public static final String FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT = "corporate_debit_card_surcharge_amount";
     public static final String FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT = "corporate_prepaid_credit_card_surcharge_amount";
     public static final String FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT = "corporate_prepaid_debit_card_surcharge_amount";
+    public static final String FIELD_ALLOW_ZERO_AMOUNT = "allow_zero_amount";
+    
     private static final List<String> VALID_PATHS = asList(
             CREDENTIALS_GATEWAY_MERCHANT_ID,
             FIELD_NOTIFY_SETTINGS, 
@@ -45,7 +47,8 @@ public class GatewayAccountRequestValidator {
             FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT,
             FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT,
             FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT,
-            FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT);
+            FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT,
+            FIELD_ALLOW_ZERO_AMOUNT);
     
     private final RequestValidator requestValidator;
     
@@ -74,10 +77,13 @@ public class GatewayAccountRequestValidator {
                 validateEmailCollectionMode(payload);
                 break;
             case FIELD_ALLOW_GOOGLE_PAY:
-                validateAllowWebPayment(payload, FIELD_ALLOW_GOOGLE_PAY);
+                validateReplaceBooleanValue(payload, FIELD_ALLOW_GOOGLE_PAY);
                 break;
             case FIELD_ALLOW_APPLE_PAY:
-                validateAllowWebPayment(payload, FIELD_ALLOW_APPLE_PAY);
+                validateReplaceBooleanValue(payload, FIELD_ALLOW_APPLE_PAY);
+                break;
+            case FIELD_ALLOW_ZERO_AMOUNT:
+                validateReplaceBooleanValue(payload, FIELD_ALLOW_ZERO_AMOUNT);
                 break;
             case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT: 
             case FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT:
@@ -131,7 +137,7 @@ public class GatewayAccountRequestValidator {
         }
     }
 
-    private void validateAllowWebPayment(JsonNode payload, String field) {
+    private void validateReplaceBooleanValue(JsonNode payload, String field) {
         throwIfInvalidFieldOperation(payload, REPLACE);
         throwIfNullFieldValue(payload.get(FIELD_VALUE));
         String booleanString = payload.get(FIELD_VALUE).asText().toLowerCase();
