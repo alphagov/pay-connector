@@ -110,24 +110,47 @@ Content-Type: application/json
     "corporate_credit_card_surcharge_amount": 250,
     "corporate_debit_card_surcharge_amount": 50
     "corporate_prepaid_credit_card_surcharge_amount": 250,
-    "corporate_prepaid_debit_card_surcharge_amount": 50
+    "corporate_prepaid_debit_card_surcharge_amount": 50,
+    "allow_apple_pay": false,
+    "allow_google_pay": false,
+    "allow_zero_amount": false,
+    "email_collection_mode": "MANDATORY",
+    "toggle_3ds": false,
+    "email_notifications": {
+        "REFUND_ISSUED": {
+            "version": 1,
+            "enabled": true,
+            "template_body": null
+        },
+        "PAYMENT_CONFIRMED": {
+            "version": 1,
+            "enabled": true,
+            "template_body": null
+        }
+    }
 }
 ```
 
 #### Response field description
 
-| Field                                              | always present   | Description                                                                                       |
-| -------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------- |
-| `gateway_account_id`                               | X                | The account Id                                                                                    |
-| `type`                                             | X                | Account type for this provider (test/live)                                                        |
-| `payment_provider`                                 | X                | The payment provider for which this account is created.                                           |
-| `description`                                      | X                | An internal description to identify the gateway account. The default value is `null`.             |
-| `analytics_id`                                     | X                | An identifier used to identify the service in Google Analytics. The default value is `null`.      |
-| `service_name`                                     |                  | The service name that is saved for this account, present if not empty.                            |
-| `corporate_credit_card_surcharge_amount`           | X                | A corporate credit card surcharge amount in pence. The default value is `0`.                      |
-| `corporate_debit_card_surcharge_amount`            | X                | A corporate debit card surcharge amount in pence. The default value is `0`.                       |
-| `corporate_prepaid_credit_card_surcharge_amount`   | X                | A corporate prepaid credit card surcharge amount in pence. The default value is `0`.              |
-| `corporate_prepaid_debit_card_surcharge_amount`    | X                | A corporate prepaid debit card surcharge amount in pence. The default value is `0`.               |
+| Field                                            | always present | Description                                                                                  |
+|--------------------------------------------------|----------------|----------------------------------------------------------------------------------------------|
+| `gateway_account_id`                             | X              | The account Id                                                                               |
+| `type`                                           | X              | Account type for this provider (test/live)                                                   |
+| `payment_provider`                               | X              | The payment provider for which this account is created.                                      |
+| `description`                                    | X              | An internal description to identify the gateway account. The default value is `null`.        |
+| `analytics_id`                                   | X              | An identifier used to identify the service in Google Analytics. The default value is `null`. |
+| `service_name`                                   |                | The service name that is saved for this account, present if not empty.                       |
+| `corporate_credit_card_surcharge_amount`         | X              | A corporate credit card surcharge amount in pence. The default value is `0`.                 |
+| `corporate_debit_card_surcharge_amount`          | X              | A corporate debit card surcharge amount in pence. The default value is `0`.                  |
+| `corporate_prepaid_credit_card_surcharge_amount` | X              | A corporate prepaid credit card surcharge amount in pence. The default value is `0`.         |
+| `corporate_prepaid_debit_card_surcharge_amount`  | X              | A corporate prepaid debit card surcharge amount in pence. The default value is `0`.          |
+| `allow_apple_pay`                                | X              | Whether apple pay is enabled. The default value is `false`.                                  |
+| `allow_google_pay`                               | X              | Whether google pay is enabled. The default value is `false`.                                 |
+| `allow_zero_amount`                              | X              | Whether the account supports charges with a zero amount. The default value is `false`.       |
+| `email_collection_mode`                          | X              | Whether email address is required from paying users. Can be `MANDATORY`, `OPTIONAL` or `OFF` |
+| `toggle_3ds`                                     | X              | Whether 3DS is enabled. The default value is `false`.                                        |
+| `email_notifications`                            | X              | The settings for the different emails that are sent out                                      |
 
 ---------------------------------------------------------------------------------------------------------------
 ## GET /v1/api/accounts
@@ -158,6 +181,23 @@ Content-Type: application/json
       "corporate_debit_card_surcharge_amount": 0,
       "corporate_prepaid_credit_card_surcharge_amount": 0,
       "corporate_prepaid_debit_card_surcharge_amount": 0,
+      "allow_apple_pay": false,
+      "allow_google_pay": false,
+      "allow_zero_amount": false,
+      "email_collection_mode": "MANDATORY",
+      "toggle_3ds": false,
+      "email_notifications": {
+          "REFUND_ISSUED": {
+              "version": 1,
+              "enabled": true,
+              "template_body": null
+          },
+          "PAYMENT_CONFIRMED": {
+              "version": 1,
+              "enabled": true,
+              "template_body": null
+          }
+      },
       "_links": {
         "self": {
           "href": "https://connector.example.com/v1/api/accounts/100"
@@ -175,6 +215,23 @@ Content-Type: application/json
       "corporate_debit_card_surcharge_amount": 0,
       "corporate_prepaid_credit_card_surcharge_amount": 250,
       "corporate_prepaid_debit_card_surcharge_amount": 0,
+      "allow_apple_pay": false,
+      "allow_google_pay": false,
+      "allow_zero_amount": false,
+      "email_collection_mode": "MANDATORY",
+      "toggle_3ds": false,
+      "email_notifications": {
+          "REFUND_ISSUED": {
+              "version": 1,
+              "enabled": true,
+              "template_body": null
+          },
+          "PAYMENT_CONFIRMED": {
+              "version": 1,
+              "enabled": true,
+              "template_body": null
+          }
+      },
       "_links": {
         "self": {
           "href": "https://connector.example.com/v1/api/accounts/200"
@@ -191,6 +248,23 @@ Content-Type: application/json
       "corporate_debit_card_surcharge_amount": 0,
       "corporate_prepaid_credit_card_surcharge_amount": 0,
       "corporate_prepaid_debit_card_surcharge_amount": 0,
+      "allow_apple_pay": false,
+      "allow_google_pay": false,
+      "allow_zero_amount": false,
+      "email_collection_mode": "MANDATORY",
+      "toggle_3ds": false,
+      "email_notifications": {
+          "REFUND_ISSUED": {
+              "version": 1,
+              "enabled": true,
+              "template_body": null
+          },
+          "PAYMENT_CONFIRMED": {
+              "version": 1,
+              "enabled": true,
+              "template_body": null
+          }
+      },
       "_links": {
         "self": {
           "href": "https://connector.example.com/v1/api/accounts/400"
@@ -203,20 +277,27 @@ Content-Type: application/json
 
 #### Response field description
 
-| Field                                              | always present     | Description                                                                                       |
-| -------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
-| `accounts`                                         | X                  | The collection of accounts.                                                                       |
-| `gateway_account_id`                               | X                  | The account Id.                                                                                   |
-| `type`                                             | X                  | Account type for this provider (test/live).                                                       |
-| `payment_provider`                                 | X                  | The payment provider for which this account is created.                                           |
-| `description`                                      | X                  | An internal description to identify the gateway account. The default value is `null`.             |
-| `analytics_id`                                     | X                  | An identifier used to identify the service in Google Analytics. The default value is `null`.      |
-| `service_name`                                     |                    | The service name that is saved for this account, present if not empty.                            |
-| `corporate_credit_card_surcharge_amount`           | X                  | A corporate credit card surcharge amount in pence. The default value is `0`.                      |
-| `corporate_debit_card_surcharge_amount`            | X                  | A corporate debit card surcharge amount in pence. The default value is `0`.                       |
-| `corporate_prepaid_credit_card_surcharge_amount`   | X                  | A corporate prepaid credit card surcharge amount in pence. The default value is `0`.              |
-| `corporate_prepaid_debit_card_surcharge_amount`    | X                  | A corporate prepaid debit card surcharge amount in pence. The default value is `0`.               |
-| `_links.self`                                      | X                  | A self link to get this account resource by account-id.                                           |
+| Field                                            | always present | Description                                                                                  |
+|--------------------------------------------------|----------------|----------------------------------------------------------------------------------------------|
+| `accounts`                                       | X              | The collection of accounts.                                                                  |
+| `gateway_account_id`                             | X              | The account Id.                                                                              |
+| `type`                                           | X              | Account type for this provider (test/live).                                                  |
+| `payment_provider`                               | X              | The payment provider for which this account is created.                                      |
+| `description`                                    | X              | An internal description to identify the gateway account. The default value is `null`.        |
+| `analytics_id`                                   | X              | An identifier used to identify the service in Google Analytics. The default value is `null`. |
+| `service_name`                                   |                | The service name that is saved for this account, present if not empty.                       |
+| `corporate_credit_card_surcharge_amount`         | X              | A corporate credit card surcharge amount in pence. The default value is `0`.                 |
+| `corporate_debit_card_surcharge_amount`          | X              | A corporate debit card surcharge amount in pence. The default value is `0`.                  |
+| `corporate_prepaid_credit_card_surcharge_amount` | X              | A corporate prepaid credit card surcharge amount in pence. The default value is `0`.         |
+| `corporate_prepaid_debit_card_surcharge_amount`  | X              | A corporate prepaid debit card surcharge amount in pence. The default value is `0`.          |
+| `allow_apple_pay`                                | X              | Whether apple pay is enabled. The default value is `false`.                                  |
+| `allow_google_pay`                               | X              | Whether google pay is enabled. The default value is `false`.                                 |
+| `allow_zero_amount`                              | X              | Whether the account supports charges with a zero amount. The default value is `false`.       |
+| `email_collection_mode`                          | X              | Whether email address is required from paying users. Can be `MANDATORY`, `OPTIONAL` or `OFF` |
+| `toggle_3ds`                                     | X              | Whether 3DS is enabled. The default value is `false`.                                        |
+| `email_notifications`                            | X              | The settings for the different emails that are sent out                                      |
+| `_links.self`                                    | X              | A self link to get this account resource by account-id.                                      |
+
 
 ---------------------------------------------------------------------------------------------------------------
 ## GET /v1/api/accounts/{accountId}/charges/{chargeId}
@@ -993,29 +1074,60 @@ Content-Type: application/json
     "gateway_account_id": "111222333",
     "description": "Sample Service",
     "analytics_id": "some identifier",
+    "requires3ds": false,
+    "notifySettings": null,
+    "notificationCredentials": null,
+    "live": false,
+    "type": "test",
     "corporate_credit_card_surcharge_amount": 0,
     "corporate_debit_card_surcharge_amount": 0,
     "corporate_prepaid_credit_card_surcharge_amount": 0,
     "corporate_prepaid_debit_card_surcharge_amount": 0,
     "credentials: {
       "username:" "Username"
+    },
+    "allow_apple_pay": false,
+    "allow_google_pay": false,
+    "allow_zero_amount": false,
+    "email_collection_mode": "MANDATORY",
+    "email_notifications": {
+      "REFUND_ISSUED": {
+          "version": 1,
+          "enabled": true,
+          "template_body": null
+      },
+      "PAYMENT_CONFIRMED": {
+          "version": 1,
+          "enabled": true,
+          "template_body": null
+      }
     }
 }
 ```
 
 #### Response field description
 
-| Field                                              | always present | Description                                                                                                       |
-| -------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `gateway_account_id`                               | X              | The account Id.                                                                                                   |
-| `payment_provider`                                 | X              | The payment provider for which this account is created.                                                           |
-| `credentials`                                      | X              | The payment provider credentials. Password is not returned. The default value is the empty JSON document {}.      |
-| `description`                                      | X              | An internal description to identify the gateway account. The default value is `null`.                             |
-| `analytics_id`                                     | X              | An identifier used to identify the service in Google Analytics. The default value is `null`.                      |
-| `corporate_credit_card_surcharge_amount`           | X              | A corporate credit card surcharge amount in pence. The default value is `0`.                                      |
-| `corporate_debit_card_surcharge_amount`            | X              | A corporate debit card surcharge amount in pence. The default value is `0`.                                       |
-| `corporate_prepaid_credit_card_surcharge_amount`   | X              | A corporate prepaid credit card surcharge amount in pence. The default value is `0`.                              |
-| `corporate_prepaid_debit_card_surcharge_amount`    | X              | A corporate prepaid debit card surcharge amount in pence. The default value is `0`.                               |
+| Field                                            | always present | Description                                                                                                             |
+|--------------------------------------------------|----------------|-------------------------------------------------------------------------------------------------------------------------|
+| `gateway_account_id`                             | X              | The account Id.                                                                                                         |
+| `payment_provider`                               | X              | The payment provider for which this account is created.                                                                 |
+| `credentials`                                    | X              | The payment provider credentials. Password is not returned. The default value is the empty JSON document {}.            |
+| `description`                                    | X              | An internal description to identify the gateway account. The default value is `null`.                                   |
+| `analytics_id`                                   | X              | An identifier used to identify the service in Google Analytics. The default value is `null`.                            |
+| `requires_3ds`                                   | X              | Whether 3DS is required. The default value is `false`.                                                                  |
+| `notify_settings`                                | X              | A JSON object containing the custom notify credentials for this account. The default value is `null`                    |
+| `notification_credentials`                       | X              | A JSON object containing credentials for receiving notifications from the payment provider. The default value is `null` |
+| `live`                                           | X              | Whether the gateway account is a live account or not.                                                                   |
+| `type`                                           | X              | The account type. Can be `live` or `test`                                                                               |
+| `corporate_credit_card_surcharge_amount`         | X              | A corporate credit card surcharge amount in pence. The default value is `0`.                                            |
+| `corporate_debit_card_surcharge_amount`          | X              | A corporate debit card surcharge amount in pence. The default value is `0`.                                             |
+| `corporate_prepaid_credit_card_surcharge_amount` | X              | A corporate prepaid credit card surcharge amount in pence. The default value is `0`.                                    |
+| `corporate_prepaid_debit_card_surcharge_amount`  | X              | A corporate prepaid debit card surcharge amount in pence. The default value is `0`.                                     |
+| `allow_apple_pay`                                | X              | Whether apple pay is enabled. The default value is `false`.                                                             |
+| `allow_google_pay`                               | X              | Whether google pay is enabled. The default value is `false`.                                                            |
+| `allow_zero_amount`                              | X              | Whether the account supports charges with a zero amount. The default value is `false`.                                  |
+| `email_collection_mode`                          | X              | Whether email address is required from paying users. Can be `MANDATORY`, `OPTIONAL` or `OFF`                            |
+| `email_notifications`                            | X              | The settings for the different emails that are sent out                                                                 |
 
 -----------------------------------------------------------------------------------------------------------
 ## PUT /v1/frontend/accounts/{accountId}

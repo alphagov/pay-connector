@@ -32,6 +32,7 @@ public class GatewayAccountResourceDTOTest {
         entity.setCredentials(Collections.emptyMap());
         entity.setEmailCollectionMode(EmailCollectionMode.MANDATORY);
         entity.setRequires3ds(true);
+        entity.setAllowZeroAmount(true);
 
         Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
         emailNotifications.put(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(new GatewayAccountEntity(), "testTemplate", true));
@@ -51,6 +52,7 @@ public class GatewayAccountResourceDTOTest {
         assertThat(dto.isAllowApplePay(), is(entity.isAllowApplePay()));
         assertThat(dto.isAllowGooglePay(), is(entity.isAllowGooglePay()));
         assertThat(dto.isRequires3ds(), is(entity.isRequires3ds()));
+        assertThat(dto.isAllowZeroAmount(), is(entity.isAllowZeroAmount()));
         assertThat(dto.getEmailCollectionMode(), is(entity.getEmailCollectionMode()));
         assertThat(dto.getEmailNotifications().size(), is(1));
         assertThat(dto.getEmailNotifications().get(EmailNotificationType.PAYMENT_CONFIRMED).getTemplateBody(), is("testTemplate"));
