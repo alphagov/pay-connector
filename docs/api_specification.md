@@ -354,6 +354,12 @@ Content-Type: application/json
 | `return_url`             | X         | The url to return the user to after the payment process has completed                 |
 | `language`               |           | A supported ISO-639-1 language code e.g. `"cy"` — defaults to `"en"` if not specified |
 | `delayed_capture`        |           | Whether the payment requires an explicit request to capture — defaults to false       |
+| `prefilled_cardholder_details.cardholder_name` | | Cardholder name to be prefilled on frontend card details page |
+| `prefilled_cardholder_details.billing_addess.line1` | | Line 1 of the billing address to be prefilled on frontend card details page |
+| `prefilled_cardholder_details.billing_addess.line2` | | Line 2 of the billing address to be prefilled on frontend card details page |
+| `prefilled_cardholder_details.billing_addess.postcode` | | Postcode of the billing address to be prefilled on frontend card details page |
+| `prefilled_cardholder_details.billing_addess.city` | | City of the billing address to be prefilled on frontend card details page |
+| `prefilled_cardholder_details.billing_addess.country` | | Country code of the billing address to be prefilled on frontend card details page |
 
 ### Response example
 
@@ -411,6 +417,16 @@ Location: https://connector.example.com/v1/api/charges/1
         "capture_submit_time": null,
         "captured_date": null
     },
+    "card_details": {
+        "cardholder_name": "ms foo",
+        "billing_address": {
+              "line1": "address line 1",
+              "line2": "address line 2",
+              "postcode": "AB1 2CD",
+              "city": "address city",
+              "country": "UK"
+        }
+     },
     "delayed_capture": false
 }
 ```
@@ -420,6 +436,15 @@ Location: https://connector.example.com/v1/api/charges/1
 | Field                    | always present | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
 | `charge_id`                 | X | The unique identifier for this charge       |
+| `card_details`      |           | Not present when no billing address and cardholder name is posted |                                                                                |
+| `card_details.cardholder_name` |           | The cardholder name of this payment                                                                           |
+| `card_details.billing_address` | | Not present when no billing address field(s) is posted |
+| `card_details.billing_address.line1`    |  | The line 1 of the billing address                                                                                   |
+| `card_details.billing_address.line2`    |  | The line 2 of the billing address                                                                                   |
+| `card_details.billing_address.postcode` |  | The postcode of the billing address                                                                                 |
+| `card_details.billing_address.city`     |  | The city of the billing address                                                                                     |
+| `card_details.billing_address.country`  |  | The country of the billing address                                                                                  |
+
 
 -----------------------------------------------------------------------------------------------------------
 
