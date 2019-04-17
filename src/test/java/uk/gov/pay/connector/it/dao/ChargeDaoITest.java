@@ -10,6 +10,7 @@ import org.junit.rules.ExpectedException;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.charge.model.CardHolderName;
+import uk.gov.pay.connector.charge.model.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -21,6 +22,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -29,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static java.time.ZonedDateTime.now;
@@ -37,6 +40,7 @@ import static junit.framework.TestCase.assertTrue;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -958,6 +962,28 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
+    public void shouldCreateANewChargeWithExternalMetadata() throws IOException {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
+        gatewayAccount.setId(defaultTestAccount.getAccountId());
+
+        ExternalMetadata expectedExternalMetadata = new ExternalMetadata(
+                Map.of("key1", "String1",
+                        "key2", 123,
+                        "key3", true));
+
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withExternalMetadata(expectedExternalMetadata)
+                .build();
+
+        chargeDao.persist(chargeEntity);
+        chargeDao.forceRefresh(chargeEntity);
+        Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
+
+        assertThat(charge.get().getExternalMetadata().get().getMetadata(), equalTo(expectedExternalMetadata.getMetadata()));
+    }
+
+    @Test
     public void shouldReturnNullFindingByIdWhenChargeDoesNotExist() {
 
         Optional<ChargeEntity> charge = chargeDao.findById(5686541L);
@@ -1004,6 +1030,7 @@ public class ChargeDaoITest extends DaoITestBase {
         assertThat(charge.getReference(), is(testCharge.getReference()));
         assertThat(charge.getGatewayAccount(), is(notNullValue()));
         assertThat(charge.getCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
+        assertThat(charge.getExternalMetadata(), is(Optional.empty()));
     }
 
     @Test

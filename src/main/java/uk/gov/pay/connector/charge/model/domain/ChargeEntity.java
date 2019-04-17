@@ -8,7 +8,9 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.SupportedLanguageJpaConverter;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
@@ -132,21 +134,25 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Column(name = "wallet")
     @Enumerated(EnumType.STRING)
     private WalletType walletType;
-    
+
+    @Column(name = "external_metadata", columnDefinition = "jsonb")
+    @Convert(converter = ExternalMetadataConverter.class)
+    private ExternalMetadata externalMetadata;
+
     public ChargeEntity() {
         //for jpa
     }
 
     public ChargeEntity(Long amount, String returnUrl, String description, ServicePaymentReference reference,
                         GatewayAccountEntity gatewayAccount, String email, SupportedLanguage language,
-                        boolean delayedCapture) {
-        this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture);
+                        boolean delayedCapture, ExternalMetadata externalMetadata) {
+        this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture, externalMetadata);
     }
 
     // Only the ChargeEntityFixture should directly call this constructor
     public ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, ServicePaymentReference reference,
                         GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate, SupportedLanguage language,
-                        boolean delayedCapture) {
+                        boolean delayedCapture, ExternalMetadata externalMetadata) {
         this.amount = amount;
         this.status = status.getValue();
         this.returnUrl = returnUrl;
@@ -158,6 +164,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.email = email;
         this.language = language;
         this.delayedCapture = delayedCapture;
+        this.externalMetadata = externalMetadata;
     }
 
     public Long getId() {
@@ -218,6 +225,10 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public String getProviderSessionId() {
         return providerSessionId;
+    }
+
+    public Optional<ExternalMetadata> getExternalMetadata() {
+        return Optional.ofNullable(externalMetadata);
     }
 
     public void setExternalId(String externalId) {
