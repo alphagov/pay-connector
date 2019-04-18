@@ -11,6 +11,7 @@ public final class ChargeCreateRequestBuilder {
     private boolean delayedCapture;
     private SupportedLanguage language;
     private PrefilledCardHolderDetails prefilledCardHolderDetails;
+    private ExternalMetadata externalMetadata;
 
     private ChargeCreateRequestBuilder() {
     }
@@ -59,7 +60,13 @@ public final class ChargeCreateRequestBuilder {
         return this;
     }
 
+    public ChargeCreateRequestBuilder withExternalMetadata(ExternalMetadata externalMetadata) {
+        this.externalMetadata = externalMetadata;
+        return this;
+    }
+
     public ChargeCreateRequest build() {
-        return new ChargeCreateRequest(amount, description, reference, returnUrl, email, delayedCapture, language, prefilledCardHolderDetails);
+        return new ChargeCreateRequest(amount, description, reference, returnUrl, email, delayedCapture, language,
+                prefilledCardHolderDetails, externalMetadata);
     }
 }

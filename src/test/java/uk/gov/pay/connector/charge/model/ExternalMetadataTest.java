@@ -7,6 +7,7 @@ import org.junit.Test;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -49,7 +50,7 @@ public class ExternalMetadataTest {
         Set<ConstraintViolation<ExternalMetadata>> violations = validator.validate(invalidExternalMetadata);
 
         assertThat(violations.size(), is(1));
-        assertThat(violations.iterator().next().getMessage(), is("metadata cannot have more than 10 key-value pairs"));
+        assertThat(violations.iterator().next().getMessage(), is("Field [metadata] cannot have more than 10 key-value pairs"));
     }
 
     @Test
@@ -60,7 +61,7 @@ public class ExternalMetadataTest {
         Set<ConstraintViolation<ExternalMetadata>> violations = validator.validate(invalidExternalMetadata);
 
         assertThat(violations.size(), is(1));
-        assertThat(violations.iterator().next().getMessage(), is("metadata keys must be between 1 and 30 characters long"));
+        assertThat(violations.iterator().next().getMessage(), is("Field [metadata] keys must be between 1 and 30 characters long"));
     }
 
     @Test
@@ -71,7 +72,7 @@ public class ExternalMetadataTest {
         Set<ConstraintViolation<ExternalMetadata>> violations = validator.validate(invalidExternalMetadata);
 
         assertThat(violations.size(), is(1));
-        assertThat(violations.iterator().next().getMessage(), is("metadata keys must be between 1 and 30 characters long"));
+        assertThat(violations.iterator().next().getMessage(), is("Field [metadata] keys must be between 1 and 30 characters long"));
     }
 
     @Test
@@ -82,7 +83,7 @@ public class ExternalMetadataTest {
         Set<ConstraintViolation<ExternalMetadata>> violations = validator.validate(invalidExternalMetadata);
 
         assertThat(violations.size(), is(1));
-        assertThat(violations.iterator().next().getMessage(), is("metadata values must be no greater than 50 characters long"));
+        assertThat(violations.iterator().next().getMessage(), is("Field [metadata] values must be no greater than 50 characters long"));
     }
 
     @Test
@@ -93,7 +94,7 @@ public class ExternalMetadataTest {
         Set<ConstraintViolation<ExternalMetadata>> violations = validator.validate(invalidExternalMetadata);
 
         assertThat(violations.size(), is(1));
-        assertThat(violations.iterator().next().getMessage(), is("metadata values must be of type String, Boolean or Number"));
+        assertThat(violations.iterator().next().getMessage(), is("Field [metadata] values must be of type String, Boolean or Number"));
     }
 
     @Test
@@ -104,7 +105,19 @@ public class ExternalMetadataTest {
         Set<ConstraintViolation<ExternalMetadata>> violations = validator.validate(invalidExternalMetadata);
 
         assertThat(violations.size(), is(1));
-        assertThat(violations.iterator().next().getMessage(), is("metadata values must be of type String, Boolean or Number"));
+        assertThat(violations.iterator().next().getMessage(), is("Field [metadata] values must be of type String, Boolean or Number"));
+    }
+
+    @Test
+    public void shouldFailValidationWhenAValueIsNull() {
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("key1", null);
+        ExternalMetadata invalidExternalMetadata = new ExternalMetadata(metadata);
+
+        Set<ConstraintViolation<ExternalMetadata>> violations = validator.validate(invalidExternalMetadata);
+
+        assertThat(violations.size(), is(1));
+        assertThat(violations.iterator().next().getMessage(), is("Field [metadata] must not have null values"));
     }
 
     @Test
@@ -116,9 +129,9 @@ public class ExternalMetadataTest {
         );
         ExternalMetadata invalidExternalMetadata = new ExternalMetadata(metadata);
         Set<String> expectedErrorMessages = Set.of(
-                "metadata values must be of type String, Boolean or Number",
-                "metadata values must be no greater than 50 characters long",
-                "metadata keys must be between 1 and 30 characters long");
+                "Field [metadata] values must be of type String, Boolean or Number",
+                "Field [metadata] values must be no greater than 50 characters long",
+                "Field [metadata] keys must be between 1 and 30 characters long");
 
         Set<ConstraintViolation<ExternalMetadata>> violations = validator.validate(invalidExternalMetadata);
 

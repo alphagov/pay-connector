@@ -53,10 +53,10 @@ import uk.gov.pay.connector.report.resource.TransactionsSummaryResource;
 import uk.gov.pay.connector.token.resource.SecurityTokensResource;
 import uk.gov.pay.connector.usernotification.resource.EmailNotificationResource;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
+import uk.gov.pay.connector.util.JsonMappingExceptionMapper;
 import uk.gov.pay.connector.util.XrayUtils;
 import uk.gov.pay.connector.webhook.resource.NotificationResource;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -104,6 +104,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         });
         environment.jersey().register(new JsonProcessingExceptionMapper());
         environment.jersey().register(new EarlyEofExceptionMapper());
+        environment.jersey().register(new JsonMappingExceptionMapper());
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(StripeAccountSetupResource.class));

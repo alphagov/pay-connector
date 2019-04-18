@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.hibernate.validator.constraints.Length;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.SupportedLanguageJsonDeserializer;
+import uk.gov.pay.connector.charge.util.ExternalMetadataDeserialiser;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
@@ -51,6 +52,11 @@ public class ChargeCreateRequest {
     @Valid
     private PrefilledCardHolderDetails prefilledCardHolderDetails;
 
+    @JsonProperty("metadata")
+    @JsonDeserialize(using = ExternalMetadataDeserialiser.class)
+    @Valid
+    private ExternalMetadata externalMetadata;
+
     public ChargeCreateRequest() {
         // for Jackson
     }
@@ -62,7 +68,8 @@ public class ChargeCreateRequest {
                         String email,
                         boolean delayedCapture,
                         SupportedLanguage language,
-                        PrefilledCardHolderDetails prefilledCardHolderDetails) {
+                        PrefilledCardHolderDetails prefilledCardHolderDetails,
+                        ExternalMetadata externalMetadata) {
         this.amount = amount;
         this.description = description;
         this.reference = reference;
@@ -71,6 +78,7 @@ public class ChargeCreateRequest {
         this.delayedCapture = delayedCapture;
         this.language = language;
         this.prefilledCardHolderDetails = prefilledCardHolderDetails;
+        this.externalMetadata = externalMetadata;
     }
 
     public long getAmount() {
@@ -103,6 +111,10 @@ public class ChargeCreateRequest {
     
     public Optional<PrefilledCardHolderDetails> getPrefilledCardHolderDetails() {
         return Optional.ofNullable(prefilledCardHolderDetails);
+    }
+
+    public Optional<ExternalMetadata> getExternalMetadata() {
+        return Optional.ofNullable(externalMetadata);
     }
 
     public String toStringWithoutPersonalIdentifiableInformation() {
