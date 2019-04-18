@@ -101,9 +101,9 @@ public class GatewayAccountServiceTest {
 
         when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
 
-        Optional<GatewayAccount> optionalGatewayAcc = gatewayAccountService.doPatch(gatewayAccountId, request);
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
 
-        assertThat(optionalGatewayAcc.isPresent(), is(true));
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
         verify(entity).setNotifySettings(settings);
         verify(mockGatewayAccountDao).merge(entity);
     }
@@ -117,9 +117,9 @@ public class GatewayAccountServiceTest {
 
         when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
 
-        Optional<GatewayAccount> optionalGatewayAcc = gatewayAccountService.doPatch(gatewayAccountId, request);
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
 
-        assertThat(optionalGatewayAcc.isPresent(), is(true));
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
         verify(entity).setNotifySettings(null);
         verify(mockGatewayAccountDao).merge(entity);
     }
@@ -134,9 +134,9 @@ public class GatewayAccountServiceTest {
 
         when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
 
-        Optional<GatewayAccount> optionalGatewayAcc = gatewayAccountService.doPatch(gatewayAccountId, request);
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
 
-        assertThat(optionalGatewayAcc.isPresent(), is(true));
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
         InOrder inOrder = Mockito.inOrder(entity, mockGatewayAccountDao);
         inOrder.verify(entity).setEmailCollectionMode(EmailCollectionMode.OFF);
         inOrder.verify(mockGatewayAccountDao).merge(entity);
@@ -151,8 +151,8 @@ public class GatewayAccountServiceTest {
         GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
 
         when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
-        Optional<GatewayAccount> optionalGatewayAcc = gatewayAccountService.doPatch(gatewayAccountId, request);
-        assertThat(optionalGatewayAcc.isPresent(), is(true));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
         verify(entity).setCorporateCreditCardSurchargeAmount(100L);
         verify(mockGatewayAccountDao).merge(entity);
     }
@@ -166,8 +166,8 @@ public class GatewayAccountServiceTest {
         GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
 
         when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
-        Optional<GatewayAccount> optionalGatewayAcc = gatewayAccountService.doPatch(gatewayAccountId, request);
-        assertThat(optionalGatewayAcc.isPresent(), is(true));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
         verify(entity).setCorporateDebitCardSurchargeAmount(100L);
         verify(mockGatewayAccountDao).merge(entity);
     }
@@ -181,8 +181,8 @@ public class GatewayAccountServiceTest {
         GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
 
         when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
-        Optional<GatewayAccount> optionalGatewayAcc = gatewayAccountService.doPatch(gatewayAccountId, request);
-        assertThat(optionalGatewayAcc.isPresent(), is(true));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
         verify(entity).setCorporatePrepaidDebitCardSurchargeAmount(100L);
         verify(mockGatewayAccountDao).merge(entity);
     }
@@ -196,8 +196,8 @@ public class GatewayAccountServiceTest {
         GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
 
         when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
-        Optional<GatewayAccount> optionalGatewayAcc = gatewayAccountService.doPatch(gatewayAccountId, request);
-        assertThat(optionalGatewayAcc.isPresent(), is(true));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
         verify(entity).setCorporatePrepaidCreditCardSurchargeAmount(100L);
         verify(mockGatewayAccountDao).merge(entity);
     }
@@ -211,7 +211,37 @@ public class GatewayAccountServiceTest {
         GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
         when(entity.getGatewayName()).thenReturn("epdq");
         when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
-        Optional<GatewayAccount> optionalGatewayAcc = gatewayAccountService.doPatch(gatewayAccountId, request);
-        assertThat(optionalGatewayAcc.isPresent(), is(false));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(false));
+    }
+
+    @Test
+    public void shouldUpdateAllowZeroAmountTrue() {
+        Long gatewayAccountId = 100L;
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+                "path", "allow_zero_amount",
+                "value", true)));
+        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
+
+        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        verify(entity).setAllowZeroAmount(true);
+        verify(mockGatewayAccountDao).merge(entity);
+    }
+
+    @Test
+    public void shouldUpdateAllowZeroAmountFalse() {
+        Long gatewayAccountId = 100L;
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+                "path", "allow_zero_amount",
+                "value", false)));
+        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
+
+        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        verify(entity).setAllowZeroAmount(false);
+        verify(mockGatewayAccountDao).merge(entity);
     }
 }

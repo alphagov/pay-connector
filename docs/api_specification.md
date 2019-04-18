@@ -878,8 +878,8 @@ Content-Type: application/json
 ## PATCH /v1/api/accounts/{accountId}
 
 A generic endpoint that allows the patching of `allow_apple_pay`, `allow_google_pay`, `credentials/gateway_merchant_id`, `notify_settings`, `email_collection_mode`, 
-`corporate_credit_card_surcharge_amount`, `corporate_debit_card_surcharge_amount`, `corporate_prepaid_credit_card_surcharge_amount`
-or `corporate_prepaid_debit_card_surcharge_amount`.
+`corporate_credit_card_surcharge_amount`, `corporate_debit_card_surcharge_amount`, `corporate_prepaid_credit_card_surcharge_amount`, 
+`corporate_prepaid_debit_card_surcharge_amount` or `allow_zero_amount`
 
 ### Request example
 
