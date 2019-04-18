@@ -36,6 +36,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected Long corporateCardSurcharge;
     protected Long fee;
     protected Long totalAmount;
+    protected Long netAmount;
     protected WalletType walletType;
 
     protected abstract T thisObject();
@@ -156,6 +157,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
     
+    public T withNetAmount(Long netAmount) {
+        this.netAmount = netAmount;
+        return thisObject();
+    }
+    
     public T withWalletType(WalletType walletType) {
         this.walletType = walletType;
         return thisObject();
@@ -239,6 +245,10 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public Long getTotalAmount() {
         return totalAmount;
+    }
+    
+    public Long getNetAmount() {
+        return netAmount;
     }
 
     public WalletType getWalletType() {
