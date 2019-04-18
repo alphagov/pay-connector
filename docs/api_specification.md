@@ -354,6 +354,7 @@ Content-Type: application/json
             "capture_submit_time": null,
             "captured_date": null
     },
+    "fee": 5,
     "links": [
         {
             "rel": "self",
@@ -402,7 +403,7 @@ Content-Type: application/json
 | `links`                  | X | Array of relevant resource references related to this charge|
 | `refund_summary`         | X | Provides a refund summary of the total refund amount still available and how much has already been refunded, plus a refund status|
 | `settlement_summary`         | X | Provides a settlement summary of the charge containing date and time of capture, if present.|
-
+| `fee`                 |  | The fee charged by payment service provider, if available    |
 -----------------------------------------------------------------------------------------------------------
 
 ## POST /v1/api/accounts/{accountId}/charges
@@ -588,7 +589,8 @@ Content-Type: application/json
         "settlement_summary": {
                 "capture_submit_time": "2016-01-02T15:02:00Z",
                 "captured_date": "2016-01-02"
-        }
+        },
+        "fee": 5
      }]
 }
 ```
@@ -624,7 +626,7 @@ Content-Type: application/json
 | `refund_summary`         | X | Provides a refund summary of the total refund amount still available and how much has already been refunded, plus a refund status |
 | `settlement_summary`     | X | Provides a settlement summary of the charge containing date and time of capture, if present.                                      |
 | `links.rel.capture`      |   | Present when a charge is available for capture. Otherwise                                       |
-
+| `fee`                    |  | The fee charged by payment service provider, if available    |
 -----------------------------------------------------------------------------------------------------------
 
 
@@ -1251,6 +1253,7 @@ Content-Type: application/json
         "card_brand": "Visa"
     },
     "delayed_capture": false,
+    "fee": 5,
     "gateway_account": {
         "version": 1,
         "requires3ds": false,
@@ -1343,6 +1346,7 @@ Content-Type: application/json
 | `card_brand`                                       |                            | The brand label of the card.                                                         |
 | `language`                                         | X                          | The ISO-639-1 code representing the language of the payment e.g. `"en"`.             |
 | `delayed_capture`                                  | X                          | Whether the payment requires or required an explicit request to capture.             |
+| `fee`                                              |                            | The fee charged by payment service provider, if available                            |
 | `corporate_credit_card_surcharge_amount`           | X                          | A corporate credit card surcharge amount in pence. The default value is `0`.         |
 | `corporate_debit_card_surcharge_amount`            | X                          | A corporate debit card surcharge amount in pence. The default value is `0`.          |
 | `corporate_prepaid_credit_card_surcharge_amount`   | X                          | A corporate prepaid credit card surcharge amount in pence. The default value is `0`. |
