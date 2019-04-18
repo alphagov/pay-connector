@@ -379,7 +379,7 @@ public class ChargeServiceTest {
     public void shouldFindChargeForChargeId_withCorporateSurcharge() {
         Long chargeId = 101L;
         Long totalAmount = 1250L;
-
+        
         ChargeEntity newCharge = aValidChargeEntity()
                 .withId(chargeId)
                 .withGatewayAccountEntity(gatewayAccount)
@@ -403,6 +403,37 @@ public class ChargeServiceTest {
         assertThat(chargeResponse.getCorporateCardSurcharge(), is(250L));
         assertThat(chargeResponse.getTotalAmount(), is(totalAmount));
         assertThat(chargeResponse.getRefundSummary().getAmountAvailable(), is(totalAmount));
+    }
+   
+    @Test
+    public void shouldFindChargeForChargeId_withFee() {
+        Long chargeId = 101L;
+        Long amount = 1000L;
+        Long fee = 100L;
+        
+        ChargeEntity charge = aValidChargeEntity()
+                .withId(chargeId)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(AUTHORISATION_READY)
+                .withAmount(amount)
+                .withFee(fee)
+                .build();
+        
+        Optional<ChargeEntity> chargeEntity = Optional.of(charge);
+
+        String externalId = charge.getExternalId();
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, GATEWAY_ACCOUNT_ID)).thenReturn(chargeEntity);
+
+        Optional<ChargeResponse> chargeResponseForAccount = service.findChargeForAccount(externalId, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor = ArgumentCaptor.forClass(TokenEntity.class);
+        verify(mockedTokenDao).persist(tokenEntityArgumentCaptor.capture());
+
+        assertThat(chargeResponseForAccount.isPresent(), is(true));
+        final ChargeResponse chargeResponse = chargeResponseForAccount.get();
+
+        assertThat(chargeResponse.getNetAmount(), is(amount - fee));
+        assertThat(chargeResponse.getAmount(), is(amount));
     }
 
     private void shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenChargeStatusIs(ChargeStatus status) throws Exception {

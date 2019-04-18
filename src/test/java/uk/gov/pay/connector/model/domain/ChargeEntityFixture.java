@@ -3,6 +3,7 @@ package uk.gov.pay.connector.model.domain;
 import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.ExternalMetadata;
+import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
@@ -45,6 +46,7 @@ public class ChargeEntityFixture {
     private SupportedLanguage language = SupportedLanguage.ENGLISH;
     private boolean delayedCapture = false;
     private Long corporateSurcharge = null;
+    private Long fee = null;
     private WalletType walletType = null;
     private ExternalMetadata externalMetadata = null;
 
@@ -59,6 +61,10 @@ public class ChargeEntityFixture {
         chargeEntity.setExternalId(externalId);
         chargeEntity.setGatewayTransactionId(transactionId);
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
+        
+        FeeEntity fee = new FeeEntity(chargeEntity, this.fee);
+        chargeEntity.setFee(fee);
+        
         chargeEntity.getEvents().addAll(events);
         chargeEntity.getRefunds().addAll(refunds);
         chargeEntity.setProviderSessionId(providerSessionId);
@@ -160,6 +166,11 @@ public class ChargeEntityFixture {
     
     public ChargeEntityFixture withWalletType(WalletType walletType) {
         this.walletType = walletType;
+        return this;
+    }
+    
+    public ChargeEntityFixture withFee(Long amount) {
+        this.fee = amount;
         return this;
     }
 

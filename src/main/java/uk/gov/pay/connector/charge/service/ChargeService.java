@@ -240,7 +240,6 @@ public class ChargeService {
         // @TODO(sfount) consider if total and net columns could be calculation columns in postgres (single source of truth)
         chargeEntity.getFeeAmount().ifPresent(fee -> 
                 builderOfResponse
-                        .withFee(fee)
                         .withNetAmount(FeeNetCalculator.getNetAmountFor(chargeEntity)));
 
         ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());

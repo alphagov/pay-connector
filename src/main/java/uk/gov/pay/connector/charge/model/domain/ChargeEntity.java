@@ -340,6 +340,10 @@ public class ChargeEntity extends AbstractVersionedEntity {
     public void setCorporateSurcharge(Long corporateSurcharge) {
         this.corporateSurcharge = corporateSurcharge;
     }
+    
+    public void setFee(FeeEntity fee) {
+        this.fee = fee;
+    }
 
     public Optional<Long> getFeeAmount() {
         return Optional.ofNullable(fee).map(FeeEntity::getAmountCollected);
