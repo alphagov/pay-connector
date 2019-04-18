@@ -61,10 +61,6 @@ public class ChargeEntityFixture {
         chargeEntity.setExternalId(externalId);
         chargeEntity.setGatewayTransactionId(transactionId);
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
-        
-        FeeEntity fee = new FeeEntity(chargeEntity, this.fee);
-        chargeEntity.setFee(fee);
-        
         chargeEntity.getEvents().addAll(events);
         chargeEntity.getRefunds().addAll(refunds);
         chargeEntity.setProviderSessionId(providerSessionId);
@@ -74,6 +70,10 @@ public class ChargeEntityFixture {
             auth3dsDetailsEntity.setPaRequest(paRequest);
 
             chargeEntity.set3dsDetails(auth3dsDetailsEntity);
+        }
+        if (this.fee != null) {
+            FeeEntity fee = new FeeEntity(chargeEntity, this.fee);
+            chargeEntity.setFee(fee);
         }
         chargeEntity.setWalletType(walletType);
         return chargeEntity;
