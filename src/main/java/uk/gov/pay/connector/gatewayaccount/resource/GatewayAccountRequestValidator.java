@@ -77,13 +77,13 @@ public class GatewayAccountRequestValidator {
                 validateEmailCollectionMode(payload);
                 break;
             case FIELD_ALLOW_GOOGLE_PAY:
-                validateReplaceBooleanValue(payload, FIELD_ALLOW_GOOGLE_PAY);
+                validateReplaceBooleanValue(payload);
                 break;
             case FIELD_ALLOW_APPLE_PAY:
-                validateReplaceBooleanValue(payload, FIELD_ALLOW_APPLE_PAY);
+                validateReplaceBooleanValue(payload);
                 break;
             case FIELD_ALLOW_ZERO_AMOUNT:
-                validateReplaceBooleanValue(payload, FIELD_ALLOW_ZERO_AMOUNT);
+                validateReplaceBooleanValue(payload);
                 break;
             case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT: 
             case FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT:
@@ -137,13 +137,10 @@ public class GatewayAccountRequestValidator {
         }
     }
 
-    private void validateReplaceBooleanValue(JsonNode payload, String field) {
+    private void validateReplaceBooleanValue(JsonNode payload) {
         throwIfInvalidFieldOperation(payload, REPLACE);
         throwIfNullFieldValue(payload.get(FIELD_VALUE));
-        String booleanString = payload.get(FIELD_VALUE).asText().toLowerCase();
-        if (!booleanString.equals("false") && !booleanString.equals("true")) {
-            throw new ValidationException(Collections.singletonList(format("Value [%s] is not valid for [%s]", booleanString, field)));
-        }
+        throwIfNotBoolean(payload);
     }
     
     private void validateCorporateCardSurchargePayload(JsonNode payload) {
@@ -169,6 +166,12 @@ public class GatewayAccountRequestValidator {
     private void throwIfNotNumber(JsonNode payload) {
         if (!payload.get(FIELD_VALUE).isNumber()) {
             throw new ValidationException(Collections.singletonList(format("Value [%s] is not valid for path [%s]", payload.get(FIELD_VALUE).asText(), payload.get(FIELD_OPERATION_PATH).asText())));
+        }
+    }
+
+    private void throwIfNotBoolean(JsonNode payload) {
+        if (payload.get(FIELD_VALUE) != null && !payload.get(FIELD_VALUE).isBoolean()) {
+            throw new ValidationException(Collections.singletonList(format("Value [%s] must be of type boolean for path [%s]", payload.get(FIELD_VALUE).asText(), payload.get(FIELD_OPERATION_PATH).asText())));
         }
     }
     

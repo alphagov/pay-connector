@@ -195,4 +195,36 @@ public class GatewayAccountResourceValidationTest {
         String errorMessage = response.readEntity(JsonNode.class).get("errors").get(0).textValue();
         assertThat(errorMessage, is("Field [value] is required"));
     }
+
+    @Test
+    public void shouldReturn400_whenAllowZeroAmountValueIsNull() {
+        Map<String, Object> valueMap = new HashMap<>();
+        valueMap.put("op", "replace");
+        valueMap.put("path", "allow_zero_amount");
+        valueMap.put("value", null);
+        JsonNode jsonNode = new ObjectMapper().valueToTree(valueMap);
+        Response response = resources.client()
+                .target("/v1/api/accounts/12")
+                .request()
+                .method("PATCH", Entity.json(jsonNode));
+        assertThat(response.getStatus(), is(400));
+        String errorMessage = response.readEntity(JsonNode.class).get("errors").get(0).textValue();
+        assertThat(errorMessage, is("Field [value] is required"));
+    }
+
+    @Test
+    public void shouldReturn400_whenAllowZeroAmountValueIsNotBooleanValue() {
+        Map<String, Object> valueMap = new HashMap<>();
+        valueMap.put("op", "replace");
+        valueMap.put("path", "allow_zero_amount");
+        valueMap.put("value", "false");
+        JsonNode jsonNode = new ObjectMapper().valueToTree(valueMap);
+        Response response = resources.client()
+                .target("/v1/api/accounts/12")
+                .request()
+                .method("PATCH", Entity.json(jsonNode));
+        assertThat(response.getStatus(), is(400));
+        String errorMessage = response.readEntity(JsonNode.class).get("errors").get(0).textValue();
+        assertThat(errorMessage, is("Value [false] must be of type boolean for path [allow_zero_amount]"));
+    }
 }

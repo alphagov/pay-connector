@@ -45,28 +45,28 @@ public class GatewayAccountRequestValidatorTest {
             "bad, allow_google_pay, true, Operation [bad] is not valid for path [allow_google_pay]",
             "replace, allow_apple_pay, null, Field [value] is required",
             "replace, allow_google_pay, null, Field [value] is required",
-            "replace, allow_apple_pay, unfalse, Value [unfalse] is not valid for [allow_apple_pay]",
-            "replace, allow_google_pay, unfalse, Value [unfalse] is not valid for [allow_google_pay]",
+            "replace, allow_apple_pay, unfalse, Value [unfalse] must be of type boolean for path [allow_apple_pay]",
+            "replace, allow_google_pay, unfalse, Value [unfalse] must be of type boolean for path [allow_google_pay]",
             "bad, allow_zero_amount, true, Operation [bad] is not valid for path [allow_zero_amount]",
             "replace, allow_zero_amount, null, Field [value] is required",
-            "replace, allow_zero_amount, unfalse, Value [unfalse] is not valid for [allow_zero_amount]",
+            "replace, allow_zero_amount, unfalse, Value [unfalse] must be of type boolean for path [allow_zero_amount]",
             "remove, credentials/gateway_merchant_id, gatewayMerchantId, Operation [remove] is not valid for path [credentials/gateway_merchant_id]",
             "add, credentials/gateway_merchant_id, , Field [value] cannot be empty",
             "add, credentials/gateway_merchant_id, zzzzz, Field [credentials/gateway_merchant_id] value [zzzzz] does not match that expected for a Worldpay Merchant ID; should be 15 characters and within range [0-9a-f]",
             "replace, credentials/gateway_merchant_id, null, Field [value] is required"
     })
     public void shouldThrowWhenRequestsAreInvalid(String op, String path, @Nullable String value, String expectedErrorMessage) {
-        Map<String, String> patch = new HashMap<String, String>(){{
+        Map<String, String> patch = new HashMap<String, String>() {{
             put(FIELD_OPERATION, op);
             put(FIELD_OPERATION_PATH, path);
         }};
-        
+
         if (value != null) patch.put(FIELD_VALUE, value);
-        
+
         JsonNode jsonNode = new ObjectMapper().valueToTree(patch);
         try {
             validator.validatePatchRequest(jsonNode);
-            fail( "Expected ValidationException" );
+            fail("Expected ValidationException");
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(1));
             assertThat(validationException.getErrors(), hasItems(expectedErrorMessage));
@@ -80,7 +80,7 @@ public class GatewayAccountRequestValidatorTest {
                         FIELD_OPERATION_PATH, "notify_settings"));
         try {
             validator.validatePatchRequest(jsonNode);
-            fail( "Expected ValidationException" );
+            fail("Expected ValidationException");
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(1));
             assertThat(validationException.getErrors(), hasItems(
@@ -97,7 +97,7 @@ public class GatewayAccountRequestValidatorTest {
                                 "colombo", "atemplateid")));
         try {
             validator.validatePatchRequest(jsonNode);
-            fail( "Expected ValidationException" );
+            fail("Expected ValidationException");
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(3));
             assertThat(validationException.getErrors(), hasItems(
@@ -113,7 +113,7 @@ public class GatewayAccountRequestValidatorTest {
                 FIELD_OPERATION_PATH, "service_name"));
         try {
             validator.validatePatchRequest(jsonNode);
-            fail( "Expected ValidationException" );
+            fail("Expected ValidationException");
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(1));
             assertThat(validationException.getErrors(), hasItems("Operation [op] not supported for path [service_name]"));
@@ -126,10 +126,10 @@ public class GatewayAccountRequestValidatorTest {
                 .valueToTree(ImmutableMap.of(
                         FIELD_OPERATION, "replace",
                         FIELD_OPERATION_PATH, "email_collection_mode",
-                        FIELD_VALUE,"someValue"));
+                        FIELD_VALUE, "someValue"));
         try {
             validator.validatePatchRequest(jsonNode);
-            fail( "Expected ValidationException" );
+            fail("Expected ValidationException");
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(1));
             assertThat(validationException.getErrors(), hasItems("Value [someValue] is not valid for [email_collection_mode]"));
@@ -145,7 +145,7 @@ public class GatewayAccountRequestValidatorTest {
                                 FIELD_NOTIFY_API_TOKEN, "anapitoken",
                                 FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID, "atemplateid",
                                 FIELD_NOTIFY_REFUND_ISSUED_TEMPLATE_ID, "anothertemplateid")));
-        
+
         validator.validatePatchRequest(jsonNode);
     }
 
@@ -155,7 +155,7 @@ public class GatewayAccountRequestValidatorTest {
                 .valueToTree(ImmutableMap.of(
                         FIELD_OPERATION, "replace",
                         FIELD_OPERATION_PATH, "email_collection_mode",
-                        FIELD_VALUE,"MANDATORY"));
+                        FIELD_VALUE, "MANDATORY"));
         validator.validatePatchRequest(jsonNode);
     }
 
@@ -168,7 +168,7 @@ public class GatewayAccountRequestValidatorTest {
                                 FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID, "atemplateid")));
         try {
             validator.validatePatchRequest(jsonNode);
-            fail( "Expected ValidationException" );
+            fail("Expected ValidationException");
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(1));
             assertThat(validationException.getErrors(), hasItems("Operation [delete] is not valid for path [notify_settings]"));
@@ -183,7 +183,7 @@ public class GatewayAccountRequestValidatorTest {
                         FIELD_VALUE, ImmutableMap.of(FIELD_NOTIFY_API_TOKEN, "")));
         validator.validatePatchRequest(jsonNode);
     }
-    
+
     @Test
     public void shouldThrow_whenCorporateCreditSurchargeAmountIsInvalid() {
         JsonNode jsonNode = new ObjectMapper()
@@ -192,7 +192,7 @@ public class GatewayAccountRequestValidatorTest {
                         FIELD_VALUE, -100));
         try {
             validator.validatePatchRequest(jsonNode);
-            fail( "Expected ValidationException" );
+            fail("Expected ValidationException");
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(1));
             assertThat(validationException.getErrors(), hasItems("Value [-100] is not valid for path [corporate_credit_card_surcharge_amount]"));
@@ -207,14 +207,14 @@ public class GatewayAccountRequestValidatorTest {
                         FIELD_VALUE, 250));
         try {
             validator.validatePatchRequest(jsonNode);
-            fail( "Expected ValidationException" );
+            fail("Expected ValidationException");
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(1));
             assertThat(validationException.getErrors(), hasItems(
                     "Operation [remove] is not valid for path [corporate_debit_card_surcharge_amount]"));
         }
     }
-    
+
     @Test
     public void shouldThrow_whenInvalidValueForCorporatePrepaidCreditSurchargeAmount() {
         JsonNode jsonNode = new ObjectMapper()
@@ -223,14 +223,14 @@ public class GatewayAccountRequestValidatorTest {
                         FIELD_VALUE, "not zero or a positive number that can be represented as a long"));
         try {
             validator.validatePatchRequest(jsonNode);
-            fail( "Expected ValidationException" );
+            fail("Expected ValidationException");
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(1));
             assertThat(validationException.getErrors(), hasItems(
                     "Value [not zero or a positive number that can be represented as a long] is not valid for path [corporate_prepaid_credit_card_surcharge_amount]"));
         }
     }
-    
+
     @Test
     public void shouldThrow_whenMissingValueForCorporatePrepaidDebitSurchargeAmount() {
         JsonNode jsonNode = new ObjectMapper()
@@ -238,13 +238,13 @@ public class GatewayAccountRequestValidatorTest {
                         FIELD_OPERATION_PATH, "corporate_prepaid_debit_card_surcharge_amount"));
         try {
             validator.validatePatchRequest(jsonNode);
-            fail( "Expected ValidationException" );
+            fail("Expected ValidationException");
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(1));
             assertThat(validationException.getErrors(), hasItems("Field [value] is required"));
         }
     }
-    
+
     @Test
     public void shouldThrow_whenNullValueForCorporatePrepaidDebitSurchargeAmount() {
         Map<String, Object> valueMap = new HashMap<>();
@@ -254,7 +254,7 @@ public class GatewayAccountRequestValidatorTest {
         JsonNode jsonNode = new ObjectMapper().valueToTree(valueMap);
         try {
             validator.validatePatchRequest(jsonNode);
-            fail( "Expected ValidationException" );
+            fail("Expected ValidationException");
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(1));
             assertThat(validationException.getErrors(), hasItems("Field [value] is required"));
@@ -269,7 +269,7 @@ public class GatewayAccountRequestValidatorTest {
                         FIELD_VALUE, ""));
         try {
             validator.validatePatchRequest(jsonNode);
-            fail( "Expected ValidationException" );
+            fail("Expected ValidationException");
         } catch (ValidationException validationException) {
             assertThat(validationException.getErrors().size(), is(1));
             assertThat(validationException.getErrors(), hasItems("Value [] is not valid for path [corporate_prepaid_debit_card_surcharge_amount]"));
