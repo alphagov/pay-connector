@@ -59,7 +59,7 @@ import static uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransi
 @Access(AccessType.FIELD)
 @SequenceGenerator(name = "charges_charge_id_seq",
         sequenceName = "charges_charge_id_seq", allocationSize = 1)
-public class ChargeEntity extends AbstractVersionedEntity {
+public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     private static final Logger logger = LoggerFactory.getLogger(ChargeEntity.class);
 
     @Id
@@ -297,10 +297,6 @@ public class ChargeEntity extends AbstractVersionedEntity {
                 .orElse(null);
     }
     
-    public Optional<Long> getNetAmount() {
-        return getFeeAmount().map(fee -> amount + getCorporateSurcharge().orElse(0L) - fee);
-    }
-
     public CardDetailsEntity getCardDetails() {
         return cardDetails;
     }

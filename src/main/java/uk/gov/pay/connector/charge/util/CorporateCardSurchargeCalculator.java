@@ -32,7 +32,7 @@ public class CorporateCardSurchargeCalculator {
      * @return A {@link Long}
      */
     public static Long getTotalAmountFor(Transaction transaction) {
-        return transaction.getCorporateCardSurcharge()
+        return transaction.getCorporateSurcharge()
                 .map(surcharge -> surcharge + transaction.getAmount())
                 .orElseGet((transaction::getAmount));
     }
