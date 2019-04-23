@@ -353,24 +353,6 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnFeeInSearchResultsV2IfFeeExists() {
-        long chargeId = nextInt();
-        String externalChargeId = RandomIdGenerator.newId();
-        long feeCollected = 100;
-
-        createCharge(externalChargeId, chargeId);
-        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
-
-        connectorRestApiClient
-                .withAccountId(accountId)
-                .getChargesV2()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("results[0].charge_id", is(externalChargeId))
-                .body("results[0].fee", is(100));
-    }
-
-    @Test
     public void shouldGetChargeTransactionsForJSONAcceptHeader() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();

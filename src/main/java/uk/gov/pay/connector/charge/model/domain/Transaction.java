@@ -270,4 +270,9 @@ public class Transaction {
     public Optional<Long> getFeeAmount() {
         return Optional.ofNullable(feeAmount);
     }
+
+    public Optional<Long> getNetAmount() {
+        long csc = corporateSurcharge == null ? 0 : corporateSurcharge;
+        return getFeeAmount().map(fee -> amount + csc - fee);
+    }
 }

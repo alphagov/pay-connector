@@ -27,7 +27,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
-import uk.gov.pay.connector.charge.util.FeeNetCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
@@ -238,9 +237,7 @@ public class ChargeService {
                         .withTotalAmount(CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity)));
 
         // @TODO(sfount) consider if total and net columns could be calculation columns in postgres (single source of truth)
-        chargeEntity.getFeeAmount().ifPresent(fee -> 
-                builderOfResponse
-                        .withNetAmount(FeeNetCalculator.getNetAmountFor(chargeEntity)));
+        chargeEntity.getNetAmount().ifPresent(builderOfResponse::withNetAmount);
 
         ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
         if (!chargeStatus.toExternal().isFinished() && !chargeStatus.equals(ChargeStatus.AWAITING_CAPTURE_REQUEST)) {

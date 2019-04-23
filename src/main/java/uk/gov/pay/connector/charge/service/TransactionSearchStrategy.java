@@ -105,6 +105,8 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
                 }
             });
         }
+        
+        transaction.getNetAmount().ifPresent(transactionResponseBuilder::withNetAmount);
 
         return transactionResponseBuilder.build();
     }

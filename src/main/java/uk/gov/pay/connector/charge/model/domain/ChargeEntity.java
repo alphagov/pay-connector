@@ -296,6 +296,10 @@ public class ChargeEntity extends AbstractVersionedEntity {
                 .map(e -> e.getGatewayEventDate().orElse(e.getUpdated()))
                 .orElse(null);
     }
+    
+    public Optional<Long> getNetAmount() {
+        return getFeeAmount().map(fee -> amount + getCorporateSurcharge().orElse(0L) - fee);
+    }
 
     public CardDetailsEntity getCardDetails() {
         return cardDetails;
