@@ -129,26 +129,24 @@ public class ChargeService {
                     chargeRequest.getEmail(),
                     language,
                     chargeRequest.isDelayedCapture(),
-                    null);
+                    chargeRequest.getExternalMetadata().orElse(null));
             
-            if (chargeRequest.getPrefilledCardHolderDetails().isPresent()) {
-                PrefilledCardHolderDetails cardHolderDetails = chargeRequest.getPrefilledCardHolderDetails().get();
-                CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
-                if (cardHolderDetails.getCardHolderName().isPresent()) {
-                    cardDetailsEntity.setCardHolderName(cardHolderDetails.getCardHolderName().get());
-                }
-                if (cardHolderDetails.getAddress().isPresent()) {
-                    AddressEntity addressEntity = new AddressEntity(cardHolderDetails.getAddress().get());
-                    cardDetailsEntity.setBillingAddress(addressEntity);
-                }
-                chargeEntity.setCardDetails(cardDetailsEntity);
-            }
-            
+            chargeRequest.getPrefilledCardHolderDetails()
+                    .map(this::createCardDetailsEntity)
+                    .ifPresent(chargeEntity::setCardDetails);
+
             chargeDao.persist(chargeEntity);
 
             chargeEventDao.persistChargeEventOf(chargeEntity);
-            return Optional.of(populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
-        }).orElseGet(Optional::empty);
+            return populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build();
+        });
+    }
+
+    private CardDetailsEntity createCardDetailsEntity(PrefilledCardHolderDetails prefilledCardHolderDetails) {
+        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
+        prefilledCardHolderDetails.getCardHolderName().ifPresent(cardDetailsEntity::setCardHolderName);
+        prefilledCardHolderDetails.getAddress().map(AddressEntity::new).ifPresent(cardDetailsEntity::setBillingAddress);
+        return cardDetailsEntity;
     }
 
     @Transactional

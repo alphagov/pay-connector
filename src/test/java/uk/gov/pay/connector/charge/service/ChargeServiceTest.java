@@ -18,6 +18,7 @@ import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.charge.model.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -43,6 +44,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import static java.util.Collections.emptyMap;
@@ -50,6 +52,7 @@ import static java.util.Collections.singletonList;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.UriBuilder.fromUri;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
@@ -188,6 +191,22 @@ public class ChargeServiceTest {
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+    }
+
+    @Test
+    public void shouldCreateAChargeWithExternalMetadata() {
+        Map<String, Object> metadata = Map.of(
+                "key1", "string",
+                "key2", true,
+                "key3", 123,
+                "key4", 1.23);
+        final ChargeCreateRequest request = requestBuilder.withExternalMetadata(new ExternalMetadata(metadata)).build();
+
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        assertThat(chargeEntityArgumentCaptor.getValue().getExternalMetadata().get().getMetadata(), equalTo(metadata));
     }
 
     @Test

@@ -4,13 +4,17 @@ import com.google.common.collect.ImmutableMap;
 import io.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.postgresql.util.PGobject;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.charge.model.ExternalMetadata;
+import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import javax.ws.rs.core.Response.Status;
 import java.util.HashMap;
+import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.SECONDS;
@@ -19,6 +23,8 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -29,6 +35,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.JsonEncoder.toJsonWithNulls;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -50,6 +57,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     private static final String JSON_DELAYED_CAPTURE_KEY = "delayed_capture";
     private static final String JSON_CORPORATE_CARD_SURCHARGE_KEY = "corporate_card_surcharge";
     private static final String JSON_TOTAL_AMOUNT_KEY = "total_amount";
+    private static final String JSON_METADATA_KEY = "metadata";
     private static final String PROVIDER_NAME = "sandbox";
     private static final String JSON_PREFILLED_CARDHOLDER_DETAILS_KEY = "prefilled_cardholder_details";
     private static final String JSON_BILLING_ADDRESS_KEY = "billing_address";
@@ -480,7 +488,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .body("card_details.billing_address." + JSON_ADDRESS_POST_CODE_KEY, is(postCode))
                 .body("card_details.billing_address." + JSON_ADDRESS_LINE_CITY, is(nullValue()))
                 .body("card_details.billing_address." + JSON_ADDRESS_LINE_COUNTRY_CODE, is(nullValue()));
-        
     }
 
     @Test
@@ -527,6 +534,88 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
                 .body("card_details." + JSON_CARDHOLDER_NAME_KEY, is(cardholderName))
                 .body("containsKey('billing_address')", is(false));
+    }
+
+    @Test
+    public void shouldCreateChargeWithExternalMetadata() {
+        Map<String, Object> metadata = Map.of(
+                "key1", "string",
+                "key2", true,
+                "key3", 123,
+                "key4", 1.23);
+
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, "Test reference")
+                .put(JSON_DESCRIPTION_KEY, "Test description")
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, RETURN_URL)
+                .put(JSON_EMAIL_KEY, EMAIL)
+                .put(JSON_METADATA_KEY, metadata)
+                .build()
+        );
+
+        ValidatableResponse response = connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .contentType(JSON);
+
+        String externalChargeId = response.extract().path(JSON_CHARGE_KEY);
+        Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(externalChargeId);
+        ExternalMetadataConverter converter = new ExternalMetadataConverter();
+        ExternalMetadata externalMetadata = converter.convertToEntityAttribute((PGobject) charge.get("external_metadata"));
+
+        assertThat(externalMetadata.getMetadata(), equalTo(metadata));
+    }
+
+    @Test
+    public void shouldReturn400ForInvalidMetadata() {
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("key1", null);
+        metadata.put("key2", new HashMap<>());
+        metadata.put("", "validValue");
+        metadata.put("key3", "");
+        metadata.put("key4", "This value is too long because it is over fifty characters!");
+        metadata.put("This is key number 5 and it is too long", "This is valid");
+
+        String postBody = toJsonWithNulls(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, "Test reference")
+                .put(JSON_DESCRIPTION_KEY, "Test description")
+                .put(JSON_GATEWAY_ACC_KEY, accountId)
+                .put(JSON_RETURN_URL_KEY, RETURN_URL)
+                .put(JSON_EMAIL_KEY, EMAIL)
+                .put(JSON_METADATA_KEY, metadata)
+                .build());
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(400)
+                .contentType(JSON)
+                .body(JSON_MESSAGE_KEY, containsInAnyOrder(
+                        "Field [metadata] values must be of type String, Boolean or Number",
+                        "Field [metadata] keys must be between 1 and 30 characters long",
+                        "Field [metadata] must not have null values",
+                        "Field [metadata] values must be no greater than 50 characters long"));
+    }
+
+    @Test
+    public void shouldReturn201IfMetadataIsNull_BecauseWeDoNotDeserializeNullValues() {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put(JSON_AMOUNT_KEY, AMOUNT);
+        payload.put(JSON_REFERENCE_KEY, "Test reference");
+        payload.put(JSON_DESCRIPTION_KEY, "Test description");
+        payload.put(JSON_GATEWAY_ACC_KEY, accountId);
+        payload.put(JSON_RETURN_URL_KEY, RETURN_URL);
+        payload.put(JSON_EMAIL_KEY, EMAIL);
+        payload.put(JSON_METADATA_KEY, null);
+
+        String postBody = toJsonWithNulls(payload);
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(201)
+                .contentType(JSON);
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {
