@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.time.ZonedDateTime;
@@ -17,6 +18,7 @@ import static java.time.ZonedDateTime.now;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.apache.commons.lang.math.RandomUtils.nextInt;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
@@ -278,6 +280,25 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
                 .body("results[0].charge_id", is(externalChargeId2));
     }
 
+    @Test
+    public void shouldReturnFeeandNetChargeInSearchResultsV2IfFeeExists() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+        long feeCollected = 100;
+
+        createCharge(externalChargeId, chargeId);
+        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .getChargesV2()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results[0].charge_id", is(externalChargeId))
+                .body("results[0].fee", is(100))
+                .body("results[0].net_amount", is(6284)); //6234 + 150 - 100
+    }
+
     private String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, String transactionId, ZonedDateTime fromDate,
                                            String cardBrand, String returnUrl, String email) {
         String externalChargeId = "charge" + chargeId;
@@ -306,5 +327,14 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
     private String expectedChargesLocationFor(String accountId, String queryParams) {
         return "/v2/api/accounts/{accountId}/charges".replace("{accountId}", accountId)
                 + queryParams;
+    }
+
+    private void createCharge(String externalChargeId, long chargeId) {
+        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
+                ServicePaymentReference.of("ref"), null, EMAIL);
+        databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
+                "03/18", "line1", null, "postcode", "city", null, "country");
+        databaseTestHelper.updateCorporateSurcharge(chargeId, 150L);
+        databaseTestHelper.addToken(chargeId, "tokenId");
     }
 }

@@ -234,6 +234,9 @@ public class ChargeService {
                 builderOfResponse.withCorporateCardSurcharge(corporateSurcharge)
                         .withTotalAmount(CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity)));
 
+        // @TODO(sfount) consider if total and net columns could be calculation columns in postgres (single source of truth)
+        chargeEntity.getNetAmount().ifPresent(builderOfResponse::withNetAmount);
+
         ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
         if (!chargeStatus.toExternal().isFinished() && !chargeStatus.equals(ChargeStatus.AWAITING_CAPTURE_REQUEST)) {
             TokenEntity token = createNewChargeEntityToken(chargeEntity);

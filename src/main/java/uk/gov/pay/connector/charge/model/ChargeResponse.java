@@ -322,6 +322,9 @@ public class ChargeResponse {
 
     @JsonProperty("total_amount")
     private Long totalAmount;
+   
+    @JsonProperty("net_amount")
+    private Long netAmount;
     
     @JsonProperty("wallet_type")
     private WalletType walletType;
@@ -349,6 +352,7 @@ public class ChargeResponse {
         this.corporateCardSurcharge = builder.getCorporateCardSurcharge();
         this.fee = builder.getFee();
         this.totalAmount = builder.getTotalAmount();
+        this.netAmount = builder.getNetAmount();
         this.walletType = builder.getWalletType();
     }
 
@@ -431,6 +435,10 @@ public class ChargeResponse {
         return totalAmount;
     }
 
+    public Long getNetAmount() {
+        return netAmount;
+    }
+    
     public WalletType getWalletType() {
         return walletType;
     }

@@ -56,7 +56,7 @@ import java.util.Optional;
                         @ColumnResult(name = "fee_amount", type = Long.class)}))
 @Entity
 @ReadOnly
-public class Transaction {
+public class Transaction implements Nettable {
 
     @Id
     private Long chargeId;
@@ -244,7 +244,7 @@ public class Transaction {
         return addressPostcode;
     }
 
-    public long getAmount() {
+    public Long getAmount() {
         return amount;
     }
 
@@ -259,14 +259,14 @@ public class Transaction {
     public String getUserExternalId() {
         return userExternalId;
     }
-    public Optional<Long> getCorporateCardSurcharge() {
+    public Optional<Long> getCorporateSurcharge() {
         return Optional.ofNullable(corporateSurcharge);
     }
 
     public WalletType getWalletType() {
         return walletType;
     }
-    
+
     public Optional<Long> getFeeAmount() {
         return Optional.ofNullable(feeAmount);
     }

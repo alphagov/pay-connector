@@ -97,7 +97,7 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
         }
 
         if (TransactionType.CHARGE == transaction.getTransactionType()) {
-            transaction.getCorporateCardSurcharge().ifPresent(surcharge -> {
+            transaction.getCorporateSurcharge().ifPresent(surcharge -> {
                 if (surcharge > 0) {
                     transactionResponseBuilder
                             .withCorporateCardSurcharge(surcharge)
@@ -105,6 +105,8 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
                 }
             });
         }
+        
+        transaction.getNetAmount().ifPresent(transactionResponseBuilder::withNetAmount);
 
         return transactionResponseBuilder.build();
     }

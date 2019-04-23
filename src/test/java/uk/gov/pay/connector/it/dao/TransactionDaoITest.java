@@ -102,7 +102,7 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactionCharge.getLanguage(), is(testCharge.getLanguage()));
         assertThat(transactionCharge.isDelayedCapture(), is(testCharge.isDelayedCapture()));
         assertDateMatch(transactionCharge.getCreatedDate().toString());
-        assertThat(transactionCharge.getCorporateCardSurcharge(), is(Optional.empty()));
+        assertThat(transactionCharge.getCorporateSurcharge(), is(Optional.empty()));
     }
 
     @Test
@@ -130,8 +130,8 @@ public class TransactionDaoITest extends DaoITestBase {
         assertThat(transactionCharge.getLanguage(), is(testCharge.getLanguage()));
         assertThat(transactionCharge.isDelayedCapture(), is(testCharge.isDelayedCapture()));
         assertDateMatch(transactionCharge.getCreatedDate().toString());
-        assertThat(transactionCharge.getCorporateCardSurcharge().isPresent(), is(true));
-        assertThat(transactionCharge.getCorporateCardSurcharge().get(), is(250L));
+        assertThat(transactionCharge.getCorporateSurcharge().isPresent(), is(true));
+        assertThat(transactionCharge.getCorporateSurcharge().get(), is(250L));
     }
     
     @Test

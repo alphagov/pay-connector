@@ -165,6 +165,20 @@ public class ChargesFrontendResourceITest {
                 .body("charge_id", is(externalChargeId))
                 .body("fee", is(100));
     }
+    
+    @Test
+    public void getChargeShouldIncludeNetAmountIfFeeExists() {
+        String externalChargeId = postToCreateACharge(expectedAmount);
+        final long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
+        final long feeCollected = 100L;
+        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
+
+        getChargeFromResource(externalChargeId)
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("charge_id", is(externalChargeId))
+                .body("net_amount", is(6134));
+    }
 
     @Test
     public void shouldReturnInternalChargeStatusIfStatusIsAuthorised() {
