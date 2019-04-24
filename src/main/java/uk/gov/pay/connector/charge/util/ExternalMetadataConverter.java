@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.postgresql.util.PGobject;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.exception.ExternalMetadataConverterException;
-import uk.gov.pay.connector.charge.model.ExternalMetadata;
 
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;

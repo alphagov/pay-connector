@@ -4,9 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.hibernate.validator.constraints.Length;
+import uk.gov.pay.commons.api.json.ExternalMetadataDeserialiser;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.SupportedLanguageJsonDeserializer;
-import uk.gov.pay.connector.charge.util.ExternalMetadataDeserialiser;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
