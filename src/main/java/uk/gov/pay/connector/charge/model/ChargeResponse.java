@@ -26,6 +26,278 @@ import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public class ChargeResponse {
 
+    @JsonProperty("links")
+    private List<Map<String, Object>> dataLinks;
+
+    @JsonProperty("charge_id")
+    private String chargeId;
+
+    @JsonProperty
+    private Long amount;
+
+    @JsonProperty
+    private ExternalTransactionState state;
+
+    @JsonProperty("card_brand")
+    private String cardBrand;
+
+    @JsonProperty("gateway_transaction_id")
+    private String gatewayTransactionId;
+
+    @JsonProperty("return_url")
+    private String returnUrl;
+
+    @JsonProperty("email")
+    private String email;
+
+    @JsonProperty
+    private String description;
+
+    @JsonProperty
+    @JsonSerialize(using = ToStringSerializer.class)
+    private ServicePaymentReference reference;
+
+    @JsonProperty("payment_provider")
+    private String providerName;
+
+    @JsonProperty("created_date")
+    @JsonSerialize(using = ApiResponseDateTimeSerializer.class)
+    private ZonedDateTime createdDate;
+
+    @JsonProperty("refund_summary")
+    private RefundSummary refundSummary;
+
+    @JsonProperty("settlement_summary")
+    private SettlementSummary settlementSummary;
+
+    @JsonProperty("auth_3ds_data")
+    private Auth3dsData auth3dsData;
+
+    @JsonProperty("card_details")
+    protected PersistedCard cardDetails;
+
+    @JsonProperty
+    @JsonSerialize(using = ToStringSerializer.class)
+    private SupportedLanguage language;
+
+    @JsonProperty("delayed_capture")
+    private boolean delayedCapture;
+
+    @JsonProperty("corporate_card_surcharge")
+    private Long corporateCardSurcharge;
+
+    @JsonProperty("fee")
+    private Long fee;
+
+    @JsonProperty("total_amount")
+    private Long totalAmount;
+
+    @JsonProperty("net_amount")
+    private Long netAmount;
+
+    @JsonProperty("wallet_type")
+    private WalletType walletType;
+
+
+    ChargeResponse(AbstractChargeResponseBuilder<?, ? extends ChargeResponse> builder) {
+        this.dataLinks = builder.getLinks();
+        this.chargeId = builder.getChargeId();
+        this.amount = builder.getAmount();
+        this.state = builder.getState();
+        this.cardBrand = builder.getCardBrand();
+        this.gatewayTransactionId = builder.getGatewayTransactionId();
+        this.returnUrl = builder.getReturnUrl();
+        this.description = builder.getDescription();
+        this.reference = builder.getReference();
+        this.providerName = builder.getProviderName();
+        this.createdDate = builder.getCreatedDate();
+        this.email = builder.getEmail();
+        this.refundSummary = builder.getRefundSummary();
+        this.settlementSummary = builder.getSettlementSummary();
+        this.cardDetails = builder.getCardDetails();
+        this.auth3dsData = builder.getAuth3dsData();
+        this.language = builder.getLanguage();
+        this.delayedCapture = builder.isDelayedCapture();
+        this.corporateCardSurcharge = builder.getCorporateCardSurcharge();
+        this.fee = builder.getFee();
+        this.totalAmount = builder.getTotalAmount();
+        this.netAmount = builder.getNetAmount();
+        this.walletType = builder.getWalletType();
+    }
+
+    public List<Map<String, Object>> getDataLinks() {
+        return dataLinks;
+    }
+
+    public String getChargeId() {
+        return chargeId;
+    }
+
+    public Long getAmount() {
+        return amount;
+    }
+
+    public ExternalTransactionState getState() {
+        return state;
+    }
+
+    public String getCardBrand() {
+        return cardBrand;
+    }
+
+    public String getGatewayTransactionId() {
+        return gatewayTransactionId;
+    }
+
+    public String getReturnUrl() {
+        return returnUrl;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public ServicePaymentReference getReference() {
+        return reference;
+    }
+
+    public String getProviderName() {
+        return providerName;
+    }
+
+    public RefundSummary getRefundSummary() {
+        return refundSummary;
+    }
+
+    public SettlementSummary getSettlementSummary() {
+        return settlementSummary;
+    }
+
+    public Auth3dsData getAuth3dsData() {
+        return auth3dsData;
+    }
+
+    public PersistedCard getCardDetails() {
+        return cardDetails;
+    }
+
+    public SupportedLanguage getLanguage() {
+        return language;
+    }
+
+    public boolean getDelayedCapture() {
+        return delayedCapture;
+    }
+
+    public Long getCorporateCardSurcharge() {
+        return corporateCardSurcharge;
+    }
+    public Long getFee() {
+        return fee;
+    }
+
+    public Long getTotalAmount() {
+        return totalAmount;
+    }
+
+    public Long getNetAmount() {
+        return netAmount;
+    }
+
+    public WalletType getWalletType() {
+        return walletType;
+    }
+
+    public URI getLink(String rel) {
+        return dataLinks.stream()
+                .filter(map -> rel.equals(map.get("rel")))
+                .findFirst()
+                .map(link -> (URI) link.get("href"))
+                .get();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChargeResponse that = (ChargeResponse) o;
+        return delayedCapture == that.delayedCapture &&
+                Objects.equals(dataLinks, that.dataLinks) &&
+                Objects.equals(chargeId, that.chargeId) &&
+                Objects.equals(amount, that.amount) &&
+                Objects.equals(state, that.state) &&
+                Objects.equals(cardBrand, that.cardBrand) &&
+                Objects.equals(gatewayTransactionId, that.gatewayTransactionId) &&
+                Objects.equals(returnUrl, that.returnUrl) &&
+                Objects.equals(email, that.email) &&
+                Objects.equals(description, that.description) &&
+                Objects.equals(reference, that.reference) &&
+                Objects.equals(providerName, that.providerName) &&
+                Objects.equals(createdDate, that.createdDate) &&
+                Objects.equals(refundSummary, that.refundSummary) &&
+                Objects.equals(settlementSummary, that.settlementSummary) &&
+                Objects.equals(auth3dsData, that.auth3dsData) &&
+                Objects.equals(cardDetails, that.cardDetails) &&
+                language == that.language &&
+                Objects.equals(corporateCardSurcharge, that.corporateCardSurcharge) &&
+                Objects.equals(totalAmount, that.totalAmount) &&
+                walletType == that.walletType;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(dataLinks, chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email,
+                description, reference, providerName, createdDate, refundSummary, settlementSummary, auth3dsData,
+                cardDetails, language, delayedCapture, corporateCardSurcharge, totalAmount, walletType);
+    }
+
+    @Override
+    public String toString() {
+        // Some services put PII in the description, so don’t include it in the stringification
+        return "ChargeResponse{" +
+                "dataLinks=" + dataLinks +
+                ", chargeId='" + chargeId + '\'' +
+                ", amount=" + amount +
+                ", state=" + state +
+                ", cardBrand='" + cardBrand + '\'' +
+                ", gatewayTransactionId='" + gatewayTransactionId + '\'' +
+                ", returnUrl='" + returnUrl + '\'' +
+                ", reference='" + reference + '\'' +
+                ", providerName='" + providerName + '\'' +
+                ", createdDate=" + createdDate +
+                ", refundSummary=" + refundSummary +
+                ", settlementSummary=" + settlementSummary +
+                ", auth3dsData=" + auth3dsData +
+                ", language=" + language +
+                ", delayedCapture=" + delayedCapture +
+                ", corporateCardSurcharge=" + corporateCardSurcharge +
+                ", totalAmount=" + totalAmount +
+                ", walletType=" + walletType.toString() +
+                '}';
+    }
+
+    public static class ChargeResponseBuilder extends AbstractChargeResponseBuilder<ChargeResponseBuilder, ChargeResponse> {
+        @Override
+        protected ChargeResponseBuilder thisObject() {
+            return this;
+        }
+
+        @Override
+        public ChargeResponse build() {
+            return new ChargeResponse(this);
+        }
+    }
+
+    public static ChargeResponseBuilder aChargeResponseBuilder() {
+        return new ChargeResponseBuilder();
+    }
+
+
+
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public static class RefundSummary {
 
@@ -240,277 +512,6 @@ public class ChargeResponse {
                     '}';
         }
     }
-
-    public static class ChargeResponseBuilder extends AbstractChargeResponseBuilder<ChargeResponseBuilder, ChargeResponse> {
-        @Override
-        protected ChargeResponseBuilder thisObject() {
-            return this;
-        }
-
-        @Override
-        public ChargeResponse build() {
-            return new ChargeResponse(this);
-        }
-    }
-
-    public static ChargeResponseBuilder aChargeResponseBuilder() {
-        return new ChargeResponseBuilder();
-    }
-
-    @JsonProperty("links")
-    private List<Map<String, Object>> dataLinks;
-
-    @JsonProperty("charge_id")
-    private String chargeId;
-
-    @JsonProperty
-    private Long amount;
-
-    @JsonProperty
-    private ExternalTransactionState state;
-
-    @JsonProperty("card_brand")
-    private String cardBrand;
-
-    @JsonProperty("gateway_transaction_id")
-    private String gatewayTransactionId;
-
-    @JsonProperty("return_url")
-    private String returnUrl;
-
-    @JsonProperty("email")
-    private String email;
-
-    @JsonProperty
-    private String description;
-
-    @JsonProperty
-    @JsonSerialize(using = ToStringSerializer.class)
-    private ServicePaymentReference reference;
-
-    @JsonProperty("payment_provider")
-    private String providerName;
-
-    @JsonProperty("created_date")
-    @JsonSerialize(using = ApiResponseDateTimeSerializer.class)
-    private ZonedDateTime createdDate;
-
-    @JsonProperty("refund_summary")
-    private RefundSummary refundSummary;
-
-    @JsonProperty("settlement_summary")
-    private SettlementSummary settlementSummary;
-
-    @JsonProperty("auth_3ds_data")
-    private Auth3dsData auth3dsData;
-
-    @JsonProperty("card_details")
-    protected PersistedCard cardDetails;
-
-    @JsonProperty
-    @JsonSerialize(using = ToStringSerializer.class)
-    private SupportedLanguage language;
-
-    @JsonProperty("delayed_capture")
-    private boolean delayedCapture;
-
-    @JsonProperty("corporate_card_surcharge")
-    private Long corporateCardSurcharge;
-
-    @JsonProperty("fee")
-    private Long fee;
-
-    @JsonProperty("total_amount")
-    private Long totalAmount;
-   
-    @JsonProperty("net_amount")
-    private Long netAmount;
-    
-    @JsonProperty("wallet_type")
-    private WalletType walletType;
-
-
-    ChargeResponse(AbstractChargeResponseBuilder<?, ? extends ChargeResponse> builder) {
-        this.dataLinks = builder.getLinks();
-        this.chargeId = builder.getChargeId();
-        this.amount = builder.getAmount();
-        this.state = builder.getState();
-        this.cardBrand = builder.getCardBrand();
-        this.gatewayTransactionId = builder.getGatewayTransactionId();
-        this.returnUrl = builder.getReturnUrl();
-        this.description = builder.getDescription();
-        this.reference = builder.getReference();
-        this.providerName = builder.getProviderName();
-        this.createdDate = builder.getCreatedDate();
-        this.email = builder.getEmail();
-        this.refundSummary = builder.getRefundSummary();
-        this.settlementSummary = builder.getSettlementSummary();
-        this.cardDetails = builder.getCardDetails();
-        this.auth3dsData = builder.getAuth3dsData();
-        this.language = builder.getLanguage();
-        this.delayedCapture = builder.isDelayedCapture();
-        this.corporateCardSurcharge = builder.getCorporateCardSurcharge();
-        this.fee = builder.getFee();
-        this.totalAmount = builder.getTotalAmount();
-        this.netAmount = builder.getNetAmount();
-        this.walletType = builder.getWalletType();
-    }
-
-    public List<Map<String, Object>> getDataLinks() {
-        return dataLinks;
-    }
-
-    public String getChargeId() {
-        return chargeId;
-    }
-
-    public Long getAmount() {
-        return amount;
-    }
-
-    public ExternalTransactionState getState() {
-        return state;
-    }
-
-    public String getCardBrand() {
-        return cardBrand;
-    }
-
-    public String getGatewayTransactionId() {
-        return gatewayTransactionId;
-    }
-
-    public String getReturnUrl() {
-        return returnUrl;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public ServicePaymentReference getReference() {
-        return reference;
-    }
-
-    public String getProviderName() {
-        return providerName;
-    }
-
-    public RefundSummary getRefundSummary() {
-        return refundSummary;
-    }
-
-    public SettlementSummary getSettlementSummary() {
-        return settlementSummary;
-    }
-
-    public Auth3dsData getAuth3dsData() {
-        return auth3dsData;
-    }
-
-    public PersistedCard getCardDetails() {
-        return cardDetails;
-    }
-
-    public SupportedLanguage getLanguage() {
-        return language;
-    }
-
-    public boolean getDelayedCapture() {
-        return delayedCapture;
-    }
-
-    public Long getCorporateCardSurcharge() {
-        return corporateCardSurcharge;
-    }
-    public Long getFee() {
-        return fee;
-    }
-
-    public Long getTotalAmount() {
-        return totalAmount;
-    }
-
-    public Long getNetAmount() {
-        return netAmount;
-    }
-    
-    public WalletType getWalletType() {
-        return walletType;
-    }
-
-    public URI getLink(String rel) {
-        return dataLinks.stream()
-                .filter(map -> rel.equals(map.get("rel")))
-                .findFirst()
-                .map(link -> (URI) link.get("href"))
-                .get();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ChargeResponse that = (ChargeResponse) o;
-        return delayedCapture == that.delayedCapture &&
-                Objects.equals(dataLinks, that.dataLinks) &&
-                Objects.equals(chargeId, that.chargeId) &&
-                Objects.equals(amount, that.amount) &&
-                Objects.equals(state, that.state) &&
-                Objects.equals(cardBrand, that.cardBrand) &&
-                Objects.equals(gatewayTransactionId, that.gatewayTransactionId) &&
-                Objects.equals(returnUrl, that.returnUrl) &&
-                Objects.equals(email, that.email) &&
-                Objects.equals(description, that.description) &&
-                Objects.equals(reference, that.reference) &&
-                Objects.equals(providerName, that.providerName) &&
-                Objects.equals(createdDate, that.createdDate) &&
-                Objects.equals(refundSummary, that.refundSummary) &&
-                Objects.equals(settlementSummary, that.settlementSummary) &&
-                Objects.equals(auth3dsData, that.auth3dsData) &&
-                Objects.equals(cardDetails, that.cardDetails) &&
-                language == that.language &&
-                Objects.equals(corporateCardSurcharge, that.corporateCardSurcharge) &&
-                Objects.equals(totalAmount, that.totalAmount) &&
-                walletType == that.walletType;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(dataLinks, chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email,
-                description, reference, providerName, createdDate, refundSummary, settlementSummary, auth3dsData,
-                cardDetails, language, delayedCapture, corporateCardSurcharge, totalAmount, walletType);
-    }
-
-    @Override
-    public String toString() {
-        // Some services put PII in the description, so don’t include it in the stringification
-        return "ChargeResponse{" +
-                "dataLinks=" + dataLinks +
-                ", chargeId='" + chargeId + '\'' +
-                ", amount=" + amount +
-                ", state=" + state +
-                ", cardBrand='" + cardBrand + '\'' +
-                ", gatewayTransactionId='" + gatewayTransactionId + '\'' +
-                ", returnUrl='" + returnUrl + '\'' +
-                ", reference='" + reference + '\'' +
-                ", providerName='" + providerName + '\'' +
-                ", createdDate=" + createdDate +
-                ", refundSummary=" + refundSummary +
-                ", settlementSummary=" + settlementSummary +
-                ", auth3dsData=" + auth3dsData +
-                ", language=" + language +
-                ", delayedCapture=" + delayedCapture +
-                ", corporateCardSurcharge=" + corporateCardSurcharge +
-                ", totalAmount=" + totalAmount +
-                ", walletType=" + walletType.toString() +
-                '}';
-    }
-
 }
 
 
