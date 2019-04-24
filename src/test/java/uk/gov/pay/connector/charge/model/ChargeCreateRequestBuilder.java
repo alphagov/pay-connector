@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.model;
 
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 
 public final class ChargeCreateRequestBuilder {
     private long amount;

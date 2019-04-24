@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;

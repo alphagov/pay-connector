@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import uk.gov.pay.connector.charge.model.ExternalMetadata;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 
 import java.io.IOException;
 import java.util.Map;

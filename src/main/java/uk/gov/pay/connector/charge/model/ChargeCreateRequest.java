@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.hibernate.validator.constraints.Length;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.SupportedLanguageJsonDeserializer;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.util.ExternalMetadataDeserialiser;
 
 import javax.validation.Valid;
