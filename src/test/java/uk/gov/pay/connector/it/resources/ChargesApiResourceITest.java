@@ -1,7 +1,10 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -19,6 +22,7 @@ import javax.ws.rs.core.HttpHeaders;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
@@ -127,6 +131,46 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("card_details", is(notNullValue()))
                 .body("card_details.last_digits_card_number", is("5678"))
                 .body("card_details.first_digits_card_number", is("123456"));
+    }
+
+    @Test
+    public void shouldGetMetadataWhenSet() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+        ExternalMetadata externalMetadata = new ExternalMetadata(
+                Map.of("key1", true, "key2", 123, "key3", "string1"));
+
+        databaseTestHelper.addChargeWithExternalMetadata(chargeId, externalChargeId, accountId, 100,
+                AUTHORISATION_SUCCESS, RETURN_URL, null, ServicePaymentReference.of("ref"), null,
+                SupportedLanguage.ENGLISH, false, 100L, externalMetadata);
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("metadata.key1", is(true))
+                .body("metadata.key2", is(123))
+                .body("metadata.key3", is("string1"));
+    }
+
+    @Test
+    public void shouldNotReturnMetadataWhenNull() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addChargeWithExternalMetadata(chargeId, externalChargeId, accountId, 100,
+                AUTHORISATION_SUCCESS, RETURN_URL, null, ServicePaymentReference.of("ref"), null,
+                SupportedLanguage.ENGLISH, false, 100L, null);
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("metadata", is(Matchers.nullValue()));
     }
 
     @Test

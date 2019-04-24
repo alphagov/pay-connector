@@ -2,6 +2,7 @@ package uk.gov.pay.connector.charge.model.builder;
 
 import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
@@ -38,6 +39,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected Long totalAmount;
     protected Long netAmount;
     protected WalletType walletType;
+    protected ExternalMetadata externalMetadata;
 
     protected abstract T thisObject();
 
@@ -166,6 +168,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         this.walletType = walletType;
         return thisObject();
     }
+    
+    public T withExternalMetadata(ExternalMetadata externalMetadata) {
+        this.externalMetadata = externalMetadata;
+        return thisObject();
+    }
 
     public String getChargeId() {
         return chargeId;
@@ -259,5 +266,9 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public Long getFee() {
         return fee;
+    }
+
+    public ExternalMetadata getExternalMetadata() {
+        return externalMetadata;
     }
 }

@@ -7,8 +7,10 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import uk.gov.pay.commons.api.json.ApiResponseDateTimeSerializer;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.charge.util.ExternalMetadataSerialiser;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -97,7 +99,10 @@ public class ChargeResponse {
 
     @JsonProperty("wallet_type")
     private WalletType walletType;
-
+    
+    @JsonProperty("metadata")
+    @JsonSerialize(using = ExternalMetadataSerialiser.class)
+    private ExternalMetadata externalMetadata;
 
     ChargeResponse(AbstractChargeResponseBuilder<?, ? extends ChargeResponse> builder) {
         this.dataLinks = builder.getLinks();
@@ -123,6 +128,7 @@ public class ChargeResponse {
         this.totalAmount = builder.getTotalAmount();
         this.netAmount = builder.getNetAmount();
         this.walletType = builder.getWalletType();
+        this.externalMetadata = builder.getExternalMetadata();
     }
 
     public List<Map<String, Object>> getDataLinks() {
@@ -210,6 +216,10 @@ public class ChargeResponse {
 
     public WalletType getWalletType() {
         return walletType;
+    }
+
+    public ExternalMetadata getExternalMetadata() {
+        return externalMetadata;
     }
 
     public URI getLink(String rel) {

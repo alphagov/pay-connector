@@ -7,7 +7,9 @@ import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.StringColumnMapper;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.charge.exception.ExternalMetadataConverterException;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
@@ -160,7 +162,7 @@ public class DatabaseTestHelper {
                           String transactionId, ServicePaymentReference reference, String description, ZonedDateTime createdDate, String email,
                           SupportedLanguage language, Long corporateCardSurcharge) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, description, reference,
-                createdDate == null ? now() : createdDate, 1, email, language, false, corporateCardSurcharge);
+                createdDate == null ? now() : createdDate, 1, email, language, false, corporateCardSurcharge, null);
     }
 
     public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
@@ -175,7 +177,17 @@ public class DatabaseTestHelper {
                                                     SupportedLanguage language, boolean delayedCapture, Long corporateCardSurcharge) {
         addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId,
                 "Test description", reference, createdDate == null ? now() : createdDate, 1, null,
-                language, delayedCapture, corporateCardSurcharge);
+                language, delayedCapture, corporateCardSurcharge, null);
+    }
+
+    public void addChargeWithExternalMetadata(Long chargeId, String externalChargeId, String accountId, long amount,
+                                                    ChargeStatus chargeStatus, String returnUrl, String transactionId,
+                                                    ServicePaymentReference reference, ZonedDateTime createdDate,
+                                                    SupportedLanguage language, boolean delayedCapture, Long corporateCardSurcharge,
+                                              ExternalMetadata externalMetadata) {
+        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId,
+                "Test description", reference, createdDate == null ? now() : createdDate, 1, null,
+                language, delayedCapture, corporateCardSurcharge, externalMetadata);
     }
 
     private void addCharge(
@@ -195,7 +207,7 @@ public class DatabaseTestHelper {
             boolean delayedCapture
     ) {
         addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, description, reference,
-                createdDate, version, email, language, delayedCapture, null);
+                createdDate, version, email, language, delayedCapture, null, null);
     }
 
     private void addCharge(
@@ -213,8 +225,18 @@ public class DatabaseTestHelper {
             String email,
             SupportedLanguage language,
             boolean delayedCapture,
-            Long corporateSurcharge
+            Long corporateSurcharge,
+            ExternalMetadata externalMetadata
     ) {
+        PGobject jsonMetadata = new PGobject();
+        jsonMetadata.setType("json");
+        try {
+            if (externalMetadata != null) {
+                jsonMetadata.setValue(new Gson().toJson(externalMetadata.getMetadata()));
+            }
+        } catch (SQLException e) {
+            throw new ExternalMetadataConverterException("Failed to persist external metadata");
+        }
         jdbi.withHandle(h ->
                 h.update(
                         "INSERT INTO" +
@@ -233,9 +255,10 @@ public class DatabaseTestHelper {
                                 "        email,\n" +
                                 "        language,\n" +
                                 "        delayed_capture,\n" +
-                                "        corporate_surcharge\n" +
+                                "        corporate_surcharge,\n" +
+                                "        external_metadata\n" +
                                 "    )\n" +
-                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
+                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
                         chargeId,
                         externalChargeId,
                         amount,
@@ -250,7 +273,8 @@ public class DatabaseTestHelper {
                         email,
                         language.toString(),
                         delayedCapture,
-                        corporateSurcharge
+                        corporateSurcharge,
+                        jsonMetadata
                 )
         );
     }
