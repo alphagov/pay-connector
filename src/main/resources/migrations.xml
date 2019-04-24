@@ -1121,4 +1121,12 @@
         </update>
     </changeSet>
 
+    <changeSet id="add gateway_transaction_id column to refunds_history table" author="">
+        <addColumn tableName="refunds_history">
+            <column name="gateway_transaction_id" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
