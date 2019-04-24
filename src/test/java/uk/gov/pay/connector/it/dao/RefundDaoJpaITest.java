@@ -306,6 +306,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
         RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId);
         refundEntity.setStatus(REFUND_SUBMITTED);
         refundEntity.setReference("test-refund-entity");
+        refundEntity.setGatewayTransactionId(randomAlphanumeric(10));
 
         refundDao.persist(refundEntity);
         List<RefundHistory> refundHistoryList = refundDao.searchHistoryByChargeId(chargeEntity.getId());
@@ -325,6 +326,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
         assertThat(refundHistory.getReference(), is(refundEntity.getReference()));
         assertThat(refundEntity.getUserExternalId(), is(userExternalId));
         assertThat(refundHistory.getUserExternalId(), is(refundEntity.getUserExternalId()));
+        assertThat(refundHistory.getGatewayTransactionId(), is(refundEntity.getGatewayTransactionId()));
     }
 
     // CREATED to REFUND_SUBMITTED happens synchronously so not needed to return history for CREATED status

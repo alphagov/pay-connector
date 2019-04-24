@@ -44,7 +44,8 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
                         @ColumnResult(name = "reference", type = String.class),
                         @ColumnResult(name = "history_start_date", type = Timestamp.class),
                         @ColumnResult(name = "history_end_date", type = Timestamp.class),
-                        @ColumnResult(name = "user_external_id", type = String.class)
+                        @ColumnResult(name = "user_external_id", type = String.class),
+                        @ColumnResult(name = "gateway_transaction_id", type = String.class)                        
                 }))
 
 @Entity
@@ -185,6 +186,7 @@ public class RefundEntity extends AbstractVersionedEntity {
                 ", status='" + status + '\'' +
                 ", userExternalId='" + userExternalId + '\'' +
                 ", chargeEntity=" + chargeEntity +
+                ", gatewayTransactionId=" + gatewayTransactionId +
                 ", createdDate=" + createdDate +
                 '}';
     }
