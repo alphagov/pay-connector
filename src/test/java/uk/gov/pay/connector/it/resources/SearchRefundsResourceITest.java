@@ -54,9 +54,9 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
         String refundDate1 = "2016-02-03T00:00:00.000Z";
         String refundDate2 = "2016-02-02T00:00:00.000Z";
         
-        databaseTestHelper.addRefund(refundExternalId1, "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId, ZonedDateTime.parse(refundDate1));
-        databaseTestHelper.addRefund(refundExternalId2, "refund-2-provider-reference", 2L, REFUNDED, chargeId, ZonedDateTime.parse(refundDate2));
-        databaseTestHelper.addRefund("shouldnotberetrieved", "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId2, ZonedDateTime.parse(refundDate1));
+        databaseTestHelper.addRefund(refundExternalId1, "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId, randomAlphanumeric(10), ZonedDateTime.parse(refundDate1));
+        databaseTestHelper.addRefund(refundExternalId2, "refund-2-provider-reference", 2L, REFUNDED, chargeId, randomAlphanumeric(10), ZonedDateTime.parse(refundDate2));
+        databaseTestHelper.addRefund("shouldnotberetrieved", "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId2, randomAlphanumeric(10), ZonedDateTime.parse(refundDate1));
         databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient.withAccountId(accountId)

@@ -46,12 +46,14 @@ public class RefundSearchStrategy extends AbstractSearchStrategy<RefundEntity, S
         String accountId = String.valueOf(refundEntity.getChargeEntity().getGatewayAccount().getId());
         String externalChargeId = refundEntity.getChargeEntity().getExternalId();
         String externalRefundId = refundEntity.getExternalId();
+        String gatewayTransactionId = refundEntity.getGatewayTransactionId();
 
         return responseBuilder
                 .withRefundId(externalRefundId)
                 .withCreatedDate(refundEntity.getCreatedDate())
                 .withStatus(refundEntity.getStatus().toExternal().getStatus())
                 .withChargeId(externalChargeId)
+                .withGatewayTransactionId(gatewayTransactionId)
                 .withAmountSubmitted(refundEntity.getAmount())
                 .withLink("self", GET, selfUriFor(uriInfo, accountId, externalChargeId, externalRefundId))
                 .withLink("payment_url", GET, paymentLinkFor(uriInfo, accountId, externalChargeId));

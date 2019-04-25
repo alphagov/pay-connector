@@ -16,7 +16,10 @@ public class RefundHistory extends RefundEntity {
     private ZonedDateTime historyStartDate;
     private ZonedDateTime historyEndDate;
 
-    public RefundHistory(Long id, String externalId, Long amount, String status, Long chargeId, Timestamp createdDate, Long version, String reference, Timestamp historyStartDate, Timestamp historyEndDate, String userExternalId) {
+    public RefundHistory(Long id, String externalId, Long amount, String status, Long chargeId, Timestamp createdDate, 
+                         Long version, String reference, Timestamp historyStartDate, Timestamp historyEndDate, 
+                         String userExternalId,
+                         String gatewayTransactionId) {
         super();
         setId(id);
         setExternalId(externalId);
@@ -31,6 +34,7 @@ public class RefundHistory extends RefundEntity {
         setCreatedDate(new UTCDateTimeConverter().convertToEntityAttribute(createdDate));
         setVersion(version);
         setReference(reference);
+        setGatewayTransactionId(gatewayTransactionId);
 
         setHistoryStartDate(new UTCDateTimeConverter().convertToEntityAttribute(historyStartDate));
         setHistoryEndDate(new UTCDateTimeConverter().convertToEntityAttribute(historyEndDate));

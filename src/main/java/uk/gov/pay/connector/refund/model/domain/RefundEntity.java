@@ -44,7 +44,8 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
                         @ColumnResult(name = "reference", type = String.class),
                         @ColumnResult(name = "history_start_date", type = Timestamp.class),
                         @ColumnResult(name = "history_end_date", type = Timestamp.class),
-                        @ColumnResult(name = "user_external_id", type = String.class)
+                        @ColumnResult(name = "user_external_id", type = String.class),
+                        @ColumnResult(name = "gateway_transaction_id", type = String.class)                        
                 }))
 
 @Entity
@@ -75,6 +76,9 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     @Column(name = "user_external_id")
     private String userExternalId;
+    
+    @Column(name = "gateway_transaction_id")
+    private String gatewayTransactionId;
 
     @Column(name = "created_date")
     @Convert(converter = UTCDateTimeConverter.class)
@@ -95,6 +99,10 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     public String getExternalId() {
         return externalId;
+    }
+    
+    public String getGatewayTransactionId() { 
+        return gatewayTransactionId;
     }
 
     public String getReference() {
@@ -140,6 +148,10 @@ public class RefundEntity extends AbstractVersionedEntity {
     public void setExternalId(String externalId) {
         this.externalId = externalId;
     }
+    
+    public void setGatewayTransactionId(String gatewayTransactionId) { 
+        this.gatewayTransactionId = gatewayTransactionId;
+    }
 
     public void setCreatedDate(ZonedDateTime createdDate) {
         this.createdDate = createdDate;
@@ -174,6 +186,7 @@ public class RefundEntity extends AbstractVersionedEntity {
                 ", status='" + status + '\'' +
                 ", userExternalId='" + userExternalId + '\'' +
                 ", chargeEntity=" + chargeEntity +
+                ", gatewayTransactionId=" + gatewayTransactionId +
                 ", createdDate=" + createdDate +
                 '}';
     }

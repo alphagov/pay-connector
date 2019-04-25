@@ -18,6 +18,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -191,7 +192,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     private String createNewChargeWithRefund(String transactionId, String refundExternalId, long refundAmount) {
         String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
         String chargeId = externalChargeId.substring(externalChargeId.indexOf("-") + 1);
-        databaseTestHelper.addRefund(refundExternalId, refundExternalId, refundAmount, REFUND_SUBMITTED, Long.valueOf(chargeId), ZonedDateTime.now());
+        databaseTestHelper.addRefund(refundExternalId, refundExternalId, refundAmount, REFUND_SUBMITTED, Long.valueOf(chargeId), randomAlphanumeric(10), ZonedDateTime.now());
         return externalChargeId;
     }
 

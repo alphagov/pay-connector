@@ -652,6 +652,7 @@ public class  DatabaseFixtures {
         ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
         TestCharge testCharge;
         String submittedByUserExternalId;
+        String gatewayTransactionId;
 
         public TestRefund withTestCharge(TestCharge charge) {
             this.testCharge = charge;
@@ -688,16 +689,20 @@ public class  DatabaseFixtures {
             return this;
         }
 
-
         public TestRefund withExternalRefundId(String externalRefundId) {
             this.externalRefundId = externalRefundId;
+            return this;
+        }
+        
+        public TestRefund withGatewayTransactionId(String gatewayTransactionId) { 
+            this.gatewayTransactionId = gatewayTransactionId;
             return this;
         }
 
         public TestRefund insert() {
             if (testCharge == null)
                 throw new IllegalStateException("Test charge must be provided.");
-            id = databaseTestHelper.addRefund(externalRefundId, reference, amount, status, testCharge.getChargeId(), createdDate, submittedByUserExternalId);
+            id = databaseTestHelper.addRefund(externalRefundId, reference, amount, status, testCharge.getChargeId(), gatewayTransactionId, createdDate, submittedByUserExternalId);
             return this;
         }
 
@@ -728,6 +733,10 @@ public class  DatabaseFixtures {
 
         public TestCharge getTestCharge() {
             return testCharge;
+        }
+        
+        public String getGatewayTransactionId() {
+            return gatewayTransactionId;
         }
 
         public String getSubmittedByUserExternalId() {

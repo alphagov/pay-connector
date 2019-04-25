@@ -30,6 +30,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static io.restassured.RestAssured.given;
 import static java.lang.String.format;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 
 @RunWith(PactRunner.class)
@@ -95,7 +96,7 @@ public class TransactionsApiContractTest {
 
         for (int i = 0; i < numberOfRefunds; i++) {
             dbHelper.addRefund("external" + RandomUtils.nextInt(), "reference", 1L, REFUNDED,
-                    chargeId, createdDate);
+                    chargeId, randomAlphanumeric(10), createdDate);
         }
     }
 
