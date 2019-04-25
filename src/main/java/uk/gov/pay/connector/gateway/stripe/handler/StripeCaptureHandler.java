@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
@@ -9,20 +8,15 @@ import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
-import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
+import uk.gov.pay.connector.gateway.stripe.request.StripeCaptureRequest;
 import uk.gov.pay.connector.gateway.stripe.response.StripeCaptureResponse;
-import uk.gov.pay.connector.gateway.util.AuthUtil;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import java.net.URI;
 import java.util.Map;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.COMPLETE;
@@ -47,17 +41,10 @@ public class StripeCaptureHandler implements CaptureHandler {
 
     @Override
     public CaptureResponse capture(CaptureGatewayRequest request) {
-
         String transactionId = request.getTransactionId();
-        String url = stripeGatewayConfig.getUrl() + "/v1/charges/" + transactionId + "/capture";
-        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
 
         try {
-            String captureResponse = client.postRequestFor(
-                    URI.create(url),
-                    gatewayAccount, 
-                    new GatewayOrder(OrderRequestType.CAPTURE, StringUtils.EMPTY, APPLICATION_FORM_URLENCODED_TYPE),
-                    AuthUtil.getStripeAuthHeader(stripeGatewayConfig, gatewayAccount.isLive())).getEntity();
+            String captureResponse = client.postRequestFor(StripeCaptureRequest.of(request, stripeGatewayConfig)).getEntity();
             String stripeTransactionId = jsonObjectMapper.getObject(captureResponse, Map.class).get("id").toString();
             return fromBaseCaptureResponse(new StripeCaptureResponse(stripeTransactionId), COMPLETE);
 
