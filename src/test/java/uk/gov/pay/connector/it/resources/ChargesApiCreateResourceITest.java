@@ -402,7 +402,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
         connectorRestApiClient.postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .contentType(JSON)
-                .log().body()
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
                 .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
                 .body(JSON_REFERENCE_KEY, is("Reference"))
@@ -558,7 +557,11 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
         ValidatableResponse response = connectorRestApiClient
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
-                .contentType(JSON);
+                .contentType(JSON)
+                .log().body()
+                .body(JSON_METADATA_KEY + ".key1", is("string"))
+                .body(JSON_METADATA_KEY + ".key2", is(true))
+                .body(JSON_METADATA_KEY + ".key3", is(123));
 
         String externalChargeId = response.extract().path(JSON_CHARGE_KEY);
         Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(externalChargeId);

@@ -223,8 +223,10 @@ public class ChargeService {
                 .withAuth3dsData(auth3dsData)
                 .withLink("self", GET, selfUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()))
-                .withWalletType(chargeEntity.getWalletType())
-                .withFee(chargeEntity.getFeeAmount().orElse(null));
+                .withWalletType(chargeEntity.getWalletType());
+        
+        chargeEntity.getFeeAmount().ifPresent(builderOfResponse::withFee);
+        chargeEntity.getExternalMetadata().ifPresent(builderOfResponse::withExternalMetadata);
 
         if (ChargeStatus.AWAITING_CAPTURE_REQUEST.getValue().equals(chargeEntity.getStatus())) {
             builderOfResponse.withLink("capture", POST, captureUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()));
