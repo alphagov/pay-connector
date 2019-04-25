@@ -99,7 +99,7 @@ public class ChargesApiResourceAllowWebPaymentsITest {
         String accountIdWithNotDigitalWalletSupportedGateway = extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), "epdq"));
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", "allow_apple_pay",
-                "value", "true"));
+                "value", true));
         given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + accountIdWithNotDigitalWalletSupportedGateway)
@@ -112,7 +112,7 @@ public class ChargesApiResourceAllowWebPaymentsITest {
     private void allowWebPaymentsOnGatewayAccount(String path) throws JsonProcessingException {
         String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
                 "path", path,
-                "value", "true"));
+                "value", true));
 
         given().port(testContext.getPort()).contentType(JSON)
                 .body(payload)
