@@ -19,7 +19,15 @@ public class JsonMappingExceptionMapper implements ExceptionMapper<JsonMappingEx
     @Override
     public Response toResponse(JsonMappingException exception) {
         LOGGER.error(exception.getMessage());
-        Map<String, String> entity = Map.of("message", exception.getMessage());
+        Map<String, String> entity = Map.of("message", sanitiseExceptionMessage(exception.getMessage()));
         return Response.status(400).entity(entity).type(APPLICATION_JSON).build();
+    }
+
+    private String sanitiseExceptionMessage(String message) {
+        if (message.contains("Field [metadata] must be an object of JSON key-value pairs")) {
+            return "Field [metadata] must be an object of JSON key-value pairs";
+        }
+
+        return message;
     }
 }
