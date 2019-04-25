@@ -621,6 +621,50 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .contentType(JSON);
     }
 
+    @Test
+    public void shouldFailValidationWhenMetadataIsAString() {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put(JSON_AMOUNT_KEY, AMOUNT);
+        payload.put(JSON_REFERENCE_KEY, "Test reference");
+        payload.put(JSON_DESCRIPTION_KEY, "Test description");
+        payload.put(JSON_GATEWAY_ACC_KEY, accountId);
+        payload.put(JSON_RETURN_URL_KEY, RETURN_URL);
+        payload.put(JSON_EMAIL_KEY, EMAIL);
+        payload.put(JSON_METADATA_KEY, "metadata cannot be a string");
+
+        String postBody = toJsonWithNulls(payload);
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .log().body()
+                .statusCode(400)
+                .contentType(JSON)
+                .body("message", is("Field [metadata] must be an object of JSON key-value pairs"));
+    }
+
+    @Test
+    public void shouldFailValidationWhenMetadataIsAnArray() {
+        Object[] arrayMetadata = new Object[1];
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put(JSON_AMOUNT_KEY, AMOUNT);
+        payload.put(JSON_REFERENCE_KEY, "Test reference");
+        payload.put(JSON_DESCRIPTION_KEY, "Test description");
+        payload.put(JSON_GATEWAY_ACC_KEY, accountId);
+        payload.put(JSON_RETURN_URL_KEY, RETURN_URL);
+        payload.put(JSON_EMAIL_KEY, EMAIL);
+        payload.put(JSON_METADATA_KEY, arrayMetadata);
+
+        String postBody = toJsonWithNulls(payload);
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .log().body()
+                .statusCode(400)
+                .contentType(JSON)
+                .body("message", is("Field [metadata] must be an object of JSON key-value pairs"));
+    }
+
     private String expectedChargeLocationFor(String accountId, String chargeId) {
         return "https://localhost:" + testContext.getPort() + "/v1/api/accounts/{accountId}/charges/{chargeId}"
                 .replace("{accountId}", accountId)
