@@ -19,7 +19,7 @@ import java.util.Map;
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
@@ -112,7 +112,7 @@ public class EpdqCardResourceITest extends ChargingITestBase {
                 .post(authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(400)
-                .body("message", containsString("Wallets are not supported for ePDQ"));
+                .body("message", contains("Wallets are not supported for ePDQ"));
     }
 
     @Test
@@ -127,7 +127,7 @@ public class EpdqCardResourceITest extends ChargingITestBase {
                 .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(400)
-                .body("message", containsString("Wallets are not supported for ePDQ"));
+                .body("message", contains("Wallets are not supported for ePDQ"));
     }
     
     @Test

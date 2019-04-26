@@ -14,6 +14,7 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import javax.ws.rs.core.Response.Status;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
@@ -620,7 +621,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .log().body()
                 .statusCode(400)
                 .contentType(JSON)
-                .body("message", is("Field [metadata] must be an object of JSON key-value pairs"));
+                .body("message", is(List.of("Field [metadata] must be an object of JSON key-value pairs")));
     }
 
     @Test
@@ -642,7 +643,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .log().body()
                 .statusCode(400)
                 .contentType(JSON)
-                .body("message", is("Field [metadata] must be an object of JSON key-value pairs"));
+                .body("message", is(List.of("Field [metadata] must be an object of JSON key-value pairs")));
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {

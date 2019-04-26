@@ -24,7 +24,7 @@ import java.util.UUID;
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -162,7 +162,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
                 .post(authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(400)
-                .body("message", containsString("Wallets are not supported for Smartpay"));
+                .body("message", contains("Wallets are not supported for Smartpay"));
     }
 
     @Test
@@ -177,7 +177,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
                 .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(400)
-                .body("message", containsString("Wallets are not supported for Smartpay"));
+                .body("message", contains("Wallets are not supported for Smartpay"));
     }
     
     @Test

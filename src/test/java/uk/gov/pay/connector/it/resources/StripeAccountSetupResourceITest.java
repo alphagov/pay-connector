@@ -136,8 +136,8 @@ public class StripeAccountSetupResourceITest extends GatewayAccountResourceTestB
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
                 .then()
                 .statusCode(400)
-                .body("errors", hasSize(1))
-                .body("errors[0]", is("Operation [not_replace] not supported for path [bank_account]"));
+                .body("message", hasSize(1))
+                .body("message[0]", is("Operation [not_replace] not supported for path [bank_account]"));
     }
 
     @Test

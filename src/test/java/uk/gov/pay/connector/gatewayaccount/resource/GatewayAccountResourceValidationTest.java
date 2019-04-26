@@ -99,7 +99,7 @@ public class GatewayAccountResourceValidationTest {
                 .request()
                 .method("PATCH", Entity.json(jsonNode));
         assertThat(response.getStatus(), is(400));
-        String errorMessage = response.readEntity(JsonNode.class).get("errors").get(0).textValue();
+        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
         assertThat(errorMessage, 
                 is("Operation [add] is not valid for path [corporate_debit_card_surcharge_amount]"));
     }
@@ -115,7 +115,7 @@ public class GatewayAccountResourceValidationTest {
                 .request()
                 .method("PATCH", Entity.json(jsonNode));
         assertThat(response.getStatus(), is(400));
-        String errorMessage = response.readEntity(JsonNode.class).get("errors").get(0).textValue();
+        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
         assertThat(errorMessage, is("Field [op] is required"));
     }
     
@@ -130,7 +130,7 @@ public class GatewayAccountResourceValidationTest {
                 .request()
                 .method("PATCH", Entity.json(jsonNode));
         assertThat(response.getStatus(), is(400));
-        String errorMessage = response.readEntity(JsonNode.class).get("errors").get(0).textValue();
+        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
         assertThat(errorMessage, 
                 is("Value [-100] is not valid for path [corporate_credit_card_surcharge_amount]"));
     }
@@ -146,7 +146,7 @@ public class GatewayAccountResourceValidationTest {
                 .request()
                 .method("PATCH", Entity.json(jsonNode));
         assertThat(response.getStatus(), is(400));
-        String errorMessage = response.readEntity(JsonNode.class).get("errors").get(0).textValue();
+        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
         assertThat(errorMessage, 
                 is("Value [not zero or a positive number that can be represented as a long] is not valid for path [corporate_debit_card_surcharge_amount]"));
     }
@@ -161,7 +161,7 @@ public class GatewayAccountResourceValidationTest {
                 .request()
                 .method("PATCH", Entity.json(jsonNode));
         assertThat(response.getStatus(), is(400));
-        String errorMessage = response.readEntity(JsonNode.class).get("errors").get(0).textValue();
+        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
         assertThat(errorMessage, is("Field [value] is required"));
     }
 
@@ -176,7 +176,7 @@ public class GatewayAccountResourceValidationTest {
                 .request()
                 .method("PATCH", Entity.json(jsonNode));
         assertThat(response.getStatus(), is(400));
-        String errorMessage = response.readEntity(JsonNode.class).get("errors").get(0).textValue();
+        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
         assertThat(errorMessage, is("Value [] is not valid for path [corporate_credit_card_surcharge_amount]"));
     }
 
@@ -192,7 +192,7 @@ public class GatewayAccountResourceValidationTest {
                 .request()
                 .method("PATCH", Entity.json(jsonNode));
         assertThat(response.getStatus(), is(400));
-        String errorMessage = response.readEntity(JsonNode.class).get("errors").get(0).textValue();
+        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
         assertThat(errorMessage, is("Field [value] is required"));
     }
 
@@ -208,7 +208,7 @@ public class GatewayAccountResourceValidationTest {
                 .request()
                 .method("PATCH", Entity.json(jsonNode));
         assertThat(response.getStatus(), is(400));
-        String errorMessage = response.readEntity(JsonNode.class).get("errors").get(0).textValue();
+        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
         assertThat(errorMessage, is("Field [value] is required"));
     }
 
@@ -224,7 +224,7 @@ public class GatewayAccountResourceValidationTest {
                 .request()
                 .method("PATCH", Entity.json(jsonNode));
         assertThat(response.getStatus(), is(400));
-        String errorMessage = response.readEntity(JsonNode.class).get("errors").get(0).textValue();
+        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
         assertThat(errorMessage, is("Value [false] must be of type boolean for path [allow_zero_amount]"));
     }
 }
