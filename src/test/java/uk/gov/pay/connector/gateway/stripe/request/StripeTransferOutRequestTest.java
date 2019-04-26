@@ -77,7 +77,7 @@ public class StripeTransferOutRequestTest {
     public void shouldHaveIdempotencyKeySetToChargeExternalId() {
         assertThat(
                 stripeTransferOutRequest.getHeaders().get("Idempotency-Key"),
-                is(chargeExternalId)
+                is("transfer_out" + chargeExternalId)
         );
     }
 }

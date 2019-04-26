@@ -95,7 +95,7 @@ public class StripeRefundITest extends ChargingITestBase {
         String refundId = response.extract().path("refund_id");
 
         verify(postRequestedFor(urlEqualTo("/v1/refunds"))
-                .withHeader("Idempotency-Key", equalTo(refundId))
+                .withHeader("Idempotency-Key", equalTo("refund" + refundId))
                 .withRequestBody(containing("charge=" + defaultTestCharge.getTransactionId()))
                 .withRequestBody(containing("amount=" + amount))
                 .withRequestBody(containing("reverse_transfer=true"))
