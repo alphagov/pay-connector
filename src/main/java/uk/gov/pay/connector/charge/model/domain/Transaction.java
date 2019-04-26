@@ -1,12 +1,15 @@
 package uk.gov.pay.connector.charge.model.domain;
 
 import org.eclipse.persistence.annotations.ReadOnly;
+import org.postgresql.util.PGobject;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumberConverter;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumberConverter;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
 import uk.gov.pay.connector.wallets.WalletType;
 
@@ -53,7 +56,9 @@ import java.util.Optional;
                         @ColumnResult(name = "delayed_capture", type = Boolean.class),
                         @ColumnResult(name = "corporate_surcharge", type = Long.class),
                         @ColumnResult(name = "wallet", type = String.class),
-                        @ColumnResult(name = "fee_amount", type = Long.class)}))
+                        @ColumnResult(name = "fee_amount", type = Long.class),
+                        @ColumnResult(name = "external_metadata", type = PGobject.class)
+                }))
 @Entity
 @ReadOnly
 public class Transaction implements Nettable {
@@ -92,6 +97,8 @@ public class Transaction implements Nettable {
     private Long corporateSurcharge;
     private WalletType walletType;
     private Long feeAmount;
+    @Convert(converter = ExternalMetadataConverter.class)
+    private ExternalMetadata externalMetadata;
 
     public Transaction() {
     }
@@ -124,7 +131,8 @@ public class Transaction implements Nettable {
                        boolean delayedCapture,
                        Long corporateSurcharge,
                        String walletType,
-                       Long feeAmount) {
+                       Long feeAmount,
+                       PGobject externalMetadata) {
         this.chargeId = chargeId;
         this.externalId = externalId;
         this.reference = reference;
@@ -154,6 +162,7 @@ public class Transaction implements Nettable {
         this.corporateSurcharge = corporateSurcharge;
         this.walletType = walletType == null ? null : WalletType.valueOf(walletType);
         this.feeAmount = feeAmount;
+        this.externalMetadata = new ExternalMetadataConverter().convertToEntityAttribute(externalMetadata);
     }
 
     public Long getChargeId() {
@@ -269,5 +278,9 @@ public class Transaction implements Nettable {
 
     public Optional<Long> getFeeAmount() {
         return Optional.ofNullable(feeAmount);
+    }
+
+    public Optional<ExternalMetadata> getExternalMetadata() {
+        return Optional.ofNullable(externalMetadata);
     }
 }

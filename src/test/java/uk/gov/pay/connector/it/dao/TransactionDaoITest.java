@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.dao;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.charge.dao.TransactionDao;
 import uk.gov.pay.connector.charge.model.CardHolderName;
@@ -22,12 +23,14 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static java.time.ZonedDateTime.now;
 import static java.util.Collections.singletonList;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
@@ -195,6 +198,22 @@ public class TransactionDaoITest extends DaoITestBase {
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), new SearchParams());
         assertThat(transactions.get(0).getWalletType(), is(WalletType.APPLE_PAY));
         
+    }
+
+    @Test
+    public void shouldReturnExternalMetadata() {
+        Map<String, Object> metadata = Map.of("key1", true, "key2", 123, "key3", "string1");
+        ExternalMetadata externalMetadata = new ExternalMetadata(metadata);
+
+        TestCharge testCharge = withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .insert();
+
+        databaseTestHelper.addExternalMetadata(testCharge.getChargeId(), externalMetadata);
+
+        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), new SearchParams());
+        assertThat(transactions.get(0).getExternalMetadata().get().getMetadata(), equalTo(metadata));
     }
 
     @Test

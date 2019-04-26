@@ -2,6 +2,8 @@ package uk.gov.pay.connector.it.resources;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -12,6 +14,7 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.time.ZonedDateTime;
+import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.time.ZonedDateTime.now;
@@ -297,6 +300,47 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
                 .body("results[0].charge_id", is(externalChargeId))
                 .body("results[0].fee", is(100))
                 .body("results[0].net_amount", is(6284)); //6234 + 150 - 100
+    }
+
+    @Test
+    public void shouldReturnExternalMetadataInSearchResultsV2IfExternalMetadataExists() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        ExternalMetadata externalMetadata = new ExternalMetadata(
+                Map.of("key1", true, "key2", 123, "key3", "string1"));
+
+        databaseTestHelper.addChargeWithExternalMetadata(chargeId, externalChargeId, accountId, 100,
+                AUTHORISATION_SUCCESS, RETURN_URL, null, ServicePaymentReference.of("ref"), null,
+                SupportedLanguage.ENGLISH, false, 100L, externalMetadata);
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .getChargesV2()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results[0].metadata.key1", is(true))
+                .body("results[0].metadata.key2", is(123))
+                .body("results[0].metadata.key3", is("string1"));
+    }
+
+    @Test
+    public void shouldNotReturnExternalMetadataInSearchResultsV2IfExternalMetadataDoesNotExists() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        ExternalMetadata nullExternalMetadata = null;
+
+        databaseTestHelper.addChargeWithExternalMetadata(chargeId, externalChargeId, accountId, 100,
+                AUTHORISATION_SUCCESS, RETURN_URL, null, ServicePaymentReference.of("ref"), null,
+                SupportedLanguage.ENGLISH, false, 100L, nullExternalMetadata);
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .getChargesV2()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results[0].metadata", is(nullValue()));
     }
 
     private String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, String transactionId, ZonedDateTime fromDate,

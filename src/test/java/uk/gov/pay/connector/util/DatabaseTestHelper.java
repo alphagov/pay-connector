@@ -651,6 +651,26 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void addExternalMetadata(long chargeId, ExternalMetadata externalMetadata) {
+        PGobject jsonExternMetadata = new PGobject();
+        jsonExternMetadata.setType("json");
+
+        if (externalMetadata != null) {
+            try {
+                jsonExternMetadata.setValue(new Gson().toJson(externalMetadata.getMetadata()));
+            } catch (SQLException e) {
+                throw new ExternalMetadataConverterException("Failed to serialize metadata");
+            }
+        }
+
+        jdbi.withHandle(handle ->
+                handle.createStatement("UPDATE CHARGES set external_metadata=:metadata WHERE id=:chargeId")
+                        .bind("chargeId", chargeId)
+                        .bind("metadata", jsonExternMetadata)
+                        .execute()
+        );
+    }
+
     public void enable3dsForGatewayAccount(long accountId) {
         jdbi.withHandle(handle ->
                 handle.createStatement("UPDATE gateway_accounts set requires_3ds=true WHERE id=:gatewayAccountId")

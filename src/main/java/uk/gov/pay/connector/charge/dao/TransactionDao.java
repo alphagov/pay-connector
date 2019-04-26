@@ -76,7 +76,8 @@ public class TransactionDao {
                         field("delayed_capture"),
                         field("corporate_surcharge"),
                         field("wallet"),
-                        field("fee_amount"))
+                        field("fee_amount"),
+                        field("external_metadata"))
                 .from(buildQueryFor(gatewayAccountId, QueryType.SELECT, params))
                 .orderBy(field("date_created").desc());
 
@@ -213,7 +214,8 @@ public class TransactionDao {
                 field("c.delayed_capture"),
                 field("c.corporate_surcharge"),
                 field("c.wallet"),
-                field("f.amount_collected").as("fee_amount"))
+                field("f.amount_collected").as("fee_amount"),
+                field("c.external_metadata"))
                 .from(table("charges").as("c")
                         .leftJoin(table("fees").asTable("f")).on("c.id = f.charge_id")
                         .leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
@@ -248,7 +250,8 @@ public class TransactionDao {
                 field("c.delayed_capture"),
                 field("c.corporate_surcharge"),
                 field("c.wallet"),
-                field("f.amount_collected").as("fee_amount"))
+                field("f.amount_collected").as("fee_amount"),
+                field("c.external_metadata"))
                 .from(table("charges").as("c")
                         .leftJoin(table("fees").asTable("f")).on("c.id = f.charge_id")
                         .leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
