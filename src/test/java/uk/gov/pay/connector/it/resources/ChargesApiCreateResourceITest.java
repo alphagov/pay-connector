@@ -46,7 +46,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     private static final String JSON_AMOUNT_KEY = "amount";
     private static final String JSON_REFERENCE_KEY = "reference";
     private static final String JSON_DESCRIPTION_KEY = "description";
-    private static final String JSON_GATEWAY_ACC_KEY = "gateway_account_id";
     private static final String JSON_RETURN_URL_KEY = "return_url";
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
@@ -80,7 +79,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_AMOUNT_KEY, AMOUNT)
                 .put(JSON_REFERENCE_KEY, expectedReference)
                 .put(JSON_DESCRIPTION_KEY, expectedDescription)
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL)
                 .put(JSON_EMAIL_KEY, EMAIL)
                 .put(JSON_LANGUAGE_KEY, "cy")
@@ -174,7 +172,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_AMOUNT_KEY, AMOUNT)
                 .put(JSON_REFERENCE_KEY, "Test reference")
                 .put(JSON_DESCRIPTION_KEY, "Test description")
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL)
                 .put(JSON_EMAIL_KEY, EMAIL)
                 .build()
@@ -205,7 +202,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_AMOUNT_KEY, AMOUNT)
                 .put(JSON_REFERENCE_KEY, expectedReference)
                 .put(JSON_DESCRIPTION_KEY, expectedDescription)
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_EMAIL_KEY, EMAIL)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL).build());
 
@@ -234,7 +230,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, "Test reference",
                 JSON_DESCRIPTION_KEY, "Test description",
-                JSON_GATEWAY_ACC_KEY, accountId,
                 JSON_RETURN_URL_KEY, RETURN_URL));
 
         connectorRestApiClient
@@ -255,7 +250,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_AMOUNT_KEY, 0)
                 .put(JSON_REFERENCE_KEY, expectedReference)
                 .put(JSON_DESCRIPTION_KEY, expectedDescription)
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL)
                 .put(JSON_EMAIL_KEY, EMAIL).build());
 
@@ -270,7 +264,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_AMOUNT_KEY, AMOUNT)
                 .put(JSON_REFERENCE_KEY, "Test reference")
                 .put(JSON_DESCRIPTION_KEY, "Test description")
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL)
                 .put(JSON_EMAIL_KEY, EMAIL)
                 .put(JSON_LANGUAGE_KEY, "not a supported language")
@@ -310,7 +303,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_REFERENCE_KEY, randomAlphabetic(256))
                 .put(JSON_DESCRIPTION_KEY, randomAlphanumeric(256))
                 .put(JSON_EMAIL_KEY, randomAlphanumeric(255))
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL).build());
 
         connectorRestApiClient.postCreateCharge(postBody)
@@ -356,7 +348,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_AMOUNT_KEY, AMOUNT)
                 .put(JSON_REFERENCE_KEY, "Reference")
                 .put(JSON_DESCRIPTION_KEY, "Description")
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL)
                 .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, preFilledBillingAddress)
                 .build());
@@ -394,7 +385,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_AMOUNT_KEY, AMOUNT)
                 .put(JSON_REFERENCE_KEY, "Reference")
                 .put(JSON_DESCRIPTION_KEY, "Description")
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL)
                 .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, billingAddress)
                 .build());
@@ -430,7 +420,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_AMOUNT_KEY, AMOUNT)
                 .put(JSON_REFERENCE_KEY, "Reference")
                 .put(JSON_DESCRIPTION_KEY, "Description")
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL)
                 .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, billingAddress)
                 .build());
@@ -468,7 +457,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_AMOUNT_KEY, AMOUNT)
                 .put(JSON_REFERENCE_KEY, "Reference")
                 .put(JSON_DESCRIPTION_KEY, "Description")
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL)
                 .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, billingAddress)
                 .build());
@@ -495,7 +483,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_AMOUNT_KEY, AMOUNT)
                 .put(JSON_REFERENCE_KEY, "Reference")
                 .put(JSON_DESCRIPTION_KEY, "Description")
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL)
                 .build());
         connectorRestApiClient.postCreateCharge(postBody)
@@ -517,7 +504,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_AMOUNT_KEY, AMOUNT)
                 .put(JSON_REFERENCE_KEY, "Reference")
                 .put(JSON_DESCRIPTION_KEY, "Description")
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL)
                 .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, ImmutableMap.builder()
                         .put(JSON_CARDHOLDER_NAME_KEY, cardholderName).build())
@@ -547,7 +533,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_AMOUNT_KEY, AMOUNT)
                 .put(JSON_REFERENCE_KEY, "Test reference")
                 .put(JSON_DESCRIPTION_KEY, "Test description")
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL)
                 .put(JSON_EMAIL_KEY, EMAIL)
                 .put(JSON_METADATA_KEY, metadata)
@@ -585,7 +570,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_AMOUNT_KEY, AMOUNT)
                 .put(JSON_REFERENCE_KEY, "Test reference")
                 .put(JSON_DESCRIPTION_KEY, "Test description")
-                .put(JSON_GATEWAY_ACC_KEY, accountId)
                 .put(JSON_RETURN_URL_KEY, RETURN_URL)
                 .put(JSON_EMAIL_KEY, EMAIL)
                 .put(JSON_METADATA_KEY, metadata)
@@ -608,7 +592,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
         payload.put(JSON_AMOUNT_KEY, AMOUNT);
         payload.put(JSON_REFERENCE_KEY, "Test reference");
         payload.put(JSON_DESCRIPTION_KEY, "Test description");
-        payload.put(JSON_GATEWAY_ACC_KEY, accountId);
         payload.put(JSON_RETURN_URL_KEY, RETURN_URL);
         payload.put(JSON_EMAIL_KEY, EMAIL);
         payload.put(JSON_METADATA_KEY, null);
@@ -627,7 +610,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
         payload.put(JSON_AMOUNT_KEY, AMOUNT);
         payload.put(JSON_REFERENCE_KEY, "Test reference");
         payload.put(JSON_DESCRIPTION_KEY, "Test description");
-        payload.put(JSON_GATEWAY_ACC_KEY, accountId);
         payload.put(JSON_RETURN_URL_KEY, RETURN_URL);
         payload.put(JSON_EMAIL_KEY, EMAIL);
         payload.put(JSON_METADATA_KEY, "metadata cannot be a string");
@@ -650,7 +632,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
         payload.put(JSON_AMOUNT_KEY, AMOUNT);
         payload.put(JSON_REFERENCE_KEY, "Test reference");
         payload.put(JSON_DESCRIPTION_KEY, "Test description");
-        payload.put(JSON_GATEWAY_ACC_KEY, accountId);
         payload.put(JSON_RETURN_URL_KEY, RETURN_URL);
         payload.put(JSON_EMAIL_KEY, EMAIL);
         payload.put(JSON_METADATA_KEY, arrayMetadata);
