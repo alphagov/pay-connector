@@ -138,7 +138,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .body(invalidPayload)
                 .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
-                .statusCode(BAD_REQUEST.getStatusCode())
+                .statusCode(422)
                 .body("message", is(Collections.singletonList("Field [signature] must not be empty")));
     }
 

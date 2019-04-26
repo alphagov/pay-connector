@@ -14,7 +14,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -84,7 +83,7 @@ public class CardResourceAuthoriseGooglePayITest extends ChargingITestBase {
                 .body(googlePayload)
                 .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
-                .statusCode(HttpStatus.SC_BAD_REQUEST)
+                .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
                 .body("message", contains("Card holder name must be a maximum of 255 chars"));
 
         verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());
@@ -104,7 +103,7 @@ public class CardResourceAuthoriseGooglePayITest extends ChargingITestBase {
                 .body(googlePayload)
                 .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
-                .statusCode(HttpStatus.SC_BAD_REQUEST)
+                .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
                 .body("message", contains("Email must be a maximum of 254 chars"));
 
         verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());

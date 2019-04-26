@@ -25,7 +25,7 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
                 .map(ConstraintViolation::getMessage)
                 .collect(Collectors.toList());
 
-        return Response.status(400)
+        return Response.status(422)
                 .entity(ImmutableMap.of("message", constraintViolationMessages))
                 .type(APPLICATION_JSON).build();
     }

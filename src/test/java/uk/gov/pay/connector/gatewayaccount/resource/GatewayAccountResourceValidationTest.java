@@ -47,17 +47,17 @@ public class GatewayAccountResourceValidationTest {
             .build();
 
     @Test
-    public void shouldReturn400_whenEverythingMissing() {
+    public void shouldReturn422_whenEverythingMissing() {
         Response response = resources.client()
                 .target("/v1/api/accounts")
                 .request()
                 .post(Entity.json(""));
 
-        assertThat(response.getStatus(), is(400));
+        assertThat(response.getStatus(), is(422));
     }
 
     @Test
-    public void shouldReturn400_whenProviderAccountTypeIsInvalid() {
+    public void shouldReturn422_whenProviderAccountTypeIsInvalid() {
 
         Map<String, Object> payload = ImmutableMap.of("type", "invalid");
 
@@ -66,14 +66,14 @@ public class GatewayAccountResourceValidationTest {
                 .request()
                 .post(Entity.json(payload));
 
-        assertThat(response.getStatus(), is(400));
+        assertThat(response.getStatus(), is(422));
 
         String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
         assertThat(errorMessage, is("Unsupported payment provider account type, should be one of (test, live)"));
     }
 
     @Test
-    public void shouldReturn400_whenPaymentProviderIsInvalid() {
+    public void shouldReturn422_whenPaymentProviderIsInvalid() {
 
         Map<String, Object> payload = ImmutableMap.of("payment_provider", "blockchain");
 
@@ -82,7 +82,7 @@ public class GatewayAccountResourceValidationTest {
                 .request()
                 .post(Entity.json(payload));
 
-        assertThat(response.getStatus(), is(400));
+        assertThat(response.getStatus(), is(422));
 
         String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
         assertThat(errorMessage, is("Unsupported payment provider value."));

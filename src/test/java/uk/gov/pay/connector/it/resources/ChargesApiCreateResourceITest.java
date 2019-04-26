@@ -18,7 +18,6 @@ import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
@@ -247,7 +246,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturn400WhenAmountIsLessThanMinAmount() {
+    public void shouldReturn422WhenAmountIsLessThanMinAmount() {
 
         String expectedReference = "Test reference";
         String expectedDescription = "Test description";
@@ -261,7 +260,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateCharge(postBody)
-                .statusCode(Status.BAD_REQUEST.getStatusCode());
+                .statusCode(422);
     }
 
     @Test
@@ -314,7 +313,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .put(JSON_RETURN_URL_KEY, RETURN_URL).build());
 
         connectorRestApiClient.postCreateCharge(postBody)
-                .statusCode(BAD_REQUEST.getStatusCode())
+                .statusCode(422)
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body(JSON_CHARGE_KEY, is(nullValue()))
@@ -328,7 +327,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     @Test
     public void cannotMakeChargeForMissingFields() {
         connectorRestApiClient.postCreateCharge("{}")
-                .statusCode(BAD_REQUEST.getStatusCode())
+                .statusCode(422)
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body(JSON_CHARGE_KEY, is(nullValue()))
@@ -341,7 +340,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturn400WhenPrefilledCardHolderDetailsFieldsAreLongerThanMaximum() {
+    public void shouldReturn422WhenPrefilledCardHolderDetailsFieldsAreLongerThanMaximum() {
         ImmutableMap preFilledBillingAddress = ImmutableMap.builder()
                 .put(JSON_CARDHOLDER_NAME_KEY, randomAlphanumeric(256))
                 .put(JSON_BILLING_ADDRESS_KEY, ImmutableMap.builder()
@@ -362,7 +361,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .build());
 
         connectorRestApiClient.postCreateCharge(postBody)
-                .statusCode(BAD_REQUEST.getStatusCode())
+                .statusCode(422)
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body(JSON_CHARGE_KEY, is(nullValue()))
@@ -572,7 +571,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturn400ForInvalidMetadata() {
+    public void shouldReturn422ForInvalidMetadata() {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("key1", null);
         metadata.put("key2", new HashMap<>());
@@ -593,7 +592,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateCharge(postBody)
-                .statusCode(400)
+                .statusCode(422)
                 .contentType(JSON)
                 .body(JSON_MESSAGE_KEY, containsInAnyOrder(
                         "Field [metadata] values must be of type String, Boolean or Number",

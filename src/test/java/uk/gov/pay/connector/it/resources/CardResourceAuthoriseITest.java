@@ -420,7 +420,7 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
                 .body(randomCardNumber)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .statusCode(400)
+                .statusCode(422)
                 .contentType(JSON)
                 .body("message", containsInAnyOrder("Values do not match expected format/length."));
     }
