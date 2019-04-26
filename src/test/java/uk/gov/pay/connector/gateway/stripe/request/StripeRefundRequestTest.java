@@ -69,8 +69,6 @@ public class StripeRefundRequestTest {
         
         assertThat(payload, containsString("charge=" + stripeChargeId));
         assertThat(payload, containsString("amount=" + refundAmount));
-        assertThat(payload, containsString("refund_application_fee=true"));
-        assertThat(payload, containsString("reverse_transfer=true"));
     }
     
     @Test

@@ -51,8 +51,6 @@ public class StripeRefundRequest extends StripeRequest {
         List<BasicNameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("charge", stripeChargeId));
         params.add(new BasicNameValuePair("amount", amount));
-        params.add(new BasicNameValuePair("refund_application_fee", "true"));
-        params.add(new BasicNameValuePair("reverse_transfer", "true"));
         String payload = URLEncodedUtils.format(params, UTF_8);
 
         return new GatewayOrder(

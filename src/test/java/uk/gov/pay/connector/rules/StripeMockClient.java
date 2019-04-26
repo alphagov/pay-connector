@@ -61,6 +61,11 @@ public class StripeMockClient {
         String payload = TestTemplateResourceLoader.load(STRIPE_ERROR_RESPONSE);
         setupResponse(payload, "/v1/charges/" + gatewayTransactionId + "/capture", 402);
     }
+    
+    public void mockRefundError() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_ERROR_RESPONSE);
+        setupResponse(payload, "/v1/refunds", 402);
+    }
 
     public void mockUnauthorizedResponse() {
         Map<String, Object> unauthorizedResponse = ImmutableMap.of("error", ImmutableMap.of(
@@ -92,6 +97,11 @@ public class StripeMockClient {
     }
 
     public void mockCancelCharge() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_REFUND_FULL_CHARGE_RESPONSE);
+        setupResponse(payload, "/v1/refunds", 200);
+    }
+
+    public void mockRefund() {
         String payload = TestTemplateResourceLoader.load(STRIPE_REFUND_FULL_CHARGE_RESPONSE);
         setupResponse(payload, "/v1/refunds", 200);
     }
