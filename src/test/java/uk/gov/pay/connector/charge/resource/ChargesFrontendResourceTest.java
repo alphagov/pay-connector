@@ -43,7 +43,7 @@ public class ChargesFrontendResourceTest {
                 .request()
                 .put(Entity.json(""));
 
-        assertThat(response.getStatus(), is(400));
+        assertThat(response.getStatus(), is(422));
         
         List<String> listOfErrors = (List) response.readEntity(Map.class).get("message");
         assertThat(listOfErrors.size(), is(1));
@@ -51,13 +51,13 @@ public class ChargesFrontendResourceTest {
     }
 
     @Test
-    public void shouldReturn400_whenPutToChargeStatus_emptyNewStatus() {
+    public void shouldReturn422_whenPutToChargeStatus_emptyNewStatus() {
         Response response = resources.client()
                 .target("/v1/frontend/charges/irrelevant_charge_id/status")
                 .request()
                 .put(Entity.json(Collections.singletonMap("new_status", "")));
 
-        assertEquals( 400, response.getStatus());
+        assertEquals( 422, response.getStatus());
         
         List<String> listOfErrors = (List) response.readEntity(Map.class).get("message");
         assertThat(listOfErrors.size(), is(2));
@@ -67,13 +67,13 @@ public class ChargesFrontendResourceTest {
     }
 
     @Test
-    public void shouldReturn400_whenPutToChargeStatus_invalidNewStatus() {
+    public void shouldReturn422_whenPutToChargeStatus_invalidNewStatus() {
         Response response = resources.client()
                 .target("/v1/frontend/charges/irrelevant_charge_id/status")
                 .request()
                 .put(Entity.json(Collections.singletonMap("new_status", "invalid_status")));
 
-        assertEquals(400, response.getStatus());
+        assertEquals(422, response.getStatus());
 
         List<String> listOfErrors = (List) response.readEntity(Map.class).get("message");
         assertThat(listOfErrors.size(), is(1));
