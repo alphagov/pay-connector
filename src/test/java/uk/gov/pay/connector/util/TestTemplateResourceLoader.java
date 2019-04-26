@@ -127,12 +127,14 @@ public class TestTemplateResourceLoader {
     public static final String STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_sources_3ds_required_response.json";
     public static final String STRIPE_CREATE_3DS_SOURCES_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_3ds_sources_response.json";
     public static final String STRIPE_CAPTURE_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/capture_success_response.json";
+    public static final String STRIPE_CAPTURE_SUCCESS_RESPONSE_DESTINATION_CHARGE = TEMPLATE_BASE_NAME + "/stripe/capture_success_response_destination_charge.json";
     public static final String STRIPE_ERROR_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/error_response.json";
     public static final String STRIPE_ERROR_RESPONSE_GENERAL = TEMPLATE_BASE_NAME + "/stripe/error_response_general.json";
     public static final String STRIPE_CANCEL_CHARGE_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/cancel_charge_response.json";
     public static final String STRIPE_REFUND_FULL_CHARGE_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/refund_full_charge.json";
     public static final String STRIPE_REFUND_ERROR_GREATER_AMOUNT_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/refund_error_greater_amount.json";
     public static final String STRIPE_REFUND_ERROR_ALREADY_REFUNDED_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/refund_error_charge_already_refunded.json";
+    public static final String STRIPE_TRANSFER_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/transfer_success_response.json";
 
     public static final String STRIPE_NOTIFICATION_3DS_SOURCE = TEMPLATE_BASE_NAME + "/stripe/notification_3ds_source.json";
 
