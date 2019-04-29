@@ -160,6 +160,17 @@ public class TransactionsApiContractTest {
                 .insert();
     }
 
+    @State("a gateway account supporting digital wallet with external id 666 exists in the database")
+    public void anAccountExists() {
+        String aDigitalWalletSupportedPaymentProvider = "worldpay";
+        DatabaseFixtures
+                .withDatabaseTestHelper(dbHelper)
+                .aTestAccount()
+                .withAccountId(666L)
+                .withPaymentProvider(aDigitalWalletSupportedPaymentProvider)
+                .insert();
+    }
+
     @State({"default", "Card types exist in the database"})
     public void defaultCase() {
     }
