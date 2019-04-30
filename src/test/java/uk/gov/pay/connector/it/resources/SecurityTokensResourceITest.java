@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -16,6 +17,7 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -76,7 +78,8 @@ public class SecurityTokensResourceITest {
     @Test
     public void shouldReturn404WhenTokenNotFound() {
         findTokenGetsStatusCode("non-existant-secure-redirect-token", 404)
-                .body("message", is("Token invalid!"));
+                .body("message", contains("Token invalid!"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -87,7 +90,8 @@ public class SecurityTokensResourceITest {
                 .statusCode(204)
                 .body(emptyOrNullString());
         findTokenGetsStatusCode(defaultTestToken.getSecureRedirectToken(), 404)
-                .body("message", is("Token invalid!"));
+                .body("message", contains("Token invalid!"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     private ValidatableResponse findTokenGetsStatusCode(String secureRedirectToken, int expectedStatusCode) {

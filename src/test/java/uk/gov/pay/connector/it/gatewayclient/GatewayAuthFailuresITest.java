@@ -19,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -35,6 +36,7 @@ import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static io.restassured.config.ConnectionConfig.connectionConfig;
 import static io.restassured.http.ContentType.JSON;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -112,7 +114,8 @@ public class GatewayAuthFailuresITest {
                 .then()
                 .statusCode(500)
                 .contentType(JSON)
-                .body("message", is(errorMessage));
+                .body("message", contains(errorMessage))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         assertThatLastGatewayClientLoggingEventIs(
                 String.format("Gateway returned unexpected status code: 999, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test", WIREMOCK_PORT));

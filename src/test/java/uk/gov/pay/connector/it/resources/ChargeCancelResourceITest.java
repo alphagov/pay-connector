@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -20,6 +21,7 @@ import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -128,7 +130,8 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .and()
                 .contentType(JSON)
-                .body("message", is(expectedMessage));
+                .body("message", contains(expectedMessage))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -141,7 +144,8 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
                 .statusCode(ACCEPTED.getStatusCode())
                 .and()
                 .contentType(JSON)
-                .body("message", is(expectedMessage));
+                .body("message", contains(expectedMessage))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -153,11 +157,12 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
                 .statusCode(NOT_FOUND.getStatusCode())
                 .and()
                 .contentType(JSON)
-                .body("message", is("Charge with id [" + unknownChargeId + "] not found."));
+                .body("message", contains("Charge with id [" + unknownChargeId + "] not found."))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
-    public void respondWith400__IfAccountIdIsMissing() {
+    public void respondWith404_IfAccountIdIsMissing() {
         String chargeId = createNewInPastChargeWithStatus(CREATED);
         String expectedMessage = "HTTP 404 Not Found";
 
@@ -172,7 +177,7 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void respondWith404__IfAccountIdIsNonNumeric() {
+    public void respondWith404_IfAccountIdIsNonNumeric() {
         String chargeId = createNewInPastChargeWithStatus(CREATED);
         String expectedMessage = "HTTP 404 Not Found";
 
@@ -187,7 +192,7 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void respondWith404__IfChargeIdDoNotBelongToAccount() {
+    public void respondWith404_IfChargeIdDoNotBelongToAccount() {
         String chargeId = createNewInPastChargeWithStatus(CREATED);
         String expectedMessage = format("Charge with id [%s] not found.", chargeId);
 
@@ -198,7 +203,8 @@ public class ChargeCancelResourceITest extends ChargingITestBase {
                 .statusCode(NOT_FOUND.getStatusCode())
                 .and()
                 .contentType(JSON)
-                .body("message", is(expectedMessage));
+                .body("message", contains(expectedMessage))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     private String createNewInPastChargeWithStatus(ChargeStatus status) {

@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -34,7 +36,8 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
                 .statusCode(400)
-                .body("message", is("Bad patch parameters{}"));
+                .body("message", contains("Bad patch parameters{}"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -47,7 +50,8 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .patch(ACCOUNTS_API_URL + nonExistingAccountId + "/email-notification")
                 .then()
                 .statusCode(404)
-                .body("message", is("The gateway account id '111111111' does not exist"));
+                .body("message", contains("The gateway account id '111111111' does not exist"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -113,7 +117,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
         String newTemplateBody = "new value";
 
         givenSetup().accept(JSON)
-                .body(getPatchRequestBody("replace",                       
+                .body(getPatchRequestBody("replace",
                         "/payment_confirmed/template_body", newTemplateBody))
                 .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
@@ -152,7 +156,7 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
                 .withEmailNotifications(new HashMap<>())
                 .insert();
         givenSetup().accept(JSON)
-                .body(getPatchRequestBody("replace","/refund_issued/enabled", false))
+                .body(getPatchRequestBody("replace", "/refund_issued/enabled", false))
                 .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                 .then()
                 .statusCode(200);
@@ -162,9 +166,9 @@ public class EmailNotificationResourceITest extends GatewayAccountResourceTestBa
         assertThat(confirmationEmail, is(nullValue()));
         assertThat(refundEmail.get("enabled"), is(false));
     }
-    
+
 
     private String getPatchRequestBody(String operation, String path, Object value) {
-        return toJson(ImmutableMap.of("op",operation, "path", path, "value", value));
+        return toJson(ImmutableMap.of("op", operation, "path", path, "value", value));
     }
 }

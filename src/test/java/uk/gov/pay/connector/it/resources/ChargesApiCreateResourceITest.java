@@ -295,7 +295,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
                 .body(JSON_CHARGE_KEY, is(nullValue()))
-                .body(JSON_MESSAGE_KEY, is("Unknown gateway account: " + missingGatewayAccount));
+                .body(JSON_MESSAGE_KEY, contains("Unknown gateway account: " + missingGatewayAccount))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test

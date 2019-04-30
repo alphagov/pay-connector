@@ -15,6 +15,7 @@ import org.junit.ClassRule;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -36,6 +37,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -217,7 +219,8 @@ public class ChargingITestBase {
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
-                .body("message", is(errorMessage));
+                .body("message", contains(errorMessage))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         assertFrontendChargeStatusIs(chargeId, status);
     }
@@ -229,7 +232,7 @@ public class ChargingITestBase {
     public static String authoriseChargeUrlForGooglePay(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/wallets/google".replace("{chargeId}", chargeId);
     }
-    
+
     public static String authoriseChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeId);
     }
@@ -294,7 +297,7 @@ public class ChargingITestBase {
                 .body("state.finished", is(true))
                 .body("state.message", is("Payment was cancelled by the service"))
                 .body("state.code", is("P0040"));
-        
+
         return chargeId;
     }
 
