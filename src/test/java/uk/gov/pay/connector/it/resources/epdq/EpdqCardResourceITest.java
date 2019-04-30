@@ -8,6 +8,7 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -112,7 +113,8 @@ public class EpdqCardResourceITest extends ChargingITestBase {
                 .post(authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(400)
-                .body("message", contains("Wallets are not supported for ePDQ"));
+                .body("message", contains("Wallets are not supported for ePDQ"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -127,7 +129,8 @@ public class EpdqCardResourceITest extends ChargingITestBase {
                 .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(400)
-                .body("message", contains("Wallets are not supported for ePDQ"));
+                .body("message", contains("Wallets are not supported for ePDQ"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
     
     @Test

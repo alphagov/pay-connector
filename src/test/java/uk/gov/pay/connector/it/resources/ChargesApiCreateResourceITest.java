@@ -2,19 +2,20 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import io.restassured.response.ValidatableResponse;
+import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.postgresql.util.PGobject;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import javax.ws.rs.core.Response.Status;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
@@ -25,6 +26,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -621,7 +623,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .log().body()
                 .statusCode(400)
                 .contentType(JSON)
-                .body("message", is(List.of("Field [metadata] must be an object of JSON key-value pairs")));
+                .body("message", contains("Field [metadata] must be an object of JSON key-value pairs"))
+                .body("error_identifier", Matchers.is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -643,7 +646,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .log().body()
                 .statusCode(400)
                 .contentType(JSON)
-                .body("message", is(List.of("Field [metadata] must be an object of JSON key-value pairs")));
+                .body("message", contains("Field [metadata] must be an object of JSON key-value pairs"))
+                .body("error_identifier", Matchers.is(ErrorIdentifier.GENERIC.toString()));
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {

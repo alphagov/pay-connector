@@ -5,6 +5,7 @@ import io.restassured.specification.RequestSpecification;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -14,7 +15,7 @@ import java.util.Collections;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -136,8 +137,8 @@ public class StripeAccountSetupResourceITest extends GatewayAccountResourceTestB
                 .patch("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
                 .then()
                 .statusCode(400)
-                .body("message", hasSize(1))
-                .body("message[0]", is("Operation [not_replace] not supported for path [bank_account]"));
+                .body("message", contains("Operation [not_replace] not supported for path [bank_account]"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
