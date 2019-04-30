@@ -1,4 +1,5 @@
 {
+  "destination": "account_id",
   "id": "ch_123456",
   "object": "charge",
   "captured": true,

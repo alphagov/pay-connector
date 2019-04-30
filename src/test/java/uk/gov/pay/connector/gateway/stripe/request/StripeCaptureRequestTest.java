@@ -87,7 +87,7 @@ public class StripeCaptureRequestTest {
     public void shouldCreateCorrectCaptureHeaders() {
         assertThat(
                 stripeCaptureRequest.getHeaders().get("Idempotency-Key"),
-                is(chargeExternalId)
+                is("capture" + chargeExternalId)
         );
 
         assertThat(

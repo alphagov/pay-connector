@@ -77,6 +77,6 @@ public class StripeRefundRequestTest {
     public void createsCorrectIdempotencyKey() {
         assertThat(
                 stripeRefundRequest.getHeaders().get("Idempotency-Key"), 
-                is(refundExternalId));
+                is("refund" + refundExternalId));
     }
 }

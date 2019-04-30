@@ -15,7 +15,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 
 public class StripeTransferOutRequest extends StripeTransferRequest {
 
-    public StripeTransferOutRequest(String amount,
+    private StripeTransferOutRequest(String amount,
                                     GatewayAccountEntity gatewayAccount,
                                     String sourceTransactionId,
                                     String idempotencyKey,
@@ -46,5 +46,10 @@ public class StripeTransferOutRequest extends StripeTransferRequest {
                 payload,
                 APPLICATION_FORM_URLENCODED_TYPE
         );
+    }
+
+    @Override
+    protected String getIdempotencyKeyType() {
+        return "transfer_out";
     }
 }

@@ -65,4 +65,9 @@ public class StripeTransferInRequest extends StripeTransferRequest {
 
         return headers;
     }
+
+    @Override
+    protected String getIdempotencyKeyType() {
+        return "transfer_in";
+    }
 }

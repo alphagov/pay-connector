@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.stripe;
 
 import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
-import uk.gov.pay.connector.gateway.stripe.json.StripeCreateChargeResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 
 import java.util.Optional;
 
@@ -10,15 +10,15 @@ import static java.lang.String.format;
 
 public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
 
-    private StripeCreateChargeResponse jsonResponse;
+    private StripeCharge jsonResponse;
 
-    public StripeAuthorisationResponse(StripeCreateChargeResponse jsonResponse) {
+    public StripeAuthorisationResponse(StripeCharge jsonResponse) {
         this.jsonResponse = jsonResponse;
     }
 
     @Override
     public String getTransactionId() {
-        return jsonResponse.getTransactionId();
+        return jsonResponse.getId();
     }
 
     @Override
