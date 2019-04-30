@@ -8,6 +8,7 @@ import au.com.dius.pact.provider.junit.loader.PactBrokerAuth;
 import au.com.dius.pact.provider.junit.target.HttpTarget;
 import au.com.dius.pact.provider.junit.target.Target;
 import au.com.dius.pact.provider.junit.target.TestTarget;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -33,6 +34,7 @@ import static io.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 @RunWith(PactRunner.class)
 @Provider("connector")
@@ -47,6 +49,7 @@ public class TransactionsApiContractTest {
     @TestTarget
     public static Target target;
     private static DatabaseTestHelper dbHelper;
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeClass
     public static void setUp() {
@@ -60,14 +63,48 @@ public class TransactionsApiContractTest {
         dbHelper.truncateAllData();
     }
 
+    @State("a charge with metadata exists")
+    public void aChargeWithMetadataExists(Map<String, String> params) throws Exception {
+        String gatewayAccountId = params.get("gateway_account_id");
+        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        String chargeExternalId = params.get("charge_id");
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
+        dbHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(chargeExternalId)
+                .withGatewayAccountId(gatewayAccountId)
+                .withAmount(100)
+                .withStatus(ChargeStatus.CAPTURED)
+                .withReturnUrl("https://somewhere.gov.uk/rainbow/1")
+                .withDescription("Test description")
+                .withReference(ServicePaymentReference.of("aReference"))
+                .withCreatedDate(ZonedDateTime.now())
+                .withEmail("test@test.com")
+                .withDelayedCapture(false)
+                .withExternalMetadata(new ExternalMetadata(objectMapper.readValue(params.get("metadata"), Map.class)))
+                .build());
+    }
+
     @State("a charge with a gateway transaction id exists")
     public void aChargeWithGatewayTxIdExists(Map<String, String> params) {
         String gatewayAccountId = params.get("gateway_account_id");
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        dbHelper.addCharge(chargeId, chargeExternalId, gatewayAccountId, 100L, ChargeStatus.CAPTURED, "aReturnUrl",
-                params.get("gateway_transaction_id"), ServicePaymentReference.of("aReference"), ZonedDateTime.now(), "test@test.com", false);
+        dbHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(chargeExternalId)
+                .withGatewayAccountId(gatewayAccountId)
+                .withAmount(100)
+                .withStatus(ChargeStatus.CAPTURED)
+                .withReturnUrl("aReturnUrl")
+                .withTransactionId(params.get("gateway_transaction_id"))
+                .withDescription("Test description")
+                .withReference(ServicePaymentReference.of("aReference"))
+                .withCreatedDate(ZonedDateTime.now())
+                .withEmail("test@test.com")
+                .withDelayedCapture(false)
+                .build());
     }
 
     private void setUpCharges(int numberOfCharges, String accountId, ZonedDateTime createdDate) {
@@ -80,8 +117,20 @@ public class TransactionsApiContractTest {
     private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus,
                                    ZonedDateTime createdDate, boolean delayedCapture, String cardHolderName,
                                    String lastDigitsCardNumber, String firstDigitsCardNumber, String gatewayTransactionId) {
-        dbHelper.addCharge(chargeId, chargeExternalId, accountId, 100L, chargeStatus, "aReturnUrl",
-                gatewayTransactionId, ServicePaymentReference.of("aReference"), createdDate, "test@test.com", delayedCapture);
+        dbHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(chargeExternalId)
+                .withGatewayAccountId(accountId)
+                .withAmount(100)
+                .withStatus(chargeStatus)
+                .withReturnUrl("aReturnUrl")
+                .withTransactionId(gatewayTransactionId)
+                .withDescription("Test description")
+                .withReference(ServicePaymentReference.of("aReference"))
+                .withCreatedDate(createdDate)
+                .withEmail("test@test.com")
+                .withDelayedCapture(delayedCapture)
+                .build());
         dbHelper.updateChargeCardDetails(chargeId, "visa", lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, "08/23",
                 "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
     }
