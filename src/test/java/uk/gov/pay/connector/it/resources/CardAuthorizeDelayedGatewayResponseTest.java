@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.PortFactory;
@@ -17,6 +18,7 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
@@ -83,6 +85,7 @@ public class CardAuthorizeDelayedGatewayResponseTest extends ChargingITestBase {
                 .then()
                 .statusCode(202)
                 .contentType(JSON)
-                .body("message", is(format("Authorisation for charge already in progress, %s", chargeId)));
+                .body("message", contains(format("Authorisation for charge already in progress, %s", chargeId)))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 }

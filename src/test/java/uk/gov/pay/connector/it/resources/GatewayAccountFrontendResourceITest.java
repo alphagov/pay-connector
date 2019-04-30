@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -25,6 +26,7 @@ import static java.lang.String.format;
 import static java.lang.String.join;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasItems;
@@ -38,11 +40,11 @@ import static org.junit.Assert.assertThat;
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceTestBase {
-    
+
     private static final String ACCOUNTS_CARD_TYPE_FRONTEND_URL = "v1/frontend/accounts/{accountId}/card-types";
-    
+
     private Gson gson = new Gson();
-    
+
     @Test
     public void shouldGetGatewayAccountForExistingAccount() {
         String accountId = createAGatewayAccountFor("worldpay");
@@ -171,7 +173,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
                 .get(ACCOUNTS_FRONTEND_URL + nonExistingGatewayAccount)
                 .then()
                 .statusCode(404)
-                .body("message", is("Account with id '12345' not found"));
+                .body("message", contains("Account with id '12345' not found"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
     }
 
@@ -239,7 +242,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         updateGatewayAccountCredentialsWith(accountId, new HashMap<>())
                 .then()
                 .statusCode(400)
-                .body("message", is("Field(s) missing: [credentials]"));
+                .body("message", contains("Field(s) missing: [credentials]"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -254,9 +258,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         updateGatewayAccountCredentialsWith(accountId, credentials)
                 .then()
                 .statusCode(400)
-                .body("message", is("Field(s) missing: [password]"));
-        //TODO: For backward compatibility. Enable once the selfservice/e2e/acceptest changes are done
-//                .body("message", is("Field(s) missing: [password, merchant_id]"));
+                .body("message", contains("Field(s) missing: [password]"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -272,7 +275,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         updateGatewayAccountCredentialsWith(accountId, credentials)
                 .then()
                 .statusCode(400)
-                .body("message", is("Field(s) missing: [merchant_id]"));
+                .body("message", contains("Field(s) missing: [merchant_id]"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -287,7 +291,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         updateGatewayAccountCredentialsWith(accountId, credentials)
                 .then()
                 .statusCode(400)
-                .body("message", is("Field(s) missing: [password, merchant_id]"));
+                .body("message", contains("Field(s) missing: [password, merchant_id]"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -310,7 +315,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         updateGatewayAccountCredentialsWith(nonExistingAccountId, credentials)
                 .then()
                 .statusCode(404)
-                .body("message", is("The gateway account id '111111111' does not exist"));
+                .body("message", contains("The gateway account id '111111111' does not exist"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -336,7 +342,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         updateGatewayAccountServiceNameWith(accountId, new HashMap<>())
                 .then()
                 .statusCode(400)
-                .body("message", is("Field(s) missing: [service_name]"));
+                .body("message", contains("Field(s) missing: [service_name]"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -349,7 +356,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         updateGatewayAccountServiceNameWith(accountId, gatewayAccountPayload.buildServiceNamePayload())
                 .then()
                 .statusCode(400)
-                .body("message", is("Field(s) are too big: [service_name]"));
+                .body("message", contains("Field(s) are too big: [service_name]"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -372,7 +380,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         updateGatewayAccountServiceNameWith(nonExistingAccountId, serviceNamePayload)
                 .then()
                 .statusCode(404)
-                .body("message", is("The gateway account id '111111111' does not exist"));
+                .body("message", contains("The gateway account id '111111111' does not exist"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -383,7 +392,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), body)
                 .then()
                 .statusCode(400)
-                .body("message", is("Field(s) missing: [card_types]"));
+                .body("message", contains("Field(s) missing: [card_types]"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -400,7 +410,8 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), body)
                 .then()
                 .statusCode(400)
-                .body("message", is(expectedMessage));
+                .body("message", contains(expectedMessage))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test

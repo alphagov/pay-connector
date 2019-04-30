@@ -9,6 +9,7 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -39,6 +40,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.emptyOrNullString;
@@ -138,34 +140,34 @@ public class ChargesFrontendResourceITest {
                 .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))
                 .body("links", containsLink("cardCapture", POST, expectedLocation + "/capture"));
     }
-    
+
     @Test
     public void getChargeShouldIncludeWalletType() {
         String externalChargeId = postToCreateACharge(expectedAmount);
         final long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
         databaseTestHelper.addWalletType(chargeId, WalletType.APPLE_PAY);
-        
+
         getChargeFromResource(externalChargeId)
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("charge_id", is(externalChargeId))
                 .body("wallet_type", is(WalletType.APPLE_PAY.toString()));
     }
-    
+
     @Test
     public void getChargeShouldIncludeFeeIfItExists() {
         String externalChargeId = postToCreateACharge(expectedAmount);
         final long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
         final long feeCollected = 100L;
         databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
-        
+
         getChargeFromResource(externalChargeId)
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("charge_id", is(externalChargeId))
                 .body("fee", is(100));
     }
-    
+
     @Test
     public void getChargeShouldIncludeNetAmountIfFeeExists() {
         String externalChargeId = postToCreateACharge(expectedAmount);
@@ -270,7 +272,8 @@ public class ChargesFrontendResourceITest {
                 .getCharge()
                 .statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
-                .body("message", is(format("Charge with id [%s] not found.", chargeId)));
+                .body("message", contains(format("Charge with id [%s] not found.", chargeId)))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     //TODO getTransactions test should sit in the ChargesAPIResourceTest and not in here as it uses end points defined in the APIResource
@@ -346,7 +349,8 @@ public class ChargesFrontendResourceITest {
 
         response.statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
-                .body("message", is(format("account with id %s not found", nonExistentAccountId)));
+                .body("message", contains(format("account with id %s not found", nonExistentAccountId)))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -427,7 +431,8 @@ public class ChargesFrontendResourceITest {
 
         response.statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
-                .body("message", is("Bad patch parameters{op=delete, path=email, value=a@b.c}"));
+                .body("message", contains("Bad patch parameters{op=delete, path=email, value=a@b.c}"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -442,7 +447,8 @@ public class ChargesFrontendResourceITest {
 
         response.statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
-                .body("message", is(format("Invalid patch parameters{op=replace, path=email, value=%s}", tooLongEmail)));
+                .body("message", contains(format("Invalid patch parameters{op=replace, path=email, value=%s}", tooLongEmail)))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -456,7 +462,8 @@ public class ChargesFrontendResourceITest {
 
         response.statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
-                .body("message", is("Bad patch parameters{op=replace, path=amount, value=1}"));
+                .body("message", contains("Bad patch parameters{op=replace, path=amount, value=1}"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
 
