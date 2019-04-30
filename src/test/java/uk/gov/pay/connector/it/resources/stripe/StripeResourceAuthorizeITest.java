@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -48,6 +49,7 @@ import static org.eclipse.jetty.http.HttpStatus.BAD_REQUEST_400;
 import static org.eclipse.jetty.http.HttpStatus.INTERNAL_SERVER_ERROR_500;
 import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
 import static org.eclipse.jetty.http.HttpStatus.OK_200;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -261,7 +263,8 @@ public class StripeResourceAuthorizeITest {
                 .post(authoriseChargeUrlForApplePay(externalChargeId))
                 .then()
                 .statusCode(400)
-                .body("message", containsString("Wallets are not supported for Stripe"));
+                .body("message", contains("Wallets are not supported for Stripe"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -278,7 +281,8 @@ public class StripeResourceAuthorizeITest {
                 .post(authoriseChargeUrlForGooglePay(externalChargeId))
                 .then()
                 .statusCode(400)
-                .body("message", containsString("Wallets are not supported for Stripe"));
+                .body("message", contains("Wallets are not supported for Stripe"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
