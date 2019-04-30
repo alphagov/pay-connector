@@ -14,6 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -196,6 +197,20 @@ public class TransactionsApiContractTest {
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.AWAITING_CAPTURE_REQUEST, ZonedDateTime.now(), true);
+    }
+
+    @State("a charge in state CREATED with accountId 42 and chargeExternalId 100 and metadata exists")
+    public void createChargeWithMetadata() {
+        String gatewayAccountId = "42";
+        String chargeExternalId = "100";
+        long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, ZonedDateTime.now(), false);
+
+        var externalMetadata = new ExternalMetadata(
+                Map.of("key1", "some string", "key2", true, "key3", 123));
+        dbHelper.addExternalMetadata(chargeId, externalMetadata);
     }
 
     @State("a charge with card details exists")
