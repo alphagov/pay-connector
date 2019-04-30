@@ -2,18 +2,16 @@ package uk.gov.pay.connector.gateway.stripe.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import javax.inject.Inject;
 import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StripeCharge {
-    @Inject
-    ObjectMapper mapper;
+    @Inject 
+    private ObjectMapper mapper;
     
     @JsonProperty("id")
     private String id;
