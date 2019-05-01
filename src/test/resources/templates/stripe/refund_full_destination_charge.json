@@ -4,7 +4,7 @@
   "amount": 2000,
   "balance_transaction": "txn_1DRiccHj08_test",
   "charge": {
-    "destination": null,
+    "destination": "account_id",
     "id": "ch_123456",
     "object": "charge",
     "captured": true,

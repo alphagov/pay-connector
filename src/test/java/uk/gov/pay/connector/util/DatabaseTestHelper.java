@@ -459,6 +459,18 @@ public class DatabaseTestHelper {
         return ret;
     }
 
+    public Map<String, Object> getRefundByExternalId(String refundExternalId) {
+        Map<String, Object> ret = jdbi.withHandle(h ->
+                h.createQuery("SELECT external_id, reference, amount, status, created_date, charge_id, user_external_id " +
+                        "FROM refunds " +
+                        "WHERE external_id = :refund_id")
+                        .bind("refund_id", refundExternalId)
+                        .list())
+                .stream()
+                .findFirst().get();
+        return ret;
+    }
+
     public List<Map<String, Object>> getRefundsByChargeId(long chargeId) {
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
                 h.createQuery("SELECT external_id, reference, amount, status, created_date, charge_id, user_external_id " +

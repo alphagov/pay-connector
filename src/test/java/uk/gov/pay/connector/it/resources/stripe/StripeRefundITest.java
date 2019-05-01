@@ -23,9 +23,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static io.restassured.RestAssured.given;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.eclipse.jetty.http.HttpStatus.ACCEPTED_202;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 
@@ -62,16 +62,16 @@ public class StripeRefundITest extends ChargingITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
                 .insert();
-
-
     }
 
     @Test
     public void stripeRefund() {
+        String platformAccountId = "stripe_platform_account_id";
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         long amount = 10L;
         
-        stripeMockClient.mockCancelCharge();
+        stripeMockClient.mockRefund();
+        stripeMockClient.mockTransferSuccess(null);
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());
         String refundPayload = new Gson().toJson(refundData);
@@ -88,17 +88,72 @@ public class StripeRefundITest extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-
-        Long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
-        assertEquals(databaseTestHelper.getChargeStatus(chargeId), CAPTURED.getValue());
+        assertThat(refundsFoundByChargeId.get(0).get("status"), is("REFUNDED"));
 
         String refundId = response.extract().path("refund_id");
 
         verify(postRequestedFor(urlEqualTo("/v1/refunds"))
                 .withHeader("Idempotency-Key", equalTo("refund" + refundId))
                 .withRequestBody(containing("charge=" + defaultTestCharge.getTransactionId()))
-                .withRequestBody(containing("amount=" + amount))
-                .withRequestBody(containing("reverse_transfer=true"))
-                .withRequestBody(containing("refund_application_fee=true")));
+                .withRequestBody(containing("amount=" + amount)));
+
+        verify(postRequestedFor(urlEqualTo("/v1/transfers"))
+                .withHeader("Idempotency-Key", equalTo("transfer_in" + refundId))
+                .withHeader("Stripe-Account", equalTo(stripeAccountId))
+                .withRequestBody(containing("transfer_group=" + defaultTestCharge.getExternalChargeId()))
+                .withRequestBody(containing("destination=" + platformAccountId)));
+    }
+    
+    @Test
+    public void stripeRefund_shouldResultInRefundErrorIfRefundFails() {
+        String externalChargeId = defaultTestCharge.getExternalChargeId();
+        long amount = 10L;
+        
+        stripeMockClient.mockRefundError();
+
+        ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());
+        String refundPayload = new Gson().toJson(refundData);
+
+        given().port(testContext.getPort())
+                .body(refundPayload)
+                .accept(ContentType.JSON)
+                .contentType(ContentType.JSON)
+                .post("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds"
+                        .replace("{accountId}", accountId)
+                        .replace("{chargeId}", externalChargeId))
+                .then()
+                .statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
+
+        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
+        assertThat(refundsFoundByChargeId.size(), is(1));
+        assertThat(refundsFoundByChargeId.get(0).get("status"), is("REFUND ERROR"));
+    }
+    
+    @Test
+    public void stripeRefund_shouldResultInRefundErrorIfTransferFails() {
+        String externalChargeId = defaultTestCharge.getExternalChargeId();
+        long amount = 10L;
+        
+        stripeMockClient.mockRefund();
+        stripeMockClient.mockTransferFailure();
+
+        ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());
+        String refundPayload = new Gson().toJson(refundData);
+
+        given().port(testContext.getPort())
+                .body(refundPayload)
+                .accept(ContentType.JSON)
+                .contentType(ContentType.JSON)
+                .post("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds"
+                        .replace("{accountId}", accountId)
+                        .replace("{chargeId}", externalChargeId))
+                .then()
+                .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
+                .body("message", is("Stripe refund response (error code: expired_card, error: Your card has expired.)"));
+
+
+        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
+        assertThat(refundsFoundByChargeId.size(), is(1));
+        assertThat(refundsFoundByChargeId.get(0).get("status"), is("REFUND ERROR"));
     }
 }
