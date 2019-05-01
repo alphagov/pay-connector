@@ -22,6 +22,8 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+
 @RunWith(PactRunner.class)
 @Provider("connector")
 @PactBroker(scheme = "https", host = "pact-broker-test.cloudapps.digital", tags = {"${PACT_CONSUMER_TAG}", "test", "staging", "production"},
@@ -55,7 +57,19 @@ public class WalletApiContractTest {
         long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = "testChargeId";
 
-        dbHelper.addCharge(chargeId, chargeExternalId, String.valueOf(gatewayAccountId), 100L, ChargeStatus.ENTERING_CARD_DETAILS, "aReturnUrl",
-                chargeExternalId, ServicePaymentReference.of("aReference"), ZonedDateTime.now(), "test@test.com", false);
+        dbHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(chargeExternalId)
+                .withGatewayAccountId(String.valueOf(gatewayAccountId))
+                .withAmount(100)
+                .withStatus(ChargeStatus.ENTERING_CARD_DETAILS)
+                .withReturnUrl("aReturnUrl")
+                .withTransactionId(chargeExternalId)
+                .withReference(ServicePaymentReference.of("aReference"))
+                .withDescription("Test description")
+                .withCreatedDate(ZonedDateTime.now())
+                .withEmail("test@test.com")
+                .withDelayedCapture(false)
+                .build());
     }
 }
