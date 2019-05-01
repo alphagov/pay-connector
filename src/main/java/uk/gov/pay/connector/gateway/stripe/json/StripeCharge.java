@@ -10,8 +10,7 @@ import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StripeCharge {
-    @Inject 
-    private ObjectMapper mapper;
+    private ObjectMapper mapper = new ObjectMapper();
     
     @JsonProperty("id")
     private String id;

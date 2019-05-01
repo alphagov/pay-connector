@@ -67,6 +67,8 @@ stripe:
       test: ${GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET:-whtest}
       live: ${GDS_CONNECTOR_STRIPE_WEBHOOK_LIVE_SIGN_SECRET:-whlive}
   platformAccountId: ${STRIPE_PLATFORM_ACCOUNT_ID}
+  feePercentage: ${STRIPE_TRANSACTION_FEE_PERCENTAGE:-0.08}
+  collectFee: ${COLLECT_FEE_FEATURE_FLAG:-true}
 
 jerseyClient:
   timeout: 500ms

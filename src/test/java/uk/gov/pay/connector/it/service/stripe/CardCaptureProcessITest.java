@@ -34,17 +34,18 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         new StripeMockClient().mockTransferSuccess("transfer_out" + testCharge.getExternalChargeId());
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
-        
+
         verify(postRequestedFor(urlEqualTo("/v1/charges/" + testCharge.getTransactionId() + "/capture"))
                 .withHeader("Idempotency-Key", equalTo("capture" + testCharge.getExternalChargeId())));
-        
+
         verify(postRequestedFor(urlEqualTo("/v1/transfers"))
                 .withHeader("Idempotency-Key", equalTo("transfer_out" + testCharge.getExternalChargeId()))
                 .withRequestBody(containing("destination=stripe_account_id"))
                 .withRequestBody(containing("source_transaction=" + testCharge.getTransactionId()))
-                .withRequestBody(containing("amount=" + (testCharge.getAmount()))));
+                .withRequestBody(containing("amount=" + (testCharge.getAmount() - 51))));
 
         assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURED.getValue()));
+        assertThat(app.getDatabaseTestHelper().getFeeByChargeId(testCharge.getChargeId()).get("amount_collected"), is(51L));
     }
 
     @Test
