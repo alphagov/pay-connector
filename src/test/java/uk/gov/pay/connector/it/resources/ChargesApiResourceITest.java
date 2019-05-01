@@ -523,7 +523,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_MESSAGE_KEY, contains(format("Charge with id [%s] not found.", chargeId)))
-                .body("error_identifier", Matchers.is(ErrorIdentifier.GENERIC.toString()));
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -657,7 +657,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_MESSAGE_KEY, contains("Charge with id [i-do-not-exist] not found."))
-                .body("error_identifier", Matchers.is(ErrorIdentifier.GENERIC.toString()));
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -674,7 +674,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .statusCode(CONFLICT.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_MESSAGE_KEY, contains(expectedErrorMessage))
-                .body("error_identifier", Matchers.is(ErrorIdentifier.GENERIC.toString()));
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     private void createCharge(String externalChargeId, long chargeId) {

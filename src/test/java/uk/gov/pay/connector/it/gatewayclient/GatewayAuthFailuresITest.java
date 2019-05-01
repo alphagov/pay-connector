@@ -10,7 +10,6 @@ import com.google.common.collect.ImmutableMap;
 import io.restassured.RestAssured;
 import org.hamcrest.core.Is;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -125,6 +124,6 @@ public class GatewayAuthFailuresITest {
     private void assertThatLastGatewayClientLoggingEventIs(String loggingEvent) {
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        Assert.assertThat(logStatement.get(logStatement.size() - 1).getFormattedMessage(), Is.is(loggingEvent));
+        assertThat(logStatement.get(logStatement.size() - 1).getFormattedMessage(), Is.is(loggingEvent));
     }
 }

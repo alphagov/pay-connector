@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.wallets.applepay;
 
 import com.google.common.collect.ImmutableMap;
-import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -89,6 +88,6 @@ public class ApplePayServiceTest {
         verify(mockedApplePayAuthoriseService).doAuthorise(externalChargeId, validData);
         assertThat(authorisationResponse.getStatus(), is(500));
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
-        MatcherAssert.assertThat(response.getMessages(), contains("oops"));
+        assertThat(response.getMessages(), contains("oops"));
     }
 }

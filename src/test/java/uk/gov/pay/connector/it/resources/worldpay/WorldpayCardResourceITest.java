@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.resources.worldpay;
 
 import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -56,7 +55,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
@@ -72,7 +71,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .body(validApplePayAuthorisationDetails)
                 .post(authoriseChargeUrlForApplePay(chargeId))
                 .then()
-                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
@@ -158,7 +157,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .body(corporateCreditAuthDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
@@ -176,7 +175,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .body(authDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
@@ -191,7 +190,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .body("status", Matchers.is(AUTHORISATION_3DS_REQUIRED.toString()))
+                .body("status", is(AUTHORISATION_3DS_REQUIRED.toString()))
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_3DS_REQUIRED.toString());
