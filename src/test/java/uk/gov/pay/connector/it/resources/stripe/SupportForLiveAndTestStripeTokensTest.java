@@ -33,6 +33,7 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlFor;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.cancelChargeUrlFor;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -95,8 +96,13 @@ public class SupportForLiveAndTestStripeTokensTest {
     private String addCharge() {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, 100L, ENTERING_CARD_DETAILS,
-                "RETURN_URL", null, "a description");
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(100L)
+                .withStatus(ENTERING_CARD_DETAILS)
+                .build());
         return externalChargeId;
     }
 }

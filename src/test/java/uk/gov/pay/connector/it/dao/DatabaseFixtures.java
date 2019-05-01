@@ -27,6 +27,7 @@ import java.util.UUID;
 
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 public class  DatabaseFixtures {
 
@@ -551,9 +552,24 @@ public class  DatabaseFixtures {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
 
-            databaseTestHelper.addCharge(chargeId, externalChargeId, String.valueOf(testAccount.getAccountId()), amount, chargeStatus, returnUrl, transactionId,
-                    reference, description, createdDate, email, language, corporateCardSurcharge);
-
+            databaseTestHelper.addCharge(anAddChargeParams()
+                    .withChargeId(chargeId)
+                    .withExternalChargeId(externalChargeId)
+                    .withGatewayAccountId(String.valueOf(testAccount.getAccountId()))
+                    .withAmount(amount)
+                    .withStatus(chargeStatus)
+                    .withReturnUrl(returnUrl)
+                    .withTransactionId(transactionId)
+                    .withDescription(description)
+                    .withReference(reference)
+                    .withCreatedDate(createdDate)
+                    .withVersion(1)
+                    .withLanguage(language)
+                    .withDelayedCapture(false)
+                    .withEmail(email)
+                    .withCorporateSurcharge(corporateCardSurcharge)
+                    .build());
+            
             if (cardDetails != null) {
                 cardDetails.update();
             }

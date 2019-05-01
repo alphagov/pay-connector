@@ -36,6 +36,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 /**
  * This is effectively a copy of TransactionsApiResourceITest pointing to V2 resource
@@ -310,9 +311,20 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
         ExternalMetadata externalMetadata = new ExternalMetadata(
                 Map.of("key1", true, "key2", 123, "key3", "string1"));
 
-        databaseTestHelper.addChargeWithExternalMetadata(chargeId, externalChargeId, accountId, 100,
-                AUTHORISATION_SUCCESS, RETURN_URL, null, ServicePaymentReference.of("ref"), null,
-                SupportedLanguage.ENGLISH, false, 100L, externalMetadata);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(100)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .withReturnUrl(RETURN_URL)
+                .withDescription("Test description")
+                .withReference(ServicePaymentReference.of("ref"))
+                .withLanguage(SupportedLanguage.ENGLISH)
+                .withDelayedCapture(false)
+                .withCorporateSurcharge(100L)
+                .withExternalMetadata(externalMetadata)
+                .build());
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -331,10 +343,20 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
 
         ExternalMetadata nullExternalMetadata = null;
 
-        databaseTestHelper.addChargeWithExternalMetadata(chargeId, externalChargeId, accountId, 100,
-                AUTHORISATION_SUCCESS, RETURN_URL, null, ServicePaymentReference.of("ref"), null,
-                SupportedLanguage.ENGLISH, false, 100L, nullExternalMetadata);
-
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(100)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .withReturnUrl(RETURN_URL)
+                .withDescription("Test description")
+                .withReference(ServicePaymentReference.of("ref"))
+                .withLanguage(SupportedLanguage.ENGLISH)
+                .withDelayedCapture(false)
+                .withCorporateSurcharge(100L)
+                .build());
+        
         connectorRestApiClient
                 .withAccountId(accountId)
                 .getChargesV2()
@@ -347,7 +369,22 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
                                            String cardBrand, String returnUrl, String email) {
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, transactionId, reference, fromDate, email);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(chargeStatus)
+                .withReturnUrl(returnUrl)
+                .withTransactionId(transactionId)
+                .withDescription("Test description")
+                .withReference(reference)
+                .withCreatedDate(fromDate)
+                .withEmail(email)
+                .withVersion(1)
+                .withLanguage(SupportedLanguage.ENGLISH)
+                .withDelayedCapture(false)
+                .build());
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
         expiryDate = "03/18";
@@ -360,7 +397,22 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
                                            String cardHolderName, String lastDigitsCardNumber) {
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, returnUrl, transactionId, reference, fromDate, email);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(chargeStatus)
+                .withReturnUrl(returnUrl)
+                .withTransactionId(transactionId)
+                .withDescription("Test description")
+                .withReference(reference)
+                .withCreatedDate(fromDate)
+                .withEmail(email)
+                .withVersion(1)
+                .withLanguage(SupportedLanguage.ENGLISH)
+                .withDelayedCapture(false)
+                .build());
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
         expiryDate = "03/18";
@@ -374,8 +426,20 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
     }
 
     private void createCharge(String externalChargeId, long chargeId) {
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
-                ServicePaymentReference.of("ref"), null, EMAIL);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .withReturnUrl(RETURN_URL)
+                .withDescription("Test description")
+                .withReference(ServicePaymentReference.of("ref"))
+                .withEmail(EMAIL)
+                .withVersion(1)
+                .withLanguage(SupportedLanguage.ENGLISH)
+                .withDelayedCapture(false)
+                .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.updateCorporateSurcharge(chargeId, 150L);

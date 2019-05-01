@@ -14,7 +14,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
-import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -141,9 +140,19 @@ public class TransactionsApiContractTest {
 
     private void setUpChargeAndRefunds(int numberOfRefunds, String accountID, ZonedDateTime createdDate) {
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
-        dbHelper.addCharge(chargeId, Long.toString(chargeId), accountID, 100L, ChargeStatus.CREATED, "aReturnUrl",
-                "aTransactionId", ServicePaymentReference.of("aReference"), ZonedDateTime.now().minusHours(12), "test@test.com@");
-
+        dbHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(Long.toString(chargeId))
+                .withGatewayAccountId(accountID)
+                .withAmount(100)
+                .withStatus(ChargeStatus.CREATED)
+                .withReturnUrl("aReturnUrl")
+                .withReference(ServicePaymentReference.of("aReference"))
+                .withCreatedDate(ZonedDateTime.now().minusHours(12))
+                .withTransactionId("aTransactionId")
+                .withEmail("test@test.com")
+                .build());
+        
         for (int i = 0; i < numberOfRefunds; i++) {
             dbHelper.addRefund("external" + RandomUtils.nextInt(), "reference", 1L, REFUNDED,
                     chargeId, randomAlphanumeric(10), createdDate);
@@ -298,8 +307,17 @@ public class TransactionsApiContractTest {
         long accountId = Long.parseLong(params.get("account_id"));
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
         String chargeExternalId = params.get("charge_id");
-        dbHelper.addChargeWithCorporateCardSurcharge(1234L, chargeExternalId, Long.toString(accountId), 2000L,
-                ChargeStatus.CAPTURED, "https://someurl.example", chargeExternalId, ServicePaymentReference.of("My reference"),
-                ZonedDateTime.now(), SupportedLanguage.ENGLISH, false, 250L);
+        dbHelper.addCharge(anAddChargeParams()
+                .withChargeId(1234L)
+                .withExternalChargeId(chargeExternalId)
+                .withGatewayAccountId(Long.toString(accountId))
+                .withAmount(2000L)
+                .withStatus(ChargeStatus.CAPTURED)
+                .withReturnUrl("https://someurl.example")
+                .withDescription("Test description")
+                .withReference(ServicePaymentReference.of("My reference"))
+                .withTransactionId(chargeExternalId)
+                .withCorporateSurcharge(250L)
+                .build());
     }
 }

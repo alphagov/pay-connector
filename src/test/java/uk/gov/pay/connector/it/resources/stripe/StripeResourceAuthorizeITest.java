@@ -63,6 +63,7 @@ import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlF
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForApplePay;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForGooglePay;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -304,7 +305,13 @@ public class StripeResourceAuthorizeITest {
     private String addChargeWithStatus(ChargeStatus chargeStatus) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, Long.valueOf(AMOUNT), chargeStatus, "RETURN_URL", null, DESCRIPTION);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(Long.valueOf(AMOUNT))
+                .withStatus(chargeStatus)
+                .build());
         return externalChargeId;
     }
 

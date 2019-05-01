@@ -21,6 +21,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -58,6 +59,13 @@ public class SearchChargesITest {
     private void addCharge(String gatewayTransactionId, ChargeStatus chargeStatus) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, 100, chargeStatus, "http://return.com/1", gatewayTransactionId);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(100)
+                .withStatus(chargeStatus)
+                .withTransactionId(gatewayTransactionId)
+                .build());
     }
 }

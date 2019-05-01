@@ -38,6 +38,7 @@ import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
 import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -116,7 +117,14 @@ public class StripeResourceCancelITest {
     private String addChargeWithStatusAndTransactionId(ChargeStatus chargeStatus, String transactionId) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, Long.valueOf(AMOUNT), chargeStatus, "RETURN_URL", transactionId, DESCRIPTION);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(Long.valueOf(AMOUNT))
+                .withStatus(chargeStatus)
+                .withTransactionId(transactionId)
+                .build());
         return externalChargeId;
     }
 

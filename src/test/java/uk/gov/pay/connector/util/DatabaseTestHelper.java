@@ -6,12 +6,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.StringColumnMapper;
-import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ExternalMetadataConverterException;
-import uk.gov.pay.connector.charge.model.ServicePaymentReference;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
@@ -115,95 +112,6 @@ public class DatabaseTestHelper {
         addGatewayAccount(accountId, paymentProvider, credentials, serviceName, type, description, analyticsId, EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, corporatePrepaidCreditCardSurchargeAmount, corporatePrepaidDebitCardSurchargeAmount);
     }
     
-    public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl,
-                          String transactionId) {
-        addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, "Test description",
-                ServicePaymentReference.of("Test reference"), now(), 1, "email@fake.test", SupportedLanguage.ENGLISH, false);
-    }
-
-    public void addCharge(Long chargeId, String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl,
-                          String transactionId, String description) {
-        addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, description,
-                ServicePaymentReference.of("Test reference"), now(), 1, "email@fake.test", SupportedLanguage.ENGLISH, false);
-    }
-
-    public void addCharge(String externalChargeId, String gatewayAccountId, long amount, ChargeStatus status, String returnUrl, String transactionId) {
-        addCharge((long) RandomUtils.nextInt(), externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId,
-                "Test description", ServicePaymentReference.of("Test reference"), now(), 1, null, SupportedLanguage.ENGLISH, false);
-    }
-
-    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
-                          String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate) {
-        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference,
-                createdDate == null ? now() : createdDate, 1, null, SupportedLanguage.ENGLISH, false);
-    }
-
-    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
-                          String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate, SupportedLanguage
-                                  language,
-                          boolean delayedCapture) {
-        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference,
-                createdDate == null ? now() : createdDate, 1, null, language, delayedCapture);
-    }
-
-    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
-                          String transactionId, ServicePaymentReference reference, ZonedDateTime createdDate, String email) {
-        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, "Test description", reference,
-                createdDate == null ? now() : createdDate, 1, email, SupportedLanguage.ENGLISH, false);
-    }
-
-    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
-                          String transactionId, ServicePaymentReference reference, String description, ZonedDateTime createdDate, String email) {
-        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, description, reference,
-                createdDate == null ? now() : createdDate, 1, email, SupportedLanguage.ENGLISH, false);
-    }
-
-    public void addCharge(Long chargeId, String externalChargeId, String accountId, long amount, ChargeStatus chargeStatus, String returnUrl,
-                          String transactionId, ServicePaymentReference reference, String description, ZonedDateTime createdDate, String email,
-                          SupportedLanguage language, Long corporateCardSurcharge) {
-        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId, description, reference,
-                createdDate == null ? now() : createdDate, 1, email, language, false, corporateCardSurcharge, null);
-    }
-
-    public void addChargeWithCorporateCardSurcharge(Long chargeId, String externalChargeId, String accountId, long amount,
-                                                    ChargeStatus chargeStatus, String returnUrl, String transactionId,
-                                                    ServicePaymentReference reference, ZonedDateTime createdDate,
-                                                    SupportedLanguage language, boolean delayedCapture, Long corporateCardSurcharge) {
-        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId,
-                "Test description", reference, createdDate == null ? now() : createdDate, 1, null,
-                language, delayedCapture, corporateCardSurcharge, null);
-    }
-
-    public void addChargeWithExternalMetadata(Long chargeId, String externalChargeId, String accountId, long amount,
-                                                    ChargeStatus chargeStatus, String returnUrl, String transactionId,
-                                                    ServicePaymentReference reference, ZonedDateTime createdDate,
-                                                    SupportedLanguage language, boolean delayedCapture, Long corporateCardSurcharge,
-                                              ExternalMetadata externalMetadata) {
-        addCharge(chargeId, externalChargeId, accountId, amount, chargeStatus, returnUrl, transactionId,
-                "Test description", reference, createdDate == null ? now() : createdDate, 1, null,
-                language, delayedCapture, corporateCardSurcharge, externalMetadata);
-    }
-
-    private void addCharge(
-            Long chargeId,
-            String externalChargeId,
-            String gatewayAccountId,
-            long amount,
-            ChargeStatus status,
-            String returnUrl,
-            String transactionId,
-            String description,
-            ServicePaymentReference reference,
-            ZonedDateTime createdDate,
-            long version,
-            String email,
-            SupportedLanguage language,
-            boolean delayedCapture
-    ) {
-        addCharge(chargeId, externalChargeId, gatewayAccountId, amount, status, returnUrl, transactionId, description, reference,
-                createdDate, version, email, language, delayedCapture, null, null);
-    }
-
     public void addCharge(AddChargeParams addChargeParams) {
         PGobject jsonMetadata = new PGobject();
         jsonMetadata.setType("json");
@@ -252,79 +160,6 @@ public class DatabaseTestHelper {
                         addChargeParams.getLanguage().toString(),
                         addChargeParams.isDelayedCapture(),
                         addChargeParams.getCorporateSurcharge(),
-                        jsonMetadata
-                )
-        );
-    }
-    
-    /*
-        Use addCharge(AddChargeParams addChargeParams) instead.
-     */
-    @Deprecated
-    private void addCharge(
-            Long chargeId,
-            String externalChargeId,
-            String gatewayAccountId,
-            long amount,
-            ChargeStatus status,
-            String returnUrl,
-            String transactionId,
-            String description,
-            ServicePaymentReference reference,
-            ZonedDateTime createdDate,
-            long version,
-            String email,
-            SupportedLanguage language,
-            boolean delayedCapture,
-            Long corporateSurcharge,
-            ExternalMetadata externalMetadata
-    ) {
-        PGobject jsonMetadata = new PGobject();
-        jsonMetadata.setType("json");
-        try {
-            if (externalMetadata != null) {
-                jsonMetadata.setValue(new Gson().toJson(externalMetadata.getMetadata()));
-            }
-        } catch (SQLException e) {
-            throw new ExternalMetadataConverterException("Failed to persist external metadata");
-        }
-        jdbi.withHandle(h ->
-                h.update(
-                        "INSERT INTO" +
-                                "    charges(\n" +
-                                "        id,\n" +
-                                "        external_id,\n" +
-                                "        amount,\n" +
-                                "        status,\n" +
-                                "        gateway_account_id,\n" +
-                                "        return_url,\n" +
-                                "        gateway_transaction_id,\n" +
-                                "        description,\n" +
-                                "        created_date,\n" +
-                                "        reference,\n" +
-                                "        version,\n" +
-                                "        email,\n" +
-                                "        language,\n" +
-                                "        delayed_capture,\n" +
-                                "        corporate_surcharge,\n" +
-                                "        external_metadata\n" +
-                                "    )\n" +
-                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
-                        chargeId,
-                        externalChargeId,
-                        amount,
-                        status.getValue(),
-                        Long.valueOf(gatewayAccountId),
-                        returnUrl,
-                        transactionId,
-                        description,
-                        Timestamp.from(createdDate.toInstant()),
-                        reference.toString(),
-                        version,
-                        email,
-                        language.toString(),
-                        delayedCapture,
-                        corporateSurcharge,
                         jsonMetadata
                 )
         );
@@ -753,7 +588,7 @@ public class DatabaseTestHelper {
     }
 
     public void addEvent(Long chargeId, String chargeStatus) {
-        addEvent(chargeId, chargeStatus, ZonedDateTime.now());
+        addEvent(chargeId, chargeStatus, now());
     }
 
     public void addEvent(Long chargeId, String chargeStatus, ZonedDateTime updated) {

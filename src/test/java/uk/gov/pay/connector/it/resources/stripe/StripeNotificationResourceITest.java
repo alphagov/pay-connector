@@ -35,6 +35,7 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_3DS_SOURCE;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -178,7 +179,14 @@ public class StripeNotificationResourceITest {
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge-" + chargeId;
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, 6234L, status, "RETURN_URL", gatewayTransactionId);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(6234L)
+                .withStatus(status)
+                .withTransactionId(gatewayTransactionId)
+                .build());
         return externalChargeId;
     }
 
