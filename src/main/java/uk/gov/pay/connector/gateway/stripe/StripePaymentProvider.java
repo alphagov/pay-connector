@@ -67,6 +67,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
+import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 @Singleton
 public class StripePaymentProvider implements PaymentProvider {
@@ -374,7 +375,8 @@ public class StripePaymentProvider implements PaymentProvider {
         if (StringUtils.isBlank(stripeAccountId)) {
             logger.error("Unable to process charge [{}]. There is no stripe_account_id for corresponding gateway account with id {}",
                     externalId, gatewayAccount.getId());
-            throw new WebApplicationException(format("There is no stripe_account_id for gateway account with id %s", gatewayAccount.getId()));
+            throw new WebApplicationException(serviceErrorResponse(
+                    format("There is no stripe_account_id for gateway account with id %s", gatewayAccount.getId())));
         }
         return stripeAccountId;
     }
