@@ -149,7 +149,7 @@ public class WorldpayRefundITest extends ChargingITestBase {
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("pending"))
                 .body("message", contains(format("Charge with id [%s] not available for refund.", testCharge.getExternalChargeId())))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(0));
@@ -170,7 +170,7 @@ public class WorldpayRefundITest extends ChargingITestBase {
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("full"))
                 .body("message", contains(format("Charge with id [%s] not available for refund.", externalChargeId)))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(chargeId);
         assertThat(refundsFoundByChargeId.size(), is(1));
@@ -184,7 +184,7 @@ public class WorldpayRefundITest extends ChargingITestBase {
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_not_available"))
                 .body("message", contains("Not sufficient amount available for refund"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(0));
@@ -199,7 +199,7 @@ public class WorldpayRefundITest extends ChargingITestBase {
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_not_available"))
                 .body("message", contains("Not sufficient amount available for refund"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(0));
@@ -214,7 +214,7 @@ public class WorldpayRefundITest extends ChargingITestBase {
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_min_validation"))
                 .body("message", contains("Validation error for amount. Minimum amount for a refund is 1"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(0));
@@ -238,7 +238,7 @@ public class WorldpayRefundITest extends ChargingITestBase {
                 .statusCode(400)
                 .body("reason", is("amount_not_available"))
                 .body("message", contains("Not sufficient amount available for refund"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
         List<Map<String, Object>> refundsFoundByChargeId1 = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId1.size(), is(1));

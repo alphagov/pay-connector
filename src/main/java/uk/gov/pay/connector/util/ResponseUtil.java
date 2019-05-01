@@ -50,21 +50,11 @@ public class ResponseUtil {
         return buildErrorResponse(BAD_REQUEST, message);
     }
 
-    public static Response badRequestResponse(String code, String message) {
-        logger.error(message);
-        return buildErrorResponse(BAD_REQUEST, message, code);
-    }
-
     public static Response badRequestResponse(List<String> messages) {
         logger.error(messages.toString());
         return buildErrorResponse(BAD_REQUEST, messages);
     }
-
-    public static Response preconditionFailedResponse(String message) {
-        logger.info(message);
-        return buildErrorResponse(PRECONDITION_FAILED, message);
-    }
-
+    
     public static Response notFoundResponse(String message) {
         logger.error(message);
         return buildErrorResponse(NOT_FOUND, message);
@@ -95,11 +85,6 @@ public class ResponseUtil {
 
     private static Response buildErrorResponse(Status status, List<String> messages) {
         ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.GENERIC, messages);
-        return responseWithEntity(status, errorResponse);
-    }
-
-    private static Response buildErrorResponse(Status status, String message, String reason) {
-        ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.GENERIC, List.of(message), reason);
         return responseWithEntity(status, errorResponse);
     }
 

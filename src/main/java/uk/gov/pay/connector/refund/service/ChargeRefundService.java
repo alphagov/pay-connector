@@ -190,7 +190,7 @@ public class ChargeRefundService {
                     totalAmountToBeRefunded,
                     refundRequest.getAmount());
 
-            throw RefundException.refundException("Not sufficient amount available for refund", NOT_SUFFICIENT_AMOUNT_AVAILABLE);
+            throw RefundException.notAvailableForRefundException("Not sufficient amount available for refund", NOT_SUFFICIENT_AMOUNT_AVAILABLE);
         }
     }
 

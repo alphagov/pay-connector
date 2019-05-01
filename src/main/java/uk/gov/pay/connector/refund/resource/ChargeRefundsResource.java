@@ -57,10 +57,10 @@ public class ChargeRefundsResource {
 
     private void validateRefundRequest(long amount) {
         if (MAX_AMOUNT < amount) {
-            throw RefundException.refundException("Not sufficient amount available for refund", NOT_SUFFICIENT_AMOUNT_AVAILABLE);
+            throw RefundException.notAvailableForRefundException("Not sufficient amount available for refund", NOT_SUFFICIENT_AMOUNT_AVAILABLE);
         }
         if (MIN_AMOUNT > amount) {
-            throw RefundException.refundException("Validation error for amount. Minimum amount for a refund is " + MIN_AMOUNT, RefundException.ErrorCode.MINIMUM_AMOUNT);
+            throw RefundException.notAvailableForRefundException("Validation error for amount. Minimum amount for a refund is " + MIN_AMOUNT, RefundException.ErrorCode.MINIMUM_AMOUNT);
         }
     }
 
