@@ -6,11 +6,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -372,7 +370,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
         String expectedLogMessage = String.format("CAPTURE_ERROR for charge [charge_external_id=%s] - reached maximum number of capture attempts", charge.getExternalId());
-        Assert.assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
+        assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
     }
 
     @Test

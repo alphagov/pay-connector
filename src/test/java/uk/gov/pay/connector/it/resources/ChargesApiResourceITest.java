@@ -9,6 +9,7 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -35,6 +36,7 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextInt;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
@@ -303,7 +305,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("results[0].charge_id", is(externalChargeId))
                 .body("results[0].wallet_type", is(WalletType.APPLE_PAY.toString()));
     }
-    
+
     @Test
     public void shouldReturnWalletTypeWhenNotNull_v2() {
         long chargeId = nextInt();
@@ -342,7 +344,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
         long feeCollected = 100L;
-        
+
 
         createCharge(externalChargeId, chargeId);
         databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
@@ -355,19 +357,19 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body("fee", is(100));
     }
-    
+
     @Test
     public void shouldReturnNetAmountIfFeeExists() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
         long feeCollected = 100L;
-        
+
         long defaultAmount = 6234L;
         long defaultCorporateSurchargeAmount = 150L;
-        
+
         createCharge(externalChargeId, chargeId);
         databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
-        
+
         connectorRestApiClient
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
@@ -377,7 +379,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .body("fee", is(100))
                 .body("net_amount", is(Long.valueOf(defaultAmount + defaultCorporateSurchargeAmount - feeCollected).intValue()));
     }
-    
+
     @Test
     public void shouldReturnFeeInSearchResultsV1IfFeeExists() {
         long chargeId = nextInt();
@@ -473,7 +475,8 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .getCharge()
                 .statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
-                .body(JSON_MESSAGE_KEY, is(format("Charge with id [%s] not found.", chargeId)));
+                .body(JSON_MESSAGE_KEY, contains(format("Charge with id [%s] not found.", chargeId)))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -606,7 +609,8 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .postMarkChargeAsCaptureApproved()
                 .statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
-                .body(JSON_MESSAGE_KEY, is("Charge with id [i-do-not-exist] not found."));
+                .body(JSON_MESSAGE_KEY, contains("Charge with id [i-do-not-exist] not found."))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -622,7 +626,8 @@ public class ChargesApiResourceITest extends ChargingITestBase {
                 .postMarkChargeAsCaptureApproved()
                 .statusCode(CONFLICT.getStatusCode())
                 .contentType(JSON)
-                .body(JSON_MESSAGE_KEY, is(expectedErrorMessage));
+                .body(JSON_MESSAGE_KEY, contains(expectedErrorMessage))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     private void createCharge(String externalChargeId, long chargeId) {

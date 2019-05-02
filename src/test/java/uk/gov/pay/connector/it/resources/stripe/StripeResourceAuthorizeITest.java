@@ -130,7 +130,8 @@ public class StripeResourceAuthorizeITest {
                 .post(authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(BAD_REQUEST_400)
-                .body("message", is("Your card has expired."));
+                .body("message", contains("Your card has expired."))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -233,7 +234,8 @@ public class StripeResourceAuthorizeITest {
                 .post(authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(INTERNAL_SERVER_ERROR_500)
-                .body("message", containsString("There was an internal server error authorising charge_external_id: " + externalChargeId));
+                .body("message", contains("There was an internal server error authorising charge_external_id: " + externalChargeId))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test

@@ -2,24 +2,24 @@ package uk.gov.pay.connector.it.resources.worldpay;
 
 import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
@@ -40,7 +40,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
 
     private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
     private String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
-    
+
     public WorldpayCardResourceITest() {
         super("worldpay");
     }
@@ -55,12 +55,12 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
     }
-    
+
     @Test
     public void shouldAuthoriseChargeWithApplePay_ForValidAuthorisationDetails() {
 
@@ -71,10 +71,10 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .body(validApplePayAuthorisationDetails)
                 .post(authoriseChargeUrlForApplePay(chargeId))
                 .then()
-                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(200);
 
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString()); 
+        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
     }
 
     @Test
@@ -89,11 +89,12 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
-                .body("message", is("This transaction was declined."));
+                .body("message", contains("This transaction was declined."))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
     }
-    
+
     @Test
     public void shouldAuthoriseChargeWithGooglePay() throws IOException {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
@@ -123,7 +124,8 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
-                .body("message", is("This transaction was declined."));
+                .body("message", contains("This transaction was declined."))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
     }
@@ -139,7 +141,8 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(422)
-                .body("message", is(Collections.singletonList("Field [signature] must not be empty")));
+                .body("message", contains("Field [signature] must not be empty"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -154,7 +157,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .body(corporateCreditAuthDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
@@ -172,7 +175,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .body(authDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .body("status", Matchers.is(AUTHORISATION_SUCCESS.toString()))
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.toString());
@@ -187,7 +190,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .body(validAuthorisationDetails)
                 .post(authoriseChargeUrlFor(chargeId))
                 .then()
-                .body("status", Matchers.is(AUTHORISATION_3DS_REQUIRED.toString()))
+                .body("status", is(AUTHORISATION_3DS_REQUIRED.toString()))
                 .statusCode(200);
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_3DS_REQUIRED.toString());
@@ -260,7 +263,8 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
-                .body("message", is(expectedErrorMessage));
+                .body("message", contains(expectedErrorMessage))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
     }
@@ -278,7 +282,8 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .then()
                 .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
                 .contentType(JSON)
-                .body("message", is(expectedErrorMessage));
+                .body("message", contains(expectedErrorMessage))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_ERROR.getValue());
     }
@@ -296,7 +301,8 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
                 .then()
                 .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
                 .contentType(JSON)
-                .body("message", is(expectedErrorMessage));
+                .body("message", contains(expectedErrorMessage))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_ERROR.getValue());
     }
