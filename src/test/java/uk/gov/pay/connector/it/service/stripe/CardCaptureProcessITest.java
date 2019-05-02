@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.service.stripe;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -15,6 +14,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
@@ -44,7 +44,7 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
                 .withRequestBody(containing("source_transaction=" + testCharge.getTransactionId()))
                 .withRequestBody(containing("amount=" + (testCharge.getAmount()))));
 
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURED.getValue()));
+        assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURED.getValue()));
     }
 
     @Test
@@ -54,7 +54,7 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         new StripeMockClient().mockCaptureSuccess(testCharge.getTransactionId());
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(ENTERING_CARD_DETAILS.getValue()));
+        assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(ENTERING_CARD_DETAILS.getValue()));
     }
 
     @Test
@@ -65,7 +65,7 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURE_APPROVED_RETRY.getValue()));
+        assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURE_APPROVED_RETRY.getValue()));
     }
 
     @Test
@@ -77,7 +77,7 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURE_APPROVED_RETRY.getValue()));
+        assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURE_APPROVED_RETRY.getValue()));
     }
 
     @Test
@@ -90,6 +90,6 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
             app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
         }
 
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURE_ERROR.getValue()));
+        assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURE_ERROR.getValue()));
     }
 }

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.epdq;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -28,7 +27,7 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
 
     @Test
     public void shouldGenerateNoTransactionId() {
-        Assert.assertThat(provider.generateTransactionId().isPresent(), is(false));
+        assertThat(provider.generateTransactionId().isPresent(), is(false));
     }
 
     @Test

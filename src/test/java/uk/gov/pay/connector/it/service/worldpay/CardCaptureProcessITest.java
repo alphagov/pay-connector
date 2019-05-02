@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.service.worldpay;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -10,6 +9,7 @@ import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
@@ -29,7 +29,7 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURE_SUBMITTED.getValue()));
+        assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURE_SUBMITTED.getValue()));
     }
 
     @Test
@@ -39,7 +39,7 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         new WorldpayMockClient().mockCaptureSuccess();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(ENTERING_CARD_DETAILS.getValue()));
+        assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(ENTERING_CARD_DETAILS.getValue()));
     }
 
     @Test
@@ -50,7 +50,7 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).loadCaptureQueue();
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
 
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURE_APPROVED_RETRY.getValue()));
+        assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURE_APPROVED_RETRY.getValue()));
     }
 
     @Test
@@ -63,6 +63,6 @@ public class CardCaptureProcessITest extends CardCaptureProcessBaseITest {
             app.getInstanceFromGuiceContainer(CardCaptureProcess.class).runCapture(1);
         }
 
-        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURE_ERROR.getValue()));
+        assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURE_ERROR.getValue()));
     }
 }

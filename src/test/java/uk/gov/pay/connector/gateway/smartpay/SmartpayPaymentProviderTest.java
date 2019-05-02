@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +44,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
 
     @Test
     public void shouldGenerateTransactionId() {
-        Assert.assertThat(provider.generateTransactionId().isPresent(), is(false));
+        assertThat(provider.generateTransactionId().isPresent(), is(false));
     }
 
     @Test
