@@ -4,6 +4,7 @@ import io.dropwizard.Configuration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.Optional;
 
 public class StripeGatewayConfig extends Configuration {
 
@@ -18,9 +19,16 @@ public class StripeGatewayConfig extends Configuration {
     @Valid
     @NotNull
     private StripeWebhookSigningSecrets webhookSigningSecrets;
+    
+    @Valid
+    private Double feePercentage;
 
     @Valid
     private String platformAccountId;
+
+    @Valid
+    @NotNull
+    private Boolean collectFee;
 
     public String getUrl() {
         return url;
@@ -32,6 +40,16 @@ public class StripeGatewayConfig extends Configuration {
 
     public StripeWebhookSigningSecrets getWebhookSigningSecrets() {
         return webhookSigningSecrets;
+    }
+
+
+    public Double getFeePercentage() {
+        return Optional.ofNullable(feePercentage).orElse(0.0);
+    }
+
+
+    public Boolean isCollectFee() {
+        return collectFee;
     }
 
     public String getPlatformAccountId() {

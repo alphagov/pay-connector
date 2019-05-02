@@ -7,8 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
+import uk.gov.pay.connector.fee.dao.FeeDao;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -31,6 +33,7 @@ public class CardCaptureService {
     private static final Logger LOG = LoggerFactory.getLogger(CardCaptureService.class);
 
     private final UserNotificationService userNotificationService;
+    private final FeeDao feeDao;
     private final ChargeService chargeService;
     private final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
@@ -38,10 +41,12 @@ public class CardCaptureService {
 
     @Inject
     public CardCaptureService(ChargeService chargeService,
+                              FeeDao feeDao,
                               PaymentProviders providers,
                               UserNotificationService userNotificationService,
                               Environment environment) {
         this.chargeService = chargeService;
+        this.feeDao = feeDao;
         this.providers = providers;
         this.metricRegistry = environment.metrics();
         this.userNotificationService = userNotificationService;
@@ -88,27 +93,35 @@ public class CardCaptureService {
     }
 
     @Transactional
-    public void processGatewayCaptureResponse(String chargeId, String oldStatus, CaptureResponse operationResponse) {
+    public void processGatewayCaptureResponse(String chargeId, String oldStatus, CaptureResponse captureResponse) {
 
-        ChargeStatus nextStatus = determineNextStatus(operationResponse);
-        checkTransactionId(chargeId, operationResponse);
+        ChargeStatus nextStatus = determineNextStatus(captureResponse);
+        checkTransactionId(chargeId, captureResponse);
+
 
         ChargeEntity charge = chargeService.updateChargePostCapture(chargeId, nextStatus);
+        captureResponse.getFee().ifPresent(fee -> persistFee(charge, fee));
 
         // Used by Sumo Logic saved search
         LOG.info("Capture for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                 charge.getExternalId(), charge.getPaymentGatewayName().getName(), charge.getGatewayTransactionId(),
                 charge.getGatewayAccount().getAnalyticsId(), charge.getGatewayAccount().getId(),
-                operationResponse, oldStatus, nextStatus);
+                captureResponse, oldStatus, nextStatus);
 
         metricRegistry.counter(format("gateway-operations.%s.%s.%s.capture.result.%s",
                 charge.getGatewayAccount().getGatewayName(),
                 charge.getGatewayAccount().getType(),
                 charge.getGatewayAccount().getId(), nextStatus.toString())).inc();
 
-        if (operationResponse.isSuccessful()) {
+        if (captureResponse.isSuccessful()) {
             userNotificationService.sendPaymentConfirmedEmail(charge);
         }
+    }
+
+    @Transactional
+    public void persistFee(ChargeEntity charge, Long feeAmount) {
+        FeeEntity fee = new FeeEntity(charge, feeAmount);
+        feeDao.persist(fee);
     }
 
     private void checkTransactionId(String chargeId, CaptureResponse operationResponse) {
@@ -119,7 +132,12 @@ public class CardCaptureService {
     }
 
     private ChargeStatus determineNextStatus(CaptureResponse operationResponse) {
-        if (operationResponse.getError().isPresent()) return CAPTURE_APPROVED_RETRY;
-        if (operationResponse.state().equals(PENDING)) return CAPTURE_SUBMITTED; else return CAPTURED;
+        if (operationResponse.getError().isPresent()) {
+            return CAPTURE_APPROVED_RETRY;
+        } else if (PENDING.equals(operationResponse.state())) {
+            return CAPTURE_SUBMITTED;
+        } else {
+            return CAPTURED;
+        }
     }
 }

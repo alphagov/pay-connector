@@ -43,7 +43,7 @@ public class WorldpayCaptureHandler implements CaptureHandler {
         return aWorldpayCaptureOrderRequestBuilder()
                 .withDate(DateTime.now(DateTimeZone.UTC))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
-                .withAmount(request.getAmount())
+                .withAmount(request.getAmountAsString())
                 .withTransactionId(request.getTransactionId())
                 .build();
     }
