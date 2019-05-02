@@ -4,8 +4,6 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
-import uk.gov.pay.connector.common.model.api.ErrorResponse;
 
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -94,13 +92,11 @@ public class ResponseUtil {
     }
 
     private static Response responseWithMessageMap(Status status, String message) {
-        ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.GENERIC, List.of(message));
-        return responseWithEntity(status, errorResponse);
+        return responseWithEntity(status, ImmutableMap.of("message", message));
     }
 
     private static Response responseWith(Status status, String message, String reason) {
-        ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.GENERIC, List.of(message), reason);
-        return responseWithEntity(status, errorResponse);
+        return responseWithEntity(status, ImmutableMap.of("reason", reason, "message", message));
     }
 
     private static Response responseWithMessageMap(Status status, Object entity) {

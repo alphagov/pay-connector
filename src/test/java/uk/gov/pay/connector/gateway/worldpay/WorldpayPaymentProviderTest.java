@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -7,11 +8,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.GatewayException;
-import uk.gov.pay.connector.gateway.GatewayOperation;
-import uk.gov.pay.connector.gateway.GatewayOrder;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.*;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ErrorType;
@@ -45,6 +42,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -65,13 +63,13 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
 
     @Test
     public void shouldGetPaymentProviderName() {
-        assertThat(provider.getPaymentGatewayName().getName(), is("worldpay"));
+        Assert.assertThat(provider.getPaymentGatewayName().getName(), is("worldpay"));
     }
 
     @Test
     public void shouldGenerateTransactionId() {
-        assertThat(provider.generateTransactionId().isPresent(), is(true));
-        assertThat(provider.generateTransactionId().get(), is(instanceOf(String.class)));
+        Assert.assertThat(provider.generateTransactionId().isPresent(), is(true));
+        Assert.assertThat(provider.generateTransactionId().get(), is(instanceOf(String.class)));
     }
 
     @Test

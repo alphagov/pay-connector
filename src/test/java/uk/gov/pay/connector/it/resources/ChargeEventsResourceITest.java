@@ -6,7 +6,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -22,8 +21,9 @@ import java.time.ZonedDateTime;
 import static io.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
+import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
@@ -31,8 +31,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READ
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
-import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -172,8 +170,7 @@ public class ChargeEventsResourceITest {
                 .getEvents("non-existent-charge")
                 .contentType(JSON)
                 .statusCode(NOT_FOUND.getStatusCode())
-                .body("message", contains("Charge with id [non-existent-charge] not found."))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is("Charge with id [non-existent-charge] not found."));
     }
 
     private DatabaseFixtures.TestCharge createTestCharge() {
@@ -182,16 +179,16 @@ public class ChargeEventsResourceITest {
                 .withAccountId(Long.valueOf(accountId));
 
         return withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withAmount(100L)
-                .withTestAccount(testAccount)
-                .withChargeStatus(CAPTURED);
+                        .aTestCharge()
+                        .withAmount(100L)
+                        .withTestAccount(testAccount)
+                        .withChargeStatus(CAPTURED);
     }
 
     private DatabaseFixtures.TestChargeEvent createTestChargeEvent(DatabaseFixtures.TestCharge testCharge) {
         return withDatabaseTestHelper(databaseTestHelper)
-                .aTestChargeEvent()
-                .withTestCharge(testCharge);
+                        .aTestChargeEvent()
+                        .withTestCharge(testCharge);
     }
 
     private DatabaseFixtures.TestRefundHistory createTestRefundHistory(DatabaseFixtures.TestRefund testRefund) {

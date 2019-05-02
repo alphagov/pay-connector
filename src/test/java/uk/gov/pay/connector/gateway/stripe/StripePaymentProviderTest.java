@@ -2,11 +2,13 @@ package uk.gov.pay.connector.gateway.stripe;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.apache.http.HttpStatus;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,6 +38,7 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import javax.ws.rs.WebApplicationException;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -110,7 +113,7 @@ public class StripePaymentProviderTest {
 
     @Test
     public void shouldGenerateNoTransactionId() {
-        assertThat(provider.generateTransactionId().isPresent(), is(false));
+        Assert.assertThat(provider.generateTransactionId().isPresent(), is(false));
     }
 
     @Test

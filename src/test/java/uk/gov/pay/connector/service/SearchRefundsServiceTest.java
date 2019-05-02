@@ -8,10 +8,9 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.SearchParams;
+import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -30,7 +29,6 @@ import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -98,13 +96,14 @@ public class SearchRefundsServiceTest {
 
         Response response = searchRefundsService.getAllRefunds(uriInfo, searchParams);
 
-        ErrorResponse errorResponse = (ErrorResponse)response.getEntity();
-        assertThat(errorResponse.getMessages(), contains("the requested page not found"));
-
+        ImmutableMap<String, Object> actualResponse = (ImmutableMap<String, Object>) response.getEntity();
         Response.StatusType statusType = response.getStatusInfo();
         int statusCode = response.getStatus();
+        ImmutableMap<String, String> expectedMessage = ImmutableMap.of(
+                "message", "the requested page not found");
         assertThat(statusType, is(NOT_FOUND));
         assertThat(statusCode, is(NOT_FOUND.getStatusCode()));
+        assertThat(actualResponse, is(expectedMessage));
     }
 
     @Test

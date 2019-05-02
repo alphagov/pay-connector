@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.sandbox;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,13 +46,13 @@ public class SandboxPaymentProviderTest {
 
     @Test
     public void getPaymentGatewayName_shouldGetExpectedName() {
-        assertThat(provider.getPaymentGatewayName().getName(), is("sandbox"));
+        Assert.assertThat(provider.getPaymentGatewayName().getName(), is("sandbox"));
     }
 
     @Test
     public void shouldGenerateTransactionId() {
-        assertThat(provider.generateTransactionId().isPresent(), is(true));
-        assertThat(provider.generateTransactionId().get(), is(instanceOf(String.class)));
+        Assert.assertThat(provider.generateTransactionId().isPresent(), is(true));
+        Assert.assertThat(provider.generateTransactionId().get(), is(instanceOf(String.class)));
     }
 
     @Test

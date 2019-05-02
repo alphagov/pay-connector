@@ -5,6 +5,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,7 +25,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -86,7 +86,7 @@ public class RefundNotificationProcessorTest {
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
         String expectedLogMessage = String.format("%s refund notification could not be used to update charge (missing reference)", paymentGatewayName);
 
-        assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
+        Assert.assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
     }
 
     @Test
@@ -99,7 +99,7 @@ public class RefundNotificationProcessorTest {
                 paymentGatewayName,
                 "unknown");
 
-        assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
+        Assert.assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
     }
 
     public static RefundEntityFixture aValidRefundEntity() {

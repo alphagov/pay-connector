@@ -8,7 +8,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
@@ -174,8 +173,7 @@ public class SandboxRefundITest extends ChargingITestBase {
         postRefundFor(testCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("pending"))
-                .body("message", contains(format("Charge with id [%s] not available for refund.", testCharge.getExternalChargeId())))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is(format("Charge with id [%s] not available for refund.", testCharge.getExternalChargeId())));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(0));
@@ -197,8 +195,7 @@ public class SandboxRefundITest extends ChargingITestBase {
         postRefundFor(externalChargeId, 1L, defaultTestCharge.getAmount() - refundAmount)
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("full"))
-                .body("message", contains(format("Charge with id [%s] not available for refund.", externalChargeId)))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is(format("Charge with id [%s] not available for refund.", externalChargeId)));
     }
 
     @Test
@@ -208,8 +205,7 @@ public class SandboxRefundITest extends ChargingITestBase {
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_not_available"))
-                .body("message", contains("Not sufficient amount available for refund"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is("Not sufficient amount available for refund"));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(0));
@@ -226,12 +222,11 @@ public class SandboxRefundITest extends ChargingITestBase {
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_not_available"))
-                .body("message", contains("Not sufficient amount available for refund"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is("Not sufficient amount available for refund"));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(0));
-
+        
         List<String> refundsHistory = databaseTestHelper.getRefundsHistoryByChargeId(defaultTestCharge.getChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
         assertThat(refundsHistory.size(), is(0));
     }
@@ -244,8 +239,7 @@ public class SandboxRefundITest extends ChargingITestBase {
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_min_validation"))
-                .body("message", contains("Validation error for amount. Minimum amount for a refund is 1"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is("Validation error for amount. Minimum amount for a refund is 1"));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(0));
@@ -269,8 +263,7 @@ public class SandboxRefundITest extends ChargingITestBase {
         postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount)
                 .statusCode(400)
                 .body("reason", is("amount_not_available"))
-                .body("message", contains("Not sufficient amount available for refund"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is("Not sufficient amount available for refund"));
 
         List<Map<String, Object>> refundsFoundByChargeId1 = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId1.size(), is(1));

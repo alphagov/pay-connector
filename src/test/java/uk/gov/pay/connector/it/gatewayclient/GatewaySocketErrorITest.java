@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.it.gatewayclient;
 
+import org.hamcrest.Matchers;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -14,8 +16,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.dropwizard.testing.ConfigOverride.config;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -43,6 +43,6 @@ public class GatewaySocketErrorITest extends BaseGatewayITest {
 
         assertLastGatewayClientLoggingEventContains(
                 String.format("Gateway returned unexpected status code: 404, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test", port));
-        assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), is(CAPTURE_APPROVED_RETRY.getValue()));
+        Assert.assertThat(app.getDatabaseTestHelper().getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_APPROVED_RETRY.getValue()));
     }
 }

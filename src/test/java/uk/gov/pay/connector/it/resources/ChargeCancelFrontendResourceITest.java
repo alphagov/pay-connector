@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.junit.DropwizardConfig;
@@ -19,7 +18,6 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
@@ -101,8 +99,7 @@ public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
                 .statusCode(ACCEPTED.getStatusCode())
                 .and()
                 .contentType(JSON)
-                .body("message", contains(expectedMessage))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is(expectedMessage));
     }
 
     @Test
@@ -175,8 +172,7 @@ public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
                 .statusCode(NOT_FOUND.getStatusCode())
                 .and()
                 .contentType(JSON)
-                .body("message", contains("Charge with id [" + unknownChargeId + "] not found."))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is("Charge with id [" + unknownChargeId + "] not found."));
     }
 
     @Test
@@ -208,8 +204,7 @@ public class ChargeCancelFrontendResourceITest extends ChargingITestBase {
                             .statusCode(BAD_REQUEST.getStatusCode())
                             .and()
                             .contentType(JSON)
-                            .body("message", contains(incorrectStateMessage))
-                            .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                            .body("message", is(incorrectStateMessage));
 
                 });
     }

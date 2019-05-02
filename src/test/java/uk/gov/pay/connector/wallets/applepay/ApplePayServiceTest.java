@@ -6,7 +6,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -17,7 +16,6 @@ import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -87,7 +85,6 @@ public class ApplePayServiceTest {
 
         verify(mockedApplePayAuthoriseService).doAuthorise(externalChargeId, validData);
         assertThat(authorisationResponse.getStatus(), is(500));
-        ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
-        assertThat(response.getMessages(), contains("oops"));
+        assertThat(authorisationResponse.getEntity(), is(ImmutableMap.of("message", "oops")));
     }
 }

@@ -8,7 +8,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
@@ -166,8 +165,7 @@ public class EpdqRefundITest extends ChargingITestBase {
         postRefundFor(testCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("pending"))
-                .body("message", contains(format("Charge with id [%s] not available for refund.", testCharge.getExternalChargeId())))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is(format("Charge with id [%s] not available for refund.", testCharge.getExternalChargeId())));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(0));
@@ -187,8 +185,7 @@ public class EpdqRefundITest extends ChargingITestBase {
         postRefundFor(externalChargeId, 1L, 0L)
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("full"))
-                .body("message", contains(format("Charge with id [%s] not available for refund.", externalChargeId)))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is(format("Charge with id [%s] not available for refund.", externalChargeId)));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(chargeId);
         assertThat(refundsFoundByChargeId.size(), is(1));
@@ -201,8 +198,7 @@ public class EpdqRefundITest extends ChargingITestBase {
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_not_available"))
-                .body("message", contains("Not sufficient amount available for refund"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is("Not sufficient amount available for refund"));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(0));
@@ -216,8 +212,7 @@ public class EpdqRefundITest extends ChargingITestBase {
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_not_available"))
-                .body("message", contains("Not sufficient amount available for refund"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is("Not sufficient amount available for refund"));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(0));
@@ -231,8 +226,7 @@ public class EpdqRefundITest extends ChargingITestBase {
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("reason", is("amount_min_validation"))
-                .body("message", contains("Validation error for amount. Minimum amount for a refund is 1"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is("Validation error for amount. Minimum amount for a refund is 1"));
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(0));
@@ -255,8 +249,7 @@ public class EpdqRefundITest extends ChargingITestBase {
         postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount)
                 .statusCode(400)
                 .body("reason", is("amount_not_available"))
-                .body("message", contains("Not sufficient amount available for refund"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is("Not sufficient amount available for refund"));
 
         List<Map<String, Object>> refundsFoundByChargeId1 = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId1.size(), is(1));
@@ -271,7 +264,7 @@ public class EpdqRefundITest extends ChargingITestBase {
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
                 .body("message",
-                        contains("ePDQ refund response (PAYID: 0, STATUS: 0, NCERROR: 50001111, " +
+                        is("ePDQ refund response (PAYID: 0, STATUS: 0, NCERROR: 50001111, " +
                                 "NCERRORPLUS: An error has occurred; please try again later. " +
                                 "If you are the owner or the integrator of this website, " +
                                 "please log into the  back office to see the details of the error.)"));
@@ -280,9 +273,9 @@ public class EpdqRefundITest extends ChargingITestBase {
         assertThat(refundsFoundByChargeId.size(), is(1));
         assertThat(refundsFoundByChargeId, contains(
                 allOf(
-                        hasEntry("amount", (Object) refundAmount),
-                        hasEntry("status", RefundStatus.REFUND_ERROR.getValue()),
-                        hasEntry("charge_id", (Object) defaultTestCharge.getChargeId())
+                                hasEntry("amount", (Object) refundAmount),
+                                hasEntry("status", RefundStatus.REFUND_ERROR.getValue()),
+                                hasEntry("charge_id", (Object) defaultTestCharge.getChargeId())
 
                 )));
     }
@@ -367,8 +360,7 @@ public class EpdqRefundITest extends ChargingITestBase {
                 nonExistentAccountId, defaultTestCharge.getExternalChargeId(), testRefund.getExternalRefundId());
 
         validatableResponse.statusCode(NOT_FOUND.getStatusCode())
-                .body("message", contains(format("Charge with id [%s] not found.", defaultTestCharge.getExternalChargeId())))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is(format("Charge with id [%s] not found.", defaultTestCharge.getExternalChargeId())));
     }
 
     @Test
@@ -386,8 +378,7 @@ public class EpdqRefundITest extends ChargingITestBase {
                 defaultTestAccount.getAccountId(), nonExistentChargeId, testRefund.getExternalRefundId());
 
         validatableResponse.statusCode(NOT_FOUND.getStatusCode())
-                .body("message", contains(format("Charge with id [%s] not found.", nonExistentChargeId)))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is(format("Charge with id [%s] not found.", nonExistentChargeId)));
     }
 
     @Test
@@ -405,8 +396,7 @@ public class EpdqRefundITest extends ChargingITestBase {
                 defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId(), nonExistentRefundId);
 
         validatableResponse.statusCode(NOT_FOUND.getStatusCode())
-                .body("message", contains(format("Refund with id [%s] not found.", nonExistentRefundId)))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is(format("Refund with id [%s] not found.", nonExistentRefundId)));
     }
 
     private ValidatableResponse postRefundFor(String chargeId, Long refundAmount, Long refundAmountAvlbl) {
