@@ -5,6 +5,8 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.core.Is;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -196,7 +198,7 @@ public class SmartpayPaymentProviderTest {
 
         CaptureResponse captureGatewayResponse = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
         assertTrue(captureGatewayResponse.isSuccessful());
-        assertThat(captureGatewayResponse.state(), is(CaptureResponse.ChargeState.PENDING));
+        MatcherAssert.assertThat(captureGatewayResponse.state(), Is.is(CaptureResponse.ChargeState.PENDING));
     }
 
     @Test

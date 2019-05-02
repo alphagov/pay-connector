@@ -12,7 +12,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -37,7 +36,7 @@ public class CardResourceAuthoriseApplePayITest extends ChargingITestBase {
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-
+    
     public CardResourceAuthoriseApplePayITest() {
         super("sandbox");
     }
@@ -48,7 +47,7 @@ public class CardResourceAuthoriseApplePayITest extends ChargingITestBase {
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }
-
+    
     @Test
     public void shouldAuthoriseCharge_ForApplePay() {
         shouldAuthoriseChargeForApplePay("mr payment", "mr@payment.test");
@@ -91,8 +90,7 @@ public class CardResourceAuthoriseApplePayITest extends ChargingITestBase {
                 .post(authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
-                .body("message", contains("Card holder name must be a maximum of 255 chars"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", contains("Card holder name must be a maximum of 255 chars"));
 
         verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
@@ -111,8 +109,7 @@ public class CardResourceAuthoriseApplePayITest extends ChargingITestBase {
                 .post(authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
-                .body("message", contains("Email must be a maximum of 254 chars"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", contains("Email must be a maximum of 254 chars"));
 
         verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();

@@ -7,6 +7,7 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -28,7 +29,6 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -99,7 +99,7 @@ public class CaptureProcessSchedulerITest {
         verify(mockAppender, times(4)).doAppend(loggingEventArgumentCaptor.capture());
         assertThatTwoThreadsAreCompletingCaptureProcess(loggingEventArgumentCaptor);
 
-        assertThat(databaseTestHelper.getChargeStatus(testCharge.getChargeId()), is(CAPTURE_SUBMITTED.getValue()));
+        assertThat(databaseTestHelper.getChargeStatus(testCharge.getChargeId()), Matchers.is(CAPTURE_SUBMITTED.getValue()));
     }
 
     private void assertThatTwoThreadsAreCompletingCaptureProcess(ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor) {

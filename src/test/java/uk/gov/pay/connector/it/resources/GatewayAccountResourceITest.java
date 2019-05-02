@@ -8,7 +8,6 @@ import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -18,7 +17,6 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -30,7 +28,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase {
     private DatabaseFixtures.TestAccount defaultTestAccount;
-
+    
     @Test
     public void getAccountShouldReturn404IfAccountIdIsUnknown() {
         String unknownAccountId = "92348739";
@@ -95,7 +93,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
 
     @Test
     public void getAccountShouldReturn3dsSetting() {
-        String gatewayAccountId = extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), "stripe", "desc", null, "true"));
+        String gatewayAccountId = extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), "stripe",  "desc", null,"true"));
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
                 .then()
@@ -405,8 +403,7 @@ public class GatewayAccountResourceITest extends GatewayAccountResourceTestBase 
                 .then()
                 .contentType(ContentType.JSON)
                 .statusCode(BAD_REQUEST.getStatusCode())
-                .body("message", contains("Credentials update failure: Invalid password length"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("message", is("Credentials update failure: Invalid password length"));
     }
 
     @Test

@@ -10,7 +10,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.resources.GatewayAccountResourceTestBase.GatewayAccountPayload;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -22,7 +21,6 @@ import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceTestBase.ACCOUNTS_FRONTEND_URL;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceTestBase.createAGatewayAccountFor;
@@ -92,8 +90,7 @@ public class ChargesApiResourceAllowWebPaymentsITest {
                 .body(payload)
                 .patch("/v1/api/accounts/" + accountIdWithoutGatewayAccountCredentials)
                 .then()
-                .body("message", contains("Account Credentials are required to set a Gateway Merchant ID"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()))
+                .body("message", is("Account Credentials are required to set a Gateway Merchant ID"))
                 .and()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
     }    
@@ -107,8 +104,7 @@ public class ChargesApiResourceAllowWebPaymentsITest {
                 .body(payload)
                 .patch("/v1/api/accounts/" + accountIdWithNotDigitalWalletSupportedGateway)
                 .then()
-                .body("message", contains("Gateway epdq does not support digital wallets."))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()))
+                .body("message", is("Gateway epdq does not support digital wallets."))
                 .and()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
     }
