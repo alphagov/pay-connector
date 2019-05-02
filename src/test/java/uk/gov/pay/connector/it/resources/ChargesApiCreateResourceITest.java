@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import io.restassured.response.ValidatableResponse;
-import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.postgresql.util.PGobject;
@@ -625,7 +624,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .statusCode(400)
                 .contentType(JSON)
                 .body("message", contains("Field [metadata] must be an object of JSON key-value pairs"))
-                .body("error_identifier", Matchers.is(ErrorIdentifier.GENERIC.toString()));
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -648,7 +647,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .statusCode(400)
                 .contentType(JSON)
                 .body("message", contains("Field [metadata] must be an object of JSON key-value pairs"))
-                .body("error_identifier", Matchers.is(ErrorIdentifier.GENERIC.toString()));
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {

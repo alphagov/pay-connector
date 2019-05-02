@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.wallets.applepay;
 
 import com.google.common.collect.ImmutableMap;
-import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

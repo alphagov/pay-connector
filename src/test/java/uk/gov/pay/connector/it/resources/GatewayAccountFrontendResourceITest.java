@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
-import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -431,7 +430,7 @@ public class GatewayAccountFrontendResourceITest extends GatewayAccountResourceT
         List<Map<String, Object>> acceptedCardTypes =
                 databaseTestHelper.getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
 
-        MatcherAssert.assertThat(acceptedCardTypes, containsInAnyOrder(
+        assertThat(acceptedCardTypes, containsInAnyOrder(
                 allOf(
                         hasEntry("label", mastercardCreditCard.getLabel()),
                         hasEntry("type", mastercardCreditCard.getType().toString()),

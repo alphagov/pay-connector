@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
-import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,7 +60,7 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails));
 
         assertTrue(response.isSuccessful());
-        assertThat(response.getBaseResponse().isPresent(), CoreMatchers.is(true));
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         String transactionId = response.getBaseResponse().get().getTransactionId();
         assertThat(transactionId, is(not(nullValue())));
     }
