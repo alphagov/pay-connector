@@ -50,6 +50,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -118,7 +119,14 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build());
+        
         databaseTestHelper.updateChargeCardDetails(chargeId, AuthCardDetailsFixture.anAuthCardDetails().withCardNo("12345678").build());
         databaseTestHelper.addToken(chargeId, "tokenId");
 
@@ -140,9 +148,14 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         ExternalMetadata externalMetadata = new ExternalMetadata(
                 Map.of("key1", true, "key2", 123, "key3", "string1"));
 
-        databaseTestHelper.addChargeWithExternalMetadata(chargeId, externalChargeId, accountId, 100,
-                AUTHORISATION_SUCCESS, RETURN_URL, null, ServicePaymentReference.of("ref"), null,
-                SupportedLanguage.ENGLISH, false, 100L, externalMetadata);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(100)
+                .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .withExternalMetadata(externalMetadata)
+                .build());
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -160,10 +173,14 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
-        databaseTestHelper.addChargeWithExternalMetadata(chargeId, externalChargeId, accountId, 100,
-                AUTHORISATION_SUCCESS, RETURN_URL, null, ServicePaymentReference.of("ref"), null,
-                SupportedLanguage.ENGLISH, false, 100L, null);
-
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(100)
+                .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .build());
+        
         connectorRestApiClient
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
@@ -180,8 +197,13 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
         CardTypeEntity mastercardCredit = databaseTestHelper.getMastercardCreditCard();
 
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
-                ServicePaymentReference.of("ref"), null, EMAIL);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, mastercardCredit.getBrand(), "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.addToken(chargeId, "tokenId");
@@ -200,8 +222,13 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
-                ServicePaymentReference.of("ref"), null, EMAIL);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.addToken(chargeId, "tokenId");
@@ -220,8 +247,13 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
-                ServicePaymentReference.of("ref"), null, EMAIL);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "Visa", "1234", "123456", "Mr. McPayment",
                 "03/18", null, null, null, null, null, null);
         databaseTestHelper.addToken(chargeId, "tokenId");
@@ -405,8 +437,17 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
         final CardTypeEntity mastercardCreditCard = databaseTestHelper.getMastercardCreditCard();
         databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), mastercardCreditCard.getId());
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null,
-                ServicePaymentReference.of("My reference"), createdDate);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(chargeStatus)
+                .withReturnUrl(RETURN_URL)
+                .withDescription("Test description")
+                .withReference(ServicePaymentReference.of("My reference"))
+                .withCreatedDate(createdDate)
+                .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "VISA", "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.addToken(chargeId, "tokenId");
@@ -441,8 +482,14 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
         final CardTypeEntity mastercardCreditCard = databaseTestHelper.getMastercardCreditCard();
         databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), mastercardCreditCard.getId());
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null,
-                ServicePaymentReference.of("My reference"), createdDate);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(chargeStatus)
+                .withCreatedDate(createdDate)
+                .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "visa", null, null, null, null,
                 null, null, null, null, null, null);
         databaseTestHelper.addToken(chargeId, "tokenId");
@@ -626,8 +673,14 @@ public class ChargesApiResourceITest extends ChargingITestBase {
     }
 
     private void createCharge(String externalChargeId, long chargeId) {
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, AUTHORISATION_SUCCESS, RETURN_URL, null,
-                ServicePaymentReference.of("ref"), null, EMAIL);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .withReturnUrl(RETURN_URL)
+                .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
                 "03/18", "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.updateCorporateSurcharge(chargeId, 150L);

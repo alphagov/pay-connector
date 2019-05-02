@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.base;
 
-import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
@@ -13,7 +12,7 @@ import org.hamcrest.TypeSafeMatcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Rule;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
@@ -50,6 +49,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
@@ -246,20 +246,6 @@ public class ChargingITestBase {
         return "/v1/api/accounts/{accountId}/charges/{chargeId}/cancel".replace("{accountId}", accountId).replace("{chargeId}", chargeId);
     }
 
-    protected String addCharge(ChargeStatus status, String reference, ZonedDateTime fromDate, String gatewayTransactionId) {
-        long chargeId = RandomUtils.nextInt();
-        String externalChargeId = "charge" + chargeId;
-        ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, "http://somereturn.gov.uk",
-                gatewayTransactionId, ServicePaymentReference.of(reference), fromDate);
-        databaseTestHelper.addToken(chargeId, "tokenId");
-        databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
-        databaseTestHelper.updateChargeCardDetails(
-                chargeId,
-                AuthCardDetailsFixture.anAuthCardDetails().build());
-        return externalChargeId;
-    }
-
     protected Matcher<? super List<Map<String, Object>>> hasEvent(ChargeStatus chargeStatus) {
         return new TypeSafeMatcher<List<Map<String, Object>>>() {
             @Override
@@ -321,10 +307,41 @@ public class ChargingITestBase {
         return addChargeAndCardDetails(nextLong(), status, reference, fromDate, cardBrand);
     }
 
+    protected String addCharge(ChargeStatus status, String reference, ZonedDateTime fromDate, String transactionId) {
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge" + chargeId;
+        ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
+        addCharge(chargeId, externalChargeId, status, ServicePaymentReference.of(reference), fromDate, transactionId);
+        databaseTestHelper.addToken(chargeId, "tokenId");
+        databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
+        databaseTestHelper.updateChargeCardDetails(
+                chargeId,
+                AuthCardDetailsFixture.anAuthCardDetails().build());
+        return externalChargeId;
+    }
+    
+    private void addCharge(long chargeId, String externalChargeId, ChargeStatus chargeStatus, 
+                             ServicePaymentReference reference, ZonedDateTime fromDate, String transactionId) {
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(chargeStatus)
+                .withTransactionId(transactionId)
+                .withReference(reference)
+                .withCreatedDate(fromDate)
+                .withVersion(1)
+                .withLanguage(SupportedLanguage.ENGLISH)
+                .withDelayedCapture(false)
+                .withEmail(EMAIL)
+                .build());
+    }
+
     protected String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, ZonedDateTime fromDate, String cardBrand) {
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, RETURN_URL, null, reference, fromDate, EMAIL);
+        addCharge(chargeId, externalChargeId, chargeStatus, reference, fromDate, null);
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
         databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");

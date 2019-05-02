@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.resources;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -17,13 +16,13 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -39,15 +38,23 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnAllRefundsForGetRefundsByAccountId() {
-        String returnUrl = "http://return.url/return-page/";
-        String email = randomAlphabetic(242) + "@example.com";
         long chargeId = nextLong();
         long chargeId2 = nextLong();
         databaseTestHelper.addGatewayAccount("123", "SANDBOX", credentials);
-        databaseTestHelper.addCharge(chargeId, "charge1", accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
-                ServicePaymentReference.of("ref"), null, email);
-        databaseTestHelper.addCharge(chargeId2, "charge2", "123", AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
-                ServicePaymentReference.of("ref"), null, email);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId("charge1")
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build());
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId2)
+                .withExternalChargeId("charge2")
+                .withGatewayAccountId("123")
+                .withAmount(AMOUNT)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build());
         
         String refundExternalId1 = randomAlphanumeric(10);
         String refundExternalId2 = randomAlphanumeric(10);
@@ -87,13 +94,13 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturnNoRefundsWhenNoneFound() {
-        String returnUrl = "http://return.url/return-page/";
-        String email = randomAlphabetic(242) + "@example.com";
-        long chargeId = nextLong();
-
-        databaseTestHelper.addCharge(chargeId, "charge2", accountId, AMOUNT, AUTHORISATION_SUCCESS, returnUrl, null,
-                ServicePaymentReference.of("ref"), null, email);
-
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(nextLong())
+                .withExternalChargeId("charge2")
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build());
         connectorRestApiClient.withAccountId(accountId)
                 .withQueryParam("page", "1")
                 .withQueryParam("display_size", "2")

@@ -6,6 +6,10 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Objects;
+
+import static java.time.ZonedDateTime.now;
 
 public class AddChargeParams {
     private final Long chargeId;
@@ -114,15 +118,15 @@ public class AddChargeParams {
         private String gatewayAccountId;
         private long amount;
         private ChargeStatus status;
-        private String returnUrl;
+        private String returnUrl = "http://somereturn.gov.uk";
         private String transactionId;
-        private String description;
-        private ServicePaymentReference reference;
-        private ZonedDateTime createdDate;
-        private long version;
+        private String description = "Test description";
+        private ServicePaymentReference reference = ServicePaymentReference.of("Test reference");
+        private ZonedDateTime createdDate = now();
+        private long version = 1;
         private String email;
         private SupportedLanguage language = SupportedLanguage.ENGLISH;
-        private boolean delayedCapture;
+        private boolean delayedCapture = false;
         private Long corporateSurcharge;
         private ExternalMetadata externalMetadata;
 
@@ -214,6 +218,9 @@ public class AddChargeParams {
         }
 
         public AddChargeParams build() {
+            List.of(amount, status, returnUrl, gatewayAccountId, description, reference, externalChargeId)
+                    .forEach(x -> Objects.requireNonNull(x));
+
             return new AddChargeParams(this);
         }
     }

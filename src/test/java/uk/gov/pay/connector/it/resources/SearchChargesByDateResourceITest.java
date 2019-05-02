@@ -5,7 +5,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -23,6 +22,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -90,7 +90,7 @@ public class SearchChargesByDateResourceITest {
                 .body("results[0].links.size()", is(4))
                 .body("results[0].return_url", is("http://return.com/1"))
                 .body("results[0].created_date", is("2016-02-02T00:00:00.299Z"))
-                .body("results[0].reference", is("reference"));
+                .body("results[0].reference", is("Test reference"));
     }
 
     @Test
@@ -224,8 +224,15 @@ public class SearchChargesByDateResourceITest {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = ChargeStatus.CREATED;
-        databaseTestHelper.addCharge(chargeId, externalChargeId, accountId, AMOUNT, chargeStatus, "http://return.com/1", null,
-                ServicePaymentReference.of("reference"), createdDate);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withReturnUrl("http://return.com/1")
+                .withStatus(chargeStatus)
+                .withCreatedDate(createdDate)
+                .build());
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
         return externalChargeId;

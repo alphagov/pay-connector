@@ -8,6 +8,7 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.Map;
 
+import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ChargeUtils {
@@ -30,7 +31,15 @@ public class ChargeUtils {
     public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId, DatabaseTestHelper databaseTestHelper) {
         long chargeId = RandomUtils.nextInt();
         ExternalChargeId externalChargeId = ExternalChargeId.fromChargeId(chargeId);
-        databaseTestHelper.addCharge(chargeId, externalChargeId.toString(), accountId, 6234L, status, "RETURN_URL", gatewayTransactionId);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId.toString())
+                .withGatewayAccountId(accountId)
+                .withAmount(6234L)
+                .withStatus(status)
+                .withTransactionId(gatewayTransactionId)
+                .withEmail("email@fake.test")
+                .build());
         return externalChargeId;
     }
 
