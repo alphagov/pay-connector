@@ -239,6 +239,17 @@ public class TransactionsApiContractTest {
         dbHelper.addGatewayAccount(params.get("gateway_account_id"), "sandbox");
     }
 
+    @State("a charge with fee and net_amount exists")
+    public void createACharge(Map<String, String> params) {
+        String gatewayAccountId = params.get("gateway_account_id");
+        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        String chargeExternalId = params.get("charge_id");
+
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CAPTURED, ZonedDateTime.now(),false);
+        dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), randomAlphanumeric(10));
+    }
+
     @State("a charge with delayed capture true exists")
     public void createChargeWithDelayedCaptureTrue(Map<String, String> params) {
         String gatewayAccountId = params.get("gateway_account_id");
