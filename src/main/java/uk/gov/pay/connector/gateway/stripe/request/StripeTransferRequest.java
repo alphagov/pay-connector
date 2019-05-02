@@ -38,6 +38,7 @@ public abstract class StripeTransferRequest extends StripeRequest {
         params.add(new BasicNameValuePair("currency", "GBP"));
         params.add(new BasicNameValuePair("expand[]", "balance_transaction"));
         params.add(new BasicNameValuePair("expand[]", "destination_payment"));
+        params.add(new BasicNameValuePair("metadata[stripe_charge_id]", stripeChargeId));
 
         return params;
     }

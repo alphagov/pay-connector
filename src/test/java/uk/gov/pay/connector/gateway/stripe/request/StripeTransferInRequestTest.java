@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 public class StripeTransferInRequestTest {
     private final String refundExternalId = "payRefundExternalId";
     private final String chargeExternalId = "payChargeExternalId";
+    private final String stripeChargeId = "stripeChargeId";
     private final long refundAmount = 100L;
     private final String stripeBaseUrl = "stripeUrl";
     private final String stripePlatformAccountId = "stripePlatformAccountId";
@@ -50,6 +51,7 @@ public class StripeTransferInRequestTest {
 
         when(charge.getGatewayAccount()).thenReturn(gatewayAccount);
         when(charge.getExternalId()).thenReturn(chargeExternalId);
+        when(charge.getGatewayTransactionId()).thenReturn(stripeChargeId);
 
         when(refund.getAmount()).thenReturn(refundAmount);
         when(refund.getExternalId()).thenReturn(refundExternalId);
@@ -79,6 +81,7 @@ public class StripeTransferInRequestTest {
         assertThat(payload, containsString("expand%5B%5D=balance_transaction"));
         assertThat(payload, containsString("expand%5B%5D=destination_payment"));
         assertThat(payload, containsString("currency=GBP"));
+        assertThat(payload, containsString("metadata%5Bstripe_charge_id%5D=" + stripeChargeId));
     }
     
     @Test
