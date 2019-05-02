@@ -250,10 +250,9 @@ public class TransactionDao {
                 field("c.delayed_capture"),
                 field("c.corporate_surcharge"),
                 field("c.wallet"),
-                field("f.amount_collected").as("fee_amount"),
+                inline((Integer) null).as("fee_amount"),
                 field("c.external_metadata"))
                 .from(table("charges").as("c")
-                        .leftJoin(table("fees").asTable("f")).on("c.id = f.charge_id")
                         .leftJoin(selectDistinct().on(field("label")).from("card_types").asTable("t")).on("c.card_brand=t.brand"))
                 .join(table("refunds").as("r"))
                 .on(field("c.id").eq(field("r.charge_id")))

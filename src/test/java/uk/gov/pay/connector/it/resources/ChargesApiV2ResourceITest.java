@@ -304,6 +304,33 @@ public class ChargesApiV2ResourceITest extends ChargingITestBase {
     }
 
     @Test
+    public void shouldNotReturnFeeandNetAmountForRefund() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+        long feeCollected = 100;
+
+        createCharge(externalChargeId, chargeId);
+        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
+        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-2-provider-reference", 2L, REFUNDED, chargeId, randomAlphanumeric(10), now().minusHours(3));
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .getChargesV2()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("total", is(2))
+                .body("results[0].charge_id", is(externalChargeId))
+                .body("results[0].transaction_type", is("charge"))
+                .body("results[0].fee", is(100))
+                .body("results[0].net_amount", is(6284)) //6234 + 150 - 100
+                .body("results[1].charge_id", is(externalChargeId))
+                .body("results[1].transaction_type", is("refund"))
+                .body("results[1].amount", is(2))
+                .body("results[1].fee", is(nullValue()))
+                .body("results[1].net_amount", is(nullValue())); 
+    }
+    
+    @Test
     public void shouldReturnExternalMetadataInSearchResultsV2IfExternalMetadataExists() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
