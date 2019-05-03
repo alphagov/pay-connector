@@ -38,7 +38,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 
 public class UserNotificationService {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserNotificationService.class);
     private static final Pattern LITERAL_DOLLAR_REFERENCE = Pattern.compile(Pattern.quote("$reference"));
 
     private String confirmationEmailTemplateId;
@@ -138,6 +138,10 @@ public class UserNotificationService {
 
 
     private void readEmailConfig(ConnectorConfiguration configuration) {
+        LOGGER.error("emailNotifyEnabled " + configuration.getNotifyConfiguration().isEmailNotifyEnabled());
+        LOGGER.error("emailTemplateId " + configuration.getNotifyConfiguration().getEmailTemplateId());
+        LOGGER.error("refundIssuedEmailTemplateId " + configuration.getNotifyConfiguration().getRefundIssuedEmailTemplateId());
+        
         emailNotifyGloballyEnabled = configuration.getNotifyConfiguration().isEmailNotifyEnabled();
         confirmationEmailTemplateId = configuration.getNotifyConfiguration().getEmailTemplateId();
         refundIssuedEmailTemplateId = configuration.getNotifyConfiguration().getRefundIssuedEmailTemplateId();
