@@ -58,4 +58,8 @@ public class TestContext {
     String getDatabasePassword() {
         return databasePassword;
     }
+
+    public ConnectorConfiguration getConnectorConfiguration() {
+        return connectorConfiguration;
+    }
 }

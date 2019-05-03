@@ -1,29 +1,31 @@
 package uk.gov.pay.connector.app;
 
-import io.dropwizard.testing.ResourceHelpers;
-import io.dropwizard.testing.junit.DropwizardAppRule;
 import io.dropwizard.util.Duration;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import uk.gov.pay.connector.junit.DropwizardConfig;
+import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.junit.DropwizardTestContext;
+import uk.gov.pay.connector.junit.TestContext;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
+@RunWith(DropwizardJUnitRunner.class)
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-config.yaml")
 public class ConnectorConfigurationTest {
 
-    @Rule
-    public final DropwizardAppRule<ConnectorConfiguration> RULE =
-            new DropwizardAppRule<>(ConnectorApp.class, ResourceHelpers.resourceFilePath("config/test-config.yaml"));
-
+    @DropwizardTestContext
+    protected TestContext testContext;
 
     @Test
     public void shouldParseConfiguration() {
-        JerseyClientOverrides jerseyClientOverrides = RULE.getConfiguration().getWorldpayConfig().getJerseyClientOverrides().get();
+        JerseyClientOverrides jerseyClientOverrides = testContext.getConnectorConfiguration().getWorldpayConfig().getJerseyClientOverrides().get();
 
         Duration authReadTimeout = jerseyClientOverrides.getAuth().getReadTimeout();
         assertThat(authReadTimeout, is(Duration.milliseconds(222)));
 
-        CaptureProcessConfig captureProcessConfig = RULE.getConfiguration().getCaptureProcessConfig();
+        CaptureProcessConfig captureProcessConfig = testContext.getConnectorConfiguration().getCaptureProcessConfig();
         assertThat(captureProcessConfig.getRetryFailuresEvery(), is(Duration.minutes(60)));
         assertThat(captureProcessConfig.getRetryFailuresEveryAsJavaDuration(), is(java.time.Duration.ofMinutes(60)));
         assertThat(captureProcessConfig.getMaximumRetries(), is(48));
