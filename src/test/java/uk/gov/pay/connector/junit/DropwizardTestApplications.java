@@ -9,6 +9,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.InjectorLookup;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -42,7 +43,7 @@ final class DropwizardTestApplications {
     static Optional<DropwizardTestSupport> createIfNotRunning(Class<? extends Application> appClass, String configClasspathLocation, ConfigOverride... configOverrides) {
         Pair<Class<? extends Application>, String> key = Pair.of(appClass, configClasspathLocation);
 
-        shutdownIfConfigHasChanged(key, configOverrides);
+        shutdownIfConfigHasChanged(configOverrides);
 
         if (!apps.containsKey(key)) {
             String resourceConfigFilePath = ResourceHelpers.resourceFilePath(configClasspathLocation);
@@ -57,9 +58,9 @@ final class DropwizardTestApplications {
         return Optional.empty();
     }
 
-    private static void shutdownIfConfigHasChanged(Pair<Class<? extends Application>, String> key, ConfigOverride[] configOverrides) {
-        if (!configs.containsAll(Sets.newHashSet(configOverrides)) && apps.containsKey(key)) {
-            apps.get(key).after();
+    private static void shutdownIfConfigHasChanged(ConfigOverride[] configOverrides) {
+        if (!configs.equals(Sets.newHashSet(configOverrides))) {
+            apps.values().forEach(DropwizardTestSupport::after);
             apps.clear();
         }
     }
@@ -69,5 +70,9 @@ final class DropwizardTestApplications {
         DropwizardTestSupport application = apps.get(appConfig);
         return new TestContext(application.getLocalPort(), ((ConnectorConfiguration) application.getConfiguration()),
                 InjectorLookup.getInjector(application.getApplication()).get());
+    }
+
+    static void removeConfigOverridesFromSystemProperties() {
+        configs.forEach(ConfigOverride::removeFromSystemProperties);
     }
 }

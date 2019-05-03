@@ -58,30 +58,35 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
     protected Statement classBlock(final RunNotifier notifier) {
         DropwizardConfig dropwizardConfigAnnotation = dropwizardConfigAnnotation();
         List<ConfigOverride> configOverride = newArrayList();
-        
+
         if (dropwizardConfigAnnotation.withDockerPostgres()) {
             getOrCreate();
             configOverride.add(config("database.url", getDbUri()));
             configOverride.add(config("database.user", getDbUsername()));
             configOverride.add(config("database.password", getDbPassword()));
         }
-        
-        if (dropwizardConfigAnnotation.configOverrides().length > 0) 
+
+        if (dropwizardConfigAnnotation.configOverrides().length > 0) {
             Arrays.stream(dropwizardConfigAnnotation.configOverrides()).forEach(c -> configOverride.add(config(c.key(), c.value())));
-        
+        }
         
         configOverride.add(config("worldpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/jsp/merchant/xml/paymentService.jsp"));
         configOverride.add(config("smartpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/pal/servlet/soap/Payment"));
         configOverride.add(config("epdq.urls.test", "http://localhost:" + WIREMOCK_PORT + "/epdq"));
         configOverride.add(config("smartpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/pal/servlet/soap/Payment"));
         configOverride.add(config("stripe.url", "http://localhost:" + WIREMOCK_PORT));
-        Optional<DropwizardTestSupport> createdApp = createIfNotRunning(dropwizardConfigAnnotation.app(), dropwizardConfigAnnotation.config(), configOverride.toArray(new ConfigOverride[0]));
-        if (dropwizardConfigAnnotation.withDockerPostgres() && createdApp.isPresent()) {
-            try {
+
+        try {
+            Optional<DropwizardTestSupport> createdApp = createIfNotRunning(dropwizardConfigAnnotation.app(), dropwizardConfigAnnotation.config(), configOverride.toArray(new ConfigOverride[0]));
+            if (dropwizardConfigAnnotation.withDockerPostgres() && createdApp.isPresent()) {
                 createdApp.get().getApplication().run("db", "migrate", resourceFilePath(dropwizardConfigAnnotation.config()));
-            } catch (Exception e) {
-                throw new DropwizardJUnitRunnerException(e);
             }
+        } catch (Exception e) {
+            throw new DropwizardJUnitRunnerException(e);
+        } finally {
+            // DropwizardTestSupport adds the config overrides to the System properties. Clear these up immediately
+            // otherwise all subsequent DropWizard apps started by tests will use these until the app is stopped
+            DropwizardTestApplications.removeConfigOverridesFromSystemProperties();
         }
 
         return super.classBlock(notifier);
