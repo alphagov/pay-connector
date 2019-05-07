@@ -29,6 +29,14 @@ public class ErrorResponse {
         this(identifier, messages, null);
     }
 
+    public ErrorResponse(ErrorIdentifier identifier, String message) {
+        this(identifier, List.of(message), null);
+    }
+    
+    public ErrorResponse(ErrorIdentifier identifier, String message, String reason) {
+        this(identifier, List.of(message), reason);
+    }
+
     public ErrorIdentifier getIdentifier() {
         return identifier;
     }
