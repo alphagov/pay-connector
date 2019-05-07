@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -17,6 +18,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -55,12 +57,12 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
                 .withAmount(AMOUNT)
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
-        
+
         String refundExternalId1 = randomAlphanumeric(10);
         String refundExternalId2 = randomAlphanumeric(10);
         String refundDate1 = "2016-02-03T00:00:00.000Z";
         String refundDate2 = "2016-02-02T00:00:00.000Z";
-        
+
         databaseTestHelper.addRefund(refundExternalId1, "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId, randomAlphanumeric(10), ZonedDateTime.parse(refundDate1));
         databaseTestHelper.addRefund(refundExternalId2, "refund-2-provider-reference", 2L, REFUNDED, chargeId, randomAlphanumeric(10), ZonedDateTime.parse(refundDate2));
         databaseTestHelper.addRefund("shouldnotberetrieved", "refund-1-provider-reference", 1L, REFUND_SUBMITTED, chargeId2, randomAlphanumeric(10), ZonedDateTime.parse(refundDate1));
@@ -123,6 +125,7 @@ public class SearchRefundsResourceITest extends ChargingITestBase {
                 .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
                 .getRefunds()
                 .statusCode(NOT_FOUND.getStatusCode())
-                .body("message", is(format("Gateway account with id %s does not exist", INVALID_ACCOUNT_ID)));
+                .body("message", contains(format("Gateway account with id %s does not exist", INVALID_ACCOUNT_ID)))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 }

@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
@@ -26,6 +27,7 @@ import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.eclipse.jetty.http.HttpStatus.ACCEPTED_202;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 
@@ -149,7 +151,8 @@ public class StripeRefundITest extends ChargingITestBase {
                         .replace("{chargeId}", externalChargeId))
                 .then()
                 .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
-                .body("message", is("Stripe refund response (error code: expired_card, error: Your card has expired.)"));
+                .body("message", contains("Stripe refund response (error code: expired_card, error: Your card has expired.)"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());

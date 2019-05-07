@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -39,7 +40,7 @@ public class CardResourceAuthoriseGooglePayITest extends ChargingITestBase {
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-    
+
     public CardResourceAuthoriseGooglePayITest() {
         super("sandbox");
     }
@@ -50,7 +51,7 @@ public class CardResourceAuthoriseGooglePayITest extends ChargingITestBase {
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }
-    
+
     @Test
     public void authoriseChargeSuccess() throws IOException {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
@@ -74,7 +75,7 @@ public class CardResourceAuthoriseGooglePayITest extends ChargingITestBase {
     @Test
     public void tooLongCardHolderName_shouldResultInBadRequest() throws Exception {
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        String payload = fixture("googlepay/example-auth-request.json").replace("Example Name", 
+        String payload = fixture("googlepay/example-auth-request.json").replace("Example Name",
                 "tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars " +
                         "12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12");
         JsonNode googlePayload = Jackson.getObjectMapper().readTree(payload);
@@ -84,7 +85,8 @@ public class CardResourceAuthoriseGooglePayITest extends ChargingITestBase {
                 .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
-                .body("message", contains("Card holder name must be a maximum of 255 chars"));
+                .body("message", contains("Card holder name must be a maximum of 255 chars"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
@@ -104,7 +106,8 @@ public class CardResourceAuthoriseGooglePayITest extends ChargingITestBase {
                 .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
-                .body("message", contains("Email must be a maximum of 254 chars"));
+                .body("message", contains("Email must be a maximum of 254 chars"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();

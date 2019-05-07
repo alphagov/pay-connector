@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
@@ -263,7 +265,8 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
-                .body("message", is(format("Charge not in correct state to be processed, %s", chargeId)));
+                .body("message", contains(format("Charge not in correct state to be processed, %s", chargeId)))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
     }
 
@@ -276,7 +279,8 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
                 .then()
                 .statusCode(404)
                 .contentType(JSON)
-                .body("message", is(format("Charge with id [%s] not found.", unknownId)));
+                .body("message", contains(format("Charge with id [%s] not found.", unknownId)))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
@@ -292,7 +296,8 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
-                .body("message", is(msg));
+                .body("message", contains(msg))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
@@ -307,7 +312,8 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
                 .then()
                 .statusCode(202)
                 .contentType(JSON)
-                .body("message", is(message));
+                .body("message", contains(message))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_READY.getValue());
     }
 
@@ -412,7 +418,8 @@ public class CardResourceAuthoriseITest extends ChargingITestBase {
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
-                .body("message", is("Unsupported card details."));
+                .body("message", contains("Unsupported card details."))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     private void shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(String chargeId, String randomCardNumber) {

@@ -10,7 +10,6 @@ import com.google.common.collect.ImmutableMap;
 import io.restassured.RestAssured;
 import org.hamcrest.core.Is;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -19,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -35,6 +35,7 @@ import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static io.restassured.config.ConnectionConfig.connectionConfig;
 import static io.restassured.http.ContentType.JSON;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -112,7 +113,8 @@ public class GatewayAuthFailuresITest {
                 .then()
                 .statusCode(500)
                 .contentType(JSON)
-                .body("message", is(errorMessage));
+                .body("message", contains(errorMessage))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         assertThatLastGatewayClientLoggingEventIs(
                 String.format("Gateway returned unexpected status code: 999, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test", WIREMOCK_PORT));
@@ -122,6 +124,6 @@ public class GatewayAuthFailuresITest {
     private void assertThatLastGatewayClientLoggingEventIs(String loggingEvent) {
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        Assert.assertThat(logStatement.get(logStatement.size() - 1).getFormattedMessage(), Is.is(loggingEvent));
+        assertThat(logStatement.get(logStatement.size() - 1).getFormattedMessage(), Is.is(loggingEvent));
     }
 }
