@@ -1,10 +1,9 @@
 package uk.gov.pay.connector.util;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
+import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 
 import javax.ws.rs.core.Response;
@@ -18,7 +17,6 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
-import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 

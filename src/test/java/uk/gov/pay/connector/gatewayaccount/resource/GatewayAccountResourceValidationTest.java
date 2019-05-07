@@ -7,10 +7,10 @@ import io.dropwizard.testing.junit.ResourceTestRule;
 import org.assertj.core.util.Lists;
 import org.junit.ClassRule;
 import org.junit.Test;
+import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.WorldpayConfig;
-import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 

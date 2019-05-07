@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.refund.exception;
 
-import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
+import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 
@@ -10,8 +10,8 @@ import javax.ws.rs.core.Response;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
-import static uk.gov.pay.connector.common.model.api.ErrorIdentifier.REFUND_AMOUNT_AVAILABLE_MISMATCH;
-import static uk.gov.pay.connector.common.model.api.ErrorIdentifier.REFUND_NOT_AVAILABLE;
+import static uk.gov.pay.commons.model.ErrorIdentifier.REFUND_AMOUNT_AVAILABLE_MISMATCH;
+import static uk.gov.pay.commons.model.ErrorIdentifier.REFUND_NOT_AVAILABLE;
 
 public class RefundException extends WebApplicationException {
 
