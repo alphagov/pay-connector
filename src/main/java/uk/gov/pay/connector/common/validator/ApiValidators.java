@@ -92,7 +92,7 @@ public class ApiValidators {
         }
     }
 
-    public static Optional<List> validateQueryParams(List<Pair<String, String>> dateParams, List<Pair<String, Long>> nonNegativePairMap) {
+    public static Optional<List<String>> validateQueryParams(List<Pair<String, String>> dateParams, List<Pair<String, Long>> nonNegativePairMap) {
         Map<String, String> invalidQueryParams = new HashMap<>();
 
         dateParams.forEach(param -> {

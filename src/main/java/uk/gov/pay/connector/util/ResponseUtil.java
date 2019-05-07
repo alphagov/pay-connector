@@ -36,11 +36,6 @@ public class ResponseUtil {
         return badRequestResponse(message);
     }
 
-    public static Response fieldsInvalidResponse(List<String> invalidFields) {
-        String message = format("Field(s) are invalid: [%s]", COMMA_JOINER.join(invalidFields));
-        return badRequestResponse(message);
-    }
-
     public static Response responseWithChargeNotFound(String chargeId) {
         String message = format("Charge with id [%s] not found.", chargeId);
         return notFoundResponse(message);
@@ -52,59 +47,60 @@ public class ResponseUtil {
     }
 
     public static Response badRequestResponse(String message) {
-        return responseWithMessageMap(BAD_REQUEST, message);
+        return buildErrorResponse(BAD_REQUEST, message);
     }
 
     public static Response badRequestResponse(String code, String message) {
         logger.error(message);
-        return responseWith(BAD_REQUEST, message, code);
+        return buildErrorResponse(BAD_REQUEST, message, code);
     }
 
-    public static Response badRequestResponse(List message) {
-        logger.error(message.toString());
-        return responseWithMessageMap(BAD_REQUEST, message);
+    public static Response badRequestResponse(List<String> messages) {
+        logger.error(messages.toString());
+        return buildErrorResponse(BAD_REQUEST, messages);
     }
 
     public static Response preconditionFailedResponse(String message) {
         logger.info(message);
-        return responseWithMessageMap(PRECONDITION_FAILED, message);
+        return buildErrorResponse(PRECONDITION_FAILED, message);
     }
 
     public static Response notFoundResponse(String message) {
         logger.error(message);
-        return responseWithMessageMap(NOT_FOUND, message);
+        return buildErrorResponse(NOT_FOUND, message);
     }
 
     public static Response acceptedResponse(String message) {
-        return responseWithMessageMap(ACCEPTED, message);
+        return buildErrorResponse(ACCEPTED, message);
     }
 
     public static Response serviceErrorResponse(String message) {
         logger.error(message);
-        return responseWithMessageMap(INTERNAL_SERVER_ERROR, message);
+        return buildErrorResponse(INTERNAL_SERVER_ERROR, message);
     }
 
     public static Response conflictErrorResponse(String message) {
         logger.error(message);
-        return responseWithMessageMap(CONFLICT, message);
+        return buildErrorResponse(CONFLICT, message);
     }
 
     public static Response forbiddenErrorResponse() {
         return status(Status.FORBIDDEN).build();
     }
 
-    private static Response responseWithMessageMap(Status status, String message) {
+    private static Response buildErrorResponse(Status status, String message) {
         ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.GENERIC, List.of(message));
         return responseWithEntity(status, errorResponse);
     }
 
-    private static Response responseWith(Status status, String message, String reason) {
-        ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.GENERIC, List.of(message), reason);
+    private static Response buildErrorResponse(Status status, List<String> messages) {
+        ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.GENERIC, messages);
         return responseWithEntity(status, errorResponse);
     }
 
-    private static Response responseWithMessageMap(Status status, Object entity) {
-        return responseWithEntity(status, ImmutableMap.of("message", entity));
+    private static Response buildErrorResponse(Status status, String message, String reason) {
+        ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.GENERIC, List.of(message), reason);
+        return responseWithEntity(status, errorResponse);
     }
 
     public static Response noContentResponse() {
