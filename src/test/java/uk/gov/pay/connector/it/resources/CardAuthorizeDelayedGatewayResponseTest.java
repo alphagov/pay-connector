@@ -5,8 +5,8 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
-import uk.gov.pay.connector.common.model.api.ErrorIdentifier;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.PortFactory;
@@ -14,9 +14,9 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.lang.reflect.Field;
 
+import static io.dropwizard.testing.ConfigOverride.config;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
