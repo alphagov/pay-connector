@@ -30,10 +30,13 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.reporting.EventEmitter;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
 
+import javax.inject.Provider;
+import javax.persistence.EntityManager;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.time.ZoneId;
@@ -103,6 +106,9 @@ public class ChargeServiceTest {
     private ChargeService service;
 
     private GatewayAccountEntity gatewayAccount;
+    @Mock
+    private EventEmitter mockEventEmitter;
+    @Mock private Provider<EntityManager> emProvider;
 
     @Before
     public void setUp() {
@@ -138,8 +144,8 @@ public class ChargeServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
 
-        service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders);
+        service = new ChargeService(emProvider, mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
+                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, mockEventEmitter);
     }
 
     @Test

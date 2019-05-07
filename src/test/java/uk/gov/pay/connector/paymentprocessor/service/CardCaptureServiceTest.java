@@ -35,8 +35,11 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
+import uk.gov.pay.connector.reporting.EventEmitter;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
+import javax.inject.Provider;
+import javax.persistence.EntityManager;
 import javax.persistence.OptimisticLockException;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -90,6 +93,11 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
     @Captor
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
+    
+    @Mock private EventEmitter mockEventEmitter;
+    
+    @Mock
+    private Provider<EntityManager> emProvider;
 
     @Before
     public void beforeTest() {
@@ -99,8 +107,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
-        chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null);
+        chargeService = new ChargeService(emProvider,null, mockedChargeDao, mockedChargeEventDao,
+                null, null, mockConfiguration, null, mockEventEmitter);
         
         cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService, mockEnvironment);
 

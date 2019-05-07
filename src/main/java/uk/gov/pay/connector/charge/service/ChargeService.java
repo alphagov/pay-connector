@@ -40,11 +40,15 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
+import uk.gov.pay.connector.reporting.EventEmitter;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
@@ -89,15 +93,19 @@ public class ChargeService {
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
     private final CardTypeDao cardTypeDao;
+    private final Provider<EntityManager> emProvider;
     private final TokenDao tokenDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final LinksConfig linksConfig;
     private final PaymentProviders providers;
+    private final EventEmitter eventEmitter;
 
     @Inject
-    public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
+    public ChargeService(Provider<EntityManager> emProvider, TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
-                         ConnectorConfiguration config, PaymentProviders providers) {
+                         ConnectorConfiguration config, PaymentProviders providers,
+                         EventEmitter eventEmitter) {
+        this.emProvider = emProvider;
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -105,14 +113,14 @@ public class ChargeService {
         this.gatewayAccountDao = gatewayAccountDao;
         this.linksConfig = config.getLinks();
         this.providers = providers;
+        this.eventEmitter = eventEmitter;
     }
 
     @Transactional
-    public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
+    public Optional<ChargeResponse> doCreate(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
-
             if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
-                logger.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
+                logger.info(format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
             }
 
             SupportedLanguage language = chargeRequest.getLanguage() != null
@@ -132,7 +140,60 @@ public class ChargeService {
 
             chargeEventDao.persistChargeEventOf(chargeEntity);
             return Optional.of(populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
-        }).orElseGet(Optional::empty);
+        }).orElse(Optional.empty());
+    }
+
+    
+    public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
+        return doCreate(chargeRequest, accountId, uriInfo);
+    }
+
+    public Optional<ChargeResponse> createTxn(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
+        final EntityTransaction txn = emProvider.get().getTransaction();
+        txn.begin();
+
+        Optional<ChargeResponse> chargeResponse;
+        boolean shouldRollback = false;
+        try {
+            chargeResponse = gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
+                if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
+                    logger.info(format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
+                }
+
+                SupportedLanguage language = chargeRequest.getLanguage() != null
+                        ? chargeRequest.getLanguage()
+                        : SupportedLanguage.ENGLISH;
+
+                ChargeEntity chargeEntity = new ChargeEntity(
+                        chargeRequest.getAmount(),
+                        chargeRequest.getReturnUrl(),
+                        chargeRequest.getDescription(),
+                        ServicePaymentReference.of(chargeRequest.getReference()),
+                        gatewayAccount,
+                        chargeRequest.getEmail(),
+                        language,
+                        chargeRequest.isDelayedCapture());
+                chargeDao.persist(chargeEntity);
+
+                chargeEventDao.persistChargeEventOf(chargeEntity);
+                if (true) {
+                    throw new RuntimeException("oops!");
+                }
+                return Optional.of(populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
+            }).orElse(Optional.empty());
+        }
+        catch(Exception e) {
+            shouldRollback = true;
+            throw e;
+        }
+        finally {
+            if (shouldRollback) {
+                txn.rollback();
+            } else {
+                txn.commit();
+            }
+        }
+        return chargeResponse;
     }
 
     @Transactional

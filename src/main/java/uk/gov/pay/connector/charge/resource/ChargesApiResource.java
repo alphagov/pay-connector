@@ -20,6 +20,9 @@ import uk.gov.pay.connector.charge.service.SearchService;
 import uk.gov.pay.connector.common.model.CommaDelimitedSetParameter;
 import uk.gov.pay.connector.common.validator.ApiValidators;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.reporting.ChargeCreatedEvent;
+import uk.gov.pay.connector.reporting.Event;
+import uk.gov.pay.connector.reporting.EventEmitter;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
@@ -85,16 +88,18 @@ public class ChargesApiResource {
     private final ConnectorConfiguration configuration;
     private final ChargeExpiryService chargeExpiryService;
     private SearchService searchService;
+    private EventEmitter eventEmitter;
 
     @Inject
     public ChargesApiResource(GatewayAccountDao gatewayAccountDao,
                               ChargeService chargeService, SearchService searchService,
-                              ChargeExpiryService chargeExpiryService, ConnectorConfiguration configuration) {
+                              ChargeExpiryService chargeExpiryService, ConnectorConfiguration configuration, EventEmitter eventEmitter) {
         this.gatewayAccountDao = gatewayAccountDao;
         this.chargeService = chargeService;
         this.searchService = searchService;
         this.chargeExpiryService = chargeExpiryService;
         this.configuration = configuration;
+        this.eventEmitter = eventEmitter;
     }
 
 
@@ -236,7 +241,10 @@ public class ChargesApiResource {
         logger.info("Creating new charge - {}", chargeRequest.toStringWithoutPersonalIdentifiableInformation());
 
         return chargeService.create(chargeRequest, accountId, uriInfo)
-                .map(response -> created(response.getLink("self")).entity(response).build())
+                .map(response -> {
+                    eventEmitter.serviceCreatedCharge(response);
+                    return created(response.getLink("self")).entity(response).build(); 
+                })
                 .orElseGet(() -> notFoundResponse("Unknown gateway account: " + accountId));
     }
 

@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.chargeevent.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
@@ -9,11 +11,13 @@ import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.PostPersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.time.ZonedDateTime;
@@ -23,8 +27,15 @@ import java.util.Optional;
 @Table(name = "charge_events")
 @SequenceGenerator(name = "charge_events_id_seq",
         sequenceName = "charge_events_id_seq", allocationSize = 1)
-public class ChargeEventEntity extends AbstractVersionedEntity {
+@EntityListeners(ChargeEventListener.class)
 
+public class ChargeEventEntity extends AbstractVersionedEntity {
+    private static final Logger logger = LoggerFactory.getLogger(ChargeEventEntity.class);
+
+    @PostPersist public void onPostPersist() {
+        logger.error("POSTPERSIST: {}", this);
+    }
+    
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "charge_events_id_seq")
     @JsonIgnore

@@ -1,0 +1,100 @@
+digraph PaymentGatewayStateTransitions {
+rankdir=TB overlap=false splines=true
+node [style=filled shape=box color="0.650 0.200 1.000"]
+"AUTHORISATION_READY (started)" -> "AUTHORISATION_ABORTED (failed)" [label=""]
+"AWAITING_CAPTURE_REQUEST (submitted)" -> "EXPIRE_CANCEL_READY (failed)" [label=""]
+"EXPIRE_CANCEL_READY (failed)" -> "EXPIRE_CANCEL_SUBMITTED (failed)" [label=""]
+"SYSTEM_CANCEL_READY (cancelled)" -> "SYSTEM_CANCELLED (cancelled)" [label=""]
+"ENTERING_CARD_DETAILS (started)" -> "USER_CANCELLED (failed)" [label="user clicked cancel"]
+"AUTHORISATION_READY (started)" -> "AUTHORISATION_SUCCESS (submitted)" [label="Gateway response: AUTHORISED"]
+"AUTHORISATION_READY (started)" -> "AUTHORISATION_SUBMITTED (error)" [label="Epdq only: WAITING_EXTERNAL(50)"]
+"SYSTEM_CANCEL_READY (cancelled)" -> "SYSTEM_CANCEL_SUBMITTED (cancelled)" [label=""]
+"EXPIRE_CANCEL_SUBMITTED (failed)" -> "EXPIRED (failed)" [label="ChargeExpiryService"]
+"SYSTEM_CANCEL_SUBMITTED (cancelled)" -> "SYSTEM_CANCELLED (cancelled)" [label=""]
+"EXPIRE_CANCEL_READY (failed)" -> "EXPIRED (failed)" [label="ChargeExpiryService"]
+"AUTHORISATION_SUBMITTED (error)" -> "AUTHORISATION_ERROR (error)" [label=""]
+"ENTERING_CARD_DETAILS (started)" -> "AUTHORISATION_ABORTED (failed)" [label=""]
+"AUTHORISATION_SUCCESS (submitted)" -> "CAPTURE_READY (success)" [label=""]
+"AUTHORISATION_READY (started)" -> "AUTHORISATION_REJECTED (failed)" [label="Gateway response: REJECTED"]
+"ENTERING_CARD_DETAILS (started)" -> "SYSTEM_CANCELLED (cancelled)" [label=""]
+"AUTHORISATION_3DS_REQUIRED (started)" -> "USER_CANCELLED (failed)" [label=""]
+"CAPTURE_READY (success)" -> "CAPTURE_SUBMITTED (success)" [label=""]
+"USER_CANCEL_SUBMITTED (failed)" -> "USER_CANCEL_ERROR (failed)" [label=""]
+"AUTHORISATION_3DS_READY (started)" -> "AUTHORISATION_ERROR (error)" [label=""]
+"CAPTURE_APPROVED_RETRY (success)" -> "CAPTURED (success)" [label=""]
+"CREATED (created)" -> "ENTERING_CARD_DETAILS (started)" [label="frontend: POST /frontend/charges/{chargeId}/status"]
+"AUTHORISATION_SUCCESS (submitted)" -> "USER_CANCEL_READY (failed)" [label=""]
+"CAPTURE_APPROVED (success)" -> "CAPTURE_ERROR (error)" [label=""]
+"SYSTEM_CANCEL_READY (cancelled)" -> "SYSTEM_CANCEL_ERROR (cancelled)" [label=""]
+"EXPIRE_CANCEL_SUBMITTED (failed)" -> "EXPIRE_CANCEL_FAILED (failed)" [label=""]
+"AUTHORISATION_READY (started)" -> "AUTHORISATION_ERROR (error)" [label="Gateway error"]
+"SYSTEM_CANCEL_SUBMITTED (cancelled)" -> "SYSTEM_CANCEL_ERROR (cancelled)" [label=""]
+"EXPIRE_CANCEL_READY (failed)" -> "EXPIRE_CANCEL_FAILED (failed)" [label=""]
+"AUTHORISATION_SUCCESS (submitted)" -> "EXPIRE_CANCEL_READY (failed)" [label=""]
+"AUTHORISATION_SUCCESS (submitted)" -> "AWAITING_CAPTURE_REQUEST (submitted)" [label=""]
+"AUTHORISATION_READY (started)" -> "AUTHORISATION_3DS_REQUIRED (started)" [label="Gateway response: 3ds required"]
+"USER_CANCEL_SUBMITTED (failed)" -> "USER_CANCELLED (failed)" [label=""]
+"AUTHORISATION_3DS_REQUIRED (started)" -> "AUTHORISATION_3DS_READY (started)" [label=""]
+"CAPTURE_APPROVED_RETRY (success)" -> "CAPTURE_ERROR (error)" [label=""]
+"AUTHORISATION_READY (started)" -> "AUTHORISATION_CANCELLED (failed)" [label="Gateway response: cancelled"]
+"AUTHORISATION_SUBMITTED (error)" -> "AUTHORISATION_3DS_REQUIRED (started)" [label=""]
+"CREATED (created)" -> "EXPIRED (failed)" [label="ChargeExpiryService"]
+"AUTHORISATION_SUBMITTED (error)" -> "AUTHORISATION_SUCCESS (submitted)" [label=""]
+"AUTHORISATION_3DS_READY (started)" -> "AUTHORISATION_REJECTED (failed)" [label=""]
+"USER_CANCEL_READY (failed)" -> "USER_CANCELLED (failed)" [label=""]
+"AWAITING_CAPTURE_REQUEST (submitted)" -> "CAPTURE_APPROVED (success)" [label=""]
+"AUTHORISATION_3DS_REQUIRED (started)" -> "AUTHORISATION_CANCELLED (failed)" [label=""]
+"AWAITING_CAPTURE_REQUEST (submitted)" -> "SYSTEM_CANCEL_READY (cancelled)" [label=""]
+"AUTHORISATION_SUBMITTED (error)" -> "AUTHORISATION_REJECTED (failed)" [label=""]
+"AUTHORISATION_3DS_READY (started)" -> "AUTHORISATION_SUCCESS (submitted)" [label=""]
+"CAPTURE_READY (success)" -> "CAPTURED (success)" [label="received CAPTURED notification while about to retry"]
+"AUTHORISATION_READY (started)" -> "AUTHORISATION_TIMEOUT (error)" [label="Gateway timeout"]
+"ENTERING_CARD_DETAILS (started)" -> "EXPIRED (failed)" [label="ChargeExpiryService"]
+"AUTHORISATION_3DS_REQUIRED (started)" -> "EXPIRED (failed)" [label="ChargeExpiryService"]
+"CAPTURE_READY (success)" -> "CAPTURE_ERROR (error)" [label=""]
+"ENTERING_CARD_DETAILS (started)" -> "AUTHORISATION_READY (started)" [label="user submitted card details"]
+"CAPTURE_READY (success)" -> "CAPTURE_APPROVED_RETRY (success)" [label=""]
+"CAPTURE_APPROVED_RETRY (success)" -> "CAPTURE_READY (success)" [label=""]
+"CAPTURE_SUBMITTED (success)" -> "CAPTURED (success)" [label=""]
+"AUTHORISATION_SUCCESS (submitted)" -> "SYSTEM_CANCEL_READY (cancelled)" [label=""]
+"USER_CANCEL_READY (failed)" -> "USER_CANCEL_ERROR (failed)" [label=""]
+"AUTHORISATION_SUCCESS (submitted)" -> "CAPTURE_APPROVED (success)" [label=""]
+"CREATED (created)" -> "SYSTEM_CANCELLED (cancelled)" [label=""]
+"AUTHORISATION_3DS_READY (started)" -> "AUTHORISATION_CANCELLED (failed)" [label=""]
+"USER_CANCEL_READY (failed)" -> "USER_CANCEL_SUBMITTED (failed)" [label=""]
+"AUTHORISATION_3DS_REQUIRED (started)" -> "AUTHORISATION_REJECTED (failed)" [label=""]
+"AUTHORISATION_READY (started)" -> "AUTHORISATION_UNEXPECTED_ERROR (error)" [label="Gateway response: unexpected error"]
+"CAPTURE_APPROVED (success)" -> "CAPTURE_READY (success)" [label=""]
+"CREATED (created)" [color="0.305 0.625 1.000" shape=box] ;
+"EXPIRED (failed)" [color="0.628 0.227 1.000" shape=doubleoctagon] ;
+"ENTERING_CARD_DETAILS (started)" [color="0.201 0.753 1.000" shape=box] ;
+"AUTHORISATION_3DS_REQUIRED (started)" [color="0.201 0.753 1.000" shape=box] ;
+"EXPIRE_CANCEL_READY (failed)" [color="0.628 0.227 1.000" shape=doubleoctagon] ;
+"EXPIRE_CANCEL_SUBMITTED (failed)" [color="0.628 0.227 1.000" shape=doubleoctagon] ;
+"SYSTEM_CANCELLED (cancelled)" [color="0.578 0.289 1.000" shape=doubleoctagon] ;
+"AUTHORISATION_READY (started)" [color="0.201 0.753 1.000" shape=box] ;
+"AUTHORISATION_ABORTED (failed)" [color="0.628 0.227 1.000" shape=doubleoctagon] ;
+"USER_CANCELLED (failed)" [color="0.628 0.227 1.000" shape=doubleoctagon] ;
+"AUTHORISATION_SUCCESS (submitted)" [color="0.408 0.498 1.000" shape=box] ;
+"AUTHORISATION_REJECTED (failed)" [color="0.628 0.227 1.000" shape=doubleoctagon] ;
+"AUTHORISATION_ERROR (error)" [color="0.650 0.200 1.000" shape=doubleoctagon] ;
+"AUTHORISATION_TIMEOUT (error)" [color="0.650 0.200 1.000" shape=doubleoctagon] ;
+"AUTHORISATION_UNEXPECTED_ERROR (error)" [color="0.650 0.200 1.000" shape=doubleoctagon] ;
+"AUTHORISATION_CANCELLED (failed)" [color="0.628 0.227 1.000" shape=doubleoctagon] ;
+"AUTHORISATION_SUBMITTED (error)" [color="0.650 0.200 1.000" shape=doubleoctagon] ;
+"AUTHORISATION_3DS_READY (started)" [color="0.201 0.753 1.000" shape=box] ;
+"CAPTURE_APPROVED (success)" [color="0.449 0.447 1.000" shape=doubleoctagon] ;
+"CAPTURE_READY (success)" [color="0.449 0.447 1.000" shape=doubleoctagon] ;
+"SYSTEM_CANCEL_READY (cancelled)" [color="0.578 0.289 1.000" shape=doubleoctagon] ;
+"USER_CANCEL_READY (failed)" [color="0.628 0.227 1.000" shape=doubleoctagon] ;
+"AWAITING_CAPTURE_REQUEST (submitted)" [color="0.408 0.498 1.000" shape=box] ;
+"CAPTURE_ERROR (error)" [color="0.650 0.200 1.000" shape=doubleoctagon] ;
+"CAPTURE_APPROVED_RETRY (success)" [color="0.449 0.447 1.000" shape=doubleoctagon] ;
+"CAPTURED (success)" [color="0.449 0.447 1.000" shape=doubleoctagon] ;
+"CAPTURE_SUBMITTED (success)" [color="0.449 0.447 1.000" shape=doubleoctagon] ;
+"EXPIRE_CANCEL_FAILED (failed)" [color="0.628 0.227 1.000" shape=doubleoctagon] ;
+"SYSTEM_CANCEL_SUBMITTED (cancelled)" [color="0.578 0.289 1.000" shape=doubleoctagon] ;
+"SYSTEM_CANCEL_ERROR (cancelled)" [color="0.578 0.289 1.000" shape=doubleoctagon] ;
+"USER_CANCEL_SUBMITTED (failed)" [color="0.628 0.227 1.000" shape=doubleoctagon] ;
+"USER_CANCEL_ERROR (failed)" [color="0.628 0.227 1.000" shape=doubleoctagon] ;
+}

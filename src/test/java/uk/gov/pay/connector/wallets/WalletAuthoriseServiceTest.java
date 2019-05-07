@@ -34,10 +34,13 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
+import uk.gov.pay.connector.reporting.EventEmitter;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
+import javax.inject.Provider;
+import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -97,6 +100,12 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
                     .build();
 
     private Appender<ILoggingEvent> mockAppender;
+    
+    @Mock
+    private EventEmitter mockEventEmitter;
+    
+    @Mock
+    private Provider<EntityManager> emProvider;
 
     @Before
     public void setUp() {
@@ -109,8 +118,8 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
 
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
-        ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null);
+        ChargeService chargeService = new ChargeService(emProvider,null, mockedChargeDao, mockedChargeEventDao,
+                null, null, mockConfiguration, null, mockEventEmitter);
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,

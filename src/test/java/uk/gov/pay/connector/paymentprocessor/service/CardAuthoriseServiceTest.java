@@ -33,7 +33,10 @@ import uk.gov.pay.connector.model.domain.AddressFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
+import uk.gov.pay.connector.reporting.EventEmitter;
 
+import javax.inject.Provider;
+import javax.persistence.EntityManager;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -89,6 +92,11 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private Counter mockCounter;
 
     private CardAuthoriseService cardAuthorisationService;
+    
+    @Mock
+    private EventEmitter mockEventEmitter;
+    @Mock
+    private Provider<EntityManager> emProvider;
 
     @Before
     public void setUpCardAuthorisationService() {
@@ -96,8 +104,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
 
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
-        ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null);
+        ChargeService chargeService = new ChargeService(emProvider,null, mockedChargeDao, mockedChargeEventDao,
+                null, null, mockConfiguration, null, mockEventEmitter);
 
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         cardAuthorisationService = new CardAuthoriseService(
