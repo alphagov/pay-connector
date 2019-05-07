@@ -251,7 +251,8 @@ public class StripeResourceAuthorizeITest {
                 .post(authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(500)
-                .body("message", containsString("There is no stripe_account_id for gateway account with id"));
+                .body("message", contains(containsString("There is no stripe_account_id for gateway account with id")))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
