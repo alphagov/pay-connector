@@ -26,6 +26,8 @@ public class StripeErrorResponse {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public class Error {
 
+        @JsonProperty("charge")
+        private String charge;
         @JsonProperty("code")
         private String code;
         @JsonProperty("message")
@@ -37,6 +39,10 @@ public class StripeErrorResponse {
 
         public String getMessage() {
             return message;
+        }
+
+        public String getCharge() {
+            return charge;
         }
     }
 }

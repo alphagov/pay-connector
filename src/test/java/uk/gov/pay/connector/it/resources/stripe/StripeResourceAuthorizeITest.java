@@ -52,10 +52,7 @@ import static org.eclipse.jetty.http.HttpStatus.OK_200;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
@@ -131,8 +128,10 @@ public class StripeResourceAuthorizeITest {
                 .post(authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(BAD_REQUEST_400)
-                .body("message", contains("Your card has expired."))
+                .body("message", contains("This transaction was declined."))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+
+        assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_REJECTED.toString());
     }
 
     @Test
