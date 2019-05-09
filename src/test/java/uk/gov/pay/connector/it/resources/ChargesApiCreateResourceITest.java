@@ -36,6 +36,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static org.junit.Assert.assertNull;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
@@ -545,8 +546,9 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body("$", not(hasKey("metadata")));
 
+        String chargeExternalId = response.extract().path(JSON_CHARGE_KEY);
         connectorRestApiClient
-                .withChargeId(response.extract().path(JSON_CHARGE_KEY))
+                .withChargeId(chargeExternalId)
                 .getCharge()
                 .body("$", not(hasKey("metadata")));
         
@@ -554,6 +556,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .withQueryParam("reference", reference)
                 .getChargesV1()
                 .body("results[0]", not(hasKey("metadata")));
+        
+        assertNull(databaseTestHelper.getChargeByExternalId(chargeExternalId).get("metadata"));
     }
 
     @Test
