@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import io.restassured.response.ValidatableResponse;
+import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.postgresql.util.PGobject;
@@ -16,6 +17,7 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import javax.ws.rs.core.Response.Status;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.SECONDS;
@@ -27,7 +29,9 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -522,6 +526,35 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .body("card_details." + JSON_CARDHOLDER_NAME_KEY, is(cardholderName))
                 .body("containsKey('billing_address')", is(false));
     }
+    
+    @Test
+    public void shouldReturnChargeWithNoMetadataField_whenCreatedWithEmptyMetadata() {
+        String reference = UUID.randomUUID().toString();
+        String postBody = toJson(ImmutableMap.builder()
+                .put(JSON_AMOUNT_KEY, AMOUNT)
+                .put(JSON_REFERENCE_KEY, reference)
+                .put(JSON_DESCRIPTION_KEY, "Test description")
+                .put(JSON_RETURN_URL_KEY, RETURN_URL)
+                .put(JSON_EMAIL_KEY, EMAIL)
+                .put(JSON_METADATA_KEY, Map.of())
+                .build());
+
+        ValidatableResponse response = connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .contentType(JSON)
+                .body("$", not(hasKey("metadata")));
+
+        connectorRestApiClient
+                .withChargeId(response.extract().path(JSON_CHARGE_KEY))
+                .getCharge()
+                .body("$", not(hasKey("metadata")));
+        
+        connectorRestApiClient
+                .withQueryParam("reference", reference)
+                .getChargesV1()
+                .body("results[0]", not(hasKey("metadata")));
+    }
 
     @Test
     public void shouldCreateChargeWithExternalMetadata() {
@@ -545,7 +578,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .contentType(JSON)
-                .log().body()
                 .body(JSON_METADATA_KEY + ".key1", is("string"))
                 .body(JSON_METADATA_KEY + ".key2", is(true))
                 .body(JSON_METADATA_KEY + ".key3", is(123));
@@ -620,7 +652,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateCharge(postBody)
-                .log().body()
                 .statusCode(400)
                 .contentType(JSON)
                 .body("message", contains("Field [metadata] must be an object of JSON key-value pairs"))
@@ -643,7 +674,6 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateCharge(postBody)
-                .log().body()
                 .statusCode(400)
                 .contentType(JSON)
                 .body("message", contains("Field [metadata] must be an object of JSON key-value pairs"))
