@@ -114,7 +114,7 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    @Parameters({"recommended", "required", "optional"})
+    @Parameters({"recommended", "required"})
     public void shouldAuthoriseAs3dsRequired_whenStripeSourceSupports3ds(String threeDSecureOption) throws Exception {
 
         when(gatewayClient.postRequestFor(eq(tokensUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(tokenResponse);
@@ -135,6 +135,32 @@ public class StripePaymentProviderTest {
         Optional<StripeParamsFor3ds> stripeParamsFor3ds = (Optional<StripeParamsFor3ds>) response.getBaseResponse().get().getGatewayParamsFor3ds();
         assertThat(stripeParamsFor3ds.isPresent(), is(true));
         assertThat(stripeParamsFor3ds.get().toAuth3dsDetailsEntity().getIssuerUrl(), containsString("https://hooks.stripe.com")); //from templates/stripe/create_3ds_sources_response.json
+    }
+
+    /**
+     * See https://stripe.com/docs/sources/three-d-secure
+     */
+    @Test
+    @Parameters({"optional", "not_supported"})
+    public void shouldAuthoriseWithout3DSRequired_whenStripeAdvisesNotNeeded(String threeDSecureOption) throws Exception {
+
+        when(gatewayClient.postRequestFor(eq(tokensUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(tokenResponse);
+
+        GatewayClient.Response sourceResponseWith3dsRequired = mock(GatewayClient.Response.class);
+        when(sourceResponseWith3dsRequired.getEntity()).thenReturn(successSourceResponseWith3dsRequired(threeDSecureOption));
+        GatewayClient.Response threeDsSourceResponse = mock(GatewayClient.Response.class);
+        when(threeDsSourceResponse.getEntity()).thenReturn(success3dsSourceResponse());
+        when(gatewayClient.postRequestFor(eq(sourcesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
+                .thenReturn(sourceResponseWith3dsRequired, threeDsSourceResponse);
+        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(chargeResponse);
+
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
+
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+        assertThat(response.getBaseResponse().get().getTransactionId(), is("ch_1DRQ842eZvKYlo2CPbf7NNDv_test")); // id from templates/stripe/authorisation_success_response.json
+
+        Optional<StripeParamsFor3ds> stripeParamsFor3ds = (Optional<StripeParamsFor3ds>) response.getBaseResponse().get().getGatewayParamsFor3ds();
+        assertThat(stripeParamsFor3ds.isPresent(), is(false));
     }
 
     @Test
