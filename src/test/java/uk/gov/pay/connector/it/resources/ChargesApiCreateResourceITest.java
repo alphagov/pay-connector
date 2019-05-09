@@ -530,7 +530,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     
     @Test
     public void shouldReturnChargeWithNoMetadataField_whenCreatedWithEmptyMetadata() {
-        String reference = UUID.randomUUID().toString();
+        String reference = "no metadata reference";
         String postBody = toJson(ImmutableMap.builder()
                 .put(JSON_AMOUNT_KEY, AMOUNT)
                 .put(JSON_REFERENCE_KEY, reference)
