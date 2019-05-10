@@ -39,8 +39,10 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
@@ -607,14 +609,20 @@ public class ChargesFrontendResourceITest {
                 .body("gateway_account.corporate_credit_card_surcharge_amount", isNumber(corporateCreditCardSurchargeAmount))
                 .body("gateway_account.corporate_debit_card_surcharge_amount", isNumber(corporateDebitCardSurchargeAmount))
                 .body("gateway_account.card_types", is(notNullValue()))
-                .body("gateway_account.card_types[0].id", is(notNullValue()))
-                .body("gateway_account.card_types[0].label", is("Mastercard"))
-                .body("gateway_account.card_types[0].type", is("CREDIT"))
-                .body("gateway_account.card_types[0].brand", is("master-card"))
-                .body("gateway_account.card_types[1].id", is(notNullValue()))
-                .body("gateway_account.card_types[1].label", is("Visa"))
-                .body("gateway_account.card_types[1].type", is("CREDIT"))
-                .body("gateway_account.card_types[1].brand", is("visa"));
+                .body("gateway_account.card_types", contains(
+                        allOf(
+                                hasKey("id"),
+                                hasEntry("label", "Mastercard"),
+                                hasEntry("type", "CREDIT"),
+                                hasEntry("brand", "master-card")
+                        ),
+                        allOf(
+                                hasKey("id"),
+                                hasEntry("label","Visa"),
+                                hasEntry("type", "CREDIT"),
+                                hasEntry("brand", "visa")
+                        )
+                ));
     }
 
     private void validateCardDetails(ValidatableResponse response, ChargeStatus status) {
