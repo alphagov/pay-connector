@@ -9,7 +9,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StripeSourcesResponse {
 
-    private List<String> threeDSecureRequiredOptions = ImmutableList.of("required", "recommended", "optional");
+    private List<String> threeDSecureRequiredOptions = ImmutableList.of("required", "recommended");
 
     @JsonProperty("id")
     private String id;
