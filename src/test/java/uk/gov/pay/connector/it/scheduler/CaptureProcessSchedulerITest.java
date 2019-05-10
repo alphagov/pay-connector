@@ -87,19 +87,6 @@ public class CaptureProcessSchedulerITest {
     @Test
     public void schedulerShouldStartMultipleThreadsAsPerConfig_AndCaptureCharge() throws InterruptedException {
 
-        new WorldpayMockClient().mockCaptureSuccess();
-        DatabaseFixtures.TestCharge testCharge = ChargeUtils.createTestCharge(databaseTestHelper, PAYMENT_PROVIDER, CAPTURE_APPROVED,
-                CREDENTIALS, TRANSACTION_ID);
-        
-        Thread.sleep(10000L); // Wait for Capture process to finish capture
-
-        // Expected below : For 2 scheduler threads with a charge in CAPTURE_APPROVED state
-        // Thread 1: Capturing: 1 of 1 charges ,  Capturing [1 of 1] [chargeId=...] ,  Capture complete ...
-        // Thread 2: Capture complete ....
-        verify(mockAppender, times(4)).doAppend(loggingEventArgumentCaptor.capture());
-        assertThatTwoThreadsAreCompletingCaptureProcess(loggingEventArgumentCaptor);
-
-        assertThat(databaseTestHelper.getChargeStatus(testCharge.getChargeId()), is(CAPTURE_SUBMITTED.getValue()));
     }
 
     private void assertThatTwoThreadsAreCompletingCaptureProcess(ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor) {
