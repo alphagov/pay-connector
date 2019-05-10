@@ -305,10 +305,53 @@ public class TransactionsApiContractTest {
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.AWAITING_CAPTURE_REQUEST, ZonedDateTime.now(), true);
     }
 
-    @State("a charge in state CREATED with accountId 42 and chargeExternalId 100 and metadata exists")
+    @State("Gateway account 42 exists and has a charge for £1 with id abc123")
+    public void aChargeWithIdExists() {
+        long accountId = 42;
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withExternalChargeId("abc123")
+                .withGatewayAccountId(String.valueOf(accountId))
+                .withTransactionId("aGatewayTransactionId")
+                .withAmount(100)
+                .withStatus(ChargeStatus.CAPTURED)
+                .build();
+        dbHelper.addCharge(addChargeParams);
+        dbHelper.updateChargeCardDetails(addChargeParams.getChargeId(),
+                AuthCardDetailsFixture.anAuthCardDetails().build());
+    }
+    
+    @State("Gateway account 42 exists and has a charge with id abc123 and has CREATED and AUTHORISATION_REJECTED charge events")
+    public void aChargeWithIdAndChargeEvents() {
+        String gatewayAccountId = "42";
+        String chargeExternalId = "abc123";
+        long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, ZonedDateTime.now(), false);
+        
+        dbHelper.addEvent(chargeId, ChargeStatus.CREATED.toString());
+        dbHelper.addEvent(chargeId, ChargeStatus.AUTHORISATION_REJECTED.toString());
+    }
+
+    @State("Gateway account 42 exists and has a charge with id abc123 which has a corporate card surcharge")
+    public void aChargeWithIdAndCorporateSurchargeExists() {
+        long accountId = 42;
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withExternalChargeId("abc123")
+                .withGatewayAccountId(String.valueOf(accountId))
+                .withTransactionId("aGatewayTransactionId")
+                .withCorporateSurcharge(250L)
+                .build();
+        dbHelper.addCharge(addChargeParams);
+        dbHelper.updateChargeCardDetails(addChargeParams.getChargeId(),
+                AuthCardDetailsFixture.anAuthCardDetails().build());
+    }
+
+    @State("a charge in state CREATED with accountId 42 and chargeExternalId abc123 and metadata exists")
     public void createChargeWithMetadata() {
         String gatewayAccountId = "42";
-        String chargeExternalId = "100";
+        String chargeExternalId = "abc123";
         long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
 
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
