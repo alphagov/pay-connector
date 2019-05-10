@@ -11,7 +11,7 @@ public final class AuthCardDetailsFixture {
     private String cvc = "123";
     private String endDate = "12/99";
     private Address address = AddressFixture.anAddress().build();
-    private String cardBrand = "VISA";
+    private String cardBrand = "visa";
     private String userAgentHeader = "Mozilla/5.0";
     private String acceptHeader = "text/html";
     private PayersCardType payersCardType = PayersCardType.DEBIT;

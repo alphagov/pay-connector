@@ -18,8 +18,10 @@ import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.util.AddChargeParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.ZoneId;
@@ -152,7 +154,7 @@ public class TransactionsApiContractTest {
                 .withTransactionId("aTransactionId")
                 .withEmail("test@test.com")
                 .build());
-        
+
         for (int i = 0; i < numberOfRefunds; i++) {
             dbHelper.addRefund("external" + RandomUtils.nextInt(), "reference", 1L, REFUNDED,
                     chargeId, randomAlphanumeric(10), createdDate);
@@ -187,25 +189,60 @@ public class TransactionsApiContractTest {
         setUpCharges(5, Long.toString(accountId), ZonedDateTime.now());
     }
 
-    @State("User 666 exists in the database and has 2 available transactions occurring after 2018-05-03T00:00:00.000Z")
+    @State("Account 42 exists in the database and has 2 available transactions occurring after 2018-05-03T00:00:00.000Z")
     public void accountWithTransactionsAfterMay2018() {
-        long accountId = 666L;
+        long accountId = 42L;
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
         setUpCharges(2, Long.toString(accountId), ZonedDateTime.now());
     }
 
-    @State("User 666 exists in the database and has 2 available transactions occurring before 2018-05-03T00:00:01.000Z")
+    @State("Account 42 exists in the database and has 2 available transactions occurring before 2018-05-03T00:00:01.000Z")
     public void accountWithTransactionsBeforeMay2018() {
-        long accountId = 666L;
+        long accountId = 42L;
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
         setUpCharges(2, Long.toString(accountId), ZonedDateTime.of(2018, 1, 1, 1, 1, 1, 1, ZoneId.systemDefault()));
     }
 
-    @State("User 666 exists in the database and has 2 available transactions between 2018-05-14T00:00:00 and 2018-05-15T00:00:00")
+    @State({
+            "Account 42 exists in the database and has 2 available transactions between 2018-05-14T00:00:00 and 2018-05-15T00:00:00",
+            "Account 42 exists in the database and has 2 transactions available"
+    })
     public void accountWithTransactionsOnMay_5_2018() {
-        long accountId = 666L;
+        long accountId = 42;
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
         setUpCharges(2, Long.toString(accountId), ZonedDateTime.of(2018, 5, 14, 1, 1, 1, 1, ZoneId.systemDefault()));
+    }
+
+    @State("Account 42 exists in the database and has 1 available transaction with a card brand visa and a partial email matching blah")
+    public void accountWithTransactionWithCardBrandAndPartialEmail() {
+        long accountId = 42;
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withGatewayAccountId(String.valueOf(accountId))
+                .withTransactionId("aGatewayTransactionId")
+                .withEmail("blah@test.com")
+                .build();
+        dbHelper.addCharge(addChargeParams);
+        dbHelper.updateChargeCardDetails(addChargeParams.getChargeId(),
+                AuthCardDetailsFixture.anAuthCardDetails()
+                        .withCardBrand("visa")
+                        .build());
+    }
+
+    @State("Account 42 exists in the database and has 1 available transaction with a payment state of success, a reference matching the partial search payment1 and falls between the date range 2018-05-03T00:00:00.000Z amd 2018-05-04T00:00:01.000Z")
+    public void accountWithTransactionWithStateAndReferenceInDateRange() {
+        long accountId = 42;
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withGatewayAccountId(String.valueOf(accountId))
+                .withTransactionId("aGatewayTransactionId")
+                .withStatus(ChargeStatus.CAPTURED)
+                .withReference(ServicePaymentReference.of("payment1-andsomeotherstuff"))
+                .withCreatedDate(ZonedDateTime.of(2018, 5, 3, 12, 1, 1, 1, ZoneId.systemDefault()))
+                .build();
+        dbHelper.addCharge(addChargeParams);
+        dbHelper.updateChargeCardDetails(addChargeParams.getChargeId(),
+                AuthCardDetailsFixture.anAuthCardDetails().build());
     }
 
     @State("a stripe gateway account with external id 42 exists in the database")
@@ -246,7 +283,7 @@ public class TransactionsApiContractTest {
         String chargeExternalId = params.get("charge_id");
 
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CAPTURED, ZonedDateTime.now(),false);
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CAPTURED, ZonedDateTime.now(), false);
         dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), randomAlphanumeric(10));
     }
 

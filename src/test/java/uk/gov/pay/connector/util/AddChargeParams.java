@@ -113,18 +113,18 @@ public class AddChargeParams {
     }
 
     public static final class AddChargeParamsBuilder {
-        private Long chargeId;
-        private String externalChargeId;
+        private Long chargeId = 1L;
+        private String externalChargeId = "anExternalChargeId";
         private String gatewayAccountId;
-        private long amount;
-        private ChargeStatus status;
+        private long amount = 1000;
+        private ChargeStatus status = ChargeStatus.CAPTURED;
         private String returnUrl = "http://somereturn.gov.uk";
         private String transactionId;
         private String description = "Test description";
         private ServicePaymentReference reference = ServicePaymentReference.of("Test reference");
         private ZonedDateTime createdDate = now();
         private long version = 1;
-        private String email;
+        private String email = "test@example.com";
         private SupportedLanguage language = SupportedLanguage.ENGLISH;
         private boolean delayedCapture = false;
         private Long corporateSurcharge;
