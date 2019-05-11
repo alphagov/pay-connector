@@ -37,7 +37,7 @@ public class PostgresContainer {
     private static final String GOVUK_POSTGRES_IMAGE = "govukpay/postgres:9.6.12";
     private static final String INTERNAL_PORT = "5432";
 
-    public PostgresContainer(DockerClient docker) throws DockerException, InterruptedException, IOException, ClassNotFoundException {
+    public PostgresContainer(DockerClient docker) throws DockerException, InterruptedException, ClassNotFoundException {
         Class.forName("org.postgresql.Driver");
 
         this.docker = docker;

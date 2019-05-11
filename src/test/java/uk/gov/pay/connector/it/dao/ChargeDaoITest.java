@@ -22,7 +22,6 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -962,7 +961,7 @@ public class ChargeDaoITest extends DaoITestBase {
     }
 
     @Test
-    public void shouldCreateANewChargeWithExternalMetadata() throws IOException {
+    public void shouldCreateANewChargeWithExternalMetadata() {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
         gatewayAccount.setId(defaultTestAccount.getAccountId());
 

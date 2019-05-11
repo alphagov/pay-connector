@@ -34,7 +34,7 @@ public class PostgresDockerRule implements TestRule {
                 DockerClient docker = DefaultDockerClient.fromEnv().build();
                 container = new PostgresContainer(docker);
             }
-        } catch (DockerCertificateException | InterruptedException | IOException | ClassNotFoundException e) {
+        } catch (DockerCertificateException | InterruptedException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }

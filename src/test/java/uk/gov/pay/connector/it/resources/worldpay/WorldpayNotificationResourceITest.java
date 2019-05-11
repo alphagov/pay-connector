@@ -39,7 +39,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldHandleAChargeNotification() throws Exception {
+    public void shouldHandleAChargeNotification() {
         String transactionId = RandomIdGenerator.newId();
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
@@ -54,7 +54,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldHandleARefundNotification() throws Exception {
+    public void shouldHandleARefundNotification() {
         String transactionId = RandomIdGenerator.newId();
         String refundExternalId = String.valueOf(nextLong());
         int refundAmount = 1000;
@@ -72,7 +72,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldIgnoreAuthorisedNotification() throws Exception {
+    public void shouldIgnoreAuthorisedNotification() {
 
         String transactionId = RandomIdGenerator.newId();
         String chargeId = createNewChargeWith(CAPTURED, transactionId);
@@ -88,7 +88,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotAddUnknownStatusToDatabaseFromANotification() throws Exception {
+    public void shouldNotAddUnknownStatusToDatabaseFromANotification() {
         String transactionId = RandomIdGenerator.newId();
         String chargeId = createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
@@ -103,7 +103,7 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotUpdateStatusToDatabaseIfGatewayAccountIsNotFound() throws Exception {
+    public void shouldNotUpdateStatusToDatabaseIfGatewayAccountIsNotFound() {
         String chargeId = createNewCharge(AUTHORISATION_SUCCESS);
 
         notifyConnector("unknown-transation-id", "GARBAGE")
@@ -156,11 +156,11 @@ public class WorldpayNotificationResourceITest extends ChargingITestBase {
                 .statusCode(415);
     }
 
-    private ValidatableResponse notifyConnector(String transactionId, String status) throws Exception {
+    private ValidatableResponse notifyConnector(String transactionId, String status) {
         return notifyConnector(notificationPayloadForTransaction(transactionId, status));
     }
 
-    private ValidatableResponse notifyConnector(String transactionId, String status, String reference) throws Exception {
+    private ValidatableResponse notifyConnector(String transactionId, String status, String reference) {
         return notifyConnector(notificationPayloadForTransaction(transactionId, status, reference));
     }
 

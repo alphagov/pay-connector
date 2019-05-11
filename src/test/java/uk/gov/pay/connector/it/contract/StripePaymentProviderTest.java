@@ -12,7 +12,6 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
-import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -84,7 +83,7 @@ public class StripePaymentProviderTest {
     }
 
     @Test
-    public void cancelCharge() throws GatewayException {
+    public void cancelCharge() {
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = authorise();
         ChargeEntity chargeEntity = getCharge();
         chargeEntity.setGatewayTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId());

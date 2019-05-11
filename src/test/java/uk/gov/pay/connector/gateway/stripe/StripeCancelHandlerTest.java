@@ -54,7 +54,7 @@ public class StripeCancelHandlerTest {
     }
 
     @Test
-    public void shouldCancelPaymentSuccessfully() throws Exception {
+    public void shouldCancelPaymentSuccessfully() {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(charge);
         final GatewayResponse<BaseCancelResponse> response = stripeCancelHandler.cancel(request);
