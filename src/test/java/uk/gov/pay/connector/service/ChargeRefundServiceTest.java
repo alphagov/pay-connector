@@ -502,20 +502,14 @@ public class ChargeRefundServiceTest {
     }
 
     private ArgumentMatcher<RefundEntity> aRefundEntity(long amount, ChargeEntity chargeEntity) {
-        return object -> {
-            RefundEntity refundEntity = ((RefundEntity) object);
-            return refundEntity.getAmount() == amount &&
-                    refundEntity.getChargeEntity().equals(chargeEntity);
-        };
+        return (RefundEntity refundEntity) -> refundEntity.getAmount() == amount &&
+                refundEntity.getChargeEntity().equals(chargeEntity);
     }
 
     private ArgumentMatcher<RefundGatewayRequest> aRefundRequestWith(ChargeEntity capturedCharge, long amountInPence) {
-        return object -> {
-            RefundGatewayRequest refundGatewayRequest = ((RefundGatewayRequest) object);
-            return refundGatewayRequest.getGatewayAccount().equals(capturedCharge.getGatewayAccount()) &&
-                    refundGatewayRequest.getTransactionId().equals(capturedCharge.getGatewayTransactionId()) &&
-                    refundGatewayRequest.getAmount().equals(String.valueOf(amountInPence));
-        };
+        return (RefundGatewayRequest refundGatewayRequest) -> refundGatewayRequest.getGatewayAccount().equals(capturedCharge.getGatewayAccount()) &&
+                refundGatewayRequest.getTransactionId().equals(capturedCharge.getGatewayTransactionId()) &&
+                refundGatewayRequest.getAmount().equals(String.valueOf(amountInPence));
     }
 
     private void setupWorldpayMock(String reference, String errorCode) {
