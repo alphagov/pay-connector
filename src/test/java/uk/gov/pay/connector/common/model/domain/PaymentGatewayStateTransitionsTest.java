@@ -9,16 +9,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsCollectionContaining.hasItem;
+import static org.hamcrest.Matchers.hasItem;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions.isValidTransition;
 
 public class PaymentGatewayStateTransitionsTest {
-    PaymentGatewayStateTransitions transitions = PaymentGatewayStateTransitions.getInstance();
+    private PaymentGatewayStateTransitions transitions = PaymentGatewayStateTransitions.getInstance();
 
     @Test
     public void allStatuses_hasEveryValidChargeStatus() {
@@ -34,7 +35,7 @@ public class PaymentGatewayStateTransitionsTest {
 
     @Test
     public void isValidTransition_indicatesValidAndInvalidTransition() {
-        assertThat(transitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED), is(true));
-        assertThat(transitions.isValidTransition(CREATED, AUTHORISATION_READY), is(false));
+        assertThat(isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED), is(true));
+        assertThat(isValidTransition(CREATED, AUTHORISATION_READY), is(false));
     }
 }
