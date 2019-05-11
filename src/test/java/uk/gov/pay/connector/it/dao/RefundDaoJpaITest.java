@@ -42,7 +42,7 @@ public class RefundDaoJpaITest extends DaoITestBase {
 
     @Before
     public void setUp() throws Exception {
-        super.setup();
+        setup();
         refundDao = env.getInstance(RefundDao.class);
         databaseTestHelper.deleteAllCardTypes();
 
