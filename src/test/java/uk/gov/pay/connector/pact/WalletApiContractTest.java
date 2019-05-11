@@ -19,7 +19,6 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.ZonedDateTime;
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;

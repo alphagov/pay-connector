@@ -11,7 +11,6 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
-import static java.util.Collections.emptyMap;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;

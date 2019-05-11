@@ -9,7 +9,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.InjectorLookup;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;

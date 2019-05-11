@@ -3,7 +3,6 @@ package uk.gov.pay.connector.gateway.worldpay;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import uk.gov.pay.connector.gateway.*;
-import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 
 import java.net.URI;
