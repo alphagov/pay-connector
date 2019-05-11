@@ -17,7 +17,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -72,7 +73,7 @@ public class WorldpayNotificationServiceTest {
                 "2017");
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
-        assertEquals(true, result);
+        assertTrue(result);
 
         WorldpayNotification expectedNotification = new WorldpayNotification(
                 "MERCHANTCODE",
@@ -99,7 +100,7 @@ public class WorldpayNotificationServiceTest {
                     "10", "03", "2017");
 
             final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
-            assertEquals(true, result);
+            assertTrue(result);
         }
 
 
@@ -114,7 +115,7 @@ public class WorldpayNotificationServiceTest {
                 "10", "03", "2017");
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
-        assertEquals(true, result);
+        assertTrue(result);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
         verify(mockRefundNotificationProcessor).invoke(WORLDPAY, RefundStatus.REFUND_ERROR, referenceId, transactionId);
@@ -134,7 +135,7 @@ public class WorldpayNotificationServiceTest {
         when(mockChargeDao.findByProviderAndTransactionId(WORLDPAY.getName(), transactionId)).thenReturn(Optional.empty());
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
-        assertEquals(result, true);
+        assertTrue(result);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
     }
@@ -150,7 +151,7 @@ public class WorldpayNotificationServiceTest {
                 "2017");
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
-        assertEquals(result, true);
+        assertTrue(result);
 
         verify(mockChargeNotificationProcessor, never()).invoke(anyString(), any(), any(), any());
     }
@@ -174,7 +175,7 @@ public class WorldpayNotificationServiceTest {
                     referenceId,
                     status);
 
-            assertEquals(true, notificationService.handleNotificationFor(ipAddress, payload));
+            assertTrue(notificationService.handleNotificationFor(ipAddress, payload));
 
             verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
             verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
@@ -195,7 +196,7 @@ public class WorldpayNotificationServiceTest {
         when(mockDnsUtils.ipMatchesDomain(ipAddress, "worldpay.com")).thenReturn(false);
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
-        assertEquals(false, result);
+        assertFalse(result);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
         verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
@@ -206,7 +207,7 @@ public class WorldpayNotificationServiceTest {
         String payload = "<not></valid>";
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
-        assertEquals(true, result);
+        assertTrue(result);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
         verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
