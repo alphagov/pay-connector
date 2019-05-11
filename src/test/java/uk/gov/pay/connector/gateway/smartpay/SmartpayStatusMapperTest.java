@@ -3,7 +3,6 @@ package uk.gov.pay.connector.gateway.smartpay;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
-import uk.gov.pay.connector.gateway.model.status.MappedRefundStatus;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -40,7 +39,7 @@ public class SmartpayStatusMapperTest {
         InterpretedStatus status = SmartpayStatusMapper.from(value, CAPTURED);
 
         assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
-        assertThat(((MappedRefundStatus) status).getRefundStatus(), is(REFUNDED));
+        assertThat(status.getRefundStatus(), is(REFUNDED));
     }
 
     @Test
