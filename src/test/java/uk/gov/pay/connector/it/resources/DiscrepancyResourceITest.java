@@ -101,7 +101,7 @@ public class DiscrepancyResourceITest extends ChargingITestBase {
 
     @Test
     public void should404_whenAChargeIdDoesntExist() {
-        String chargeId = addCharge(ChargeStatus.EXPIRED, "ref", ZonedDateTime.now().minusHours(1), "irrelevant");
+        addCharge(ChargeStatus.EXPIRED, "ref", ZonedDateTime.now().minusHours(1), "irrelevant");
         epdqMockClient.mockAuthorisationQuerySuccess();
 
         connectorRestApiClient
