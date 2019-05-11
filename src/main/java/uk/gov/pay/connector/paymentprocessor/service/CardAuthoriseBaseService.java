@@ -54,7 +54,7 @@ public class CardAuthoriseBaseService {
         Optional<String> transactionId = operationResponse.getBaseResponse()
                 .map(BaseAuthoriseResponse::getTransactionId);
 
-        if (!transactionId.isPresent() || StringUtils.isBlank(transactionId.get())) {
+        if (transactionId.isEmpty() || StringUtils.isBlank(transactionId.get())) {
             logger.warn("AuthCardDetails authorisation response received with no transaction id. -  charge_external_id={}",
                     chargeExternalId);
         }

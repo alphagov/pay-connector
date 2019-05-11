@@ -99,7 +99,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getSmartpayGatewayResponse(response, SmartpayAuthorisationResponse.class);
             
-            if (!gatewayResponse.getBaseResponse().isPresent())
+            if (gatewayResponse.getBaseResponse().isEmpty())
                 gatewayResponse.throwGatewayError();
             
             transactionId = Optional.ofNullable(gatewayResponse.getBaseResponse().get().getTransactionId());

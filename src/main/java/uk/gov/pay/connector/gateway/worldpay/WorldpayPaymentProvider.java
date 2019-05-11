@@ -133,7 +133,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
             
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getWorldpayGatewayResponse(response);
             
-            if (!gatewayResponse.getBaseResponse().isPresent()) gatewayResponse.throwGatewayError();
+            if (gatewayResponse.getBaseResponse().isEmpty()) gatewayResponse.throwGatewayError();
             
             BaseAuthoriseResponse authoriseResponse = gatewayResponse.getBaseResponse().get();
             

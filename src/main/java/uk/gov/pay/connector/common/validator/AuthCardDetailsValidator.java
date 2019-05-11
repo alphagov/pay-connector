@@ -43,7 +43,7 @@ public class AuthCardDetailsValidator implements ConstraintValidator<ValidAuthCa
     }
 
     private static boolean isAddressValid(AuthCardDetails authCardDetails) {
-        if (!authCardDetails.getAddress().isPresent())
+        if (authCardDetails.getAddress().isEmpty())
             return true;
 
         final Address address = authCardDetails.getAddress().get();

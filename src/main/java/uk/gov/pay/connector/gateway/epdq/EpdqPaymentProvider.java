@@ -193,7 +193,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 gatewayResponse = reconstructErrorBiasedGatewayResponse(gatewayResponse, authoriseStatus, auth3DResult);
             }
             
-            if (!gatewayResponse.getBaseResponse().isPresent()) gatewayResponse.throwGatewayError();
+            if (gatewayResponse.getBaseResponse().isEmpty()) gatewayResponse.throwGatewayError();
             
             transactionId = Optional.ofNullable(gatewayResponse.getBaseResponse().get().getTransactionId());
             stringifiedResponse = gatewayResponse.toString();

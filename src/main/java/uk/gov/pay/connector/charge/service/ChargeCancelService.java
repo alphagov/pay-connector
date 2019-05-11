@@ -87,7 +87,7 @@ public class ChargeCancelService {
         try {
             final GatewayResponse<BaseCancelResponse> gatewayResponse = doGatewayCancel(chargeEntity);
             
-            if (!gatewayResponse.getBaseResponse().isPresent()) gatewayResponse.throwGatewayError();
+            if (gatewayResponse.getBaseResponse().isEmpty()) gatewayResponse.throwGatewayError();
             
             chargeStatus = determineTerminalState(gatewayResponse.getBaseResponse().get(), statusFlow);
             stringifiedResponse = gatewayResponse.getBaseResponse().get().toString();

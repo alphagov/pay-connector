@@ -89,7 +89,7 @@ public class WorldpayNotificationService {
         Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(gatewayName(),
                 notification.getTransactionId());
 
-        if (!optionalChargeEntity.isPresent()) {
+        if (optionalChargeEntity.isEmpty()) {
             logger.error("{} notification {} could not be evaluated (associated charge entity not found)",
                     gatewayName(), notification);
             return true;

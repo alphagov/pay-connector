@@ -97,7 +97,7 @@ public class ApiValidators {
 
         dateParams.forEach(param -> {
             String dateString = param.getRight();
-            if (isNotBlank(dateString) && !parseZonedDateTime(dateString).isPresent()) {
+            if (isNotBlank(dateString) && parseZonedDateTime(dateString).isEmpty()) {
                 invalidQueryParams.put(param.getLeft(), "query param '%s' not in correct format");
             }
         });
@@ -120,7 +120,7 @@ public class ApiValidators {
     }
 
     public static Either<String, Boolean> validateGatewayAccountReference(GatewayAccountDao gatewayAccountDao, Long gatewayAccountId) {
-        if (!gatewayAccountDao.findById(gatewayAccountId).isPresent()) {
+        if (gatewayAccountDao.findById(gatewayAccountId).isEmpty()) {
             return left(format("account with id %s not found", gatewayAccountId));
         }
         return right(true);
@@ -152,12 +152,12 @@ public class ApiValidators {
         List<String> errors = newArrayList();
 
         Optional<ZonedDateTime> fromOptional = parseZonedDateTime(fromDate);
-        if (!fromOptional.isPresent()) {
+        if (fromOptional.isEmpty()) {
             errors.add("query param '" + fromDateParamName + "' not in correct format");
         }
 
         Optional<ZonedDateTime> toOptional = parseZonedDateTime(toDate);
-        if (!toOptional.isPresent()) {
+        if (toOptional.isEmpty()) {
             errors.add("query param '" + toDateParamName + "' not in correct format");
         }
 

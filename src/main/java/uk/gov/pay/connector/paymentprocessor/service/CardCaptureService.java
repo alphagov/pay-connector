@@ -126,7 +126,7 @@ public class CardCaptureService {
 
     private void checkTransactionId(String chargeId, CaptureResponse operationResponse) {
         Optional<String> transactionId = operationResponse.getTransactionId();
-        if (!transactionId.isPresent()) {
+        if (transactionId.isEmpty()) {
             LOG.warn("Card capture response received with no transaction id. - charge_external_id={}", chargeId);
         }
     }

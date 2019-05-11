@@ -68,7 +68,7 @@ public class SmartpayNotificationService {
         Optional<ChargeEntity> maybeCharge = chargeDao.findByProviderAndTransactionId(PAYMENT_GATEWAY_NAME,
                 notification.getOriginalReference());
 
-        if (!maybeCharge.isPresent()) {
+        if (maybeCharge.isEmpty()) {
             logger.error("{} notification {} could not be evaluated (associated charge entity not found)",
                     PAYMENT_GATEWAY_NAME, notification);
             return;
