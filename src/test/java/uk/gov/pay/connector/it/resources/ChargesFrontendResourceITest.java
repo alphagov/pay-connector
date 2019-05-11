@@ -77,9 +77,7 @@ public class ChargesFrontendResourceITest {
     private String description = "Test description";
     private String returnUrl = "http://whatever.com";
     private String email = randomAlphabetic(242) + "@example.com";
-    private String serviceName = "a cool service";
     private String analyticsId = "test-123";
-    private String type = "test";
     private String paymentProvider = "sandbox";
     private long expectedAmount = 6234L;
     private long corporateCreditCardSurchargeAmount = 213L;
@@ -602,9 +600,9 @@ public class ChargesFrontendResourceITest {
                 .body("containsKey('gateway_account')", is(true))
                 .body("gateway_account.gateway_account_id", is(Long.valueOf(accountId)))
                 .body("gateway_account.containsKey('credentials')", is(false))
-                .body("gateway_account.service_name", is(serviceName))
+                .body("gateway_account.service_name", is("a cool service"))
                 .body("gateway_account.payment_provider", is(paymentProvider))
-                .body("gateway_account.type", is(type))
+                .body("gateway_account.type", is("test"))
                 .body("gateway_account.analytics_id", is(analyticsId))
                 .body("gateway_account.corporate_credit_card_surcharge_amount", isNumber(corporateCreditCardSurchargeAmount))
                 .body("gateway_account.corporate_debit_card_surcharge_amount", isNumber(corporateDebitCardSurchargeAmount))
