@@ -88,7 +88,7 @@ public class SearchChargesByDateResourceITest {
                 .body("results[0].description", is("Test description"))
                 .body("results[0].state.status", is("created"))
                 .body("results[0].links.size()", is(4))
-                .body("results[0].return_url", is("http://return.com/1"))
+                .body("results[0].return_url", is("http://return.invalid/1"))
                 .body("results[0].created_date", is("2016-02-02T00:00:00.299Z"))
                 .body("results[0].reference", is("Test reference"));
     }
@@ -229,7 +229,7 @@ public class SearchChargesByDateResourceITest {
                 .withExternalChargeId(externalChargeId)
                 .withGatewayAccountId(accountId)
                 .withAmount(AMOUNT)
-                .withReturnUrl("http://return.com/1")
+                .withReturnUrl("http://return.invalid/1")
                 .withStatus(chargeStatus)
                 .withCreatedDate(createdDate)
                 .build());
