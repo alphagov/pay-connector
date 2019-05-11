@@ -250,7 +250,7 @@ public class ChargingITestBase {
     }
 
     protected Matcher<? super List<Map<String, Object>>> hasEvent(ChargeStatus chargeStatus) {
-        return new TypeSafeMatcher<List<Map<String, Object>>>() {
+        return new TypeSafeMatcher<>() {
             @Override
             protected boolean matchesSafely(List<Map<String, Object>> chargeEvents) {
                 return chargeEvents.stream()

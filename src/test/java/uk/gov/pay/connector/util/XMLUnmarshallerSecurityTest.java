@@ -92,7 +92,7 @@ public class XMLUnmarshallerSecurityTest {
     }
 
     private Matcher<Throwable> unmarshalExceptionWithLinkedSAXParseException(final String expectedMessage) {
-        return new TypeSafeMatcher<Throwable>() {
+        return new TypeSafeMatcher<>() {
             @Override
             protected boolean matchesSafely(Throwable throwable) {
                 if (throwable instanceof UnmarshalException) {

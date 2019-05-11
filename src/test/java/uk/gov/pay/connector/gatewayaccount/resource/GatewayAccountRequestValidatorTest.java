@@ -56,7 +56,7 @@ public class GatewayAccountRequestValidatorTest {
             "replace, credentials/gateway_merchant_id, null, Field [value] is required"
     })
     public void shouldThrowWhenRequestsAreInvalid(String op, String path, @Nullable String value, String expectedErrorMessage) {
-        Map<String, String> patch = new HashMap<String, String>() {{
+        Map<String, String> patch = new HashMap<>() {{
             put(FIELD_OPERATION, op);
             put(FIELD_OPERATION_PATH, path);
         }};

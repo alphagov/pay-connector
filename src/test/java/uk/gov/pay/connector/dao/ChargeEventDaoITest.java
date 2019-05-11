@@ -134,7 +134,7 @@ public class ChargeEventDaoITest extends DaoITestBase {
     }
 
     private Matcher<? super List<ChargeEventEntity>> shouldIncludeStatus(ChargeStatus... expectedStatuses) {
-        return new TypeSafeMatcher<List<ChargeEventEntity>>() {
+        return new TypeSafeMatcher<>() {
             @Override
             protected boolean matchesSafely(List<ChargeEventEntity> chargeEvents) {
                 List<ChargeStatus> actualStatuses = chargeEvents.stream()

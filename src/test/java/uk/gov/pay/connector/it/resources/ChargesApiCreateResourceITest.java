@@ -122,7 +122,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .body("links", containsLink("self", "GET", documentLocation))
                 .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
                 .body("links", containsLink("next_url", "GET", hrefNextUrl))
-                .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+                .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<>() {{
                     put("chargeTokenId", chargeTokenId);
                 }}));
 
@@ -162,7 +162,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .body("links", containsLink("self", "GET", documentLocation))
                 .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
                 .body("links", containsLink("next_url", "GET", newHrefNextUrl))
-                .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+                .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<>() {{
                     put("chargeTokenId", newChargeTokenId);
                 }}));
 

@@ -199,7 +199,7 @@ public class GatewayAccountDaoITest extends DaoITestBase {
 
         assertThat(gatewayAccount.getCredentials(), is(emptyMap()));
 
-        gatewayAccount.setCredentials(new HashMap<String, String>() {{
+        gatewayAccount.setCredentials(new HashMap<>() {{
             put("username", "Username");
             put("password", "Password");
         }});

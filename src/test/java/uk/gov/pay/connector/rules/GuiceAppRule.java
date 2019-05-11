@@ -112,7 +112,7 @@ public class GuiceAppRule<C extends Configuration> extends ExternalResource impl
         try {
             application = newApplication();
 
-            final Bootstrap<C> bootstrap = new Bootstrap<C>(application) {
+            final Bootstrap<C> bootstrap = new Bootstrap<>(application) {
                 @Override
                 public void run(final C configuration, final Environment environment) throws Exception {
                     GuiceAppRule.this.configuration = configuration;

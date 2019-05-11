@@ -91,11 +91,11 @@ public class GatewayAccountService {
     }
     
     private final Map<String, BiConsumer<JsonPatchRequest, GatewayAccountEntity>> attributeUpdater =
-            new HashMap<String, BiConsumer<JsonPatchRequest, GatewayAccountEntity>>() {{
+            new HashMap<>() {{
                 put(CREDENTIALS_GATEWAY_MERCHANT_ID,
                         (gatewayAccountRequest, gatewayAccountEntity) -> {
                             Map<String, String> credentials = gatewayAccountEntity.getCredentials();
-                            if(credentials.isEmpty()) {
+                            if (credentials.isEmpty()) {
                                 throw new MerchantIdWithoutCredentialsException();
                             }
                             throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);

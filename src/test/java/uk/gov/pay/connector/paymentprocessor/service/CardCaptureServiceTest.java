@@ -458,7 +458,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     private HamcrestArgumentMatcher<ChargeEntity> chargeEntityHasStatus(ChargeStatus expectedStatus) {
-        return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<ChargeEntity>() {
+        return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<>() {
             @Override
             protected boolean matchesSafely(ChargeEntity chargeEntity) {
                 return chargeEntity.getStatus().equals(expectedStatus.getValue());

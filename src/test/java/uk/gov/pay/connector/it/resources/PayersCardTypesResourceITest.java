@@ -43,7 +43,7 @@ public class PayersCardTypesResourceITest {
     public void shouldGetAllCardTypesWhenCardTypesExist() {
         final Map<String, List<CardTypeEntity>> response = resources.target("/v1/api/card-types")
                 .request()
-                .get(new GenericType<Map<String, List<CardTypeEntity>>>() {
+                .get(new GenericType<>() {
                 });
         List<CardTypeEntity> cardTypeEntities = response.get("card_types");
         assertThat(cardTypeEntities, hasSize(1));

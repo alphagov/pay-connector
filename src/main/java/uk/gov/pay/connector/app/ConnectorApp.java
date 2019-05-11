@@ -100,7 +100,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new ConstraintViolationExceptionMapper());
         environment.jersey().register(new ValidationExceptionMapper());
         environment.jersey().register(new UnsupportedOperationExceptionMapper());
-        environment.jersey().register(new LoggingExceptionMapper<Throwable>() {
+        environment.jersey().register(new LoggingExceptionMapper<>() {
         });
         environment.jersey().register(new JsonProcessingExceptionMapper());
         environment.jersey().register(new EarlyEofExceptionMapper());

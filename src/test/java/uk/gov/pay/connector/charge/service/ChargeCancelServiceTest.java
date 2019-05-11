@@ -275,7 +275,7 @@ public class ChargeCancelServiceTest {
     }
 
     private HamcrestArgumentMatcher<ChargeEntity> chargeEntityHasStatus(ChargeStatus expectedStatus) {
-        return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<ChargeEntity>() {
+        return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<>() {
             @Override
             protected boolean matchesSafely(ChargeEntity chargeEntity) {
                 return chargeEntity.getStatus().equals(expectedStatus.getValue());
@@ -289,7 +289,7 @@ public class ChargeCancelServiceTest {
     }
 
     private HamcrestArgumentMatcher<CancelGatewayRequest> aCancelGatewayRequestMatching(ChargeEntity chargeEntity) {
-        return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<CancelGatewayRequest>() {
+        return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<>() {
             @Override
             protected boolean matchesSafely(CancelGatewayRequest cancelGatewayRequest) {
                 return cancelGatewayRequest.getGatewayAccount().equals(chargeEntity.getGatewayAccount()) &&
