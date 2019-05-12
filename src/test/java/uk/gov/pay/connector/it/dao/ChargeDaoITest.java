@@ -1461,7 +1461,7 @@ public class ChargeDaoITest extends DaoITestBase {
         List<ChargeEntity> charges = chargeDao.findChargesForCapture(10, Duration.of(60, ChronoUnit.MINUTES));
 
         assertThat(charges.size(), is(1));
-        assertEquals(charges.get(0).getId(), new Long(chargeId1));
+        assertEquals(charges.get(0).getId(), Long.valueOf(chargeId1));
     }
 
     @Test
