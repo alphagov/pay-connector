@@ -285,17 +285,16 @@ public class DatabaseTestHelper {
     }
 
     public List<Map<String, Object>> getRefund(long refundId) {
-        List<Map<String, Object>> ret = jdbi.withHandle(h ->
+        return jdbi.withHandle(h ->
                 h.createQuery("SELECT external_id, reference, amount, status, created_date, charge_id, user_external_id " +
                         "FROM refunds " +
                         "WHERE id = :refund_id")
                         .bind("refund_id", refundId)
                         .list());
-        return ret;
     }
 
     public Map<String, Object> getRefundByExternalId(String refundExternalId) {
-        Map<String, Object> ret = jdbi.withHandle(h ->
+        return jdbi.withHandle(h ->
                 h.createQuery("SELECT external_id, reference, amount, status, created_date, charge_id, user_external_id " +
                         "FROM refunds " +
                         "WHERE external_id = :refund_id")
@@ -303,27 +302,24 @@ public class DatabaseTestHelper {
                         .list())
                 .stream()
                 .findFirst().get();
-        return ret;
     }
 
     public List<Map<String, Object>> getRefundsByChargeId(long chargeId) {
-        List<Map<String, Object>> ret = jdbi.withHandle(h ->
+        return jdbi.withHandle(h ->
                 h.createQuery("SELECT external_id, reference, amount, status, created_date, charge_id, user_external_id " +
                         "FROM refunds r " +
                         "WHERE charge_id = :charge_id")
                         .bind("charge_id", chargeId)
                         .list());
-        return ret;
     }
 
     public Map<String, Object> getChargeCardDetailsByChargeId(Long chargeId) {
-        Map<String, Object> ret = jdbi.withHandle(h ->
+        return jdbi.withHandle(h ->
                 h.createQuery("SELECT id, card_brand, last_digits_card_number, first_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country " +
                         "FROM charges " +
                         "WHERE id = :charge_id")
                         .bind("charge_id", chargeId)
                         .first());
-        return ret;
     }
 
     public void updateChargeCardDetails(Long chargeId, AuthCardDetails authCardDetails) {
@@ -343,13 +339,12 @@ public class DatabaseTestHelper {
     }
 
     public Map<String, Object> getChargeCardDetails(long chargeId) {
-        Map<String, Object> ret = jdbi.withHandle(h ->
+        return jdbi.withHandle(h ->
                 h.createQuery("SELECT id, last_digits_card_number, first_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country " +
                         "FROM charges " +
                         "WHERE id = :charge_id")
                         .bind("charge_id", chargeId)
                         .first());
-        return ret;
     }
     
     public Map<String, Object> getChargeByExternalId(String externalId) {
@@ -403,24 +398,22 @@ public class DatabaseTestHelper {
 
     public List<Map<String, Object>> getAcceptedCardTypesByAccountId(Long gatewayAccountId) {
 
-        List<Map<String, Object>> ret = jdbi.withHandle(h ->
+        return jdbi.withHandle(h ->
                 h.createQuery("SELECT ct.id, ct.label, ct.type, ct.brand, ct.version " +
                         "FROM card_types ct " +
                         "LEFT JOIN accepted_card_types act ON ct.id = act.card_type_id " +
                         "WHERE act.gateway_account_id = :gatewayAccountId")
                         .bind("gatewayAccountId", gatewayAccountId)
                         .list());
-        return ret;
     }
 
     public List<Map<String, Object>> getChargeEvents(long chargeId) {
-        List<Map<String, Object>> ret = jdbi.withHandle(h ->
+        return jdbi.withHandle(h ->
                 h.createQuery("SELECT ce.id, ce.charge_id, ce.status, ce.updated " +
                         "FROM charge_events ce " +
                         "WHERE ce.charge_id = :chargeId")
                         .bind("chargeId", chargeId)
                         .list());
-        return ret;
     }
 
     public void addToken(Long chargeId, String tokenId) {

@@ -20,11 +20,10 @@ public class TestClientFactory {
         if (readTimeout > 0) {
             clientConfig.property(ClientProperties.READ_TIMEOUT, readTimeout);
         }
-        Client client = ClientBuilder
+
+        return ClientBuilder
                 .newBuilder()
                 .withConfig(clientConfig)
                 .build();
-
-        return client;
     }
 }

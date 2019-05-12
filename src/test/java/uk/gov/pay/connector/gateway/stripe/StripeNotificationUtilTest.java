@@ -15,7 +15,6 @@ public abstract class StripeNotificationUtilTest {
             e.printStackTrace();
         }
 
-        final String header = String.format("t=%d,v1=%s", currentTimestamp, signature);
-        return header;
+        return String.format("t=%d,v1=%s", currentTimestamp, signature);
     }
 }
