@@ -16,6 +16,8 @@ import java.util.List;
 
 import static io.restassured.http.ContentType.JSON;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -90,7 +92,7 @@ public class DiscrepancyResourceITest extends ChargingITestBase {
 
         assertEquals(1, results.size());
 
-        assertEquals( null, results.get(0).get("gatewayStatus"));
+        assertNull(results.get(0).get("gatewayStatus"));
         assertEquals( "EXPIRED", results.get(0).get("payStatus").asText());
         assertEquals( chargeId, results.get(0).get("chargeId").asText());
         assertEquals( "EXTERNAL_FAILED_EXPIRED", results.get(0).get("payExternalStatus").asText());
@@ -129,7 +131,7 @@ public class DiscrepancyResourceITest extends ChargingITestBase {
         assertEquals( "ePDQ query response (PAYID: 3014644340, STATUS: 5)", results.get(0).get("rawGatewayResponse").asText());
         assertEquals( "EXTERNAL_SUBMITTED", results.get(0).get("gatewayExternalStatus").asText());
         assertEquals( "EXTERNAL_FAILED_EXPIRED", results.get(0).get("payExternalStatus").asText());
-        assertEquals( true, results.get(0).get("processed").asBoolean());
+        assertTrue(results.get(0).get("processed").asBoolean());
     }
     
 

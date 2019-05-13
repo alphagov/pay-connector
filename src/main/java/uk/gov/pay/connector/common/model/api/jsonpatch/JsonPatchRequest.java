@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Map;
 
-import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION;
 import static uk.gov.pay.connector.common.model.api.jsonpatch.JsonPatchKeys.FIELD_OPERATION_PATH;
@@ -51,7 +50,7 @@ public class JsonPatchRequest {
                 try {
                     return new ObjectMapper().readValue(value.traverse(), new TypeReference<Map<String, String>>() {});
                 } catch (IOException e) {
-                    throw new RuntimeException(format("Malformed JSON object in value"), e);
+                    throw new RuntimeException("Malformed JSON object in value", e);
                 }
             }
         }

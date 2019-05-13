@@ -14,7 +14,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 public class ChargeUtils {
 
     public static String createChargePostBody(String accountId) {
-        return createChargePostBody("description", 100, accountId, "http://nothing", "default@email.com");
+        return createChargePostBody("description", 100, accountId, "http://nothing", "default@email.invalid");
     }
     
     public static String createChargePostBody(String description, long expectedAmount, String accountId, String returnUrl, String email) {

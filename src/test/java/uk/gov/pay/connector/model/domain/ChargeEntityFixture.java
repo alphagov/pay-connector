@@ -30,8 +30,8 @@ public class ChargeEntityFixture {
     private Long id = ThreadLocalRandom.current().nextLong();
     private String externalId = RandomIdGenerator.newId();
     private Long amount = 500L;
-    private String returnUrl = "http://return.com";
-    private String email = "test@email.com";
+    private String returnUrl = "http://return.invalid";
+    private String email = "test@email.invalid";
     private String description = "This is a description";
     private ServicePaymentReference reference = ServicePaymentReference.of("This is a reference");
     private ChargeStatus status = ChargeStatus.CREATED;
