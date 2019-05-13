@@ -3,6 +3,9 @@ package uk.gov.pay.connector.app;
 import io.dropwizard.Configuration;
 import io.dropwizard.util.Duration;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
 public class CaptureProcessConfig extends Configuration {
     private long schedulerInitialDelayInSeconds;
     private long schedulerRandomIntervalMinimumInSeconds;
@@ -12,6 +15,10 @@ public class CaptureProcessConfig extends Configuration {
     private int batchSize;
     private Duration retryFailuresEvery;
     private int maximumRetries;
+
+    @Valid
+    @NotNull
+    private Boolean captureUsingSQS;
 
     public long getSchedulerInitialDelayInSeconds() {
         return schedulerInitialDelayInSeconds;
@@ -43,5 +50,9 @@ public class CaptureProcessConfig extends Configuration {
 
     public int getSchedulerThreads() {
         return schedulerThreads;
+    }
+
+    public Boolean getCaptureUsingSQS() {
+        return captureUsingSQS;
     }
 }
