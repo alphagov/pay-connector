@@ -460,7 +460,7 @@ public class  DatabaseFixtures {
     }
 
     public class TestCharge {
-        Long chargeId = RandomUtils.nextLong(1, 99999);
+        Long chargeId = RandomUtils.nextLong();
         private String description = "Test description";
         String email = "alice.111@mail.test";
         String externalChargeId = RandomIdGenerator.newId();
