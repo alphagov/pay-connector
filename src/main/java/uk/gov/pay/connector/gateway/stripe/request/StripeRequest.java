@@ -87,15 +87,15 @@ public abstract class StripeRequest implements GatewayClientRequest {
     
     protected List<String> expansionFields() {
         return Collections.emptyList();
-    }
+    };
     
     protected  String getIdempotencyKeyType() {
         return orderRequestType().toString();
-    }
+    };
 
     protected Map<String, String> params() {
         return Collections.emptyMap();
-    }
+    };
     
     protected abstract String urlPath();
     protected abstract OrderRequestType orderRequestType();
