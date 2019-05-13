@@ -1,13 +1,10 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import org.apache.http.message.BasicNameValuePair;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
-import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class StripeTransferRequest extends StripeRequest {
     protected String amount;
@@ -25,21 +22,21 @@ public abstract class StripeTransferRequest extends StripeRequest {
         this.amount = amount;
     }
 
-    public abstract GatewayOrder getGatewayOrder();
-
-    @Override
-    public URI getUrl() {
-        return URI.create(stripeGatewayConfig.getUrl() + "/v1/transfers");
+    public String urlPath() {
+        return "/v1/transfers";
     }
 
-    protected List<BasicNameValuePair> getCommonPayloadParameters() {
-        List<BasicNameValuePair> params = new ArrayList<>();
-        params.add(new BasicNameValuePair("amount", amount));
-        params.add(new BasicNameValuePair("currency", "GBP"));
-        params.add(new BasicNameValuePair("expand[]", "balance_transaction"));
-        params.add(new BasicNameValuePair("expand[]", "destination_payment"));
-        params.add(new BasicNameValuePair("metadata[stripe_charge_id]", stripeChargeId));
-
-        return params;
+    @Override
+    protected Map<String, String> params() {
+        return Map.of(
+                "amount", amount,
+                "currency", "GBP",
+                "metadata[stripe_charge_id]", stripeChargeId
+        );
+    }
+    
+    @Override
+    protected List<String> expansionFields() {
+        return List.of("balance_transaction", "destination_payment");
     }
 }
