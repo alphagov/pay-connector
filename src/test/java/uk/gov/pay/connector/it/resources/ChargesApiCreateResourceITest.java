@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
-import com.google.common.collect.ImmutableMap;
 import io.restassured.response.ValidatableResponse;
-import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.postgresql.util.PGobject;
@@ -17,7 +15,6 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import javax.ws.rs.core.Response.Status;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.SECONDS;
@@ -81,15 +78,14 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     public void makeChargeAndRetrieveAmount() {
         String expectedReference = "Test reference";
         String expectedDescription = "Test description";
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, expectedReference)
-                .put(JSON_DESCRIPTION_KEY, expectedDescription)
-                .put(JSON_RETURN_URL_KEY, RETURN_URL)
-                .put(JSON_EMAIL_KEY, EMAIL)
-                .put(JSON_LANGUAGE_KEY, "cy")
-                .build()
-        );
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, expectedReference,
+                JSON_DESCRIPTION_KEY, expectedDescription,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_EMAIL_KEY, EMAIL,
+                JSON_LANGUAGE_KEY, "cy"
+        ));
 
         ValidatableResponse response = connectorRestApiClient
                 .postCreateCharge(postBody)
@@ -174,14 +170,13 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
     @Test
     public void makeChargeWithNoExplicitLanguageDefaultsToEnglish() {
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, "Test reference")
-                .put(JSON_DESCRIPTION_KEY, "Test description")
-                .put(JSON_RETURN_URL_KEY, RETURN_URL)
-                .put(JSON_EMAIL_KEY, EMAIL)
-                .build()
-        );
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, "Test reference",
+                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_EMAIL_KEY, EMAIL
+        ));
 
         ValidatableResponse response = connectorRestApiClient
                 .postCreateCharge(postBody)
@@ -204,12 +199,13 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     public void makeChargeNoEmailField_shouldReturnOK() {
         String expectedReference = "Test reference";
         String expectedDescription = "Test description";
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, expectedReference)
-                .put(JSON_DESCRIPTION_KEY, expectedDescription)
-                .put(JSON_EMAIL_KEY, EMAIL)
-                .put(JSON_RETURN_URL_KEY, RETURN_URL).build());
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, expectedReference,
+                JSON_DESCRIPTION_KEY, expectedDescription,
+                JSON_EMAIL_KEY, EMAIL,
+                JSON_RETURN_URL_KEY, RETURN_URL
+        ));
 
 
         connectorRestApiClient
@@ -232,11 +228,12 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     @Test
     public void shouldReturn404WhenCreatingChargeAccountIdIsNonNumeric() {
 
-        String postBody = toJson(ImmutableMap.of(
+        String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, "Test reference",
                 JSON_DESCRIPTION_KEY, "Test description",
-                JSON_RETURN_URL_KEY, RETURN_URL));
+                JSON_RETURN_URL_KEY, RETURN_URL
+        ));
 
         connectorRestApiClient
                 .withAccountId("invalidAccountId")
@@ -252,12 +249,13 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
         String expectedReference = "Test reference";
         String expectedDescription = "Test description";
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, 0)
-                .put(JSON_REFERENCE_KEY, expectedReference)
-                .put(JSON_DESCRIPTION_KEY, expectedDescription)
-                .put(JSON_RETURN_URL_KEY, RETURN_URL)
-                .put(JSON_EMAIL_KEY, EMAIL).build());
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, 0,
+                JSON_REFERENCE_KEY, expectedReference,
+                JSON_DESCRIPTION_KEY, expectedDescription,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_EMAIL_KEY, EMAIL
+        ));
 
         connectorRestApiClient
                 .postCreateCharge(postBody)
@@ -266,15 +264,14 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturn400WhenLanguageNotSupported() {
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, "Test reference")
-                .put(JSON_DESCRIPTION_KEY, "Test description")
-                .put(JSON_RETURN_URL_KEY, RETURN_URL)
-                .put(JSON_EMAIL_KEY, EMAIL)
-                .put(JSON_LANGUAGE_KEY, "not a supported language")
-                .build()
-        );
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, "Test reference",
+                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_EMAIL_KEY, EMAIL,
+                JSON_LANGUAGE_KEY, "not a supported language"
+        ));
 
         connectorRestApiClient
                 .postCreateCharge(postBody)
@@ -285,12 +282,13 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     @Test
     public void cannotMakeChargeForMissingGatewayAccount() {
         String missingGatewayAccount = "1234123";
-        String postBody = toJson(ImmutableMap.of(
+        String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, "Test reference",
                 JSON_DESCRIPTION_KEY, "Test description",
                 JSON_EMAIL_KEY, EMAIL,
-                JSON_RETURN_URL_KEY, RETURN_URL));
+                JSON_RETURN_URL_KEY, RETURN_URL
+        ));
 
         connectorRestApiClient
                 .withAccountId(missingGatewayAccount)
@@ -305,12 +303,13 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
     @Test
     public void cannotMakeChargeForInvalidSizeOfFields() {
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, randomAlphabetic(256))
-                .put(JSON_DESCRIPTION_KEY, randomAlphanumeric(256))
-                .put(JSON_EMAIL_KEY, randomAlphanumeric(255))
-                .put(JSON_RETURN_URL_KEY, RETURN_URL).build());
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, randomAlphabetic(256),
+                JSON_DESCRIPTION_KEY, randomAlphanumeric(256),
+                JSON_EMAIL_KEY, randomAlphanumeric(255),
+                JSON_RETURN_URL_KEY, RETURN_URL
+        ));
 
         connectorRestApiClient.postCreateCharge(postBody)
                 .statusCode(422)
@@ -341,23 +340,22 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturn422WhenPrefilledCardHolderDetailsFieldsAreLongerThanMaximum() {
-        ImmutableMap preFilledBillingAddress = ImmutableMap.builder()
-                .put(JSON_CARDHOLDER_NAME_KEY, randomAlphanumeric(256))
-                .put(JSON_BILLING_ADDRESS_KEY, ImmutableMap.builder()
-                        .put(JSON_ADDRESS_LINE_1_KEY, randomAlphanumeric(256))
-                        .put(JSON_ADDRESS_LINE_2_KEY, randomAlphanumeric(256))
-                        .put(JSON_ADDRESS_LINE_CITY, randomAlphanumeric(256))
-                        .put(JSON_ADDRESS_POST_CODE_KEY, randomAlphanumeric(26))
-                        .put(JSON_ADDRESS_LINE_COUNTRY_CODE, randomAlphanumeric(3))
-                        .build())
-                .build();
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, "Reference")
-                .put(JSON_DESCRIPTION_KEY, "Description")
-                .put(JSON_RETURN_URL_KEY, RETURN_URL)
-                .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, preFilledBillingAddress)
-                .build());
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, "Reference",
+                JSON_DESCRIPTION_KEY, "Description",
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, Map.of(
+                        JSON_CARDHOLDER_NAME_KEY, randomAlphanumeric(256),
+                        JSON_BILLING_ADDRESS_KEY, Map.of(
+                                JSON_ADDRESS_LINE_1_KEY, randomAlphanumeric(256),
+                                JSON_ADDRESS_LINE_2_KEY, randomAlphanumeric(256),
+                                JSON_ADDRESS_LINE_CITY, randomAlphanumeric(256),
+                                JSON_ADDRESS_POST_CODE_KEY, randomAlphanumeric(26),
+                                JSON_ADDRESS_LINE_COUNTRY_CODE, randomAlphanumeric(3)
+                        )
+                )
+        ));
 
         connectorRestApiClient.postCreateCharge(postBody)
                 .statusCode(422)
@@ -379,22 +377,22 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
         String city = randomAlphanumeric(255);
         String postCode = randomAlphanumeric(25);
         String countryCode = "GB";
-        ImmutableMap billingAddress = ImmutableMap.builder()
-                .put(JSON_CARDHOLDER_NAME_KEY, randomAlphanumeric(255))
-                .put(JSON_BILLING_ADDRESS_KEY, ImmutableMap.builder()
-                        .put(JSON_ADDRESS_LINE_1_KEY, line1)
-                        .put(JSON_ADDRESS_LINE_CITY, city)
-                        .put(JSON_ADDRESS_POST_CODE_KEY, postCode)
-                        .put(JSON_ADDRESS_LINE_COUNTRY_CODE, countryCode)
-                        .build())
-                .build();
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, "Reference")
-                .put(JSON_DESCRIPTION_KEY, "Description")
-                .put(JSON_RETURN_URL_KEY, RETURN_URL)
-                .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, billingAddress)
-                .build());
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, "Reference",
+                JSON_DESCRIPTION_KEY, "Description",
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, Map.of(
+                        JSON_CARDHOLDER_NAME_KEY, randomAlphanumeric(255),
+                        JSON_BILLING_ADDRESS_KEY, Map.of(
+                                JSON_ADDRESS_LINE_1_KEY, line1,
+                                JSON_ADDRESS_LINE_CITY, city,
+                                JSON_ADDRESS_POST_CODE_KEY, postCode,
+                                JSON_ADDRESS_LINE_COUNTRY_CODE, countryCode
+                        )
+                )
+        ));
 
         connectorRestApiClient.postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
@@ -414,22 +412,22 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
         String city = "City";
         String postCode = "AB1 CD2";
         String countryCode = "GB";
-        ImmutableMap billingAddress = ImmutableMap.builder()
-                .put(JSON_CARDHOLDER_NAME_KEY, cardholderName)
-                .put(JSON_BILLING_ADDRESS_KEY, ImmutableMap.builder()
-                        .put(JSON_ADDRESS_LINE_1_KEY, line1)
-                        .put(JSON_ADDRESS_LINE_CITY, city)
-                        .put(JSON_ADDRESS_POST_CODE_KEY, postCode)
-                        .put(JSON_ADDRESS_LINE_COUNTRY_CODE, countryCode)
-                        .build())
-                .build();
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, "Reference")
-                .put(JSON_DESCRIPTION_KEY, "Description")
-                .put(JSON_RETURN_URL_KEY, RETURN_URL)
-                .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, billingAddress)
-                .build());
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, "Reference",
+                JSON_DESCRIPTION_KEY, "Description",
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, Map.of(
+                        JSON_CARDHOLDER_NAME_KEY, cardholderName,
+                        JSON_BILLING_ADDRESS_KEY, Map.of(
+                                JSON_ADDRESS_LINE_1_KEY, line1,
+                                JSON_ADDRESS_LINE_CITY, city,
+                                JSON_ADDRESS_POST_CODE_KEY, postCode,
+                                JSON_ADDRESS_LINE_COUNTRY_CODE, countryCode
+                        )
+                )
+        ));
 
         connectorRestApiClient.postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
@@ -453,20 +451,21 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
         String cardholderName = "Joe Bogs";
         String line1 = "Line 1";
         String postCode = "AB1 CD2";
-        ImmutableMap billingAddress = ImmutableMap.builder()
-                .put(JSON_CARDHOLDER_NAME_KEY, cardholderName)
-                .put(JSON_BILLING_ADDRESS_KEY, ImmutableMap.builder()
-                        .put(JSON_ADDRESS_LINE_1_KEY, line1)
-                        .put(JSON_ADDRESS_POST_CODE_KEY, postCode)
-                        .build())
-                .build();
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, "Reference")
-                .put(JSON_DESCRIPTION_KEY, "Description")
-                .put(JSON_RETURN_URL_KEY, RETURN_URL)
-                .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, billingAddress)
-                .build());
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, "Reference",
+                JSON_DESCRIPTION_KEY, "Description",
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, Map.of(
+                        JSON_CARDHOLDER_NAME_KEY, cardholderName,
+                        JSON_BILLING_ADDRESS_KEY, Map.of(
+                                JSON_ADDRESS_LINE_1_KEY, line1,
+                                JSON_ADDRESS_POST_CODE_KEY, postCode
+                        )
+                )
+        ));
+
         connectorRestApiClient.postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .contentType(JSON)
@@ -486,12 +485,13 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturn201WithNoCardDetailsWhenPrefilledCardHolderDetailsFieldsAreNotPresent() {
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, "Reference")
-                .put(JSON_DESCRIPTION_KEY, "Description")
-                .put(JSON_RETURN_URL_KEY, RETURN_URL)
-                .build());
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, "Reference",
+                JSON_DESCRIPTION_KEY, "Description",
+                JSON_RETURN_URL_KEY, RETURN_URL
+        ));
+
         connectorRestApiClient.postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .contentType(JSON)
@@ -507,14 +507,16 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     @Test
     public void shouldReturn201WithBillingAddresssWhenPrefilledCardHolderDetailsFieldsContainsCardHolderNameOnly() {
         String cardholderName = "Joe Bogs";
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, "Reference")
-                .put(JSON_DESCRIPTION_KEY, "Description")
-                .put(JSON_RETURN_URL_KEY, RETURN_URL)
-                .put(JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, ImmutableMap.builder()
-                        .put(JSON_CARDHOLDER_NAME_KEY, cardholderName).build())
-                .build());
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, "Reference",
+                JSON_DESCRIPTION_KEY, "Description",
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, Map.of(
+                        JSON_CARDHOLDER_NAME_KEY, cardholderName
+                )
+        ));
+        
         connectorRestApiClient.postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .contentType(JSON)
@@ -531,14 +533,14 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     @Test
     public void shouldReturnChargeWithNoMetadataField_whenCreatedWithEmptyMetadata() {
         String reference = "no metadata reference";
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, reference)
-                .put(JSON_DESCRIPTION_KEY, "Test description")
-                .put(JSON_RETURN_URL_KEY, RETURN_URL)
-                .put(JSON_EMAIL_KEY, EMAIL)
-                .put(JSON_METADATA_KEY, Map.of())
-                .build());
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, reference,
+                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_EMAIL_KEY, EMAIL,
+                JSON_METADATA_KEY, Map.of()
+        ));
 
         ValidatableResponse response = connectorRestApiClient
                 .postCreateCharge(postBody)
@@ -566,17 +568,17 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 "key1", "string",
                 "key2", true,
                 "key3", 123,
-                "key4", 1.23);
-
-        String postBody = toJson(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, "Test reference")
-                .put(JSON_DESCRIPTION_KEY, "Test description")
-                .put(JSON_RETURN_URL_KEY, RETURN_URL)
-                .put(JSON_EMAIL_KEY, EMAIL)
-                .put(JSON_METADATA_KEY, metadata)
-                .build()
+                "key4", 1.23
         );
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, "Test reference",
+                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_EMAIL_KEY, EMAIL,
+                JSON_METADATA_KEY, metadata
+        ));
 
         ValidatableResponse response = connectorRestApiClient
                 .postCreateCharge(postBody)
@@ -604,14 +606,14 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
         metadata.put("key4", "This value is too long because it is over fifty characters!");
         metadata.put("This is key number 5 and it is too long", "This is valid");
 
-        String postBody = toJsonWithNulls(ImmutableMap.builder()
-                .put(JSON_AMOUNT_KEY, AMOUNT)
-                .put(JSON_REFERENCE_KEY, "Test reference")
-                .put(JSON_DESCRIPTION_KEY, "Test description")
-                .put(JSON_RETURN_URL_KEY, RETURN_URL)
-                .put(JSON_EMAIL_KEY, EMAIL)
-                .put(JSON_METADATA_KEY, metadata)
-                .build());
+        String postBody = toJsonWithNulls(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, "Test reference",
+                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_EMAIL_KEY, EMAIL,
+                JSON_METADATA_KEY, metadata
+        ));
 
         connectorRestApiClient
                 .postCreateCharge(postBody)
@@ -644,15 +646,14 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldFailValidationWhenMetadataIsAString() {
-        Map<String, Object> payload = new HashMap<>();
-        payload.put(JSON_AMOUNT_KEY, AMOUNT);
-        payload.put(JSON_REFERENCE_KEY, "Test reference");
-        payload.put(JSON_DESCRIPTION_KEY, "Test description");
-        payload.put(JSON_RETURN_URL_KEY, RETURN_URL);
-        payload.put(JSON_EMAIL_KEY, EMAIL);
-        payload.put(JSON_METADATA_KEY, "metadata cannot be a string");
-
-        String postBody = toJsonWithNulls(payload);
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, "Test reference",
+                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_EMAIL_KEY, EMAIL,
+                JSON_METADATA_KEY, "metadata cannot be a string"
+        ));
 
         connectorRestApiClient
                 .postCreateCharge(postBody)
@@ -664,17 +665,14 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldFailValidationWhenMetadataIsAnArray() {
-        Object[] arrayMetadata = new Object[1];
-
-        Map<String, Object> payload = new HashMap<>();
-        payload.put(JSON_AMOUNT_KEY, AMOUNT);
-        payload.put(JSON_REFERENCE_KEY, "Test reference");
-        payload.put(JSON_DESCRIPTION_KEY, "Test description");
-        payload.put(JSON_RETURN_URL_KEY, RETURN_URL);
-        payload.put(JSON_EMAIL_KEY, EMAIL);
-        payload.put(JSON_METADATA_KEY, arrayMetadata);
-
-        String postBody = toJsonWithNulls(payload);
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, "Test reference",
+                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_EMAIL_KEY, EMAIL,
+                JSON_METADATA_KEY, new Object[1]
+        ));
 
         connectorRestApiClient
                 .postCreateCharge(postBody)
