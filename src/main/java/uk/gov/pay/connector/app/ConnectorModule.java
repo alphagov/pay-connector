@@ -1,5 +1,8 @@
 package uk.gov.pay.connector.app;
 
+import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -25,6 +28,8 @@ import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
+
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 public class ConnectorModule extends AbstractModule {
     final ConnectorConfiguration configuration;
@@ -119,5 +124,24 @@ public class ConnectorModule extends AbstractModule {
     @Singleton
     public Queue<ChargeEntity> captureQueue(ConnectorConfiguration connectorConfiguration) {
         return new ArrayBlockingQueue(connectorConfiguration.getCaptureProcessConfig().getBatchSize());
+    }
+
+    @Provides
+    @Singleton
+    public AmazonSQS sqsClient(ConnectorConfiguration connectorConfiguration) {
+
+        if (isEmpty(connectorConfiguration.getSqsConfig().getEndpoint())) {
+            return AmazonSQSClientBuilder.standard()
+                    .withRegion(connectorConfiguration.getSqsConfig().getRegion())
+                    .build();
+        } else {
+            return AmazonSQSClientBuilder.standard()
+                    .withEndpointConfiguration(
+                            new AwsClientBuilder.EndpointConfiguration(
+                                    connectorConfiguration.getSqsConfig().getEndpoint(),
+                                    connectorConfiguration.getSqsConfig().getRegion())
+                    ).build();
+        }
+        
     }
 }

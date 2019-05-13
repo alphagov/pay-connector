@@ -76,6 +76,11 @@ captureProcessConfig:
   maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-48}
   captureUsingSQS: ${CAPTURE_USING_SQS_FEATURE_FLAG:-false}
 
+sqsConfig:
+  endpoint: ${AWS_SQS_ENDPOINT}
+  region: ${AWS_SQS_REGION}
+  captureQueueUrl: ${AWS_SQS_CAPTURE_QUEUE_URL}
+
 transactionsPaginationServiceConfig:
   displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}
 

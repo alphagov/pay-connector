@@ -81,6 +81,11 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     private Boolean xrayEnabled;
 
+    @Valid
+    @NotNull
+    @JsonProperty("sqsConfig")
+    private SqsConfig sqsConfig;
+
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {
         return dataSourceFactory;
@@ -166,5 +171,9 @@ public class ConnectorConfiguration extends Configuration {
     
     public ChargeSweepConfig getChargeSweepConfig() {
         return chargeSweepConfig;
+    }
+
+    public SqsConfig getSqsConfig() {
+        return sqsConfig;
     }
 }
