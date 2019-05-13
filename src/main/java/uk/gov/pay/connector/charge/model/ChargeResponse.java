@@ -286,7 +286,7 @@ public class ChargeResponse {
                 ", delayedCapture=" + delayedCapture +
                 ", corporateCardSurcharge=" + corporateCardSurcharge +
                 ", totalAmount=" + totalAmount +
-                ", walletType=" + walletType.toString() +
+                ", walletType=" + walletType +
                 '}';
     }
 
