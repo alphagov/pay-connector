@@ -25,6 +25,7 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.commons.utils.logging.LoggingFilter;
 import uk.gov.pay.commons.utils.xray.Xray;
 import uk.gov.pay.connector.cardtype.resource.CardTypesResource;
+import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountExceptionMapper;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.resource.ChargesFrontendResource;
 import uk.gov.pay.connector.chargeevent.resource.ChargeEventsResource;
@@ -100,11 +101,12 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new ConstraintViolationExceptionMapper());
         environment.jersey().register(new ValidationExceptionMapper());
         environment.jersey().register(new UnsupportedOperationExceptionMapper());
-        environment.jersey().register(new LoggingExceptionMapper<Throwable>() {
-        });
+        environment.jersey().register(new LoggingExceptionMapper<>() {});
         environment.jersey().register(new JsonProcessingExceptionMapper());
         environment.jersey().register(new EarlyEofExceptionMapper());
         environment.jersey().register(new JsonMappingExceptionMapper());
+        environment.jersey().register(new JsonMappingExceptionMapper());
+        environment.jersey().register(new ZeroAmountNotAllowedForGatewayAccountExceptionMapper());
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(StripeAccountSetupResource.class));

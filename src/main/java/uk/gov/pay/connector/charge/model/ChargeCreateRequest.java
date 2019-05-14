@@ -19,10 +19,10 @@ import java.util.Optional;
 public class ChargeCreateRequest {
 
     @NotNull(message = "Field [amount] cannot be null")
-    @Min(value = 1, message = "Field [amount] can be between 1 and 10_000_000")
-    @Max(value = 10_000_000, message = "Field [amount] can be between 1 and 10_000_000")
+    @Min(value = 0, message = "Field [amount] can be between 0 and 10_000_000")
+    @Max(value = 10_000_000, message = "Field [amount] can be between 0 and 10_000_000")
     @JsonProperty("amount")
-    private long amount;
+    private Long amount;
 
     @NotNull(message = "Field [description] cannot be null")
     @Length(max = 255, message = "Field [description] can have a size between 0 and 255")
