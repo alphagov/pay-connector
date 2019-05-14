@@ -245,8 +245,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturn422WhenAmountIsLessThanMinAmount() {
-
+    public void shouldReturn422WhenAmountIsZeroIfAccountDoesNotAllowIt() {
         String expectedReference = "Test reference";
         String expectedDescription = "Test description";
         String postBody = toJson(Map.of(
@@ -259,7 +258,31 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateCharge(postBody)
-                .statusCode(422);
+                .statusCode(422)
+                .contentType(JSON)
+                .body("message", contains("Zero amount charges are not enabled for this gateway account"))
+                .body("error_identifier", is(ErrorIdentifier.ZERO_AMOUNT_NOT_ALLOWED.toString()));
+    }
+
+    @Test
+    public void shouldMakeChargeWhenAmountIsZeroIfAccountAllowsIt() {
+        allowZeroAmountForGatewayAccount();
+        
+        String expectedReference = "Test reference";
+        String expectedDescription = "Test description";
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, 0,
+                JSON_REFERENCE_KEY, expectedReference,
+                JSON_DESCRIPTION_KEY, expectedDescription,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_EMAIL_KEY, EMAIL
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(201)
+                .contentType(JSON)
+                .body("amount", is(0));
     }
 
     @Test
@@ -334,7 +357,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                         "Field [reference] cannot be null",
                         "Field [return_url] cannot be null",
                         "Field [description] cannot be null",
-                        "Field [amount] can be between 1 and 10_000_000"
+                        "Field [amount] cannot be null"
                 ));
     }
 

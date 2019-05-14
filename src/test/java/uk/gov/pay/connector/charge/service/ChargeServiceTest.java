@@ -15,6 +15,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
@@ -120,9 +121,9 @@ public class ChargeServiceTest {
 
         gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
         // Populate ChargeEntity with ID when persisting
-        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
         doAnswer(invocation -> {
             ChargeEntity chargeEntityBeingPersisted = (ChargeEntity) invocation.getArguments()[0];
             chargeEntityBeingPersisted.setId(CHARGE_ENTITY_ID);
@@ -216,9 +217,33 @@ public class ChargeServiceTest {
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
-        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
 
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.WELSH));
+    }
+
+    @Test
+    public void shouldCreateChargeWithZeroAmountIfGatewayAccountAllowsIt() {
+        gatewayAccount.setAllowZeroAmount(true);
+
+        final ChargeCreateRequest request = requestBuilder.withAmount(0).build();
+
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        assertThat(createdChargeEntity.getAmount(), is(0L));
+    }
+
+    @Test(expected = ZeroAmountNotAllowedForGatewayAccountException.class)
+    public void shouldThrowExceptionWhenCreateChargeWithZeroAmountIfGatewayAccountDoesNotAllowIt() {
+        final ChargeCreateRequest request = requestBuilder.withAmount(0).build();
+
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        
+        verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
 
     @Test

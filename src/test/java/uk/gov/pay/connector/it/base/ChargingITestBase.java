@@ -361,4 +361,8 @@ public class ChargingITestBase {
         createdDateStrings.forEach(aDateString -> dateTimes.add(toUTCZonedDateTime(aDateString).get()));
         return dateTimes;
     }
+    
+    protected void allowZeroAmountForGatewayAccount() {
+        databaseTestHelper.updateGatewayAccountAllowZeroAmount(Long.valueOf(accountId), true);
+    }
 }

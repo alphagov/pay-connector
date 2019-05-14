@@ -111,7 +111,17 @@ public class DatabaseTestHelper {
     public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials, String serviceName, GatewayAccountEntity.Type type, String description, String analyticsId, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount, long corporatePrepaidCreditCardSurchargeAmount, long corporatePrepaidDebitCardSurchargeAmount) {
         addGatewayAccount(accountId, paymentProvider, credentials, serviceName, type, description, analyticsId, EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, corporatePrepaidCreditCardSurchargeAmount, corporatePrepaidDebitCardSurchargeAmount);
     }
-    
+
+    public void updateGatewayAccountAllowZeroAmount(long gatewayAccountId, boolean allowZeroAmount) {
+        jdbi.withHandle(handle ->
+                handle
+                        .createStatement("UPDATE gateway_accounts SET allow_zero_amount=:allow_zero_amount WHERE id=:gateway_account_id")
+                        .bind("gateway_account_id", gatewayAccountId)
+                        .bind("allow_zero_amount", allowZeroAmount)
+                        .execute()
+        );
+    }
+
     public void addCharge(AddChargeParams addChargeParams) {
         PGobject jsonMetadata = new PGobject();
         jsonMetadata.setType("json");
