@@ -42,6 +42,7 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTokenResponse;
+import uk.gov.pay.connector.gateway.stripe.request.StripeAuthoriseRequest;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsSourceResponse;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
@@ -52,13 +53,11 @@ import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.ws.rs.WebApplicationException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
@@ -67,7 +66,6 @@ import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
-import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 @Singleton
 public class StripePaymentProvider implements PaymentProvider {
@@ -240,26 +238,14 @@ public class StripePaymentProvider implements PaymentProvider {
 
     private StripeAuthorisationResponse createChargeFor3DSSource(Auth3dsResponseGatewayRequest request, String sourceId)
             throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
-        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
-        String jsonResponse = postToStripe(
-                "/v1/charges",
-                authorise3DSChargePayload(request, sourceId),
-                gatewayAccount.isLive(),
-                gatewayAccount,
-                OrderRequestType.STRIPE_CREATE_CHARGE).getEntity();
+        String jsonResponse = client.postRequestFor(StripeAuthoriseRequest.of(sourceId, request, stripeGatewayConfig)).getEntity();
         final StripeCharge createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCharge.class);
         return new StripeAuthorisationResponse(createChargeResponse);
     }
 
     private StripeAuthorisationResponse createCharge(CardAuthorisationGatewayRequest request, String sourceId)
             throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
-        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
-        String jsonResponse = postToStripe(
-                "/v1/charges",
-                authorisePayload(request, sourceId),
-                gatewayAccount.isLive(),
-                gatewayAccount, 
-                OrderRequestType.STRIPE_CREATE_CHARGE).getEntity();
+        String jsonResponse = client.postRequestFor(StripeAuthoriseRequest.of(sourceId, request, stripeGatewayConfig)).getEntity();
         final StripeCharge createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCharge.class);
         return new StripeAuthorisationResponse(createChargeResponse);
     }
@@ -344,40 +330,6 @@ public class StripePaymentProvider implements PaymentProvider {
         params.add(new BasicNameValuePair("redirect[return_url]", frontend3dsIncomingUrl));
         params.add(new BasicNameValuePair("three_d_secure[card]", sourceId));
         return URLEncodedUtils.format(params, UTF_8);
-    }
-
-    private String authorisePayload(CardAuthorisationGatewayRequest request, String sourceId) {
-        return buildAuthorisePayload(sourceId, request.getChargeExternalId(), request.getAmount(), request.getDescription(), request.getGatewayAccount());
-    }
-
-    private String authorise3DSChargePayload(Auth3dsResponseGatewayRequest request, String sourceId) {
-        return buildAuthorisePayload(sourceId, request.getChargeExternalId(), request.getAmount(), request.getDescription(), request.getGatewayAccount());
-    }
-
-    private String buildAuthorisePayload(String sourceId, String externalId, String amount, String description, GatewayAccountEntity gatewayAccount) {
-        List<BasicNameValuePair> params = new ArrayList<>();
-        params.add(new BasicNameValuePair("amount", amount));
-        params.add(new BasicNameValuePair("currency", "GBP"));
-        params.add(new BasicNameValuePair("description", description));
-        params.add(new BasicNameValuePair("source", sourceId));
-        params.add(new BasicNameValuePair("capture", "false"));
-        params.add(new BasicNameValuePair("transfer_group", externalId));
-        String stripeAccountId = getStripeAccountId(externalId, gatewayAccount);
-
-        params.add(new BasicNameValuePair("on_behalf_of", stripeAccountId));
-        return URLEncodedUtils.format(params, UTF_8);
-    }
-
-    private String getStripeAccountId(String externalId, GatewayAccountEntity gatewayAccount) {
-        String stripeAccountId = gatewayAccount.getCredentials().get("stripe_account_id");
-
-        if (StringUtils.isBlank(stripeAccountId)) {
-            logger.error("Unable to process charge [{}]. There is no stripe_account_id for corresponding gateway account with id {}",
-                    externalId, gatewayAccount.getId());
-            throw new WebApplicationException(serviceErrorResponse(
-                    format("There is no stripe_account_id for gateway account with id %s", gatewayAccount.getId())));
-        }
-        return stripeAccountId;
     }
 
     private String tokenPayload(CardAuthorisationGatewayRequest request) {

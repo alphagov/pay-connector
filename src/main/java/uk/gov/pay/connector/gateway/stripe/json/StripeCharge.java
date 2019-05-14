@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.inject.Inject;
 import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
