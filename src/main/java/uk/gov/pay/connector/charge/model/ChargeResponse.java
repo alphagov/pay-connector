@@ -305,10 +305,9 @@ public class ChargeResponse {
     public static ChargeResponseBuilder aChargeResponseBuilder() {
         return new ChargeResponseBuilder();
     }
-
-
-
+    
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
+    @JsonInclude(Include.NON_NULL)
     public static class RefundSummary {
 
         @JsonProperty("status")
@@ -398,6 +397,7 @@ public class ChargeResponse {
         }
     }
 
+    @JsonInclude(Include.NON_NULL)
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public static class SettlementSummary {
         private ZonedDateTime captureSubmitTime, capturedTime;
