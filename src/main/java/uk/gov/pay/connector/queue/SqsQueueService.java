@@ -30,11 +30,11 @@ public class SqsQueueService {
         }
     }
 
-    public List<SqsQueueReceiveResponse> receiveMessages(String queueUrl) {
+    public List<QueueMessage> receiveMessages(String queueUrl) {
         try {
             ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(queueUrl);
 
-            return SqsQueueReceiveResponse.of(receiveMessageResult);
+            return QueueMessage.of(receiveMessageResult);
         } catch (AmazonSQSException | UnsupportedOperationException e) {
             logger.error("Failed to receive messages from SQS queue - {}", e.getMessage());
             throw new SqsQueueOperationException(e.getMessage());

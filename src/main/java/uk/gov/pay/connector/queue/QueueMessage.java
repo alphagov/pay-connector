@@ -5,26 +5,26 @@ import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SqsQueueReceiveResponse {
+public class QueueMessage {
 
     private String messageId;
     private String receiptHandle;
     private String messageBody;
 
-    private SqsQueueReceiveResponse(String messageId, String receiptHandle, String messageBody) {
+    private QueueMessage(String messageId, String receiptHandle, String messageBody) {
         this.messageId = messageId;
         this.receiptHandle = receiptHandle;
         this.messageBody = messageBody;
     }
 
-    public static List<SqsQueueReceiveResponse> of(ReceiveMessageResult receiveMessageResult) {
+    public static List<QueueMessage> of(ReceiveMessageResult receiveMessageResult) {
 
-        List<SqsQueueReceiveResponse> sqsQueueReceiveResponse = receiveMessageResult.getMessages()
+        List<QueueMessage> queueMessage = receiveMessageResult.getMessages()
                 .stream()
-                .map(c -> new SqsQueueReceiveResponse(c.getMessageId(), c.getReceiptHandle(), c.getBody()))
+                .map(c -> new QueueMessage(c.getMessageId(), c.getReceiptHandle(), c.getBody()))
                 .collect(Collectors.toList());
 
-        return sqsQueueReceiveResponse;
+        return queueMessage;
     }
 
     public String getMessageId() {
