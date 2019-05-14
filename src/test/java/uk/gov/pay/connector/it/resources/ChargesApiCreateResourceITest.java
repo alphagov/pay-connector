@@ -70,18 +70,19 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     private static final String JSON_ADDRESS_LINE_CITY = "city";
     private static final String JSON_ADDRESS_LINE_COUNTRY_CODE = "country";
 
+    private static final String JSON_REFERENCE_VALUE = "Test reference";
+    private static final String JSON_DESCRIPTION_VALUE = "Test description";
+
     public ChargesApiCreateResourceITest() {
         super(PROVIDER_NAME);
     }
 
     @Test
     public void makeChargeAndRetrieveAmount() {
-        String expectedReference = "Test reference";
-        String expectedDescription = "Test description";
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, expectedReference,
-                JSON_DESCRIPTION_KEY, expectedDescription,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_EMAIL_KEY, EMAIL,
                 JSON_LANGUAGE_KEY, "cy"
@@ -92,8 +93,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .statusCode(Status.CREATED.getStatusCode())
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
                 .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
-                .body(JSON_REFERENCE_KEY, is(expectedReference))
-                .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
+                .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
+                .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
                 .body(JSON_EMAIL_KEY, is(EMAIL))
@@ -134,8 +135,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(externalChargeId))
                 .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
-                .body(JSON_REFERENCE_KEY, is(expectedReference))
-                .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
+                .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
+                .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
                 .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()))
                 .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
                 .body(JSON_EMAIL_KEY, is(EMAIL))
@@ -172,8 +173,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     public void makeChargeWithNoExplicitLanguageDefaultsToEnglish() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, "Test reference",
-                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_EMAIL_KEY, EMAIL
         ));
@@ -197,12 +198,10 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
     @Test
     public void makeChargeNoEmailField_shouldReturnOK() {
-        String expectedReference = "Test reference";
-        String expectedDescription = "Test description";
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, expectedReference,
-                JSON_DESCRIPTION_KEY, expectedDescription,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_EMAIL_KEY, EMAIL,
                 JSON_RETURN_URL_KEY, RETURN_URL
         ));
@@ -213,8 +212,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .statusCode(Status.CREATED.getStatusCode())
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
                 .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
-                .body(JSON_REFERENCE_KEY, is(expectedReference))
-                .body(JSON_DESCRIPTION_KEY, is(expectedDescription))
+                .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
+                .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
                 .body("containsKey('card_details')", is(false))
@@ -227,11 +226,10 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturn404WhenCreatingChargeAccountIdIsNonNumeric() {
-
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, "Test reference",
-                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL
         ));
 
@@ -246,12 +244,10 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldReturn422WhenAmountIsZeroIfAccountDoesNotAllowIt() {
-        String expectedReference = "Test reference";
-        String expectedDescription = "Test description";
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, 0,
-                JSON_REFERENCE_KEY, expectedReference,
-                JSON_DESCRIPTION_KEY, expectedDescription,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_EMAIL_KEY, EMAIL
         ));
@@ -267,13 +263,11 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     @Test
     public void shouldMakeChargeWhenAmountIsZeroIfAccountAllowsIt() {
         allowZeroAmountForGatewayAccount();
-        
-        String expectedReference = "Test reference";
-        String expectedDescription = "Test description";
+
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, 0,
-                JSON_REFERENCE_KEY, expectedReference,
-                JSON_DESCRIPTION_KEY, expectedDescription,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_EMAIL_KEY, EMAIL
         ));
@@ -289,8 +283,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     public void shouldReturn400WhenLanguageNotSupported() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, "Test reference",
-                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_EMAIL_KEY, EMAIL,
                 JSON_LANGUAGE_KEY, "not a supported language"
@@ -307,8 +301,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
         String missingGatewayAccount = "1234123";
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, "Test reference",
-                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_EMAIL_KEY, EMAIL,
                 JSON_RETURN_URL_KEY, RETURN_URL
         ));
@@ -365,8 +359,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     public void shouldReturn422WhenPrefilledCardHolderDetailsFieldsAreLongerThanMaximum() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, "Reference",
-                JSON_DESCRIPTION_KEY, "Description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, Map.of(
                         JSON_CARDHOLDER_NAME_KEY, randomAlphanumeric(256),
@@ -403,8 +397,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, "Reference",
-                JSON_DESCRIPTION_KEY, "Description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, Map.of(
                         JSON_CARDHOLDER_NAME_KEY, randomAlphanumeric(255),
@@ -422,8 +416,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
                 .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
-                .body(JSON_REFERENCE_KEY, is("Reference"))
-                .body(JSON_DESCRIPTION_KEY, is("Description"))
+                .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
+                .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(RETURN_URL));
     }
@@ -438,8 +432,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, "Reference",
-                JSON_DESCRIPTION_KEY, "Description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, Map.of(
                         JSON_CARDHOLDER_NAME_KEY, cardholderName,
@@ -457,8 +451,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
                 .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
-                .body(JSON_REFERENCE_KEY, is("Reference"))
-                .body(JSON_DESCRIPTION_KEY, is("Description"))
+                .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
+                .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
                 .body("card_details." + JSON_CARDHOLDER_NAME_KEY, is(cardholderName))
@@ -477,8 +471,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, "Reference",
-                JSON_DESCRIPTION_KEY, "Description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, Map.of(
                         JSON_CARDHOLDER_NAME_KEY, cardholderName,
@@ -494,8 +488,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
                 .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
-                .body(JSON_REFERENCE_KEY, is("Reference"))
-                .body(JSON_DESCRIPTION_KEY, is("Description"))
+                .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
+                .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
                 .body("card_details." + JSON_CARDHOLDER_NAME_KEY, is(cardholderName))
@@ -510,8 +504,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     public void shouldReturn201WithNoCardDetailsWhenPrefilledCardHolderDetailsFieldsAreNotPresent() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, "Reference",
-                JSON_DESCRIPTION_KEY, "Description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL
         ));
 
@@ -520,8 +514,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
                 .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
-                .body(JSON_REFERENCE_KEY, is("Reference"))
-                .body(JSON_DESCRIPTION_KEY, is("Description"))
+                .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
+                .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
                 .body("containsKey('card_details')", is(false));
@@ -532,8 +526,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
         String cardholderName = "Joe Bogs";
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, "Reference",
-                JSON_DESCRIPTION_KEY, "Description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, Map.of(
                         JSON_CARDHOLDER_NAME_KEY, cardholderName
@@ -545,8 +539,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
                 .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
-                .body(JSON_REFERENCE_KEY, is("Reference"))
-                .body(JSON_DESCRIPTION_KEY, is("Description"))
+                .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
+                .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
                 .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
                 .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
                 .body("card_details." + JSON_CARDHOLDER_NAME_KEY, is(cardholderName))
@@ -555,11 +549,10 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     
     @Test
     public void shouldReturnChargeWithNoMetadataField_whenCreatedWithEmptyMetadata() {
-        String reference = "no metadata reference";
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, reference,
-                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_EMAIL_KEY, EMAIL,
                 JSON_METADATA_KEY, Map.of()
@@ -578,7 +571,7 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
                 .body("$", not(hasKey("metadata")));
         
         connectorRestApiClient
-                .withQueryParam("reference", reference)
+                .withQueryParam("reference", JSON_REFERENCE_VALUE)
                 .getChargesV1()
                 .body("results[0]", not(hasKey("metadata")));
         
@@ -596,8 +589,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, "Test reference",
-                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_EMAIL_KEY, EMAIL,
                 JSON_METADATA_KEY, metadata
@@ -631,8 +624,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
 
         String postBody = toJsonWithNulls(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, "Test reference",
-                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_EMAIL_KEY, EMAIL,
                 JSON_METADATA_KEY, metadata
@@ -653,8 +646,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     public void shouldReturn201IfMetadataIsNull_BecauseWeDoNotDeserializeNullValues() {
         Map<String, Object> payload = new HashMap<>();
         payload.put(JSON_AMOUNT_KEY, AMOUNT);
-        payload.put(JSON_REFERENCE_KEY, "Test reference");
-        payload.put(JSON_DESCRIPTION_KEY, "Test description");
+        payload.put(JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE);
+        payload.put(JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE);
         payload.put(JSON_RETURN_URL_KEY, RETURN_URL);
         payload.put(JSON_EMAIL_KEY, EMAIL);
         payload.put(JSON_METADATA_KEY, null);
@@ -671,8 +664,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     public void shouldFailValidationWhenMetadataIsAString() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, "Test reference",
-                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_EMAIL_KEY, EMAIL,
                 JSON_METADATA_KEY, "metadata cannot be a string"
@@ -690,8 +683,8 @@ public class ChargesApiCreateResourceITest extends ChargingITestBase {
     public void shouldFailValidationWhenMetadataIsAnArray() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, "Test reference",
-                JSON_DESCRIPTION_KEY, "Test description",
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_EMAIL_KEY, EMAIL,
                 JSON_METADATA_KEY, new Object[1]
