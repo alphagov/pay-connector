@@ -41,6 +41,7 @@ import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
@@ -609,7 +610,7 @@ public class ChargesFrontendResourceITest {
                 .body("gateway_account.corporate_credit_card_surcharge_amount", isNumber(corporateCreditCardSurchargeAmount))
                 .body("gateway_account.corporate_debit_card_surcharge_amount", isNumber(corporateDebitCardSurchargeAmount))
                 .body("gateway_account.card_types", is(notNullValue()))
-                .body("gateway_account.card_types", contains(
+                .body("gateway_account.card_types", containsInAnyOrder(
                         allOf(
                                 hasKey("id"),
                                 hasEntry("label", "Mastercard"),
