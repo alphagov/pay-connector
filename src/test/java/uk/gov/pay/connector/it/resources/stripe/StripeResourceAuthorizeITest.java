@@ -161,7 +161,7 @@ public class StripeResourceAuthorizeITest {
 
         List<LoggedRequest> requests = findAll(postRequestedFor(urlMatching("/v1/charges")));
         assertThat(requests).hasSize(1);
-        assertThat(requests.get(0).getBodyAsString()).isEqualTo(constructExpectedAuthoriseRequestBody(externalChargeId));
+        assertExpectedAuthoriseRequestBody(requests.get(0), externalChargeId);
     }
 
     @Test
@@ -191,7 +191,7 @@ public class StripeResourceAuthorizeITest {
 
         List<LoggedRequest> requests = findAll(postRequestedFor(urlMatching("/v1/charges")));
         assertThat(requests).hasSize(1);
-        assertThat(requests.get(0).getBodyAsString()).isEqualTo(constructExpectedAuthoriseRequestBody(externalChargeId));
+        assertExpectedAuthoriseRequestBody(requests.get(0), externalChargeId);
     }
 
     @Test
@@ -250,7 +250,7 @@ public class StripeResourceAuthorizeITest {
                 .post(authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(500)
-                .body("message", contains(containsString("There is no stripe_account_id for gateway account with id")))
+                .body("message", contains(containsString("Exception occurred while doing authorisation")))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
@@ -344,16 +344,14 @@ public class StripeResourceAuthorizeITest {
         return "/v1/frontend/charges/{chargeId}/capture".replace("{chargeId}", chargeId);
     }
 
-    private String constructExpectedAuthoriseRequestBody(String chargeExternalId) {
-        List<BasicNameValuePair> params = new ArrayList<>();
-        params.add(new BasicNameValuePair("amount", AMOUNT));
-        params.add(new BasicNameValuePair("currency", "GBP"));
-        params.add(new BasicNameValuePair("description", DESCRIPTION));
-        params.add(new BasicNameValuePair("source", "src_1DT9bn2eZvKYlo2Cg5okt8WC")); //This comes from resources/stripe/create_sources_response.json
-        params.add(new BasicNameValuePair("capture", "false"));
-        params.add(new BasicNameValuePair("transfer_group", chargeExternalId));
-        params.add(new BasicNameValuePair("on_behalf_of", stripeAccountId));
-        return URLEncodedUtils.format(params, UTF_8);
+    private void assertExpectedAuthoriseRequestBody(LoggedRequest request, String chargeExternalId) {
+        assertThat(request.getBodyAsString()).contains("amount=" + AMOUNT);
+        assertThat(request.getBodyAsString()).contains("on_behalf_of=" + stripeAccountId);
+        assertThat(request.getBodyAsString()).contains("transfer_group=" +  chargeExternalId);
+        assertThat(request.getBodyAsString()).contains("currency=GBP");
+        assertThat(request.getBodyAsString()).contains("source=src_1DT9bn2eZvKYlo2Cg5okt8WC");
+        assertThat(request.getBodyAsString()).contains("capture=false");
+        assertThat(request.getBodyAsString()).contains("description=Test+description");
     }
 
     private String constructExpectedTokensRequestBody() {
