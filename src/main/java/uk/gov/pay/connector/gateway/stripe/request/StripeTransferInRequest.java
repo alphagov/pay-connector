@@ -1,18 +1,12 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 
 /***
  * Represents a request to transfer an amount from a Stripe Connect account to 
@@ -45,29 +39,31 @@ public class StripeTransferInRequest extends StripeTransferRequest {
     }
 
     @Override
-    public GatewayOrder getGatewayOrder() {
-        List<BasicNameValuePair> params = getCommonPayloadParameters();
-        params.add(new BasicNameValuePair("destination", stripeGatewayConfig.getPlatformAccountId()));
-        params.add(new BasicNameValuePair("transfer_group", transferGroup));
-        String payload = URLEncodedUtils.format(params, UTF_8);
-
-        return new GatewayOrder(
-                OrderRequestType.REFUND,
-                payload,
-                APPLICATION_FORM_URLENCODED_TYPE
+    public Map<String, String> params() {
+        Map<String, String> params = new HashMap<>();
+        Map<String, String> transferOutParams = Map.of(
+                "destination", stripeGatewayConfig.getPlatformAccountId(),
+                "transfer_group", transferGroup
         );
+        Map<String, String> commonParams = super.params();
+        params.putAll(transferOutParams);
+        params.putAll(commonParams);
+
+        return params;
     }
 
     @Override
-    public Map<String, String> getHeaders() {
-        Map<String, String> headers = super.getHeaders();
-        headers.put("Stripe-Account", stripeConnectAccountId);
-
-        return headers;
+    public Map<String, String> headers() {
+        return Map.of("Stripe-Account", stripeConnectAccountId);
     }
 
     @Override
     protected String getIdempotencyKeyType() {
         return "transfer_in";
+    }
+
+    @Override
+    protected OrderRequestType orderRequestType() {
+        return OrderRequestType.REFUND;
     }
 }

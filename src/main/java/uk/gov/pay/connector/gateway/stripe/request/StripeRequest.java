@@ -1,13 +1,25 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
+import com.google.common.collect.ImmutableList;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientRequest;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 
 public abstract class StripeRequest implements GatewayClientRequest {
 
@@ -32,17 +44,59 @@ public abstract class StripeRequest implements GatewayClientRequest {
         this.stripeConnectAccountId = stripeAccountId;
     }
 
-    public GatewayAccountEntity getGatewayAccount() {
+    public final GatewayAccountEntity getGatewayAccount() {
         return gatewayAccount;
     }
 
-    public Map<String, String> getHeaders() {
-        Map<String, String> headers = new HashMap<>();
-        Optional.ofNullable(idempotencyKey).ifPresent(idempotencyKey -> headers.put("Idempotency-Key", getIdempotencyKeyType() + idempotencyKey));
-        headers.putAll(AuthUtil.getStripeAuthHeader(stripeGatewayConfig, gatewayAccount.isLive()));
+    
+    public final URI getUrl() {
+        return URI.create(stripeGatewayConfig.getUrl() + urlPath());
+    }
 
-        return headers;
+    public final Map<String, String> getHeaders() {
+        Map<String, String> result = new HashMap<>(Map.copyOf(headers()));
+        Optional.ofNullable(idempotencyKey).ifPresent(idempotencyKey -> result.put("Idempotency-Key", getIdempotencyKeyType() + idempotencyKey));
+        result.putAll(AuthUtil.getStripeAuthHeader(stripeGatewayConfig, gatewayAccount.isLive()));
+
+        return result;
+    }
+
+    public final GatewayOrder getGatewayOrder() {
+        Map<String, String> params = params();
+        List<BasicNameValuePair> paramsList = params.keySet().stream()
+                .map(key -> new BasicNameValuePair(key, params.get(key)))
+                .collect(Collectors.toUnmodifiableList());
+        
+        List<BasicNameValuePair> expansionList = expansionFields().stream()
+                .map(fieldName -> new BasicNameValuePair("expand[]", fieldName))
+                .collect(Collectors.toUnmodifiableList());
+
+        List<BasicNameValuePair> result = new ImmutableList.Builder<BasicNameValuePair>()
+                .addAll(paramsList)
+                .addAll(expansionList)
+                .build();
+        
+        String payload = URLEncodedUtils.format(result, UTF_8);
+
+        return new GatewayOrder(orderRequestType(), payload, APPLICATION_FORM_URLENCODED_TYPE);
     }
     
-    protected abstract  String getIdempotencyKeyType();
+    protected Map<String, String> headers() {
+        return Collections.emptyMap();
+    }
+    
+    protected List<String> expansionFields() {
+        return Collections.emptyList();
+    }
+    
+    protected  String getIdempotencyKeyType() {
+        return orderRequestType().toString();
+    }
+
+    protected Map<String, String> params() {
+        return Collections.emptyMap();
+    }
+    
+    protected abstract String urlPath();
+    protected abstract OrderRequestType orderRequestType();
 }

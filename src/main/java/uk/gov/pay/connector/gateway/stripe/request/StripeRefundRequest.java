@@ -1,19 +1,11 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
+import java.util.Map;
 
 public class StripeRefundRequest extends StripeRequest {
     private final String stripeChargeId;
@@ -41,27 +33,17 @@ public class StripeRefundRequest extends StripeRequest {
         );
     }
 
-    @Override
-    public URI getUrl() {
-        return URI.create(stripeGatewayConfig.getUrl() + "/v1/refunds");
+    protected String urlPath() {
+        return "/v1/refunds";
     }
 
     @Override
-    public GatewayOrder getGatewayOrder() {
-        List<BasicNameValuePair> params = new ArrayList<>();
-        params.add(new BasicNameValuePair("charge", stripeChargeId));
-        params.add(new BasicNameValuePair("amount", amount));
-        String payload = URLEncodedUtils.format(params, UTF_8);
-
-        return new GatewayOrder(
-                OrderRequestType.REFUND,
-                payload,
-                APPLICATION_FORM_URLENCODED_TYPE
-        );    
+    protected Map<String, String> params() {
+        return Map.of("charge", stripeChargeId, "amount", amount);
     }
 
     @Override
-    protected String getIdempotencyKeyType() {
-        return "refund";
+    protected OrderRequestType orderRequestType() {
+        return OrderRequestType.REFUND;
     }
 }
