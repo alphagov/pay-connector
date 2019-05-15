@@ -28,7 +28,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
-import static uk.gov.pay.connector.paymentprocessor.model.OperationType.AUTHORISATION_3DS;
 
 public class StripeNotificationService {
 
@@ -113,15 +112,6 @@ public class StripeNotificationService {
     private void authorise3DSSource(ChargeEntity charge, String notificationEventType) {
         try {
             final StripeNotificationType type = StripeNotificationType.byType(notificationEventType);
-
-            if (AUTHORISATION_3DS_REQUIRED.equals(ChargeStatus.fromString(charge.getStatus()))) {
-                logger.info("Updating charge for notification - " +
-                                "charge_external_id={}, status={}, status_to={}, transaction_id={}, " +
-                                "account_id={}, provider={}, provider_type={}",
-                        charge.getExternalId(), charge.getStatus(), AUTHORISATION_3DS_READY, charge.getGatewayTransactionId(),
-                        charge.getGatewayAccount().getId(), charge.getGatewayAccount().getGatewayName(), charge.getGatewayAccount().getType());
-                chargeService.lockChargeForProcessing(charge.getExternalId(), AUTHORISATION_3DS);
-            }
 
             Auth3dsDetails auth3dsDetails = new Auth3dsDetails();
             auth3dsDetails.setAuth3dsResult(getMappedAuth3dsResult(type));

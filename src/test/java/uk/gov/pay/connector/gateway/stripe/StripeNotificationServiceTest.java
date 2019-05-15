@@ -66,7 +66,6 @@ public class StripeNotificationServiceTest {
         when(stripeGatewayConfig.getWebhookSigningSecrets()).thenReturn(stripeWebhookSigningSecrets);
         when(mockCharge.getExternalId()).thenReturn(externalId);
         when(mockCharge.getStatus()).thenReturn(AUTHORISATION_3DS_REQUIRED.getValue());
-        when(mockCharge.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
         when(mockChargeService.findByProviderAndTransactionId(STRIPE.getName(), sourceId)).thenReturn(Optional.of(mockCharge));
     }
 
