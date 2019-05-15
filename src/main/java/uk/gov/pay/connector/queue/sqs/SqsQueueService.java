@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.QueueMessage;
 
+import javax.inject.Inject;
 import java.util.List;
 
 public class SqsQueueService {
@@ -17,6 +18,7 @@ public class SqsQueueService {
 
     private AmazonSQS sqsClient;
 
+    @Inject
     public SqsQueueService(AmazonSQS sqsClient) {
         this.sqsClient = sqsClient;
     }

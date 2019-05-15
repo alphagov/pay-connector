@@ -5,24 +5,32 @@ import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
+import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.fee.dao.FeeDao;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
+import uk.gov.pay.connector.queue.CaptureQueue;
+import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
+import javax.ws.rs.WebApplicationException;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
@@ -38,18 +46,24 @@ public class CardCaptureService {
     private final PaymentProviders providers;
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected MetricRegistry metricRegistry;
+    protected CaptureQueue captureQueue;
+    protected Boolean captureUsingSQS;
 
     @Inject
     public CardCaptureService(ChargeService chargeService,
                               FeeDao feeDao,
                               PaymentProviders providers,
                               UserNotificationService userNotificationService,
-                              Environment environment) {
+                              Environment environment,
+                              CaptureQueue captureQueue,
+                              ConnectorConfiguration connectorConfiguration) {
         this.chargeService = chargeService;
         this.feeDao = feeDao;
         this.providers = providers;
         this.metricRegistry = environment.metrics();
         this.userNotificationService = userNotificationService;
+        this.captureQueue = captureQueue;
+        this.captureUsingSQS = connectorConfiguration.getCaptureProcessConfig().getCaptureUsingSQS();
     }
 
     public CaptureResponse doCapture(String externalId) {
@@ -72,7 +86,18 @@ public class CardCaptureService {
 
     @Transactional
     public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
-        return chargeService.markChargeAsEligibleForCapture(externalId);
+        final ChargeEntity charge = chargeService.findChargeById(externalId);
+        ChargeStatus targetStatus = charge.isDelayedCapture() ? AWAITING_CAPTURE_REQUEST : CAPTURE_APPROVED;
+
+        if (CAPTURE_APPROVED.equals(targetStatus)) {
+            addChargeToCaptureQueue(externalId);
+        }
+
+        try {
+            return chargeService.updateChargeStatus(charge.getExternalId(), targetStatus);
+        } catch (InvalidStateTransitionException e) {
+            throw new IllegalStateRuntimeException(charge.getExternalId());
+        }
     }
 
     @Transactional
@@ -84,7 +109,23 @@ public class CardCaptureService {
 
     @Transactional
     public ChargeEntity markChargeAsCaptureApproved(String externalId) {
+        addChargeToCaptureQueue(externalId);
         return chargeService.markChargeAsCaptureApproved(externalId);
+    }
+
+    private void addChargeToCaptureQueue(String externalId) {
+        try {
+            captureQueue.sendForCapture(externalId);
+        } catch (QueueException e) {
+            logger.error("Exception sending charge [{}] to capture queue", externalId);
+
+            if (captureUsingSQS) {
+                chargeService.updateChargeStatus(externalId, CAPTURE_ERROR);
+                throw new WebApplicationException(String.format(
+                        "Unable to schedule charge [%s] for capture - %s",
+                        externalId, e.getMessage()));
+            }
+        }
     }
 
     private CaptureResponse capture(ChargeEntity chargeEntity) {

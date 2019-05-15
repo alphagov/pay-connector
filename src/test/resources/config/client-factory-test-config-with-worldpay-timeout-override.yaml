@@ -99,9 +99,9 @@ captureProcessConfig:
   captureUsingSQS: ${CAPTURE_USING_SQS_FEATURE_FLAG:-false}
 
 sqsConfig:
-  endpoint: ${AWS_SQS_ENDPOINT}
-  region: ${AWS_SQS_REGION}
-  captureQueueUrl: ${AWS_SQS_CAPTURE_QUEUE_URL}
+  endpoint: ${AWS_SQS_ENDPOINT:-localhost}
+  region: ${AWS_SQS_REGION:-region-1}
+  captureQueueUrl: ${AWS_SQS_CAPTURE_QUEUE_URL:-http://queue}
 
 transactionsPaginationServiceConfig:
   displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}
