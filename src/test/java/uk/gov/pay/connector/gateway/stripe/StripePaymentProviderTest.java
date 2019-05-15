@@ -29,6 +29,7 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.stripe.request.StripeAuthoriseRequest;
 import uk.gov.pay.connector.gateway.stripe.response.StripeParamsFor3ds;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -74,7 +75,6 @@ public class StripePaymentProviderTest {
     private LinksConfig linksConfig = mock(LinksConfig.class);
     private URI tokensUrl;
     private URI sourcesUrl;
-    private URI chargesUrl;
     private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
     private GatewayClient.Response tokenResponse = mock(GatewayClient.Response.class);
     private GatewayClient.Response chargeResponse = mock(GatewayClient.Response.class);
@@ -88,7 +88,7 @@ public class StripePaymentProviderTest {
 
         when(configuration.getLinks()).thenReturn(linksConfig);
         when(linksConfig.getFrontendUrl()).thenReturn("http://frontendUrl");
-        
+
         when(gatewayClientFactory.createGatewayClient(eq(STRIPE), any(MetricRegistry.class))).thenReturn(gatewayClient);
         
         when(environment.metrics()).thenReturn(metricRegistry);
@@ -96,7 +96,6 @@ public class StripePaymentProviderTest {
         provider = new StripePaymentProvider(gatewayClientFactory, configuration, objectMapper, environment);
         tokensUrl = URI.create(gatewayConfig.getUrl() + "/v1/tokens");
         sourcesUrl = URI.create(gatewayConfig.getUrl() + "/v1/sources");
-        chargesUrl = URI.create(gatewayConfig.getUrl() + "/v1/charges");
 
         when(tokenResponse.getEntity()).thenReturn(successTokenResponse());
         when(chargeResponse.getEntity()).thenReturn(successChargeResponse());
@@ -152,7 +151,7 @@ public class StripePaymentProviderTest {
         when(threeDsSourceResponse.getEntity()).thenReturn(success3dsSourceResponse());
         when(gatewayClient.postRequestFor(eq(sourcesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
                 .thenReturn(sourceResponseWith3dsRequired, threeDsSourceResponse);
-        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(chargeResponse);
+        when(gatewayClient.postRequestFor(any(StripeAuthoriseRequest.class))).thenReturn(chargeResponse);
 
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
 
@@ -175,7 +174,7 @@ public class StripePaymentProviderTest {
         when(gatewayClient.postRequestFor(eq(sourcesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
                 .thenReturn(sourceResponseWith3dsRequired, threeDsSourceResponse);
 
-        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(chargeResponse);
+        when(gatewayClient.postRequestFor(any(StripeAuthoriseRequest.class))).thenReturn(chargeResponse);
 
         GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest());
 
@@ -189,8 +188,8 @@ public class StripePaymentProviderTest {
         
         when(gatewayClient.postRequestFor(eq(tokensUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(tokenResponse);
         when(gatewayClient.postRequestFor(eq(sourcesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(sourceResponse);
-        
-        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
+
+        when(gatewayClient.postRequestFor(any(StripeAuthoriseRequest.class)))
                 .thenThrow(new GatewayConnectionTimeoutException("javax.ws.rs.ProcessingException: java.io.IOException"));
 
         GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
@@ -211,7 +210,7 @@ public class StripePaymentProviderTest {
     public void shouldNotAuthorise_whenPaymentProviderReturnsUnexpectedStatusCode() throws Exception {
         when(gatewayClient.postRequestFor(eq(tokensUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(tokenResponse);
         when(gatewayClient.postRequestFor(eq(sourcesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(sourceResponse);
-        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
+        when(gatewayClient.postRequestFor(any(StripeAuthoriseRequest.class)))
                 .thenThrow(new GatewayErrorException("server error", errorResponse(), 500));
         GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest());
 
@@ -224,7 +223,7 @@ public class StripePaymentProviderTest {
 
     @Test
     public void shouldAuthorise3DSSource_when3DSAuthDetailsStatusIsAuthorised() throws Exception {
-        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class))).thenReturn(chargeResponse);
+        when(gatewayClient.postRequestFor(any(StripeAuthoriseRequest.class))).thenReturn(chargeResponse);
 
         Auth3dsResponseGatewayRequest request = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.AUTHORISED);
 
@@ -270,7 +269,7 @@ public class StripePaymentProviderTest {
     public void shouldMark3DSChargeAsError_whenGatewayOperationResultedInUnauthorisedException() throws Exception {
         Auth3dsResponseGatewayRequest request = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.AUTHORISED);
 
-        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
+        when(gatewayClient.postRequestFor(any(StripeAuthoriseRequest.class)))
                 .thenThrow(new GatewayErrorException("Unexpected HTTP status code 401 from gateway", "", HttpStatus.SC_UNAUTHORIZED));
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
@@ -281,7 +280,7 @@ public class StripePaymentProviderTest {
     public void shouldMark3DSChargeAsRejected_whenGatewayOperationResultedIn4xxHttpStatus() throws Exception {
         Auth3dsResponseGatewayRequest request = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.AUTHORISED);
 
-        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
+        when(gatewayClient.postRequestFor(any(StripeAuthoriseRequest.class)))
                 .thenThrow(new GatewayErrorException("Unexpected HTTP status code 403 from gateway", errorResponse(), HttpStatus.SC_FORBIDDEN));
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
@@ -292,7 +291,7 @@ public class StripePaymentProviderTest {
     public void shouldMark3DSChargeAsError_whenGatewayOperationResultedInException() throws Exception {
         Auth3dsResponseGatewayRequest request = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.AUTHORISED);
 
-        when(gatewayClient.postRequestFor(eq(chargesUrl), any(GatewayAccountEntity.class), any(GatewayOrder.class), any(Map.class)))
+        when(gatewayClient.postRequestFor(any(StripeAuthoriseRequest.class)))
                 .thenThrow(new GatewayErrorException("server error", errorResponse(), 501));
 
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
@@ -312,7 +311,7 @@ public class StripePaymentProviderTest {
         assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_3DS_READY));
     }
 
-    @Test(expected = WebApplicationException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionFor3DSCharge_IfStripeAccountIsNotAvailable() {
         Auth3dsResponseGatewayRequest request
                 = build3dsResponseGatewayRequest(Auth3dsDetails.Auth3dsResult.AUTHORISED);
@@ -373,11 +372,12 @@ public class StripePaymentProviderTest {
     }
 
     private ChargeEntity buildTestCharge() {
-        return aValidChargeEntity()
+        ChargeEntity mq4ht90j2oir6am585afk58kml = aValidChargeEntity()
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withTransactionId("transaction-id")
                 .withGatewayAccountEntity(buildTestGatewayAccountEntity())
                 .build();
+        return mq4ht90j2oir6am585afk58kml;
     }
 
     private CardAuthorisationGatewayRequest buildTestAuthorisationRequest(ChargeEntity chargeEntity) {
