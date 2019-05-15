@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.queue;
 
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.amazonaws.services.sqs.model.SendMessageResult;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,6 +18,10 @@ public class QueueMessage {
         this.messageBody = messageBody;
     }
 
+    private QueueMessage(String messageId, String messageBody) {
+        this(messageId, null, messageBody);
+    }
+
     public static List<QueueMessage> of(ReceiveMessageResult receiveMessageResult) {
 
         List<QueueMessage> queueMessage = receiveMessageResult.getMessages()
@@ -25,6 +30,10 @@ public class QueueMessage {
                 .collect(Collectors.toList());
 
         return queueMessage;
+    }
+
+    public static QueueMessage of(SendMessageResult sendMessageResult, String messageBody) {
+        return new QueueMessage(sendMessageResult.getMessageId(), messageBody);
     }
 
     public String getMessageId() {

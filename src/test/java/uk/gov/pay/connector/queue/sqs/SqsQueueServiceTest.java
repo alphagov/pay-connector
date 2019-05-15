@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.queue;
+package uk.gov.pay.connector.queue.sqs;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -18,13 +18,19 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.pay.connector.queue.QueueMessage;
 
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SqsQueueServiceTest {
@@ -50,12 +56,13 @@ public class SqsQueueServiceTest {
     }
 
     @Test
-    public void shouldSendMessageToQueueSuccessfully() {
+    public void shouldSendMessageToQueueSuccessfully() throws QueueException {
         SendMessageResult sendMessageResult = new SendMessageResult();
         sendMessageResult.setMessageId("test-message-id");
         when(mockSqsClient.sendMessage(QUEUE_URL, MESSAGE)).thenReturn(sendMessageResult);
 
-        sqsQueueService.sendMessage(QUEUE_URL, MESSAGE);
+        QueueMessage message = sqsQueueService.sendMessage(QUEUE_URL, MESSAGE);
+        assertEquals("test-message-id", message.getMessageId());
 
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
@@ -63,15 +70,15 @@ public class SqsQueueServiceTest {
         assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Message sent to SQS queue - {MessageId: test-message-id")), is(true));
     }
 
-    @Test(expected = SqsQueueOperationException.class)
-    public void shouldThrowExceptionIfMessageIsNotSentToQueue() {
+    @Test(expected = QueueException.class)
+    public void shouldThrowExceptionIfMessageIsNotSentToQueue() throws QueueException {
         when(mockSqsClient.sendMessage(QUEUE_URL, MESSAGE)).thenThrow(AmazonSQSException.class);
 
         sqsQueueService.sendMessage(QUEUE_URL, MESSAGE);
     }
 
     @Test
-    public void shouldReceiveMessagesFromQueueSuccessfully() {
+    public void shouldReceiveMessagesFromQueueSuccessfully() throws QueueException {
         ReceiveMessageResult receiveMessageResult = new ReceiveMessageResult();
         Message message = new Message();
         message.setMessageId("test-message-id");
@@ -89,7 +96,7 @@ public class SqsQueueServiceTest {
     }
 
     @Test
-    public void shouldReturnEmptyListWhenReceiveDoesNotReturnAnyMessages() {
+    public void shouldReturnEmptyListWhenReceiveDoesNotReturnAnyMessages() throws QueueException {
         ReceiveMessageResult receiveMessageResult = new ReceiveMessageResult();
         when(mockSqsClient.receiveMessage(QUEUE_URL)).thenReturn(receiveMessageResult);
 
@@ -97,8 +104,8 @@ public class SqsQueueServiceTest {
         assertTrue(queueMessages.isEmpty());
     }
 
-    @Test(expected = SqsQueueOperationException.class)
-    public void shouldThrowExceptionIfMessageCannotBeReceivedFromQueue() {
+    @Test(expected = QueueException.class)
+    public void shouldThrowExceptionIfMessageCannotBeReceivedFromQueue() throws QueueException {
         when(mockSqsClient.receiveMessage(anyString())).thenThrow(AmazonSQSException.class);
 
         sqsQueueService.receiveMessages(QUEUE_URL);
