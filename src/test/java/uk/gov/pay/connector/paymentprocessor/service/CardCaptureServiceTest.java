@@ -98,14 +98,13 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private CaptureProcessConfig mockCaptureProcessConfig;
     @Mock
     private ConnectorConfiguration mockConfiguration;
-
+    @Mock
+    private Environment mockEnvironment;
     @Captor
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
-    Environment mockEnvironment;
     @Before
     public void beforeTest() {
-        mockEnvironment = mock(Environment.class);
         Counter mockCounter = mock(Counter.class);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
@@ -327,6 +326,48 @@ public class CardCaptureServiceTest extends CardServiceTest {
         }
 
         verify(mockedChargeEventDao, never()).persistChargeEventOf(any(ChargeEntity.class), any(ZonedDateTime.class));
+    }
+
+    @Test(expected=WebApplicationException.class)
+    public void markChargeAsCaptureError_ForCaptureEligible_whenUnableToAddChargeToQueue() throws QueueException {
+
+        when(mockCaptureProcessConfig.getCaptureUsingSQS()).thenReturn(true);
+        doThrow(new QueueException()).when(mockCaptureQueue).sendForCapture(anyString());
+
+        cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService,
+                mockEnvironment, mockCaptureQueue,
+                mockConfiguration);
+        
+        ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AWAITING_CAPTURE_REQUEST, "gatewayTxId"));
+        when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+        doNothing().when(mockedChargeEventDao).persistChargeEventOf(chargeEntity);
+
+        ChargeEntity result = cardCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
+
+        verify(chargeEntity).setStatus(CAPTURE_ERROR);
+        verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(CAPTURE_ERROR)));
+        assertThat(result.getStatus(), is(CAPTURE_ERROR.getValue()));
+    }
+
+    @Test(expected=WebApplicationException.class)
+    public void markChargeAsCaptureError_ForCaptureApproved_whenUnableToAddChargeToQueue() throws QueueException {
+
+        when(mockCaptureProcessConfig.getCaptureUsingSQS()).thenReturn(true);
+        doThrow(new QueueException()).when(mockCaptureQueue).sendForCapture(anyString());
+
+        cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService,
+                mockEnvironment, mockCaptureQueue,
+                mockConfiguration);
+
+        ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AWAITING_CAPTURE_REQUEST, "gatewayTxId"));
+        when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+        doNothing().when(mockedChargeEventDao).persistChargeEventOf(chargeEntity);
+
+        ChargeEntity result = cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());
+
+        verify(chargeEntity).setStatus(CAPTURE_ERROR);
+        verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(CAPTURE_ERROR)));
+        assertThat(result.getStatus(), is(CAPTURE_ERROR.getValue()));
     }
 
     @Test(expected = IllegalStateRuntimeException.class)

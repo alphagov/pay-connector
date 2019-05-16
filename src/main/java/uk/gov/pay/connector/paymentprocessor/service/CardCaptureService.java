@@ -119,7 +119,7 @@ public class CardCaptureService {
 
             if (captureUsingSQS) {
                 chargeService.updateChargeStatus(externalId, CAPTURE_ERROR);
-                throw new WebApplicationException(String.format(
+                throw new WebApplicationException(format(
                         "Unable to schedule charge [%s] for capture - %s",
                         externalId, e.getMessage()));
             }

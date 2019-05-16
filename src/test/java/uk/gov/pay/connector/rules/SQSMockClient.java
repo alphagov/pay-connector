@@ -19,9 +19,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 public class SQSMockClient {
 
-    public SQSMockClient() {
-    }
-
     /**
      * Mocks sending message to SQS  queue. Response includes MD5 of message body
      * SQSClient throws `com.amazonaws.AmazonClientException` exception if MD5 doesn't match based on request body
