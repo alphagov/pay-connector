@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.app;
 
-import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
@@ -132,7 +131,6 @@ public class ConnectorModule extends AbstractModule {
 
         if (isEmpty(connectorConfiguration.getSqsConfig().getEndpoint())) {
             return AmazonSQSClientBuilder.standard()
-                    .withCredentials(new InstanceProfileCredentialsProvider(false))
                     .withRegion(connectorConfiguration.getSqsConfig().getRegion())
                     .build();
         } else {
