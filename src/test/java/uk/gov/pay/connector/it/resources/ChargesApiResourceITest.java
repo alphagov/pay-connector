@@ -4,7 +4,6 @@ import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.ErrorIdentifier;
-import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
@@ -77,7 +76,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         String chargeId = authoriseNewCharge();
 
         givenSetup()
-                .post(captureChargeUrlFor(chargeId))
+                .post(captureChargeUrlWithSqsMockFor(chargeId))
                 .then()
                 .statusCode(204);
 
@@ -605,6 +604,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         //create charge
         String extChargeId = addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
                 ServicePaymentReference.of("ref"), ZonedDateTime.now().minusMinutes(90));
+        sqsMockClient.mockSendMessageSuccessful(extChargeId);
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -629,6 +629,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         //create charge
         String extChargeId = addChargeAndCardDetails(CAPTURE_APPROVED,
                 ServicePaymentReference.of("ref"), ZonedDateTime.now().minusMinutes(90));
+        sqsMockClient.mockSendMessageSuccessful(extChargeId);
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -650,9 +651,11 @@ public class ChargesApiResourceITest extends ChargingITestBase {
 
     @Test
     public void shouldGetNotFoundFor_markChargeAsCaptureApproved_whenNoChargeExists() {
+        String chargeId = "i-do-not-exist";
+        sqsMockClient.mockSendMessageSuccessful(chargeId);
         connectorRestApiClient
                 .withAccountId(accountId)
-                .withChargeId("i-do-not-exist")
+                .withChargeId(chargeId)
                 .postMarkChargeAsCaptureApproved()
                 .statusCode(NOT_FOUND.getStatusCode())
                 .contentType(JSON)
@@ -665,6 +668,7 @@ public class ChargesApiResourceITest extends ChargingITestBase {
         //create charge
         String extChargeId = addChargeAndCardDetails(EXPIRED,
                 ServicePaymentReference.of("ref"), ZonedDateTime.now().minusMinutes(90));
+        sqsMockClient.mockSendMessageSuccessful(extChargeId);
 
         final String expectedErrorMessage = format("Operation for charge conflicting, %s, attempt to perform delayed capture on charge not in AWAITING CAPTURE REQUEST state.", extChargeId);
         connectorRestApiClient

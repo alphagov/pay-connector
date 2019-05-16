@@ -101,12 +101,14 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_CANCELLED, "");
         graph.putEdgeValue(AUTHORISATION_SUCCESS, CAPTURE_APPROVED, "");
         graph.putEdgeValue(AUTHORISATION_SUCCESS, CAPTURE_READY, "");
+        graph.putEdgeValue(AUTHORISATION_SUCCESS, CAPTURE_ERROR, "");
         graph.putEdgeValue(AUTHORISATION_SUCCESS, SYSTEM_CANCEL_READY, "");
         graph.putEdgeValue(AUTHORISATION_SUCCESS, USER_CANCEL_READY, "");
         graph.putEdgeValue(AUTHORISATION_SUCCESS, EXPIRE_CANCEL_READY, "");
         graph.putEdgeValue(AUTHORISATION_SUCCESS, AWAITING_CAPTURE_REQUEST, "");
 
         graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, CAPTURE_APPROVED, "");
+        graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, CAPTURE_ERROR, "");
         graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, SYSTEM_CANCEL_READY, "");
         graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, EXPIRE_CANCEL_READY, "");
 

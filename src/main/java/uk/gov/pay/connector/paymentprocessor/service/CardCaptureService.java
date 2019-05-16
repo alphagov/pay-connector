@@ -84,7 +84,6 @@ public class CardCaptureService {
         return chargeService.lockChargeForProcessing(chargeId, OperationType.CAPTURE);
     }
 
-    @Transactional
     public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
         final ChargeEntity charge = chargeService.findChargeById(externalId);
         ChargeStatus targetStatus = charge.isDelayedCapture() ? AWAITING_CAPTURE_REQUEST : CAPTURE_APPROVED;
@@ -94,7 +93,7 @@ public class CardCaptureService {
         }
 
         try {
-            return chargeService.updateChargeStatus(charge, targetStatus);
+            return chargeService.updateChargeStatus(externalId, targetStatus);
         } catch (InvalidStateTransitionException e) {
             throw new IllegalStateRuntimeException(charge.getExternalId());
         }
@@ -107,7 +106,6 @@ public class CardCaptureService {
         chargeService.updateChargeStatus(chargeId, CAPTURE_ERROR);
     }
 
-    @Transactional
     public ChargeEntity markChargeAsCaptureApproved(String externalId) {
         addChargeToCaptureQueue(externalId);
         return chargeService.markChargeAsCaptureApproved(externalId);

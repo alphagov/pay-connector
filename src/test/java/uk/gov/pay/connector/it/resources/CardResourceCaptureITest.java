@@ -42,7 +42,7 @@ public class CardResourceCaptureITest extends ChargingITestBase {
     public void shouldSubmitForCaptureTheCardPayment_IfChargeWasPreviouslyAuthorised() {
         String chargeId = authoriseNewCharge();
         givenSetup()
-                .post(captureChargeUrlFor(chargeId))
+                .post(captureChargeUrlWithSqsMockFor(chargeId))
                 .then()
                 .statusCode(204);
 
@@ -84,7 +84,7 @@ public class CardResourceCaptureITest extends ChargingITestBase {
         assertThat(chargeCardDetails.isEmpty(), is(false));
 
         givenSetup()
-                .post(captureChargeUrlFor(externalChargeId))
+                .post(captureChargeUrlWithSqsMockFor(externalChargeId))
                 .then()
                 .statusCode(204);
 
@@ -103,7 +103,7 @@ public class CardResourceCaptureITest extends ChargingITestBase {
 
     private void captureAndVerifyFor(String chargeId, int expectedStatusCode, String message) {
         givenSetup()
-                .post(captureChargeUrlFor(chargeId))
+                .post(captureChargeUrlWithSqsMockFor(chargeId))
                 .then()
                 .statusCode(expectedStatusCode)
                 .contentType(JSON)

@@ -9,6 +9,7 @@ import au.com.dius.pact.provider.junit.target.HttpTarget;
 import au.com.dius.pact.provider.junit.target.Target;
 import au.com.dius.pact.provider.junit.target.TestTarget;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -21,6 +22,7 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.SQSMockClient;
 import uk.gov.pay.connector.util.AddChargeParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -35,6 +37,7 @@ import static io.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.rules.AppWithPostgresRule.WIREMOCK_PORT_WITH_APP_RULE;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 @RunWith(PactRunner.class)
@@ -47,6 +50,11 @@ public class TransactionsApiContractTest {
     @ClassRule
     public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
+    @ClassRule
+    public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT_WITH_APP_RULE);
+    
+    SQSMockClient sqsMockClient = new SQSMockClient();
+    
     @TestTarget
     public static Target target;
     private static DatabaseTestHelper dbHelper;
@@ -118,6 +126,8 @@ public class TransactionsApiContractTest {
     private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus,
                                    ZonedDateTime createdDate, boolean delayedCapture, String cardHolderName,
                                    String lastDigitsCardNumber, String firstDigitsCardNumber, String gatewayTransactionId) {
+
+        sqsMockClient.mockSendMessageSuccessful(chargeExternalId);
         dbHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(chargeExternalId)

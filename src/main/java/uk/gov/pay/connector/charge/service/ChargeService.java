@@ -382,6 +382,7 @@ public class ChargeService {
         return chargeEntity;
     }
 
+    @Transactional
     public ChargeEntity updateChargeStatus(String chargeId, ChargeStatus chargeStatus) {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity ->
                 updateChargeStatus(chargeEntity, chargeStatus)
@@ -406,6 +407,7 @@ public class ChargeService {
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
 
+    @Transactional
     public ChargeEntity markChargeAsCaptureApproved(String externalId) {
         return chargeDao.findByExternalId(externalId).map(charge -> {
 

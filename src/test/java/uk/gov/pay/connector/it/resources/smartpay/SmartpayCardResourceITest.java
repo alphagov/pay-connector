@@ -145,7 +145,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
         smartpayMockClient.mockCaptureSuccess();
 
         givenSetup()
-                .post(captureChargeUrlFor(chargeId))
+                .post(captureChargeUrlWithSqsMockFor(chargeId))
                 .then()
                 .statusCode(204);
 
@@ -201,7 +201,7 @@ public class SmartpayCardResourceITest extends ChargingITestBase {
         smartpayMockClient.mockCaptureSuccessWithTransactionId(pspReference2);
 
         givenSetup()
-                .post(captureChargeUrlFor(externalChargeId))
+                .post(captureChargeUrlWithSqsMockFor(externalChargeId))
                 .then()
                 .statusCode(204);
         assertApiStateIs(externalChargeId, EXTERNAL_SUCCESS.getStatus());

@@ -228,7 +228,7 @@ public class WorldpayCardResourceITest extends ChargingITestBase {
         worldpayMockClient.mockCaptureSuccess();
 
         givenSetup()
-                .post(captureChargeUrlFor(chargeId))
+                .post(captureChargeUrlWithSqsMockFor(chargeId))
                 .then()
                 .statusCode(204);
 

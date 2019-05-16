@@ -20,6 +20,7 @@ import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.rules.EpdqMockClient;
+import uk.gov.pay.connector.rules.SQSMockClient;
 import uk.gov.pay.connector.rules.SmartpayMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -70,6 +71,7 @@ public class ChargingITestBase {
     protected static final WorldpayMockClient worldpayMockClient = new WorldpayMockClient();
     protected static final SmartpayMockClient smartpayMockClient = new SmartpayMockClient();
     protected static final EpdqMockClient epdqMockClient = new EpdqMockClient();
+    protected static final SQSMockClient sqsMockClient = new SQSMockClient();
 
     private final String paymentProvider;
     protected RestAssuredClient connectorRestApiClient;
@@ -243,6 +245,11 @@ public class ChargingITestBase {
 
     protected static String captureChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/capture".replace("{chargeId}", chargeId);
+    }
+
+    protected static String captureChargeUrlWithSqsMockFor(String chargeId) {
+        sqsMockClient.mockSendMessageSuccessful(chargeId);
+        return captureChargeUrlFor(chargeId);
     }
 
     public static String cancelChargeUrlFor(String accountId, String chargeId) {

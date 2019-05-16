@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.pay.connector.util.PortFactory;
 
 import java.util.List;
 
@@ -29,6 +30,8 @@ abstract public class AppWithPostgresRule implements TestRule {
     private final AppRule<ConnectorConfiguration> appRule;
     private final RuleChain rules;
 
+    public final static int WIREMOCK_PORT_WITH_APP_RULE = PortFactory.findFreePort();
+
     private DatabaseTestHelper databaseTestHelper;
 
     public AppWithPostgresRule(ConfigOverride... configOverrides) {
@@ -43,7 +46,9 @@ abstract public class AppWithPostgresRule implements TestRule {
             throw new RuntimeException(e);
         }
 
-        appRule = newApplication(configFilePath, overrideDatabaseConfig(configOverrides, postgres));
+        ConfigOverride[] newConfigOverrides = overrideDatabaseConfig(configOverrides, postgres);
+        newConfigOverrides = overrideSqsConfig(newConfigOverrides);
+        appRule = newApplication(configFilePath, newConfigOverrides);
 
         rules = RuleChain.outerRule(postgres).around(appRule);
     }
@@ -110,6 +115,13 @@ abstract public class AppWithPostgresRule implements TestRule {
         newConfigOverride.add(config("database.password", postgresDockerRule.getPassword()));
         return newConfigOverride.toArray(new ConfigOverride[0]);
     }
+
+    private ConfigOverride[] overrideSqsConfig(ConfigOverride[] configOverrides) {
+        List<ConfigOverride> newConfigOverride = newArrayList(configOverrides);
+        newConfigOverride.add(config("sqsConfig.captureQueueUrl", "http://localhost:" + WIREMOCK_PORT_WITH_APP_RULE + "/capture-queue"));
+        return newConfigOverride.toArray(new ConfigOverride[0]);
+    }
+
 
     private void restoreDropwizardsLogging() {
         appRule.getConfiguration().getLoggingFactory().configure(appRule.getEnvironment().metrics(),

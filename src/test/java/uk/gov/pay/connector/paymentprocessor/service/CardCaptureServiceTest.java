@@ -36,9 +36,11 @@ import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.queue.CaptureQueue;
+import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.persistence.OptimisticLockException;
+import javax.ws.rs.WebApplicationException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -52,6 +54,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -93,23 +96,26 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private CaptureQueue mockCaptureQueue;
     @Mock
     private CaptureProcessConfig mockCaptureProcessConfig;
+    @Mock
+    private ConnectorConfiguration mockConfiguration;
 
     @Captor
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
+    Environment mockEnvironment;
     @Before
     public void beforeTest() {
-        Environment mockEnvironment = mock(Environment.class);
+        mockEnvironment = mock(Environment.class);
         Counter mockCounter = mock(Counter.class);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
-        ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         when(mockConfiguration.getCaptureProcessConfig()).thenReturn(mockCaptureProcessConfig);
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null);
 
-        cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService, mockEnvironment, mockCaptureQueue,
+        cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService, 
+                mockEnvironment, mockCaptureQueue,
                 mockConfiguration);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
@@ -332,7 +338,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         try {
             cardCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
         } catch (IllegalStateRuntimeException e) {
-            verify(mockedChargeDao).findByExternalId(chargeEntity.getExternalId());
+            verify(mockedChargeDao, times(2)).findByExternalId(chargeEntity.getExternalId());
             verifyNoMoreInteractions(mockedChargeDao);
             throw e;
         }
