@@ -94,7 +94,7 @@ public class CardCaptureService {
         }
 
         try {
-            return chargeService.updateChargeStatus(charge.getExternalId(), targetStatus);
+            return chargeService.updateChargeStatus(charge, targetStatus);
         } catch (InvalidStateTransitionException e) {
             throw new IllegalStateRuntimeException(charge.getExternalId());
         }

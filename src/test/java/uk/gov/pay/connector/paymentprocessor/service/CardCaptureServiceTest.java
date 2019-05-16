@@ -22,6 +22,7 @@ import org.mockito.Mockito;
 import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -90,6 +91,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private Appender<ILoggingEvent> mockAppender;
     @Mock
     private CaptureQueue mockCaptureQueue;
+    @Mock
+    private CaptureProcessConfig mockCaptureProcessConfig;
 
     @Captor
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
@@ -102,6 +105,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
+        when(mockConfiguration.getCaptureProcessConfig()).thenReturn(mockCaptureProcessConfig);
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null);
 

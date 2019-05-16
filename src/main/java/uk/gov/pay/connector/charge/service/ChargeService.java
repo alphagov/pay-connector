@@ -369,7 +369,7 @@ public class ChargeService {
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    private ChargeEntity updateChargeStatus(ChargeEntity chargeEntity, ChargeStatus chargeStatus) {
+    public ChargeEntity updateChargeStatus(ChargeEntity chargeEntity, ChargeStatus chargeStatus) {
         if (chargeStatus == CAPTURED) {
             chargeEntity.setStatus(CAPTURE_SUBMITTED);
             chargeEventDao.persistChargeEventOf(chargeEntity);
