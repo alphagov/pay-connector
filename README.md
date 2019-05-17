@@ -65,7 +65,7 @@ To run the integration tests, the `DOCKER_HOST` and `DOCKER_CERT_PATH` environme
 The command to run all the tests is:
 
 ```
-    mvn test
+    mvn verify
 ```
 
 ## API Specification
