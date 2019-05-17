@@ -1,15 +1,14 @@
 package uk.gov.pay.connector.queue.sqs;
 
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.AmazonSQSException;
-import com.amazonaws.services.sqs.model.ReceiveMessageResult;
-import com.amazonaws.services.sqs.model.SendMessageResult;
+import com.amazonaws.services.sqs.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.QueueMessage;
 
 import javax.inject.Inject;
+import java.lang.UnsupportedOperationException;
 import java.util.List;
 
 public class SqsQueueService {
@@ -37,7 +36,13 @@ public class SqsQueueService {
 
     public List<QueueMessage> receiveMessages(String queueUrl) throws QueueException {
         try {
-            ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(queueUrl);
+            Integer MAX_MESSAGES = 10;
+            String MESSAGE_ATTRIBUTE_NAME = "All";
+            
+            ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
+            receiveMessageRequest.setMaxNumberOfMessages(MAX_MESSAGES);
+
+            ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest.withMessageAttributeNames(MESSAGE_ATTRIBUTE_NAME));
 
             return QueueMessage.of(receiveMessageResult);
         } catch (AmazonSQSException | UnsupportedOperationException e) {
@@ -45,5 +50,14 @@ public class SqsQueueService {
             throw new QueueException(e.getMessage());
         }
     }
-
+    
+    public DeleteMessageResult deleteMessage(String queueUrl, QueueMessage message) throws QueueException { 
+        try {
+            String messageReceiptHandle = message.getReceiptHandle();
+            return sqsClient.deleteMessage(new DeleteMessageRequest(queueUrl, messageReceiptHandle));
+        } catch (AmazonSQSException | UnsupportedOperationException e) {
+            logger.error("Failed to delete message from SQS queue - {}", e.getMessage());
+            throw new QueueException(e.getMessage());
+        }
+    }
 }
