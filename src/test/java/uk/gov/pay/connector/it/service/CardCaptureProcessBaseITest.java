@@ -3,11 +3,11 @@ package uk.gov.pay.connector.it.service;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Rule;
+import uk.gov.pay.commons.testing.port.PortFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.rules.GuiceAppWithPostgresRule;
-import uk.gov.pay.connector.util.PortFactory;
 
 import java.util.Map;
 

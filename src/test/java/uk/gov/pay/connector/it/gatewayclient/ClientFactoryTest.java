@@ -1,16 +1,18 @@
 package uk.gov.pay.connector.it.gatewayclient;
 
 import com.codahale.metrics.MetricRegistry;
+import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
 import org.glassfish.jersey.client.ClientProperties;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockserver.integration.ClientAndServer;
+import uk.gov.pay.commons.testing.port.PortFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.gateway.ClientFactory;
@@ -18,8 +20,12 @@ import uk.gov.pay.connector.gateway.ClientFactory;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
 import java.net.SocketTimeoutException;
-import java.util.concurrent.TimeUnit;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
@@ -28,12 +34,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-import static org.mockserver.socket.PortFactory.findFreePort;
-import static org.mockserver.verify.VerificationTimes.exactly;
-import static org.mockserver.verify.VerificationTimes.once;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -42,25 +42,22 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 public class ClientFactoryTest {
 
     private DropwizardTestSupport<ConnectorConfiguration> app;
-    private ClientAndServer proxy;
-    private ClientAndServer mockServer;
-    private int serverPort = findFreePort();
-    private int proxyPort = findFreePort();
-    private String serverUrl = format("http://localhost:%s", serverPort);
+    
     private static String DEFAULT_DROPWIZARD_CONFIG = "config/test-it-config.yaml";
 
     @Mock
     MetricRegistry mockMetricRegistry;
+
+    @ClassRule
+    public static WireMockClassRule wireMockRule = new WireMockClassRule(PortFactory.findFreePort());
+
     @Before
     public void setup() {
-        proxy = startClientAndServer("localhost", serverPort, proxyPort);
-        mockServer = startClientAndServer(serverPort);
+        wireMockRule.resetAll();
     }
-
+    
     @After
     public void after() {
-        proxy.stop();
-        mockServer.stop();
         System.clearProperty("https.proxyHost");
         System.clearProperty("https.proxyPort");
         app.after();
@@ -70,40 +67,34 @@ public class ClientFactoryTest {
     public void shouldProxyRequestToTargetServer_whenProxyEnabled() {
         app = startApp(DEFAULT_DROPWIZARD_CONFIG, true);
 
-        mockServer
-                .when(request().withMethod("GET").withPath("/hello"))
-                .respond(response("world").withStatusCode(200));
+        wireMockRule.stubFor(get(urlPathEqualTo("/hello"))
+                .willReturn(aResponse().withBody("world").withStatus(200)));
 
         when(mockMetricRegistry.register(any(), any())).thenReturn(null);
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
                 .createWithDropwizardClient(WORLDPAY, AUTHORISE, mockMetricRegistry);
 
-        client.target(serverUrl).path("hello").request().get();
+        client.target(getServerUrl()).path("hello").request().get();
 
-        mockServer.verify(request().withPath("/hello"), once());
+        wireMockRule.verify(1, getRequestedFor(urlEqualTo("/hello")));
         assertEquals(90000, client.getConfiguration().getProperty(ClientProperties.READ_TIMEOUT));
-
-        proxy.verify(request().withPath("/hello"), once());
     }
 
     @Test
     public void shouldNotProxyRequestToTargetServer_whenProxyDisabled() {
         app = startApp(DEFAULT_DROPWIZARD_CONFIG, false);
 
-        mockServer
-                .when(request().withMethod("GET").withPath("/hello"))
-                .respond(response("world").withStatusCode(200));
+        wireMockRule.stubFor(get(urlPathEqualTo("/hello"))
+                .willReturn(aResponse().withBody("world").withStatus(200)));
         when(mockMetricRegistry.register(any(), any())).thenReturn(null);
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
                 .createWithDropwizardClient(WORLDPAY, AUTHORISE, mockMetricRegistry);
 
-        client.target(serverUrl).path("hello").request().get();
+        client.target(getServerUrl()).path("hello").request().get();
 
-        mockServer.verify(request().withPath("/hello"), once());
+        wireMockRule.verify(1, getRequestedFor(urlEqualTo("/hello")));
         assertEquals(90000, client.getConfiguration().getProperty(ClientProperties.READ_TIMEOUT));
-
-        proxy.verify(request().withPath("/hello"), exactly(0));
     }
 
     @Test
@@ -113,14 +104,14 @@ public class ClientFactoryTest {
         when(mockMetricRegistry.register(any(), any())).thenReturn(null);
 
         String path = "/hello";
-        mockServer
-                .when(request().withMethod("GET").withPath(path))
-                .respond(response("world").withStatusCode(200).withDelay(TimeUnit.MILLISECONDS, 2000));
 
+        wireMockRule.stubFor(get(urlPathEqualTo("/hello"))
+                .willReturn(aResponse().withBody("world").withStatus(200).withFixedDelay(2000)));
+        
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
                 .createWithDropwizardClient(WORLDPAY, AUTHORISE, mockMetricRegistry);
 
-        Invocation.Builder request = client.target(serverUrl).path(path).request();
+        Invocation.Builder request = client.target(getServerUrl()).path(path).request();
         long startTime = System.currentTimeMillis();
         try {
             request.get();
@@ -184,14 +175,14 @@ public class ClientFactoryTest {
         when(mockMetricRegistry.register(any(), any())).thenReturn(null);
 
         String path = "/hello";
-        mockServer
-                .when(request().withMethod("GET").withPath(path))
-                .respond(response("world").withStatusCode(200).withDelay(TimeUnit.MILLISECONDS, 2000));
+        
+        wireMockRule.stubFor(get(urlPathEqualTo("/hello"))
+                .willReturn(aResponse().withBody("world").withStatus(200).withFixedDelay(2000)));
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
                 .createWithDropwizardClient(WORLDPAY, AUTHORISE, mockMetricRegistry);
 
-        Invocation.Builder request = client.target(serverUrl).path(path).request();
+        Invocation.Builder request = client.target(getServerUrl()).path(path).request();
 
         Long authOverriddenTimeout = app.getConfiguration().getWorldpayConfig().getJerseyClientOverrides()
                 .map(override -> override.getAuth().getReadTimeout().toMicroseconds())
@@ -206,14 +197,14 @@ public class ClientFactoryTest {
         when(mockMetricRegistry.register(any(), any())).thenReturn(null);
 
         String path = "/hello";
-        mockServer
-                .when(request().withMethod("GET").withPath(path))
-                .respond(response("world").withStatusCode(200).withDelay(TimeUnit.MILLISECONDS, 2000));
+        
+        wireMockRule.stubFor(get(urlPathEqualTo("/hello"))
+                .willReturn(aResponse().withBody("world").withStatus(200).withFixedDelay(2000)));
 
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
                 .createWithDropwizardClient(SMARTPAY, AUTHORISE, mockMetricRegistry);
 
-        Invocation.Builder request = client.target(serverUrl).path(path).request();
+        Invocation.Builder request = client.target(getServerUrl()).path(path).request();
         Long authOverriddenTimeout = app.getConfiguration().getSmartpayConfig().getJerseyClientOverrides()
                 .map(override -> override.getAuth().getReadTimeout().toMicroseconds())
                 .orElse(0L);
@@ -252,12 +243,16 @@ public class ClientFactoryTest {
                 ResourceHelpers.resourceFilePath(configuration));
         if (proxyEnabled) {
             System.setProperty(PROXY_HOST_PROPERTY, "localhost");
-            System.setProperty(PROXY_PORT_PROPERTY, String.valueOf(proxyPort));
+            System.setProperty(PROXY_PORT_PROPERTY, String.valueOf(wireMockRule.port()));
         } else {
             System.clearProperty(PROXY_HOST_PROPERTY);
             System.clearProperty(PROXY_PORT_PROPERTY);
         }
         app.before();
         return app;
+    }
+
+    private String getServerUrl() {
+        return format("http://localhost:%s", wireMockRule.port());
     }
 }
