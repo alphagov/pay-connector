@@ -22,6 +22,9 @@ import static uk.gov.pay.connector.junit.PostgresTestDocker.getDbPassword;
 import static uk.gov.pay.connector.junit.PostgresTestDocker.getDbUsername;
 import static uk.gov.pay.connector.junit.PostgresTestDocker.getDbUri;
 import static uk.gov.pay.connector.junit.PostgresTestDocker.getOrCreate;
+import static uk.gov.pay.connector.junit.SqsTestDocker.getEndpoint;
+import static uk.gov.pay.connector.junit.SqsTestDocker.getRegion;
+import static uk.gov.pay.connector.junit.SqsTestDocker.getQueueUrl;
 
 /**
  * Runs a Dropwizard application with the given {@link DropwizardConfig} before the Test class if there is not an
@@ -59,6 +62,10 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
         DropwizardConfig dropwizardConfigAnnotation = dropwizardConfigAnnotation();
         List<ConfigOverride> configOverride = newArrayList();
 
+        if (dropwizardConfigAnnotation.withDockerSqs()) {
+            SqsTestDocker.getOrCreate(new String[]{"capture-queue"});
+        }
+        
         if (dropwizardConfigAnnotation.withDockerPostgres()) {
             getOrCreate();
             configOverride.add(config("database.url", getDbUri()));
@@ -69,12 +76,15 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
         if (dropwizardConfigAnnotation.configOverrides().length > 0) {
             Arrays.stream(dropwizardConfigAnnotation.configOverrides()).forEach(c -> configOverride.add(config(c.key(), c.value())));
         }
-        
+
         configOverride.add(config("worldpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/jsp/merchant/xml/paymentService.jsp"));
         configOverride.add(config("smartpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/pal/servlet/soap/Payment"));
         configOverride.add(config("epdq.urls.test", "http://localhost:" + WIREMOCK_PORT + "/epdq"));
         configOverride.add(config("smartpay.urls.test", "http://localhost:" + WIREMOCK_PORT + "/pal/servlet/soap/Payment"));
         configOverride.add(config("stripe.url", "http://localhost:" + WIREMOCK_PORT));
+        configOverride.add(config("sqsConfig.region", getRegion() ));
+        configOverride.add(config("sqsConfig.endpoint", getEndpoint() ));
+        configOverride.add(config("sqsConfig.captureQueueUrl", getQueueUrl("capture-queue")  ));
 
         try {
             Optional<DropwizardTestSupport> createdApp = createIfNotRunning(dropwizardConfigAnnotation.app(), dropwizardConfigAnnotation.config(), configOverride.toArray(new ConfigOverride[0]));

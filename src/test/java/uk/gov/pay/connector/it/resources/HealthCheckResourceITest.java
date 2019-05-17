@@ -2,7 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import org.junit.Rule;
 import org.junit.Test;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresAndSqsRule;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
@@ -11,7 +11,7 @@ import static org.hamcrest.Matchers.is;
 public class HealthCheckResourceITest {
 
     @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    public DropwizardAppWithPostgresAndSqsRule app = new DropwizardAppWithPostgresAndSqsRule();
     
     @Test
     public void checkHealthcheck_isHealthy() {

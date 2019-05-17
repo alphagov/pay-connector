@@ -27,7 +27,7 @@ import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresAndSqsRule;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static java.util.UUID.randomUUID;
@@ -49,7 +49,7 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
 public class StripePaymentProviderTest {
 
     @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    public DropwizardAppWithPostgresAndSqsRule app = new DropwizardAppWithPostgresAndSqsRule();
 
     private StripePaymentProvider stripePaymentProvider;
 

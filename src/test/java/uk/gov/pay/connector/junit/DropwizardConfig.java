@@ -55,6 +55,13 @@ public @interface DropwizardConfig {
      * @return boolean
      */
     boolean withDockerPostgres() default true;
+
+    /**
+     * Run am SQS docker image as a dependency of the given Dropwizard Application
+     *
+     * @return boolean
+     */
+    boolean withDockerSqs() default true;
     
     ConfigOverride[] configOverrides() default {};
 }

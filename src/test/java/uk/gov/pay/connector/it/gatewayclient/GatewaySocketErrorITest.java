@@ -7,7 +7,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
-import uk.gov.pay.connector.rules.GuiceAppWithPostgresRule;
+import uk.gov.pay.connector.rules.GuiceAppWithPostgresAndSqsRule;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
@@ -22,7 +22,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPR
 public class GatewaySocketErrorITest extends BaseGatewayITest {
 
     @Rule
-    public GuiceAppWithPostgresRule app = new GuiceAppWithPostgresRule(
+    public GuiceAppWithPostgresAndSqsRule app = new GuiceAppWithPostgresAndSqsRule(
             config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"));
 
     @Before

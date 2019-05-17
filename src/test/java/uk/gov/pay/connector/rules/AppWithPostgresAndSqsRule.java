@@ -13,6 +13,7 @@ import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.junit.SqsTestDocker;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.List;
@@ -20,25 +21,31 @@ import java.util.List;
 import static com.google.common.collect.Lists.newArrayList;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
+import static uk.gov.pay.connector.junit.SqsTestDocker.getEndpoint;
+import static uk.gov.pay.connector.junit.SqsTestDocker.getQueueUrl;
+import static uk.gov.pay.connector.junit.SqsTestDocker.getRegion;
 
-abstract public class AppWithPostgresRule implements TestRule {
-    private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresRule.class);
+abstract public class AppWithPostgresAndSqsRule implements TestRule {
+    private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresAndSqsRule.class);
 
     private final String configFilePath;
     private final PostgresDockerRule postgres;
+    private final SqsTestDocker sqs;
     private final AppRule<ConnectorConfiguration> appRule;
     private final RuleChain rules;
 
     private DatabaseTestHelper databaseTestHelper;
 
-    public AppWithPostgresRule(ConfigOverride... configOverrides) {
+    public AppWithPostgresAndSqsRule(ConfigOverride... configOverrides) {
         this("config/test-it-config.yaml", configOverrides);
     }
 
-    public AppWithPostgresRule(String configPath, ConfigOverride... configOverrides) {
+    public AppWithPostgresAndSqsRule(String configPath, ConfigOverride... configOverrides) {
         configFilePath = resourceFilePath(configPath);
         try {
             postgres = new PostgresDockerRule();
+            sqs = new SqsTestDocker();
+            SqsTestDocker.getOrCreate(new String[]{"capture-queue"});
         } catch (DockerException e) {
             throw new RuntimeException(e);
         }
@@ -108,6 +115,9 @@ abstract public class AppWithPostgresRule implements TestRule {
         newConfigOverride.add(config("database.url", postgresDockerRule.getConnectionUrl()));
         newConfigOverride.add(config("database.user", postgresDockerRule.getUsername()));
         newConfigOverride.add(config("database.password", postgresDockerRule.getPassword()));
+        newConfigOverride.add(config("sqsConfig.region", getRegion() ));
+        newConfigOverride.add(config("sqsConfig.endpoint", getEndpoint() ));
+        newConfigOverride.add(config("sqsConfig.captureQueueUrl", getQueueUrl("capture-queue")  ));
         return newConfigOverride.toArray(new ConfigOverride[0]);
     }
 

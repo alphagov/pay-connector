@@ -15,11 +15,10 @@ import org.junit.runner.RunWith;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresAndSqsRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.ZonedDateTime;
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
@@ -32,7 +31,7 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 public class WalletApiContractTest {
 
     @ClassRule
-    public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    public static DropwizardAppWithPostgresAndSqsRule app = new DropwizardAppWithPostgresAndSqsRule();
 
     @TestTarget
     public static Target target;

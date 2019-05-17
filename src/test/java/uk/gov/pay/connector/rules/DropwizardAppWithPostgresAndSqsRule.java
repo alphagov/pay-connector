@@ -4,9 +4,9 @@ import io.dropwizard.testing.ConfigOverride;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 
-public class DropwizardAppWithPostgresRule extends AppWithPostgresRule {
+public class DropwizardAppWithPostgresAndSqsRule extends AppWithPostgresAndSqsRule {
 
-    public DropwizardAppWithPostgresRule(ConfigOverride... configOverrides) {
+    public DropwizardAppWithPostgresAndSqsRule(ConfigOverride... configOverrides) {
         super(configOverrides);
     }
 

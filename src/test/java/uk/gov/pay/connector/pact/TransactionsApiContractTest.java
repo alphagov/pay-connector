@@ -20,7 +20,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresAndSqsRule;
 import uk.gov.pay.connector.util.AddChargeParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -45,7 +45,7 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 public class TransactionsApiContractTest {
 
     @ClassRule
-    public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    public static DropwizardAppWithPostgresAndSqsRule app = new DropwizardAppWithPostgresAndSqsRule();
 
     @TestTarget
     public static Target target;

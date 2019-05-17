@@ -8,7 +8,7 @@ import org.junit.Test;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresAndSqsRule;
 import uk.gov.pay.connector.util.PortFactory;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
@@ -32,7 +32,7 @@ public class CardAuthorizeDelayedGatewayResponseTest extends ChargingITestBase {
     private int port = PortFactory.findFreePort();
 
     @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
+    public DropwizardAppWithPostgresAndSqsRule app = new DropwizardAppWithPostgresAndSqsRule(
             config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
             config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"),
             config("epdq.urls.test", "http://localhost:" + port + "/epdq")

@@ -6,7 +6,7 @@ import org.junit.Rule;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.it.util.ChargeUtils;
-import uk.gov.pay.connector.rules.GuiceAppWithPostgresRule;
+import uk.gov.pay.connector.rules.GuiceAppWithPostgresAndSqsRule;
 import uk.gov.pay.connector.util.PortFactory;
 
 import java.util.Map;
@@ -36,7 +36,7 @@ abstract public class CardCaptureProcessBaseITest {
     public WireMockRule wireMockRule = new WireMockRule(port);
 
     @Rule
-    public GuiceAppWithPostgresRule app = new GuiceAppWithPostgresRule(
+    public GuiceAppWithPostgresAndSqsRule app = new GuiceAppWithPostgresAndSqsRule(
             config("worldpay.urls.test", "http://localhost:" + port + "/jsp/merchant/xml/paymentService.jsp"),
             config("smartpay.urls.test", "http://localhost:" + port + "/pal/servlet/soap/Payment"),
             config("stripe.url", "http://localhost:" + port ),

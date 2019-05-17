@@ -13,7 +13,7 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresAndSqsRule;
 
 import javax.ws.rs.client.ClientBuilder;
 import java.net.URI;
@@ -40,7 +40,7 @@ public class GooglePayForWorldpayTest {
     private String signedMessage = "{\"encryptedMessage\":\"3QcR7WccaLDaSSBn1b4yNY3EjVq16bwxAPF5TITtznbuQCYZCEVWvqQTsJiZA8rChdL94w3CxJYWVrJ580IJvRZ/xsKxa3DN8WnLf9gu6vQ8ky8Xes08qA2wvUNkiJBUtDWE7NmKPxkrmvz2a8KGkAFrrsYghVIBYBXALxadQg9NawHDxZmBrVhxC+NvNtH1GFo0B2mUvyayzxKwqYs8qd7PBiVWEoNFShilLOA65jYhR6C6vEkt+n9BRywtwrBA0f8CX8Ay4TebufWVA6lDAGZWHxWJ2alBrxKE52dhkf6vBxWwDk3GrjAQf97bZ6pfw+hQMZ4n4QLFzvTQD2e1RKNjsaNt5cn2OgvwKM4UbwiByowRMSN9ZPynDG/rsnCkNLBS5sZEMkW3K3LMR1xYPMiBUDnoqEt9ONNYMxUJE+toUF7H6fgBsT/Ju+52kpiDQgwhbwbUw97TKA\\u003d\\u003d\",\"ephemeralPublicKey\":\"BGgZEJ5TvU0BuA5/BYql24H5Ce9N+R7VgoivFv5lH6FyWXvqDQMBlVb4vZGSIR6Ziknpkalk2hYOiSrIkhxUmaM\\u003d\",\"tag\":\"HDfoODJBoosAef3H6NYH9jrUvm2/bmqNZDPTBfOFv4U\\u003d\"}";
 
     @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
+    public DropwizardAppWithPostgresAndSqsRule app = new DropwizardAppWithPostgresAndSqsRule(
             config("worldpay.urls.test", "https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp"));
     
     @Test
