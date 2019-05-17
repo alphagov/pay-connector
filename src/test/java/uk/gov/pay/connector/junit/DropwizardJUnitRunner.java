@@ -7,7 +7,7 @@ import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.model.FrameworkField;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
-import uk.gov.pay.connector.util.PortFactory;
+import uk.gov.pay.commons.testing.port.PortFactory;
 
 import java.util.Arrays;
 import java.util.List;

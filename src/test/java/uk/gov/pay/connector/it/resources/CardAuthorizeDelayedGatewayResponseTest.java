@@ -6,10 +6,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.commons.model.ErrorIdentifier;
+import uk.gov.pay.commons.testing.port.PortFactory;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
-import uk.gov.pay.connector.util.PortFactory;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.lang.reflect.Field;
