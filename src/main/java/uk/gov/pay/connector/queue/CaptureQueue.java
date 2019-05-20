@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.gateway.CaptureResponse;
+import uk.gov.pay.connector.paymentprocessor.service.CardCaptureMessageProcess;
 import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 
 import javax.inject.Inject;
@@ -16,16 +18,20 @@ public class CaptureQueue {
 
     private final String captureQueueUrl;
     private SqsQueueService sqsQueueService;
+    
+    private CardCaptureMessageProcess cardCaptureMessageProcess;
 
     // @TODO(sfount) capture specific message attribute
-    private static final String CAPTURE_MESSAGE_ATTRIBUTE_NAME = "All";
+    private String CAPTURE_MESSAGE_ATTRIBUTE_NAME = "All";
 
     @Inject
     public CaptureQueue(
             SqsQueueService sqsQueueService,
-            ConnectorConfiguration connectorConfiguration) { 
+            ConnectorConfiguration connectorConfiguration,
+            CardCaptureMessageProcess cardCaptureMessageProcess) {
         this.sqsQueueService = sqsQueueService;
         this.captureQueueUrl = connectorConfiguration.getSqsConfig().getCaptureQueueUrl();
+        this.cardCaptureMessageProcess = cardCaptureMessageProcess;
     }
 
     public void sendForCapture(String externalId) throws QueueException {
@@ -39,11 +45,24 @@ public class CaptureQueue {
         logger.info("Charge [{}] added to capture queue. Message ID [{}]", externalId, queueMessage.getMessageId());
     }
     
-    public List<QueueMessage> receiveCaptureMessages() throws QueueException {
-        return sqsQueueService.receiveMessages(this.captureQueueUrl, CAPTURE_MESSAGE_ATTRIBUTE_NAME);
-    }
-    
-    public void markMessageAsProcessed(QueueMessage message) throws QueueException {    
-        sqsQueueService.deleteMessage(this.captureQueueUrl, message.getReceiptHandle());
+    public void receiveCaptureMessages() throws QueueException {
+        List<QueueMessage> captureMessages = sqsQueueService.receiveMessages(this.captureQueueUrl, CAPTURE_MESSAGE_ATTRIBUTE_NAME);
+        for (QueueMessage message: captureMessages) {
+            try {
+                CaptureResponse gatewayResponse = cardCaptureMessageProcess.runCapture(message);
+                
+                if (gatewayResponse.isSuccessful()) {
+                    sqsQueueService.deleteMessage(this.captureQueueUrl, message);
+                } else {
+                    logger.info(
+                            "Failed to capture [messageBody={}] due to: {}",
+                            message.getMessageBody(),
+                            gatewayResponse.getError().get().getMessage()
+                    );
+                }
+            } catch (Exception e) {
+                logger.warn("Error capturing charge from SQS message [{}]", e);
+            }
+        }
     }
 }
