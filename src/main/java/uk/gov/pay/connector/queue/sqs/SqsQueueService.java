@@ -34,15 +34,14 @@ public class SqsQueueService {
         }
     }
 
-    public List<QueueMessage> receiveMessages(String queueUrl) throws QueueException {
+    public List<QueueMessage> receiveMessages(String queueUrl, String messageAttributeName) throws QueueException {
         try {
             Integer MAX_MESSAGES = 10;
-            String MESSAGE_ATTRIBUTE_NAME = "All";
             
             ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
             receiveMessageRequest.setMaxNumberOfMessages(MAX_MESSAGES);
 
-            ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest.withMessageAttributeNames(MESSAGE_ATTRIBUTE_NAME));
+            ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest.withMessageAttributeNames(messageAttributeName));
 
             return QueueMessage.of(receiveMessageResult);
         } catch (AmazonSQSException | UnsupportedOperationException e) {

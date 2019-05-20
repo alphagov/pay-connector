@@ -19,11 +19,7 @@ public class CardCaptureMessageProcess {
     public CardCaptureMessageProcess() { 
     }
     
-    public void runCapture(List<QueueMessage> captureMessaages) { 
-        for (QueueMessage message: captureMessaages) {
-            LOGGER.info("SQS message received [{}] - {}", message.getMessageId(), message.getMessageBody());
-            // @TODO(sfount) use CaptureQueue to interact with queue specific handling 
-//              sqsQueueService.deleteMessage(queueUrl, message);
-        }   
+    public void runCapture(QueueMessage captureMessage) {  
+        LOGGER.info("SQS message received [{}] - {}", captureMessage.getMessageId(), captureMessage.getMessageBody());
     }
 }
