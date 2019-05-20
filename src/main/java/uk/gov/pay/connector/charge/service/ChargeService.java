@@ -369,7 +369,7 @@ public class ChargeService {
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    private ChargeEntity updateChargeStatus(ChargeEntity chargeEntity, ChargeStatus chargeStatus) {
+    public ChargeEntity updateChargeStatus(ChargeEntity chargeEntity, ChargeStatus chargeStatus) {
         if (chargeStatus == CAPTURED) {
             chargeEntity.setStatus(CAPTURE_SUBMITTED);
             chargeEventDao.persistChargeEventOf(chargeEntity);
@@ -390,20 +390,6 @@ public class ChargeService {
 
     public Optional<ChargeEntity> findByProviderAndTransactionId(String paymentGatewayName, String transactionId) {
         return chargeDao.findByProviderAndTransactionId(paymentGatewayName, transactionId);
-    }
-
-    public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
-        return chargeDao.findByExternalId(externalId).map(charge -> {
-            ChargeStatus targetStatus = charge.isDelayedCapture() ? AWAITING_CAPTURE_REQUEST : CAPTURE_APPROVED;
-
-            try {
-                updateChargeStatus(charge, targetStatus);
-            } catch (InvalidStateTransitionException e) {
-                throw new IllegalStateRuntimeException(charge.getExternalId());
-            }
-
-            return charge;
-        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
 
     public ChargeEntity markChargeAsCaptureApproved(String externalId) {

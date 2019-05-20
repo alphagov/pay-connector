@@ -80,7 +80,7 @@ captureProcessConfig:
   captureUsingSQS: ${CAPTURE_USING_SQS_FEATURE_FLAG:-false}
 
 sqsConfig:
-  endpoint: ${AWS_SQS_ENDPOINT}
+  endpoint: ${AWS_SQS_ENDPOINT:-localhost}
   region: ${AWS_SQS_REGION}
   captureQueueUrl: ${AWS_SQS_CAPTURE_QUEUE_URL}
 

@@ -12,6 +12,7 @@ import org.junit.runners.model.Statement;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.commons.testing.port.PortFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -23,7 +24,8 @@ import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
 
 abstract public class AppWithPostgresRule implements TestRule {
     private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresRule.class);
-
+    public final static int WIREMOCK_PORT = PortFactory.findFreePort();
+    
     private final String configFilePath;
     private final PostgresDockerRule postgres;
     private final AppRule<ConnectorConfiguration> appRule;
@@ -43,9 +45,17 @@ abstract public class AppWithPostgresRule implements TestRule {
             throw new RuntimeException(e);
         }
 
-        appRule = newApplication(configFilePath, overrideDatabaseConfig(configOverrides, postgres));
-
+        ConfigOverride[] newConfigOverrides = overrideDatabaseConfig(configOverrides, postgres);
+        newConfigOverrides = overrideSqsConfig(newConfigOverrides);
+        appRule = newApplication(configFilePath, newConfigOverrides);
+        
         rules = RuleChain.outerRule(postgres).around(appRule);
+    }
+
+    private ConfigOverride[] overrideSqsConfig(ConfigOverride[] configOverrides) {
+        List<ConfigOverride> newConfigOverride = newArrayList(configOverrides);
+        newConfigOverride.add(config("sqsConfig.captureQueueUrl", "http://localhost:" + WIREMOCK_PORT + "/capture-queue"));
+        return newConfigOverride.toArray(new ConfigOverride[0]);
     }
 
     abstract protected AppRule<ConnectorConfiguration> newApplication(
