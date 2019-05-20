@@ -1,7 +1,9 @@
 package uk.gov.pay.connector.queue;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -49,7 +51,11 @@ public class CaptureQueue {
         List<QueueMessage> captureMessages = sqsQueueService.receiveMessages(this.captureQueueUrl, CAPTURE_MESSAGE_ATTRIBUTE_NAME);
         for (QueueMessage message: captureMessages) {
             try {
-                CaptureResponse gatewayResponse = cardCaptureMessageProcess.runCapture(message);
+                logger.info("SQS message received [{}] - {}", message.getMessageId(), message.getMessageBody());
+
+                String externalChargeId = getExternalChargeIdFromMessage(message);
+
+                CaptureResponse gatewayResponse = cardCaptureMessageProcess.runCapture(externalChargeId);
                 
                 if (gatewayResponse.isSuccessful()) {
                     sqsQueueService.deleteMessage(this.captureQueueUrl, message);
@@ -65,4 +71,11 @@ public class CaptureQueue {
             }
         }
     }
+
+    private String getExternalChargeIdFromMessage(QueueMessage message) {
+        JsonObject captureObject = new Gson().fromJson(message.getMessageBody(), JsonObject.class);
+        return captureObject.get("chargeId").getAsString();
+    }
+
+
 }
