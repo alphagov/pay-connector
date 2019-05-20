@@ -127,7 +127,6 @@ public class ConnectorModule extends AbstractModule {
     }
 
     @Provides
-    @Singleton
     public AmazonSQS sqsClient(ConnectorConfiguration connectorConfiguration) {
 
         if (isEmpty(connectorConfiguration.getSqsConfig().getEndpoint())) {
