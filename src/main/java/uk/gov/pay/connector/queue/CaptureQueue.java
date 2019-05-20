@@ -21,7 +21,7 @@ public class CaptureQueue {
     private CardCaptureMessageProcess cardCaptureMessageProcess;
 
     // @TODO(sfount) capture specific message attribute
-    String CAPTURE_MESSAGE_ATTRIBUTE_NAME = "All";
+    private String CAPTURE_MESSAGE_ATTRIBUTE_NAME = "All";
 
     @Inject
     public CaptureQueue(

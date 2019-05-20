@@ -4,7 +4,6 @@ import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.queue.CaptureQueue;
 import uk.gov.pay.connector.queue.QueueException;
 
@@ -14,24 +13,23 @@ import java.util.concurrent.TimeUnit;
 
 public class SQSMessageReceiver implements Managed {
     
+    private final String SQS_MESSAGE_RECEIVER_NAME = "sqs-message-receiver";
+    private final int TOTAL_MESSAGE_RECEIVER_THREADS = 1;
+    
     private static final Logger LOGGER = LoggerFactory.getLogger(SQSMessageReceiver.class);
 
     private ScheduledExecutorService scheduledExecutorService;
     private CaptureQueue captureQueue;
     
-    private String SQS_MESSAGE_RECEIVER_HANDLER_NAME = "sqs-message-receiver";
-    private int TOTAL_THREADS = 1;
-  
     @Inject
-    public SQSMessageReceiver(ConnectorConfiguration configuration,
-                              CaptureQueue captureQueue,
+    public SQSMessageReceiver(CaptureQueue captureQueue,
                               Environment environment) { 
         this.captureQueue = captureQueue;
         
         scheduledExecutorService = environment
                 .lifecycle()
-                .scheduledExecutorService(SQS_MESSAGE_RECEIVER_HANDLER_NAME)
-                .threads(TOTAL_THREADS)
+                .scheduledExecutorService(SQS_MESSAGE_RECEIVER_NAME)
+                .threads(TOTAL_MESSAGE_RECEIVER_THREADS)
                 .build();
     }
     

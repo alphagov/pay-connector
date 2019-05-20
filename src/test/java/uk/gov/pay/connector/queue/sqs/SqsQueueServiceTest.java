@@ -37,6 +37,7 @@ public class SqsQueueServiceTest {
 
     private static final String QUEUE_URL = "http://queue-url";
     private static final String MESSAGE = "{chargeId: 123}";
+    private static final String MESSAGE_ATTRIBUTE_NAME = "All";
 
     @Mock
     private AmazonSQS mockSqsClient;
@@ -88,7 +89,7 @@ public class SqsQueueServiceTest {
 
         when(mockSqsClient.receiveMessage(QUEUE_URL)).thenReturn(receiveMessageResult);
 
-        List<QueueMessage> queueMessages = sqsQueueService.receiveMessages(QUEUE_URL);
+        List<QueueMessage> queueMessages = sqsQueueService.receiveMessages(QUEUE_URL, MESSAGE_ATTRIBUTE_NAME);
         Assert.assertThat(queueMessages.size(), is(1));
         Assert.assertThat(queueMessages.get(0).getMessageId(), is("test-message-id"));
         Assert.assertThat(queueMessages.get(0).getReceiptHandle(), is("test-receipt-handle"));
@@ -100,7 +101,7 @@ public class SqsQueueServiceTest {
         ReceiveMessageResult receiveMessageResult = new ReceiveMessageResult();
         when(mockSqsClient.receiveMessage(QUEUE_URL)).thenReturn(receiveMessageResult);
 
-        List<QueueMessage> queueMessages = sqsQueueService.receiveMessages(QUEUE_URL);
+        List<QueueMessage> queueMessages = sqsQueueService.receiveMessages(QUEUE_URL, MESSAGE_ATTRIBUTE_NAME);
         assertTrue(queueMessages.isEmpty());
     }
 
@@ -108,6 +109,6 @@ public class SqsQueueServiceTest {
     public void shouldThrowExceptionIfMessageCannotBeReceivedFromQueue() throws QueueException {
         when(mockSqsClient.receiveMessage(anyString())).thenThrow(AmazonSQSException.class);
 
-        sqsQueueService.receiveMessages(QUEUE_URL);
+        sqsQueueService.receiveMessages(QUEUE_URL, MESSAGE_ATTRIBUTE_NAME);
     }
 }

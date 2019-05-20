@@ -138,7 +138,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
         environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
-        
+
         if (configuration.isXrayEnabled())
             Xray.init(environment, "pay-connector", Optional.empty(), "/v1/*");
     }
