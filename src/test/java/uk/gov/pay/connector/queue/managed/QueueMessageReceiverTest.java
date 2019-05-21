@@ -9,7 +9,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureMessageProcess;
-import uk.gov.pay.connector.queue.CaptureQueue;
 
 import java.util.concurrent.ScheduledExecutorService;
 

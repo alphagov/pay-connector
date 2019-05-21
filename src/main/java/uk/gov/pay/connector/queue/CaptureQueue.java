@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.paymentprocessor.service.CardCaptureMessageProcess;
 import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 
 import javax.inject.Inject;
@@ -17,20 +16,16 @@ public class CaptureQueue {
 
     private final String captureQueueUrl;
     private SqsQueueService sqsQueueService;
-    
-    private CardCaptureMessageProcess cardCaptureMessageProcess;
 
     // @TODO(sfount) capture specific message attribute
-    private String CAPTURE_MESSAGE_ATTRIBUTE_NAME = "All";
+    private static final String CAPTURE_MESSAGE_ATTRIBUTE_NAME = "All";
 
     @Inject
     public CaptureQueue(
             SqsQueueService sqsQueueService,
-            ConnectorConfiguration connectorConfiguration,
-            CardCaptureMessageProcess cardCaptureMessageProcess) {
+            ConnectorConfiguration connectorConfiguration) { 
         this.sqsQueueService = sqsQueueService;
         this.captureQueueUrl = connectorConfiguration.getSqsConfig().getCaptureQueueUrl();
-        this.cardCaptureMessageProcess = cardCaptureMessageProcess;
     }
 
     public void sendForCapture(String externalId) throws QueueException {
