@@ -49,6 +49,6 @@ public class CaptureQueue {
     }
     
     public void markMessageAsProcessed(QueueMessage message) throws QueueException {    
-        sqsQueueService.deleteMessage(this.captureQueueUrl, message);
+        sqsQueueService.deleteMessage(this.captureQueueUrl, message.getReceiptHandle());
     }
 }

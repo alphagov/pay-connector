@@ -13,8 +13,8 @@ import java.util.concurrent.TimeUnit;
 
 public class QueueMessageReceiver implements Managed {
 
-    private final String SQS_MESSAGE_RECEIVER_NAME = "sqs-message-receiver";
-    private final int TOTAL_MESSAGE_RECEIVER_THREADS = 1;
+    private static final String SQS_MESSAGE_RECEIVER_NAME = "sqs-message-receiver";
+    private static final int TOTAL_MESSAGE_RECEIVER_THREADS = 1;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(QueueMessageReceiver.class);
 
@@ -35,12 +35,13 @@ public class QueueMessageReceiver implements Managed {
 
     @Override
     public void start() {
-        int INITIAL_DELAY = 1;
-        int DELAY = 1;
+        // @TODO(sfount) fetch these variables from environment config
+        int initialDelay = 1;
+        int delay = 1;
         scheduledExecutorService.scheduleWithFixedDelay(
                 receiver(),
-                INITIAL_DELAY,
-                DELAY,
+                initialDelay,
+                delay,
                 TimeUnit.SECONDS);
     }
 

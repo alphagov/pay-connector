@@ -36,12 +36,12 @@ public class SqsQueueService {
 
     public List<QueueMessage> receiveMessages(String queueUrl, String messageAttributeName) throws QueueException {
         try {
-            Integer MAX_MESSAGES = 10;
-            
             ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
-            receiveMessageRequest.setMaxNumberOfMessages(MAX_MESSAGES);
+            receiveMessageRequest
+                    .withMessageAttributeNames(messageAttributeName)
+                    .withMaxNumberOfMessages(10);
 
-            ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest.withMessageAttributeNames(messageAttributeName));
+            ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
 
             return QueueMessage.of(receiveMessageResult);
         } catch (AmazonSQSException | UnsupportedOperationException e) {
@@ -50,9 +50,8 @@ public class SqsQueueService {
         }
     }
     
-    public DeleteMessageResult deleteMessage(String queueUrl, QueueMessage message) throws QueueException { 
+    public DeleteMessageResult deleteMessage(String queueUrl, String messageReceiptHandle) throws QueueException { 
         try {
-            String messageReceiptHandle = message.getReceiptHandle();
             return sqsClient.deleteMessage(new DeleteMessageRequest(queueUrl, messageReceiptHandle));
         } catch (AmazonSQSException | UnsupportedOperationException e) {
             logger.error("Failed to delete message from SQS queue - {}", e.getMessage());
