@@ -10,7 +10,8 @@ public enum ExpirableChargeStatus {
     AUTHORISATION_3DS_REQUIRED(ChargeStatus.AUTHORISATION_3DS_REQUIRED, AuthorisationStage.DURING_AUTHORISATION, ExpiryThresholdType.REGULAR),
     AUTHORISATION_3DS_READY(ChargeStatus.AUTHORISATION_3DS_READY, AuthorisationStage.DURING_AUTHORISATION, ExpiryThresholdType.REGULAR),
     AUTHORISATION_SUCCESS(ChargeStatus.AUTHORISATION_SUCCESS, AuthorisationStage.POST_AUTHORISATION, ExpiryThresholdType.REGULAR),
-    AWAITING_CAPTURE_REQUEST(ChargeStatus.AWAITING_CAPTURE_REQUEST, AuthorisationStage.POST_AUTHORISATION, ExpiryThresholdType.DELAYED);
+    AWAITING_CAPTURE_REQUEST(ChargeStatus.AWAITING_CAPTURE_REQUEST, AuthorisationStage.POST_AUTHORISATION, ExpiryThresholdType.DELAYED),
+    AUTHORISATION_ERROR(ChargeStatus.AUTHORISATION_ERROR, AuthorisationStage.POST_AUTHORISATION, ExpiryThresholdType.REGULAR);
     
     ExpirableChargeStatus(ChargeStatus chargeStatus, AuthorisationStage authorisationStage, ExpiryThresholdType expiryThresholdType) {
         this.chargeStatus = chargeStatus;

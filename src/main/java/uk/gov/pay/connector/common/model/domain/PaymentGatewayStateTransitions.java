@@ -76,6 +76,7 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(ENTERING_CARD_DETAILS, AUTHORISATION_ABORTED, "");
         graph.putEdgeValue(ENTERING_CARD_DETAILS, USER_CANCELLED, "user clicked cancel");
         graph.putEdgeValue(ENTERING_CARD_DETAILS, SYSTEM_CANCELLED, "");
+        graph.putEdgeValue(AUTHORISATION_ERROR, EXPIRE_CANCEL_READY, "");
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_ABORTED, "");
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_SUCCESS, "Gateway response: AUTHORISED");
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_REJECTED, "Gateway response: REJECTED");

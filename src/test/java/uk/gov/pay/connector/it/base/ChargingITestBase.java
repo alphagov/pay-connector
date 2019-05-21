@@ -101,6 +101,8 @@ public class ChargingITestBase {
         databaseTestHelper = testContext.getDatabaseTestHelper();
         databaseTestHelper.addGatewayAccount(accountId, paymentProvider, credentials);
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
+        
+        wireMockRule.resetAll();
     }
 
     @After

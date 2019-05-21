@@ -27,6 +27,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
@@ -37,16 +38,40 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCE
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class ChargeExpiryResourceITest extends ChargingITestBase {
+public class WorldpayChargeExpiryResourceITest extends ChargingITestBase {
 
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
-    private static final String PROVIDER_NAME = "worldpay";
 
-    public ChargeExpiryResourceITest() {
-        super(PROVIDER_NAME);
+    public WorldpayChargeExpiryResourceITest() {
+        super("worldpay");
     }
 
+    @Test
+    public void shouldTransitionChargeToExpiryCancelFailedIfCancelErrorResponseFromWorldpay() {
+        String chargeId = addCharge(AUTHORISATION_ERROR, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        
+        worldpayMockClient.mockCancelError();
+
+        connectorRestApiClient
+                .postChargeExpiryTask()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("expiry-success", is(0))
+                .body("expiry-failed", is(1));
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(chargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(chargeId))
+                .body(JSON_STATE_KEY, is(EXPIRE_CANCEL_FAILED.toExternal().getStatus()));
+
+        wireMockRule.verify(1, postRequestedFor(urlEqualTo("/jsp/merchant/xml/paymentService.jsp")));
+    }
+    
     @Test
     public void shouldExpireChargesBeforeAndAfterAuthorisationAndShouldHaveTheRightEvents() {
         String extChargeId1 = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());

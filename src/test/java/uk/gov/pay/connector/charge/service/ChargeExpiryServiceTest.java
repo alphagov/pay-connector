@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.charge.service;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,6 +44,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -80,22 +80,24 @@ public class ChargeExpiryServiceTest {
     @Mock
     private ConnectorConfiguration mockedConfig;
     
-    private static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ImmutableList.of(
+    private static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = List.of(
             CREATED,
             ENTERING_CARD_DETAILS,
             AUTHORISATION_3DS_REQUIRED,
             AUTHORISATION_3DS_READY,
-            AUTHORISATION_SUCCESS
+            AUTHORISATION_SUCCESS,
+            AUTHORISATION_ERROR
     );
 
-    private static final List<ChargeStatus> GATEWAY_CANCELLABLE_STATUSES = ImmutableList.of(
+    private static final List<ChargeStatus> GATEWAY_CANCELLABLE_STATUSES = List.of(
             AUTHORISATION_3DS_READY,
             AUTHORISATION_3DS_REQUIRED,
             AUTHORISATION_SUCCESS,
-            AWAITING_CAPTURE_REQUEST
+            AWAITING_CAPTURE_REQUEST,
+            AUTHORISATION_ERROR
     );
 
-    private static final List<ChargeStatus> EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS = ImmutableList.of(
+    private static final List<ChargeStatus> EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS = List.of(
             AWAITING_CAPTURE_REQUEST
     );
 
