@@ -44,15 +44,11 @@ public class CaptureQueue {
         logger.info("Charge [{}] added to capture queue. Message ID [{}]", externalId, queueMessage.getMessageId());
     }
     
-    public void receiveCaptureMessages() throws QueueException {
-        List<QueueMessage> captureMessages = sqsQueueService.receiveMessages(this.captureQueueUrl, CAPTURE_MESSAGE_ATTRIBUTE_NAME);
-        for (QueueMessage message: captureMessages) {
-            try {
-                cardCaptureMessageProcess.runCapture(message);
-                sqsQueueService.deleteMessage(this.captureQueueUrl, message);
-            } catch (Exception e) {
-                logger.warn("Error capturing charge from SQS message [{}]", e);
-            }
-        }
+    public List<QueueMessage> receiveCaptureMessages() throws QueueException {
+        return sqsQueueService.receiveMessages(this.captureQueueUrl, CAPTURE_MESSAGE_ATTRIBUTE_NAME);
+    }
+    
+    public void markMessageAsProcessed(QueueMessage message) throws QueueException {    
+        sqsQueueService.deleteMessage(this.captureQueueUrl, message);
     }
 }
