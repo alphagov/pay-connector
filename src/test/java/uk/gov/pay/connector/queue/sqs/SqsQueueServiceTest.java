@@ -6,10 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.AmazonSQSException;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageResult;
-import com.amazonaws.services.sqs.model.SendMessageResult;
+import com.amazonaws.services.sqs.model.*;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,6 +35,7 @@ public class SqsQueueServiceTest {
 
     private static final String QUEUE_URL = "http://queue-url";
     private static final String MESSAGE = "{chargeId: 123}";
+    private static final String MESSAGE_ATTRIBUTE_NAME = "All";
 
     @Mock
     private AmazonSQS mockSqsClient;
@@ -86,9 +85,9 @@ public class SqsQueueServiceTest {
         message.setBody("test-message-body");
         receiveMessageResult.getMessages().add(message);
 
-        when(mockSqsClient.receiveMessage(QUEUE_URL)).thenReturn(receiveMessageResult);
+        when(mockSqsClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(receiveMessageResult);
 
-        List<QueueMessage> queueMessages = sqsQueueService.receiveMessages(QUEUE_URL);
+        List<QueueMessage> queueMessages = sqsQueueService.receiveMessages(QUEUE_URL, MESSAGE_ATTRIBUTE_NAME);
         Assert.assertThat(queueMessages.size(), is(1));
         Assert.assertThat(queueMessages.get(0).getMessageId(), is("test-message-id"));
         Assert.assertThat(queueMessages.get(0).getReceiptHandle(), is("test-receipt-handle"));
@@ -98,16 +97,16 @@ public class SqsQueueServiceTest {
     @Test
     public void shouldReturnEmptyListWhenReceiveDoesNotReturnAnyMessages() throws QueueException {
         ReceiveMessageResult receiveMessageResult = new ReceiveMessageResult();
-        when(mockSqsClient.receiveMessage(QUEUE_URL)).thenReturn(receiveMessageResult);
+        when(mockSqsClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(receiveMessageResult);
 
-        List<QueueMessage> queueMessages = sqsQueueService.receiveMessages(QUEUE_URL);
+        List<QueueMessage> queueMessages = sqsQueueService.receiveMessages(QUEUE_URL, MESSAGE_ATTRIBUTE_NAME);
         assertTrue(queueMessages.isEmpty());
     }
 
     @Test(expected = QueueException.class)
     public void shouldThrowExceptionIfMessageCannotBeReceivedFromQueue() throws QueueException {
-        when(mockSqsClient.receiveMessage(anyString())).thenThrow(AmazonSQSException.class);
+        when(mockSqsClient.receiveMessage(any(ReceiveMessageRequest.class))).thenThrow(AmazonSQSException.class);
 
-        sqsQueueService.receiveMessages(QUEUE_URL);
+        sqsQueueService.receiveMessages(QUEUE_URL, MESSAGE_ATTRIBUTE_NAME);
     }
 }

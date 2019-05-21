@@ -8,6 +8,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 
 import javax.inject.Inject;
+import java.util.List;
 
 public class CaptureQueue {
 
@@ -16,8 +17,13 @@ public class CaptureQueue {
     private final String captureQueueUrl;
     private SqsQueueService sqsQueueService;
 
+    // @TODO(sfount) capture specific message attribute
+    private static final String CAPTURE_MESSAGE_ATTRIBUTE_NAME = "All";
+
     @Inject
-    public CaptureQueue(SqsQueueService sqsQueueService, ConnectorConfiguration connectorConfiguration) {
+    public CaptureQueue(
+            SqsQueueService sqsQueueService,
+            ConnectorConfiguration connectorConfiguration) { 
         this.sqsQueueService = sqsQueueService;
         this.captureQueueUrl = connectorConfiguration.getSqsConfig().getCaptureQueueUrl();
     }
@@ -32,6 +38,12 @@ public class CaptureQueue {
 
         logger.info("Charge [{}] added to capture queue. Message ID [{}]", externalId, queueMessage.getMessageId());
     }
-
-
+    
+    public List<QueueMessage> receiveCaptureMessages() throws QueueException {
+        return sqsQueueService.receiveMessages(this.captureQueueUrl, CAPTURE_MESSAGE_ATTRIBUTE_NAME);
+    }
+    
+    public void markMessageAsProcessed(QueueMessage message) throws QueueException {    
+        sqsQueueService.deleteMessage(this.captureQueueUrl, message.getReceiptHandle());
+    }
 }

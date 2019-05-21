@@ -1,9 +1,12 @@
 package uk.gov.pay.connector.queue.sqs;
 
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.AmazonSQSException;
-import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageResult;
+import com.amazonaws.services.sqs.model.DeleteMessageRequest;
+import com.amazonaws.services.sqs.model.DeleteMessageResult;
+import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.amazonaws.services.sqs.model.AmazonSQSException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.queue.QueueException;
@@ -35,9 +38,14 @@ public class SqsQueueService {
         }
     }
 
-    public List<QueueMessage> receiveMessages(String queueUrl) throws QueueException {
+    public List<QueueMessage> receiveMessages(String queueUrl, String messageAttributeName) throws QueueException {
         try {
-            ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(queueUrl);
+            ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
+            receiveMessageRequest
+                    .withMessageAttributeNames(messageAttributeName)
+                    .withMaxNumberOfMessages(10);
+
+            ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
 
             return QueueMessage.of(receiveMessageResult);
         } catch (AmazonSQSException | UnsupportedOperationException e) {
@@ -45,5 +53,13 @@ public class SqsQueueService {
             throw new QueueException(e.getMessage());
         }
     }
-
+    
+    public DeleteMessageResult deleteMessage(String queueUrl, String messageReceiptHandle) throws QueueException { 
+        try {
+            return sqsClient.deleteMessage(new DeleteMessageRequest(queueUrl, messageReceiptHandle));
+        } catch (AmazonSQSException | UnsupportedOperationException e) {
+            logger.error("Failed to delete message from SQS queue - {}", e.getMessage());
+            throw new QueueException(e.getMessage());
+        }
+    }
 }
