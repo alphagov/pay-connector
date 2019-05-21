@@ -19,6 +19,7 @@ import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static io.restassured.http.ContentType.JSON;
 import static java.util.Arrays.asList;
@@ -75,6 +76,8 @@ public class ChargeExpiryResourceITest extends ChargingITestBase {
 
         assertThat(asList(CREATED.getValue(), EXPIRED.getValue()), is(events1));
         assertThat(asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()), is(events2));
+        
+        wireMockRule.verify(1, postRequestedFor(urlEqualTo("/jsp/merchant/xml/paymentService.jsp")));
     }
 
     @Test

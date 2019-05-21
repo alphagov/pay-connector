@@ -317,9 +317,7 @@ public class ChargingITestBase {
         addCharge(chargeId, externalChargeId, status, ServicePaymentReference.of(reference), fromDate, transactionId);
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
-        databaseTestHelper.updateChargeCardDetails(
-                chargeId,
-                AuthCardDetailsFixture.anAuthCardDetails().build());
+        databaseTestHelper.updateChargeCardDetails(chargeId, AuthCardDetailsFixture.anAuthCardDetails().build());
         return externalChargeId;
     }
     
