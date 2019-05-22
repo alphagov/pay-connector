@@ -47,6 +47,7 @@ import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
 import uk.gov.pay.connector.paymentprocessor.resource.DiscrepancyResource;
 import uk.gov.pay.connector.paymentprocessor.service.CaptureProcessScheduler;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
+import uk.gov.pay.connector.queue.managed.QueueMessageReceiver;
 import uk.gov.pay.connector.refund.resource.ChargeRefundsResource;
 import uk.gov.pay.connector.refund.resource.SearchRefundsResource;
 import uk.gov.pay.connector.report.resource.PerformanceReportResource;
@@ -180,5 +181,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration,
                 environment, injector.getInstance(CardCaptureProcess.class), injector.getInstance(XrayUtils.class));
         environment.lifecycle().manage(captureProcessScheduler);
+        
+        environment.lifecycle().manage(injector.getInstance(QueueMessageReceiver.class));
     }
 }

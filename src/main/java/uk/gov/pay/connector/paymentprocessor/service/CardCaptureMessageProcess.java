@@ -2,6 +2,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.queue.CaptureQueue;
 import uk.gov.pay.connector.queue.QueueException;
@@ -15,12 +16,14 @@ public class CardCaptureMessageProcess {
   
     private static final Logger LOGGER = LoggerFactory.getLogger(CardCaptureMessageProcess.class);
     private final CaptureQueue captureQueue;
+    private final Boolean captureUsingSqs;
     private CardCaptureService cardCaptureService;
 
     @Inject
-    public CardCaptureMessageProcess(CaptureQueue captureQueue, CardCaptureService cardCaptureService) { 
+    public CardCaptureMessageProcess(CaptureQueue captureQueue, CardCaptureService cardCaptureService, ConnectorConfiguration connectorConfiguration) { 
         this.captureQueue = captureQueue;
         this.cardCaptureService = cardCaptureService;
+        this.captureUsingSqs = connectorConfiguration.getCaptureProcessConfig().getCaptureUsingSQS();
     }
     
     public void handleCaptureMessages() throws QueueException { 
@@ -28,7 +31,12 @@ public class CardCaptureMessageProcess {
         for (ChargeCaptureMessage message: captureMessages) {
             try {
                 LOGGER.info("Charge capture message received - {}", message.getChargeId());
-                runCapture(message);
+                
+                if (captureUsingSqs) {
+                    runCapture(message);
+                } else {
+                    LOGGER.info("Charge capture not enabled for message capture request - {}", message.getChargeId());
+                }
             } catch (Exception e) {
                 LOGGER.warn("Error capturing charge from SQS message [{}]", e.getMessage());
             }
