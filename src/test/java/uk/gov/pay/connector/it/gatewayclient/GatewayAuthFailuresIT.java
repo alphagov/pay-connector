@@ -117,7 +117,7 @@ public class GatewayAuthFailuresIT {
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         assertThatLastGatewayClientLoggingEventIs(
-                String.format("Gateway returned unexpected status code: 999, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test", WIREMOCK_PORT));
+                String.format("Gateway returned unexpected status code: 999, for gateway url=http://localhost:%s/pal/servlet/soap/Payment with type test with order request type authorise", WIREMOCK_PORT));
         assertThat(databaseTestHelper.getChargeStatus(chargeTestRecord.getChargeId()), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
     }
 
