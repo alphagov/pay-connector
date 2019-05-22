@@ -2,39 +2,54 @@ package uk.gov.pay.connector.paymentprocessor.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.queue.CaptureQueue;
 import uk.gov.pay.connector.queue.QueueException;
-import uk.gov.pay.connector.queue.QueueMessage;
+import uk.gov.pay.connector.queue.ChargeCaptureMessage;
 
 import javax.inject.Inject;
 import java.util.List;
 
 // @TODO(sfount) replace `CardCaptureProcess` when feature flag is switched
 public class CardCaptureMessageProcess {
-    
+  
     private static final Logger LOGGER = LoggerFactory.getLogger(CardCaptureMessageProcess.class);
     private final CaptureQueue captureQueue;
+    private CardCaptureService cardCaptureService;
 
     @Inject
-    public CardCaptureMessageProcess(CaptureQueue captureQueue) { 
+    public CardCaptureMessageProcess(CaptureQueue captureQueue, CardCaptureService cardCaptureService) { 
         this.captureQueue = captureQueue;
+        this.cardCaptureService = cardCaptureService;
     }
     
     public void handleCaptureMessages() throws QueueException { 
-        List<QueueMessage> captureMessages = captureQueue.receiveCaptureMessages();     
-        for (QueueMessage message: captureMessages) {
+        List<ChargeCaptureMessage> captureMessages = captureQueue.retrieveChargesForCapture();    
+        for (ChargeCaptureMessage message: captureMessages) {
             try {
+                LOGGER.info("Charge capture message received - {}", message.getChargeId());
                 runCapture(message);
-                
-                // @TODO(sfount) model charge message as class, include charge ID (extracted) and message receipt handle
-                captureQueue.markMessageAsProcessed(message);
             } catch (Exception e) {
-                LOGGER.warn("Error capturing charge from SQS message [{}]", e);
+                LOGGER.warn("Error capturing charge from SQS message [{}]", e.getMessage());
             }
         }
     }
     
-    private void runCapture(QueueMessage captureMessage) {  
-        LOGGER.info("SQS message received [{}] - {}", captureMessage.getMessageId(), captureMessage.getMessageBody());
+    private void runCapture(ChargeCaptureMessage captureMessage) throws QueueException {
+        String externalChargeId = captureMessage.getChargeId();
+
+        CaptureResponse gatewayResponse = cardCaptureService.doCapture(externalChargeId);
+
+        // @TODO(sfount) handling gateway response failure should be considered in PP-5171
+        if (gatewayResponse.isSuccessful()) {
+            captureQueue.markMessageAsProcessed(captureMessage);
+        } else {
+            LOGGER.info(
+                    "Failed to capture [externalChargeId={}] due to: {}",
+                    externalChargeId,
+                    gatewayResponse.getError().get().getMessage()
+            );
+        }
     }
+    
 }
