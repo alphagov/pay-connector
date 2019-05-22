@@ -92,7 +92,7 @@ public class CardCaptureService {
             return chargeService.updateChargeStatus(charge, AWAITING_CAPTURE_REQUEST);
 
         } else {
-            addChargeToCaptureQueue(externalId);
+            addChargeToCaptureQueue(charge);
             try {
                 return chargeService.updateChargeStatus(charge, CAPTURE_APPROVED);
             } catch (InvalidStateTransitionException e) {
@@ -110,7 +110,8 @@ public class CardCaptureService {
 
     @Transactional
     public ChargeEntity markChargeAsCaptureApproved(String externalId) {
-        addChargeToCaptureQueue(externalId);
+        ChargeEntity charge = chargeService.findChargeById(externalId);
+        addChargeToCaptureQueue(charge);
         return chargeService.markChargeAsCaptureApproved(externalId);
     }
 
@@ -151,15 +152,15 @@ public class CardCaptureService {
         feeDao.persist(fee);
     }
 
-    private void addChargeToCaptureQueue(String externalId) {
+    private void addChargeToCaptureQueue(ChargeEntity charge) {
         if (captureUsingSQS) {
             try {
-                captureQueue.sendForCapture(externalId);
+                captureQueue.sendForCapture(charge);
             } catch (QueueException e) {
-                logger.error("Exception sending charge [{}] to capture queue", externalId);
+                logger.error("Exception sending charge [{}] to capture queue", charge.getExternalId());
                 throw new WebApplicationException(format(
                         "Unable to schedule charge [%s] for capture - %s",
-                        externalId, e.getMessage()));
+                        charge.getExternalId(), e.getMessage()));
             }
         }
     }
