@@ -40,9 +40,12 @@ public class SqsQueueService {
 
     public List<QueueMessage> receiveMessages(String queueUrl, String messageAttributeName) throws QueueException {
         try {
+            // @TODO(sfount) this should be configured in the connector environment
+            int longPollingMaxWaitTime = 20;
             ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
             receiveMessageRequest
                     .withMessageAttributeNames(messageAttributeName)
+                    .withWaitTimeSeconds(longPollingMaxWaitTime)
                     .withMaxNumberOfMessages(10);
 
             ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
