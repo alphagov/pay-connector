@@ -9,7 +9,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.SqsConfig;
-import uk.gov.pay.connector.queue.sqs.ChargeCaptureMessage;
 import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
@@ -37,7 +36,7 @@ public class CaptureQueueTest {
     public void setUp() throws Exception {
         String validJsonMessage = "{ \"chargeId\": \"my-charge-id\"}";
         SendMessageResult messageResult = mock(SendMessageResult.class);
-
+        
         List<QueueMessage> messages = Arrays.asList(
                 QueueMessage.of(messageResult, validJsonMessage)
         );

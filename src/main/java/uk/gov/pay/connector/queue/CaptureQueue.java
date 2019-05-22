@@ -5,16 +5,13 @@ import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.queue.sqs.CaptureCharge;
 import uk.gov.pay.connector.queue.sqs.SqsQueueService;
-import uk.gov.pay.connector.queue.sqs.ChargeCaptureMessage;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class CaptureQueue {
@@ -55,22 +52,20 @@ public class CaptureQueue {
         
         return queueMessages 
                 .stream()
-                .map(getChargeCaptureMessageFunction())
+                .map(this::getChargeCaptureMessage)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
-    private Function<QueueMessage, ChargeCaptureMessage> getChargeCaptureMessageFunction() {
-        return qm -> {
-            try {
-                CaptureCharge captureCharge = jsonObjectMapper
-                        .getObject(qm.getMessageBody(), CaptureCharge.class);
-                return ChargeCaptureMessage.of(captureCharge, qm);
-            } catch (WebApplicationException e) {
-                logger.warn("Error parsing the charge capture message from queue [{}]", e.getMessage());
-                return null;
-            }
-        };
+    private ChargeCaptureMessage getChargeCaptureMessage(QueueMessage qm) {
+        try {
+            CaptureCharge captureCharge = jsonObjectMapper
+                    .getObject(qm.getMessageBody(), CaptureCharge.class);
+            return ChargeCaptureMessage.of(captureCharge, qm);
+        } catch (WebApplicationException e) {
+            logger.warn("Error parsing the charge capture message from queue [{}]", e.getMessage());
+            return null;
+        }
     }
 
     public void markMessageAsProcessed(ChargeCaptureMessage message) throws QueueException {    

@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.queue.CaptureQueue;
 import uk.gov.pay.connector.queue.QueueException;
-import uk.gov.pay.connector.queue.sqs.ChargeCaptureMessage;
+import uk.gov.pay.connector.queue.ChargeCaptureMessage;
 
 import javax.inject.Inject;
 import java.util.List;
