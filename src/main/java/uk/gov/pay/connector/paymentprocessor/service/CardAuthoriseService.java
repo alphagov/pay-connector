@@ -55,8 +55,6 @@ public class CardAuthoriseService {
     public AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
             
-            
-            
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
             GatewayResponse<BaseAuthoriseResponse> operationResponse = null;
             ChargeStatus newStatus = null;

@@ -109,6 +109,7 @@ public class CardExecutorService {
                 return task.call();
             } finally {
                 xrayUtils.endSegment();
+                MDC.clear();
             }
         });
 

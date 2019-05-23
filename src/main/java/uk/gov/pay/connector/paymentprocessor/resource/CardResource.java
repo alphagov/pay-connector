@@ -3,8 +3,7 @@ package uk.gov.pay.connector.paymentprocessor.resource;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import uk.gov.pay.connector.app.ChargeIdMDCRequired;
+import uk.gov.pay.connector.app.LogChargeIDToMDC;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -38,7 +37,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 @Path("/")
-@ChargeIdMDCRequired
+@LogChargeIDToMDC
 public class CardResource {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());

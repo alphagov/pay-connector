@@ -12,7 +12,7 @@ import javax.ws.rs.ext.Provider;
 public class ChargeIdMDCLoggingFeature implements DynamicFeature {
     @Override
     public void configure(ResourceInfo resourceInfo, FeatureContext context) {
-        if (resourceInfo.getResourceClass().getAnnotation(ChargeIdMDCRequired.class) != null) {
+        if (resourceInfo.getResourceClass().getAnnotation(LogChargeIDToMDC.class) != null) {
             context.register(ChargeIdLoggingMDCRequestFilter.class);
             context.register(ChargeIdLoggingMDCResponseFilter.class);
         }
