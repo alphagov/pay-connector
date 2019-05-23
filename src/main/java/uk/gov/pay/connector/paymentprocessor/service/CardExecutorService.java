@@ -14,6 +14,7 @@ import uk.gov.pay.connector.util.XrayUtils;
 
 import javax.ws.rs.WebApplicationException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -92,7 +93,7 @@ public class CardExecutorService {
     // returns a Pair of the execution status and the return type
     public <T> Pair<ExecutionStatus, T> execute(Supplier<T> callable) {
         Callable<T> task = callable::get;
-        Map<String, String> mdcContextMap = MDC.getCopyOfContextMap();
+        Map<String, String> mdcContextMap = Optional.ofNullable(MDC.getCopyOfContextMap()).orElse(Map.of());
         final long startTime = System.currentTimeMillis();
 
         Future<T> futureObject = executor.submit(() -> {
