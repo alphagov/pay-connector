@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
@@ -35,15 +36,15 @@ public class CaptureQueue {
         this.jsonObjectMapper = jsonObjectMapper;
     }
 
-    public void sendForCapture(String externalId) throws QueueException {
+    public void sendForCapture(ChargeEntity charge) throws QueueException {
 
         String message = new GsonBuilder()
                 .create()
-                .toJson(ImmutableMap.of("chargeId", externalId));
+                .toJson(ImmutableMap.of("chargeId", charge.getExternalId()));
 
         QueueMessage queueMessage = sqsQueueService.sendMessage(captureQueueUrl, message);
 
-        logger.info("Charge [{}] added to capture queue. Message ID [{}]", externalId, queueMessage.getMessageId());
+        logger.info("Charge [{}] added to capture queue. Message ID [{}]", charge.getExternalId(), queueMessage.getMessageId());
     }
     
     public List<ChargeCaptureMessage> retrieveChargesForCapture() throws QueueException {
