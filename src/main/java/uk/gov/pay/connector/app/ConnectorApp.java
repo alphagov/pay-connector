@@ -180,10 +180,18 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     private void setupSchedulers(ConnectorConfiguration configuration, Environment environment, Injector injector) {
-        CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration,
-                environment, injector.getInstance(CardCaptureProcess.class), injector.getInstance(XrayUtils.class));
-        environment.lifecycle().manage(captureProcessScheduler);
+        boolean disableCaptureProcessScheduler = isDisabledCaptureProcessScheduler(configuration);
+        if(disableCaptureProcessScheduler) {
+            CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration,
+                    environment, injector.getInstance(CardCaptureProcess.class), injector.getInstance(XrayUtils.class));
+            environment.lifecycle().manage(captureProcessScheduler);
+        }
         
         environment.lifecycle().manage(injector.getInstance(QueueMessageReceiver.class));
+    }
+
+    private boolean isDisabledCaptureProcessScheduler(ConnectorConfiguration configuration) {
+        boolean enableSqsCapture = configuration.getCaptureProcessConfig().getCaptureUsingSQS();
+        return !enableSqsCapture;
     }
 }
