@@ -2,6 +2,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -36,6 +37,7 @@ public class Card3dsResponseAuthService {
     public Gateway3DSAuthorisationResponse process3DSecureAuthorisation(String chargeId, Auth3dsDetails auth3DsDetails) {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
 
+            MDC.get("chargeId");
             final ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, AUTHORISATION_3DS);
             return authoriseAndProcess3DS(auth3DsDetails, charge);
         });

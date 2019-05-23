@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import uk.gov.pay.connector.app.ChargeIdMDCRequired;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -37,6 +38,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 @Path("/")
+@ChargeIdMDCRequired
 public class CardResource {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -65,7 +67,6 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response authoriseCharge(@PathParam("chargeId") String chargeId, 
                                     @NotNull @Valid ApplePayAuthRequest applePayAuthRequest) {
-        MDC.put("chargeId", chargeId);
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
         return applePayService.authorise(chargeId, applePayAuthRequest);
     }
@@ -76,7 +77,6 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response authoriseCharge(@PathParam("chargeId") String chargeId,
                                     @NotNull @Valid GooglePayAuthRequest googlePayAuthRequest) {
-        MDC.put("chargeId", chargeId);
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
         return googlePayService.authorise(chargeId, googlePayAuthRequest);
     }
@@ -87,7 +87,6 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response authoriseCharge(@PathParam("chargeId") String chargeId,
                                     @Valid AuthCardDetails authCardDetails) {
-        MDC.put("chargeId", chargeId);
         AuthorisationResponse response = cardAuthoriseService.doAuthorise(chargeId, authCardDetails);
 
         return response.getGatewayError().map(error -> handleError(chargeId, error))
@@ -113,7 +112,6 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsDetails auth3DsDetails) {
-        MDC.put("chargeId", chargeId);
         Gateway3DSAuthorisationResponse response = card3dsResponseAuthService.process3DSecureAuthorisation(chargeId, auth3DsDetails);
         return response.isDeclined() ? badRequestResponse("This transaction was declined.") : handleGateway3DSAuthoriseResponse(response);
     }
@@ -134,7 +132,6 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) {
-        MDC.put("chargeId", chargeId);
         cardCaptureService.markChargeAsEligibleForCapture(chargeId);
         return ResponseUtil.noContentResponse();
     }
@@ -154,7 +151,6 @@ public class CardResource {
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/cancel")
     @Produces(APPLICATION_JSON)
     public Response cancelCharge(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId) {
-        MDC.put("chargeId", chargeId);
         return chargeCancelService.doSystemCancel(chargeId, accountId)
                 .map(chargeEntity -> Response.noContent().build())
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(chargeId));
@@ -164,7 +160,6 @@ public class CardResource {
     @Path("/v1/frontend/charges/{chargeId}/cancel")
     @Produces(APPLICATION_JSON)
     public Response userCancelCharge(@PathParam("chargeId") String chargeId) {
-        MDC.put("chargeId", chargeId);
         return chargeCancelService.doUserCancel(chargeId)
                 .map(chargeEntity -> Response.noContent().build())
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(chargeId));
