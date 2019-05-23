@@ -1129,4 +1129,28 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add created_date to tokens table" author="">
+        <addColumn tableName="tokens">
+            <column name="created_date" type="timestamp without timezone">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add default date to created_date on tokens table" author="">
+        <addDefaultValue tableName="tokens" columnName="created_date" columnDataType="timestamp without timezone" defaultValueComputed="(now() at time zone 'utc')" />
+    </changeSet>
+
+    <changeSet id="update created_date with default value on tokens table" author="">
+        <update tableName="tokens">
+            <column name ="created_date" valueComputed="(now() at time zone 'utc')" />
+        </update>
+    </changeSet>
+
+    <changeSet id="add index concurrently to created_date column on tokens table" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_created_date on tokens(created_date);
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

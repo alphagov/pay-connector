@@ -61,7 +61,7 @@ public class ChargeExpiryServiceTest {
 
     @Mock
     private ChargeEventDao mockChargeEventDao;
-
+    
     @Mock
     private PaymentProviders mockPaymentProviders;
 
