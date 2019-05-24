@@ -66,7 +66,7 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     @JsonProperty("customJerseyClient")
     private CustomJerseyClientConfiguration customJerseyClient;
-    
+
     @Valid
     @NotNull
     @JsonProperty("chargesSweepConfig")
@@ -85,6 +85,11 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     @JsonProperty("sqsConfig")
     private SqsConfig sqsConfig;
+
+    @Valid
+    @NotNull
+    @JsonProperty("backgroundProcessingEnabled")
+    private Boolean backgroundProcessingEnabled;
 
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {
@@ -168,12 +173,16 @@ public class ConnectorConfiguration extends Configuration {
     public Boolean isXrayEnabled() {
         return xrayEnabled;
     }
-    
+
     public ChargeSweepConfig getChargeSweepConfig() {
         return chargeSweepConfig;
     }
 
     public SqsConfig getSqsConfig() {
         return sqsConfig;
+    }
+
+    public Boolean getBackgroundProcessingEnabled() {
+        return backgroundProcessingEnabled;
     }
 }

@@ -27,6 +27,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 
@@ -60,7 +61,7 @@ public class CardResourceCaptureWithSqsQueueITest extends ChargingITestBase {
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
+        assertFrontendChargeStatusIsAnyOf(chargeId, CAPTURE_APPROVED.getValue(), CAPTURED.getValue());
         assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
 
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());

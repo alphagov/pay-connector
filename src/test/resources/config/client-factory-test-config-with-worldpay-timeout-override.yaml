@@ -103,6 +103,8 @@ sqsConfig:
   region: ${AWS_SQS_REGION:-region}
   captureQueueUrl: ${AWS_SQS_CAPTURE_QUEUE_URL}
 
+backgroundProcessingEnabled: ${BACKGROUND_PROCESSING_ENABLED:-true}
+
 transactionsPaginationServiceConfig:
   displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}
 

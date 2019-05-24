@@ -65,4 +65,5 @@ public class CaptureWithSqsQueueITest extends ChargingITestBase {
 
         return chargeId;
     }
+
 }

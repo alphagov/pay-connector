@@ -10,6 +10,7 @@ import au.com.dius.pact.provider.junit.target.Target;
 import au.com.dius.pact.provider.junit.target.TestTarget;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import io.dropwizard.testing.ConfigOverride;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -48,13 +49,13 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 public class TransactionsApiContractTest {
 
     @ClassRule
-    public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(ConfigOverride.config("backgroundProcessingEnabled", "false"));
 
     @ClassRule
     public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
 
     private SQSMockClient sqsMockClient = new SQSMockClient();
-    
+
     @TestTarget
     public static Target target;
     private static DatabaseTestHelper dbHelper;
@@ -329,7 +330,7 @@ public class TransactionsApiContractTest {
         dbHelper.updateChargeCardDetails(addChargeParams.getChargeId(),
                 AuthCardDetailsFixture.anAuthCardDetails().build());
     }
-    
+
     @State("Gateway account 42 exists and has a charge with id abc123 and has CREATED and AUTHORISATION_REJECTED charge events")
     public void aChargeWithIdAndChargeEvents() {
         String gatewayAccountId = "42";
@@ -337,7 +338,7 @@ public class TransactionsApiContractTest {
         long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, ZonedDateTime.now(), false);
-        
+
         dbHelper.addEvent(chargeId, ChargeStatus.CREATED.toString());
         dbHelper.addEvent(chargeId, ChargeStatus.AUTHORISATION_REJECTED.toString());
     }

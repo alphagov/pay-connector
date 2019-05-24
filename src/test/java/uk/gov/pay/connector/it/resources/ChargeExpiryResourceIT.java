@@ -24,6 +24,7 @@ import static io.restassured.http.ContentType.JSON;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -74,7 +75,7 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
         List<String> events2 = databaseTestHelper.getInternalEvents(extChargeId2);
 
         assertThat(asList(CREATED.getValue(), EXPIRED.getValue()), is(events1));
-        assertThat(asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()), is(events2));
+        assertThat(events2, containsInAnyOrder(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()));
     }
 
     @Test
@@ -112,7 +113,7 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
         List<String> events1 = databaseTestHelper.getInternalEvents(shouldExpireChargeId);
         List<String> events2 = databaseTestHelper.getInternalEvents(shouldntExpireChargeId);
 
-        assertThat(asList(CREATED.getValue(), EXPIRED.getValue()), is(events1));
+        assertThat(events1, containsInAnyOrder(CREATED.getValue(), EXPIRED.getValue()));
         assertThat(Collections.singletonList(CREATED.getValue()), is(events2));
     }
 
@@ -141,7 +142,7 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
 
         List<String> events = databaseTestHelper.getInternalEvents(extChargeId1);
 
-        assertThat(asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRE_CANCEL_FAILED.getValue()), is(events));
+        assertThat(events, containsInAnyOrder(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRE_CANCEL_FAILED.getValue()));
 
     }
 
@@ -184,8 +185,8 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
         List<String> events1 = databaseTestHelper.getInternalEvents(extChargeId1);
         List<String> events2 = databaseTestHelper.getInternalEvents(extChargeId2);
 
-        assertThat(asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()), is(events1));
-        assertThat(asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRE_CANCEL_FAILED.getValue()), is(events2));
+        assertThat(events1, containsInAnyOrder(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()));
+        assertThat(events2, containsInAnyOrder(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRE_CANCEL_FAILED.getValue()));
 
     }
 
@@ -251,7 +252,7 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
         List<String> events1 = databaseTestHelper.getInternalEvents(chargeToBeExpiredCreatedStatus);
         List<String> events2 = databaseTestHelper.getInternalEvents(chargeToBeExpiredAwaitingCaptureRequest);
 
-        assertThat(asList(CREATED.getValue(), EXPIRED.getValue()), is(events1));
+        assertThat(events1, containsInAnyOrder(CREATED.getValue(), EXPIRED.getValue()));
         assertThat(Collections.singletonList(AWAITING_CAPTURE_REQUEST.getValue()), is(events2));
     }
 
@@ -291,7 +292,7 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
         List<String> events2 = databaseTestHelper.getInternalEvents(chargeToBeExpiredAwaitingCaptureRequest);
 
         assertThat(asList(CREATED.getValue(), EXPIRED.getValue()), is(events1));
-        assertThat(asList(AWAITING_CAPTURE_REQUEST.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()), is(events2));
+        assertThat(events2, containsInAnyOrder(AWAITING_CAPTURE_REQUEST.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()));
     }
 
     @Test

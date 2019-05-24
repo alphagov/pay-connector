@@ -29,6 +29,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static io.restassured.RestAssured.given;
@@ -37,6 +38,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.is;
@@ -150,6 +152,14 @@ public class ChargingITestBase {
                 .withChargeId(chargeId)
                 .getFrontendCharge()
                 .body("status", is(status));
+    }
+
+    protected void assertFrontendChargeStatusIsAnyOf(String chargeId, String ... status) {
+        List<Matcher<? super String>> matchers = Stream.of(status).map(s -> is(s)).collect(Collectors.toList());
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .body("status", anyOf(matchers));
     }
 
     protected void assertFrontendChargeCorporateSurchargeAmount(String chargeId, String status, Long corporateSurcharge) {
@@ -328,8 +338,8 @@ public class ChargingITestBase {
                 AuthCardDetailsFixture.anAuthCardDetails().build());
         return externalChargeId;
     }
-    
-    private void addCharge(long chargeId, String externalChargeId, ChargeStatus chargeStatus, 
+
+    private void addCharge(long chargeId, String externalChargeId, ChargeStatus chargeStatus,
                              ServicePaymentReference reference, ZonedDateTime fromDate, String transactionId) {
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
@@ -367,7 +377,7 @@ public class ChargingITestBase {
         createdDateStrings.forEach(aDateString -> dateTimes.add(toUTCZonedDateTime(aDateString).get()));
         return dateTimes;
     }
-    
+
     protected void allowZeroAmountForGatewayAccount() {
         databaseTestHelper.updateGatewayAccountAllowZeroAmount(Long.valueOf(accountId), true);
     }
