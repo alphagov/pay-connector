@@ -7,6 +7,7 @@ import uk.gov.pay.connector.token.model.domain.TokenEntity;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 @Transactional
@@ -31,5 +32,12 @@ public class TokenDao extends JpaDao<TokenEntity> {
                 .setParameter("chargeId", chargeId)
                 .getResultList().stream()
                 .findFirst();
+    }
+
+    public int deleteTokensOlderThanSpecifiedDate(ZonedDateTime cut_off_date) {
+        return entityManager.get()
+                .createQuery("DELETE FROM TokenEntity t WHERE t.createdDate < :cut_off_date", TokenEntity.class)
+                .setParameter("cut_off_date", cut_off_date)
+                .executeUpdate();
     }
 }
