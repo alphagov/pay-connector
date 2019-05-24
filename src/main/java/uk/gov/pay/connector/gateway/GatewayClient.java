@@ -37,30 +37,30 @@ public class GatewayClient {
         this.metricRegistry = metricRegistry;
     }
 
-    public GatewayClient.Response postRequestFor(URI url, GatewayAccountEntity account, GatewayOrder request, Map<String, String> headers) 
+    public GatewayClient.Response postRequestFor(URI url, GatewayAccountEntity account, GatewayOrder request, Map<String, String> headers)
             throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
         return postRequestFor(url, account, request, emptyList(), headers);
     }
-    
+
     public GatewayClient.Response postRequestFor(GatewayClientRequest request)
             throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
         return postRequestFor(request.getUrl(), request.getGatewayAccount(), request.getGatewayOrder(), request.getHeaders());
     }
 
-    public GatewayClient.Response postRequestFor(URI url, 
-                                                 GatewayAccountEntity account, 
-                                                 GatewayOrder request, 
-                                                 List<HttpCookie> cookies, 
-                                                 Map<String, String> headers) 
+    public GatewayClient.Response postRequestFor(URI url,
+                                                 GatewayAccountEntity account,
+                                                 GatewayOrder request,
+                                                 List<HttpCookie> cookies,
+                                                 Map<String, String> headers)
             throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
-        
+
         String metricsPrefix = format("gateway-operations.%s.%s.%s", account.getGatewayName(), account.getType(), request.getOrderRequestType());
         javax.ws.rs.core.Response response = null;
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         try {
             logger.info("POSTing request for account '{}' with type '{}'", account.getGatewayName(), account.getType());
-            
+
             Builder requestBuilder = client.target(url).request();
             headers.keySet().forEach(headerKey -> requestBuilder.header(headerKey, headers.get(headerKey)));
             cookies.forEach(cookie -> requestBuilder.cookie(cookie.getName(), cookie.getValue()));
@@ -70,7 +70,8 @@ public class GatewayClient {
             if (statusCode == OK.getStatusCode()) {
                 return gatewayResponse;
             } else {
-                logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {}", statusCode, url, account.getType());
+                logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {} with order request type {}",
+                        statusCode, url, account.getType(), request.getOrderRequestType().toString());
                 incrementFailureCounter(metricRegistry, metricsPrefix);
                 throw new GatewayErrorException("Unexpected HTTP status code " + statusCode + " from gateway", gatewayResponse.getEntity(), statusCode);
             }
@@ -84,7 +85,7 @@ public class GatewayClient {
             }
             logger.error(format("Exception for gateway url=%s, error message: %s", url, pe.getMessage()), pe);
             throw new GenericGatewayException(pe.getMessage());
-        } catch(GatewayErrorException e) {
+        } catch (GatewayErrorException e) {
             throw e;
         } catch (Exception e) {
             incrementFailureCounter(metricRegistry, metricsPrefix);
@@ -98,11 +99,11 @@ public class GatewayClient {
             }
         }
     }
-    
+
     private void incrementFailureCounter(MetricRegistry metricRegistry, String metricsPrefix) {
         metricRegistry.counter(metricsPrefix + ".failures").inc();
     }
-    
+
     public static class Response {
         private final int status;
         private final String entity;

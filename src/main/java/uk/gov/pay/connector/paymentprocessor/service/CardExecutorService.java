@@ -7,11 +7,14 @@ import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.util.XrayUtils;
 
 import javax.ws.rs.WebApplicationException;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -90,9 +93,11 @@ public class CardExecutorService {
     // returns a Pair of the execution status and the return type
     public <T> Pair<ExecutionStatus, T> execute(Supplier<T> callable) {
         Callable<T> task = callable::get;
+        Map<String, String> mdcContextMap = Optional.ofNullable(MDC.getCopyOfContextMap()).orElse(Map.of());
         final long startTime = System.currentTimeMillis();
 
         Future<T> futureObject = executor.submit(() -> {
+            MDC.setContextMap(mdcContextMap);
             xrayUtils.beginSegment();
             long totalWaitTime = System.currentTimeMillis() - startTime;
             logger.debug("Card operation task spent {} ms in queue", totalWaitTime);
@@ -104,6 +109,7 @@ public class CardExecutorService {
                 return task.call();
             } finally {
                 xrayUtils.endSegment();
+                MDC.clear();
             }
         });
 

@@ -3,6 +3,7 @@ package uk.gov.pay.connector.paymentprocessor.resource;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.LogChargeIDToMDC;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -36,6 +37,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 @Path("/")
+@LogChargeIDToMDC
 public class CardResource {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -129,7 +131,6 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Response captureCharge(@PathParam("chargeId") String chargeId) {
-        logger.info("Capture of charge asynchronously [charge_external_id={}]", chargeId);
         cardCaptureService.markChargeAsEligibleForCapture(chargeId);
         return ResponseUtil.noContentResponse();
     }

@@ -126,6 +126,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(PerformanceReportResource.class));
         environment.jersey().register(injector.getInstance(SearchRefundsResource.class));
         environment.jersey().register(injector.getInstance(DiscrepancyResource.class));
+        
+        environment.jersey().register(ChargeIdMDCLoggingFeature.class);
 
         setupSchedulers(configuration, environment, injector);
 
