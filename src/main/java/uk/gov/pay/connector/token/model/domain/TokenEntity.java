@@ -47,6 +47,7 @@ public class TokenEntity extends AbstractVersionedEntity {
     public static TokenEntity generateNewTokenFor(ChargeEntity chargeEntity) {
         TokenEntity tokenEntity = new TokenEntity();
         tokenEntity.setChargeEntity(chargeEntity);
+        tokenEntity.setCreatedDate(chargeEntity.getCreatedDate());
         tokenEntity.setToken(UUID.randomUUID().toString());
         
         return tokenEntity;
