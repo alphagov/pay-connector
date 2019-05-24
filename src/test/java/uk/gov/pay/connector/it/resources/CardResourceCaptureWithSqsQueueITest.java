@@ -32,7 +32,10 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml",
-        configOverrides = {@ConfigOverride(key = "captureProcessConfig.captureUsingSQS", value = "true")},
+        configOverrides = {
+                @ConfigOverride(key = "captureProcessConfig.captureUsingSQS", value = "true"),
+                @ConfigOverride(key = "backgroundProcessingEnabled", value = "false")
+        },
         withDockerSQS = true
 )
 public class CardResourceCaptureWithSqsQueueITest extends ChargingITestBase {
@@ -73,7 +76,7 @@ public class CardResourceCaptureWithSqsQueueITest extends ChargingITestBase {
     public void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture() {
         String chargeId = addCharge(AWAITING_CAPTURE_REQUEST, "ref", ZonedDateTime.now().minusHours(48L).plusMinutes(1L), RandomIdGenerator.newId());
 
-        captureApproveUrl = captureUrlForAwaitingCaptureCharge(accountId,chargeId);
+        captureApproveUrl = captureUrlForAwaitingCaptureCharge(accountId, chargeId);
 
         givenSetup()
                 .post(captureApproveUrl)

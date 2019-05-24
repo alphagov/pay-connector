@@ -130,7 +130,9 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         
         environment.jersey().register(ChargeIdMDCLoggingFeature.class);
 
-        setupSchedulers(configuration, environment, injector);
+        if(configuration.getBackgroundProcessingEnabled()) {
+            setupSchedulers(configuration, environment, injector);
+        }
 
         setupSmartpayBasicAuth(environment, injector.getInstance(SmartpayAccountSpecificAuthenticator.class));
 
@@ -180,18 +182,18 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     private void setupSchedulers(ConnectorConfiguration configuration, Environment environment, Injector injector) {
-        boolean disableCaptureProcessScheduler = isDisabledCaptureProcessScheduler(configuration);
-        if(disableCaptureProcessScheduler) {
+        boolean captureUsingProcessScheduler = isEnabledCaptureProcessScheduler(configuration);
+        if(captureUsingProcessScheduler) {
             CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration,
                     environment, injector.getInstance(CardCaptureProcess.class), injector.getInstance(XrayUtils.class));
             environment.lifecycle().manage(captureProcessScheduler);
         }
-        
+
         environment.lifecycle().manage(injector.getInstance(QueueMessageReceiver.class));
     }
 
-    private boolean isDisabledCaptureProcessScheduler(ConnectorConfiguration configuration) {
-        boolean enableSqsCapture = configuration.getCaptureProcessConfig().getCaptureUsingSQS();
-        return !enableSqsCapture;
+    private boolean isEnabledCaptureProcessScheduler(ConnectorConfiguration configuration) {
+        boolean captureUsingSqs = configuration.getCaptureProcessConfig().getCaptureUsingSQS();
+        return !captureUsingSqs;
     }
 }

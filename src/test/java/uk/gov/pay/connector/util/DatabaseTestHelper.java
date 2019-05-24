@@ -126,7 +126,7 @@ public class DatabaseTestHelper {
         PGobject jsonMetadata = new PGobject();
         jsonMetadata.setType("json");
         try {
-            if (addChargeParams.getExternalMetadata() != null && 
+            if (addChargeParams.getExternalMetadata() != null &&
                     !addChargeParams.getExternalMetadata().getMetadata().isEmpty()) {
                 jsonMetadata.setValue(new Gson().toJson(addChargeParams.getExternalMetadata().getMetadata()));
             }
@@ -361,9 +361,9 @@ public class DatabaseTestHelper {
                         .first());
         return ret;
     }
-    
+
     public Map<String, Object> getChargeByExternalId(String externalId) {
-        return jdbi.withHandle(h -> 
+        return jdbi.withHandle(h ->
                 h.createQuery("SELECT * FROM charges WHERE external_id = :external_id")
                 .bind("external_id", externalId)
                 .first());
@@ -532,8 +532,8 @@ public class DatabaseTestHelper {
                         .bind("corporateDebitCardSurchargeAmount", corporateDebitCardSurchargeAmount)
                         .execute()
         );
-    }    
-    
+    }
+
     public void allowApplePay(long accountId) {
         jdbi.withHandle(handle ->
                 handle.createStatement("UPDATE gateway_accounts set allow_apple_pay=true WHERE id=:gatewayAccountId")
@@ -541,7 +541,7 @@ public class DatabaseTestHelper {
                         .execute()
         );
     }
-    
+
     public void allowZeroAmount(long accountId) {
         jdbi.withHandle(handle ->
                 handle.createStatement("UPDATE gateway_accounts set allow_zero_amount=true WHERE id=:gatewayAccountId")
