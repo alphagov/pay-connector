@@ -28,7 +28,7 @@ public class TokenEntity extends AbstractVersionedEntity {
 
     @Column(name = "secure_redirect_token")
     private String token;
-
+    
     @ManyToOne
     @JoinColumn(name = "charge_id", nullable = false)
     private ChargeEntity chargeEntity;
@@ -41,6 +41,7 @@ public class TokenEntity extends AbstractVersionedEntity {
         TokenEntity tokenEntity = new TokenEntity();
         tokenEntity.setChargeEntity(chargeEntity);
         tokenEntity.setToken(UUID.randomUUID().toString());
+        
         return tokenEntity;
     }
 
@@ -59,7 +60,7 @@ public class TokenEntity extends AbstractVersionedEntity {
     public void setToken(String token) {
         this.token = token;
     }
-
+    
     public ChargeEntity getChargeEntity() {
         return chargeEntity;
     }
