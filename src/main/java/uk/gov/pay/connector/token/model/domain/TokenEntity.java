@@ -3,8 +3,10 @@ package uk.gov.pay.connector.token.model.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
+import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
 
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -13,6 +15,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Entity
@@ -28,6 +31,10 @@ public class TokenEntity extends AbstractVersionedEntity {
 
     @Column(name = "secure_redirect_token")
     private String token;
+    
+    @Column(name = "created_date")
+    @Convert(converter = UTCDateTimeConverter.class)
+    private ZonedDateTime createdDate;
     
     @ManyToOne
     @JoinColumn(name = "charge_id", nullable = false)
@@ -60,7 +67,15 @@ public class TokenEntity extends AbstractVersionedEntity {
     public void setToken(String token) {
         this.token = token;
     }
-    
+
+    public ZonedDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(ZonedDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
     public ChargeEntity getChargeEntity() {
         return chargeEntity;
     }
