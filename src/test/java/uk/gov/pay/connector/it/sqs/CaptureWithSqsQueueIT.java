@@ -22,18 +22,22 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml",
-        configOverrides = {@ConfigOverride(key = "captureProcessConfig.captureUsingSQS", value = "true")},
+        configOverrides = {
+                @ConfigOverride(key = "captureProcessConfig.captureUsingSQS", value = "true"),
+                @ConfigOverride(key = "backgroundProcessingEnabled", value = "true")
+        },
         withDockerSQS = true
 )
-public class CaptureWithSqsQueueITest extends ChargingITestBase {
+public class CaptureWithSqsQueueIT extends ChargingITestBase {
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
 
-    public CaptureWithSqsQueueITest() {
+    public CaptureWithSqsQueueIT() {
         super("sandbox");
     }
 
@@ -57,11 +61,8 @@ public class CaptureWithSqsQueueITest extends ChargingITestBase {
     // TODO (mj): simple way of putting a message in the queue given we don't have proper setup - ideally
     //              should be replaced with QueueFixture + QueueHelper (similar to database set up)
     private String getIdOfCapturePutInTheQueue() {
-        String chargeId = authoriseNewCharge();
-        givenSetup()
-                .post(captureChargeUrlFor(chargeId))
-                .then()
-                .statusCode(204);
+        String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_SUCCESS);
+        givenSetup().post(captureChargeUrlFor(chargeId));
 
         return chargeId;
     }
