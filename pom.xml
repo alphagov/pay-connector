@@ -6,7 +6,7 @@
     <artifactId>pay-connector</artifactId>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.version>1.3.11</dropwizard.version>
+        <dropwizard.version>1.3.12</dropwizard.version>
         <liquibase.version>3.3.5</liquibase.version>
         <wiremock.version>2.23.2</wiremock.version>
         <eclipselink.version>2.7.4</eclipselink.version>
