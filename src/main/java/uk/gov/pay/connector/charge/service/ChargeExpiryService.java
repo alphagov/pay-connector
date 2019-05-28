@@ -56,7 +56,7 @@ public class ChargeExpiryService {
     private static final String EXPIRY_SUCCESS = "expiry-success";
     private static final String EXPIRY_FAILED = "expiry-failed";
     private static final long TOKEN_EXPIRY_DAYS = 7;
-
+    
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
     private final TokenDao tokenDao;
@@ -130,7 +130,7 @@ public class ChargeExpiryService {
         }
     }
 
-    public Map<String, Integer> sweepAndExpireCharges() {
+    public Map<String, Integer> sweepAndExpireChargesAndTokens() {
         List<ChargeEntity> chargesToExpire = new ImmutableList.Builder<ChargeEntity>()
                 .addAll(getChargesToExpireWithRegularExpiryThreshold())
                 .addAll(getChargesToExpireWithDelayedExpiryThreshold())

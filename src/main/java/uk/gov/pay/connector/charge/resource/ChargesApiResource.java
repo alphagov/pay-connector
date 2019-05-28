@@ -244,7 +244,7 @@ public class ChargesApiResource {
     @Path("/v1/tasks/expired-charges-sweep")
     @Produces(APPLICATION_JSON)
     public Response expireCharges(@Context UriInfo uriInfo) {
-        Map<String, Integer> resultMap = chargeExpiryService.sweepAndExpireCharges();
+        Map<String, Integer> resultMap = chargeExpiryService.sweepAndExpireChargesAndTokens();
         return successResponseWithEntity(resultMap);
     }
 

@@ -236,7 +236,7 @@ public class ChargeExpiryServiceTest {
         when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS))).thenReturn(singletonList(chargeEntityAwaitingCapture));
         when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(EXPIRABLE_REGULAR_STATUSES))).thenReturn(singletonList(chargeEntityAuthorisationSuccess));
 
-        chargeExpiryService.sweepAndExpireCharges();
+        chargeExpiryService.sweepAndExpireChargesAndTokens();
 
         assertThat(chargeEntityAwaitingCapture.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
         assertThat(chargeEntityAuthorisationSuccess.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
@@ -261,7 +261,7 @@ public class ChargeExpiryServiceTest {
         doNothing().when(mockChargeEventDao).persistChargeEventOf(any(ChargeEntity.class));
         when(mockChargeDao.findBeforeDateWithStatusIn(any(ZonedDateTime.class), eq(EXPIRABLE_REGULAR_STATUSES))).thenReturn(singletonList(preAuthorisationCharge));
 
-        Map<String, Integer> sweepResult = chargeExpiryService.sweepAndExpireCharges();
+        Map<String, Integer> sweepResult = chargeExpiryService.sweepAndExpireChargesAndTokens();
 
         assertThat(sweepResult.get("expiry-success"), is(1));
         assertNull(sweepResult.get("expiry-failure"));
