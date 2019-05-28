@@ -27,6 +27,7 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
+import uk.gov.pay.connector.token.dao.TokenDao;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -61,6 +62,9 @@ public class ChargeExpiryServiceTest {
 
     @Mock
     private ChargeEventDao mockChargeEventDao;
+    
+    @Mock
+    private TokenDao mockTokenDao;
     
     @Mock
     private PaymentProviders mockPaymentProviders;
@@ -105,7 +109,7 @@ public class ChargeExpiryServiceTest {
     @Before
     public void setup() {
         when(mockedConfig.getChargeSweepConfig()).thenReturn(mockedChargeSweepConfig);
-        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, mockQueryService, mockedConfig);
+        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeEventDao, mockTokenDao, mockPaymentProviders, mockQueryService, mockedConfig);
         when(mockPaymentProviders.byName(PaymentGatewayName.WORLDPAY)).thenReturn(mockPaymentProvider);
         GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
         gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayCancelResponse).build();
@@ -221,7 +225,7 @@ public class ChargeExpiryServiceTest {
                 .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
-
+        
         when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
 
         when(mockChargeDao.findByExternalId(chargeEntityAwaitingCapture.getExternalId())).thenReturn(Optional.of(chargeEntityAwaitingCapture));
