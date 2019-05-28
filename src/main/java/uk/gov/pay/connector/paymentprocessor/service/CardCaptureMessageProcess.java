@@ -13,25 +13,25 @@ import java.util.List;
 
 // @TODO(sfount) replace `CardCaptureProcess` when feature flag is switched
 public class CardCaptureMessageProcess {
-  
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CardCaptureMessageProcess.class);
     private final CaptureQueue captureQueue;
     private final Boolean captureUsingSqs;
     private CardCaptureService cardCaptureService;
 
     @Inject
-    public CardCaptureMessageProcess(CaptureQueue captureQueue, CardCaptureService cardCaptureService, ConnectorConfiguration connectorConfiguration) { 
+    public CardCaptureMessageProcess(CaptureQueue captureQueue, CardCaptureService cardCaptureService, ConnectorConfiguration connectorConfiguration) {
         this.captureQueue = captureQueue;
         this.cardCaptureService = cardCaptureService;
         this.captureUsingSqs = connectorConfiguration.getCaptureProcessConfig().getCaptureUsingSQS();
     }
-    
-    public void handleCaptureMessages() throws QueueException { 
-        List<ChargeCaptureMessage> captureMessages = captureQueue.retrieveChargesForCapture();    
+
+    public void handleCaptureMessages() throws QueueException {
+        List<ChargeCaptureMessage> captureMessages = captureQueue.retrieveChargesForCapture();
         for (ChargeCaptureMessage message: captureMessages) {
             try {
                 LOGGER.info("Charge capture message received - {}", message.getChargeId());
-                
+
                 if (captureUsingSqs) {
                     runCapture(message);
                 } else {
@@ -42,7 +42,7 @@ public class CardCaptureMessageProcess {
             }
         }
     }
-    
+
     private void runCapture(ChargeCaptureMessage captureMessage) throws QueueException {
         String externalChargeId = captureMessage.getChargeId();
 
@@ -57,7 +57,7 @@ public class CardCaptureMessageProcess {
                     externalChargeId,
                     gatewayResponse.getError().get().getMessage()
             );
+            captureQueue.scheduleMessageForRetry(captureMessage);
         }
     }
-    
 }
