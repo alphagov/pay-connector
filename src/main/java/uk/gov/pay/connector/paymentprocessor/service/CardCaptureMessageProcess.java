@@ -3,10 +3,12 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.queue.CaptureQueue;
-import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.ChargeCaptureMessage;
+import uk.gov.pay.connector.queue.QueueException;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -17,13 +19,18 @@ public class CardCaptureMessageProcess {
     private static final Logger LOGGER = LoggerFactory.getLogger(CardCaptureMessageProcess.class);
     private final CaptureQueue captureQueue;
     private final Boolean captureUsingSqs;
+    private final ChargeDao chargeDao;
+    private final int maximumCaptureRetries;
     private CardCaptureService cardCaptureService;
 
     @Inject
-    public CardCaptureMessageProcess(CaptureQueue captureQueue, CardCaptureService cardCaptureService, ConnectorConfiguration connectorConfiguration) {
+    public CardCaptureMessageProcess(CaptureQueue captureQueue, CardCaptureService cardCaptureService,
+                                     ConnectorConfiguration connectorConfiguration, ChargeDao chargeDao) {
         this.captureQueue = captureQueue;
         this.cardCaptureService = cardCaptureService;
         this.captureUsingSqs = connectorConfiguration.getCaptureProcessConfig().getCaptureUsingSQS();
+        this.chargeDao = chargeDao;
+        this.maximumCaptureRetries = connectorConfiguration.getCaptureProcessConfig().getMaximumRetries();
     }
 
     public void handleCaptureMessages() throws QueueException {
@@ -57,7 +64,22 @@ public class CardCaptureMessageProcess {
                     externalChargeId,
                     gatewayResponse.getError().get().getMessage()
             );
+            handleCaptureRetry(captureMessage);
+        }
+    }
+
+    private void handleCaptureRetry(ChargeCaptureMessage captureMessage) throws QueueException {
+        // @TODO(sfount) charge entity read could all be moved to the charge dao under get retries for external id
+        ChargeEntity charge = chargeDao.findByExternalId(captureMessage.getChargeId())
+                .orElseThrow(() -> new QueueException("Invalid message on capture retry " + captureMessage.getChargeId()));
+
+        boolean shouldRetry = chargeDao.countCaptureRetriesForCharge(charge.getId()) >= maximumCaptureRetries;
+
+        if (shouldRetry) {
             captureQueue.scheduleMessageForRetry(captureMessage);
+        } else {
+            cardCaptureService.markChargeAsCaptureError(captureMessage.getChargeId());
+            captureQueue.markMessageAsProcessed(captureMessage);
         }
     }
 }
