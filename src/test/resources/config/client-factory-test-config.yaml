@@ -96,6 +96,8 @@ sqsConfig:
   accessKey: ${AWS_ACCESS_KEY:-access-key}
   captureQueueUrl: ${AWS_SQS_CAPTURE_QUEUE_URL}
 
+backgroundProcessingEnabled: ${BACKGROUND_PROCESSING_ENABLED:-true}
+
 transactionsPaginationServiceConfig:
   displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}
 

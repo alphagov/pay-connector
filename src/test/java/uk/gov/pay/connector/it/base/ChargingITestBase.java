@@ -328,8 +328,8 @@ public class ChargingITestBase {
                 AuthCardDetailsFixture.anAuthCardDetails().build());
         return externalChargeId;
     }
-    
-    private void addCharge(long chargeId, String externalChargeId, ChargeStatus chargeStatus, 
+
+    private void addCharge(long chargeId, String externalChargeId, ChargeStatus chargeStatus,
                              ServicePaymentReference reference, ZonedDateTime fromDate, String transactionId) {
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
@@ -367,7 +367,7 @@ public class ChargingITestBase {
         createdDateStrings.forEach(aDateString -> dateTimes.add(toUTCZonedDateTime(aDateString).get()));
         return dateTimes;
     }
-    
+
     protected void allowZeroAmountForGatewayAccount() {
         databaseTestHelper.updateGatewayAccountAllowZeroAmount(Long.valueOf(accountId), true);
     }

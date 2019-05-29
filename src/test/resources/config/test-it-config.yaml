@@ -84,6 +84,8 @@ sqsConfig:
   secretKey: ${AWS_SECRET_KEY:-secret-key}
   accessKey: ${AWS_ACCESS_KEY:-access-key}
 
+backgroundProcessingEnabled: ${BACKGROUND_PROCESSING_ENABLED:-true}
+
 transactionsPaginationServiceConfig:
   displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}
 
