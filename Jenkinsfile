@@ -147,5 +147,8 @@ pipeline {
     success {
       postSuccessfulMetrics(appendBranchSuffix("connector"))
     }
+    always {
+      junit "**/target/surefire-reports/*.xml,**/target/failsafe-reports/*.xml"
+    }
   }
 }
