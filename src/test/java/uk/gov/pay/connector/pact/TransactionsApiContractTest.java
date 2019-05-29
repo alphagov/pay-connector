@@ -49,7 +49,7 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 public class TransactionsApiContractTest {
 
     @ClassRule
-    public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(ConfigOverride.config("backgroundProcessingEnabled", "false"));
+    public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(ConfigOverride.config("captureProcessConfig.backgroundProcessingEnabled", "false"));
 
     @ClassRule
     public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);

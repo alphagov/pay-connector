@@ -20,6 +20,10 @@ public class CaptureProcessConfig extends Configuration {
     @NotNull
     private Boolean captureUsingSQS;
 
+    @Valid
+    @NotNull
+    private Boolean backgroundProcessingEnabled;
+
     public long getSchedulerInitialDelayInSeconds() {
         return schedulerInitialDelayInSeconds;
     }
@@ -55,4 +59,6 @@ public class CaptureProcessConfig extends Configuration {
     public Boolean getCaptureUsingSQS() {
         return captureUsingSQS;
     }
+
+    public Boolean getBackgroundProcessingEnabled() { return backgroundProcessingEnabled; }
 }
