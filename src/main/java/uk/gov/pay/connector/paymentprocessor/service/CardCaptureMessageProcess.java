@@ -69,11 +69,8 @@ public class CardCaptureMessageProcess {
     }
 
     private void handleCaptureRetry(ChargeCaptureMessage captureMessage) throws QueueException {
-        // @TODO(sfount) charge entity read could all be moved to the charge dao under get retries for external id
-        ChargeEntity charge = chargeDao.findByExternalId(captureMessage.getChargeId())
-                .orElseThrow(() -> new QueueException("Invalid message on capture retry " + captureMessage.getChargeId()));
-
-        boolean shouldRetry = chargeDao.countCaptureRetriesForCharge(charge.getId()) < maximumCaptureRetries;
+        int numberOfChargeRetries = chargeDao.countCaptureRetriesForChargeExternalId(captureMessage.getChargeId());
+        boolean shouldRetry = numberOfChargeRetries <= maximumCaptureRetries;
 
         if (shouldRetry) {
             captureQueue.scheduleMessageForRetry(captureMessage);

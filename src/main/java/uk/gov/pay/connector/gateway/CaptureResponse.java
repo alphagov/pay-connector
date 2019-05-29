@@ -54,11 +54,8 @@ public class CaptureResponse {
         return Optional.ofNullable(gatewayError);
     }
 
-    public String getErrorMessage() {
-        if (getError().isPresent()) {
-            return getError().get().getMessage();
-        }
-        return "";
+    public Optional<String> getErrorMessage() {
+        return getError().map(error -> error.getMessage());
     }
 
     /**
