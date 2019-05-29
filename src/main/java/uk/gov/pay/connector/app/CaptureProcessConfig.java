@@ -20,15 +20,13 @@ public class CaptureProcessConfig extends Configuration {
     @NotNull
     private Boolean captureUsingSQS;
 
-<<<<<<< HEAD
     @Valid
     @NotNull
     private Boolean backgroundProcessingEnabled;
-=======
+
     private int failedCaptureRetryDelayInSeconds;
     private int queueSchedulerThreadDelayInSeconds;
     private int queueSchedulerNumberOfThreads;
->>>>>>> PP-5167: introduce queue message receiver env. config
 
     public long getSchedulerInitialDelayInSeconds() {
         return schedulerInitialDelayInSeconds;
@@ -66,9 +64,8 @@ public class CaptureProcessConfig extends Configuration {
         return captureUsingSQS;
     }
 
-<<<<<<< HEAD
     public Boolean getBackgroundProcessingEnabled() { return backgroundProcessingEnabled; }
-=======
+
     public int getFailedCaptureRetryDelayInSeconds() {
         return failedCaptureRetryDelayInSeconds;
     }
@@ -80,5 +77,4 @@ public class CaptureProcessConfig extends Configuration {
     public int getQueueSchedulerNumberOfThreads() {
         return queueSchedulerNumberOfThreads;
     }
->>>>>>> PP-5167: introduce queue message receiver env. config
 }
