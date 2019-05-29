@@ -9,6 +9,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
@@ -104,5 +106,42 @@ public class TokenDaoJpaIT extends DaoITestBase {
         String tokenId = "non_existing_tokenId";
 
         assertThat(tokenDao.findByTokenId(tokenId), is(Optional.empty()));
+    }
+    
+    @Test
+    public void deleteByCutOffDate_shouldDeleteOlderTokens() {
+        
+        long daysTillExpiry = 7;
+        long daysLongerThanExpiry = 8;
+        ZonedDateTime cutOffDate = ZonedDateTime.now(ZoneId.of("UTC")).minusDays(daysTillExpiry);
+        ZonedDateTime today = ZonedDateTime.now(ZoneId.of("UTC"));
+        ZonedDateTime eightDaysOld = ZonedDateTime.now(ZoneId.of("UTC")).minusDays(daysLongerThanExpiry);
+        
+        String presentDayTokenId = "token1";
+        String eightDaysOldTokenId = "token2";
+        
+        ChargeEntity ChargeTestEntity = new ChargeEntity();
+        ChargeTestEntity.setId(defaultTestCharge.getChargeId());
+        
+        TokenEntity presentDayToken = TokenEntity.generateNewTokenFor(ChargeTestEntity);
+        presentDayToken.setCreatedDate(today);
+        presentDayToken.setToken(presentDayTokenId);
+
+        tokenDao.persist(presentDayToken);
+        
+        TokenEntity eightDayOldToken = TokenEntity.generateNewTokenFor(ChargeTestEntity);
+        eightDayOldToken.setCreatedDate(eightDaysOld);
+        eightDayOldToken.setToken(eightDaysOldTokenId);
+        
+        tokenDao.persist(eightDayOldToken);
+        
+        tokenDao.deleteTokensOlderThanSpecifiedDate(cutOffDate);
+        
+        assertThat(tokenDao.findByTokenId(eightDaysOldTokenId), is(Optional.empty()));
+
+        TokenEntity presentToken = tokenDao.findByTokenId(presentDayTokenId).get();
+        assertThat(presentToken.getId(), is(notNullValue()));
+        assertThat(presentToken.getToken(), is(presentDayTokenId));
+        assertThat(presentToken.getCreatedDate(), is(today));
     }
 }
