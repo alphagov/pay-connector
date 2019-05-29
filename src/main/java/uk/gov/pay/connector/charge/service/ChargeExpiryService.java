@@ -55,7 +55,7 @@ public class ChargeExpiryService {
 
     private static final String EXPIRY_SUCCESS = "expiry-success";
     private static final String EXPIRY_FAILED = "expiry-failed";
-    private static final long DAYS_TILL_EXPIRY = -7;
+    private static final long TOKEN_EXPIRY_DAYS = 7;
 
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
@@ -144,8 +144,8 @@ public class ChargeExpiryService {
     }
     
     private int deleteTokensOlderThanSpecifiedDate() {
-        ZonedDateTime cut_off_date = ZonedDateTime.now(ZoneId.of("UTC")).plusDays(DAYS_TILL_EXPIRY);
-        return tokenDao.deleteTokensOlderThanSpecifiedDate(cut_off_date);
+        ZonedDateTime cutOffDate = ZonedDateTime.now(ZoneId.of("UTC")).minusDays(TOKEN_EXPIRY_DAYS);
+        return tokenDao.deleteTokensOlderThanSpecifiedDate(cutOffDate);
     }
     
 

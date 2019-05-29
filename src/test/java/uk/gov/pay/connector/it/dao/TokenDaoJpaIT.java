@@ -111,35 +111,35 @@ public class TokenDaoJpaIT extends DaoITestBase {
     @Test
     public void deleteByCutOffDate_shouldDeleteOlderTokens() {
         
-        long days_till_expiry = -7;
-        long days_longer_than_expiry = -8;
-        ZonedDateTime cut_off_date = ZonedDateTime.now(ZoneId.of("UTC")).plusDays(days_till_expiry);
+        long daysTillExpiry = 7;
+        long daysLongerThanExpiry = 8;
+        ZonedDateTime cut_off_date = ZonedDateTime.now(ZoneId.of("UTC")).minusDays(daysTillExpiry);
         ZonedDateTime today = ZonedDateTime.now(ZoneId.of("UTC"));
-        ZonedDateTime eight_days_old = ZonedDateTime.now(ZoneId.of("UTC")).plusDays(days_longer_than_expiry);
+        ZonedDateTime eight_days_old = ZonedDateTime.now(ZoneId.of("UTC")).minusDays(daysLongerThanExpiry);
         
-        String present_day_tokenId = "token1";
-        String eight_days_old_tokenId = "token2";
+        String presentDayTokenId = "token1";
+        String eightDaysOldTokenId = "token2";
         
         ChargeEntity ChargeTestEntity = new ChargeEntity();
         ChargeTestEntity.setId(defaultTestCharge.getChargeId());
         
         TokenEntity present_day_token = TokenEntity.generateNewTokenFor(ChargeTestEntity);
         present_day_token.setCreatedDate(today);
-        present_day_token.setToken(present_day_tokenId);
+        present_day_token.setToken(presentDayTokenId);
         tokenDao.persist(present_day_token);
         
         TokenEntity eight_day_old_token = TokenEntity.generateNewTokenFor(ChargeTestEntity);
         eight_day_old_token.setCreatedDate(eight_days_old);
-        eight_day_old_token.setToken(eight_days_old_tokenId);
+        eight_day_old_token.setToken(eightDaysOldTokenId);
         tokenDao.persist(eight_day_old_token);
         
         tokenDao.deleteTokensOlderThanSpecifiedDate(cut_off_date);
         
-        assertThat(tokenDao.findByTokenId(eight_days_old_tokenId), is(Optional.empty()));
+        assertThat(tokenDao.findByTokenId(eightDaysOldTokenId), is(Optional.empty()));
 
-        TokenEntity present_token = tokenDao.findByTokenId(present_day_tokenId).get();
+        TokenEntity present_token = tokenDao.findByTokenId(presentDayTokenId).get();
         assertThat(present_token.getId(), is(notNullValue()));
-        assertThat(present_token.getToken(), is(present_day_tokenId));
+        assertThat(present_token.getToken(), is(presentDayTokenId));
         assertThat(present_token.getCreatedDate(), is(today));
         
     }
