@@ -34,7 +34,7 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml",
         configOverrides = {
                 @ConfigOverride(key = "captureProcessConfig.captureUsingSQS", value = "true"),
-                @ConfigOverride(key = "backgroundProcessingEnabled", value = "false")
+                @ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "false")
         },
         withDockerSQS = true
 )

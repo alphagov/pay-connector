@@ -116,7 +116,7 @@ public class ChargeServiceTest {
                 .aChargeCreateRequest()
                 .withAmount(100L)
                 .withReturnUrl("http://return-service.com")
-                .withDescription("This is a description")
+                .withDescription("This is a description u")
                 .withReference("Pay reference");
 
         gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
@@ -163,7 +163,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
         assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
         assertThat(createdChargeEntity.getReference(), is(ServicePaymentReference.of("Pay reference")));
-        assertThat(createdChargeEntity.getDescription(), is("This is a description"));
+        assertThat(createdChargeEntity.getDescription(), is("This is a description u"));
         assertThat(createdChargeEntity.getAmount(), is(100L));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is(nullValue()));
         assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
