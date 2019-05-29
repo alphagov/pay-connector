@@ -25,6 +25,17 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 | `STRIPE_TRANSACTION_FEE_PERCENTAGE` | - | percentage of total charge amount to recover GOV.UK Pay platform costs. |
 | `STRIPE_PLATFORM_ACCOUNT_ID` | - | the account ID for the Stripe Connect GOV.UK Pay platform. |
 
+
+### Queues
+| Varible | Default | Purpose |
+|---------|---------|---------|
+| `AWS_SQS_REGION`            | - | SQS capture queue region |
+| `AWS_SQS_CAPTURE_QUEUE_URL` | - | SQS capture queue URL  |
+| `AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT`  | false | Set to true to use non standard (eg: http://my-own-sqs-endpoint) SQS endpoint |
+| `AWS_SQS_ENDPOINT`          | - |  URL that is the entry point for SQS. Only required when AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT is `true` |
+| `AWS_SECRET_KEY`            | - | Secret key. Only required when AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT is `true` |
+| `AWS_ACCESS_KEY`            | - | Access key. Only required when AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT is `true`|
+
 ### Background captures
 
 The background capture mechanism will capture all payments in the `CAPTURE_APPROVED` state. 
@@ -42,9 +53,6 @@ The following variables control the background process:
 | `CAPTURE_PROCESS_BATCH_SIZE` | `10` | limits the batch window size processed at each polling attempt. If connector is not managing to clear the queue of captures, increase this value. |
 | `CAPTURE_PROCESS_RETRY_FAILURES_EVERY` | `60 minutes` | a failed capture attempt will be returned to the queue, and will not be retried until this time has passed |
 | `CAPTURE_PROCESS_MAXIMUM_RETRIES` | `48` | connector keeps track of the number of times capture has been attempted for each charge. If a charge fails this number of times or more it will be marked as a permanent failure. An error log message will be written as well. This should *never* happen and if it does it should be investigated. |
-| `AWS_SQS_ENDPOINT` | - |  URL that is the entry point for SQS. Not required when AWS_SQS_REGION is set or can be set if using a non-standard SQS endpoint   |
-| `AWS_SQS_CAPTURE_QUEUE_ID` | - | SQS capture queue URL  |
-| `AWS_SQS_REGION` | - | SQS capture queue region |
 
 ## Integration tests
 

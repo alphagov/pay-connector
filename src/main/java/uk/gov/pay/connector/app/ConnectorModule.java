@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.app;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
@@ -28,8 +30,6 @@ import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
-
-import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 public class ConnectorModule extends AbstractModule {
     final ConnectorConfiguration configuration;
@@ -129,18 +129,27 @@ public class ConnectorModule extends AbstractModule {
     @Provides
     public AmazonSQS sqsClient(ConnectorConfiguration connectorConfiguration) {
 
-        if (isEmpty(connectorConfiguration.getSqsConfig().getEndpoint())) {
-            return AmazonSQSClientBuilder.standard()
-                    .withRegion(connectorConfiguration.getSqsConfig().getRegion())
-                    .build();
-        } else {
-            return AmazonSQSClientBuilder.standard()
+        AmazonSQSClientBuilder clientBuilder = AmazonSQSClientBuilder
+                .standard();
+
+        if (connectorConfiguration.getSqsConfig().isNonStandardServiceEndpoint()) {
+
+            BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(
+                    connectorConfiguration.getSqsConfig().getAccessKey(),
+                    connectorConfiguration.getSqsConfig().getSecretKey());
+
+            clientBuilder
+                    .withCredentials(new AWSStaticCredentialsProvider(basicAWSCredentials))
                     .withEndpointConfiguration(
                             new AwsClientBuilder.EndpointConfiguration(
                                     connectorConfiguration.getSqsConfig().getEndpoint(),
                                     connectorConfiguration.getSqsConfig().getRegion())
-                    ).build();
+                    );
+        } else {
+            // uses AWS SDK's DefaultAWSCredentialsProviderChain to obtain credentials 
+            clientBuilder.withRegion(connectorConfiguration.getSqsConfig().getRegion());
         }
-        
+
+        return clientBuilder.build();
     }
 }

@@ -53,8 +53,8 @@ stripe:
     test: ${GDS_CONNECTOR_STRIPE_AUTH_TOKEN:-sk_test}
     live: ${GDS_CONNECTOR_STRIPE_AUTH_LIVE_TOKEN}
   webhookSigningSecrets:
-      test: ${GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET:-whtest}
-      live: ${GDS_CONNECTOR_STRIPE_WEBHOOK_LIVE_SIGN_SECRET:-whlive}
+    test: ${GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET:-whtest}
+    live: ${GDS_CONNECTOR_STRIPE_WEBHOOK_LIVE_SIGN_SECRET:-whlive}
   platformAccountId: ${STRIPE_PLATFORM_ACCOUNT_ID}
   feePercentage: ${STRIPE_TRANSACTION_FEE_PERCENTAGE:-0.08}
   collectFee: ${COLLECT_FEE_FEATURE_FLAG:-true}
@@ -89,8 +89,11 @@ captureProcessConfig:
   captureUsingSQS: ${CAPTURE_USING_SQS_FEATURE_FLAG:-false}
 
 sqsConfig:
+  nonStandardServiceEndpoint: ${AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT:-true}
   endpoint: ${AWS_SQS_ENDPOINT:-localhost}
   region: ${AWS_SQS_REGION:-region}
+  secretKey: ${AWS_SECRET_KEY:-secret-key}
+  accessKey: ${AWS_ACCESS_KEY:-access-key}
   captureQueueUrl: ${AWS_SQS_CAPTURE_QUEUE_URL}
 
 transactionsPaginationServiceConfig:

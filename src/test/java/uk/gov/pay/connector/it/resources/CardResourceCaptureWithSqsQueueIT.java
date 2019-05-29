@@ -35,13 +35,13 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
         configOverrides = {@ConfigOverride(key = "captureProcessConfig.captureUsingSQS", value = "true")},
         withDockerSQS = true
 )
-public class CardResourceCaptureWithSqsQueueITest extends ChargingITestBase {
+public class CardResourceCaptureWithSqsQueueIT extends ChargingITestBase {
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
     private String captureApproveUrl;
 
-    public CardResourceCaptureWithSqsQueueITest() {
+    public CardResourceCaptureWithSqsQueueIT() {
         super("sandbox");
     }
 
