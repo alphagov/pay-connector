@@ -54,6 +54,13 @@ public class CaptureResponse {
         return Optional.ofNullable(gatewayError);
     }
 
+    public String getErrorMessage() {
+        if (getError().isPresent()) {
+            return getError().get().getMessage();
+        }
+        return "";
+    }
+
     /**
      * To avoid returning a null, one must call isSuccessful first to determine if there is an error
      */

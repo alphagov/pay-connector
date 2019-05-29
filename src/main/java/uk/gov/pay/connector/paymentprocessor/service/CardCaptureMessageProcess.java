@@ -62,7 +62,7 @@ public class CardCaptureMessageProcess {
             LOGGER.info(
                     "Failed to capture [externalChargeId={}] due to: {}",
                     externalChargeId,
-                    gatewayResponse.getError().get().getMessage()
+                    gatewayResponse.getErrorMessage()
             );
             handleCaptureRetry(captureMessage);
         }
@@ -73,7 +73,7 @@ public class CardCaptureMessageProcess {
         ChargeEntity charge = chargeDao.findByExternalId(captureMessage.getChargeId())
                 .orElseThrow(() -> new QueueException("Invalid message on capture retry " + captureMessage.getChargeId()));
 
-        boolean shouldRetry = chargeDao.countCaptureRetriesForCharge(charge.getId()) >= maximumCaptureRetries;
+        boolean shouldRetry = chargeDao.countCaptureRetriesForCharge(charge.getId()) < maximumCaptureRetries;
 
         if (shouldRetry) {
             captureQueue.scheduleMessageForRetry(captureMessage);
