@@ -7,6 +7,8 @@ import com.amazonaws.services.sqs.model.DeleteMessageResult;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.AmazonSQSException;
+import com.amazonaws.services.sqs.model.ChangeMessageVisibilityResult;
+import com.amazonaws.services.sqs.model.ChangeMessageVisibilityRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.queue.QueueException;
@@ -56,12 +58,26 @@ public class SqsQueueService {
             throw new QueueException(e.getMessage());
         }
     }
-    
-    public DeleteMessageResult deleteMessage(String queueUrl, String messageReceiptHandle) throws QueueException { 
+
+    public DeleteMessageResult deleteMessage(String queueUrl, String messageReceiptHandle) throws QueueException {
         try {
             return sqsClient.deleteMessage(new DeleteMessageRequest(queueUrl, messageReceiptHandle));
         } catch (AmazonSQSException | UnsupportedOperationException e) {
             logger.error("Failed to delete message from SQS queue - {}", e.getMessage());
+            throw new QueueException(e.getMessage());
+        }
+    }
+
+    public ChangeMessageVisibilityResult deferMessage(String queueUrl, String messageReceiptHandle, int timeoutInSeconds) throws QueueException {
+        try {
+            ChangeMessageVisibilityRequest changeMessageVisibilityRequest = new ChangeMessageVisibilityRequest(
+                    queueUrl,
+                    messageReceiptHandle,
+                    timeoutInSeconds);
+
+            return sqsClient.changeMessageVisibility(changeMessageVisibilityRequest);
+        } catch (AmazonSQSException | UnsupportedOperationException e) {
+            logger.error("Failed to defer message from SQS queue - {}", e.getMessage());
             throw new QueueException(e.getMessage());
         }
     }

@@ -20,7 +20,7 @@ public class CaptureQueue {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final JsonObjectMapper jsonObjectMapper;
-    
+
     private final String captureQueueUrl;
     private SqsQueueService sqsQueueService;
 
@@ -30,7 +30,7 @@ public class CaptureQueue {
     @Inject
     public CaptureQueue(
             SqsQueueService sqsQueueService,
-            ConnectorConfiguration connectorConfiguration, JsonObjectMapper jsonObjectMapper) { 
+            ConnectorConfiguration connectorConfiguration, JsonObjectMapper jsonObjectMapper) {
         this.sqsQueueService = sqsQueueService;
         this.captureQueueUrl = connectorConfiguration.getSqsConfig().getCaptureQueueUrl();
         this.jsonObjectMapper = jsonObjectMapper;
@@ -46,12 +46,12 @@ public class CaptureQueue {
 
         logger.info("Charge [{}] added to capture queue. Message ID [{}]", charge.getExternalId(), queueMessage.getMessageId());
     }
-    
+
     public List<ChargeCaptureMessage> retrieveChargesForCapture() throws QueueException {
         List<QueueMessage> queueMessages = sqsQueueService
                 .receiveMessages(this.captureQueueUrl, CAPTURE_MESSAGE_ATTRIBUTE_NAME);
-        
-        return queueMessages 
+
+        return queueMessages
                 .stream()
                 .map(this::getChargeCaptureMessage)
                 .filter(Objects::nonNull)
@@ -69,7 +69,13 @@ public class CaptureQueue {
         }
     }
 
-    public void markMessageAsProcessed(ChargeCaptureMessage message) throws QueueException {    
+    public void markMessageAsProcessed(ChargeCaptureMessage message) throws QueueException {
         sqsQueueService.deleteMessage(this.captureQueueUrl, message.getReceiptHandle());
+    }
+
+    public void scheduleMessageForRetry(ChargeCaptureMessage message) throws QueueException {
+        // @TODO(sfount) this should be configured by environment with other receive params
+        int captureMessageDeferTimeout = 3600;
+        sqsQueueService.deferMessage(this.captureQueueUrl, message.getReceiptHandle(), captureMessageDeferTimeout);
     }
 }

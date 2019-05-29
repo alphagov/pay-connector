@@ -1536,7 +1536,39 @@ public class ChargeDaoIT extends DaoITestBase {
                 .insert();
 
         assertThat(chargeDao.countCaptureRetriesForCharge(chargeId), is(2));
+    }
 
+    @Test
+    public void countCaptureRetriesForChargeExternalId_shouldReturnNumberOfRetries() {
+        long chargeId = nextLong();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withCreatedDate(now().minusHours(2))
+                .withChargeStatus(CAPTURE_APPROVED)
+                .insert();
+
+        assertThat(chargeDao.countCaptureRetriesForChargeExternalId(externalChargeId), is(0));
+
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeId(chargeId)
+                .withChargeStatus(CAPTURE_APPROVED)
+                .insert();
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeId(chargeId)
+                .withChargeStatus(CAPTURE_APPROVED_RETRY)
+                .insert();
+
+        assertThat(chargeDao.countCaptureRetriesForChargeExternalId(externalChargeId), is(2));
     }
 
     @Test
@@ -1566,7 +1598,7 @@ public class ChargeDaoIT extends DaoITestBase {
     @Test
     public void getChargeWithAFee_shouldReturnFeeOnCharge() {
         insertTestCharge();
-        
+
         DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestFee()
@@ -1578,7 +1610,7 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(chargeDao
                 .findById(defaultTestCharge.getChargeId())
                 .flatMap(ChargeEntity::getFeeAmount)
-                .get(), 
+                .get(),
                 is(10L)
         );
     }

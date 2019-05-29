@@ -243,6 +243,19 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .getSingleResult()).intValue();
     }
 
+    public int countCaptureRetriesForChargeExternalId(String externalId) {
+        String query = "SELECT count(ce) FROM ChargeEventEntity ce WHERE " +
+                "    ce.chargeEntity.externalId = :externalId AND " +
+                "    (ce.status = :captureApprovedStatus OR ce.status = :captureApprovedRetryStatus)";
+
+        return ((Number) entityManager.get()
+                .createQuery(query)
+                .setParameter("externalId", externalId)
+                .setParameter("captureApprovedStatus", CAPTURE_APPROVED)
+                .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY)
+                .getSingleResult()).intValue();
+    }
+
     public List<ChargeEntity> findByIdAndLimit(Long id, int limit) {
         return entityManager.get()
                 .createQuery("SELECT c FROM ChargeEntity c WHERE c.id > :id ORDER BY c.id", ChargeEntity.class)
