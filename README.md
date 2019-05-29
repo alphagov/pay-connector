@@ -4,7 +4,7 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 
 ## Environment Variables
 
-| Varible | Default | Purpose |
+| Variable | Default | Purpose |
 |---------|---------|---------|
 | `AUTH_READ_TIMEOUT_SECONDS` | `10 seconds` | the timeout before the resource responds with an awaited auth response (202), so that frontend can choose to show a spinner and poll for auth response. Supports any duration parsable by dropwizard [Duration](https://github.com/dropwizard/dropwizard/blob/master/dropwizard-util/src/main/java/io/dropwizard/util/Duration.java)|
 | `SECURE_WORLDPAY_NOTIFICATION_ENABLED` | false | whether to filter incoming notifications by domain; they will be rejected with a 403 unless they match the required domain |
@@ -27,7 +27,7 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 
 
 ### Queues
-| Varible | Default | Purpose |
+| Variable | Default | Purpose |
 |---------|---------|---------|
 | `AWS_SQS_REGION`            | - | SQS capture queue region |
 | `AWS_SQS_CAPTURE_QUEUE_URL` | - | SQS capture queue URL  |
@@ -35,6 +35,8 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 | `AWS_SQS_ENDPOINT`          | - |  URL that is the entry point for SQS. Only required when AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT is `true` |
 | `AWS_SECRET_KEY`            | - | Secret key. Only required when AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT is `true` |
 | `AWS_ACCESS_KEY`            | - | Access key. Only required when AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT is `true`|
+| `AWS_SQS_MESSAGE_MAXIMUM_WAIT_TIME_IN_SECONDS` | `20` | Maximum wait time for long poll message requests to queue. |
+| `AWS_SQS_MESSAGE_MAXIMUM_BATCH_SIZE` | `10` | Maximum number of messages that should be received in an individual message batch. |
 
 ### Background captures
 
