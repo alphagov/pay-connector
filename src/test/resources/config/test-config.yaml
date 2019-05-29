@@ -70,6 +70,7 @@ executorServiceConfig:
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
 
 captureProcessConfig:
+  backgroundProcessingEnabled: ${BACKGROUND_PROCESSING_ENABLED:-true}
   schedulerInitialDelayInSeconds: ${CAPTURE_PROCESS_SCHEDULER_INITIAL_DELAY_SECONDS:-20}
   schedulerRandomIntervalMinimumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MINIMUM_SECONDS:-150}
   schedulerRandomIntervalMaximumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MAXIMUM_SECONDS:-200}
@@ -86,8 +87,6 @@ sqsConfig:
   secretKey: ${AWS_SECRET_KEY:-secret-key}
   accessKey: ${AWS_ACCESS_KEY:-access-key}
   captureQueueUrl: ${AWS_SQS_CAPTURE_QUEUE_URL}
-
-backgroundProcessingEnabled: ${BACKGROUND_PROCESSING_ENABLED:-true}
 
 transactionsPaginationServiceConfig:
   displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}

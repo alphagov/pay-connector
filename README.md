@@ -1,7 +1,7 @@
 # pay-connector
 The GOV.UK Pay Connector in Java (Dropwizard)
 
-  
+
 ## Environment Variables
 
 | Varible | Default | Purpose |
@@ -38,7 +38,7 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 
 ### Background captures
 
-The background capture mechanism will capture all payments in the `CAPTURE_APPROVED` state. 
+The background capture mechanism will capture all payments in the `CAPTURE_APPROVED` state.
 
 A background thread managed by dropwizard runs on all connector nodes. It polls the database periodically to check for payments which need to be captured.
 
@@ -46,10 +46,11 @@ The polling interval is a random value between 150-200 seconds.
 
 If a capture attempt fails it will be retried again after a specified delay (`CAPTURE_PROCESS_RETRY_FAILURES_EVERY`).
 
-The following variables control the background process: 
+The following variables control the background process:
 
 | Varible | Default | Purpose |
 |---------|---------|---------|
+| `BACKGROUND_PROCESSING_ENABLED` | `true` | enables registering scheduled processes - it includes both database based & queue based capture methods |
 | `CAPTURE_PROCESS_BATCH_SIZE` | `10` | limits the batch window size processed at each polling attempt. If connector is not managing to clear the queue of captures, increase this value. |
 | `CAPTURE_PROCESS_RETRY_FAILURES_EVERY` | `60 minutes` | a failed capture attempt will be returned to the queue, and will not be retried until this time has passed |
 | `CAPTURE_PROCESS_MAXIMUM_RETRIES` | `48` | connector keeps track of the number of times capture has been attempted for each charge. If a charge fails this number of times or more it will be marked as a permanent failure. An error log message will be written as well. This should *never* happen and if it does it should be investigated. |
@@ -62,7 +63,7 @@ To run the integration tests, the `DOCKER_HOST` and `DOCKER_CERT_PATH` environme
 ## Contract tests
 
 `$GDS_CONNECTOR_WORLDPAY_PASSWORD` and`$GDS_CONNECTOR_WORLDPAY_PASSWORD` environment variable must be set for Worldpay contract tests.
-`GDS_CONNECTOR_SMARTPAY_USER`, `GDS_CONNECTOR_SMARTPAY_PASSWORD` must be set for the smartpay contract tests. 
+`GDS_CONNECTOR_SMARTPAY_USER`, `GDS_CONNECTOR_SMARTPAY_PASSWORD` must be set for the smartpay contract tests.
 
 ```
     eval $(boot2docker shellinit)
@@ -84,7 +85,7 @@ The [API Specification](docs/api_specification.md) provides more detail on the p
 
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
-|[```/v1/tasks/expired-charges-sweep```](docs/api_specification.md#post-v1tasksexpired-charges-sweep)  | POST    |  Spawns a task to expire charges with a default window of 90 minutes|   
+|[```/v1/tasks/expired-charges-sweep```](docs/api_specification.md#post-v1tasksexpired-charges-sweep)  | POST    |  Spawns a task to expire charges with a default window of 90 minutes|
 
 ### Command line tasks
 
@@ -101,7 +102,7 @@ $ java -jar target/pay-connector-0.1-SNAPSHOT-allinone.jar
 
    positional arguments: `file` - application configuration file
 
-* `render-state-transition-graph` - Outputs a representation of the connector state 
+* `render-state-transition-graph` - Outputs a representation of the connector state
                                     transitions as a graphviz 'dot' file
 
 ### API namespace
