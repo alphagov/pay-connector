@@ -116,7 +116,6 @@ sqsConfig:
   accessKey: ${AWS_ACCESS_KEY}
   captureQueueUrl: ${AWS_SQS_CAPTURE_QUEUE_URL}
 
-
 transactionsPaginationServiceConfig:
   displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}
 

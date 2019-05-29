@@ -11,6 +11,9 @@ public class SqsConfig extends Configuration {
     private String accessKey;
     private String secretKey;
 
+    private int messageMaximumWaitTimeInSeconds;
+    private int messageMaximumBatchSize;
+
     public String getEndpoint() {
         return endpoint;
     }
@@ -33,5 +36,13 @@ public class SqsConfig extends Configuration {
 
     public boolean isNonStandardServiceEndpoint() {
         return nonStandardServiceEndpoint;
+    }
+
+    public int getMessageMaximumWaitTimeInSeconds() {
+        return messageMaximumWaitTimeInSeconds;
+    }
+
+    public int getMessageMaximumBatchSize() {
+        return messageMaximumBatchSize;
     }
 }

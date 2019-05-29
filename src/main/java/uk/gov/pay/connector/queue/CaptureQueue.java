@@ -22,9 +22,10 @@ public class CaptureQueue {
     private final JsonObjectMapper jsonObjectMapper;
 
     private final String captureQueueUrl;
+    private final int failedCaptureRetryDelayInSeconds;
     private SqsQueueService sqsQueueService;
 
-    // @TODO(sfount) capture specific message attribute
+    // default message keyword `All`, can be made more granular if queue is responsible for multiple message types
     private static final String CAPTURE_MESSAGE_ATTRIBUTE_NAME = "All";
 
     @Inject
@@ -33,11 +34,11 @@ public class CaptureQueue {
             ConnectorConfiguration connectorConfiguration, JsonObjectMapper jsonObjectMapper) {
         this.sqsQueueService = sqsQueueService;
         this.captureQueueUrl = connectorConfiguration.getSqsConfig().getCaptureQueueUrl();
+        this.failedCaptureRetryDelayInSeconds = connectorConfiguration.getCaptureProcessConfig().getFailedCaptureRetryDelayInSeconds();
         this.jsonObjectMapper = jsonObjectMapper;
     }
 
     public void sendForCapture(ChargeEntity charge) throws QueueException {
-
         String message = new GsonBuilder()
                 .create()
                 .toJson(ImmutableMap.of("chargeId", charge.getExternalId()));
@@ -74,8 +75,6 @@ public class CaptureQueue {
     }
 
     public void scheduleMessageForRetry(ChargeCaptureMessage message) throws QueueException {
-        // @TODO(sfount) this should be configured by environment with other receive params
-        int captureMessageDeferTimeout = 3600;
-        sqsQueueService.deferMessage(this.captureQueueUrl, message.getReceiptHandle(), captureMessageDeferTimeout);
+        sqsQueueService.deferMessage(this.captureQueueUrl, message.getReceiptHandle(), failedCaptureRetryDelayInSeconds);
     }
 }

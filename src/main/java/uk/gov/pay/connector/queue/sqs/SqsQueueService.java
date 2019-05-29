@@ -11,6 +11,7 @@ import com.amazonaws.services.sqs.model.ChangeMessageVisibilityResult;
 import com.amazonaws.services.sqs.model.ChangeMessageVisibilityRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.QueueMessage;
 
@@ -23,9 +24,14 @@ public class SqsQueueService {
 
     private AmazonSQS sqsClient;
 
+    private final int messageMaximumWaitTimeInSeconds;
+    private final int messageMaximumBatchSize;
+
     @Inject
-    public SqsQueueService(AmazonSQS sqsClient) {
+    public SqsQueueService(AmazonSQS sqsClient, ConnectorConfiguration connectorConfiguration) {
         this.sqsClient = sqsClient;
+        this.messageMaximumWaitTimeInSeconds = connectorConfiguration.getSqsConfig().getMessageMaximumWaitTimeInSeconds();
+        messageMaximumBatchSize = connectorConfiguration.getSqsConfig().getMessageMaximumBatchSize();
     }
 
     public QueueMessage sendMessage(String queueUrl, String messageBody) throws QueueException {
@@ -42,13 +48,11 @@ public class SqsQueueService {
 
     public List<QueueMessage> receiveMessages(String queueUrl, String messageAttributeName) throws QueueException {
         try {
-            // @TODO(sfount) this should be configured in the connector environment
-            int longPollingMaxWaitTime = 20;
             ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
             receiveMessageRequest
                     .withMessageAttributeNames(messageAttributeName)
-                    .withWaitTimeSeconds(longPollingMaxWaitTime)
-                    .withMaxNumberOfMessages(10);
+                    .withWaitTimeSeconds(messageMaximumWaitTimeInSeconds)
+                    .withMaxNumberOfMessages(messageMaximumBatchSize);
 
             ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
 
