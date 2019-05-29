@@ -68,14 +68,12 @@ public class SqsQueueService {
         }
     }
 
-    public ChangeMessageVisibilityResult deferMessage(String queueUrl, String messageReceiptHandle) throws QueueException {
+    public ChangeMessageVisibilityResult deferMessage(String queueUrl, String messageReceiptHandle, int timeoutInSeconds) throws QueueException {
         try {
-            // @TODO(sfount) this should be configured by environment with other receive params
-            int deferTimeout = 3600;
             ChangeMessageVisibilityRequest changeMessageVisibilityRequest = new ChangeMessageVisibilityRequest(
                     queueUrl,
                     messageReceiptHandle,
-                    deferTimeout);
+                    timeoutInSeconds);
 
             return sqsClient.changeMessageVisibility(changeMessageVisibilityRequest);
         } catch (AmazonSQSException | UnsupportedOperationException e) {

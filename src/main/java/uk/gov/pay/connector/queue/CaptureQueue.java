@@ -74,6 +74,8 @@ public class CaptureQueue {
     }
 
     public void scheduleMessageForRetry(ChargeCaptureMessage message) throws QueueException {
-        sqsQueueService.deferMessage(this.captureQueueUrl, message.getReceiptHandle());
+        // @TODO(sfount) this should be configured by environment with other receive params
+        int captureMessageDeferTimeout = 3600;
+        sqsQueueService.deferMessage(this.captureQueueUrl, message.getReceiptHandle(), captureMessageDeferTimeout);
     }
 }
