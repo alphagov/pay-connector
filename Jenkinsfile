@@ -56,69 +56,65 @@ pipeline {
         }
       }
     }
-    stage('Tests') {
-      failFast true
-      parallel {
-        stage('Card Payment End-to-End Tests') {
-            when {
-                anyOf {
-                  branch 'master'
-                  environment name: 'RUN_END_TO_END_ON_PR', value: 'true'
-                }
-            }
-
-            steps {
-              dir('e2e-pay-scripts') {
-                git url: '/opt/govukpay/repos/pay-scripts', branch: '${PAY_SCRIPTS_BRANCH}'
-
-                withCredentials([
-                  string(credentialsId: 'graphite_account_id', variable: 'HOSTED_GRAPHITE_ACCOUNT_ID'),
-                  string(credentialsId: 'graphite_api_key', variable: 'HOSTED_GRAPHITE_API_KEY')
-                  ]) {
-                  sh(
-                      '''|#!/bin/bash
-                         |set -e
-                         |bundle install --path gems
-                         |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb up
-                         |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb run --end-to-end=${E2E_TEST_TYPE}
-                      '''.stripMargin()
-                  )
-                }
-              }
-            }
-
-            post {
-              always {
-                steps {
-                  shell(
-                      '''|#!/bin/bash
-                         |set -e
-                         |bundle install --path gems
-                         |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb down
-                      '''.stripMargin()
-                  )
-
-                  archiveArtifacts artifacts: '**/target/docker*.log,**/target/screenshots/*.png'
-                  junit testResults: "**/target/surefire-reports/*.xml,**/target/failsafe-reports/*.xml"
-
-                }
-              }
+    stage('Card Payment End-to-End Tests') {
+        when {
+            anyOf {
+              branch 'master'
+              environment name: 'RUN_END_TO_END_ON_PR', value: 'true'
             }
         }
 
-        stage('ZAP Tests') {
-            when {
-                anyOf {
-                  branch 'master'
-                  environment name: 'RUN_ZAP_ON_PR', value: 'true'
-                }
+        steps {
+          dir('e2e-pay-scripts') {
+            git url: '/opt/govukpay/repos/pay-scripts', branch: '${PAY_SCRIPTS_BRANCH}'
+
+            withCredentials([
+              string(credentialsId: 'graphite_account_id', variable: 'HOSTED_GRAPHITE_ACCOUNT_ID'),
+              string(credentialsId: 'graphite_api_key', variable: 'HOSTED_GRAPHITE_API_KEY')
+              ]) {
+              sh(
+                  '''|#!/bin/bash
+                     |set -e
+                     |bundle install --path gems
+                     |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb up
+                     |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb run --end-to-end=${E2E_TEST_TYPE}
+                  '''.stripMargin()
+              )
             }
-            steps {
-                runZap("connector")
-            }
+          }
         }
-      }
+
+        post {
+          always {
+            steps {
+              shell(
+                  '''|#!/bin/bash
+                     |set -e
+                     |bundle install --path gems
+                     |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb down
+                  '''.stripMargin()
+              )
+
+              archiveArtifacts artifacts: '**/target/docker*.log,**/target/screenshots/*.png'
+              junit testResults: "**/target/surefire-reports/*.xml,**/target/failsafe-reports/*.xml"
+
+            }
+          }
+        }
     }
+
+    stage('ZAP Tests') {
+        when {
+            anyOf {
+              branch 'master'
+              environment name: 'RUN_ZAP_ON_PR', value: 'true'
+            }
+        }
+        steps {
+            runZap("connector")
+        }
+    }
+
     stage('Docker Tag') {
       steps {
         script {
