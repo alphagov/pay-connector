@@ -57,14 +57,7 @@ pipeline {
         }
       }
     }
-    stage('Card Payment End-to-End Tests') {
-        when {
-            anyOf {
-              branch 'master'
-              environment name: 'RUN_END_TO_END_ON_PR', value: 'true'
-            }
-        }
-
+    stage('Card Payment End-to-End Tests inline') {
         steps {
           dir('e2e-pay-scripts') {
             git url: '/opt/govukpay/repos/pay-scripts', branch: '${PAY_SCRIPTS_BRANCH}'
