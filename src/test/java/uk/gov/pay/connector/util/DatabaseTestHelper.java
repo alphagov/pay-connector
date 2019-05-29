@@ -610,7 +610,7 @@ public class DatabaseTestHelper {
 
     public List<String> getInternalEvents(String externalChargeId) {
         return jdbi.withHandle(h ->
-                h.createQuery("SELECT status from charge_events WHERE charge_id = (SELECT id from charges WHERE external_id=:external_id)")
+                h.createQuery("SELECT status from charge_events WHERE charge_id = (SELECT id from charges WHERE external_id=:external_id) order by charge_events.id")
                         .bind("external_id", externalChargeId)
                         .map(StringColumnMapper.INSTANCE)
                         .list()
