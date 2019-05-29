@@ -87,19 +87,16 @@ pipeline {
 
         post {
           always {
-            steps {
-              shell(
-                  '''|#!/bin/bash
-                     |set -e
-                     |bundle install --path gems
-                     |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb down
-                  '''.stripMargin()
-              )
+            shell(
+                '''|#!/bin/bash
+                   |set -e
+                   |bundle install --path gems
+                   |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb down
+                '''.stripMargin()
+            )
 
-              archiveArtifacts artifacts: '**/target/docker*.log,**/target/screenshots/*.png'
-              junit testResults: "**/target/surefire-reports/*.xml,**/target/failsafe-reports/*.xml"
-
-            }
+            archiveArtifacts artifacts: '**/target/docker*.log,**/target/screenshots/*.png'
+            junit testResults: "**/target/surefire-reports/*.xml,**/target/failsafe-reports/*.xml"
           }
         }
     }
