@@ -26,6 +26,7 @@ pipeline {
   stages {
     stage('Maven Build') {
       steps {
+        checkout scm
         script {
           long stepBuildTime = System.currentTimeMillis()
 
