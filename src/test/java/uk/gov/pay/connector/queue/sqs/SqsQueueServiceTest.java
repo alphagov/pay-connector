@@ -15,6 +15,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.SqsConfig;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.QueueMessage;
 
@@ -26,9 +28,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SqsQueueServiceTest {
@@ -41,13 +41,23 @@ public class SqsQueueServiceTest {
     private AmazonSQS mockSqsClient;
     @Mock
     private Appender<ILoggingEvent> mockAppender;
+
+    @Mock
+    private ConnectorConfiguration connectorConfiguration;
+
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
 
     private SqsQueueService sqsQueueService;
 
     @Before
     public void setUp() {
-        sqsQueueService = new SqsQueueService(mockSqsClient);
+        SqsConfig sqsConfig = mock(SqsConfig.class);
+        when(sqsConfig.getMessageMaximumBatchSize()).thenReturn(10);
+        when(sqsConfig.getMessageMaximumWaitTimeInSeconds()).thenReturn(20);
+
+        when(connectorConfiguration.getSqsConfig()).thenReturn(sqsConfig);
+
+        sqsQueueService = new SqsQueueService(mockSqsClient, connectorConfiguration);
 
         Logger root = (Logger) LoggerFactory.getLogger(SqsQueueService.class);
         root.setLevel(Level.INFO);

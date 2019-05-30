@@ -24,6 +24,10 @@ public class CaptureProcessConfig extends Configuration {
     @NotNull
     private Boolean backgroundProcessingEnabled;
 
+    private int failedCaptureRetryDelayInSeconds;
+    private int queueSchedulerThreadDelayInSeconds;
+    private int queueSchedulerNumberOfThreads;
+
     public long getSchedulerInitialDelayInSeconds() {
         return schedulerInitialDelayInSeconds;
     }
@@ -61,4 +65,16 @@ public class CaptureProcessConfig extends Configuration {
     }
 
     public Boolean getBackgroundProcessingEnabled() { return backgroundProcessingEnabled; }
+
+    public int getFailedCaptureRetryDelayInSeconds() {
+        return failedCaptureRetryDelayInSeconds;
+    }
+
+    public int getQueueSchedulerThreadDelayInSeconds() {
+        return queueSchedulerThreadDelayInSeconds;
+    }
+
+    public int getQueueSchedulerNumberOfThreads() {
+        return queueSchedulerNumberOfThreads;
+    }
 }

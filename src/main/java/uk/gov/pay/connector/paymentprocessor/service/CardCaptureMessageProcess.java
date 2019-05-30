@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.queue.CaptureQueue;
 import uk.gov.pay.connector.queue.ChargeCaptureMessage;
@@ -55,7 +54,6 @@ public class CardCaptureMessageProcess {
 
         CaptureResponse gatewayResponse = cardCaptureService.doCapture(externalChargeId);
 
-        // @TODO(sfount) handling gateway response failure should be considered in PP-5171
         if (gatewayResponse.isSuccessful()) {
             captureQueue.markMessageAsProcessed(captureMessage);
         } else {

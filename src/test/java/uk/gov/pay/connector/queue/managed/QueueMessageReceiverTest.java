@@ -8,6 +8,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.app.CaptureProcessConfig;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureMessageProcess;
 
 import java.util.concurrent.ScheduledExecutorService;
@@ -17,7 +19,7 @@ import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class QueueMessageReceiverTest {
-    
+
     @Mock
     private CardCaptureMessageProcess cardCaptureMessageProcess;
 
@@ -30,7 +32,12 @@ public class QueueMessageReceiverTest {
     @Mock
     private ScheduledExecutorService scheduledExecutorService;
 
+    @Mock
+    private ConnectorConfiguration connectorConfiguration;
+
     private ScheduledExecutorServiceBuilder scheduledExecutorServiceBuilder;
+
+    private final static int EXPECTED_TOTAL_MESSAGE_RECEIVER_THREADS = 1;
 
     @Before
     public void setUp() {
@@ -45,15 +52,20 @@ public class QueueMessageReceiverTest {
         when(scheduledExecutorServiceBuilder.build()).thenReturn(scheduledExecutorService);
         when(environment.lifecycle()).thenReturn(lifecycleEnvironment);
         when(lifecycleEnvironment.scheduledExecutorService(anyString())).thenReturn(scheduledExecutorServiceBuilder);
+
+        CaptureProcessConfig captureProcessConfig = mock(CaptureProcessConfig.class);
+        when(captureProcessConfig.getQueueSchedulerNumberOfThreads()).thenReturn(EXPECTED_TOTAL_MESSAGE_RECEIVER_THREADS);
+        when(captureProcessConfig.getQueueSchedulerThreadDelayInSeconds()).thenReturn(1);
+
+        when(connectorConfiguration.getCaptureProcessConfig()).thenReturn(captureProcessConfig);
     }
 
-    
+
     @Test
     public void shouldSetupScheduledExecutorService() {
         String EXPECTED_SQS_MESSAGE_RECEIVER_THREAD_NAME = "sqs-message-receiver";
-        int EXPECTED_TOTAL_MESSAGE_RECEIVER_THREADS = 1;
-        
-        new QueueMessageReceiver(cardCaptureMessageProcess, environment);
+
+        new QueueMessageReceiver(cardCaptureMessageProcess, environment, connectorConfiguration);
 
         verify(lifecycleEnvironment).scheduledExecutorService(EXPECTED_SQS_MESSAGE_RECEIVER_THREAD_NAME);
         verify(scheduledExecutorServiceBuilder).threads(EXPECTED_TOTAL_MESSAGE_RECEIVER_THREADS);
@@ -62,7 +74,7 @@ public class QueueMessageReceiverTest {
 
     @Test
     public void shouldShutdownScheduledExecutorServiceWhenStopped() {
-        QueueMessageReceiver queueMessageReceiver = new QueueMessageReceiver(cardCaptureMessageProcess, environment);
+        QueueMessageReceiver queueMessageReceiver = new QueueMessageReceiver(cardCaptureMessageProcess, environment, connectorConfiguration);
         queueMessageReceiver.stop();
 
         verify(scheduledExecutorService).shutdown();

@@ -4,7 +4,7 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 
 ## Environment Variables
 
-| Varible | Default | Purpose |
+| Variable | Default | Purpose |
 |---------|---------|---------|
 | `AUTH_READ_TIMEOUT_SECONDS` | `10 seconds` | the timeout before the resource responds with an awaited auth response (202), so that frontend can choose to show a spinner and poll for auth response. Supports any duration parsable by dropwizard [Duration](https://github.com/dropwizard/dropwizard/blob/master/dropwizard-util/src/main/java/io/dropwizard/util/Duration.java)|
 | `SECURE_WORLDPAY_NOTIFICATION_ENABLED` | false | whether to filter incoming notifications by domain; they will be rejected with a 403 unless they match the required domain |
@@ -27,7 +27,7 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 
 
 ### Queues
-| Varible | Default | Purpose |
+| Variable | Default | Purpose |
 |---------|---------|---------|
 | `AWS_SQS_REGION`            | - | SQS capture queue region |
 | `AWS_SQS_CAPTURE_QUEUE_URL` | - | SQS capture queue URL  |
@@ -35,6 +35,8 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 | `AWS_SQS_ENDPOINT`          | - |  URL that is the entry point for SQS. Only required when AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT is `true` |
 | `AWS_SECRET_KEY`            | - | Secret key. Only required when AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT is `true` |
 | `AWS_ACCESS_KEY`            | - | Access key. Only required when AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT is `true`|
+| `AWS_SQS_MESSAGE_MAXIMUM_WAIT_TIME_IN_SECONDS` | `20` | Maximum wait time for long poll message requests to queue. |
+| `AWS_SQS_MESSAGE_MAXIMUM_BATCH_SIZE` | `10` | Maximum number of messages that should be received in an individual message batch. |
 
 ### Background captures
 
@@ -48,12 +50,15 @@ If a capture attempt fails it will be retried again after a specified delay (`CA
 
 The following variables control the background process:
 
-| Varible | Default | Purpose |
+| Variable | Default | Purpose |
 |---------|---------|---------|
 | `BACKGROUND_PROCESSING_ENABLED` | `true` | enables registering scheduled processes - it includes both database based & queue based capture methods |
 | `CAPTURE_PROCESS_BATCH_SIZE` | `10` | limits the batch window size processed at each polling attempt. If connector is not managing to clear the queue of captures, increase this value. |
 | `CAPTURE_PROCESS_RETRY_FAILURES_EVERY` | `60 minutes` | a failed capture attempt will be returned to the queue, and will not be retried until this time has passed |
-| `CAPTURE_PROCESS_MAXIMUM_RETRIES` | `48` | connector keeps track of the number of times capture has been attempted for each charge. If a charge fails this number of times or more it will be marked as a permanent failure. An error log message will be written as well. This should *never* happen and if it does it should be investigated. |
+| `CAPTURE_PROCESS_MAXIMUM_RETRIES` | `96` | connector keeps track of the number of times capture has been attempted for each charge. If a charge fails this number of times or more it will be marked as a permanent failure. An error log message will be written as well. This should *never* happen and if it does it should be investigated. |
+| `CAPTURE_PROCESS_FAILED_CAPTURE_RETRY_DELAY_IN_SECONDS` | `3600` | the duration in seconds that a message should be deferred before it should be retried. |
+| `CAPTURE_PROCESS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS` | `1` | the duration in seconds that the queue message receiver should wait between running threads. |
+| `CAPTURE_PROCESS_QUEUE_SCHEDULER_NUMBER_OF_THREADS` | `1` | the number of polling threads started by the queue message scheduler. |
 
 ## Integration tests
 
