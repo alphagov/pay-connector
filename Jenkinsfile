@@ -22,6 +22,7 @@ pipeline {
     RUN_END_TO_END_ON_PR = "${params.runEndToEndTestsOnPR}"
     RUN_ZAP_ON_PR = "${params.runZapTestsOnPR}"
     JAVA_HOME="/usr/lib/jvm/java-1.11.0-openjdk-amd64"
+    PAY_SCRIPTS_BRANCH="refs/heads/master"
   }
   stages {
     // stage('Maven Build') {
@@ -67,22 +68,22 @@ pipeline {
 
         steps {
           dir('e2e-pay-scripts') {
-            git(url: '/opt/govukpay/repos/pay-scripts', branch: '${PAY_SCRIPTS_BRANCH}')
+            checkout([$class: 'GitSCM', branches: [[name: '${PAY_SCRIPTS_BRANCH}']], userRemoteConfigs: [[url: '/opt/govukpay/repos/pay-scripts']]])
 
             script {
-            // withCredentials([
-            //   string(credentialsId: 'graphite_account_id', variable: 'HOSTED_GRAPHITE_ACCOUNT_ID'),
-            //   string(credentialsId: 'graphite_api_key', variable: 'HOSTED_GRAPHITE_API_KEY')
-            //   ]) {
-              shell(
-                  '''|#!/bin/bash
-                     |set -e
-                     |bundle install --path gems
-                     |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb up
-                     |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb run --end-to-end=${E2E_TEST_TYPE}
-                  '''.stripMargin()
-              )
-            // }
+              withCredentials([
+                string(credentialsId: 'graphite_account_id', variable: 'HOSTED_GRAPHITE_ACCOUNT_ID'),
+                string(credentialsId: 'graphite_api_key', variable: 'HOSTED_GRAPHITE_API_KEY') ])
+              {
+                sh(
+                    '''|#!/bin/bash
+                       |set -e
+                       |bundle install --path gems
+                       |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb up
+                       |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb run --end-to-end=${E2E_TEST_TYPE}
+                    '''.stripMargin()
+                )
+              }
             }
           }
         }
