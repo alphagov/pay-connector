@@ -61,7 +61,7 @@ public @interface DropwizardConfig {
      *
      * @return boolean
      */
-    boolean withDockerSQS() default true;
+    boolean withDockerSQS() default false;
     
     ConfigOverride[] configOverrides() default {};
 }
