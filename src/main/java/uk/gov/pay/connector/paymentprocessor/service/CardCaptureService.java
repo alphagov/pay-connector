@@ -76,6 +76,7 @@ public class CardCaptureService {
         }
         CaptureResponse operationResponse = capture(charge);
         processGatewayCaptureResponse(externalId, charge.getStatus(), operationResponse);
+        
         return operationResponse;
     }
 

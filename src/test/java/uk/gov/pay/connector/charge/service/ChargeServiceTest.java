@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
+import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
@@ -60,10 +61,7 @@ import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
@@ -82,6 +80,8 @@ public class ChargeServiceTest {
     private static final long GATEWAY_ACCOUNT_ID = 10L;
     private static final long CHARGE_ENTITY_ID = 12345L;
     private static final String[] EXTERNAL_CHARGE_ID = new String[1];
+    private static final int RETRIABLE_NUMBER_OF_CAPTURE_ATTEMPTS = 1;
+    private static final int MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS = 10;
 
     private ChargeCreateRequestBuilder requestBuilder;
 
@@ -134,6 +134,10 @@ public class ChargeServiceTest {
         when(mockedConfig.getLinks())
                 .thenReturn(mockedLinksConfig);
 
+
+        CaptureProcessConfig mockedCaptureProcessConfig = mock(CaptureProcessConfig.class);
+        when(mockedCaptureProcessConfig.getMaximumRetries()).thenReturn(MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS);
+        when(mockedConfig.getCaptureProcessConfig()).thenReturn(mockedCaptureProcessConfig);
         when(mockedLinksConfig.getFrontendUrl())
                 .thenReturn("http://payments.com");
 
@@ -242,7 +246,7 @@ public class ChargeServiceTest {
         final ChargeCreateRequest request = requestBuilder.withAmount(0).build();
 
         service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
-        
+
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
 
@@ -265,7 +269,7 @@ public class ChargeServiceTest {
 
         service.updateCharge(chargeEntityExternalId, patchRequest);
     }
-    
+
     @Test
     public void shouldCreateAChargeWithAllPrefilledCardHolderDetails() {
         PrefilledCardHolderDetails cardHolderDetails = new PrefilledCardHolderDetails();
@@ -289,7 +293,7 @@ public class ChargeServiceTest {
         assertThat(addressEntity.getPostcode(), is("AB1 CD2"));
         assertThat(addressEntity.getCounty(), is(nullValue()));
     }
-    
+
     @Test
     public void shouldCreateAChargeWithPrefilledCardHolderDetailsAndSomeAddressMissing() {
         PrefilledCardHolderDetails cardHolderDetails = new PrefilledCardHolderDetails();
@@ -302,7 +306,7 @@ public class ChargeServiceTest {
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
-        
+
         assertThat(createdChargeEntity.getCardDetails(), is(notNullValue()));
         assertThat(createdChargeEntity.getCardDetails().getBillingAddress().isPresent(), is(true));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Joe Bogs"));
@@ -364,7 +368,7 @@ public class ChargeServiceTest {
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
         assertThat(createdChargeEntity.getCardDetails(), is(nullValue()));
     }
-    
+
     @Test
     public void shouldCreateAToken() {
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
@@ -422,7 +426,7 @@ public class ChargeServiceTest {
     public void shouldFindChargeForChargeId_withCorporateSurcharge() {
         Long chargeId = 101L;
         Long totalAmount = 1250L;
-        
+
         ChargeEntity newCharge = aValidChargeEntity()
                 .withId(chargeId)
                 .withGatewayAccountEntity(gatewayAccount)
@@ -447,13 +451,13 @@ public class ChargeServiceTest {
         assertThat(chargeResponse.getTotalAmount(), is(totalAmount));
         assertThat(chargeResponse.getRefundSummary().getAmountAvailable(), is(totalAmount));
     }
-   
+
     @Test
     public void shouldFindChargeForChargeId_withFee() {
         Long chargeId = 101L;
         Long amount = 1000L;
         Long fee = 100L;
-        
+
         ChargeEntity charge = aValidChargeEntity()
                 .withId(chargeId)
                 .withGatewayAccountEntity(gatewayAccount)
@@ -461,7 +465,7 @@ public class ChargeServiceTest {
                 .withAmount(amount)
                 .withFee(fee)
                 .build();
-        
+
         Optional<ChargeEntity> chargeEntity = Optional.of(charge);
 
         String externalId = charge.getExternalId();
@@ -635,4 +639,17 @@ public class ChargeServiceTest {
                 .withLanguage(chargeEntity.getLanguage());
     }
 
+    @Test
+    public void shouldBeRetriableGivenChargeHasNotExceededMaxNumberOfCaptureAttempts() {
+        when(mockedChargeDao.countCaptureRetriesForChargeExternalId(any())).thenReturn(RETRIABLE_NUMBER_OF_CAPTURE_ATTEMPTS);
+
+        assertThat(service.isChargeRetriable(anyString()), is(true));
+    }
+
+    @Test
+    public void shouldNotBeRetriableGivenChargeExceededMaxNumberOfCaptureAttempts() {
+        when(mockedChargeDao.countCaptureRetriesForChargeExternalId(any())).thenReturn(MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS + 1);
+
+        assertThat(service.isChargeRetriable(anyString()), is(false));
+    }
 }
