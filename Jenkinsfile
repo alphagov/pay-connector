@@ -67,7 +67,7 @@ pipeline {
 
         steps {
           dir('e2e-pay-scripts') {
-            git(url: '/opt/govukpay/repos/pay-scripts', branches: '${PAY_SCRIPTS_BRANCH}')
+            git(url: '/opt/govukpay/repos/pay-scripts', branch: '${PAY_SCRIPTS_BRANCH}')
 
             script {
             // withCredentials([
