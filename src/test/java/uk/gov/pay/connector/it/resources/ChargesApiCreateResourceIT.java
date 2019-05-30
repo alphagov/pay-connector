@@ -1,5 +1,9 @@
 package uk.gov.pay.connector.it.resources;
 
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import io.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,6 +18,7 @@ import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import javax.ws.rs.core.Response.Status;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
@@ -42,7 +47,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJsonWithNulls;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 @RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml", withDockerSQS = true)
 public class ChargesApiCreateResourceIT extends ChargingITestBase {
 
     private static final String FRONTEND_CARD_DETAILS_URL = "/secure";
@@ -696,6 +701,38 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body("message", contains("Field [metadata] must be an object of JSON key-value pairs"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+    
+    @Test
+    public void shouldEmitPaymentCreatedEventWhenChargeIsSuccessfullyCreated() {
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(201);
+
+        List<Message> messages = readMessagesFromEventQueue();
+        
+        assertThat(messages.size(), is(1));
+    }
+
+    private List<Message> readMessagesFromEventQueue() {
+        AmazonSQS sqsClient = testContext.getInstanceFromGuiceContainer(AmazonSQS.class);
+
+        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(testContext.getEventQueueUrl());
+        receiveMessageRequest
+                .withMessageAttributeNames()
+                .withWaitTimeSeconds(1)
+                .withMaxNumberOfMessages(10);
+
+        ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
+
+        return receiveMessageResult.getMessages();
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {

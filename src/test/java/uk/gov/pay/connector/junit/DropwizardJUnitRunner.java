@@ -68,8 +68,9 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
         }
 
         if (dropwizardConfigAnnotation.withDockerSQS()) {
-            SqsTestDocker.initialise("capture-queue");
+            SqsTestDocker.initialise("capture-queue", "event-queue");
             configOverride.add(config("sqsConfig.captureQueueUrl", getQueueUrl("capture-queue")));
+            configOverride.add(config("sqsConfig.eventQueueUrl", getQueueUrl("event-queue")));
         }
 
         if (dropwizardConfigAnnotation.configOverrides().length > 0) {
