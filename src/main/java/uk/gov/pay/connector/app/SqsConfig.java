@@ -1,12 +1,19 @@
 package uk.gov.pay.connector.app;
 
 import io.dropwizard.Configuration;
+import uk.gov.pay.connector.app.validator.ValidSqsConfig;
 
+import javax.validation.constraints.NotNull;
+
+@ValidSqsConfig
 public class SqsConfig extends Configuration {
 
+    @NotNull
     private boolean nonStandardServiceEndpoint;
     private String endpoint;
+    @NotNull
     private String captureQueueUrl;
+    @NotNull
     private String region;
     private String accessKey;
     private String secretKey;
