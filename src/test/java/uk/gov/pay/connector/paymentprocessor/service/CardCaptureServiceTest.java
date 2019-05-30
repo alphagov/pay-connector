@@ -37,6 +37,7 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.queue.CaptureQueue;
 import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.persistence.OptimisticLockException;
@@ -98,6 +99,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private ConnectorConfiguration mockConfiguration;
     @Mock
     private Environment mockEnvironment;
+    @Mock
+    private SqsQueueService sqsQueueService;
 
     @Captor
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
@@ -109,7 +112,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null);
+                null, null, mockConfiguration, null, sqsQueueService);
 
         cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService, mockEnvironment,
                 mockCaptureQueue);

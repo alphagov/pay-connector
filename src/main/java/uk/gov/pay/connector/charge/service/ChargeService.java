@@ -9,6 +9,7 @@ import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
+import uk.gov.pay.connector.app.SqsConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -43,6 +44,8 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
+import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -98,10 +101,13 @@ public class ChargeService {
     private final CaptureProcessConfig captureProcessConfig;
     private final PaymentProviders providers;
 
+    private final SqsQueueService queueService;
+    private final SqsConfig sqsConfig;
+
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
-                         ConnectorConfiguration config, PaymentProviders providers) {
+                         ConnectorConfiguration config, PaymentProviders providers, SqsQueueService queueService) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -110,6 +116,8 @@ public class ChargeService {
         this.linksConfig = config.getLinks();
         this.providers = providers;
         this.captureProcessConfig = config.getCaptureProcessConfig();
+        this.queueService = queueService;
+        this.sqsConfig = config.getSqsConfig();
     }
 
     @Transactional
@@ -146,6 +154,12 @@ public class ChargeService {
             chargeDao.persist(chargeEntity);
 
             chargeEventDao.persistChargeEventOf(chargeEntity);
+
+            try {
+                queueService.sendMessage(sqsConfig.getEventQueueUrl(), "I've been created");
+            } catch (QueueException e) {
+                e.printStackTrace();
+            }
             return populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build();
         });
     }

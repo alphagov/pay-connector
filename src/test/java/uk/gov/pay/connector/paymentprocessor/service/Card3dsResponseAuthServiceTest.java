@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
@@ -20,6 +21,7 @@ import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
+import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 import uk.gov.pay.connector.util.AuthUtils;
 
 import java.util.Optional;
@@ -48,6 +50,8 @@ import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.
 public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
     private static final String GENERATED_TRANSACTION_ID = "generated-transaction-id";
+    @Mock
+    private SqsQueueService sqsQueueService;
 
     private ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_3DS_REQUIRED, GENERATED_TRANSACTION_ID);
     private ChargeService chargeService;
@@ -63,7 +67,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
-                null, mockConfiguration, null);
+                null, mockConfiguration, null, sqsQueueService);
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
 
         card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, cardAuthoriseBaseService);

@@ -36,6 +36,7 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -105,6 +106,8 @@ public class ChargeServiceTest {
     private PaymentProviders mockedProviders;
     @Mock
     private PaymentProvider mockedPaymentProvider;
+    @Mock
+    private SqsQueueService sqsQueueService;
 
     private ChargeService service;
 
@@ -149,7 +152,7 @@ public class ChargeServiceTest {
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders);
+                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, sqsQueueService);
     }
 
     @Test
