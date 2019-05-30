@@ -74,7 +74,7 @@ pipeline {
             //   string(credentialsId: 'graphite_account_id', variable: 'HOSTED_GRAPHITE_ACCOUNT_ID'),
             //   string(credentialsId: 'graphite_api_key', variable: 'HOSTED_GRAPHITE_API_KEY')
             //   ]) {
-              sh(
+              shell(
                   '''|#!/bin/bash
                      |set -e
                      |bundle install --path gems
