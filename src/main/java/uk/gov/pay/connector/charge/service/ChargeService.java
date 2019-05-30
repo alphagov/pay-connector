@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
@@ -94,6 +95,7 @@ public class ChargeService {
     private final TokenDao tokenDao;
     private final GatewayAccountDao gatewayAccountDao;
     private final LinksConfig linksConfig;
+    private final CaptureProcessConfig captureProcessConfig;
     private final PaymentProviders providers;
 
     @Inject
@@ -107,6 +109,7 @@ public class ChargeService {
         this.gatewayAccountDao = gatewayAccountDao;
         this.linksConfig = config.getLinks();
         this.providers = providers;
+        this.captureProcessConfig = config.getCaptureProcessConfig();
     }
 
     @Transactional
@@ -116,7 +119,7 @@ public class ChargeService {
             if (chargeRequest.getAmount() == 0L && !gatewayAccount.isAllowZeroAmount()) {
                 throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
             }
-            
+
             if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
                 logger.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
             }
@@ -135,7 +138,7 @@ public class ChargeService {
                     language,
                     chargeRequest.isDelayedCapture(),
                     chargeRequest.getExternalMetadata().orElse(null));
-            
+
             chargeRequest.getPrefilledCardHolderDetails()
                     .map(this::createCardDetailsEntity)
                     .ifPresent(chargeEntity::setCardDetails);
@@ -229,7 +232,7 @@ public class ChargeService {
                 .withLink("self", GET, selfUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()))
                 .withWalletType(chargeEntity.getWalletType());
-        
+
         chargeEntity.getFeeAmount().ifPresent(builderOfResponse::withFee);
         chargeEntity.getExternalMetadata().ifPresent(builderOfResponse::withExternalMetadata);
 
@@ -351,9 +354,9 @@ public class ChargeService {
                         gatewayAccount.getGatewayName(),
                         gatewayAccount.getType(),
                         operationType.getLockingStatus());
-                
+
                 chargeEntity.setStatus(operationType.getLockingStatus());
-                
+
             } catch (InvalidStateTransitionException e) {
                 if (chargeIsInLockedStatus(operationType, chargeEntity)) {
                     throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), chargeEntity.getExternalId());
@@ -411,6 +414,16 @@ public class ChargeService {
 
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
+    }
+
+    public boolean isChargeRetriable(String externalId) {
+        int numberOfChargeRetries = chargeDao.countCaptureRetriesForChargeExternalId(externalId);
+        return numberOfChargeRetries <= captureProcessConfig.getMaximumRetries();
+    }
+
+    public boolean isChargeCaptured(String externalId) {
+        ChargeEntity charge = findChargeById(externalId);
+        return ChargeStatus.fromString(charge.getStatus()) == CAPTURED;
     }
 
     private CardDetailsEntity buildCardDetailsEntity(AuthCardDetails authCardDetails) {
