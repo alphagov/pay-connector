@@ -24,39 +24,39 @@ pipeline {
     JAVA_HOME="/usr/lib/jvm/java-1.11.0-openjdk-amd64"
   }
   stages {
-    stage('Maven Build') {
-      steps {
-        checkout scm
-        script {
-          long stepBuildTime = System.currentTimeMillis()
+    // stage('Maven Build') {
+    //   steps {
+    //     checkout scm
+    //     script {
+    //       long stepBuildTime = System.currentTimeMillis()
 
-          sh 'docker pull govukpay/postgres:9.6.12'
-          sh 'mvn -version'
-          sh 'mvn clean test package'
-          // runProviderContractTests()
-          postSuccessfulMetrics("connector.maven-build", stepBuildTime)
-        }
-      }
-      post {
-        failure {
-          postMetric("connector.maven-build.failure", 1)
-        }
-      }
-    }
-    stage('Docker Build') {
-      steps {
-        script {
-          buildAppWithMetrics {
-            app = "connector"
-          }
-        }
-      }
-      post {
-        failure {
-          postMetric("connector.docker-build.failure", 1)
-        }
-      }
-    }
+    //       sh 'docker pull govukpay/postgres:9.6.12'
+    //       sh 'mvn -version'
+    //       sh 'mvn clean test package'
+    //       // runProviderContractTests()
+    //       postSuccessfulMetrics("connector.maven-build", stepBuildTime)
+    //     }
+    //   }
+    //   post {
+    //     failure {
+    //       postMetric("connector.maven-build.failure", 1)
+    //     }
+    //   }
+    // }
+    // stage('Docker Build') {
+    //   steps {
+    //     script {
+    //       buildAppWithMetrics {
+    //         app = "connector"
+    //       }
+    //     }
+    //   }
+    //   post {
+    //     failure {
+    //       postMetric("connector.docker-build.failure", 1)
+    //     }
+    //   }
+    // }
     stage('Card Payment End-to-End Tests inline') {
         // when {
         //     anyOf {
