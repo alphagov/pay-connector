@@ -33,9 +33,13 @@ public class CardCaptureMessageProcess {
 
     public void handleCaptureMessages() throws QueueException {
         List<ChargeCaptureMessage> captureMessages = captureQueue.retrieveChargesForCapture();
-        for (ChargeCaptureMessage message: captureMessages) {
+        for (ChargeCaptureMessage message : captureMessages) {
             try {
-                LOGGER.info("Charge capture message received - {}", message.getChargeId());
+                LOGGER.info("Charge capture message received - [externalChargeId={}] [queueMessageId={}] [queueMessageReceiptHandle={}]",
+                        message.getChargeId(),
+                        message.getQueueMessageId(),
+                        message.getQueueMessageReceiptHandle()
+                );
 
                 if (captureUsingSqs) {
                     runCapture(message);
@@ -86,7 +90,7 @@ public class CardCaptureMessageProcess {
             captureQueue.markMessageAsProcessed(captureMessage);
             return;
         }
-        
+
         throw e;
     }
 }

@@ -95,8 +95,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
     @Mock
     private CaptureQueue mockCaptureQueue;
     @Mock
-    private CaptureProcessConfig mockCaptureProcessConfig;
-    @Mock
     private ConnectorConfiguration mockConfiguration;
     @Mock
     private Environment mockEnvironment;
@@ -109,14 +107,12 @@ public class CardCaptureServiceTest extends CardServiceTest {
         Counter mockCounter = mock(Counter.class);
         when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
-        when(mockCaptureProcessConfig.getCaptureUsingSQS()).thenReturn(true);
-        when(mockConfiguration.getCaptureProcessConfig()).thenReturn(mockCaptureProcessConfig);
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null);
 
         cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService, mockEnvironment,
-                mockCaptureQueue, mockConfiguration);
+                mockCaptureQueue);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.setLevel(Level.INFO);
@@ -485,13 +481,11 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
     @Test(expected = WebApplicationException.class)
     public void markChargeAsEligibleForCapture_shouldThrowException_WithFeatureFlagEnabledAndUnableToAddChargeToQueue() throws QueueException {
-
-        when(mockCaptureProcessConfig.getCaptureUsingSQS()).thenReturn(true);
         doThrow(new QueueException()).when(mockCaptureQueue).sendForCapture(any());
 
         CardCaptureService cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService,
-                mockEnvironment, mockCaptureQueue,
-                mockConfiguration);
+                mockEnvironment, mockCaptureQueue
+        );
 
         String externalId = "external-id";
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId");
@@ -525,13 +519,12 @@ public class CardCaptureServiceTest extends CardServiceTest {
     @Test(expected = WebApplicationException.class)
     public void markChargeAsCaptureApproved_shouldThrowException_WithFeatureFlagEnabledAndUnableToAddChargeToQueue() throws QueueException {
         ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId"));
-        when(mockCaptureProcessConfig.getCaptureUsingSQS()).thenReturn(true);
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
         doThrow(new QueueException()).when(mockCaptureQueue).sendForCapture(chargeEntity);
 
         CardCaptureService cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService,
-                mockEnvironment, mockCaptureQueue,
-                mockConfiguration);
+                mockEnvironment, mockCaptureQueue
+        );
 
         try {
             cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());

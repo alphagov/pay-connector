@@ -71,10 +71,10 @@ public class CaptureQueue {
     }
 
     public void markMessageAsProcessed(ChargeCaptureMessage message) throws QueueException {
-        sqsQueueService.deleteMessage(this.captureQueueUrl, message.getReceiptHandle());
+        sqsQueueService.deleteMessage(this.captureQueueUrl, message.getQueueMessageReceiptHandle());
     }
 
     public void scheduleMessageForRetry(ChargeCaptureMessage message) throws QueueException {
-        sqsQueueService.deferMessage(this.captureQueueUrl, message.getReceiptHandle(), failedCaptureRetryDelayInSeconds);
+        sqsQueueService.deferMessage(this.captureQueueUrl, message.getQueueMessageReceiptHandle(), failedCaptureRetryDelayInSeconds);
     }
 }

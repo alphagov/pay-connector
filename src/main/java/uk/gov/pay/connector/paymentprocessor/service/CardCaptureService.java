@@ -43,7 +43,6 @@ public class CardCaptureService {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected MetricRegistry metricRegistry;
     protected CaptureQueue captureQueue;
-    protected Boolean captureUsingSQS;
 
     @Inject
     public CardCaptureService(ChargeService chargeService,
@@ -51,15 +50,13 @@ public class CardCaptureService {
                               PaymentProviders providers,
                               UserNotificationService userNotificationService,
                               Environment environment,
-                              CaptureQueue captureQueue,
-                              ConnectorConfiguration connectorConfiguration) {
+                              CaptureQueue captureQueue) {
         this.chargeService = chargeService;
         this.feeDao = feeDao;
         this.providers = providers;
         this.metricRegistry = environment.metrics();
         this.userNotificationService = userNotificationService;
         this.captureQueue = captureQueue;
-        this.captureUsingSQS = connectorConfiguration.getCaptureProcessConfig().getCaptureUsingSQS();
     }
 
     public CaptureResponse doCapture(String externalId) {
@@ -141,15 +138,13 @@ public class CardCaptureService {
     }
 
     private void addChargeToCaptureQueue(ChargeEntity charge) {
-        if (captureUsingSQS) {
-            try {
-                captureQueue.sendForCapture(charge);
-            } catch (QueueException e) {
-                logger.error("Exception sending charge [{}] to capture queue", charge.getExternalId());
-                throw new WebApplicationException(format(
-                        "Unable to schedule charge [%s] for capture - %s",
-                        charge.getExternalId(), e.getMessage()));
-            }
+        try {
+            captureQueue.sendForCapture(charge);
+        } catch (QueueException e) {
+            logger.error("Exception sending charge [{}] to capture queue", charge.getExternalId());
+            throw new WebApplicationException(format(
+                    "Unable to schedule charge [%s] for capture - %s",
+                    charge.getExternalId(), e.getMessage()));
         }
     }
 
