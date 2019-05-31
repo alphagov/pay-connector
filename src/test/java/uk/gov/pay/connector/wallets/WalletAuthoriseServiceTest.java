@@ -25,6 +25,7 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
+import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -34,7 +35,6 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
-import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
@@ -89,7 +89,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     @Mock
     private Counter mockCounter;
     @Mock
-    private SqsQueueService sqsQueueService;
+    private EventQueue eventQueue;
 
     private WalletAuthoriseService walletAuthoriseService;
     
@@ -113,7 +113,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null, sqsQueueService);
+                null, null, mockConfiguration, null, eventQueue);
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,

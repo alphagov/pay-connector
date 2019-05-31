@@ -9,7 +9,6 @@ import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
-import uk.gov.pay.connector.app.SqsConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -39,18 +38,20 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
+import uk.gov.pay.connector.events.EventQueue;
+import uk.gov.pay.connector.events.PaymentCreatedEvent;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.QueueException;
-import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
@@ -101,13 +102,12 @@ public class ChargeService {
     private final CaptureProcessConfig captureProcessConfig;
     private final PaymentProviders providers;
 
-    private final SqsQueueService queueService;
-    private final SqsConfig sqsConfig;
+    private final EventQueue eventQueue;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
-                         ConnectorConfiguration config, PaymentProviders providers, SqsQueueService queueService) {
+                         ConnectorConfiguration config, PaymentProviders providers, EventQueue eventQueue) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -116,12 +116,28 @@ public class ChargeService {
         this.linksConfig = config.getLinks();
         this.providers = providers;
         this.captureProcessConfig = config.getCaptureProcessConfig();
-        this.queueService = queueService;
-        this.sqsConfig = config.getSqsConfig();
+        this.eventQueue = eventQueue;
+    }
+
+    public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
+        return createCharge(chargeRequest, accountId, uriInfo)
+                .map(charge -> {
+                    emitCreationEvent(charge);
+                    return populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge).build();
+                });
+    }
+
+    private void emitCreationEvent(ChargeEntity charge) {
+        try {
+            eventQueue.emitEvent(PaymentCreatedEvent.from(charge));
+        } catch (QueueException e) {
+            logger.error("Error emitting payment creation event: {}", e.getMessage());
+            throw new WebApplicationException(String.format("Error emitting payment creation event: %s", e.getMessage()));
+        }
     }
 
     @Transactional
-    public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
+    private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
 
             if (chargeRequest.getAmount() == 0L && !gatewayAccount.isAllowZeroAmount()) {
@@ -155,12 +171,7 @@ public class ChargeService {
 
             chargeEventDao.persistChargeEventOf(chargeEntity);
 
-            try {
-                queueService.sendMessage(sqsConfig.getEventQueueUrl(), "I've been created");
-            } catch (QueueException e) {
-                e.printStackTrace();
-            }
-            return populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build();
+            return chargeEntity;
         });
     }
 
