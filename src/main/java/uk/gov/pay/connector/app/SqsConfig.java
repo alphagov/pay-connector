@@ -3,6 +3,7 @@ package uk.gov.pay.connector.app;
 import io.dropwizard.Configuration;
 import uk.gov.pay.connector.app.validator.ValidSqsConfig;
 
+import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;
 
 @ValidSqsConfig
@@ -18,7 +19,9 @@ public class SqsConfig extends Configuration {
     private String accessKey;
     private String secretKey;
 
+    @Max(20)
     private int messageMaximumWaitTimeInSeconds;
+    @Max(10)
     private int messageMaximumBatchSize;
 
     public String getEndpoint() {
