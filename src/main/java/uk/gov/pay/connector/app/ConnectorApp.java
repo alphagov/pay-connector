@@ -127,7 +127,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(PerformanceReportResource.class));
         environment.jersey().register(injector.getInstance(SearchRefundsResource.class));
         environment.jersey().register(injector.getInstance(DiscrepancyResource.class));
-        
+
         environment.jersey().register(ChargeIdMDCLoggingFeature.class);
 
         if(configuration.getCaptureProcessConfig().getBackgroundProcessingEnabled()) {
@@ -187,9 +187,9 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
             CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration,
                     environment, injector.getInstance(CardCaptureProcess.class), injector.getInstance(XrayUtils.class));
             environment.lifecycle().manage(captureProcessScheduler);
+        } else {
+            environment.lifecycle().manage(injector.getInstance(QueueMessageReceiver.class));
         }
-
-        environment.lifecycle().manage(injector.getInstance(QueueMessageReceiver.class));
     }
 
     private boolean isEnabledCaptureProcessScheduler(ConnectorConfiguration configuration) {
