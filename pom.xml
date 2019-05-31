@@ -527,6 +527,9 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <forkCount>2</forkCount>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
