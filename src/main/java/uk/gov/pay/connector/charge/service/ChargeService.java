@@ -395,6 +395,22 @@ public class ChargeService {
         return chargeDao.findByProviderAndTransactionId(paymentGatewayName, transactionId);
     }
 
+    @Transactional
+    public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
+        return chargeDao.findByExternalId(externalId).map(charge -> {
+            ChargeStatus targetStatus = charge.isDelayedCapture() ? AWAITING_CAPTURE_REQUEST : CAPTURE_APPROVED;
+
+            try {
+                updateChargeStatus(charge, targetStatus);
+            } catch (InvalidStateTransitionException e) {
+                throw new IllegalStateRuntimeException(charge.getExternalId());
+            }
+
+            return charge;
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
+    }
+
+    @Transactional
     public ChargeEntity markChargeAsCaptureApproved(String externalId) {
         return chargeDao.findByExternalId(externalId).map(charge -> {
 

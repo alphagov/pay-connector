@@ -11,8 +11,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
-import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
-import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.fee.dao.FeeDao;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -28,9 +26,7 @@ import javax.ws.rs.WebApplicationException;
 import java.util.Optional;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
@@ -76,7 +72,7 @@ public class CardCaptureService {
         }
         CaptureResponse operationResponse = capture(charge);
         processGatewayCaptureResponse(externalId, charge.getStatus(), operationResponse);
-        
+
         return operationResponse;
     }
 
@@ -85,21 +81,13 @@ public class CardCaptureService {
         return chargeService.lockChargeForProcessing(chargeId, OperationType.CAPTURE);
     }
 
-    @Transactional
     public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
-        final ChargeEntity charge = chargeService.findChargeById(externalId);
+        ChargeEntity charge = chargeService.markChargeAsEligibleForCapture(externalId);
 
-        if (charge.isDelayedCapture()) {
-            return chargeService.updateChargeStatus(charge, AWAITING_CAPTURE_REQUEST);
-
-        } else {
+        if (!charge.isDelayedCapture())
             addChargeToCaptureQueue(charge);
-            try {
-                return chargeService.updateChargeStatus(charge, CAPTURE_APPROVED);
-            } catch (InvalidStateTransitionException e) {
-                throw new IllegalStateRuntimeException(charge.getExternalId());
-            }
-        }
+        
+        return charge;
     }
 
     @Transactional
@@ -109,11 +97,10 @@ public class CardCaptureService {
         chargeService.updateChargeStatus(chargeId, CAPTURE_ERROR);
     }
 
-    @Transactional
     public ChargeEntity markChargeAsCaptureApproved(String externalId) {
-        ChargeEntity charge = chargeService.findChargeById(externalId);
+        ChargeEntity charge = chargeService.markChargeAsCaptureApproved(externalId);
         addChargeToCaptureQueue(charge);
-        return chargeService.markChargeAsCaptureApproved(externalId);
+        return charge;
     }
 
     private CaptureResponse capture(ChargeEntity chargeEntity) {
