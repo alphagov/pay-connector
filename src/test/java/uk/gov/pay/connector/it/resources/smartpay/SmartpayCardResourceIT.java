@@ -39,7 +39,8 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthori
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 
 @RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml",
+        withDockerSQS = true)
 public class SmartpayCardResourceIT extends ChargingITestBase {
 
     private String validCardDetails = buildCardDetailsWith("737");
@@ -172,7 +173,7 @@ public class SmartpayCardResourceIT extends ChargingITestBase {
         String chargeId = createNewChargeWithNoTransactionId(ChargeStatus.ENTERING_CARD_DETAILS);
         JsonNode validPayload = Jackson.getObjectMapper().readTree(
                 fixture("googlepay/example-auth-request.json"));
-        
+
         given().port(testContext.getPort())
                 .contentType(JSON)
                 .body(validPayload)
@@ -182,7 +183,7 @@ public class SmartpayCardResourceIT extends ChargingITestBase {
                 .body("message", contains("Wallets are not supported for Smartpay"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
-    
+
     @Test
     public void shouldPersistTransactionIds_duringAuthorisationAndCapture() {
         String externalChargeId = createNewChargeWithNoTransactionId(ChargeStatus.ENTERING_CARD_DETAILS);

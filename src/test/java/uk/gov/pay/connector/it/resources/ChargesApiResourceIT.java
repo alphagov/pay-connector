@@ -4,7 +4,6 @@ import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.ErrorIdentifier;
-import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
@@ -55,7 +54,8 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 @RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml",
+        withDockerSQS = true)
 public class ChargesApiResourceIT extends ChargingITestBase {
 
     private static final String JSON_CHARGE_KEY = "charge_id";
@@ -128,7 +128,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withAmount(AMOUNT)
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
-        
+
         databaseTestHelper.updateChargeCardDetails(chargeId, AuthCardDetailsFixture.anAuthCardDetails().withCardNo("12345678").build());
         databaseTestHelper.addToken(chargeId, "tokenId");
 
@@ -182,7 +182,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withAmount(100)
                 .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
                 .build());
-        
+
         connectorRestApiClient
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
