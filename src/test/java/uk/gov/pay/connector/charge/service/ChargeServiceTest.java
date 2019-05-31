@@ -119,6 +119,7 @@ public class ChargeServiceTest {
                 .withDescription("This is a description")
                 .withReference("Pay reference");
 
+        
         gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
