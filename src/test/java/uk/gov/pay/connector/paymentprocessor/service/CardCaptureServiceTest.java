@@ -494,12 +494,13 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 mockConfiguration);
 
         String externalId = "external-id";
-        ChargeEntity charge = createNewChargeWith("worldpay", 1L, EXPIRED, "gatewayTxId");
+        ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId");
         when(mockedChargeDao.findByExternalId(externalId)).thenReturn(Optional.of(charge));
 
         try {
             cardCaptureService.markChargeAsEligibleForCapture(externalId);
         } catch (WebApplicationException e) {
+            verify(mockCaptureQueue).sendForCapture(charge);
             verify(mockedChargeDao).findByExternalId(externalId);
             verify(mockedChargeEventDao, never()).persistChargeEventOf(any(ChargeEntity.class), any(ZonedDateTime.class));
             verifyNoMoreInteractions(mockedChargeDao);
