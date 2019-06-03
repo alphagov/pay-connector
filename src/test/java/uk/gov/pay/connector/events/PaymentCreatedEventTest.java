@@ -1,21 +1,18 @@
 package uk.gov.pay.connector.events;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.jackson.Jackson;
+import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
-import java.io.IOException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.mockito.ArgumentMatchers.contains;
+import static org.hamcrest.core.IsEqual.equalTo;
 
 public class PaymentCreatedEventTest {
 
@@ -41,48 +38,39 @@ public class PaymentCreatedEventTest {
             .build();
     
     private final PaymentCreatedEvent paymentCreatedEvent = PaymentCreatedEvent.from(chargeEntity);
+    private String actual;
 
+
+    @Before
+    public void setup() throws Exception {
+        actual = paymentCreatedEvent.toJsonString();
+    }
+    
     @Test
     public void serializesTimeWithMicrosecondPrecision() throws Exception {
-        final JsonNode actual = paymentCreatedEvent.toJsonNode();
-
-        assertThat(actual.get("time").textValue(), is(time));
+        assertThat(actual, hasJsonPath("$.time", equalTo(time)));
     }
 
     @Test
     public void serializesPaymentCreatedEventType() {
-        final JsonNode actual = paymentCreatedEvent.toJsonNode();
-
-        assertThat(actual.get("event_type").textValue(), is("PaymentCreated"));
+        assertThat(actual, hasJsonPath("$.event_type", equalTo("PaymentCreated")));
     }
 
     @Test
-    public void serializesPaymentResourceType() {
-        final JsonNode actual = paymentCreatedEvent.toJsonNode();
+    public void serializesPaymentResourceType() throws Exception {
+        final String actual = paymentCreatedEvent.toJsonString();
 
-        assertThat(actual.get("resource_type").textValue(), is("payment"));
-    }
-
-    @Test
-    public void serializesPayloadFieldstoJsonNode() {
-        final JsonNode actual = paymentCreatedEvent.toJsonNode();
-
-        assertThat(actual.get("payment_id").textValue(), is(paymentId));
-        assertThat(actual.get("amount").isValueNode(), is(true));
-        assertThat(actual.get("amount").longValue(), is(100L));
-        assertThat(actual.get("description").textValue(), is("new passport"));
-        assertThat(actual.get("reference").textValue(), is("myref"));
-        assertThat(actual.get("return_url").textValue(), is("http://example.com"));
+        assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
     }
 
     @Test
     public void serializesPayloadFieldstoJsonString() throws Exception{
         final String actual = paymentCreatedEvent.toJsonString();
 
-        assertThat(actual, containsString("\"payment_id\":\"" + paymentId + "\""));
-        assertThat(actual, containsString("\"amount\":100"));
-        assertThat(actual, containsString("\"description\":\"new passport\""));
-        assertThat(actual, containsString("\"reference\":\"myref\""));
-        assertThat(actual, containsString("\"return_url\":\"http://example.com\""));
+        assertThat(actual, hasJsonPath("$.payment_id", equalTo(paymentId )));
+        assertThat(actual, hasJsonPath("$.amount", equalTo(100)));
+        assertThat(actual, hasJsonPath("$.description", equalTo("new passport")));
+        assertThat(actual, hasJsonPath("$.reference", equalTo("myref")));
+        assertThat(actual, hasJsonPath("$.return_url", equalTo("http://example.com")));
     }
 }

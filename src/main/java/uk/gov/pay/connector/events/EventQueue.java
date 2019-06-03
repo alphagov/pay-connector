@@ -1,11 +1,9 @@
 package uk.gov.pay.connector.events;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.sqs.SqsQueueService;
-import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import javax.inject.Inject;
 
@@ -13,21 +11,25 @@ public class EventQueue {
 
     private final SqsQueueService sqsQueueService;
     private final String eventQueueUrl;
-    private final ObjectMapper objectMapper;
+    private final Boolean eventQueueEnabled;
 
     @Inject
     public EventQueue (
             SqsQueueService sqsQueueService,
-            ConnectorConfiguration connectorConfiguration, 
-            ObjectMapper objectMapper) {
+            ConnectorConfiguration connectorConfiguration
+    ) {
         this.sqsQueueService = sqsQueueService;
         this.eventQueueUrl = connectorConfiguration.getSqsConfig().getEventQueueUrl();
-        this.objectMapper = objectMapper;
+        this.eventQueueEnabled = connectorConfiguration.getEventQueueConfig().getEventQueueEnabled();
     }
     
-    public void emitEvent(Event event) throws JsonProcessingException, QueueException {
-        final String messageBody;
-        messageBody = objectMapper.writeValueAsString(event);
-        sqsQueueService.sendMessage(eventQueueUrl, messageBody);
+    public void emitEvent(Event event) throws QueueException {
+        if (eventQueueEnabled) {
+            try {
+                sqsQueueService.sendMessage(eventQueueUrl, event.toJsonString());
+            } catch (JsonProcessingException e) {
+                throw new QueueException(String.format("Error serialising event to json: %s", e.getMessage()));
+            }
+        }
     }
 }

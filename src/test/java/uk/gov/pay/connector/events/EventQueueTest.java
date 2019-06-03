@@ -1,22 +1,16 @@
 package uk.gov.pay.connector.events;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.jackson.Jackson;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.EventQueueConfig;
 import uk.gov.pay.connector.app.SqsConfig;
-import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.sqs.SqsQueueService;
-import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,23 +28,24 @@ public class EventQueueTest {
     @Mock
     private SqsConfig sqsConfig;
     @Mock
-    private ObjectMapper mockObjectMapper;
+    private EventQueueConfig eventQueueConfig;
     @Mock
     private Event event;
 
     @Before
     public void setUp() {
         when(mockConnectorConfiguration.getSqsConfig()).thenReturn(sqsConfig);
+        when(mockConnectorConfiguration.getEventQueueConfig()).thenReturn(eventQueueConfig);
         when(sqsConfig.getEventQueueUrl()).thenReturn(eventQueueUrl);
+        when(eventQueueConfig.getEventQueueEnabled()).thenReturn(true);
         
         eventQueue = new EventQueue(mockSqsQueueService, 
-                mockConnectorConfiguration, 
-                mockObjectMapper);
+                mockConnectorConfiguration);
     }
 
     @Test
     public void emitEvent_serialisesTheEventAndSendsToSqs() throws Exception {
-        when(mockObjectMapper.writeValueAsString(event)).thenReturn("{~~SERIALIZED~~}");
+        when(event.toJsonString()).thenReturn("{~~SERIALIZED~~}");
         
         eventQueue.emitEvent(event);
 
