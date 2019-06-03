@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.queue.sqs;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
@@ -69,6 +70,10 @@ public class SqsQueueService {
         } catch (AmazonSQSException | UnsupportedOperationException e) {
             logger.error("Failed to delete message from SQS queue - {}", e.getMessage());
             throw new QueueException(e.getMessage());
+        } catch (AmazonServiceException e) {
+            logger.error("Failed to delete message from SQS queue - [errorMessage={}] [awsErrorCode={}]", e.getMessage(), e.getErrorCode());
+            String errorMessage = String.format("%s [%s]", e.getMessage(), e.getErrorCode());
+            throw new QueueException(errorMessage);
         }
     }
 
