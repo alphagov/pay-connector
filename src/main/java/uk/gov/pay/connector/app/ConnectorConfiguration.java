@@ -86,6 +86,11 @@ public class ConnectorConfiguration extends Configuration {
     @JsonProperty("sqsConfig")
     private SqsConfig sqsConfig;
 
+    @Valid
+    @NotNull
+    @JsonProperty("eventQueue")
+    private EventQueueConfig eventQueueConfig;
+
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {
         return dataSourceFactory;
@@ -175,5 +180,9 @@ public class ConnectorConfiguration extends Configuration {
 
     public SqsConfig getSqsConfig() {
         return sqsConfig;
+    }
+
+    public EventQueueConfig getEventQueueConfig() {
+        return eventQueueConfig;
     }
 }

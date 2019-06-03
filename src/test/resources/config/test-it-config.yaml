@@ -80,11 +80,15 @@ captureProcessConfig:
   queueSchedulerThreadDelayInSeconds: ${CAPTURE_PROCESS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS:-1}
   queueSchedulerNumberOfThreads: ${CAPTURE_PROCESS_QUEUE_SCHEDULER_NUMBER_OF_THREADS:-1}
 
+eventQueue:
+  eventQueueEnabled: ${EVENT_QUEUE_ENABLED:-false}
+
 sqsConfig:
   nonStandardServiceEndpoint: ${AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT:-true}
   endpoint: ${AWS_SQS_ENDPOINT:-localhost}
   region: ${AWS_SQS_REGION:-region-1}
   captureQueueUrl: ${AWS_SQS_CAPTURE_QUEUE_URL}
+  eventQueueUrl: ${AWS_SQS_EVENT_QUEUE_URL}
   secretKey: ${AWS_SECRET_KEY:-secret-key}
   accessKey: ${AWS_ACCESS_KEY:-access-key}
   messageMaximumWaitTimeInSeconds: ${AWS_SQS_MESSAGE_MAXIMUM_WAIT_TIME_IN_SECONDS:-20}
