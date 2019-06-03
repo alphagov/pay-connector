@@ -47,7 +47,11 @@ public class CardCaptureMessageProcess {
                     LOGGER.info("Charge capture not enabled for message capture request - {}", message.getChargeId());
                 }
             } catch (Exception e) {
-                LOGGER.warn("Error capturing charge from SQS message [{}]", e.getMessage());
+                LOGGER.warn("Error capturing charge from SQS message [externalChargeId={}] [queueMessageId={}] [errorMessage={}]",
+                        message.getChargeId(),
+                        message.getQueueMessageId(),
+                        e.getMessage()
+                );
             }
         }
     }
@@ -77,6 +81,7 @@ public class CardCaptureMessageProcess {
         boolean shouldRetry = chargeService.isChargeRetriable(captureMessage.getChargeId());
 
         if (shouldRetry) {
+            LOGGER.info("Charge capture message [{}] scheduled for retry.", captureMessage.getChargeId());
             captureQueue.scheduleMessageForRetry(captureMessage);
         } else {
             cardCaptureService.markChargeAsCaptureError(captureMessage.getChargeId());
