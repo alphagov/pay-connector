@@ -2,9 +2,11 @@ package uk.gov.pay.connector.it.resources;
 
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import io.restassured.response.ValidatableResponse;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.postgresql.util.PGobject;
@@ -13,6 +15,7 @@ import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
@@ -47,7 +50,12 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJsonWithNulls;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 @RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml", withDockerSQS = true)
+@DropwizardConfig(
+        app = ConnectorApp.class,
+        config = "config/test-it-config.yaml",
+        withDockerSQS = true, 
+        configOverrides = {@ConfigOverride(key = "eventQueue.eventQueueEnabled", value = "true")}
+)
 public class ChargesApiCreateResourceIT extends ChargingITestBase {
 
     private static final String FRONTEND_CARD_DETAILS_URL = "/secure";
@@ -80,6 +88,13 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
 
     public ChargesApiCreateResourceIT() {
         super(PROVIDER_NAME);
+    }
+    
+    @Before
+    @Override
+    public void setup() {
+        purgeEventQueue();
+        super.setup();
     }
 
     @Test
@@ -733,6 +748,11 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
         ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
 
         return receiveMessageResult.getMessages();
+    }
+    
+    private void purgeEventQueue() {
+        AmazonSQS sqsClient = testContext.getInstanceFromGuiceContainer(AmazonSQS.class);
+        sqsClient.purgeQueue(new PurgeQueueRequest(testContext.getEventQueueUrl()));
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {
