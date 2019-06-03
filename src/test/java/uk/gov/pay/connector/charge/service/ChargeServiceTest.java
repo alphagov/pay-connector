@@ -207,6 +207,8 @@ public class ChargeServiceTest {
         doThrow(new QueueException("Queue badness")).when(eventQueue).emitEvent(any(Event.class));
         
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        
+        // assert that DB record got written
     }
 
 

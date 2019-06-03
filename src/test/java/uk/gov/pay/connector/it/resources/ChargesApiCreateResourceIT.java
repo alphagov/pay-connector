@@ -20,10 +20,14 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import javax.ws.rs.core.Response.Status;
+import java.sql.Timestamp;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -43,6 +47,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.junit.Assert.assertNull;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.events.MicrosecondPrecisionDateTimeSerializer.MICROSECOND_FORMATTER;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -727,13 +732,20 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
                 JSON_RETURN_URL_KEY, RETURN_URL
         ));
 
-        connectorRestApiClient
+        final ValidatableResponse response = connectorRestApiClient
                 .postCreateCharge(postBody)
                 .statusCode(201);
+
+        String chargeExternalId = response.extract().path(JSON_CHARGE_KEY);
+        final Map<String, Object> persistedCharge = databaseTestHelper.getChargeByExternalId(chargeExternalId);
+        final ZonedDateTime persistedCreatedDate = ZonedDateTime.ofInstant(((Timestamp) persistedCharge.get("created_date")).toInstant(), ZoneOffset.UTC);
 
         List<Message> messages = readMessagesFromEventQueue();
         
         assertThat(messages.size(), is(1));
+        final Message message = messages.get(0);
+        assertThat(message.getBody(), hasJsonPath("$.event_type", equalTo("PaymentCreated")));
+        assertThat(message.getBody(), hasJsonPath("$.time", equalTo(MICROSECOND_FORMATTER.format(persistedCreatedDate))));
     }
 
     private List<Message> readMessagesFromEventQueue() {
