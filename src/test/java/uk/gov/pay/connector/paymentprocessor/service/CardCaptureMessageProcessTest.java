@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureMessageProcessTest {
-    
+
     @Mock
     CaptureQueue captureQueue;
 
@@ -94,7 +94,7 @@ public class CardCaptureMessageProcessTest {
     @Test
     public void shouldMarkMessageAsProcessedGivenChargeInCapturedState() throws QueueException {
         when(cardCaptureService.doCapture(anyString())).thenThrow(IllegalStateRuntimeException.class);
-        when(chargeService.isChargeCaptured(anyString())).thenReturn(true);
+        when(chargeService.isChargeCaptureSuccess(anyString())).thenReturn(true);
 
         cardCaptureMessageProcess.handleCaptureMessages();
 
