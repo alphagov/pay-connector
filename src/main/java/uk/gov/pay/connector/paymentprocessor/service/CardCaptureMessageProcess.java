@@ -90,12 +90,19 @@ public class CardCaptureMessageProcess {
     }
 
     private void handleCapturedInvalidTransition(ChargeCaptureMessage captureMessage, IllegalStateRuntimeException e) throws QueueException {
-        if (chargeService.isChargeCaptured(captureMessage.getChargeId())) {
-            LOGGER.info("Charge capture message [{}] already captured - marking as processed.", captureMessage.getChargeId());
+        if (chargeService.isChargeCaptureSuccess(captureMessage.getChargeId())) {
+            LOGGER.info(
+                    "Charge capture message [{}] already captured - marking as processed. [chargeId={}]",
+                    captureMessage.getQueueMessageId(),
+                    captureMessage.getChargeId());
             captureQueue.markMessageAsProcessed(captureMessage);
             return;
         }
 
+        LOGGER.info(
+                "Capture process non-success illegal state transition for message {} [chargeId={}]",
+                captureMessage.getQueueMessageId(),
+                captureMessage.getChargeId());
         throw e;
     }
 }

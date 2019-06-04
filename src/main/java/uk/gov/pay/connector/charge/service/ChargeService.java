@@ -462,9 +462,10 @@ public class ChargeService {
         return numberOfChargeRetries <= captureProcessConfig.getMaximumRetries();
     }
 
-    public boolean isChargeCaptured(String externalId) {
+    public boolean isChargeCaptureSuccess(String externalId) {
         ChargeEntity charge = findChargeById(externalId);
-        return ChargeStatus.fromString(charge.getStatus()) == CAPTURED;
+        ChargeStatus status = ChargeStatus.fromString(charge.getStatus());
+        return status == CAPTURED || status == CAPTURE_SUBMITTED;
     }
 
     private CardDetailsEntity buildCardDetailsEntity(AuthCardDetails authCardDetails) {
