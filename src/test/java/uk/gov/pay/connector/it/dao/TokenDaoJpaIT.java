@@ -13,6 +13,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import static com.github.npathai.hamcrestopt.OptionalMatchers.isEmpty;
+import static com.github.npathai.hamcrestopt.OptionalMatchers.isPresent;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
@@ -110,38 +112,25 @@ public class TokenDaoJpaIT extends DaoITestBase {
     
     @Test
     public void deleteByCutOffDate_shouldDeleteOlderTokens() {
-        
-        long daysTillExpiry = 7;
-        long daysLongerThanExpiry = 8;
-        ZonedDateTime cutOffDate = ZonedDateTime.now(ZoneId.of("UTC")).minusDays(daysTillExpiry);
         ZonedDateTime today = ZonedDateTime.now(ZoneId.of("UTC"));
-        ZonedDateTime eightDaysOld = ZonedDateTime.now(ZoneId.of("UTC")).minusDays(daysLongerThanExpiry);
-        
-        String presentDayTokenId = "token1";
-        String eightDaysOldTokenId = "token2";
-        
-        ChargeEntity ChargeTestEntity = new ChargeEntity();
-        ChargeTestEntity.setId(defaultTestCharge.getChargeId());
-        
-        TokenEntity presentDayToken = TokenEntity.generateNewTokenFor(ChargeTestEntity);
-        presentDayToken.setCreatedDate(today);
-        presentDayToken.setToken(presentDayTokenId);
 
+        ChargeEntity chargeTestEntity = new ChargeEntity();
+        chargeTestEntity.setId(defaultTestCharge.getChargeId());
+        
+        TokenEntity presentDayToken = TokenEntity.generateNewTokenFor(chargeTestEntity);
+        presentDayToken.setCreatedDate(today);
+        presentDayToken.setToken("present-day-token");
         tokenDao.persist(presentDayToken);
         
-        TokenEntity eightDayOldToken = TokenEntity.generateNewTokenFor(ChargeTestEntity);
-        eightDayOldToken.setCreatedDate(eightDaysOld);
-        eightDayOldToken.setToken(eightDaysOldTokenId);
-        
-        tokenDao.persist(eightDayOldToken);
-        
-        tokenDao.deleteTokensOlderThanSpecifiedDate(cutOffDate);
-        
-        assertThat(tokenDao.findByTokenId(eightDaysOldTokenId), is(Optional.empty()));
+        TokenEntity olderThanExpiryThreshold = TokenEntity.generateNewTokenFor(chargeTestEntity);
+        olderThanExpiryThreshold.setCreatedDate(today.minusDays(8));
+        olderThanExpiryThreshold.setToken("old-token");
+        tokenDao.persist(olderThanExpiryThreshold);
 
-        TokenEntity presentToken = tokenDao.findByTokenId(presentDayTokenId).get();
-        assertThat(presentToken.getId(), is(notNullValue()));
-        assertThat(presentToken.getToken(), is(presentDayTokenId));
-        assertThat(presentToken.getCreatedDate(), is(today));
+        final ZonedDateTime expiryThreshold = today.minusDays(7);
+        tokenDao.deleteTokensOlderThanSpecifiedDate(expiryThreshold);
+
+        assertThat(tokenDao.findByTokenId("old-token"), isEmpty());
+        assertThat(tokenDao.findByTokenId("present-day-token"), isPresent());
     }
 }
