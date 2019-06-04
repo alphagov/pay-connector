@@ -58,4 +58,8 @@ public class TestContext {
     String getDatabasePassword() {
         return databasePassword;
     }
+    
+    public String getEventQueueUrl() {
+        return connectorConfiguration.getSqsConfig().getEventQueueUrl();
+    }
 }

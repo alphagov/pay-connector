@@ -30,16 +30,21 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
+import uk.gov.pay.connector.events.Event;
+import uk.gov.pay.connector.events.EventQueue;
+import uk.gov.pay.connector.events.PaymentCreatedEvent;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.time.ZoneId;
@@ -61,7 +66,13 @@ import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
@@ -105,6 +116,8 @@ public class ChargeServiceTest {
     private PaymentProviders mockedProviders;
     @Mock
     private PaymentProvider mockedPaymentProvider;
+    @Mock
+    private EventQueue eventQueue;
 
     private ChargeService service;
 
@@ -134,7 +147,6 @@ public class ChargeServiceTest {
         when(mockedConfig.getLinks())
                 .thenReturn(mockedLinksConfig);
 
-
         CaptureProcessConfig mockedCaptureProcessConfig = mock(CaptureProcessConfig.class);
         when(mockedCaptureProcessConfig.getMaximumRetries()).thenReturn(MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS);
         when(mockedConfig.getCaptureProcessConfig()).thenReturn(mockedCaptureProcessConfig);
@@ -149,7 +161,7 @@ public class ChargeServiceTest {
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders);
+                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, eventQueue);
     }
 
     @Test
@@ -178,6 +190,26 @@ public class ChargeServiceTest {
 
         verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity);
     }
+
+    @Test
+    public void createChargeShouldPutPaymentCreatedEventOnQueue() throws Exception {
+        // ACT
+        service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        
+        // ASSERT
+        verify(eventQueue).emitEvent(any(PaymentCreatedEvent.class));
+    }
+
+    @Test(expected = WebApplicationException.class)
+    public void createChargeThrowsWebApplicationExceptionIfEmittingPaymentCreatedEventFails() throws Exception {
+        doThrow(new QueueException("Queue badness")).when(eventQueue).emitEvent(any(Event.class));
+        
+        service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        
+        // assert that DB record got written
+        verify(mockedChargeDao).persist(any(ChargeEntity.class));
+    }
+
 
     @Test
     public void shouldCreateAChargeWithDelayedCaptureTrue() {
