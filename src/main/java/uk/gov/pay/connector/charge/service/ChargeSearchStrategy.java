@@ -34,6 +34,6 @@ public class ChargeSearchStrategy extends AbstractSearchStrategy<ChargeEntity, C
 
     @Override
     public ChargeResponse buildResponse(UriInfo uriInfo, ChargeEntity chargeEntity) {
-        return chargeService.populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build();
+        return chargeService.populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity, true).build();
     }
 }
