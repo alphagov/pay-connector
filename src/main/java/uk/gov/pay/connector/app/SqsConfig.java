@@ -23,6 +23,7 @@ public class SqsConfig extends Configuration {
     private int messageMaximumWaitTimeInSeconds;
     @Max(10)
     private int messageMaximumBatchSize;
+    private String eventQueueUrl;
 
     public String getEndpoint() {
         return endpoint;
@@ -54,5 +55,9 @@ public class SqsConfig extends Configuration {
 
     public int getMessageMaximumBatchSize() {
         return messageMaximumBatchSize;
+    }
+
+    public String getEventQueueUrl() {
+        return eventQueueUrl;
     }
 }
