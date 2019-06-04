@@ -19,6 +19,7 @@ import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -88,6 +89,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     @Mock
     private Counter mockCounter;
 
+    @Mock
+    private EventQueue eventQueue;
+
     private CardAuthoriseService cardAuthorisationService;
 
     @Before
@@ -97,7 +101,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null);
+                null, null, mockConfiguration, null, eventQueue);
 
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         cardAuthorisationService = new CardAuthoriseService(

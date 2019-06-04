@@ -31,6 +31,7 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
+import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.fee.dao.FeeDao;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -98,6 +99,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private ConnectorConfiguration mockConfiguration;
     @Mock
     private Environment mockEnvironment;
+    @Mock
+    private EventQueue eventQueue;
 
     @Captor
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
@@ -109,7 +112,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null);
+                null, null, mockConfiguration, null, eventQueue);
 
         cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService, mockEnvironment,
                 mockCaptureQueue);

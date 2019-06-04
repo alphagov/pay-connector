@@ -1,6 +1,12 @@
 package uk.gov.pay.connector.it.resources;
 
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.PurgeQueueRequest;
+import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import io.restassured.response.ValidatableResponse;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.postgresql.util.PGobject;
@@ -9,13 +15,19 @@ import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import javax.ws.rs.core.Response.Status;
+import java.sql.Timestamp;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -35,6 +47,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.junit.Assert.assertNull;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.events.MicrosecondPrecisionDateTimeSerializer.MICROSECOND_FORMATTER;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -42,7 +55,12 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJsonWithNulls;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 @RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
+@DropwizardConfig(
+        app = ConnectorApp.class,
+        config = "config/test-it-config.yaml",
+        withDockerSQS = true, 
+        configOverrides = {@ConfigOverride(key = "eventQueue.eventQueueEnabled", value = "true")}
+)
 public class ChargesApiCreateResourceIT extends ChargingITestBase {
 
     private static final String FRONTEND_CARD_DETAILS_URL = "/secure";
@@ -75,6 +93,13 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
 
     public ChargesApiCreateResourceIT() {
         super(PROVIDER_NAME);
+    }
+    
+    @Before
+    @Override
+    public void setup() {
+        purgeEventQueue();
+        super.setup();
     }
 
     @Test
@@ -696,6 +721,50 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body("message", contains("Field [metadata] must be an object of JSON key-value pairs"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+    
+    @Test
+    public void shouldEmitPaymentCreatedEventWhenChargeIsSuccessfullyCreated() {
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL
+        ));
+
+        final ValidatableResponse response = connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(201);
+
+        String chargeExternalId = response.extract().path(JSON_CHARGE_KEY);
+        final Map<String, Object> persistedCharge = databaseTestHelper.getChargeByExternalId(chargeExternalId);
+        final ZonedDateTime persistedCreatedDate = ZonedDateTime.ofInstant(((Timestamp) persistedCharge.get("created_date")).toInstant(), ZoneOffset.UTC);
+
+        List<Message> messages = readMessagesFromEventQueue();
+        
+        assertThat(messages.size(), is(1));
+        final Message message = messages.get(0);
+        assertThat(message.getBody(), hasJsonPath("$.event_type", equalTo("PaymentCreated")));
+        assertThat(message.getBody(), hasJsonPath("$.time", equalTo(MICROSECOND_FORMATTER.format(persistedCreatedDate))));
+    }
+
+    private List<Message> readMessagesFromEventQueue() {
+        AmazonSQS sqsClient = testContext.getInstanceFromGuiceContainer(AmazonSQS.class);
+
+        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(testContext.getEventQueueUrl());
+        receiveMessageRequest
+                .withMessageAttributeNames()
+                .withWaitTimeSeconds(1)
+                .withMaxNumberOfMessages(10);
+
+        ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
+
+        return receiveMessageResult.getMessages();
+    }
+    
+    private void purgeEventQueue() {
+        AmazonSQS sqsClient = testContext.getInstanceFromGuiceContainer(AmazonSQS.class);
+        sqsClient.purgeQueue(new PurgeQueueRequest(testContext.getEventQueueUrl()));
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {
