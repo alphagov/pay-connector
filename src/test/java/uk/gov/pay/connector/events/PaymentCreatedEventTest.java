@@ -64,7 +64,7 @@ public class PaymentCreatedEventTest {
         assertThat(actual, hasJsonPath("$.reference", equalTo("myref")));
         assertThat(actual, hasJsonPath("$.return_url", equalTo("http://example.com")));
         assertThat(actual, hasJsonPath("$.gateway_account_id", equalTo(chargeEntity.getGatewayAccount().getId().intValue())));
-        assertThat(actual, hasJsonPath("$.is_live", equalTo(chargeEntity.getGatewayAccount().isLive())));
+        assertThat(actual, hasJsonPath("$.live", equalTo(chargeEntity.getGatewayAccount().isLive())));
         assertThat(actual, hasJsonPath("$.payment_provider", equalTo(chargeEntity.getGatewayAccount().getGatewayName())));
     }
 }

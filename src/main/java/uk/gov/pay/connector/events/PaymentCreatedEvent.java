@@ -13,16 +13,16 @@ import java.time.ZonedDateTime;
 public class PaymentCreatedEvent extends Event {
 
     @JsonSerialize(using = MicrosecondPrecisionDateTimeSerializer.class)
-    public ZonedDateTime time;
-    public String paymentId;
+    private final ZonedDateTime time;
+    private final String paymentId;
 
-    public Long amount;
-    public String description;
-    public String reference;
-    public String returnUrl;
-    public Long gatewayAccountId;
-    public Boolean isLive;
-    public String paymentProvider;
+    private final Long amount;
+    private final String description;
+    private final String reference;
+    private final String returnUrl;
+    private final Long gatewayAccountId;
+    private final Boolean isLive;
+    private final  String paymentProvider;
 
     private PaymentCreatedEvent(ZonedDateTime time, 
                                String paymentId, Long amount, String description, 
@@ -61,5 +61,41 @@ public class PaymentCreatedEvent extends Event {
     @Override
     public String getEventType() {
         return "PaymentCreated";
+    }
+
+    public ZonedDateTime getTime() {
+        return time;
+    }
+
+    public String getPaymentId() {
+        return paymentId;
+    }
+
+    public Long getAmount() {
+        return amount;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getReference() {
+        return reference;
+    }
+
+    public String getReturnUrl() {
+        return returnUrl;
+    }
+
+    public Long getGatewayAccountId() {
+        return gatewayAccountId;
+    }
+
+    public Boolean isLive() {
+        return isLive;
+    }
+
+    public String getPaymentProvider() {
+        return paymentProvider;
     }
 }
