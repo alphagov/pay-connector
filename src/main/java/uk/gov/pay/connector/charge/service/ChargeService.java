@@ -51,6 +51,7 @@ import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -365,6 +366,10 @@ public class ChargeService {
             }
             return chargeEntity;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+    }
+
+    public int getNumberOfChargesAwaitingCapture(Duration notAttemptedWithin) {
+        return chargeDao.countChargesForImmediateCapture(notAttemptedWithin);
     }
 
     public ChargeEntity findChargeById(String chargeId) {

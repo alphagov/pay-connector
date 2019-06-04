@@ -3,6 +3,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.charge.ChargesAwaitingCaptureMetricEmitter;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.CaptureResponse;
@@ -24,11 +25,14 @@ public class CardCaptureMessageProcess {
 
     @Inject
     public CardCaptureMessageProcess(CaptureQueue captureQueue, CardCaptureService cardCaptureService,
-                                     ConnectorConfiguration connectorConfiguration, ChargeService chargeService) {
+                                     ConnectorConfiguration connectorConfiguration, ChargeService chargeService,
+                                     ChargesAwaitingCaptureMetricEmitter chargesAwaitingCaptureMetricEmitter) {
         this.captureQueue = captureQueue;
         this.cardCaptureService = cardCaptureService;
         this.captureUsingSqs = connectorConfiguration.getCaptureProcessConfig().getCaptureUsingSQS();
         this.chargeService = chargeService;
+
+        chargesAwaitingCaptureMetricEmitter.register();
     }
 
     public void handleCaptureMessages() throws QueueException {

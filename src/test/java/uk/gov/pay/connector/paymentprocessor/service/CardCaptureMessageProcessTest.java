@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.charge.ChargesAwaitingCaptureMetricEmitter;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.gateway.CaptureResponse;
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardCaptureMessageProcessTest {
-    
+
     @Mock
     CaptureQueue captureQueue;
 
@@ -43,6 +44,9 @@ public class CardCaptureMessageProcessTest {
     @Mock
     ChargeService chargeService;
 
+    @Mock
+    ChargesAwaitingCaptureMetricEmitter chargesAwaitingCaptureMetricEmitter;
+
     private static final String chargeExternalId = "some-charge-id";
 
     CardCaptureMessageProcess cardCaptureMessageProcess;
@@ -58,7 +62,8 @@ public class CardCaptureMessageProcessTest {
         when(connectorConfiguration.getCaptureProcessConfig()).thenReturn(captureProcessConfig);
         when(cardCaptureService.doCapture(anyString())).thenReturn(captureResponse);
 
-        cardCaptureMessageProcess = new CardCaptureMessageProcess(captureQueue, cardCaptureService, connectorConfiguration, chargeService);
+        cardCaptureMessageProcess = new CardCaptureMessageProcess(captureQueue, cardCaptureService,
+                connectorConfiguration, chargeService, chargesAwaitingCaptureMetricEmitter);
     }
 
     @Test

@@ -25,7 +25,6 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.commons.utils.logging.LoggingFilter;
 import uk.gov.pay.commons.utils.xray.Xray;
 import uk.gov.pay.connector.cardtype.resource.CardTypesResource;
-import uk.gov.pay.connector.charge.ChargesAwaitingCaptureMetricEmitter;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountExceptionMapper;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.resource.ChargesFrontendResource;
@@ -189,14 +188,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                     environment, injector.getInstance(CardCaptureProcess.class), injector.getInstance(XrayUtils.class));
             environment.lifecycle().manage(captureProcessScheduler);
         } else {
-            registerMetricsEmitters(injector);
             environment.lifecycle().manage(injector.getInstance(QueueMessageReceiver.class));
         }
-    }
-
-    private void registerMetricsEmitters(Injector injector) {
-        ChargesAwaitingCaptureMetricEmitter chargesAwaitingCaptureMetricEmitter = injector.getInstance(ChargesAwaitingCaptureMetricEmitter.class);
-        chargesAwaitingCaptureMetricEmitter.register();
     }
 
     private boolean isEnabledCaptureProcessScheduler(ConnectorConfiguration configuration) {

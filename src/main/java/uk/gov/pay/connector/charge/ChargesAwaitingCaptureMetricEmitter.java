@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.service.ChargeService;
 
 import javax.inject.Inject;
 import java.time.Duration;
@@ -18,28 +18,28 @@ public class ChargesAwaitingCaptureMetricEmitter {
     private static final Logger logger = LoggerFactory.getLogger(ChargesAwaitingCaptureMetricEmitter.class);
     private final CaptureProcessConfig captureConfig;
     private final MetricRegistry metricRegistry;
-    private final int CACHE_TIMEOUT_MINUTES = 20;
-    private ChargeDao chargeDao;
+    private final int CAPTURE_METRIC_UPDATE_DELAY_MINUTES = 20;
+    private ChargeService chargeService;
 
     @Inject
     public ChargesAwaitingCaptureMetricEmitter(
             Environment environment,
             ConnectorConfiguration connectorConfiguration,
-            ChargeDao chargeDao) {
+            ChargeService chargeService) {
 
-        this.chargeDao = chargeDao;
+        this.chargeService = chargeService;
         this.captureConfig = connectorConfiguration.getCaptureProcessConfig();
 
         metricRegistry = environment.metrics();
     }
 
     public void register() {
-        final CachedGauge<Integer> cachedGauge = new CachedGauge<>(CACHE_TIMEOUT_MINUTES, TimeUnit.MINUTES) {
+        final CachedGauge<Integer> cachedGauge = new CachedGauge<>(CAPTURE_METRIC_UPDATE_DELAY_MINUTES, TimeUnit.MINUTES) {
             @Override
             protected Integer loadValue() {
                 try {
-                    Duration withinDuration = captureConfig.getRetryFailuresEveryAsJavaDuration();
-                    return chargeDao.countChargesForImmediateCapture(withinDuration);
+                    Duration notAttemptedWithinDuration = captureConfig.getRetryFailuresEveryAsJavaDuration();
+                    return chargeService.getNumberOfChargesAwaitingCapture(notAttemptedWithinDuration);
                 } catch (Exception e) {
                     logger.warn(
                             "An exception has been caught while retrieving the number of charges to capture metric [{}]",
