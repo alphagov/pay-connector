@@ -288,7 +288,7 @@ public class ChargeService {
 
     private boolean needsNextUrl(ChargeEntity chargeEntity, boolean buildForSearchResult) {
         ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
-        return !buildForSearchResult && !chargeStatus.toExternal().isFinished() && !chargeStatus.equals(ChargeStatus.AWAITING_CAPTURE_REQUEST);
+        return !buildForSearchResult && !chargeStatus.toExternal().isFinished() && !chargeStatus.equals(AWAITING_CAPTURE_REQUEST);
     }
 
     @Transactional
