@@ -5,7 +5,7 @@ pipeline {
 
   parameters {
     booleanParam(defaultValue: false, description: '', name: 'runEndToEndTestsOnPR')
-    booleanParam(defaultValue: false, description: '', name: 'runZapTestsOnPR')
+    booleanParam(defaultValue: false, description: '', name: 'runZap')
   }
 
   options {
@@ -19,7 +19,7 @@ pipeline {
   environment {
     DOCKER_HOST = "unix:///var/run/docker.sock"
     RUN_END_TO_END_ON_PR = "${params.runEndToEndTestsOnPR}"
-    RUN_ZAP_ON_PR = "${params.runZapTestsOnPR}"
+    RUN_ZAP = "${params.runZap}"
     JAVA_HOME="/usr/lib/jvm/java-1.11.0-openjdk-amd64"
   }
   stages {
@@ -72,8 +72,7 @@ pipeline {
          stage('ZAP Tests') {
             when {
                 anyOf {
-                  branch 'master'
-                  environment name: 'RUN_ZAP_ON_PR', value: 'true'
+                  environment name: 'RUN_ZAP', value: 'true'
                 }
             }
             steps {
