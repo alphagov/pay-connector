@@ -6,11 +6,9 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 
@@ -19,7 +17,7 @@ public class PaymentCreatedEventTest {
     private final String paymentId = "jweojfewjoifewj";
     private final String time = "2018-03-12T16:25:01.123456Z";
 
-    ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+    private final ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
             .withCreatedDate(ZonedDateTime.parse(time))
             .withExternalId(paymentId)
             .withDescription("new passport")
@@ -38,8 +36,8 @@ public class PaymentCreatedEventTest {
     }
     
     @Test
-    public void serializesTimeWithMicrosecondPrecision() throws Exception {
-        assertThat(actual, hasJsonPath("$.time", equalTo(time)));
+    public void serializesTimeWithMicrosecondPrecision() {
+        assertThat(actual, hasJsonPath("$.timestamp", equalTo(time)));
     }
 
     @Test
@@ -48,23 +46,22 @@ public class PaymentCreatedEventTest {
     }
 
     @Test
-    public void serializesPaymentResourceType() throws Exception {
-        final String actual = paymentCreatedEvent.toJsonString();
-
+    public void serializesPaymentResourceType() {
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
     }
 
     @Test
-    public void serializesPayloadFieldstoJsonString() throws Exception{
-        final String actual = paymentCreatedEvent.toJsonString();
+    public void serializesPaymentResourceExternaId() {
+        assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
+    }
 
-        assertThat(actual, hasJsonPath("$.payment_id", equalTo(paymentId )));
-        assertThat(actual, hasJsonPath("$.amount", equalTo(100)));
-        assertThat(actual, hasJsonPath("$.description", equalTo("new passport")));
-        assertThat(actual, hasJsonPath("$.reference", equalTo("myref")));
-        assertThat(actual, hasJsonPath("$.return_url", equalTo("http://example.com")));
-        assertThat(actual, hasJsonPath("$.gateway_account_id", equalTo(chargeEntity.getGatewayAccount().getId().intValue())));
-        assertThat(actual, hasJsonPath("$.live", equalTo(chargeEntity.getGatewayAccount().isLive())));
-        assertThat(actual, hasJsonPath("$.payment_provider", equalTo(chargeEntity.getGatewayAccount().getGatewayName())));
+    @Test
+    public void serializesPayloadFieldstoJsonString() {
+        assertThat(actual, hasJsonPath("$.event_details.amount", equalTo(100)));
+        assertThat(actual, hasJsonPath("$.event_details.description", equalTo("new passport")));
+        assertThat(actual, hasJsonPath("$.event_details.reference", equalTo("myref")));
+        assertThat(actual, hasJsonPath("$.event_details.return_url", equalTo("http://example.com")));
+        assertThat(actual, hasJsonPath("$.event_details.gateway_account_id", equalTo(chargeEntity.getGatewayAccount().getId().intValue())));
+        assertThat(actual, hasJsonPath("$.event_details.payment_provider", equalTo(chargeEntity.getGatewayAccount().getGatewayName())));
     }
 }

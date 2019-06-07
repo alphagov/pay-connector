@@ -148,7 +148,7 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
                 .body("links", containsLink("self", "GET", documentLocation))
                 .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
                 .body("links", containsLink("next_url", "GET", hrefNextUrl))
-                .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+                .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<>() {{
                     put("chargeTokenId", chargeTokenId);
                 }}));
 
@@ -188,7 +188,7 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
                 .body("links", containsLink("self", "GET", documentLocation))
                 .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
                 .body("links", containsLink("next_url", "GET", newHrefNextUrl))
-                .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<String, Object>() {{
+                .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<>() {{
                     put("chargeTokenId", newChargeTokenId);
                 }}));
 
@@ -745,7 +745,7 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
         assertThat(messages.size(), is(1));
         final Message message = messages.get(0);
         assertThat(message.getBody(), hasJsonPath("$.event_type", equalTo("PaymentCreated")));
-        assertThat(message.getBody(), hasJsonPath("$.time", equalTo(MICROSECOND_FORMATTER.format(persistedCreatedDate))));
+        assertThat(message.getBody(), hasJsonPath("$.timestamp", equalTo(MICROSECOND_FORMATTER.format(persistedCreatedDate))));
     }
 
     private List<Message> readMessagesFromEventQueue() {
