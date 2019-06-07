@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.events;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.events.eventpayload.PaymentCreatedEventPayload;
+import uk.gov.pay.connector.events.eventdetails.PaymentCreatedEventDetails;
 
 import java.time.ZonedDateTime;
 
-public class PaymentCreatedEvent extends PaymentEvent<PaymentCreatedEventPayload> {
+public class PaymentCreatedEvent extends PaymentEvent<PaymentCreatedEventDetails> {
 
     private final ChargeEntity charge;
 
@@ -28,12 +28,12 @@ public class PaymentCreatedEvent extends PaymentEvent<PaymentCreatedEventPayload
     }
 
     @Override
-    public PaymentCreatedEventPayload getEventData() {
-        return PaymentCreatedEventPayload.from(charge);
+    public PaymentCreatedEventDetails getEventDetails() {
+        return PaymentCreatedEventDetails.from(charge);
     }
 
     @Override
-    public ZonedDateTime getEventDate() {
+    public ZonedDateTime getTimestamp() {
         return charge.getCreatedDate();
     }
 }

@@ -7,23 +7,23 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.dropwizard.jackson.Jackson;
-import uk.gov.pay.connector.events.eventpayload.EventPayload;
+import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
 import java.time.ZonedDateTime;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public abstract class Event<T extends EventPayload> {
+public abstract class Event<T extends EventDetails> {
     private static final ObjectMapper MAPPER = Jackson.newObjectMapper();
 
     public abstract ResourceType getResourceType();
     public abstract String getResourceExternalId();
     public abstract String getEventType();
-    public abstract T getEventData();
+    public abstract T getEventDetails();
     @JsonSerialize(using = MicrosecondPrecisionDateTimeSerializer.class)
-    public abstract ZonedDateTime getEventDate();
+    public abstract ZonedDateTime getTimestamp();
     
-    String toJsonString() throws JsonProcessingException {
+    public String toJsonString() throws JsonProcessingException {
         return MAPPER.writeValueAsString(this);
     }
 }

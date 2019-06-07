@@ -1,8 +1,8 @@
-package uk.gov.pay.connector.events.eventpayload;
+package uk.gov.pay.connector.events.eventdetails;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 
-public class PaymentCreatedEventPayload extends EventPayload {
+public class PaymentCreatedEventDetails extends EventDetails {
     private final Long amount;
     private final String description;
     private final String reference;
@@ -10,7 +10,7 @@ public class PaymentCreatedEventPayload extends EventPayload {
     private final Long gatewayAccountId;
     private final  String paymentProvider;
 
-    private PaymentCreatedEventPayload(ChargeEntity charge) {
+    private PaymentCreatedEventDetails(ChargeEntity charge) {
         this.amount = charge.getAmount();
         this.description = charge.getDescription();
         this.reference = charge.getReference().toString();
@@ -19,8 +19,8 @@ public class PaymentCreatedEventPayload extends EventPayload {
         this.paymentProvider = charge.getGatewayAccount().getGatewayName();
     }
 
-    public static PaymentCreatedEventPayload from(ChargeEntity charge) {
-        return new PaymentCreatedEventPayload(charge);
+    public static PaymentCreatedEventDetails from(ChargeEntity charge) {
+        return new PaymentCreatedEventDetails(charge);
     }
 
     public Long getAmount() {
