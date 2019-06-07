@@ -6,11 +6,9 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 
@@ -39,7 +37,7 @@ public class PaymentCreatedEventTest {
     
     @Test
     public void serializesTimeWithMicrosecondPrecision() throws Exception {
-        assertThat(actual, hasJsonPath("$.time", equalTo(time)));
+        assertThat(actual, hasJsonPath("$.event_date", equalTo(time)));
     }
 
     @Test
@@ -58,13 +56,11 @@ public class PaymentCreatedEventTest {
     public void serializesPayloadFieldstoJsonString() throws Exception{
         final String actual = paymentCreatedEvent.toJsonString();
 
-        assertThat(actual, hasJsonPath("$.payment_id", equalTo(paymentId )));
-        assertThat(actual, hasJsonPath("$.amount", equalTo(100)));
-        assertThat(actual, hasJsonPath("$.description", equalTo("new passport")));
-        assertThat(actual, hasJsonPath("$.reference", equalTo("myref")));
-        assertThat(actual, hasJsonPath("$.return_url", equalTo("http://example.com")));
-        assertThat(actual, hasJsonPath("$.gateway_account_id", equalTo(chargeEntity.getGatewayAccount().getId().intValue())));
-        assertThat(actual, hasJsonPath("$.live", equalTo(chargeEntity.getGatewayAccount().isLive())));
-        assertThat(actual, hasJsonPath("$.payment_provider", equalTo(chargeEntity.getGatewayAccount().getGatewayName())));
+        assertThat(actual, hasJsonPath("$.event_data.amount", equalTo(100)));
+        assertThat(actual, hasJsonPath("$.event_data.description", equalTo("new passport")));
+        assertThat(actual, hasJsonPath("$.event_data.reference", equalTo("myref")));
+        assertThat(actual, hasJsonPath("$.event_data.return_url", equalTo("http://example.com")));
+        assertThat(actual, hasJsonPath("$.event_data.gateway_account_id", equalTo(chargeEntity.getGatewayAccount().getId().intValue())));
+        assertThat(actual, hasJsonPath("$.event_data.payment_provider", equalTo(chargeEntity.getGatewayAccount().getGatewayName())));
     }
 }
