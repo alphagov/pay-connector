@@ -326,7 +326,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-sqs</artifactId>
-            <version>1.11.564</version>
+            <version>1.11.568</version>
         </dependency>
         <!-- testing -->
         <dependency>
