@@ -124,7 +124,7 @@ public class ChargeService {
         return createCharge(chargeRequest, accountId, uriInfo)
                 .map(charge -> {
                     emitCreationEvent(charge);
-                    return populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge).build();
+                    return populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge, false).build();
                 });
     }
 
@@ -193,7 +193,7 @@ public class ChargeService {
     public Optional<ChargeResponse> findChargeForAccount(String chargeId, Long accountId, UriInfo uriInfo) {
         return chargeDao
                 .findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(chargeEntity -> populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
+                .map(chargeEntity -> populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity, false).build());
     }
 
     @Transactional
@@ -222,7 +222,7 @@ public class ChargeService {
                 }).orElse(Optional.empty());
     }
 
-    public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity) {
+    public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity, boolean buildForSearchResult) {
         String chargeId = chargeEntity.getExternalId();
         PersistedCard persistedCard = null;
         if (chargeEntity.getCardDetails() != null) {
@@ -273,8 +273,7 @@ public class ChargeService {
         // @TODO(sfount) consider if total and net columns could be calculation columns in postgres (single source of truth)
         chargeEntity.getNetAmount().ifPresent(builderOfResponse::withNetAmount);
 
-        ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
-        if (!chargeStatus.toExternal().isFinished() && !chargeStatus.equals(ChargeStatus.AWAITING_CAPTURE_REQUEST)) {
+        if (needsNextUrl(chargeEntity, buildForSearchResult)) {
             TokenEntity token = createNewChargeEntityToken(chargeEntity);
             Map<String, Object> params = new HashMap<>();
             params.put("chargeTokenId", token.getToken());
@@ -282,9 +281,14 @@ public class ChargeService {
             return builderOfResponse
                     .withLink("next_url", GET, nextUrl(token.getToken()))
                     .withLink("next_url_post", POST, nextUrl(), APPLICATION_FORM_URLENCODED, params);
+        } else {
+            return builderOfResponse;
         }
+    }
 
-        return builderOfResponse;
+    private boolean needsNextUrl(ChargeEntity chargeEntity, boolean buildForSearchResult) {
+        ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
+        return !buildForSearchResult && !chargeStatus.toExternal().isFinished() && !chargeStatus.equals(AWAITING_CAPTURE_REQUEST);
     }
 
     @Transactional

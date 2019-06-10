@@ -74,6 +74,7 @@ public class SearchChargesByDateResourceIT {
     public void whenTheChargeCreatedDateIsBetweenTheFromDateAndTheToDate_shouldReturnTheCharge() {
         int millis = 299000000;
         String chargeId = addCharge(ZonedDateTime.of(2016, 2, 2, 0, 0, 0, millis, ZoneId.of("UTC")));
+        
         connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("from_date", "2016-02-01T00:00:00Z")
@@ -87,7 +88,7 @@ public class SearchChargesByDateResourceIT {
                 .body("results[0].amount", is(AMOUNT))
                 .body("results[0].description", is("Test description"))
                 .body("results[0].state.status", is("created"))
-                .body("results[0].links.size()", is(4))
+                .body("results[0].links.size()", is(2))
                 .body("results[0].return_url", is("http://return.invalid/1"))
                 .body("results[0].created_date", is("2016-02-02T00:00:00.299Z"))
                 .body("results[0].reference", is("Test reference"));
