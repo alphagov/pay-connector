@@ -11,7 +11,6 @@ import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.SqsConfig;
 import uk.gov.pay.connector.queue.sqs.SqsQueueService;
-import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,7 +30,7 @@ public class CaptureQueueTest {
     @Mock
     ConnectorConfiguration connectorConfiguration;
 
-    JsonObjectMapper jsonObjectMapper;
+    private ObjectMapper objectMapper;
 
     @Before
     public void setUp() throws Exception {
@@ -41,7 +40,7 @@ public class CaptureQueueTest {
         List<QueueMessage> messages = Arrays.asList(
                 QueueMessage.of(messageResult, validJsonMessage)
         );
-        jsonObjectMapper = new JsonObjectMapper(new ObjectMapper());
+        objectMapper = new ObjectMapper();
         CaptureProcessConfig captureProcessConfig = mock(CaptureProcessConfig.class);
         SqsConfig sqsConfig = mock(SqsConfig.class);
         when(sqsConfig.getCaptureQueueUrl()).thenReturn("");
@@ -53,7 +52,7 @@ public class CaptureQueueTest {
 
     @Test
     public void shouldParseChargeIdGivenWellFormattedJSON() throws QueueException {
-        CaptureQueue queue = new CaptureQueue(sqsQueueService, connectorConfiguration, jsonObjectMapper);
+        CaptureQueue queue = new CaptureQueue(sqsQueueService, connectorConfiguration, objectMapper);
         List<ChargeCaptureMessage> chargeCaptureMessages = queue.retrieveChargesForCapture();
 
         assertNotNull(chargeCaptureMessages);

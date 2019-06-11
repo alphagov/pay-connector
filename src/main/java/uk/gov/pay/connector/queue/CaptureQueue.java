@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.queue;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -7,10 +8,9 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.queue.sqs.SqsQueueService;
-import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -19,7 +19,7 @@ public class CaptureQueue {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final JsonObjectMapper jsonObjectMapper;
+    private final ObjectMapper objectMapper;
 
     private final String captureQueueUrl;
     private final int failedCaptureRetryDelayInSeconds;
@@ -31,11 +31,11 @@ public class CaptureQueue {
     @Inject
     public CaptureQueue(
             SqsQueueService sqsQueueService,
-            ConnectorConfiguration connectorConfiguration, JsonObjectMapper jsonObjectMapper) {
+            ConnectorConfiguration connectorConfiguration, ObjectMapper objectMapper) {
         this.sqsQueueService = sqsQueueService;
         this.captureQueueUrl = connectorConfiguration.getSqsConfig().getCaptureQueueUrl();
         this.failedCaptureRetryDelayInSeconds = connectorConfiguration.getCaptureProcessConfig().getFailedCaptureRetryDelayInSeconds();
-        this.jsonObjectMapper = jsonObjectMapper;
+        this.objectMapper = objectMapper;
     }
 
     public void sendForCapture(ChargeEntity charge) throws QueueException {
@@ -61,11 +61,11 @@ public class CaptureQueue {
 
     private ChargeCaptureMessage getChargeCaptureMessage(QueueMessage qm) {
         try {
-            CaptureCharge captureCharge = jsonObjectMapper
-                    .getObject(qm.getMessageBody(), CaptureCharge.class);
+            CaptureCharge captureCharge = objectMapper.readValue(qm.getMessageBody(), CaptureCharge.class);
+
             return ChargeCaptureMessage.of(captureCharge, qm);
-        } catch (WebApplicationException e) {
-            logger.warn("Error parsing the charge capture message from queue [{}]", e.getMessage());
+        } catch (IOException e) {
+            logger.warn("Error parsing the charge capture message [message={}] from queue [error={}]", qm.getMessageBody(), e.getMessage());
             return null;
         }
     }
