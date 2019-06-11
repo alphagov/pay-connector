@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureMessageProcess;
-import uk.gov.pay.connector.queue.QueueException;
 
 import javax.inject.Inject;
 import java.util.concurrent.ScheduledExecutorService;
@@ -62,7 +61,7 @@ public class QueueMessageReceiver implements Managed {
                 while (!isInterrupted()) {
                     try {
                         cardCaptureMessageProcess.handleCaptureMessages();
-                    } catch (QueueException e) {
+                    } catch (Exception e) {
                         LOGGER.error("Queue message receiver thread exception [{}]", e);
                     }
                 }
