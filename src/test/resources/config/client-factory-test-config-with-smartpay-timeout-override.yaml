@@ -90,15 +90,9 @@ executorServiceConfig:
   threadsPerCpu: ${NUMBER_OF_THREADS_PER_CPU:-100}
 
 captureProcessConfig:
-  backgroundProcessingEnabled: ${BACKGROUND_PROCESSING_ENABLED:-true}
-  schedulerInitialDelayInSeconds: ${CAPTURE_PROCESS_SCHEDULER_INITIAL_DELAY_SECONDS:-20}
-  schedulerRandomIntervalMinimumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MINIMUM_SECONDS:-150}
-  schedulerRandomIntervalMaximumInSeconds: ${CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MAXIMUM_SECONDS:-200}
-  batchSize: 10
-  schedulerThreads: 1
+  backgroundProcessingEnabled: ${BACKGROUND_PROCESSING_ENABLED:-false}
   retryFailuresEvery: 60 minutes
   maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-48}
-  captureUsingSQS: ${CAPTURE_USING_SQS_FEATURE_FLAG:-false}
   failedCaptureRetryDelayInSeconds: ${CAPTURE_PROCESS_FAILED_CAPTURE_RETRY_DELAY_IN_SECONDS:-3600}
   queueSchedulerThreadDelayInSeconds: ${CAPTURE_PROCESS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS:-1}
   queueSchedulerNumberOfThreads: ${CAPTURE_PROCESS_QUEUE_SCHEDULER_NUMBER_OF_THREADS:-1}

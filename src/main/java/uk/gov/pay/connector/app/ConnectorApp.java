@@ -45,8 +45,6 @@ import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.healthcheck.resource.HealthCheckResource;
 import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
 import uk.gov.pay.connector.paymentprocessor.resource.DiscrepancyResource;
-import uk.gov.pay.connector.paymentprocessor.service.CaptureProcessScheduler;
-import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.queue.managed.QueueMessageReceiver;
 import uk.gov.pay.connector.refund.resource.ChargeRefundsResource;
 import uk.gov.pay.connector.refund.resource.SearchRefundsResource;
@@ -56,7 +54,6 @@ import uk.gov.pay.connector.token.resource.SecurityTokensResource;
 import uk.gov.pay.connector.usernotification.resource.EmailNotificationResource;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
 import uk.gov.pay.connector.util.JsonMappingExceptionMapper;
-import uk.gov.pay.connector.util.XrayUtils;
 import uk.gov.pay.connector.webhook.resource.NotificationResource;
 
 import java.util.Optional;
@@ -131,7 +128,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(ChargeIdMDCLoggingFeature.class);
 
         if(configuration.getCaptureProcessConfig().getBackgroundProcessingEnabled()) {
-            setupSchedulers(configuration, environment, injector);
+            setupSchedulers(environment, injector);
         }
 
         setupSmartpayBasicAuth(environment, injector.getInstance(SmartpayAccountSpecificAuthenticator.class));
@@ -181,19 +178,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         new ConnectorApp().run(args);
     }
 
-    private void setupSchedulers(ConnectorConfiguration configuration, Environment environment, Injector injector) {
-        boolean captureUsingProcessScheduler = isEnabledCaptureProcessScheduler(configuration);
-        if(captureUsingProcessScheduler) {
-            CaptureProcessScheduler captureProcessScheduler = new CaptureProcessScheduler(configuration,
-                    environment, injector.getInstance(CardCaptureProcess.class), injector.getInstance(XrayUtils.class));
-            environment.lifecycle().manage(captureProcessScheduler);
-        } else {
-            environment.lifecycle().manage(injector.getInstance(QueueMessageReceiver.class));
-        }
-    }
-
-    private boolean isEnabledCaptureProcessScheduler(ConnectorConfiguration configuration) {
-        boolean captureUsingSqs = configuration.getCaptureProcessConfig().getCaptureUsingSQS();
-        return !captureUsingSqs;
+    private void setupSchedulers(Environment environment, Injector injector) {
+        environment.lifecycle().manage(injector.getInstance(QueueMessageReceiver.class));
     }
 }

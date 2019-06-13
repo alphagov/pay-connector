@@ -24,10 +24,8 @@ public class ConnectorConfigurationIT {
         assertThat(authReadTimeout, is(Duration.milliseconds(222)));
 
         CaptureProcessConfig captureProcessConfig = RULE.getConfiguration().getCaptureProcessConfig();
-        assertThat(captureProcessConfig.getRetryFailuresEvery(), is(Duration.minutes(60)));
         assertThat(captureProcessConfig.getRetryFailuresEveryAsJavaDuration(), is(java.time.Duration.ofMinutes(60)));
         assertThat(captureProcessConfig.getMaximumRetries(), is(48));
-        assertThat(captureProcessConfig.getBatchSize(), is(10));
     }
 
 }

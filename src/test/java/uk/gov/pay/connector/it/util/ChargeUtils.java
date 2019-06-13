@@ -3,10 +3,7 @@ package uk.gov.pay.connector.it.util;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.math.RandomUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
-
-import java.util.Map;
 
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -41,25 +38,6 @@ public class ChargeUtils {
                 .withEmail("email@fake.test")
                 .build());
         return externalChargeId;
-    }
-
-    public static DatabaseFixtures.TestCharge createTestCharge(DatabaseTestHelper databaseTestHelper, String paymentProvider, ChargeStatus chargeStatus,
-                                                               Map<String,String> credentials, String transactionId) {
-        DatabaseFixtures.TestAccount testAccount = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestAccount()
-                .withPaymentProvider(paymentProvider)
-                .withCredentials(credentials);
-
-        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(testAccount)
-                .withChargeStatus(chargeStatus)
-                .withTransactionId(transactionId);
-
-        testAccount.insert();
-        return testCharge.insert();
     }
 
     public static class ExternalChargeId {

@@ -1503,39 +1503,6 @@ public class ChargeDaoIT extends DaoITestBase {
                 .insert();
 
         assertThat(chargeDao.countChargesForImmediateCapture(Duration.ofHours(1)), is(2));
-        assertThat(chargeDao.countChargesAwaitingCaptureRetry(Duration.ofHours(1)), is(1));
-    }
-
-    @Test
-    public void countCaptureRetriesForCharge_shouldReturnNumberOfRetries() {
-        long chargeId = nextLong();
-
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeId(chargeId)
-                .withExternalChargeId(RandomIdGenerator.newId())
-                .withCreatedDate(now().minusHours(2))
-                .withChargeStatus(CAPTURE_APPROVED)
-                .insert();
-
-        assertThat(chargeDao.countCaptureRetriesForCharge(chargeId), is(0));
-
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestChargeEvent()
-                .withChargeId(chargeId)
-                .withChargeStatus(CAPTURE_APPROVED)
-                .insert();
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestChargeEvent()
-                .withChargeId(chargeId)
-                .withChargeStatus(CAPTURE_APPROVED_RETRY)
-                .insert();
-
-        assertThat(chargeDao.countCaptureRetriesForCharge(chargeId), is(2));
     }
 
     @Test

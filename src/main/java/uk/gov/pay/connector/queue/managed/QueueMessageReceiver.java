@@ -5,7 +5,7 @@ import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.paymentprocessor.service.CardCaptureMessageProcess;
+import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 
 import javax.inject.Inject;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,15 +20,15 @@ public class QueueMessageReceiver implements Managed {
     private final int queueSchedulerThreadDelayInSeconds;
 
     private ScheduledExecutorService scheduledExecutorService;
-    private CardCaptureMessageProcess cardCaptureMessageProcess;
+    private CardCaptureProcess cardCaptureProcess;
 
     @Inject
-    public QueueMessageReceiver(CardCaptureMessageProcess cardCaptureMessageProcess,
+    public QueueMessageReceiver(CardCaptureProcess cardCaptureProcess,
                                 Environment environment, ConnectorConfiguration connectorConfiguration) {
 
         int queueScheduleNumberOfThreads = connectorConfiguration.getCaptureProcessConfig().getQueueSchedulerNumberOfThreads();
 
-        this.cardCaptureMessageProcess = cardCaptureMessageProcess;
+        this.cardCaptureProcess = cardCaptureProcess;
 
         scheduledExecutorService = environment
                 .lifecycle()
@@ -60,7 +60,7 @@ public class QueueMessageReceiver implements Managed {
                 LOGGER.info("Queue message receiver thread polling queue");
                 while (!isInterrupted()) {
                     try {
-                        cardCaptureMessageProcess.handleCaptureMessages();
+                        cardCaptureProcess.handleCaptureMessages();
                     } catch (Exception e) {
                         LOGGER.error("Queue message receiver thread exception [{}]", e);
                     }
