@@ -67,8 +67,8 @@ pipeline {
         // }
 
         steps {
-          dir('e2e-pay-scripts') {
-            checkout([$class: 'GitSCM', branches: [[name: '${PAY_SCRIPTS_BRANCH}']], userRemoteConfigs: [[url: '/opt/govukpay/repos/pay-scripts']]])
+          ws('e2e-pay-scripts') {
+            git(url: '/opt/govukpay/repos/pay-scripts')
 
             script {
               withCredentials([
