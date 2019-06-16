@@ -67,7 +67,7 @@ pipeline {
         // }
 
         steps {
-          ws('e2e-pay-scripts') {
+          dir('e2e-pay-scripts') {
             git(url: '/opt/govukpay/repos/pay-scripts')
 
             script {
