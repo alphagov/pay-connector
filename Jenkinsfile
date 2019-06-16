@@ -80,7 +80,7 @@ pipeline {
                        |set -e
                        |bundle install --path gems
                        |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb up
-                       |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb run --end-to-end=${E2E_TEST_TYPE}
+                       |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb run --end-to-end=card
                     '''.stripMargin()
                 )
               }
