@@ -10,7 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.paymentprocessor.service.CardCaptureMessageProcess;
+import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 public class QueueMessageReceiverTest {
 
     @Mock
-    private CardCaptureMessageProcess cardCaptureMessageProcess;
+    private CardCaptureProcess cardCaptureProcess;
 
     @Mock
     private Environment environment;
@@ -65,7 +65,7 @@ public class QueueMessageReceiverTest {
     public void shouldSetupScheduledExecutorService() {
         String EXPECTED_SQS_MESSAGE_RECEIVER_THREAD_NAME = "sqs-message-receiver";
 
-        new QueueMessageReceiver(cardCaptureMessageProcess, environment, connectorConfiguration);
+        new QueueMessageReceiver(cardCaptureProcess, environment, connectorConfiguration);
 
         verify(lifecycleEnvironment).scheduledExecutorService(EXPECTED_SQS_MESSAGE_RECEIVER_THREAD_NAME);
         verify(scheduledExecutorServiceBuilder).threads(EXPECTED_TOTAL_MESSAGE_RECEIVER_THREADS);
@@ -74,7 +74,7 @@ public class QueueMessageReceiverTest {
 
     @Test
     public void shouldShutdownScheduledExecutorServiceWhenStopped() {
-        QueueMessageReceiver queueMessageReceiver = new QueueMessageReceiver(cardCaptureMessageProcess, environment, connectorConfiguration);
+        QueueMessageReceiver queueMessageReceiver = new QueueMessageReceiver(cardCaptureProcess, environment, connectorConfiguration);
         queueMessageReceiver.stop();
 
         verify(scheduledExecutorService).shutdown();

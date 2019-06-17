@@ -212,37 +212,6 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .getResultList();
     }
 
-    public int countChargesAwaitingCaptureRetry(Duration notAttemptedWithin) {
-        String query = "SELECT count(c) FROM ChargeEntity c WHERE c.status=:captureApprovedRetryStatus " +
-                "AND EXISTS (" +
-                "  SELECT ce FROM ChargeEventEntity ce WHERE " +
-                "    ce.chargeEntity = c AND " +
-                "    ce.status = :eventStatus AND " +
-                "    ce.updated >= :cutoffDate " +
-                ") ";
-
-        Number count = (Number) entityManager.get()
-                .createQuery(query)
-                .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY.getValue())
-                .setParameter("eventStatus", CAPTURE_APPROVED_RETRY)
-                .setParameter("cutoffDate", ZonedDateTime.now().minus(notAttemptedWithin))
-                .getSingleResult();
-        return count.intValue();
-    }
-
-    public int countCaptureRetriesForCharge(long chargeId) {
-        String query = "SELECT count(ce) FROM ChargeEventEntity ce WHERE " +
-                "    ce.chargeEntity.id = :chargeId AND " +
-                "    (ce.status = :captureApprovedStatus OR ce.status = :captureApprovedRetryStatus)";
-
-        return ((Number) entityManager.get()
-                .createQuery(query)
-                .setParameter("chargeId", chargeId)
-                .setParameter("captureApprovedStatus", CAPTURE_APPROVED)
-                .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY)
-                .getSingleResult()).intValue();
-    }
-
     public int countCaptureRetriesForChargeExternalId(String externalId) {
         String query = "SELECT count(ce) FROM ChargeEventEntity ce WHERE " +
                 "    ce.chargeEntity.externalId = :externalId AND " +

@@ -19,8 +19,6 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 | `GDS_CONNECTOR_SMARTPAY_LIVE_URL` | - | Pointing to the LIVE gateway URL of Smartpay payment provider. |
 | `GDS_CONNECTOR_EPDQ_TEST_URL` | - | Pointing to the TEST gateway URL of ePDQ payment provider. |
 | `GDS_CONNECTOR_EPDQ_LIVE_URL` | - | Pointing to the LIVE gateway URL of ePDQ payment provider. |
-| `ASYNCHRONOUS_CAPTURE` | true | whether to handle capture asynchronously. When asynchronous capture is enabled, capture requests are deferred and operated in batch by a background task  |
-| `CAPTURE_USING_SQS_FEATURE_FLAG` | false | Enable or disable capturing charges using SQS as capture queue  |
 | `COLLECT_FEE_FEATURE_FLAG` | false | enable or disable collecting fees for the Stripe payment gateway. |
 | `STRIPE_TRANSACTION_FEE_PERCENTAGE` | - | percentage of total charge amount to recover GOV.UK Pay platform costs. |
 | `STRIPE_PLATFORM_ACCOUNT_ID` | - | the account ID for the Stripe Connect GOV.UK Pay platform. |
@@ -40,21 +38,23 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 
 ### Background captures
 
-The background capture mechanism will capture all payments in the `CAPTURE_APPROVED` state.
+The background capture mechanism will capture all payments in the `CAPTURE_APPROVED` state that have been published to
+the SQS queue (`AWS_SQS_CAPTURE_QUEUE_URL`).
 
-A background thread managed by dropwizard runs on all connector nodes. It polls the database periodically to check for payments which need to be captured.
+A background thread managed by dropwizard runs on all connector nodes. It polls the SQS capture queue to retrieve the
+ list of charges that are waiting to be captured.
 
-The polling interval is a random value between 150-200 seconds.
-
-If a capture attempt fails it will be retried again after a specified delay (`CAPTURE_PROCESS_RETRY_FAILURES_EVERY`).
+If a capture attempt fails it will be retried again after a specified delay (`CAPTURE_PROCESS_FAILED_CAPTURE_RETRY_DELAY_IN_SECONDS`).
+It is achieved by setting up the visibility timeout with the delay value which prevents consumers from receiving the message.
+After this timeout the message becomes visible for consumers again.
+More information of how the visibility timeout works can be found [here](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html).
 
 The following variables control the background process:
 
 | Variable | Default | Purpose |
 |---------|---------|---------|
-| `BACKGROUND_PROCESSING_ENABLED` | `true` | enables registering scheduled processes - it includes both database based & queue based capture methods |
-| `CAPTURE_PROCESS_BATCH_SIZE` | `10` | limits the batch window size processed at each polling attempt. If connector is not managing to clear the queue of captures, increase this value. |
-| `CAPTURE_PROCESS_RETRY_FAILURES_EVERY` | `60 minutes` | a failed capture attempt will be returned to the queue, and will not be retried until this time has passed |
+| `BACKGROUND_PROCESSING_ENABLED` | `true` | enables registering scheduled processes - at the moment it includes only queue based capture methods |
+| `CAPTURE_PROCESS_RETRY_FAILURES_EVERY` | `60 minutes` | this value is used for calculating the metric gauge of messages awaiting capture (not attempted within this interval) |
 | `CAPTURE_PROCESS_MAXIMUM_RETRIES` | `96` | connector keeps track of the number of times capture has been attempted for each charge. If a charge fails this number of times or more it will be marked as a permanent failure. An error log message will be written as well. This should *never* happen and if it does it should be investigated. |
 | `CAPTURE_PROCESS_FAILED_CAPTURE_RETRY_DELAY_IN_SECONDS` | `3600` | the duration in seconds that a message should be deferred before it should be retried. |
 | `CAPTURE_PROCESS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS` | `1` | the duration in seconds that the queue message receiver should wait between running threads. |

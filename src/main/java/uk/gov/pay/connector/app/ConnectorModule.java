@@ -13,7 +13,6 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
@@ -28,8 +27,6 @@ import uk.gov.pay.connector.util.XrayUtils;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 
 import java.util.Properties;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
 
 public class ConnectorModule extends AbstractModule {
     final ConnectorConfiguration configuration;
@@ -121,12 +118,6 @@ public class ConnectorModule extends AbstractModule {
     }
 
     @Provides
-    @Singleton
-    public Queue<ChargeEntity> captureQueue(ConnectorConfiguration connectorConfiguration) {
-        return new ArrayBlockingQueue(connectorConfiguration.getCaptureProcessConfig().getBatchSize());
-    }
-
-    @Provides
     public AmazonSQS sqsClient(ConnectorConfiguration connectorConfiguration) {
 
         AmazonSQSClientBuilder clientBuilder = AmazonSQSClientBuilder
@@ -146,7 +137,7 @@ public class ConnectorModule extends AbstractModule {
                                     connectorConfiguration.getSqsConfig().getRegion())
                     );
         } else {
-            // uses AWS SDK's DefaultAWSCredentialsProviderChain to obtain credentials 
+            // uses AWS SDK's DefaultAWSCredentialsProviderChain to obtain credentials
             clientBuilder.withRegion(connectorConfiguration.getSqsConfig().getRegion());
         }
 

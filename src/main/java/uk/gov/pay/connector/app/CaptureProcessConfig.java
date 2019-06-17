@@ -7,18 +7,9 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 public class CaptureProcessConfig extends Configuration {
-    private long schedulerInitialDelayInSeconds;
-    private long schedulerRandomIntervalMinimumInSeconds;
-    private long schedulerRandomIntervalMaximumInSeconds;
-    private int schedulerThreads;
 
-    private int batchSize;
     private Duration retryFailuresEvery;
     private int maximumRetries;
-
-    @Valid
-    @NotNull
-    private Boolean captureUsingSQS;
 
     @Valid
     @NotNull
@@ -27,22 +18,6 @@ public class CaptureProcessConfig extends Configuration {
     private int failedCaptureRetryDelayInSeconds;
     private int queueSchedulerThreadDelayInSeconds;
     private int queueSchedulerNumberOfThreads;
-
-    public long getSchedulerInitialDelayInSeconds() {
-        return schedulerInitialDelayInSeconds;
-    }
-
-    public long getSchedulerRandomIntervalMinimumInSeconds() {
-        return schedulerRandomIntervalMinimumInSeconds;
-    }
-
-    public long getSchedulerRandomIntervalMaximumInSeconds() {
-        return schedulerRandomIntervalMaximumInSeconds;
-    }
-
-    public int getBatchSize() {
-        return batchSize;
-    }
 
     public Duration getRetryFailuresEvery() {
         return retryFailuresEvery;
@@ -54,14 +29,6 @@ public class CaptureProcessConfig extends Configuration {
 
     public int getMaximumRetries() {
         return maximumRetries;
-    }
-
-    public int getSchedulerThreads() {
-        return schedulerThreads;
-    }
-
-    public Boolean getCaptureUsingSQS() {
-        return captureUsingSQS;
     }
 
     public Boolean getBackgroundProcessingEnabled() { return backgroundProcessingEnabled; }
