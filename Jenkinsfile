@@ -58,6 +58,11 @@ pipeline {
       }
     }
     stage('Card Payment End-to-End Tests inline') {
+      environment {
+        MODULE_NAME="connector"
+        MODULE_TAG="${gitCommit()}-${env.BUILD_NUMBER}"
+      }
+      
       when {
           anyOf {
             branch 'master'
