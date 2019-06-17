@@ -6,6 +6,7 @@ pipeline {
   parameters {
     booleanParam(defaultValue: false, description: '', name: 'runEndToEndTestsOnPR')
     booleanParam(defaultValue: false, description: '', name: 'runZap')
+    string(defaultValue: 'master', description: 'Branch of pay-scripts to use when running e2e', name: 'payScriptsBranch')
   }
 
   options {
@@ -21,6 +22,7 @@ pipeline {
     RUN_END_TO_END_ON_PR = "${params.runEndToEndTestsOnPR}"
     RUN_ZAP = "${params.runZap}"
     JAVA_HOME="/usr/lib/jvm/java-1.11.0-openjdk-amd64"
+    PAY_SCRIPTS_BRANCH="${params.payScriptsBranch}"
   }
   stages {
     stage('Maven Build') {
