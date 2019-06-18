@@ -54,7 +54,7 @@ The following variables control the background process:
 | Variable | Default | Purpose |
 |---------|---------|---------|
 | `BACKGROUND_PROCESSING_ENABLED` | `true` | enables registering scheduled processes - at the moment it includes only queue based capture methods |
-| `CAPTURE_PROCESS_RETRY_FAILURES_EVERY` | `60 minutes` | this value is used for calculating the metric gauge of messages awaiting capture (not attempted within this interval) |
+| `CHARGES_CONSIDERED_OVERDUE_FOR_CAPTURE_AFTER` | `60 minutes` | this value is used for calculating the metric gauge of messages awaiting capture (not attempted within this interval) |
 | `CAPTURE_PROCESS_MAXIMUM_RETRIES` | `96` | connector keeps track of the number of times capture has been attempted for each charge. If a charge fails this number of times or more it will be marked as a permanent failure. An error log message will be written as well. This should *never* happen and if it does it should be investigated. |
 | `CAPTURE_PROCESS_FAILED_CAPTURE_RETRY_DELAY_IN_SECONDS` | `3600` | the duration in seconds that a message should be deferred before it should be retried. |
 | `CAPTURE_PROCESS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS` | `1` | the duration in seconds that the queue message receiver should wait between running threads. |

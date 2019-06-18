@@ -38,7 +38,7 @@ public class ChargesAwaitingCaptureMetricEmitter {
             @Override
             protected Integer loadValue() {
                 try {
-                    Duration notAttemptedWithinDuration = captureConfig.getRetryFailuresEveryAsJavaDuration();
+                    Duration notAttemptedWithinDuration = Duration.ofMinutes(captureConfig.getChargesConsideredOverdueForCaptureAfter());
                     return chargeService.getNumberOfChargesAwaitingCapture(notAttemptedWithinDuration);
                 } catch (Exception e) {
                     logger.warn(

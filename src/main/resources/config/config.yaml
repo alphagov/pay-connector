@@ -93,15 +93,17 @@ executorServiceConfig:
 captureProcessConfig:
   backgroundProcessingEnabled: ${BACKGROUND_PROCESSING_ENABLED:-true}
 
+  retryFailuresEvery: ${CAPTURE_PROCESS_RETRY_FAILURES_EVERY:-60 minutes}
+  chargesConsideredOverdueForCaptureAfter: ${CHARGES_CONSIDERED_OVERDUE_FOR_CAPTURE_AFTER:-60}
+
   # The below effectively get multiplied together. In order to handle how
   # certain payment gateways do things, it is extremely desirable to keep these
   # values such that we will continue retrying for at least two nights after
   # the initial attempt. See PP-2627 or commit
   # e931b4dab25284acedeb6d59d4bfd3d29e454b82 for more details.
-  retryFailuresEvery: ${CAPTURE_PROCESS_RETRY_FAILURES_EVERY:-60 minutes}
   maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-96}
-
   failedCaptureRetryDelayInSeconds: ${CAPTURE_PROCESS_FAILED_CAPTURE_RETRY_DELAY_IN_SECONDS:-3600}
+
   queueSchedulerThreadDelayInSeconds: ${CAPTURE_PROCESS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS:-1}
   queueSchedulerNumberOfThreads: ${CAPTURE_PROCESS_QUEUE_SCHEDULER_NUMBER_OF_THREADS:-1}
 
