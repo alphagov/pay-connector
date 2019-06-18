@@ -681,6 +681,7 @@ public class DatabaseTestHelper {
 
     public void truncateAllData() {
         jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE gateway_accounts CASCADE").execute());
+        jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE emitted_events CASCADE").execute());
     }
 
     public Long getChargeIdByExternalId(String externalChargeId) {
@@ -732,6 +733,12 @@ public class DatabaseTestHelper {
                 handle.createQuery("SELECT * from emitted_events WHERE id = :id")
                         .bind("id", id)
                         .first()
+        );
+    }
+
+    public List<Map<String, Object>> readEmittedEvents() {
+        return jdbi.withHandle(handle ->
+                handle.createQuery("SELECT * from emitted_events").list()
         );
     }
 }

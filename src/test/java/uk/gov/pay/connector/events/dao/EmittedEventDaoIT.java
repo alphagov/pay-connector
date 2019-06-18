@@ -3,10 +3,13 @@ package uk.gov.pay.connector.events.dao;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.events.EmittedEventEntity;
+import uk.gov.pay.connector.events.PaymentCreatedEvent;
+import uk.gov.pay.connector.events.eventdetails.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -19,6 +22,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
     @Before
     public void setUp() {
         emittedEventDao = env.getInstance(EmittedEventDao.class);
+        databaseTestHelper.truncateAllData();
     }
 
     @Test
@@ -44,5 +48,44 @@ public class EmittedEventDaoIT extends DaoITestBase {
         final Timestamp eventDateInUTC = Timestamp.valueOf("2019-01-01 11:00:00");
         assertThat(persisted.get("event_date"), is(eventDateInUTC));
         assertThat(persisted.get("emitted_date"), is(Timestamp.valueOf("2019-01-01 13:00:00")));
+    }
+
+    @Test
+    public void recordEmission_shouldRecordEmission() {
+        final PaymentCreatedEvent eventThatHasBeenEmitted = aPaymentCreatedEvent();
+        
+        emittedEventDao.recordEmission(eventThatHasBeenEmitted);
+
+        final List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
+        
+        assertThat(events.size(), is(1));
+        final Map<String, Object> event = events.get(0);
+        assertThat(event.get("resource_external_id"), is(eventThatHasBeenEmitted.getResourceExternalId()));
+    }
+
+    @Test
+    public void hasBeenEmittedBefore_shouldReturnFalseIfNoRecord() {
+        final boolean b = emittedEventDao.hasBeenEmittedBefore(aPaymentCreatedEvent());
+
+        final List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
+        assertThat(events.size(), is(0));
+        
+        assertThat(b, is(false));
+    }
+
+    @Test
+    public void hasBeenEmittedBefore_shouldReturnTrueIfRecordedBefore() {
+        final PaymentCreatedEvent paymentCreatedEvent = aPaymentCreatedEvent();
+        
+        emittedEventDao.recordEmission(paymentCreatedEvent);
+        
+        assertThat(emittedEventDao.hasBeenEmittedBefore(paymentCreatedEvent), is(true));
+    }
+
+    private PaymentCreatedEvent aPaymentCreatedEvent() {
+        PaymentCreatedEventDetails eventDetails = new PaymentCreatedEventDetails(
+                1L, "desc", "ref", "return_url",
+                100L, "someProvider");
+        return new PaymentCreatedEvent("my-resource-external-id", eventDetails, ZonedDateTime.parse("2019-01-01T14:00:00Z"));
     }
 }

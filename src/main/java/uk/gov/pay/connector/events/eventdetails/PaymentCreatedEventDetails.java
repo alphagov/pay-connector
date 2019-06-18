@@ -10,17 +10,24 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private final Long gatewayAccountId;
     private final  String paymentProvider;
 
-    private PaymentCreatedEventDetails(ChargeEntity charge) {
-        this.amount = charge.getAmount();
-        this.description = charge.getDescription();
-        this.reference = charge.getReference().toString();
-        this.returnUrl = charge.getReturnUrl();
-        this.gatewayAccountId = charge.getGatewayAccount().getId();
-        this.paymentProvider = charge.getGatewayAccount().getGatewayName();
+    public PaymentCreatedEventDetails(Long amount, String description, String reference, String returnUrl, Long gatewayAccountId, String paymentProvider) {
+        this.amount = amount;
+        this.description = description;
+        this.reference = reference;
+        this.returnUrl = returnUrl;
+        this.gatewayAccountId = gatewayAccountId;
+        this.paymentProvider = paymentProvider;
     }
 
     public static PaymentCreatedEventDetails from(ChargeEntity charge) {
-        return new PaymentCreatedEventDetails(charge);
+        return new PaymentCreatedEventDetails(
+            charge.getAmount(),
+            charge.getDescription(),
+            charge.getReference().toString(),
+            charge.getReturnUrl(),
+            charge.getGatewayAccount().getId(),
+            charge.getGatewayAccount().getGatewayName()           
+        );
     }
 
     public Long getAmount() {

@@ -7,14 +7,21 @@ import java.time.ZonedDateTime;
 
 public class PaymentCreatedEvent extends PaymentEvent {
 
-    private final ChargeEntity charge;
+    private String resourceExternalId;
+    private PaymentCreatedEventDetails eventDetails;
+    private ZonedDateTime timestamp;
 
-    private PaymentCreatedEvent(ChargeEntity charge) {
-        this.charge = charge;
+    public PaymentCreatedEvent(String resourceExternalId, PaymentCreatedEventDetails eventDetails, ZonedDateTime timestamp) {
+        this.resourceExternalId = resourceExternalId;
+        this.eventDetails = eventDetails;
+        this.timestamp = timestamp;
     }
 
     public static PaymentCreatedEvent from(ChargeEntity charge) {
-        return new PaymentCreatedEvent(charge);
+        return new PaymentCreatedEvent(
+                charge.getExternalId(), 
+                PaymentCreatedEventDetails.from(charge),
+                charge.getCreatedDate());
     }
 
     @Override
@@ -24,16 +31,16 @@ public class PaymentCreatedEvent extends PaymentEvent {
 
     @Override
     public String getResourceExternalId() {
-        return charge.getExternalId();
+        return resourceExternalId;
     }
 
     @Override
     public PaymentCreatedEventDetails getEventDetails() {
-        return PaymentCreatedEventDetails.from(charge);
+        return eventDetails;
     }
 
     @Override
     public ZonedDateTime getTimestamp() {
-        return charge.getCreatedDate();
+        return timestamp;
     }
 }
