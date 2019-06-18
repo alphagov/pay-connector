@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.events;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
 
 import javax.persistence.Column;
@@ -10,8 +8,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.time.ZonedDateTime;
