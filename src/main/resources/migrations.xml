@@ -1153,4 +1153,23 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add emitted_events" author="">
+        <createTable tableName="emitted_events">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="resource_type" type="varchar(100)" />
+            <column name="resource_external_id" type="varchar(50)" />
+            <column name="event_date" type="timestamp without timezone" />
+            <column name="event_type" type="varchar(254)" />
+            <column name="emitted_date" type="timestamp without timezone" />
+        </createTable>
+        <createIndex indexName="idx_emitted_events_resource_type_and_external_id"
+                     tableName="emitted_events"
+                     unique="false">
+            <column name="resource_type" type="varchar(100)"/>
+            <column name="resource_external_id" type="varchar(50)"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
