@@ -232,4 +232,13 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setMaxResults(limit)
                 .getResultList();
     }
+
+    public Long findMaxId() {
+        String query = "SELECT c.id FROM ChargeEntity c ORDER BY c.id DESC";
+
+        return entityManager.get()
+                .createQuery(query, Long.class)
+                .setMaxResults(1)
+                .getSingleResult();
+    }
 }
