@@ -10,6 +10,7 @@ import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ExternalMetadataConverterException;
 import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.events.EmittedEventEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -365,8 +366,8 @@ public class DatabaseTestHelper {
     public Map<String, Object> getChargeByExternalId(String externalId) {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT * FROM charges WHERE external_id = :external_id")
-                .bind("external_id", externalId)
-                .first());
+                        .bind("external_id", externalId)
+                        .first());
     }
 
     public Map<String, Object> getEmailForAccountAndType(Long accountId, EmailNotificationType type) {
@@ -723,6 +724,14 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT * from fees WHERE charge_id = :charge_id")
                         .bind("charge_id", chargeId)
+                        .first()
+        );
+    }
+
+    public Map<String, Object> readEmittedEvent(Long id) {
+        return jdbi.withHandle(handle ->
+                handle.createQuery("SELECT * from emitted_events WHERE id = :id")
+                        .bind("id", id)
                         .first()
         );
     }
