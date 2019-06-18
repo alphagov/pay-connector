@@ -13,13 +13,13 @@ import java.time.ZonedDateTime;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public abstract class Event<T extends EventDetails> {
+public abstract class Event {
     private static final ObjectMapper MAPPER = Jackson.newObjectMapper();
 
     public abstract ResourceType getResourceType();
     public abstract String getResourceExternalId();
     public abstract String getEventType();
-    public abstract T getEventDetails();
+    public abstract EventDetails getEventDetails();
     @JsonSerialize(using = MicrosecondPrecisionDateTimeSerializer.class)
     public abstract ZonedDateTime getTimestamp();
     
