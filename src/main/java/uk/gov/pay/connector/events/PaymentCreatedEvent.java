@@ -5,7 +5,7 @@ import uk.gov.pay.connector.events.eventdetails.PaymentCreatedEventDetails;
 
 import java.time.ZonedDateTime;
 
-public class PaymentCreatedEvent extends PaymentEvent<PaymentCreatedEventDetails> {
+public class PaymentCreatedEvent extends PaymentEvent {
 
     private final ChargeEntity charge;
 
