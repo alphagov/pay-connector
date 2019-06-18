@@ -2,6 +2,8 @@ package uk.gov.pay.connector.events.eventdetails;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 
+import java.util.Objects;
+
 public class PaymentCreatedEventDetails extends EventDetails {
     private final Long amount;
     private final String description;
@@ -53,4 +55,23 @@ public class PaymentCreatedEventDetails extends EventDetails {
     public String getPaymentProvider() {
         return paymentProvider;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PaymentCreatedEventDetails that = (PaymentCreatedEventDetails) o;
+        return Objects.equals(amount, that.amount) &&
+                Objects.equals(description, that.description) &&
+                Objects.equals(reference, that.reference) &&
+                Objects.equals(returnUrl, that.returnUrl) &&
+                Objects.equals(gatewayAccountId, that.gatewayAccountId) &&
+                Objects.equals(paymentProvider, that.paymentProvider);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(amount, description, reference, returnUrl, gatewayAccountId, paymentProvider);
+    }
+
 }
