@@ -5,6 +5,8 @@ import uk.gov.pay.connector.events.eventdetails.PaymentCreatedEventDetails;
 
 import java.time.ZonedDateTime;
 
+import static uk.gov.pay.connector.events.MicrosecondPrecisionDateTimeSerializer.MICROSECOND_FORMATTER;
+
 public class PaymentCreatedEvent extends PaymentEvent {
 
     private String resourceExternalId;
@@ -42,5 +44,13 @@ public class PaymentCreatedEvent extends PaymentEvent {
     @Override
     public ZonedDateTime getTimestamp() {
         return timestamp;
+    }
+
+    @Override
+    public String toString() {
+        return "PaymentCreatedEvent{" +
+                "resourceExternalId='" + resourceExternalId + '\'' +
+                ", timestamp=" + MICROSECOND_FORMATTER.format(timestamp) +
+                '}';
     }
 }
