@@ -119,7 +119,7 @@ sqsConfig:
   messageMaximumBatchSize: ${AWS_SQS_MESSAGE_MAXIMUM_BATCH_SIZE:-10}
 
 eventQueue:
-  eventQueueEnabled: ${EVENT_QUEUE_ENABLED:-false}
+  eventQueueEnabled: ${EVENT_QUEUE_ENABLED:-true}
 
 transactionsPaginationServiceConfig:
   displayPageSize: ${TRANSACTION_LIST_DISPLAY_SIZE:-500}
