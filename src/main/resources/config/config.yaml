@@ -92,8 +92,6 @@ executorServiceConfig:
 
 captureProcessConfig:
   backgroundProcessingEnabled: ${BACKGROUND_PROCESSING_ENABLED:-true}
-
-  retryFailuresEvery: ${CAPTURE_PROCESS_RETRY_FAILURES_EVERY:-60 minutes}
   chargesConsideredOverdueForCaptureAfter: ${CHARGES_CONSIDERED_OVERDUE_FOR_CAPTURE_AFTER:-60}
 
   # The below effectively get multiplied together. In order to handle how
