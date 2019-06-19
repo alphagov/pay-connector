@@ -1582,6 +1582,13 @@ public class ChargeDaoIT extends DaoITestBase {
         );
     }
 
+    @Test
+    public void findMaxId_returnsTheMaximumId() {
+        insertTestCharge();
+
+        assertThat(chargeDao.findMaxId(), is(defaultTestCharge.getChargeId()));
+    }
+    
     private void insertTestAccount() {
         this.defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)

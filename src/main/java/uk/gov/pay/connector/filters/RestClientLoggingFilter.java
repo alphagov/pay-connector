@@ -17,7 +17,7 @@ import static java.lang.String.format;
 public class RestClientLoggingFilter implements ClientRequestFilter, ClientResponseFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(RestClientLoggingFilter.class);
-    private static final String HEADER_REQUEST_ID = "X-Request-Id";
+    public static final String HEADER_REQUEST_ID = "X-Request-Id";
 
     private static ThreadLocal<String> requestId = new ThreadLocal<>();
     private static ThreadLocal<Stopwatch> timer = new ThreadLocal<>();
