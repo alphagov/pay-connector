@@ -83,6 +83,7 @@ pipeline {
                   '''|#!/bin/bash
                      |set -e
                      |bundle install --path gems
+                     |rm -rf target
                      |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb up
                      |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb run --end-to-end=card
                   '''.stripMargin()
