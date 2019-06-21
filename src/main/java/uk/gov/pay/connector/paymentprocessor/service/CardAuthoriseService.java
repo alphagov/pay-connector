@@ -54,30 +54,30 @@ public class CardAuthoriseService {
 
     public AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
-            
+
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
             GatewayResponse<BaseAuthoriseResponse> operationResponse = null;
             ChargeStatus newStatus = null;
             Optional<String> transactionId = Optional.empty();
             Optional<String> sessionIdentifier = Optional.empty();
             Optional<Auth3dsDetailsEntity> auth3dsDetailsEntity = Optional.empty();
-            
+
             try {
                 operationResponse = authorise(charge, authCardDetails);
-                
+
                 if (!operationResponse.getBaseResponse().isPresent()) operationResponse.throwGatewayError();
-                    
+
                 newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
                 transactionId = cardAuthoriseBaseService.extractTransactionId(charge.getExternalId(), operationResponse);
                 auth3dsDetailsEntity = extractAuth3dsDetails(operationResponse);
                 sessionIdentifier = operationResponse.getSessionIdentifier();
-                
+
             } catch (GatewayException e) {
                 newStatus = CardAuthoriseBaseService.mapFromGatewayErrorException(e);
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
 
-            ChargeEntity updatedCharge = chargeService.updateChargePostAuthorisation(
+            ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
                     charge.getExternalId(),
                     newStatus,
                     transactionId,
@@ -102,7 +102,7 @@ public class CardAuthoriseService {
                     updatedCharge.getGatewayAccount().getId(),
                     billingAddressSubmitted ? "with-billing-address" : "without-billing-address",
                     newStatus.toString())).inc();
-            
+
             return new AuthorisationResponse(operationResponse);
         });
     }

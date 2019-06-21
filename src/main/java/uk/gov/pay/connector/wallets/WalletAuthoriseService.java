@@ -53,11 +53,11 @@ public class WalletAuthoriseService {
             ChargeStatus chargeStatus = null;
             String responseFromPaymentGateway = null;
             String requestStatus = "failure";
-            
+
             try {
                 operationResponse = authorise(charge, walletAuthorisationData);
                 Optional<BaseAuthoriseResponse> baseResponse = operationResponse.getBaseResponse();
-                
+
                 if (baseResponse.isPresent()) {
                     requestStatus = "success";
                     chargeStatus = baseResponse.get().authoriseStatus().getMappedChargeStatus();
@@ -69,18 +69,18 @@ public class WalletAuthoriseService {
                 }
 
             } catch (GatewayException e) {
-                
+
                 logger.error("Error occurred authorising charge. Charge external id: {}; message: {}", charge.getExternalId(), e.getMessage());
-                
+
                 if (e instanceof GatewayErrorException) {
                     logger.error("Response from gateway: {}", ((GatewayErrorException) e).getResponseFromGateway());
                 }
-                
+
                 chargeStatus = CardAuthoriseBaseService.mapFromGatewayErrorException(e);
                 responseFromPaymentGateway = e.getMessage();
                 operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
             }
-                
+
             logMetrics(charge, operationResponse, requestStatus, walletAuthorisationData.getWalletType());
 
             processGatewayAuthorisationResponse(
@@ -107,11 +107,11 @@ public class WalletAuthoriseService {
                             GatewayResponse<BaseAuthoriseResponse> operationResponse,
                             String successOrFailure,
                             WalletType walletType) {
-        
-        logger.info("{} authorisation {} - charge_external_id={}, payment provider response={}", 
+
+        logger.info("{} authorisation {} - charge_external_id={}, payment provider response={}",
                 walletType.toString(), successOrFailure, chargeEntity.getExternalId(), operationResponse.toString());
-        metricRegistry.counter(format("gateway-operations.%s.%s.%s.authorise.%s.result.%s", 
-                chargeEntity.getGatewayAccount().getGatewayName(), 
+        metricRegistry.counter(format("gateway-operations.%s.%s.%s.authorise.%s.result.%s",
+                chargeEntity.getGatewayAccount().getGatewayName(),
                 chargeEntity.getGatewayAccount().getType(),
                 chargeEntity.getGatewayAccount().getId(),
                 walletType.equals(WalletType.GOOGLE_PAY)? "google-pay" : "apple-pay",
@@ -120,11 +120,15 @@ public class WalletAuthoriseService {
 
     @Transactional
     private ChargeEntity prepareChargeForAuthorisation(String chargeId) {
-        ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
-        getPaymentProviderFor(charge)
-                .generateTransactionId()
-                .ifPresent(charge::setGatewayTransactionId);
-        return charge;
+        try {
+            ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
+            getPaymentProviderFor(charge)
+                    .generateTransactionId()
+                    .ifPresent(charge::setGatewayTransactionId);
+            return charge;
+        } catch (Exception e) {
+            throw e;
+        }
     }
 
     private void processGatewayAuthorisationResponse(
@@ -142,7 +146,6 @@ public class WalletAuthoriseService {
                 chargeExternalId,
                 status,
                 transactionId,
-                Optional.empty(),
                 sessionIdentifier,
                 authCardDetailsToBePersisted,
                 walletAuthorisationData.getWalletType(),

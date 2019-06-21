@@ -64,7 +64,7 @@ public class CardResourceAuthoriseApplePayIT extends ChargingITestBase {
     }
 
     private String shouldAuthoriseChargeForApplePay(String cardHolderName, String email) {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        String chargeId = createNewChargeWithNoTransactionIdOrEmailAddress(ENTERING_CARD_DETAILS);
 
         givenSetup()
                 .body(buildJsonApplePayAuthorisationDetails(cardHolderName, email))

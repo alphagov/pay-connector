@@ -3,6 +3,7 @@ package uk.gov.pay.connector.model.domain;
 import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -49,6 +50,7 @@ public class ChargeEntityFixture {
     private Long fee = null;
     private WalletType walletType = null;
     private ExternalMetadata externalMetadata = null;
+    private CardDetailsEntity cardDetails = null;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -75,6 +77,11 @@ public class ChargeEntityFixture {
             FeeEntity fee = new FeeEntity(chargeEntity, this.fee);
             chargeEntity.setFee(fee);
         }
+
+        if(cardDetails != null) {
+            chargeEntity.setCardDetails(cardDetails);
+        }
+
         chargeEntity.setWalletType(walletType);
         return chargeEntity;
     }
@@ -163,12 +170,12 @@ public class ChargeEntityFixture {
         this.corporateSurcharge = corporateSurcharge;
         return this;
     }
-    
+
     public ChargeEntityFixture withWalletType(WalletType walletType) {
         this.walletType = walletType;
         return this;
     }
-    
+
     public ChargeEntityFixture withFee(Long amount) {
         this.fee = amount;
         return this;
@@ -176,6 +183,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withExternalMetadata(ExternalMetadata externalMetadata) {
         this.externalMetadata = externalMetadata;
+        return this;
+    }
+
+    public ChargeEntityFixture withCardDetails(CardDetailsEntity cardDetailsEntity) {
+        this.cardDetails = cardDetailsEntity;
         return this;
     }
 

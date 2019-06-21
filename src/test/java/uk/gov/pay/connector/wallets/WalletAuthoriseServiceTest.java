@@ -25,6 +25,7 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
+import uk.gov.pay.connector.events.Event;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
@@ -92,7 +93,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     private EventQueue eventQueue;
 
     private WalletAuthoriseService walletAuthoriseService;
-    
+
     private final AppleDecryptedPaymentData validApplePayDetails =
             anApplePayDecryptedPaymentData()
                     .withApplePaymentInfo(
@@ -146,7 +147,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void doAuthoriseCard_ApplePay_shouldRespondAuthorisationSuccess() throws Exception {
         providerWillAuthorise();
-        
+
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 
         assertThat(response.isSuccessful(), is(true));
@@ -162,12 +163,17 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(validApplePayDetails.getPaymentInfo().getEmail()));
+
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_EVENT"));
     }
 
     @Test
     public void doAuthoriseCard_GooglePay_shouldRespondAuthorisationSuccess() throws Exception {
         providerWillAuthorise();
-        WalletAuthorisationData authorisationData = 
+        WalletAuthorisationData authorisationData =
                 Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
         GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.doAuthorise(charge.getExternalId(), authorisationData);
@@ -185,6 +191,11 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getWalletType(), is(WalletType.GOOGLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(authorisationData.getPaymentInfo().getEmail()));
+
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_EVENT"));
     }
 
     @Test
@@ -227,7 +238,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void doAuthorise_shouldStoreExpectedCardDetails_whenAuthorisationSuccess() throws Exception {
         providerWillAuthorise();
-        
+
         walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 
         CardDetailsEntity cardDetails = charge.getCardDetails();
@@ -357,7 +368,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
                 .when(mockExecutorService).execute(any(Supplier.class));
     }
-    
+
     private GatewayResponse providerWillAuthorise() throws Exception {
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null);
         when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
