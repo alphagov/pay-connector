@@ -38,10 +38,10 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
-import uk.gov.pay.connector.events.PaymentDetailsEnteredEvent;
 import uk.gov.pay.connector.events.Event;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.PaymentCreatedEvent;
+import uk.gov.pay.connector.events.PaymentDetailsEnteredEvent;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
@@ -325,8 +325,11 @@ public class ChargeService {
                                                                   Optional<String> sessionIdentifier,
                                                                   Optional<WalletType> walletType,
                                                                   Optional<String> emailAddress) {
-        ChargeEntity chargeEntity = updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId,
+
+        updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId,
                 auth3dsDetails, sessionIdentifier, walletType, emailAddress);
+
+        ChargeEntity chargeEntity = findChargeById(chargeExternalId);
 
         emitEvent(PaymentDetailsEnteredEvent.from(chargeEntity));
 

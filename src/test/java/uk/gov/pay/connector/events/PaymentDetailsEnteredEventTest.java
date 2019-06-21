@@ -18,6 +18,8 @@ import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class PaymentDetailsEnteredEventTest {
 
@@ -31,10 +33,14 @@ public class PaymentDetailsEnteredEventTest {
     public void setUp() {
         ZonedDateTime latestDateTime = ZonedDateTime.parse(time);
 
+        ChargeEventEntity mockAuthorizationSuccessEvent = mock(ChargeEventEntity.class);
+        when(mockAuthorizationSuccessEvent.getUpdated()).thenReturn(latestDateTime);
+        when(mockAuthorizationSuccessEvent.getStatus()).thenReturn(ChargeStatus.AUTHORISATION_SUCCESS);
+
         List<ChargeEventEntity> list = List.of(
-                new ChargeEventEntity(new ChargeEntity(), ChargeStatus.CREATED, latestDateTime.minusHours(3), Optional.empty()),
-                new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_SUCCESS, latestDateTime, Optional.empty()),
-                new ChargeEventEntity(new ChargeEntity(), ChargeStatus.ENTERING_CARD_DETAILS, latestDateTime.minusHours(1), Optional.empty())
+                new ChargeEventEntity(new ChargeEntity(), ChargeStatus.CREATED, Optional.empty()),
+                mockAuthorizationSuccessEvent,
+                new ChargeEventEntity(new ChargeEntity(), ChargeStatus.ENTERING_CARD_DETAILS, Optional.empty())
         );
 
         chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()

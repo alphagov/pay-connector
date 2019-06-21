@@ -28,7 +28,7 @@ import java.util.Map;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
-import static java.time.temporal.ChronoUnit.SECONDS;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -86,7 +86,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
 
         getCharge(chargeId)
                 .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
-                .body("settlement_summary.capture_submit_time", isWithin(10, SECONDS))
+                .body("settlement_summary.capture_submit_time", isWithin(1, MINUTES))
                 .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture));
     }
 

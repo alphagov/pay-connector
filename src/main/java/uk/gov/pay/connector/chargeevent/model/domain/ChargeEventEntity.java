@@ -42,17 +42,17 @@ public class ChargeEventEntity extends AbstractVersionedEntity {
     @Convert(converter = UTCDateTimeConverter.class)
     private ZonedDateTime gatewayEventDate;
 
+    @Column(insertable = false, updatable = false)
     @Convert(converter = UTCDateTimeConverter.class)
     private ZonedDateTime updated;
 
     protected ChargeEventEntity() {
     }
 
-    public ChargeEventEntity(ChargeEntity chargeEntity, ChargeStatus chargeStatus, ZonedDateTime updated, Optional<ZonedDateTime> gatewayEventDate) {
+    public ChargeEventEntity(ChargeEntity chargeEntity, ChargeStatus chargeStatus, Optional<ZonedDateTime> gatewayEventDate) {
         this.chargeEntity = chargeEntity;
         this.status = chargeStatus;
         this.gatewayEventDate = gatewayEventDate.orElse(null);
-        this.updated = updated;
     }
 
     public Long getId() {
@@ -79,7 +79,7 @@ public class ChargeEventEntity extends AbstractVersionedEntity {
         return chargeEntity;
     }
 
-    public static ChargeEventEntity from(ChargeEntity chargeEntity, ChargeStatus chargeStatus, ZonedDateTime updated, Optional<ZonedDateTime> gatewayEventDate) {
-        return new ChargeEventEntity(chargeEntity, chargeStatus, updated, gatewayEventDate);
+    public static ChargeEventEntity from(ChargeEntity chargeEntity, ChargeStatus chargeStatus, Optional<ZonedDateTime> gatewayEventDate) {
+        return new ChargeEventEntity(chargeEntity, chargeStatus, gatewayEventDate);
     }
 }
