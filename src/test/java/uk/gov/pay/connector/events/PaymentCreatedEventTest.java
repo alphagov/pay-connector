@@ -42,7 +42,7 @@ public class PaymentCreatedEventTest {
 
     @Test
     public void serializesPaymentCreatedEventType() {
-        assertThat(actual, hasJsonPath("$.event_type", equalTo("PaymentCreated")));
+        assertThat(actual, hasJsonPath("$.event_type", equalTo("PAYMENT_CREATED")));
     }
 
     @Test
