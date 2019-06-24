@@ -744,7 +744,7 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
         
         assertThat(messages.size(), is(1));
         final Message message = messages.get(0);
-        assertThat(message.getBody(), hasJsonPath("$.event_type", equalTo("PaymentCreated")));
+        assertThat(message.getBody(), hasJsonPath("$.event_type", equalTo("PAYMENT_CREATED")));
         assertThat(message.getBody(), hasJsonPath("$.timestamp", equalTo(MICROSECOND_FORMATTER.format(persistedCreatedDate))));
     }
 

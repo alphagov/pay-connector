@@ -29,7 +29,7 @@ public class PaymentCreatedEvent extends PaymentEvent {
 
     @Override
     public String getEventType() {
-        return "PaymentCreated";
+        return "PAYMENT_CREATED";
     }
 
     @Override
