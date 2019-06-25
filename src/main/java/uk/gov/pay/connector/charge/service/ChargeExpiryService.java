@@ -220,9 +220,10 @@ public class ChargeExpiryService {
         }).orElse(EXPIRE_FLOW.getFailureTerminalState());
     }
     
-    public GatewayResponse<BaseCancelResponse> forceCancelWithGateway(ChargeEntity charge) {
+    public Boolean forceCancelWithGateway(ChargeEntity charge) {
         try {
-            return doGatewayCancel(charge);
+            GatewayResponse<BaseCancelResponse> cancelResponse = doGatewayCancel(charge);
+            return handleCancelResponse(charge.getExternalId(), cancelResponse);
         } catch (GatewayException e) {
             throw new WebApplicationException(String.format(
                     "Unable to cancel charge %s with gateway: %s",
@@ -230,7 +231,24 @@ public class ChargeExpiryService {
                     e.getMessage()));
         }
     }
-    
+
+    private Boolean handleCancelResponse(String chargeExternalId, GatewayResponse<BaseCancelResponse> cancelResponse) {
+        return cancelResponse.getBaseResponse()
+                .map(r -> {
+                    if (BaseCancelResponse.CancelStatus.ERROR.equals(r.cancelStatus())) {
+                        logger.info("Could not cancel charge {}. Gateway returned error", chargeExternalId);
+                        return false;
+                    } else {
+                        return true;
+                    }
+                })
+                .orElseGet(() -> {
+                    cancelResponse.getGatewayError().ifPresent(
+                            e -> logger.info("Could not cancel charge {}. Gateway error {}", chargeExternalId, e.getMessage()));
+                    return false;
+                });
+    }
+
     private ZonedDateTime getExpiryDateForRegularCharges() {
         int chargeExpiryWindowSeconds = chargeSweepConfig.getDefaultChargeExpiryThreshold();
         logger.debug("Charge expiry window size in seconds: [{}]", chargeExpiryWindowSeconds);

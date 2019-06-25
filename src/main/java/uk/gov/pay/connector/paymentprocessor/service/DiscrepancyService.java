@@ -1,10 +1,13 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.report.model.GatewayStatusComparison;
 
 import javax.inject.Inject;
@@ -15,6 +18,8 @@ import java.util.stream.Stream;
 
 
 public class DiscrepancyService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DiscrepancyService.class);
+
     private final ChargeService chargeService;
     private final QueryService queryService;
     private final ChargeExpiryService expiryService;
@@ -25,7 +30,7 @@ public class DiscrepancyService {
         this.queryService = queryService;
         this.expiryService = expiryService;
     }
-    
+
     public List<GatewayStatusComparison> listGatewayStatusComparisons(List<String> chargeIds) {
         return toGatewayStatusComparisonList(chargeIds)
                 .collect(Collectors.toList());
@@ -44,18 +49,25 @@ public class DiscrepancyService {
                 .map(charge -> {
                     try {
                         return GatewayStatusComparison.from(charge, queryService.getChargeGatewayStatus(charge));
-                    } catch(GatewayException e) {
+                    } catch (GatewayException e) {
                         return GatewayStatusComparison.getEmpty(charge);
                     }
                 });
     }
-    
+
     private GatewayStatusComparison resolve(GatewayStatusComparison gatewayStatusComparison) {
         if (canBeCancelled(gatewayStatusComparison)) {
-            expiryService.forceCancelWithGateway(gatewayStatusComparison.getCharge());
-            gatewayStatusComparison.setProcessed(true);
+            Boolean cancelSuccess = expiryService.forceCancelWithGateway(gatewayStatusComparison.getCharge());
+            if (cancelSuccess) {
+                LOGGER.info("Successfully resolved discrepancy for charge {} ", gatewayStatusComparison.getChargeId());
+                gatewayStatusComparison.setProcessed(true);
+            } else {
+                LOGGER.info("Failed to resolve discrepancy for charge {} ", gatewayStatusComparison.getChargeId());
+            }
+        } else {
+            LOGGER.info("Could not resolve discrepancy for charge {} ", gatewayStatusComparison.getChargeId());
         }
-        
+
         return gatewayStatusComparison;
     }
 

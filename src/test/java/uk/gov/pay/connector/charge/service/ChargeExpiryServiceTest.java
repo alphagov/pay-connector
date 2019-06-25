@@ -18,6 +18,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse.CancelStatus;
@@ -35,12 +36,15 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.util.Collections.singletonList;
+import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -266,5 +270,72 @@ public class ChargeExpiryServiceTest {
         assertThat(sweepResult.get("expiry-success"), is(1));
         assertNull(sweepResult.get("expiry-failure"));
         assertThat(preAuthorisationCharge.getStatus(), is(ChargeStatus.EXPIRED.getValue()));
+    }
+
+    @Test
+    public void forceCancelShouldReturnSuccess_whenCancelStateIsCancelled() throws Exception {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withAmount(200L)
+                .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
+                .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
+        when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
+        
+        Boolean cancelSuccess = chargeExpiryService.forceCancelWithGateway(charge);
+        
+        assertThat(cancelSuccess, is(true));
+    }
+
+    @Test
+    public void forceCancelShouldReturnSuccess_whenCancelStateIsSubmitted() throws Exception {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withAmount(200L)
+                .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
+                .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
+        when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.SUBMITTED);
+
+        Boolean cancelSuccess = chargeExpiryService.forceCancelWithGateway(charge);
+
+        assertThat(cancelSuccess, is(true));
+    }
+
+    @Test
+    public void forceCancelShouldReturnFailure_whenCancelStateIsError() throws Exception {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withAmount(200L)
+                .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
+                .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
+        when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.ERROR);
+
+        Boolean cancelSuccess = chargeExpiryService.forceCancelWithGateway(charge);
+
+        assertThat(cancelSuccess, is(false));
+    }
+
+    @Test
+    public void forceCancelShouldReturnFailure_whenGatewayResponseHasError() throws Exception {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withAmount(200L)
+                .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
+                .withStatus(ChargeStatus.AUTHORISATION_3DS_READY)
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+        
+        GatewayResponse mockGatewayResponse = mock(GatewayResponse.class);
+        when(mockGatewayResponse.getBaseResponse()).thenReturn(Optional.empty());
+        when(mockGatewayResponse.getGatewayError()).thenReturn(Optional.of(GatewayError.genericGatewayError("Error")));
+        when(mockPaymentProvider.cancel(any())).thenReturn(mockGatewayResponse);
+
+        Boolean cancelSuccess = chargeExpiryService.forceCancelWithGateway(charge);
+
+        assertThat(cancelSuccess, is(false));
     }
 }
