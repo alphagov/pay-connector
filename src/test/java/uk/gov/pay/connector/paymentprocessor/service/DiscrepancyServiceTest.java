@@ -10,11 +10,16 @@ import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
+import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.Optional;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -48,11 +53,12 @@ public class DiscrepancyServiceTest {
                 .withStatus(EXPIRED)
                 .build();
         ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, "Raw response");
-
         when(chargeService.findChargeById(charge.getExternalId())).thenReturn(charge);
         when(queryService.getChargeGatewayStatus(charge)).thenReturn(chargeQueryResponse);
+        when(expiryService.forceCancelWithGateway(charge)).thenReturn(true);
 
         discrepancyService.resolveDiscrepancies(Collections.singletonList(charge.getExternalId()));
+        
         verify(expiryService).forceCancelWithGateway(charge);
     }
 
