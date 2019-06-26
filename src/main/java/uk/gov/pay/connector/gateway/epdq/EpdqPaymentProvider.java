@@ -302,8 +302,13 @@ public class EpdqPaymentProvider implements PaymentProvider {
                         CREDENTIALS_SHA_IN_PASSPHRASE))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
         
+        Optional.ofNullable(request.getTransactionId())
+                .ifPresentOrElse(
+                        cancelRequestBuilder::withTransactionId,
+                        () -> cancelRequestBuilder.withOrderId(request.getExternalChargeId())
+                );
+        
         return cancelRequestBuilder
-                .withTransactionId(request.getTransactionId())
                 .build();
     }
 }
