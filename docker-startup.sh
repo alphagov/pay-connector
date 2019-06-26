@@ -5,8 +5,12 @@ RUN_MIGRATION=${RUN_MIGRATION:-false}
 RUN_APP=${RUN_APP:-true}
 
 if [ -n "${CERTS_PATH:-}" ]; then
-  i=0
   truststore_pass=changeit
+  if keytool -cacerts -list -storepass "$truststore_pass" -alias 'custom0' &> /dev/null; then
+    echo "$0: Default Java truststore already contains a 'custom0' certificate. Skipping addition of certs from $CERTS_PATH" >&2
+    break
+  fi
+  i=0
   for cert in "$CERTS_PATH"/*; do
     [ -f "$cert" ] || continue
     echo "Adding $cert to default truststore"
