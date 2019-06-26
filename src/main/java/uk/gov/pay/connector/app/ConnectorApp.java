@@ -42,6 +42,7 @@ import uk.gov.pay.connector.gatewayaccount.resource.StripeAccountSetupResource;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
 import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
+import uk.gov.pay.connector.healthcheck.SQSHealthCheck;
 import uk.gov.pay.connector.healthcheck.resource.HealthCheckResource;
 import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
 import uk.gov.pay.connector.paymentprocessor.resource.DiscrepancyResource;
@@ -140,6 +141,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.healthChecks().register("ping", new Ping());
         environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
         environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
+        environment.healthChecks().register("sqsQueue", injector.getInstance(SQSHealthCheck.class));
 
         environment.admin().addTask(injector.getInstance(HistoricalEventEmitterTask.class));
 
