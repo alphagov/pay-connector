@@ -39,6 +39,7 @@ public class PaymentDetailsEnteredEventTest {
 
         chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.parse(time))
+                .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
                 .withExternalId(paymentId)
                 .withTransactionId(validTransactionId)
                 .withCorporateSurcharge(10L)

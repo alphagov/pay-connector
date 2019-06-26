@@ -114,21 +114,17 @@ public class WalletAuthoriseService {
                 chargeEntity.getGatewayAccount().getGatewayName(),
                 chargeEntity.getGatewayAccount().getType(),
                 chargeEntity.getGatewayAccount().getId(),
-                walletType.equals(WalletType.GOOGLE_PAY)? "google-pay" : "apple-pay",
+                walletType.equals(WalletType.GOOGLE_PAY) ? "google-pay" : "apple-pay",
                 successOrFailure)).inc();
     }
 
     @Transactional
     private ChargeEntity prepareChargeForAuthorisation(String chargeId) {
-        try {
-            ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
-            getPaymentProviderFor(charge)
-                    .generateTransactionId()
-                    .ifPresent(charge::setGatewayTransactionId);
-            return charge;
-        } catch (Exception e) {
-            throw e;
-        }
+        ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
+        getPaymentProviderFor(charge)
+                .generateTransactionId()
+                .ifPresent(charge::setGatewayTransactionId);
+        return charge;
     }
 
     private void processGatewayAuthorisationResponse(

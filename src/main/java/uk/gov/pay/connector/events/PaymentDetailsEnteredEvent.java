@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.events;
 
+import uk.gov.pay.connector.charge.exception.ChargeEventNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.PaymentDetailsEnteredEventDetails;
 
@@ -23,9 +25,10 @@ public class PaymentDetailsEnteredEvent extends PaymentEvent {
 
     public static PaymentDetailsEnteredEvent from(ChargeEntity charge) {
         ZonedDateTime lastEventDate = charge.getEvents().stream()
+                .filter(e -> e.getStatus() == ChargeStatus.fromString(charge.getStatus()))
                 .map(ChargeEventEntity::getUpdated)
                 .max(ZonedDateTime::compareTo)
-                .orElse(null);
+                .orElseThrow(() -> new ChargeEventNotFoundRuntimeException(charge.getExternalId()));
 
         return new PaymentDetailsEnteredEvent(
                 charge.getExternalId(),

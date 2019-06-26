@@ -9,10 +9,15 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.Mockito.mock;
 
@@ -32,6 +37,17 @@ public abstract class CardServiceTest {
                 .aValidChargeEntity()
                 .withId(chargeId)
                 .withStatus(status)
+                .withEvents(List.of(
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.CREATED, ZonedDateTime.now().minusHours(3), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_SUCCESS, ZonedDateTime.now(), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.ENTERING_CARD_DETAILS, ZonedDateTime.now().minusHours(2), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_TIMEOUT, ZonedDateTime.now().minusHours(1), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_ERROR, ZonedDateTime.now().minusHours(1), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_3DS_REQUIRED, ZonedDateTime.now().minusHours(1), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_CANCELLED, ZonedDateTime.now().minusHours(1), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_REJECTED, ZonedDateTime.now().minusHours(1), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR, ZonedDateTime.now().minusHours(1), Optional.empty())
+                ))
                 .build();
         entity.setCardDetails(new CardDetailsEntity());
         return entity;

@@ -317,7 +317,7 @@ public class ChargeService {
         return chargeEntity;
     }
 
-    public ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
+    private ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
                                                                   ChargeStatus status,
                                                                   AuthCardDetails authCardDetails,
                                                                   Optional<String> transactionId,
@@ -333,6 +333,7 @@ public class ChargeService {
         return chargeEntity;
     }
 
+    // cannot be private: Guice requires @Transactional methods to be public
     @Transactional
     public ChargeEntity updateChargePostAuthorisation(String chargeExternalId,
                                                       ChargeStatus status,
