@@ -1,10 +1,11 @@
 package uk.gov.pay.connector.gateway.epdq.payload;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder;
+
+import java.util.List;
 
 public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
 
@@ -25,9 +26,8 @@ public class EpdqPayloadDefinitionForNewOrder extends EpdqPayloadDefinition {
     public final static String USERID_KEY = "USERID";
 
     @Override
-    public ImmutableList<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData) {
+    public List<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData) {
 
-        // Keep this list in alphabetical order
         EpdqPayloadDefinition.ParameterBuilder parameterBuilder = newParameterBuilder()
                 .add(AMOUNT_KEY, templateData.getAmount())
                 .add(CARD_NO_KEY, templateData.getAuthCardDetails().getCardNo())

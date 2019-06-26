@@ -5,6 +5,8 @@ import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinition;
 
+import java.util.List;
+
 public class EpdqSignedPayloadDefinition extends EpdqPayloadDefinition {
 
     static public class EpdqSignedPayloadDefinitionFactory {
@@ -32,8 +34,8 @@ public class EpdqSignedPayloadDefinition extends EpdqPayloadDefinition {
     }
 
     @Override
-    public ImmutableList<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData) {
-        ImmutableList<NameValuePair> parameters = payloadDefinition.extract(templateData);
+    public List<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData) {
+        List<NameValuePair> parameters = payloadDefinition.extract(templateData);
         return ImmutableList.<NameValuePair>builder()
                 .addAll(parameters)
                 .add(new BasicNameValuePair("SHASIGN", signatureGenerator.sign(parameters, templateData.getShaInPassphrase())))

@@ -12,6 +12,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -108,7 +109,7 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
     public void shouldExtractParametersFromTemplateWithOneLineStreetAddress() {
         when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
 
-        ImmutableList<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract(mockTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract(mockTemplateData);
 
         String expectedFrontend3dsIncomingUrl = "http://www.frontend.example.com/card_details/OrderId/3ds_required_in/epdq";
 
@@ -120,8 +121,8 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
                 new BasicNameValuePair(CURRENCY_KEY, CURRENCY),
                 new BasicNameValuePair(CVC_KEY, CVC),
                 new BasicNameValuePair(DECLINEURL_KEY, expectedFrontend3dsIncomingUrl + "?status=declined"),
-                new BasicNameValuePair(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error"),
                 new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE),
+                new BasicNameValuePair(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error"),
                 new BasicNameValuePair(FLAG3D_KEY, "Y"),
                 new BasicNameValuePair(HTTPACCEPT_URL, ACCEPT_HEADER),
                 new BasicNameValuePair(HTTPUSER_AGENT_URL, USER_AGENT_HEADER),
@@ -144,7 +145,7 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
         when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
         when(mockAddress.getLine2()).thenReturn(ADDRESS_LINE_2);
 
-        ImmutableList<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract(mockTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract(mockTemplateData);
 
         String expectedFrontend3dsIncomingUrl = "http://www.frontend.example.com/card_details/OrderId/3ds_required_in/epdq";
 
@@ -156,8 +157,8 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
                 new BasicNameValuePair(CURRENCY_KEY, CURRENCY),
                 new BasicNameValuePair(CVC_KEY, CVC),
                 new BasicNameValuePair(DECLINEURL_KEY, expectedFrontend3dsIncomingUrl + "?status=declined"),
-                new BasicNameValuePair(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error"),
                 new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE),
+                new BasicNameValuePair(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error"),
                 new BasicNameValuePair(FLAG3D_KEY, "Y"),
                 new BasicNameValuePair(HTTPACCEPT_URL, ACCEPT_HEADER),
                 new BasicNameValuePair(HTTPUSER_AGENT_URL, USER_AGENT_HEADER),
@@ -179,7 +180,7 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
     public void shouldOmitAddressWhenInputAddressIsNotPresent() {
         when(mockAuthCardDetails.getAddress()).thenReturn(Optional.empty());
 
-        ImmutableList<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract(mockTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionFor3dsNewOrder.extract(mockTemplateData);
 
         String expectedFrontend3dsIncomingUrl = "http://www.frontend.example.com/card_details/OrderId/3ds_required_in/epdq";
 
@@ -191,8 +192,8 @@ public class EpdqPayloadDefinitionForNew3dsOrderTest {
                 new BasicNameValuePair(CURRENCY_KEY, CURRENCY),
                 new BasicNameValuePair(CVC_KEY, CVC),
                 new BasicNameValuePair(DECLINEURL_KEY, expectedFrontend3dsIncomingUrl + "?status=declined"),
-                new BasicNameValuePair(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error"),
                 new BasicNameValuePair(EXPIRY_DATE_KEY, END_DATE),
+                new BasicNameValuePair(EXCEPTIONURL_KEY, expectedFrontend3dsIncomingUrl + "?status=error"),
                 new BasicNameValuePair(FLAG3D_KEY, "Y"),
                 new BasicNameValuePair(HTTPACCEPT_URL, ACCEPT_HEADER),
                 new BasicNameValuePair(HTTPUSER_AGENT_URL, USER_AGENT_HEADER),

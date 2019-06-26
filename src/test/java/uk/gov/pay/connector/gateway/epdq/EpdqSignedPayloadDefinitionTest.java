@@ -11,6 +11,8 @@ import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.EpdqTemplateDat
 import uk.gov.pay.connector.gateway.epdq.EpdqSignedPayloadDefinition.EpdqSignedPayloadDefinitionFactory;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinition;
 
+import java.util.List;
+
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
@@ -42,7 +44,7 @@ public class EpdqSignedPayloadDefinitionTest {
         when(mockEpdqTemplateData.getShaInPassphrase()).thenReturn(SHA_IN_PASSPHRASE);
         when(mockSignatureGenerator.sign(ImmutableList.of(PARAM_1, PARAM_2, PARAM_3), SHA_IN_PASSPHRASE)).thenReturn(SIGNATURE);
 
-        ImmutableList<NameValuePair> result = epdqSignedPayloadDefinition.extract(mockEpdqTemplateData);
+        List<NameValuePair> result = epdqSignedPayloadDefinition.extract(mockEpdqTemplateData);
 
         assertThat(result, is(ImmutableList.of(PARAM_1, PARAM_2, PARAM_3, new BasicNameValuePair("SHASIGN", SIGNATURE))));
     }

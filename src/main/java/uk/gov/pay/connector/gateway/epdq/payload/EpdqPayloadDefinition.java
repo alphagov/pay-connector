@@ -1,9 +1,12 @@
 package uk.gov.pay.connector.gateway.epdq.payload;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
@@ -15,7 +18,7 @@ public abstract class EpdqPayloadDefinition {
 
     public static class ParameterBuilder {
 
-        private ImmutableList.Builder<NameValuePair> parameters = new ImmutableList.Builder<>();
+        private List<BasicNameValuePair> parameters = new ArrayList<>();
 
         public ParameterBuilder add(String name, String value) {
             if (!isEmpty(value)) {
@@ -24,11 +27,12 @@ public abstract class EpdqPayloadDefinition {
             return this;
         }
 
-        public ImmutableList<NameValuePair> build() {
-            return parameters.build();
+        public List<NameValuePair> build() {
+            parameters.sort(Comparator.comparing(BasicNameValuePair::getName));
+            return List.copyOf(parameters);
         }
         
     }
     
-    public abstract ImmutableList<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData);
+    public abstract List<NameValuePair> extract(EpdqOrderRequestBuilder.EpdqTemplateData templateData);
 }

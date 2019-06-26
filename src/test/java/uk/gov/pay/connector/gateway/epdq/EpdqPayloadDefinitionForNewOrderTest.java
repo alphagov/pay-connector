@@ -12,6 +12,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -93,7 +94,7 @@ public class EpdqPayloadDefinitionForNewOrderTest {
     public void shouldExtractParametersFromTemplateWithOneLineStreetAddress() {
         when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
 
-        ImmutableList<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(mockTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(mockTemplateData);
 
         assertThat(result, is(ImmutableList.builder().add(
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
@@ -119,7 +120,7 @@ public class EpdqPayloadDefinitionForNewOrderTest {
         when(mockAddress.getLine1()).thenReturn(ADDRESS_LINE_1);
         when(mockAddress.getLine2()).thenReturn(ADDRESS_LINE_2);
 
-        ImmutableList<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(mockTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(mockTemplateData);
 
         assertThat(result, is(ImmutableList.builder().add(
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
@@ -144,7 +145,7 @@ public class EpdqPayloadDefinitionForNewOrderTest {
     public void shouldOmitAddressWhenInputAddressIsNotPresent() {
         when(mockAuthCardDetails.getAddress()).thenReturn(Optional.empty());
 
-        ImmutableList<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(mockTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionForNewOrder.extract(mockTemplateData);
 
         assertThat(result, is(ImmutableList.builder().add(
                 new BasicNameValuePair(AMOUNT_KEY, AMOUNT),
