@@ -22,7 +22,7 @@ public class EventQueue {
         this.eventQueueUrl = connectorConfiguration.getSqsConfig().getEventQueueUrl();
         this.eventQueueEnabled = connectorConfiguration.getEventQueueConfig().getEventQueueEnabled();
     }
-    
+
     public void emitEvent(Event event) throws QueueException {
         if (eventQueueEnabled) {
             try {

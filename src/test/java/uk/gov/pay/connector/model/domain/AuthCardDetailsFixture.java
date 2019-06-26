@@ -1,5 +1,10 @@
 package uk.gov.pay.connector.model.domain;
 
+import org.apache.commons.lang3.StringUtils;
+import uk.gov.pay.connector.charge.model.AddressEntity;
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
@@ -78,6 +83,24 @@ public final class AuthCardDetailsFixture {
     public AuthCardDetailsFixture withPayersCardPrepaidStatus(PayersCardPrepaidStatus payersCardPrepaidStatus) {
         this.payersCardPrepaidStatus = payersCardPrepaidStatus;
         return this;
+    }
+
+    public CardDetailsEntity getCardDetailsEntity() {
+        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
+        cardDetailsEntity.setCardBrand(cardBrand);
+        cardDetailsEntity.setCardHolderName(cardHolder);
+        cardDetailsEntity.setExpiryDate(endDate);
+        if(cardNo.length() > 6) {
+            cardDetailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(cardNo, 6)));
+        }
+
+        cardDetailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(cardNo, 4)));
+
+        if(address != null) {
+            cardDetailsEntity.setBillingAddress(new AddressEntity(address));
+        }
+
+        return cardDetailsEntity;
     }
 
     public AuthCardDetails build() {

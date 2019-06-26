@@ -13,7 +13,7 @@ public class ChargeUtils {
     public static String createChargePostBody(String accountId) {
         return createChargePostBody("description", 100, accountId, "http://nothing", "default@email.invalid");
     }
-    
+
     public static String createChargePostBody(String description, long expectedAmount, String accountId, String returnUrl, String email) {
         return toJson(ImmutableMap.builder()
                 .put("reference", "Test reference")
@@ -24,8 +24,8 @@ public class ChargeUtils {
                 .put("email", email)
                 .put("delayed_capture", true).build());
     }
-    
-    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId, DatabaseTestHelper databaseTestHelper) {
+
+    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId, DatabaseTestHelper databaseTestHelper, String emailAddress) {
         long chargeId = RandomUtils.nextInt();
         ExternalChargeId externalChargeId = ExternalChargeId.fromChargeId(chargeId);
         databaseTestHelper.addCharge(anAddChargeParams()
@@ -35,9 +35,13 @@ public class ChargeUtils {
                 .withAmount(6234L)
                 .withStatus(status)
                 .withTransactionId(gatewayTransactionId)
-                .withEmail("email@fake.test")
+                .withEmail(emailAddress)
                 .build());
         return externalChargeId;
+    }
+
+    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId, DatabaseTestHelper databaseTestHelper) {
+        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, databaseTestHelper, "email@fake.test");
     }
 
     public static class ExternalChargeId {
