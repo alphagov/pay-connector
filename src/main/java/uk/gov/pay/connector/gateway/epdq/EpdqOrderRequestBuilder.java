@@ -1,18 +1,31 @@
 package uk.gov.pay.connector.gateway.epdq;
 
-import uk.gov.pay.connector.gateway.model.OrderRequestType;
+import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.OrderRequestBuilder;
+import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinition;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForMaintenanceOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNew3dsOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForNewOrder;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForQueryOrder;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.templates.FormUrlEncodedStringBuilder;
-import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
-import uk.gov.pay.connector.gateway.templates.PayloadDefinition;
-import uk.gov.pay.connector.gateway.OrderRequestBuilder;
 
 import javax.ws.rs.core.MediaType;
 
-public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
+public class EpdqOrderRequestBuilder {
+    private final FormUrlEncodedStringBuilder payloadBuilder;
+    private OrderRequestType orderRequestType;
+
+    public GatewayOrder build() { 
+        final String payload = payloadBuilder.buildWith(epdqTemplateData);
+        return new GatewayOrder(
+                orderRequestType,
+                payload,
+                MediaType.APPLICATION_FORM_URLENCODED_TYPE
+        );
+    }
+
     public static class EpdqTemplateData extends OrderRequestBuilder.TemplateData {
         private String operationType;
         private String orderId;
@@ -88,32 +101,36 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
 
     private static EpdqSignedPayloadDefinition.EpdqSignedPayloadDefinitionFactory signedPayloadDefinitionFactory = EpdqSignedPayloadDefinition.EpdqSignedPayloadDefinitionFactory.anEpdqSignedPayloadDefinitionFactory(new EpdqSha512SignatureGenerator());
 
-    private static final PayloadBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNewOrder();
-    private static final PayloadBuilder QUERY_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForQueryOrder();
-    private static final PayloadBuilder AUTHORISE_3DS_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNew3dsOrder();
-    private static final PayloadBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
-    private static final PayloadBuilder CANCEL_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
-    private static final PayloadBuilder REFUND_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
+    private static final FormUrlEncodedStringBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNewOrder();
+    private static final FormUrlEncodedStringBuilder QUERY_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForQueryOrder();
+    private static final FormUrlEncodedStringBuilder AUTHORISE_3DS_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForNew3dsOrder();
+    private static final FormUrlEncodedStringBuilder CAPTURE_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
+    private static final FormUrlEncodedStringBuilder CANCEL_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
+    private static final FormUrlEncodedStringBuilder REFUND_ORDER_TEMPLATE_BUILDER = createPayloadBuilderForMaintenanceOrder();
 
     private EpdqTemplateData epdqTemplateData;
 
-    private static PayloadBuilder createPayloadBuilderForQueryOrder() {
-        PayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForQueryOrder());
+    private static FormUrlEncodedStringBuilder createPayloadBuilderForQueryOrder() {
+        EpdqPayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForQueryOrder());
         return new FormUrlEncodedStringBuilder(payloadDefinition, EpdqPaymentProvider.EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET);
     }
 
-    private static PayloadBuilder createPayloadBuilderForNewOrder() {
-        PayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForNewOrder());
+    private static FormUrlEncodedStringBuilder createPayloadBuilderForNewOrder() {
+        EpdqPayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForNewOrder());
         return new FormUrlEncodedStringBuilder(payloadDefinition, EpdqPaymentProvider.EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET);
     }
 
-    private static PayloadBuilder createPayloadBuilderForNew3dsOrder() {
-        PayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForNew3dsOrder());
+    private static FormUrlEncodedStringBuilder createPayloadBuilderForNew3dsOrder() {
+        EpdqPayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForNew3dsOrder());
         return new FormUrlEncodedStringBuilder(payloadDefinition, EpdqPaymentProvider.EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET);
     }
 
-    private static PayloadBuilder createPayloadBuilderForMaintenanceOrder() {
-        PayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForMaintenanceOrder());
+    private static FormUrlEncodedStringBuilder createPayloadBuilderForMaintenanceOrder() {
+        EpdqPayloadDefinition payloadDefinition = signedPayloadDefinitionFactory.create(new EpdqPayloadDefinitionForMaintenanceOrder());
+        return createNewPayloadBuilder(payloadDefinition);
+    }
+    
+    private static FormUrlEncodedStringBuilder createNewPayloadBuilder(EpdqPayloadDefinition payloadDefinition) {
         return new FormUrlEncodedStringBuilder(payloadDefinition, EpdqPaymentProvider.EPDQ_APPLICATION_X_WWW_FORM_URLENCODED_CHARSET);
     }
 
@@ -143,34 +160,55 @@ public class EpdqOrderRequestBuilder extends OrderRequestBuilder {
         return new EpdqOrderRequestBuilder(new EpdqTemplateData(), CANCEL_ORDER_TEMPLATE_BUILDER, OrderRequestType.CANCEL, CANCEL_OPERATION_TYPE);
     }
 
-    private EpdqOrderRequestBuilder(EpdqTemplateData epdqTemplateData, PayloadBuilder payloadBuilder, OrderRequestType orderRequestType, String operationType) {
-        super(epdqTemplateData, payloadBuilder, orderRequestType);
+    private EpdqOrderRequestBuilder(EpdqTemplateData epdqTemplateData, FormUrlEncodedStringBuilder payloadBuilder, OrderRequestType orderRequestType, String operationType) {
         this.epdqTemplateData = epdqTemplateData;
+        this.payloadBuilder = payloadBuilder;
+        this.orderRequestType = orderRequestType;
         epdqTemplateData.setOperationType(operationType);
     }
 
-    public EpdqOrderRequestBuilder withOrderId(String orderId) {
+    EpdqOrderRequestBuilder withOrderId(String orderId) {
         epdqTemplateData.setOrderId(orderId);
         return this;
     }
 
-    public EpdqOrderRequestBuilder withPassword(String password) {
+    EpdqOrderRequestBuilder withPassword(String password) {
         epdqTemplateData.setPassword(password);
         return this;
     }
 
-    public EpdqOrderRequestBuilder withUserId(String userId) {
+    EpdqOrderRequestBuilder withUserId(String userId) {
         epdqTemplateData.setUserId(userId);
         return this;
     }
 
-    public EpdqOrderRequestBuilder withShaInPassphrase(String shaInPassphrase) {
+    EpdqOrderRequestBuilder withShaInPassphrase(String shaInPassphrase) {
         epdqTemplateData.setShaInPassphrase(shaInPassphrase);
         return this;
     }
+    
+    EpdqOrderRequestBuilder withMerchantCode(String merchantId) {
+        epdqTemplateData.setMerchantCode(merchantId);
+        return this;
+    }
+    
+    EpdqOrderRequestBuilder withTransactionId(String transactionId) {
+        epdqTemplateData.setTransactionId(transactionId);
+        return this;
+    }
 
-    @Override
-    public MediaType getMediaType() {
-        return MediaType.APPLICATION_FORM_URLENCODED_TYPE;
+    EpdqOrderRequestBuilder withAmount(String amount) {
+        epdqTemplateData.setAmount(amount);
+        return this;
+    }
+    
+    EpdqOrderRequestBuilder withAuthorisationDetails(AuthCardDetails authCardDetails) {
+        epdqTemplateData.setAuthCardDetails(authCardDetails);
+        return this;
+    }
+    
+    EpdqOrderRequestBuilder withDescription(String description) {
+        epdqTemplateData.setDescription(description);
+        return this;
     }
 }

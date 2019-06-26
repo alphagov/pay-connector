@@ -295,12 +295,14 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     private GatewayOrder buildCancelOrder(CancelGatewayRequest request) {
-        return anEpdqCancelOrderRequestBuilder()
+        EpdqOrderRequestBuilder cancelRequestBuilder = anEpdqCancelOrderRequestBuilder()
                 .withUserId(request.getGatewayAccount().getCredentials().get(CREDENTIALS_USERNAME))
                 .withPassword(request.getGatewayAccount().getCredentials().get(CREDENTIALS_PASSWORD))
                 .withShaInPassphrase(request.getGatewayAccount().getCredentials().get(
                         CREDENTIALS_SHA_IN_PASSPHRASE))
-                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
+                .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID));
+        
+        return cancelRequestBuilder
                 .withTransactionId(request.getTransactionId())
                 .build();
     }

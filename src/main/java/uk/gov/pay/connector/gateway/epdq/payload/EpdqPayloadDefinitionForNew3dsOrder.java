@@ -4,12 +4,10 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.gateway.templates.PayloadDefinition;
 
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.EpdqTemplateData;
-import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinition.newParameterBuilder;
 
-public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionForNewOrder implements PayloadDefinition<EpdqTemplateData> {
+public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionForNewOrder {
 
     public static final String ACCEPTURL_KEY = "ACCEPTURL";
     public static final String COMPLUS_KEY = "COMPLUS";

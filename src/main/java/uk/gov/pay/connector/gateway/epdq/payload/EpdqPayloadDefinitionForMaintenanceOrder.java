@@ -3,12 +3,8 @@ package uk.gov.pay.connector.gateway.epdq.payload;
 import com.google.common.collect.ImmutableList;
 import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder;
-import uk.gov.pay.connector.gateway.templates.PayloadDefinition;
 
-import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.EpdqTemplateData;
-import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinition.newParameterBuilder;
-
-public class EpdqPayloadDefinitionForMaintenanceOrder implements PayloadDefinition<EpdqTemplateData> {
+public class EpdqPayloadDefinitionForMaintenanceOrder extends EpdqPayloadDefinition {
 
     public static final String AMOUNT_KEY = "AMOUNT";
     public static final String OPERATION_KEY = "OPERATION";
