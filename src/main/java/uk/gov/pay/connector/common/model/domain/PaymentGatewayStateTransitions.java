@@ -5,6 +5,25 @@ import com.google.common.graph.MutableValueGraph;
 import com.google.common.graph.ValueGraphBuilder;
 import org.apache.commons.lang3.tuple.Triple;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.events.AuthorisationCancelledEvent;
+import uk.gov.pay.connector.events.AuthorisationRejected;
+import uk.gov.pay.connector.events.AuthorisationSucceededEvent;
+import uk.gov.pay.connector.events.CaptureAbandonedAfterTooManyRetriesEvent;
+import uk.gov.pay.connector.events.CaptureConfirmedEvent;
+import uk.gov.pay.connector.events.CaptureErrorEvent;
+import uk.gov.pay.connector.events.CaptureSubmittedEvent;
+import uk.gov.pay.connector.events.Event;
+import uk.gov.pay.connector.events.GatewayErrorDuringAuthorisation;
+import uk.gov.pay.connector.events.GatewayRequires3dsAuthorisation;
+import uk.gov.pay.connector.events.GatewayTimeoutDuringAuthorisation;
+import uk.gov.pay.connector.events.PaymentExpiredEvent;
+import uk.gov.pay.connector.events.PaymentStartedEvent;
+import uk.gov.pay.connector.events.ServiceApprovedForCapture;
+import uk.gov.pay.connector.events.SystemCancelledEvent;
+import uk.gov.pay.connector.events.UnexpectedGatewayErrorDuringAuthorisation;
+import uk.gov.pay.connector.events.UserApprovedForCapture;
+import uk.gov.pay.connector.events.UserApprovedForCaptureAwaitingServiceApproval;
+import uk.gov.pay.connector.events.UserCancelledEvent;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -52,90 +71,90 @@ public class PaymentGatewayStateTransitions {
         return instance;
     }
 
-    private ImmutableValueGraph<ChargeStatus, String> graph;
+    private ImmutableValueGraph<ChargeStatus, ModelledEvent> graph;
 
     private PaymentGatewayStateTransitions() {
         graph = buildGraph();
     }
 
-    private static ImmutableValueGraph<ChargeStatus, String> buildGraph() {
-        MutableValueGraph<ChargeStatus, String> graph = ValueGraphBuilder
+    private static ImmutableValueGraph<ChargeStatus, ModelledEvent> buildGraph() {
+        MutableValueGraph<ChargeStatus, ModelledEvent> graph = ValueGraphBuilder
                 .directed()
                 .build();
 
-        graph.putEdgeValue(CREATED, EXPIRED, "ChargeExpiryService");
-        graph.putEdgeValue(ENTERING_CARD_DETAILS, EXPIRED, "ChargeExpiryService");
-        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, EXPIRED, "ChargeExpiryService");
-        graph.putEdgeValue(EXPIRE_CANCEL_READY, EXPIRED, "ChargeExpiryService");
-        graph.putEdgeValue(EXPIRE_CANCEL_SUBMITTED, EXPIRED, "ChargeExpiryService");
-        graph.putEdgeValue(AUTHORISATION_3DS_READY, EXPIRED, "ChargeExpiryService");
+        graph.putEdgeValue(CREATED, EXPIRED, ModelledEvent.of(PaymentExpiredEvent.class));
+        graph.putEdgeValue(ENTERING_CARD_DETAILS, EXPIRED, ModelledEvent.of(PaymentExpiredEvent.class));
+        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, EXPIRED, ModelledEvent.of(PaymentExpiredEvent.class));
+        graph.putEdgeValue(EXPIRE_CANCEL_READY, EXPIRED, ModelledEvent.of(PaymentExpiredEvent.class));
+        graph.putEdgeValue(EXPIRE_CANCEL_SUBMITTED, EXPIRED, ModelledEvent.of(PaymentExpiredEvent.class));
+        graph.putEdgeValue(AUTHORISATION_3DS_READY, EXPIRED, ModelledEvent.of(PaymentExpiredEvent.class));
 
-        graph.putEdgeValue(CREATED, ENTERING_CARD_DETAILS, "frontend: POST /frontend/charges/{chargeId}/status");
-        graph.putEdgeValue(CREATED, SYSTEM_CANCELLED, "");
-        graph.putEdgeValue(ENTERING_CARD_DETAILS, AUTHORISATION_READY, "user submitted card details");
-        graph.putEdgeValue(ENTERING_CARD_DETAILS, AUTHORISATION_ABORTED, "");
-        graph.putEdgeValue(ENTERING_CARD_DETAILS, USER_CANCELLED, "user clicked cancel");
-        graph.putEdgeValue(ENTERING_CARD_DETAILS, SYSTEM_CANCELLED, "");
-        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_ABORTED, "");
-        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_SUCCESS, "Gateway response: AUTHORISED");
-        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_REJECTED, "Gateway response: REJECTED");
-        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_ERROR, "Gateway error");
-        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_TIMEOUT, "Gateway timeout");
-        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_UNEXPECTED_ERROR, "Gateway response: unexpected error");
-        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_3DS_REQUIRED, "Gateway response: 3ds required");
-        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_CANCELLED, "Gateway response: cancelled");
-        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_SUBMITTED, "Epdq only: WAITING_EXTERNAL(50)");
-        graph.putEdgeValue(AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS, "");
-        graph.putEdgeValue(AUTHORISATION_SUBMITTED, AUTHORISATION_REJECTED, "");
-        graph.putEdgeValue(AUTHORISATION_SUBMITTED, AUTHORISATION_ERROR, "");
-        graph.putEdgeValue(AUTHORISATION_SUBMITTED, AUTHORISATION_3DS_REQUIRED, "");
-        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_3DS_READY, "");
-        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_SUCCESS, "");
-        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_REJECTED, "");
-        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_CANCELLED, "");
-        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, EXPIRE_CANCEL_READY, "");
-        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, USER_CANCELLED, "");
-        graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_SUCCESS, "");
-        graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_REJECTED, "");
-        graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_ERROR, "");
-        graph.putEdgeValue(AUTHORISATION_3DS_READY, EXPIRE_CANCEL_READY, "");
-        graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_CANCELLED, "");
-        graph.putEdgeValue(AUTHORISATION_SUCCESS, CAPTURE_APPROVED, "");
-        graph.putEdgeValue(AUTHORISATION_SUCCESS, CAPTURE_READY, "");
-        graph.putEdgeValue(AUTHORISATION_SUCCESS, SYSTEM_CANCEL_READY, "");
-        graph.putEdgeValue(AUTHORISATION_SUCCESS, USER_CANCEL_READY, "");
-        graph.putEdgeValue(AUTHORISATION_SUCCESS, EXPIRE_CANCEL_READY, "");
-        graph.putEdgeValue(AUTHORISATION_SUCCESS, AWAITING_CAPTURE_REQUEST, "");
+        graph.putEdgeValue(CREATED, ENTERING_CARD_DETAILS, ModelledEvent.of(PaymentStartedEvent.class));
+        graph.putEdgeValue(CREATED, SYSTEM_CANCELLED, ModelledEvent.of(SystemCancelledEvent.class));
+        graph.putEdgeValue(ENTERING_CARD_DETAILS, AUTHORISATION_READY, ModelledEvent.none());
+        graph.putEdgeValue(ENTERING_CARD_DETAILS, AUTHORISATION_ABORTED, ModelledEvent.of(AuthorisationRejected.class));
+        graph.putEdgeValue(ENTERING_CARD_DETAILS, USER_CANCELLED, ModelledEvent.of(UserCancelledEvent.class));
+        graph.putEdgeValue(ENTERING_CARD_DETAILS, SYSTEM_CANCELLED, ModelledEvent.of(SystemCancelledEvent.class));
+        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_ABORTED, ModelledEvent.of(AuthorisationRejected.class));
+        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_SUCCESS, ModelledEvent.of(AuthorisationSucceededEvent.class));
+        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
+        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_ERROR, ModelledEvent.of(GatewayErrorDuringAuthorisation.class));
+        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_TIMEOUT, ModelledEvent.of(GatewayTimeoutDuringAuthorisation.class));
+        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_UNEXPECTED_ERROR, ModelledEvent.of(UnexpectedGatewayErrorDuringAuthorisation.class));
+        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_3DS_REQUIRED, ModelledEvent.of(GatewayRequires3dsAuthorisation.class));
+        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_CANCELLED, ModelledEvent.of(AuthorisationCancelledEvent.class));
+        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_SUBMITTED, ModelledEvent.of(GatewayErrorDuringAuthorisation.class));
+        graph.putEdgeValue(AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS, ModelledEvent.of(AuthorisationSucceededEvent.class));
+        graph.putEdgeValue(AUTHORISATION_SUBMITTED, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
+        graph.putEdgeValue(AUTHORISATION_SUBMITTED, AUTHORISATION_ERROR, ModelledEvent.of(GatewayErrorDuringAuthorisation.class));
+        graph.putEdgeValue(AUTHORISATION_SUBMITTED, AUTHORISATION_3DS_REQUIRED, ModelledEvent.of(GatewayRequires3dsAuthorisation.class));
+        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_3DS_READY, ModelledEvent.none());
+        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_SUCCESS, ModelledEvent.of(AuthorisationSucceededEvent.class));
+        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
+        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_CANCELLED, ModelledEvent.of(AuthorisationCancelledEvent.class));
+        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, EXPIRE_CANCEL_READY, ModelledEvent.none());
+        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, USER_CANCELLED, ModelledEvent.of(UserCancelledEvent.class));
+        graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_SUCCESS, ModelledEvent.of(AuthorisationSucceededEvent.class));
+        graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
+        graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_ERROR, ModelledEvent.of(GatewayErrorDuringAuthorisation.class));
+        graph.putEdgeValue(AUTHORISATION_3DS_READY, EXPIRE_CANCEL_READY, ModelledEvent.none());
+        graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_CANCELLED, ModelledEvent.of(AuthorisationCancelledEvent.class));
+        graph.putEdgeValue(AUTHORISATION_SUCCESS, CAPTURE_APPROVED, ModelledEvent.of(UserApprovedForCapture.class));
+        graph.putEdgeValue(AUTHORISATION_SUCCESS, CAPTURE_READY, ModelledEvent.none());
+        graph.putEdgeValue(AUTHORISATION_SUCCESS, SYSTEM_CANCEL_READY, ModelledEvent.none());
+        graph.putEdgeValue(AUTHORISATION_SUCCESS, USER_CANCEL_READY, ModelledEvent.none());
+        graph.putEdgeValue(AUTHORISATION_SUCCESS, EXPIRE_CANCEL_READY, ModelledEvent.none());
+        graph.putEdgeValue(AUTHORISATION_SUCCESS, AWAITING_CAPTURE_REQUEST, ModelledEvent.of(UserApprovedForCaptureAwaitingServiceApproval.class));
 
-        graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, CAPTURE_APPROVED, "");
-        graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, SYSTEM_CANCEL_READY, "");
-        graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, EXPIRE_CANCEL_READY, "");
+        graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, CAPTURE_APPROVED, ModelledEvent.of(ServiceApprovedForCapture.class));
+        graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, SYSTEM_CANCEL_READY, ModelledEvent.none());
+        graph.putEdgeValue(AWAITING_CAPTURE_REQUEST, EXPIRE_CANCEL_READY, ModelledEvent.none());
 
-        graph.putEdgeValue(CAPTURE_APPROVED, CAPTURE_READY, "");
-        graph.putEdgeValue(CAPTURE_APPROVED, CAPTURE_ERROR, "");
-        graph.putEdgeValue(CAPTURE_APPROVED_RETRY, CAPTURE_READY, "");
-        graph.putEdgeValue(CAPTURE_APPROVED_RETRY, CAPTURE_ERROR, "");
-        graph.putEdgeValue(CAPTURE_APPROVED_RETRY, CAPTURED, "");
-        graph.putEdgeValue(CAPTURE_READY, CAPTURE_SUBMITTED, "");
-        graph.putEdgeValue(CAPTURE_READY, CAPTURE_ERROR, "");
-        graph.putEdgeValue(CAPTURE_READY, CAPTURE_APPROVED_RETRY, "");
-        graph.putEdgeValue(CAPTURE_READY, CAPTURED, "received CAPTURED notification while about to retry");
-        graph.putEdgeValue(CAPTURE_SUBMITTED, CAPTURED, "");
-        graph.putEdgeValue(EXPIRE_CANCEL_READY, EXPIRE_CANCEL_SUBMITTED, "");
-        graph.putEdgeValue(EXPIRE_CANCEL_READY, EXPIRE_CANCEL_FAILED, "");
+        graph.putEdgeValue(CAPTURE_APPROVED, CAPTURE_READY, ModelledEvent.none());
+        graph.putEdgeValue(CAPTURE_APPROVED, CAPTURE_ERROR, ModelledEvent.of(CaptureAbandonedAfterTooManyRetriesEvent.class));
+        graph.putEdgeValue(CAPTURE_APPROVED_RETRY, CAPTURE_READY, ModelledEvent.none());
+        graph.putEdgeValue(CAPTURE_APPROVED_RETRY, CAPTURE_ERROR, ModelledEvent.of(CaptureAbandonedAfterTooManyRetriesEvent.class));
+        graph.putEdgeValue(CAPTURE_APPROVED_RETRY, CAPTURED, ModelledEvent.of(CaptureConfirmedEvent.class));
+        graph.putEdgeValue(CAPTURE_READY, CAPTURE_SUBMITTED, ModelledEvent.of(CaptureSubmittedEvent.class));
+        graph.putEdgeValue(CAPTURE_READY, CAPTURE_ERROR, ModelledEvent.of(CaptureErrorEvent.class));
+        graph.putEdgeValue(CAPTURE_READY, CAPTURE_APPROVED_RETRY, ModelledEvent.none());
+        graph.putEdgeValue(CAPTURE_READY, CAPTURED, ModelledEvent.of(CaptureConfirmedEvent.class));
+        graph.putEdgeValue(CAPTURE_SUBMITTED, CAPTURED, ModelledEvent.of(CaptureConfirmedEvent.class));
+        graph.putEdgeValue(EXPIRE_CANCEL_READY, EXPIRE_CANCEL_SUBMITTED, ModelledEvent.of(PaymentExpiredEvent.class));
+        graph.putEdgeValue(EXPIRE_CANCEL_READY, EXPIRE_CANCEL_FAILED, ModelledEvent.of(PaymentExpiredEvent.class));
 
-        graph.putEdgeValue(EXPIRE_CANCEL_SUBMITTED, EXPIRE_CANCEL_FAILED, "");
-        graph.putEdgeValue(SYSTEM_CANCEL_READY, SYSTEM_CANCEL_SUBMITTED, "");
-        graph.putEdgeValue(SYSTEM_CANCEL_READY, SYSTEM_CANCEL_ERROR, "");
-        graph.putEdgeValue(SYSTEM_CANCEL_READY, SYSTEM_CANCELLED, "");
-        graph.putEdgeValue(SYSTEM_CANCEL_SUBMITTED, SYSTEM_CANCEL_ERROR, "");
-        graph.putEdgeValue(SYSTEM_CANCEL_SUBMITTED, SYSTEM_CANCELLED, "");
-        graph.putEdgeValue(USER_CANCEL_READY, USER_CANCEL_SUBMITTED, "");
-        graph.putEdgeValue(USER_CANCEL_READY, USER_CANCEL_ERROR, "");
-        graph.putEdgeValue(USER_CANCEL_READY, USER_CANCELLED, "");
-        graph.putEdgeValue(USER_CANCEL_SUBMITTED, USER_CANCEL_ERROR, "");
-        graph.putEdgeValue(USER_CANCEL_SUBMITTED, USER_CANCELLED, "");
-
+        graph.putEdgeValue(EXPIRE_CANCEL_SUBMITTED, EXPIRE_CANCEL_FAILED, ModelledEvent.of(PaymentExpiredEvent.class));
+        graph.putEdgeValue(SYSTEM_CANCEL_READY, SYSTEM_CANCEL_SUBMITTED, ModelledEvent.of(SystemCancelledEvent.class));
+        graph.putEdgeValue(SYSTEM_CANCEL_READY, SYSTEM_CANCEL_ERROR, ModelledEvent.of(SystemCancelledEvent.class));
+        graph.putEdgeValue(SYSTEM_CANCEL_READY, SYSTEM_CANCELLED, ModelledEvent.of(SystemCancelledEvent.class));
+        graph.putEdgeValue(SYSTEM_CANCEL_SUBMITTED, SYSTEM_CANCEL_ERROR, ModelledEvent.of(SystemCancelledEvent.class));
+        graph.putEdgeValue(SYSTEM_CANCEL_SUBMITTED, SYSTEM_CANCELLED, ModelledEvent.of(SystemCancelledEvent.class));
+        graph.putEdgeValue(USER_CANCEL_READY, USER_CANCEL_SUBMITTED, ModelledEvent.of(UserCancelledEvent.class));
+        graph.putEdgeValue(USER_CANCEL_READY, USER_CANCEL_ERROR, ModelledEvent.of(UserCancelledEvent.class));
+        graph.putEdgeValue(USER_CANCEL_READY, USER_CANCELLED, ModelledEvent.of(UserCancelledEvent.class));
+        graph.putEdgeValue(USER_CANCEL_SUBMITTED, USER_CANCEL_ERROR, ModelledEvent.of(UserCancelledEvent.class));
+        graph.putEdgeValue(USER_CANCEL_SUBMITTED, USER_CANCELLED, ModelledEvent.of(UserCancelledEvent.class));
+        
         return ImmutableValueGraph.copyOf(graph);
     }
 
@@ -150,7 +169,7 @@ public class PaymentGatewayStateTransitions {
                 .map(edge -> Triple.of(
                         edge.nodeU(),
                         edge.nodeV(),
-                        graph.edgeValueOrDefault(edge.nodeU(), edge.nodeV(), "")))
+                        graph.edgeValue(edge.nodeU(), edge.nodeV()).map(e -> e.toString()).orElse("")))
                 .collect(Collectors.toSet());
     }
 
@@ -160,5 +179,39 @@ public class PaymentGatewayStateTransitions {
 
     private boolean isValidTransitionImpl(ChargeStatus state, ChargeStatus targetState) {
         return graph.edgeValueOrDefault(state, targetState, null) != null;
+    }
+
+    private static class ModelledEvent {
+        private String description;
+
+        public ModelledEvent(String description) {
+            this.description = description;
+        }
+
+
+        public static ModelledEvent of(String description) {
+            return new ModelledEvent(description);
+        }
+
+        public static <T extends Event> ModelledEvent of(Class<T> clazz) {
+            return new ModelledTypedEvent(clazz);
+        }
+
+        public static ModelledEvent none() {
+            return new NoEvent();
+        }
+
+    }
+
+    private static class NoEvent extends ModelledEvent {
+        public NoEvent() {
+            super("No event");
+        }
+    }
+
+    private static class ModelledTypedEvent<T extends Event> extends ModelledEvent {
+        public ModelledTypedEvent(Class<T> clazz) {
+            super(clazz.getName());
+        }
     }
 }

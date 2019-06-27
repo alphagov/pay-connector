@@ -25,7 +25,7 @@ public class PaymentCreatedEventTest {
             .withReturnUrl("http://example.com")
             .withAmount(100L)
             .build();
-    
+
     private final PaymentCreatedEvent paymentCreatedEvent = PaymentCreatedEvent.from(chargeEntity);
     private String actual;
 
@@ -34,7 +34,7 @@ public class PaymentCreatedEventTest {
     public void setup() throws Exception {
         actual = paymentCreatedEvent.toJsonString();
     }
-    
+
     @Test
     public void serializesTimeWithMicrosecondPrecision() {
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(time)));

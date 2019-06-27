@@ -9,6 +9,15 @@ import uk.gov.pay.connector.events.eventdetails.PaymentDetailsEnteredEventDetail
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
+/**
+ * @TODO(sfount) should this be moved to getTitle/ getDescription methods?
+ * Payment details entered by user, invoked through frontend endpoint:
+ * frontend: POST /frontend/charges/{chargeId}/status
+ *
+ * @TODO(sfount) proposed: not salient: updates details but doesn't transition state
+ *               ProgressEvent of(PaymentDetailsEnteredEvent) ?
+ *               PayementDataUpdatedEvent - any time payment details are updated (would replace this event)
+ */
 public class PaymentDetailsEnteredEvent extends PaymentEvent {
 
     private String resourceExternalId;
