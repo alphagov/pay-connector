@@ -1,15 +1,14 @@
 package uk.gov.pay.connector.gateway.epdq.payload;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.gateway.templates.PayloadDefinition;
+
+import java.util.List;
 
 import static uk.gov.pay.connector.gateway.epdq.EpdqOrderRequestBuilder.EpdqTemplateData;
-import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinition.newParameterBuilder;
 
-public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionForNewOrder implements PayloadDefinition<EpdqTemplateData> {
+public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionForNewOrder {
 
     public static final String ACCEPTURL_KEY = "ACCEPTURL";
     public static final String COMPLUS_KEY = "COMPLUS";
@@ -23,11 +22,10 @@ public class EpdqPayloadDefinitionForNew3dsOrder extends EpdqPayloadDefinitionFo
     public static final String WIN3DS_URL = "WIN3DS";
 
     @Override
-    public ImmutableList<NameValuePair> extract(EpdqTemplateData templateData) {
+    public List<NameValuePair> extract(EpdqTemplateData templateData) {
 
         String frontend3dsIncomingUrl = String.format("%s/card_details/%s/3ds_required_in/epdq", templateData.getFrontendUrl(), templateData.getOrderId());
 
-        // Keep this list in alphabetical order
         EpdqPayloadDefinition.ParameterBuilder parameterBuilder = newParameterBuilder()
                 .add(ACCEPTURL_KEY, frontend3dsIncomingUrl)
                 .add(AMOUNT_KEY, templateData.getAmount())

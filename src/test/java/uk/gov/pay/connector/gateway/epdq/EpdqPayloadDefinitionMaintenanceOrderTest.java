@@ -9,14 +9,11 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForMaintenanceOrder;
 
+import java.util.List;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForMaintenanceOrder.OPERATION_KEY;
-import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForMaintenanceOrder.PAYID_KEY;
-import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForMaintenanceOrder.PSPID_KEY;
-import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForMaintenanceOrder.PSWD_KEY;
-import static uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForMaintenanceOrder.USERID_KEY;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqPayloadDefinitionMaintenanceOrderTest {
@@ -40,14 +37,14 @@ public class EpdqPayloadDefinitionMaintenanceOrderTest {
         when(mockTemplateData.getPassword()).thenReturn(PASSWORD);
         when(mockTemplateData.getUserId()).thenReturn(USER_ID);
 
-        ImmutableList<NameValuePair> result = epdqPayloadDefinitionForMaintenanceOrder.extract(mockTemplateData);
+        List<NameValuePair> result = epdqPayloadDefinitionForMaintenanceOrder.extract(mockTemplateData);
 
         assertThat(result, is(ImmutableList.builder().add(
-                new BasicNameValuePair(OPERATION_KEY, OPERATION_TYPE),
-                new BasicNameValuePair(PAYID_KEY, PAY_ID),
-                new BasicNameValuePair(PSPID_KEY, PSP_ID),
-                new BasicNameValuePair(PSWD_KEY, PASSWORD),
-                new BasicNameValuePair(USERID_KEY, USER_ID))
+                new BasicNameValuePair("OPERATION", OPERATION_TYPE),
+                new BasicNameValuePair("PAYID", PAY_ID),
+                new BasicNameValuePair("PSPID", PSP_ID),
+                new BasicNameValuePair("PSWD", PASSWORD),
+                new BasicNameValuePair("USERID", USER_ID))
                 .build()));
     }
 

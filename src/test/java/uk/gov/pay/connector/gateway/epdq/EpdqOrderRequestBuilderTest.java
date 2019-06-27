@@ -33,7 +33,6 @@ public class EpdqOrderRequestBuilderTest {
                 .withShaInPassphrase("sha-passphrase")
                 .withMerchantCode("merchant-id")
                 .withDescription("MyDescription")
-                .withPaymentPlatformReference("MyPlatformReference")
                 .withAmount("500")
                 .withAuthorisationDetails(authCardDetails)
                 .build();
@@ -53,7 +52,6 @@ public class EpdqOrderRequestBuilderTest {
                 .withShaInPassphrase("sha-passphrase")
                 .withMerchantCode("merchant-id")
                 .withDescription("MyDescription")
-                .withPaymentPlatformReference("MyPlatformReference")
                 .withAmount("500")
                 .withAuthorisationDetails(authCardDetails)
                 .build();
