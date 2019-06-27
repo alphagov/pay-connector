@@ -12,22 +12,9 @@ public class HealthCheckResourceIT {
 
     @Rule
     public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
-    
-    @Test
-    public void checkHealthcheck_isHealthy() {
-        given().port(app.getLocalPort())
-                .contentType(JSON)
-                .get("healthcheck")
-                .then()
-                .statusCode(200)
-                .body("ping.healthy", is(true))
-                .body("database.healthy", is(true))
-                .body("deadlocks.healthy", is(true))
-                .body("cardExecutorService.healthy", is(true));
-    }
 
     @Test
-    public void checkHealthcheck_isUnhealthy() {
+    public void healthcheckShouldIdentifyUnhealthyDBAndQueue() {
         app.stopPostgres();
         given().port(app.getLocalPort())
                 .contentType(JSON)
@@ -37,6 +24,6 @@ public class HealthCheckResourceIT {
                 .body("ping.healthy", is(true))
                 .body("database.healthy", is(false))
                 .body("deadlocks.healthy", is(true))
-                .body("cardExecutorService.healthy", is(true));
+                .body("sqsQueue.healthy", is(false));
     }
 }
