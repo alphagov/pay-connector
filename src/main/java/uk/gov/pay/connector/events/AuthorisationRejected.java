@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.events;
 
-import uk.gov.pay.connector.events.eventdetails.EventDetails;
-
 import java.time.ZonedDateTime;
 
 /**
@@ -13,26 +11,8 @@ import java.time.ZonedDateTime;
  * @TODO(sfoun) question: should at the very high level ledger code we move to this to generic 'Payment failed' event
  *              with a sub reason; we could still support the external events but keep the ledger process streamlined
  */
-public class AuthorisationRejected extends PaymentEvent {
-
-
-    @Override
-    public String getResourceExternalId() {
-        return null;
-    }
-
-    @Override
-    public String getEventType() {
-        return null;
-    }
-
-    @Override
-    public EventDetails getEventDetails() {
-        return null;
-    }
-
-    @Override
-    public ZonedDateTime getTimestamp() {
-        return null;
+public class AuthorisationRejected extends PaymentEventWithoutDetails {
+    public AuthorisationRejected(String resourceExternalId, ZonedDateTime timestamp) {
+        super(resourceExternalId, timestamp);
     }
 }

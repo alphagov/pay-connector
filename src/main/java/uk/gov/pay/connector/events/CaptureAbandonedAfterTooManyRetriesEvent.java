@@ -1,4 +1,9 @@
 package uk.gov.pay.connector.events;
 
-public class CaptureAbandonedAfterTooManyRetriesEvent extends PaymentEvent {
+import java.time.ZonedDateTime;
+
+public class CaptureAbandonedAfterTooManyRetriesEvent extends PaymentEventWithoutDetails {
+    public CaptureAbandonedAfterTooManyRetriesEvent(String resourceExternalId, ZonedDateTime timestamp) {
+        super(resourceExternalId, timestamp);
+    }
 }

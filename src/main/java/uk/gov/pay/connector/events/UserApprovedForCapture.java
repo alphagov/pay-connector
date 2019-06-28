@@ -1,5 +1,9 @@
 package uk.gov.pay.connector.events;
 
-public class UserApprovedForCapture extends PaymentEvent {
-    // User clicked the confirm button
+import java.time.ZonedDateTime;
+
+public class UserApprovedForCapture extends PaymentEventWithoutDetails {
+    public UserApprovedForCapture(String resourceExternalId, ZonedDateTime timestamp) {
+        super(resourceExternalId, timestamp);
+    }
 }

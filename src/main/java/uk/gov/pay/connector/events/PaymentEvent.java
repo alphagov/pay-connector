@@ -6,15 +6,11 @@ import java.time.ZonedDateTime;
 
 public class PaymentEvent extends Event {
     private String resourceExternalId;
-    private String eventType;
     private EventDetails eventDetails;
     private ZonedDateTime timestamp;
 
-    public PaymentEvent() { }
-    
-    public PaymentEvent(String resourceExternalId, String eventType, EventDetails eventDetails, ZonedDateTime timestamp) {
+    public PaymentEvent(String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
         this.resourceExternalId = resourceExternalId;
-        this.eventType = eventType;
         this.eventDetails = eventDetails;
         this.timestamp = timestamp;
     }
@@ -26,7 +22,7 @@ public class PaymentEvent extends Event {
 
     @Override
     public String getEventType() {
-        return eventType;
+        return eventTypeForClass(this.getClass());
     }
 
     @Override
@@ -42,5 +38,9 @@ public class PaymentEvent extends Event {
     @Override
     public ResourceType getResourceType() {
         return ResourceType.PAYMENT;
+    }
+
+    static String eventTypeForClass(Class clazz) {
+        return clazz.getSimpleName().replaceAll("([^A-Z]+)([A-Z])", "$1_$2").toUpperCase();
     }
 }

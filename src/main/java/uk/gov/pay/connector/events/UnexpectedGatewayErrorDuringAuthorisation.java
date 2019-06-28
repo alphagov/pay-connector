@@ -1,4 +1,9 @@
 package uk.gov.pay.connector.events;
 
-public class UnexpectedGatewayErrorDuringAuthorisation extends PaymentEvent {
+import java.time.ZonedDateTime;
+
+public class UnexpectedGatewayErrorDuringAuthorisation extends PaymentEventWithoutDetails {
+    public UnexpectedGatewayErrorDuringAuthorisation(String resourceExternalId, ZonedDateTime timestamp) {
+        super(resourceExternalId, timestamp);
+    }
 }

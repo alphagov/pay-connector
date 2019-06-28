@@ -24,12 +24,10 @@ public class PaymentDetailsEnteredEvent extends PaymentEvent {
     private PaymentDetailsEnteredEventDetails eventDetails;
     private ZonedDateTime timestamp;
 
-    public PaymentDetailsEnteredEvent(String resourceExternalId, PaymentDetailsEnteredEventDetails eventDetails,
+    public PaymentDetailsEnteredEvent(String resourceExternalId, 
+                                      PaymentDetailsEnteredEventDetails eventDetails,
                                       ZonedDateTime timestamp) {
-
-        this.resourceExternalId = resourceExternalId;
-        this.eventDetails = eventDetails;
-        this.timestamp = timestamp;
+        super(resourceExternalId, eventDetails, timestamp);
     }
 
     public static PaymentDetailsEnteredEvent from(ChargeEntity charge) {

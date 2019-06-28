@@ -1,0 +1,13 @@
+package uk.gov.pay.connector.events;
+
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+
+public class PaymentEventTest {
+
+    @Test
+    public void eventTypeForClass_returnsScreamingSnakeCase() {
+        assertEquals("PAYMENT_EVENT_TEST", PaymentEvent.eventTypeForClass(PaymentEventTest.class));
+    }
+}

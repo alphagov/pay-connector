@@ -1,4 +1,9 @@
 package uk.gov.pay.connector.events;
 
-public class UserApprovedForCaptureAwaitingServiceApproval extends PaymentEvent {
+import java.time.ZonedDateTime;
+
+public class UserApprovedForCaptureAwaitingServiceApproval extends PaymentEventWithoutDetails {
+    public UserApprovedForCaptureAwaitingServiceApproval(String resourceExternalId, ZonedDateTime timestamp) {
+        super(resourceExternalId, timestamp);
+    }
 }
