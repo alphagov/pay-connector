@@ -223,7 +223,7 @@ public class PaymentGatewayStateTransitions {
     private static class NoEvent extends ModelledEvent {
         @Override
         public boolean permits(Event event) {
-            return false;
+            return (event instanceof UnspecifiedEvent);
         }
 
         @Override
