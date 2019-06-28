@@ -12,7 +12,7 @@ import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 
-public class PaymentCreatedEventTest {
+public class PaymentCreatedTest {
 
     private final String paymentId = "jweojfewjoifewj";
     private final String time = "2018-03-12T16:25:01.123456Z";
@@ -26,7 +26,7 @@ public class PaymentCreatedEventTest {
             .withAmount(100L)
             .build();
 
-    private final PaymentCreatedEvent paymentCreatedEvent = PaymentCreatedEvent.from(chargeEntity);
+    private final PaymentCreated paymentCreatedEvent = PaymentCreated.from(chargeEntity);
     private String actual;
 
 

@@ -32,7 +32,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.Event;
 import uk.gov.pay.connector.events.EventQueue;
-import uk.gov.pay.connector.events.PaymentCreatedEvent;
+import uk.gov.pay.connector.events.PaymentCreated;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -197,7 +197,7 @@ public class ChargeServiceTest {
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
         
         // ASSERT
-        verify(eventQueue).emitEvent(any(PaymentCreatedEvent.class));
+        verify(eventQueue).emitEvent(any(PaymentCreated.class));
     }
 
     @Test(expected = WebApplicationException.class)
