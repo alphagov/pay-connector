@@ -7,6 +7,7 @@ import uk.gov.pay.connector.events.CaptureErrorEvent;
 import uk.gov.pay.connector.events.CaptureSubmittedEvent;
 import uk.gov.pay.connector.events.UnspecifiedEvent;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -43,7 +44,7 @@ public class PaymentGatewayStateTransitionsTest {
 
     @Test
     public void isValidTransition_deniesTransitionWithInvalidEvent() {
-        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureSubmittedEvent()), is(true));
-        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureErrorEvent()), is(false));
+        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureSubmittedEvent("a", ZonedDateTime.now())), is(true));
+        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureErrorEvent("a", ZonedDateTime.now())), is(false));
     }
 }
