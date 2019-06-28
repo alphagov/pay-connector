@@ -21,6 +21,7 @@ import uk.gov.pay.connector.events.PaymentStartedEvent;
 import uk.gov.pay.connector.events.ServiceApprovedForCapture;
 import uk.gov.pay.connector.events.SystemCancelledEvent;
 import uk.gov.pay.connector.events.UnexpectedGatewayErrorDuringAuthorisation;
+import uk.gov.pay.connector.events.UnspecifiedEvent;
 import uk.gov.pay.connector.events.UserApprovedForCapture;
 import uk.gov.pay.connector.events.UserApprovedForCaptureAwaitingServiceApproval;
 import uk.gov.pay.connector.events.UserCancelledEvent;
@@ -173,25 +174,20 @@ public class PaymentGatewayStateTransitions {
                 .collect(Collectors.toSet());
     }
 
-    public static boolean isValidTransition(ChargeStatus state, ChargeStatus targetState) {
-        return getInstance().isValidTransitionImpl(state, targetState);
+    public static boolean isValidTransition(ChargeStatus state, ChargeStatus targetState, Event event) {
+        return getInstance().isValidTransitionImpl(state, targetState, event);
     }
 
-    private boolean isValidTransitionImpl(ChargeStatus state, ChargeStatus targetState) {
-        return graph.edgeValueOrDefault(state, targetState, null) != null;
+    private boolean isValidTransitionImpl(ChargeStatus state, ChargeStatus targetState, Event event) {
+        return graph.edgeValue(state, targetState)
+                .map(modelledEvent ->
+                        (event instanceof UnspecifiedEvent) || modelledEvent.permits(event)
+                )
+                .orElse(false);
     }
 
-    private static class ModelledEvent {
-        private String description;
-
-        public ModelledEvent(String description) {
-            this.description = description;
-        }
-
-
-        public static ModelledEvent of(String description) {
-            return new ModelledEvent(description);
-        }
+    private static abstract class ModelledEvent {
+        public abstract boolean permits(Event event);
 
         public static <T extends Event> ModelledEvent of(Class<T> clazz) {
             return new ModelledTypedEvent(clazz);
@@ -204,14 +200,33 @@ public class PaymentGatewayStateTransitions {
     }
 
     private static class NoEvent extends ModelledEvent {
-        public NoEvent() {
-            super("No event");
+        @Override
+        public boolean permits(Event event) {
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return "";
         }
     }
 
     private static class ModelledTypedEvent<T extends Event> extends ModelledEvent {
+        private final Class<T> clazz;
+
         public ModelledTypedEvent(Class<T> clazz) {
-            super(clazz.getName());
+            this.clazz = clazz;
         }
+
+        @Override
+        public boolean permits(Event event) {
+            return clazz.isInstance(event);
+        }
+
+        @Override
+        public String toString() {
+            return clazz.getSimpleName();
+        }
+
     }
 }
