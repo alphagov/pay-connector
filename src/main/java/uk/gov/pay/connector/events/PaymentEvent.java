@@ -3,6 +3,7 @@ package uk.gov.pay.connector.events;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 public class PaymentEvent extends Event {
     private String resourceExternalId;
@@ -42,5 +43,29 @@ public class PaymentEvent extends Event {
 
     static String eventTypeForClass(Class clazz) {
         return clazz.getSimpleName().replaceAll("([^A-Z]+)([A-Z])", "$1_$2").toUpperCase();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PaymentEvent that = (PaymentEvent) o;
+        return Objects.equals(resourceExternalId, that.resourceExternalId) &&
+                Objects.equals(eventDetails, that.eventDetails) &&
+                Objects.equals(timestamp, that.timestamp);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(resourceExternalId, eventDetails, timestamp);
+    }
+
+    @Override
+    public String toString() {
+        return "PaymentEvent{" +
+                "resourceExternalId='" + resourceExternalId + '\'' +
+                ", eventDetails=" + eventDetails +
+                ", timestamp=" + timestamp +
+                '}';
     }
 }
