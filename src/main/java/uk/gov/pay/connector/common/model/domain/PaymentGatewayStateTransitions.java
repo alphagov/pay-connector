@@ -97,7 +97,7 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(ENTERING_CARD_DETAILS, USER_CANCELLED, ModelledEvent.of(UserCancelled.class));
         graph.putEdgeValue(ENTERING_CARD_DETAILS, SYSTEM_CANCELLED, ModelledEvent.of(SystemCancelled.class));
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_ABORTED, ModelledEvent.of(AuthorisationRejected.class));
-        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_SUCCESS, ModelledEvent.of(AuthorisationSucceeded.class));
+        graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_SUCCESS, ModelledEvent.required(AuthorisationSucceeded.class));
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_ERROR, ModelledEvent.of(GatewayErrorDuringAuthorisation.class));
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_TIMEOUT, ModelledEvent.of(GatewayTimeoutDuringAuthorisation.class));
@@ -105,17 +105,17 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_3DS_REQUIRED, ModelledEvent.of(GatewayRequires3dsAuthorisation.class));
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_CANCELLED, ModelledEvent.of(AuthorisationCancelled.class));
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_SUBMITTED, ModelledEvent.of(GatewayErrorDuringAuthorisation.class));
-        graph.putEdgeValue(AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS, ModelledEvent.of(AuthorisationSucceeded.class));
+        graph.putEdgeValue(AUTHORISATION_SUBMITTED, AUTHORISATION_SUCCESS, ModelledEvent.required(AuthorisationSucceeded.class));
         graph.putEdgeValue(AUTHORISATION_SUBMITTED, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
         graph.putEdgeValue(AUTHORISATION_SUBMITTED, AUTHORISATION_ERROR, ModelledEvent.of(GatewayErrorDuringAuthorisation.class));
         graph.putEdgeValue(AUTHORISATION_SUBMITTED, AUTHORISATION_3DS_REQUIRED, ModelledEvent.of(GatewayRequires3dsAuthorisation.class));
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_3DS_READY, ModelledEvent.none());
-        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_SUCCESS, ModelledEvent.of(AuthorisationSucceeded.class));
+        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_SUCCESS, ModelledEvent.required(AuthorisationSucceeded.class));
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_CANCELLED, ModelledEvent.of(AuthorisationCancelled.class));
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, EXPIRE_CANCEL_READY, ModelledEvent.none());
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, USER_CANCELLED, ModelledEvent.of(UserCancelled.class));
-        graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_SUCCESS, ModelledEvent.of(AuthorisationSucceeded.class));
+        graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_SUCCESS, ModelledEvent.required(AuthorisationSucceeded.class));
         graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
         graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_ERROR, ModelledEvent.of(GatewayErrorDuringAuthorisation.class));
         graph.putEdgeValue(AUTHORISATION_3DS_READY, EXPIRE_CANCEL_READY, ModelledEvent.none());
@@ -181,7 +181,7 @@ public class PaymentGatewayStateTransitions {
     private boolean isValidTransitionImpl(ChargeStatus state, ChargeStatus targetState, Event event) {
         return graph.edgeValue(state, targetState)
                 .map(modelledEvent ->
-                        (event instanceof UnspecifiedEvent) || modelledEvent.permits(event)
+                        modelledEvent.permits(event)
                 )
                 .orElse(false);
     }
@@ -193,10 +193,31 @@ public class PaymentGatewayStateTransitions {
             return new ModelledTypedEvent(clazz);
         }
 
+        public static <T extends Event> ModelledEvent required(Class<T> clazz) {
+            return new RequiredEvent(clazz);
+        }
+
         public static ModelledEvent none() {
             return new NoEvent();
         }
 
+    }
+
+    private static class RequiredEvent extends ModelledEvent {
+        private final Class<? extends Event> clazz;
+
+        public <T extends Event> RequiredEvent(Class<T> clazz) {
+            this.clazz = clazz;
+        }
+
+        @Override
+        public boolean permits(Event event) {
+            if (event instanceof UnspecifiedEvent) {
+                throw new RuntimeException("Event " + event + " not permitted. A " + clazz.getSimpleName() + " event is required");
+
+            }
+            return clazz.isInstance(event);
+        }
     }
 
     private static class NoEvent extends ModelledEvent {
@@ -220,7 +241,7 @@ public class PaymentGatewayStateTransitions {
 
         @Override
         public boolean permits(Event event) {
-            return clazz.isInstance(event);
+            return (event instanceof UnspecifiedEvent) || clazz.isInstance(event);
         }
 
         @Override
