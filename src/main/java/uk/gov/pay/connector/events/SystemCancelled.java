@@ -18,8 +18,8 @@ import java.time.ZonedDateTime;
  * 
  * @TODO(sfount) proposed: salient - move to cancelled
  */
-public class SystemCancelledEvent extends PaymentEventWithoutDetails {
-    public SystemCancelledEvent(String resourceExternalId, ZonedDateTime timestamp) {
+public class SystemCancelled extends PaymentEventWithoutDetails {
+    public SystemCancelled(String resourceExternalId, ZonedDateTime timestamp) {
         super(resourceExternalId, timestamp);
     }
 }

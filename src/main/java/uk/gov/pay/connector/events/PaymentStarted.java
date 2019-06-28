@@ -9,8 +9,8 @@ import java.time.ZonedDateTime;
  * @TODO(sfount) proposed: not salient - replace with `PaymentInternalStateUpdatedEvent`
  *               (compliment of `PaymentDataUpdatedEvent`)
  */
-public class PaymentStartedEvent extends PaymentEventWithoutDetails {
-    public PaymentStartedEvent(String resourceExternalId, ZonedDateTime timestamp) {
+public class PaymentStarted extends PaymentEventWithoutDetails {
+    public PaymentStarted(String resourceExternalId, ZonedDateTime timestamp) {
         super(resourceExternalId, timestamp);
     }
 }

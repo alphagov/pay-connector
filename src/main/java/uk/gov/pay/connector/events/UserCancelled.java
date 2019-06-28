@@ -7,8 +7,8 @@ import java.time.ZonedDateTime;
  *     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/cancel")
  *
  */
-public class UserCancelledEvent extends PaymentEventWithoutDetails {
-    public UserCancelledEvent(String resourceExternalId, ZonedDateTime timestamp) {
+public class UserCancelled extends PaymentEventWithoutDetails {
+    public UserCancelled(String resourceExternalId, ZonedDateTime timestamp) {
         super(resourceExternalId, timestamp);
     }
 }
