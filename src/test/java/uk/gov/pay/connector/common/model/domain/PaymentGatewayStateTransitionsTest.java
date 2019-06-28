@@ -5,6 +5,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.events.CaptureError;
 import uk.gov.pay.connector.events.CaptureSubmitted;
+import uk.gov.pay.connector.events.PaymentExpired;
 import uk.gov.pay.connector.events.UnspecifiedEvent;
 
 import java.time.ZonedDateTime;
@@ -33,7 +34,7 @@ public class PaymentGatewayStateTransitionsTest {
     @Test
     public void allTransitions_containsAValidTransitionAnnotatedWithEventDescription() {
         Set<Triple<ChargeStatus, ChargeStatus, String>> actual = transitions.allTransitions();
-        assertThat(actual, hasItem(Triple.of(CREATED, EXPIRED, "PaymentExpiredEvent")));
+        assertThat(actual, hasItem(Triple.of(CREATED, EXPIRED, PaymentExpired.class.getSimpleName())));
     }
 
     @Test
