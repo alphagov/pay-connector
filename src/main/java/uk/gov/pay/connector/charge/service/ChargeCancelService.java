@@ -158,7 +158,7 @@ public class ChargeCancelService {
     @SuppressWarnings("WeakerAccess") // Guice requires @Transactional methods to be public
     public void setChargeStatusTo(String chargeEntityExternalId, ChargeStatus chargeStatus) {
         chargeDao.findByExternalId(chargeEntityExternalId).ifPresentOrElse(chargeEntity -> {
-            chargeEntity.setStatus(chargeStatus);
+            chargeEntity.setStatus(chargeStatus, chargeEventDao);
             chargeEventDao.persistChargeEventOf(chargeEntity);
         }, () -> {
             throw new ChargeNotFoundRuntimeException(chargeEntityExternalId);

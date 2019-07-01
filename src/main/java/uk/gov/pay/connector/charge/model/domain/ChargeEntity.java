@@ -11,6 +11,7 @@ import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
+import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
@@ -240,7 +241,11 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     public void setStatus(ChargeStatus targetStatus) {
         setStatus(targetStatus, new UnspecifiedEvent());
     }
-    
+
+    public void setStatus(ChargeStatus targetStatus, ChargeEventDao dao) {
+        setStatus(targetStatus, new UnspecifiedEvent());
+    }
+
     public void setStatus(ChargeStatus targetStatus, Event event) {
         if (isValidTransition(fromString(this.status), targetStatus, event)) {
             logger.info("Changing charge status for externalId [{}] [{}]->[{}] [event={}]",

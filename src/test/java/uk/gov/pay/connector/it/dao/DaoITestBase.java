@@ -39,6 +39,7 @@ abstract public class DaoITestBase {
         properties.put("javax.persistence.jdbc.url", postgres.getConnectionUrl());
         properties.put("javax.persistence.jdbc.user", postgres.getUsername());
         properties.put("javax.persistence.jdbc.password", postgres.getPassword());
+        properties.put("eclipselink.session.customizer", "uk.gov.pay.connector.util.ConnectorSessionCustomiser");
 
         JpaPersistModule jpaModule = new JpaPersistModule("ConnectorUnit");
         jpaModule.properties(properties);
