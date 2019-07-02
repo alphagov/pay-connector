@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CANCELLED;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CAPTURE_PENDING;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_ERROR_GATEWAY;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_FAILED_CANCELLED;
@@ -35,7 +36,7 @@ public enum ChargeStatus implements Status {
     AUTHORISATION_ERROR("AUTHORISATION ERROR", EXTERNAL_ERROR_GATEWAY),
     AUTHORISATION_TIMEOUT("AUTHORISATION TIMEOUT", EXTERNAL_ERROR_GATEWAY),
     AUTHORISATION_UNEXPECTED_ERROR("AUTHORISATION UNEXPECTED ERROR", EXTERNAL_ERROR_GATEWAY),
-    AWAITING_CAPTURE_REQUEST("AWAITING CAPTURE REQUEST", EXTERNAL_SUBMITTED),
+    AWAITING_CAPTURE_REQUEST("AWAITING CAPTURE REQUEST", EXTERNAL_CAPTURE_PENDING),
     CAPTURE_APPROVED("CAPTURE APPROVED", EXTERNAL_SUCCESS),
     CAPTURE_APPROVED_RETRY("CAPTURE APPROVED RETRY", EXTERNAL_SUCCESS),
     CAPTURE_READY("CAPTURE READY", EXTERNAL_SUCCESS),

@@ -10,6 +10,7 @@ public enum ExternalChargeState {
     EXTERNAL_CREATED("created", false),
     EXTERNAL_STARTED("started", false),
     EXTERNAL_SUBMITTED("submitted", false),
+    EXTERNAL_CAPTURE_PENDING("capture pending", false),
     EXTERNAL_SUCCESS("success", true),
     EXTERNAL_FAILED_REJECTED("failed", "declined", true, "P0010", "Payment method rejected"),
     EXTERNAL_FAILED_EXPIRED("failed", "timedout", true, "P0020", "Payment expired"),
