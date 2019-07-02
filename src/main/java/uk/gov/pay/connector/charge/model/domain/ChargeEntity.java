@@ -16,6 +16,8 @@ import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
+import uk.gov.pay.connector.events.Event;
+import uk.gov.pay.connector.events.UnspecifiedEvent;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -236,15 +238,20 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     }
 
     public void setStatus(ChargeStatus targetStatus) {
-        if (isValidTransition(fromString(this.status), targetStatus)) {
-            logger.info("Changing charge status for externalId [{}] [{}]->[{}]",
-                    externalId, this.status, targetStatus.getValue());
+        setStatus(targetStatus, new UnspecifiedEvent());
+    }
+    
+    public void setStatus(ChargeStatus targetStatus, Event event) {
+        if (isValidTransition(fromString(this.status), targetStatus, event)) {
+            logger.info("Changing charge status for externalId [{}] [{}]->[{}] [event={}]",
+                    externalId, this.status, targetStatus.getValue(),
+                    event);
 
             this.status = targetStatus.getValue();
         } else {
-            logger.warn("Charge with state {} cannot proceed to {} [charge_external_id={}, charge_status={}]",
-                    this.status, targetStatus, this.externalId, targetStatus);
-            throw new InvalidStateTransitionException(this.status, targetStatus.getValue());
+            logger.warn("Charge with state {} cannot proceed to {} [charge_external_id={}, charge_status={}, event={}]",
+                    this.status, targetStatus, this.externalId, targetStatus, event);
+            throw new InvalidStateTransitionException(this.status, targetStatus.getValue(), event);
         }
     }
 
@@ -348,4 +355,5 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     public Optional<Long> getFeeAmount() {
         return Optional.ofNullable(fee).map(FeeEntity::getAmountCollected);
     }
+
 }

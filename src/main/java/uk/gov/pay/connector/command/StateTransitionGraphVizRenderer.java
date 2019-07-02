@@ -21,7 +21,7 @@ public class StateTransitionGraphVizRenderer {
         StringJoiner s = new StringJoiner("\n", "", "\n");
         s.add("digraph PaymentGatewayStateTransitions {");
 
-        s.add("rankdir=TB overlap=false splines=true");
+        s.add("rankdir=LR overlap=false splines=true");
         s.add("node [style=filled shape=box color=\"0.650 0.200 1.000\"]");
 
         transitions.allTransitions().forEach(edge ->

@@ -6,7 +6,6 @@ import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.wallets.WalletType;
 
@@ -18,8 +17,9 @@ import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
-public class PaymentDetailsEnteredEventTest {
+public class PaymentDetailsEventTest {
 
     private final String paymentId = "jweojfewjoifewj";
     private final String time = "2018-03-12T16:25:01.123456Z";
@@ -43,7 +43,7 @@ public class PaymentDetailsEnteredEventTest {
                 .withExternalId(paymentId)
                 .withTransactionId(validTransactionId)
                 .withCorporateSurcharge(10L)
-                .withCardDetails(AuthCardDetailsFixture.anAuthCardDetails().getCardDetailsEntity())
+                .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
                 .withAmount(100L)
                 .withEvents(list)
                 .withWalletType(WalletType.APPLE_PAY);
@@ -52,7 +52,7 @@ public class PaymentDetailsEnteredEventTest {
     @Test
     public void whenAllTheDataIsAvailable() throws JsonProcessingException {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
-        String actual = PaymentDetailsEnteredEvent.from(chargeEntity).toJsonString();
+        String actual = PaymentDetailsEvent.from(chargeEntity).toJsonString();
 
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(time)));
         assertThat(actual, hasJsonPath("$.event_type", equalTo("PAYMENT_DETAILS_EVENT")));
@@ -81,12 +81,12 @@ public class PaymentDetailsEnteredEventTest {
     @Test
     public void whenNotAllTheDataIsAvailable() throws JsonProcessingException {
         ChargeEntity chargeEntity = chargeEntityFixture
-                .withCardDetails(AuthCardDetailsFixture.anAuthCardDetails().withAddress(null).withCardNo("4242").getCardDetailsEntity())
+                .withCardDetails(anAuthCardDetails().withAddress(null).withCardNo("4242").getCardDetailsEntity())
                 .withWalletType(null)
                 .withCorporateSurcharge(null)
                 .build();
 
-        String actual = PaymentDetailsEnteredEvent.from(chargeEntity).toJsonString();
+        String actual = PaymentDetailsEvent.from(chargeEntity).toJsonString();
 
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(time)));
         assertThat(actual, hasJsonPath("$.event_type", equalTo("PAYMENT_DETAILS_EVENT")));

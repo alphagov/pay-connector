@@ -8,7 +8,7 @@ import org.slf4j.MDC;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.events.EventQueue;
-import uk.gov.pay.connector.events.PaymentCreatedEvent;
+import uk.gov.pay.connector.events.PaymentCreated;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.queue.QueueException;
 
@@ -59,7 +59,7 @@ public class HistoricalEventEmitterWorker {
 
             if (maybeCharge.isPresent()) {
                 final ChargeEntity charge = maybeCharge.get();
-                final PaymentCreatedEvent event = PaymentCreatedEvent.from(charge);
+                final PaymentCreated event = PaymentCreated.from(charge);
                 final boolean emittedBefore = emittedEventDao.hasBeenEmittedBefore(event);
                 if (emittedBefore) {
                     logger.info("[{}/{}] - found - emitted before", i, maxId);
@@ -77,7 +77,7 @@ public class HistoricalEventEmitterWorker {
         }
     }
 
-    private void persistAndEmit(PaymentCreatedEvent event) {
+    private void persistAndEmit(PaymentCreated event) {
         try {
             eventQueue.emitEvent(event);
             emittedEventDao.recordEmission(event);

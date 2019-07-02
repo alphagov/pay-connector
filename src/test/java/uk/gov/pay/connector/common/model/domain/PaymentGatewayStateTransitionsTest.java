@@ -3,7 +3,12 @@ package uk.gov.pay.connector.common.model.domain;
 import org.apache.commons.lang3.tuple.Triple;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.events.CaptureError;
+import uk.gov.pay.connector.events.CaptureSubmitted;
+import uk.gov.pay.connector.events.PaymentExpired;
+import uk.gov.pay.connector.events.UnspecifiedEvent;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -29,12 +34,18 @@ public class PaymentGatewayStateTransitionsTest {
     @Test
     public void allTransitions_containsAValidTransitionAnnotatedWithEventDescription() {
         Set<Triple<ChargeStatus, ChargeStatus, String>> actual = transitions.allTransitions();
-        assertThat(actual, hasItem(Triple.of(CREATED, EXPIRED, "ChargeExpiryService")));
+        assertThat(actual, hasItem(Triple.of(CREATED, EXPIRED, PaymentExpired.class.getSimpleName())));
     }
 
     @Test
     public void isValidTransition_indicatesValidAndInvalidTransition() {
-        assertThat(transitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED), is(true));
-        assertThat(transitions.isValidTransition(CREATED, AUTHORISATION_READY), is(false));
+        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new UnspecifiedEvent()), is(true));
+        assertThat(PaymentGatewayStateTransitions.isValidTransition(CREATED, AUTHORISATION_READY, new UnspecifiedEvent()), is(false));
+    }
+
+    @Test
+    public void isValidTransition_deniesTransitionWithInvalidEvent() {
+        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureSubmitted("a", ZonedDateTime.now())), is(true));
+        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureError("a", ZonedDateTime.now())), is(false));
     }
 }

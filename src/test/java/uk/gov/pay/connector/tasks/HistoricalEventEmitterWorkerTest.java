@@ -8,7 +8,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.events.EventQueue;
-import uk.gov.pay.connector.events.PaymentCreatedEvent;
+import uk.gov.pay.connector.events.PaymentCreated;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.queue.QueueException;
@@ -46,8 +46,8 @@ public class HistoricalEventEmitterWorkerTest {
 
         worker.execute(1L, OptionalLong.empty());
 
-        verify(eventQueue).emitEvent(PaymentCreatedEvent.from(chargeEntity));
-        verify(emittedEventDao).recordEmission(PaymentCreatedEvent.from(chargeEntity));
+        verify(eventQueue).emitEvent(PaymentCreated.from(chargeEntity));
+        verify(emittedEventDao).recordEmission(PaymentCreated.from(chargeEntity));
         verify(chargeDao, never()).findById(2L);
     }
 
