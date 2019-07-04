@@ -6,7 +6,6 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
-import uk.gov.pay.connector.queue.QueueException;
 
 import javax.inject.Inject;
 import java.util.Optional;
@@ -30,14 +29,8 @@ public class PaymentStateTransitionEmitterProcess {
     }
 
     public void handleStateTransitionMessages() {
-        // poll queue for latest message
-        // try and emit event for message
-        // IF successful - exit
-        // IF failed - add message back to queue
         Optional.ofNullable(paymentStateTransitionQueue.poll())
                 .ifPresent(this::emitEvent);
-
-        LOGGER.info("Checking payment state transition queue for new transitions to process");
     }
 
     private void emitEvent(PaymentStateTransition paymentStateTransition) {
@@ -53,11 +46,11 @@ public class PaymentStateTransitionEmitterProcess {
 
     private PaymentEvent createEvent(PaymentStateTransition paymentStateTransition) throws Exception {
         return chargeEventDao.findById(ChargeEventEntity.class, paymentStateTransition.getChargeEventId())
-                .map(this::createEvent)
+                .map(chargeEvent -> createEvent(chargeEvent, paymentStateTransition.getStateTransitionEventClass()))
                 .orElseThrow(() -> new Exception());
     }
 
-    private PaymentEvent createEvent(ChargeEventEntity chargeEventEntity) {
+    private PaymentEvent createEvent(ChargeEventEntity chargeEvent, Class<? extends PaymentEvent> paymentEventClass) {
         return null;
     }
 }
