@@ -5,7 +5,7 @@ import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.events.dao.PaymentStateTransitionEventEmitterProcess;
+import uk.gov.pay.connector.events.PaymentStateTransitionEmitterProcess;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 
 import javax.inject.Inject;
@@ -20,49 +20,58 @@ public class QueueMessageReceiver implements Managed {
 
     private final int queueSchedulerThreadDelayInSeconds;
 
-    private ScheduledExecutorService scheduledExecutorService;
+    private ScheduledExecutorService captureQueueExecutorService;
+    private ScheduledExecutorService paymentStateTransitionExecutorService;
+
     private CardCaptureProcess cardCaptureProcess;
-    private PaymentStateTransitionEventEmitterProcess paymentStateTransitionEventEmitterProcess;
+    private PaymentStateTransitionEmitterProcess paymentStateTransitionEmitterProcess;
 
     @Inject
     public QueueMessageReceiver(CardCaptureProcess cardCaptureProcess,
+                                PaymentStateTransitionEmitterProcess paymentStateTransitionEmitterProcess,
                                 Environment environment, ConnectorConfiguration connectorConfiguration) {
 
         int queueScheduleNumberOfThreads = connectorConfiguration.getCaptureProcessConfig().getQueueSchedulerNumberOfThreads();
 
         this.cardCaptureProcess = cardCaptureProcess;
 
-        scheduledExecutorService = environment
+        captureQueueExecutorService = environment
                 .lifecycle()
                 .scheduledExecutorService(MESSAGE_RECEIVER_THREAD_NAME)
                 .threads(queueScheduleNumberOfThreads)
                 .build();
+
+        paymentStateTransitionExecutorService = environment
+                .lifecycle()
+                .scheduledExecutorService("some-name-dot-com")
+                .threads(1)
+                .build();
+
         queueSchedulerThreadDelayInSeconds = connectorConfiguration.getCaptureProcessConfig().getQueueSchedulerThreadDelayInSeconds();
     }
 
     @Override
     public void start() {
         int initialDelay = queueSchedulerThreadDelayInSeconds;
-        scheduledExecutorService.scheduleWithFixedDelay(
-                sqsReceiver(),
+        captureQueueExecutorService.scheduleWithFixedDelay(
+                captureQueueReceiver(),
                 initialDelay,
                 queueSchedulerThreadDelayInSeconds,
                 TimeUnit.SECONDS);
 
-        scheduledExecutorService.scheduleWithFixedDelay(
+        paymentStateTransitionExecutorService.scheduleWithFixedDelay(
                 paymentStateTransitionPoller(),
-                initialDelay,
-                queueSchedulerThreadDelayInSeconds,
-                TimeUnit.SECONDS
-        );
+                0,
+                100,
+                TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void stop() {
-        scheduledExecutorService.shutdown();
+        captureQueueExecutorService.shutdown();
     }
 
-    private Thread sqsReceiver() {
+    private Thread captureQueueReceiver() {
         return new Thread() {
             @Override
             public void run() {
@@ -83,7 +92,7 @@ public class QueueMessageReceiver implements Managed {
             @Override
             public void run() {
                 while(!isInterrupted()) {
-
+                    paymentStateTransitionEmitterProcess.handleStateTransitionMessages();
                 }
             }
         };
