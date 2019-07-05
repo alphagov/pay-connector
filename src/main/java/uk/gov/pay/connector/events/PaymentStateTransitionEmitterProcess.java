@@ -2,10 +2,12 @@ package uk.gov.pay.connector.events;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.exception.ChargeEventNotFoundRuntimeException;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
+import uk.gov.pay.connector.queue.QueueException;
 
 import javax.inject.Inject;
 import java.util.Optional;
@@ -38,19 +40,23 @@ public class PaymentStateTransitionEmitterProcess {
         try {
             paymentEvent = createEvent(paymentStateTransition);
             eventQueue.emitEvent(paymentEvent);
-        } catch (Exception e) {
-            LOGGER.warn("Failed to add event to queue");
+        } catch (ChargeEventNotFoundRuntimeException | QueueException e) {
+            LOGGER.warn(
+                    "Failed to emit payment event for state transition [chargeEventId={}] [eventType={}]",
+                    paymentStateTransition.getChargeEventId(),
+                    paymentStateTransition.getStateTransitionEventClass().getSimpleName()
+            );
             paymentStateTransitionQueue.offer(paymentStateTransition);
         }
     }
 
-    private PaymentEvent createEvent(PaymentStateTransition paymentStateTransition) throws Exception {
+    private PaymentEvent createEvent(PaymentStateTransition paymentStateTransition) throws ChargeEventNotFoundRuntimeException {
         return chargeEventDao.findById(ChargeEventEntity.class, paymentStateTransition.getChargeEventId())
                 .map(chargeEvent -> createEvent(chargeEvent, paymentStateTransition.getStateTransitionEventClass()))
-                .orElseThrow(() -> new Exception());
+                .orElseThrow(() -> new ChargeEventNotFoundRuntimeException("No external charge ID"));
     }
 
     private PaymentEvent createEvent(ChargeEventEntity chargeEvent, Class<? extends PaymentEvent> paymentEventClass) {
-        return null;
+        return PaymentEventFactory.create(paymentEventClass, chargeEvent);
     }
 }
