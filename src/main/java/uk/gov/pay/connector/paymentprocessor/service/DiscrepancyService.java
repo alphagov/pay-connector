@@ -79,7 +79,7 @@ public class DiscrepancyService {
                         .orElse(false) &&
                 payExternalChargeStatus.isFinished() &&
                 !payExternalChargeStatus.equals(ExternalChargeState.EXTERNAL_SUCCESS) &&
-                chargeAgeInDaysIsGreaterThan(gatewayStatusComparison.getCharge(), 7);
+                chargeAgeInDaysIsGreaterThan(gatewayStatusComparison.getCharge(), 2);
     }
 
     private boolean chargeAgeInDaysIsGreaterThan(ChargeEntity charge, long minimumAge) {
