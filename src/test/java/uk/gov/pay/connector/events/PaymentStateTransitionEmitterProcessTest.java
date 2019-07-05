@@ -2,26 +2,27 @@ package uk.gov.pay.connector.events;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
 import uk.gov.pay.connector.queue.QueueException;
-import unfiltered.response.link.Payment;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PaymentStateTransitionEmitterProcessTest {
+
+    private final ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
 
     @Mock
     PaymentStateTransitionQueue paymentStateTransitionQueue;
@@ -37,17 +38,23 @@ public class PaymentStateTransitionEmitterProcessTest {
 
     @Test
     public void shouldEmitPaymentEventGivenStateTransitionMessageOnQueue() throws Exception {
-        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(100L, PaymentEvent.class);
+        Long chargeEventId = 100L;
+        ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition<>(chargeEventId, PaymentCreated.class);
+
+        when(chargeEvent.getChargeEntity()).thenReturn(charge);
         when(paymentStateTransitionQueue.poll()).thenReturn(paymentStateTransition);
+        when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventId)).thenReturn(Optional.of(chargeEvent));
 
         paymentStateTransitionEmitterProcess.handleStateTransitionMessages();
 
-        verify(eventQueue).emitEvent(any());
+        verify(eventQueue).emitEvent(any(PaymentCreated.class));
     }
 
     @Test
-    public void shouldPutPaymentTransitionBackOnQueueIfChargeEventNotFound() throws Exception {
-        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(100L, PaymentEvent.class);
+    public void shouldPutPaymentTransitionBackOnQueueIfChargeEventNotFound() {
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition<>(100L, PaymentEvent.class);
+
         when(paymentStateTransitionQueue.poll()).thenReturn(paymentStateTransition);
         when(chargeEventDao.findById(ChargeEventEntity.class, 100L)).thenReturn(Optional.empty());
 
@@ -59,15 +66,17 @@ public class PaymentStateTransitionEmitterProcessTest {
 
     @Test
     public void shouldPutPaymentTransitionBackOnQueueIfEventEmitFails() throws Exception {
-        ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
-        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(100L, PaymentEvent.class);
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition<>(100L, PaymentEvent.class);
+        ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
+
         when(paymentStateTransitionQueue.poll()).thenReturn(paymentStateTransition);
-        when(chargeEventDao.findById(ChargeEventEntity.class, 100L)).thenReturn(Optional.of(chargeEventEntity));
+        when(chargeEvent.getUpdated()).thenReturn(ZonedDateTime.now());
+        when(chargeEvent.getChargeEntity()).thenReturn(charge);
+        when(chargeEventDao.findById(ChargeEventEntity.class, 100L)).thenReturn(Optional.of(chargeEvent));
         doThrow(QueueException.class).when(eventQueue).emitEvent(any());
 
         paymentStateTransitionEmitterProcess.handleStateTransitionMessages();
 
-        verifyNoMoreInteractions(eventQueue);
         verify(paymentStateTransitionQueue).offer(paymentStateTransition);
     }
 }
