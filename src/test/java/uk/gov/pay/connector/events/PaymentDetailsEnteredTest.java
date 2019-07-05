@@ -19,7 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
-public class PaymentDetailsEventTest {
+public class PaymentDetailsEnteredTest {
 
     private final String paymentId = "jweojfewjoifewj";
     private final String time = "2018-03-12T16:25:01.123456Z";
@@ -52,10 +52,10 @@ public class PaymentDetailsEventTest {
     @Test
     public void whenAllTheDataIsAvailable() throws JsonProcessingException {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
-        String actual = PaymentDetailsEvent.from(chargeEntity).toJsonString();
+        String actual = PaymentDetailsEntered.from(chargeEntity).toJsonString();
 
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(time)));
-        assertThat(actual, hasJsonPath("$.event_type", equalTo("PAYMENT_DETAILS_EVENT")));
+        assertThat(actual, hasJsonPath("$.event_type", equalTo("PAYMENT_DETAILS_ENTERED")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
         assertThat(actual, hasJsonPath("$.title", equalTo("Payment details entered event")));
@@ -86,10 +86,10 @@ public class PaymentDetailsEventTest {
                 .withCorporateSurcharge(null)
                 .build();
 
-        String actual = PaymentDetailsEvent.from(chargeEntity).toJsonString();
+        String actual = PaymentDetailsEntered.from(chargeEntity).toJsonString();
 
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(time)));
-        assertThat(actual, hasJsonPath("$.event_type", equalTo("PAYMENT_DETAILS_EVENT")));
+        assertThat(actual, hasJsonPath("$.event_type", equalTo("PAYMENT_DETAILS_ENTERED")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
         assertThat(actual, hasJsonPath("$.title", equalTo("Payment details entered event")));

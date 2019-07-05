@@ -13,31 +13,31 @@ import java.time.ZonedDateTime;
  * frontend: POST /frontend/charges/{chargeId}/status
  *
  */
-public class PaymentDetailsEvent extends PaymentEvent {
+public class PaymentDetailsEntered extends PaymentEvent {
 
-    public PaymentDetailsEvent(String resourceExternalId,
-                               PaymentDetailsEnteredEventDetails eventDetails,
-                               ZonedDateTime timestamp) {
+    public PaymentDetailsEntered(String resourceExternalId,
+                                 PaymentDetailsEnteredEventDetails eventDetails,
+                                 ZonedDateTime timestamp) {
         super(resourceExternalId, eventDetails, timestamp);
     }
 
-    public static PaymentDetailsEvent from(ChargeEntity charge) {
+    public static PaymentDetailsEntered from(ChargeEntity charge) {
         ZonedDateTime lastEventDate = charge.getEvents().stream()
                 .filter(e -> e.getStatus() == ChargeStatus.fromString(charge.getStatus()))
                 .map(ChargeEventEntity::getUpdated)
                 .max(ZonedDateTime::compareTo)
                 .orElseThrow(() -> new ChargeEventNotFoundRuntimeException(charge.getExternalId()));
 
-        return new PaymentDetailsEvent(
+        return new PaymentDetailsEntered(
                 charge.getExternalId(),
                 PaymentDetailsEnteredEventDetails.from(charge),
                 lastEventDate);
     }
 
-    public static PaymentDetailsEvent from (ChargeEventEntity chargeEvent) {
+    public static PaymentDetailsEntered from (ChargeEventEntity chargeEvent) {
         ChargeEntity charge = chargeEvent.getChargeEntity();
 
-        return new PaymentDetailsEvent(
+        return new PaymentDetailsEntered(
                 charge.getExternalId(),
                 PaymentDetailsEnteredEventDetails.from(charge),
                 chargeEvent.getUpdated()

@@ -244,7 +244,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
         verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
         assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_EVENT"));
+        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
     }
 
     @Test
