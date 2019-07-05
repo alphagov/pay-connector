@@ -38,6 +38,16 @@ public class PaymentDetailsEvent extends PaymentEvent {
                 lastEventDate);
     }
 
+    public static PaymentDetailsEvent from (ChargeEventEntity chargeEvent) {
+        ChargeEntity charge = chargeEvent.getChargeEntity();
+
+        return new PaymentDetailsEvent(
+                charge.getExternalId(),
+                PaymentDetailsEnteredEventDetails.from(charge),
+                chargeEvent.getUpdated()
+        );
+    }
+
     public String getTitle() { return "Payment details entered event"; }
     public String getDescription() { return "The event happens when the payment details are entered"; }
 }
