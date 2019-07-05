@@ -8,18 +8,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
-import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
-import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
-import java.util.Optional;
 
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -47,9 +42,9 @@ public class DiscrepancyServiceTest {
     }
     
     @Test
-    public void aChargeShouldBeCancellable_whenPayAndGatewayStatusesAllowItAndIsOlderThan7Days() throws GatewayException {
+    public void aChargeShouldBeCancellable_whenPayAndGatewayStatusesAllowItAndIsOlderThan2Days() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.now().minusDays(8))
+                .withCreatedDate(ZonedDateTime.now().minusDays(3))
                 .withStatus(EXPIRED)
                 .build();
         ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, "Raw response");
@@ -65,7 +60,7 @@ public class DiscrepancyServiceTest {
     @Test
     public void aChargeShouldNotBeCancellable_whenPayAndGatewayStatusesMatch() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.now().minusDays(8))
+                .withCreatedDate(ZonedDateTime.now().minusDays(3))
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build();
         
@@ -76,7 +71,7 @@ public class DiscrepancyServiceTest {
     @Test
     public void aChargeShouldNotBeCancellable_whenPayStatusIsSuccess() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.now().minusDays(8))
+                .withCreatedDate(ZonedDateTime.now().minusDays(3))
                 .withStatus(CAPTURED)
                 .build();
         
@@ -87,7 +82,7 @@ public class DiscrepancyServiceTest {
     @Test
     public void aChargeShouldNotBeCancellable_whenPayStatusIsUnfinished() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.now().minusDays(8))
+                .withCreatedDate(ZonedDateTime.now().minusDays(3))
                 .withStatus(AUTHORISATION_3DS_READY)
                 .build();
 
@@ -98,7 +93,7 @@ public class DiscrepancyServiceTest {
     @Test
     public void aChargeShouldNotBeCancellable_whenGatewayStatusIsFinished() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.now().minusDays(8))
+                .withCreatedDate(ZonedDateTime.now().minusDays(3))
                 .withStatus(EXPIRED)
                 .build();
         
@@ -107,9 +102,9 @@ public class DiscrepancyServiceTest {
     }
 
     @Test
-    public void aChargeShouldNotBeCancellable_whenChargeIsLessThan7DaysOld() throws GatewayException {
+    public void aChargeShouldNotBeCancellable_whenChargeIsLessThan2DaysOld() throws GatewayException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
-                .withCreatedDate(ZonedDateTime.now().minusDays(6))
+                .withCreatedDate(ZonedDateTime.now().minusDays(1))
                 .withStatus(EXPIRED)
                 .build();
         
