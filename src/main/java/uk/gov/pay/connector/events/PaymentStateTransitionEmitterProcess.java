@@ -36,9 +36,8 @@ public class PaymentStateTransitionEmitterProcess {
     }
 
     private void emitEvent(PaymentStateTransition paymentStateTransition) {
-        PaymentEvent paymentEvent;
         try {
-            paymentEvent = createEvent(paymentStateTransition);
+            PaymentEvent paymentEvent = createEvent(paymentStateTransition);
             eventQueue.emitEvent(paymentEvent);
         } catch (ChargeEventNotFoundRuntimeException | QueueException e) {
             LOGGER.warn(
