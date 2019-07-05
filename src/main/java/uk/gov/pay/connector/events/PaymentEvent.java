@@ -16,6 +16,12 @@ public class PaymentEvent extends Event {
         this.timestamp = timestamp;
     }
 
+    public PaymentEvent(String resourceExternalId, ZonedDateTime timestamp) {
+        this.resourceExternalId = resourceExternalId;
+        this.timestamp = timestamp;
+        this.eventDetails = new EmptyEventDetails();
+    }
+
     @Override
     public String getResourceExternalId() {
         return resourceExternalId;
