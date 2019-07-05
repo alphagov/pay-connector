@@ -53,11 +53,11 @@ public class EmittedEventDaoIT extends DaoITestBase {
     @Test
     public void recordEmission_shouldRecordEmission() {
         final PaymentCreated eventThatHasBeenEmitted = aPaymentCreatedEvent();
-        
+
         emittedEventDao.recordEmission(eventThatHasBeenEmitted);
 
         final List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
-        
+
         assertThat(events.size(), is(1));
         final Map<String, Object> event = events.get(0);
         assertThat(event.get("resource_external_id"), is(eventThatHasBeenEmitted.getResourceExternalId()));
@@ -69,23 +69,23 @@ public class EmittedEventDaoIT extends DaoITestBase {
 
         final List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
         assertThat(events.size(), is(0));
-        
+
         assertThat(b, is(false));
     }
 
     @Test
     public void hasBeenEmittedBefore_shouldReturnTrueIfRecordedBefore() {
         final PaymentCreated paymentCreatedEvent = aPaymentCreatedEvent();
-        
+
         emittedEventDao.recordEmission(paymentCreatedEvent);
-        
+
         assertThat(emittedEventDao.hasBeenEmittedBefore(paymentCreatedEvent), is(true));
     }
 
     private PaymentCreated aPaymentCreatedEvent() {
         PaymentCreatedEventDetails eventDetails = new PaymentCreatedEventDetails(
                 1L, "desc", "ref", "return_url",
-                100L, "someProvider");
+                100L, "someProvider", "en", false);
         return new PaymentCreated("my-resource-external-id", eventDetails, ZonedDateTime.parse("2019-01-01T14:00:00Z"));
     }
 }

@@ -10,26 +10,33 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private final String reference;
     private final String returnUrl;
     private final Long gatewayAccountId;
-    private final  String paymentProvider;
+    private final String paymentProvider;
+    private final String language;
+    private final boolean delayedCapture;
 
-    public PaymentCreatedEventDetails(Long amount, String description, String reference, String returnUrl, Long gatewayAccountId, String paymentProvider) {
+    public PaymentCreatedEventDetails(Long amount, String description, String reference, String returnUrl,
+                                      Long gatewayAccountId, String paymentProvider, String language,
+                                      boolean delayedCapture) {
         this.amount = amount;
         this.description = description;
         this.reference = reference;
         this.returnUrl = returnUrl;
         this.gatewayAccountId = gatewayAccountId;
         this.paymentProvider = paymentProvider;
+        this.language = language;
+        this.delayedCapture = delayedCapture;
     }
 
     public static PaymentCreatedEventDetails from(ChargeEntity charge) {
         return new PaymentCreatedEventDetails(
-            charge.getAmount(),
-            charge.getDescription(),
-            charge.getReference().toString(),
-            charge.getReturnUrl(),
-            charge.getGatewayAccount().getId(),
-            charge.getGatewayAccount().getGatewayName()           
-        );
+                charge.getAmount(),
+                charge.getDescription(),
+                charge.getReference().toString(),
+                charge.getReturnUrl(),
+                charge.getGatewayAccount().getId(),
+                charge.getGatewayAccount().getGatewayName(),
+                charge.getLanguage().toString(),
+                charge.isDelayedCapture());
     }
 
     public Long getAmount() {
@@ -56,6 +63,14 @@ public class PaymentCreatedEventDetails extends EventDetails {
         return paymentProvider;
     }
 
+    public String getLanguage() {
+        return language;
+    }
+
+    public boolean isDelayedCapture() {
+        return delayedCapture;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -66,12 +81,13 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 Objects.equals(reference, that.reference) &&
                 Objects.equals(returnUrl, that.returnUrl) &&
                 Objects.equals(gatewayAccountId, that.gatewayAccountId) &&
-                Objects.equals(paymentProvider, that.paymentProvider);
+                Objects.equals(paymentProvider, that.paymentProvider) &&
+                Objects.equals(language, that.language) &&
+                Objects.equals(delayedCapture, that.delayedCapture);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(amount, description, reference, returnUrl, gatewayAccountId, paymentProvider);
+        return Objects.hash(amount, description, reference, returnUrl, gatewayAccountId, paymentProvider, language, delayedCapture);
     }
-
 }
