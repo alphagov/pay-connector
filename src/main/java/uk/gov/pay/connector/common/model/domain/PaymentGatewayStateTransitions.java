@@ -26,6 +26,7 @@ import uk.gov.pay.connector.events.UserApprovedForCapture;
 import uk.gov.pay.connector.events.UserApprovedForCaptureAwaitingServiceApproval;
 import uk.gov.pay.connector.events.UserCancelled;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -155,7 +156,7 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(USER_CANCEL_READY, USER_CANCELLED, ModelledEvent.of(UserCancelled.class));
         graph.putEdgeValue(USER_CANCEL_SUBMITTED, USER_CANCEL_ERROR, ModelledEvent.of(UserCancelled.class));
         graph.putEdgeValue(USER_CANCEL_SUBMITTED, USER_CANCELLED, ModelledEvent.of(UserCancelled.class));
-        
+
         return ImmutableValueGraph.copyOf(graph);
     }
 
@@ -172,6 +173,18 @@ public class PaymentGatewayStateTransitions {
                         edge.nodeV(),
                         graph.edgeValue(edge.nodeU(), edge.nodeV()).map(e -> e.toString()).orElse("")))
                 .collect(Collectors.toSet());
+    }
+
+    public <T extends Event> Optional<Class<T>> getEventForTransition(ChargeStatus fromStatus, ChargeStatus toStatus) {
+        return graph.edgeValue(fromStatus , toStatus)
+                .map(modelledEvent -> {
+                    try {
+                        ModelledTypedEvent<T> modelledTypedEvent = (ModelledTypedEvent) modelledEvent;
+                        return modelledTypedEvent.getClazz();
+                    } catch (ClassCastException e) {
+                        return null;
+                    }
+                });
     }
 
     public static boolean isValidTransition(ChargeStatus state, ChargeStatus targetState, Event event) {
@@ -228,5 +241,8 @@ public class PaymentGatewayStateTransitions {
             return clazz.getSimpleName();
         }
 
+        public Class<T> getClazz() {
+            return clazz;
+        }
     }
 }
