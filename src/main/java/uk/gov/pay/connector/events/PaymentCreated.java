@@ -9,7 +9,7 @@ import java.time.ZonedDateTime;
 
 public class PaymentCreated extends PaymentEvent {
 
-    private PaymentCreated(String resourceExternalId, PaymentCreatedEventDetails paymentCreatedEventDetails, ZonedDateTime timestamp) {
+    public PaymentCreated(String resourceExternalId, PaymentCreatedEventDetails paymentCreatedEventDetails, ZonedDateTime timestamp) {
         super(resourceExternalId, paymentCreatedEventDetails, timestamp);
     }
 
@@ -26,6 +26,14 @@ public class PaymentCreated extends PaymentEvent {
                 event.getChargeEntity().getExternalId(),
                 PaymentCreatedEventDetails.from(event.getChargeEntity()),
                 event.getUpdated()
+        );
+    }
+
+    public static PaymentCreated from(ChargeEntity charge) {
+        return new PaymentCreated(
+                charge.getExternalId(),
+                PaymentCreatedEventDetails.from(charge),
+                charge.getCreatedDate()
         );
     }
 }
