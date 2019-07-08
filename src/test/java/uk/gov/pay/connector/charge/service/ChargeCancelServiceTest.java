@@ -68,9 +68,12 @@ public class ChargeCancelServiceTest {
     @Mock
     private PaymentProvider mockPaymentProvider;
 
+    @Mock
+    private ChargeService chargeService;
+
     @Before
     public void setup() {
-        chargeCancelService = new ChargeCancelService(mockChargeDao, mockChargeEventDao, mockPaymentProviders);
+        chargeCancelService = new ChargeCancelService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, chargeService);
     }
 
     @Test
@@ -87,9 +90,7 @@ public class ChargeCancelServiceTest {
 
         chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
 
-        assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
-
-        verify(mockChargeEventDao).persistChargeEventOf(chargeEntity);
+        verify(chargeService).transitionChargeState(chargeEntity, SYSTEM_CANCELLED);
     }
 
     @Test
@@ -114,10 +115,7 @@ public class ChargeCancelServiceTest {
 
         chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
 
-        assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
-
-        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)));
-
+        verify(chargeService).transitionChargeState(chargeEntity, SYSTEM_CANCELLED);
         verifyNoMoreInteractions(ignoreStubs(mockChargeDao));
     }
 
@@ -145,8 +143,7 @@ public class ChargeCancelServiceTest {
 
         chargeCancelService.doUserCancel(externalChargeId);
 
-        assertThat(chargeEntity.getStatus(), is(USER_CANCELLED.getValue()));
-        verify(mockChargeEventDao).persistChargeEventOf(chargeEntity);
+        verify(chargeService).transitionChargeState(chargeEntity, USER_CANCELLED);
     }
 
     @Test
@@ -169,10 +166,7 @@ public class ChargeCancelServiceTest {
 
         chargeCancelService.doUserCancel(externalChargeId);
 
-        assertThat(chargeEntity.getStatus(), is(USER_CANCELLED.getValue()));
-
-        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(USER_CANCELLED)));
-
+        verify(chargeService).transitionChargeState(chargeEntity, USER_CANCELLED);
         verifyNoMoreInteractions(ignoreStubs(mockChargeDao));
     }
 
@@ -208,10 +202,7 @@ public class ChargeCancelServiceTest {
 
         chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
 
-        assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
-
-        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)));
-
+        verify(chargeService).transitionChargeState(chargeEntity, SYSTEM_CANCELLED);
         verifyNoMoreInteractions(ignoreStubs(mockChargeDao));
     }
 
@@ -238,10 +229,7 @@ public class ChargeCancelServiceTest {
 
         chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
 
-        assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
-
-        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)));
-
+        verify(chargeService).transitionChargeState(chargeEntity, SYSTEM_CANCELLED);
         verifyNoMoreInteractions(ignoreStubs(mockChargeDao));
     }
 
@@ -267,10 +255,7 @@ public class ChargeCancelServiceTest {
 
         chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
 
-        assertThat(chargeEntity.getStatus(), is(SYSTEM_CANCELLED.getValue()));
-
-        verify(mockChargeEventDao, atLeastOnce()).persistChargeEventOf(argThat(chargeEntityHasStatus(SYSTEM_CANCELLED)));
-
+        verify(chargeService).transitionChargeState(chargeEntity, SYSTEM_CANCELLED);
         verifyNoMoreInteractions(ignoreStubs(mockChargeDao));
     }
 

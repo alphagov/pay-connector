@@ -44,14 +44,17 @@ public class ChargeCancelService {
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
     private final PaymentProviders providers;
+    private final ChargeService chargeService;
 
     @Inject
     public ChargeCancelService(ChargeDao chargeDao,
                                ChargeEventDao chargeEventDao,
-                               PaymentProviders providers) {
+                               PaymentProviders providers,
+                               ChargeService chargeService) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.providers = providers;
+        this.chargeService = chargeService;
     }
 
     public Optional<ChargeEntity> doSystemCancel(String chargeId, Long accountId) {
@@ -86,9 +89,9 @@ public class ChargeCancelService {
 
         try {
             final GatewayResponse<BaseCancelResponse> gatewayResponse = doGatewayCancel(chargeEntity);
-            
+
             if (!gatewayResponse.getBaseResponse().isPresent()) gatewayResponse.throwGatewayError();
-            
+
             chargeStatus = determineTerminalState(gatewayResponse.getBaseResponse().get(), statusFlow);
             stringifiedResponse = gatewayResponse.getBaseResponse().get().toString();
         } catch (GatewayException e) {
@@ -158,8 +161,7 @@ public class ChargeCancelService {
     @SuppressWarnings("WeakerAccess") // Guice requires @Transactional methods to be public
     public void setChargeStatusTo(String chargeEntityExternalId, ChargeStatus chargeStatus) {
         chargeDao.findByExternalId(chargeEntityExternalId).ifPresentOrElse(chargeEntity -> {
-            chargeEntity.setStatus(chargeStatus);
-            chargeEventDao.persistChargeEventOf(chargeEntity);
+            chargeService.transitionChargeState(chargeEntity, chargeStatus);
         }, () -> {
             throw new ChargeNotFoundRuntimeException(chargeEntityExternalId);
         });
