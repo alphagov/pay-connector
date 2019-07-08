@@ -58,9 +58,11 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -442,10 +444,22 @@ public class ChargeService {
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    @Transactional
     public ChargeEntity transitionChargeState(ChargeEntity charge, ChargeStatus targetChargeState) {
+        return transitionChargeState(charge, targetChargeState, null);
+    }
+
+    @Transactional
+    public ChargeEntity transitionChargeState(
+            ChargeEntity charge,
+            ChargeStatus targetChargeState,
+            ZonedDateTime gatewayEventTime
+    ) {
         charge.setStatus(targetChargeState);
-        chargeEventDao.persistChargeEventOf(charge);
+        if (Objects.nonNull(gatewayEventTime)) {
+            chargeEventDao.persistChargeEventOf(charge, gatewayEventTime);
+        } else {
+            chargeEventDao.persistChargeEventOf(charge);
+        }
         return charge;
     }
 
