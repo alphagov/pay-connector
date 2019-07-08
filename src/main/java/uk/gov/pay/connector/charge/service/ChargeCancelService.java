@@ -8,7 +8,6 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
@@ -42,17 +41,14 @@ public class ChargeCancelService {
     );
 
     private final ChargeDao chargeDao;
-    private final ChargeEventDao chargeEventDao;
     private final PaymentProviders providers;
     private final ChargeService chargeService;
 
     @Inject
     public ChargeCancelService(ChargeDao chargeDao,
-                               ChargeEventDao chargeEventDao,
                                PaymentProviders providers,
                                ChargeService chargeService) {
         this.chargeDao = chargeDao;
-        this.chargeEventDao = chargeEventDao;
         this.providers = providers;
         this.chargeService = chargeService;
     }

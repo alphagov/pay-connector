@@ -2,16 +2,15 @@ package uk.gov.pay.connector.charge.service;
 
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -28,7 +27,6 @@ import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.ignoreStubs;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -53,14 +51,8 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
  * A consequence of a no TDD approach
  */
 public class ChargeCancelServiceTest {
-
-    private ChargeCancelService chargeCancelService;
-
     @Mock
     private ChargeDao mockChargeDao;
-
-    @Mock
-    private ChargeEventDao mockChargeEventDao;
 
     @Mock
     private PaymentProviders mockPaymentProviders;
@@ -71,10 +63,8 @@ public class ChargeCancelServiceTest {
     @Mock
     private ChargeService chargeService;
 
-    @Before
-    public void setup() {
-        chargeCancelService = new ChargeCancelService(mockChargeDao, mockChargeEventDao, mockPaymentProviders, chargeService);
-    }
+    @InjectMocks
+    private ChargeCancelService chargeCancelService;
 
     @Test
     public void doSystemCancel_shouldCancel_withStatusThatDoesNotNeedCancellationInGatewayProvider() {
