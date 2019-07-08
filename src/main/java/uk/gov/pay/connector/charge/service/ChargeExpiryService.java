@@ -56,13 +56,14 @@ public class ChargeExpiryService {
     private static final String EXPIRY_SUCCESS = "expiry-success";
     private static final String EXPIRY_FAILED = "expiry-failed";
     private static final long TOKEN_EXPIRY_DAYS = 7;
-    
+
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
     private final TokenDao tokenDao;
     private final PaymentProviders providers;
     private final QueryService queryService;
-    
+    private final ChargeService chargeService;
+
     private final ChargeSweepConfig chargeSweepConfig;
 
     @Inject
@@ -71,13 +72,15 @@ public class ChargeExpiryService {
                                TokenDao tokenDao,
                                PaymentProviders providers,
                                QueryService queryService,
-                               ConnectorConfiguration config) {
+                               ConnectorConfiguration config,
+                               ChargeService chargeService) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.tokenDao = tokenDao;
         this.providers = providers;
         this.chargeSweepConfig = config.getChargeSweepConfig();
         this.queryService = queryService;
+        this.chargeService = chargeService;
     }
 
     Map<String, Integer> expire(List<ChargeEntity> charges) {
@@ -85,11 +88,11 @@ public class ChargeExpiryService {
                 .stream()
                 .collect(Collectors.groupingBy(this::getAuthorisationStage));
 
-        Map<Boolean, List<ChargeEntity>> chargesPartitionedByNeedForExpiryWithGateway = 
+        Map<Boolean, List<ChargeEntity>> chargesPartitionedByNeedForExpiryWithGateway =
                 getNullSafeList(chargesGroupedByAuthStage.get(DURING_AUTHORISATION))
                         .stream()
                         .collect(Collectors.partitioningBy(this::isExpirableWithGateway));
-        
+
         List<ChargeEntity> toExpireWithoutGateway = new ImmutableList.Builder<ChargeEntity>()
                 .addAll(getNullSafeList(chargesGroupedByAuthStage.get(PRE_AUTHORISATION)))
                 .addAll(getNullSafeList(chargesPartitionedByNeedForExpiryWithGateway.get(Boolean.FALSE)))
@@ -135,19 +138,19 @@ public class ChargeExpiryService {
                 .addAll(getChargesToExpireWithRegularExpiryThreshold())
                 .addAll(getChargesToExpireWithDelayedExpiryThreshold())
                 .build();
-        
+
         deleteTokensOlderThanSpecifiedDate();
         logger.info("Charges found for expiry - number_of_charges={}, since_date={}, awaiting_capture_date{}",
                 chargesToExpire.size(), getExpiryDateForRegularCharges(), getExpiryDateForAwaitingCaptureRequest());
-        
+
         return expire(chargesToExpire);
     }
-    
+
     private int deleteTokensOlderThanSpecifiedDate() {
         ZonedDateTime cutOffDate = ZonedDateTime.now(ZoneId.of("UTC")).minusDays(TOKEN_EXPIRY_DAYS);
         return tokenDao.deleteTokensOlderThanSpecifiedDate(cutOffDate);
     }
-    
+
 
     private List<ChargeEntity> getChargesToExpireWithDelayedExpiryThreshold() {
         return chargeDao.findBeforeDateWithStatusIn(getExpiryDateForAwaitingCaptureRequest(),
@@ -219,7 +222,7 @@ public class ChargeExpiryService {
             }
         }).orElse(EXPIRE_FLOW.getFailureTerminalState());
     }
-    
+
     public Boolean forceCancelWithGateway(ChargeEntity charge) {
         try {
             GatewayResponse<BaseCancelResponse> cancelResponse = doGatewayCancel(charge);
@@ -277,8 +280,7 @@ public class ChargeExpiryService {
                 .map(chargeEntity -> {
                     logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                             chargeEntity.getExternalId(), chargeEntity.getStatus(), targetStatus);
-                    chargeEntity.setStatus(targetStatus);
-                    chargeEventDao.persistChargeEventOf(chargeEntity);
+                    chargeService.transitionChargeState(chargeEntity, targetStatus);
                     return chargeEntity;
                 })
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
@@ -302,11 +304,10 @@ public class ChargeExpiryService {
 
                 throw new IllegalStateRuntimeException(chargeId);
             }
-            chargeEntity.setStatus(newStatus);
+            chargeService.transitionChargeState(chargeEntity, newStatus);
 
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
-
-            // Used by Sumo Logic saved search
+            // Used by Splunk saved search
             logger.info("Card cancel request sent - charge_external_id={}, charge_status={}, account_id={}, transaction_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
                     chargeEntity.getExternalId(),
                     chargeStatus,
@@ -317,8 +318,6 @@ public class ChargeExpiryService {
                     gatewayAccount.getGatewayName(),
                     gatewayAccount.getType(),
                     newStatus);
-
-            chargeEventDao.persistChargeEventOf(chargeEntity);
 
             return chargeEntity;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));

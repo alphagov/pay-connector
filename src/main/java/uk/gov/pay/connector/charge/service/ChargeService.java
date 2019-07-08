@@ -188,8 +188,7 @@ public class ChargeService {
 
     @Transactional
     public void abortCharge(ChargeEntity charge) {
-        charge.setStatus(AUTHORISATION_ABORTED);
-        chargeEventDao.persistChargeEventOf(charge);
+        transitionChargeState(charge, AUTHORISATION_ABORTED);
     }
 
     @Transactional
@@ -217,8 +216,7 @@ public class ChargeService {
                 .map(chargeEntity -> {
                     final ChargeStatus oldChargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
                     if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(oldChargeStatus)) {
-                        chargeEntity.setStatus(newChargeStatus);
-                        chargeEventDao.persistChargeEventOf(chargeEntity);
+                        transitionChargeState(chargeEntity, newChargeStatus);
                         return Optional.of(chargeEntity);
                     }
                     return Optional.<ChargeEntity>empty();
@@ -344,7 +342,6 @@ public class ChargeService {
                                                       Optional<WalletType> walletType,
                                                       Optional<String> emailAddress) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
-            charge.setStatus(status);
 
             setTransactionId(charge, transactionId);
             sessionIdentifier.ifPresent(charge::setProviderSessionId);
@@ -355,7 +352,8 @@ public class ChargeService {
             CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
             charge.setCardDetails(detailsEntity);
 
-            chargeEventDao.persistChargeEventOf(charge);
+            // @FIXME(sfount) verify that moving set status below other calls doesn't change any logic
+            transitionChargeState(charge, status);
 
             logger.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeExternalId);
@@ -369,10 +367,9 @@ public class ChargeService {
                                                          OperationType operationType,
                                                          Optional<String> transactionId) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
-            try {
-                charge.setStatus(status);
+            try {                setTransactionId(charge, transactionId);
                 setTransactionId(charge, transactionId);
-                chargeEventDao.persistChargeEventOf(charge);
+                transitionChargeState(charge, status);
             } catch (InvalidStateTransitionException e) {
                 if (chargeIsInLockedStatus(operationType, charge)) {
                     throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), charge.getExternalId());
@@ -444,10 +441,15 @@ public class ChargeService {
     // 3. queue payment event emit for this action
     // q.u.e.s.t.i.o.n should this be transactional or rely on lower level code to manage this?
     // @FIXME(sfount) will there be any branching logic that requires testing?
-    @Transactional
+    // @FIXME(sfount) overrideGatewayTime is gross
     public ChargeEntity transitionChargeState(ChargeEntity charge, ChargeStatus targetChargeState) {
+        return transitionChargeState(charge, targetChargeState, null);
+    }
+
+    @Transactional
+    public ChargeEntity transitionChargeState(ChargeEntity charge, ChargeStatus targetChargeState, ZonedDateTime overrideGatewayTime) {
         charge.setStatus(targetChargeState);
-        chargeEventDao.persistChargeEventOf(charge);
+        chargeEventDao.persistChargeEventOf(charge, overrideGatewayTime);
         return charge;
     }
 
