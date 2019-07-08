@@ -186,8 +186,8 @@ public class ChargeService {
 
     @Transactional
     public void abortCharge(ChargeEntity charge) {
-        charge.setStatus(AUTHORISATION_ABORTED);
-        chargeEventDao.persistChargeEventOf(charge);
+        // @TODO(sfount) this could be moved one level higher
+        transitionChargeState(charge, AUTHORISATION_ABORTED);
     }
 
     @Transactional
@@ -215,12 +215,11 @@ public class ChargeService {
                 .map(chargeEntity -> {
                     final ChargeStatus oldChargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
                     if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(oldChargeStatus)) {
-                        chargeEntity.setStatus(newChargeStatus);
-                        chargeEventDao.persistChargeEventOf(chargeEntity);
-                        return Optional.of(chargeEntity);
+                        transitionChargeState(chargeEntity, newChargeStatus);
+                        return chargeEntity;
                     }
-                    return Optional.<ChargeEntity>empty();
-                }).orElse(Optional.empty());
+                    return null;
+                });
     }
 
     public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity, boolean buildForSearchResult) {
@@ -342,8 +341,6 @@ public class ChargeService {
                                                       Optional<WalletType> walletType,
                                                       Optional<String> emailAddress) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
-            charge.setStatus(status);
-
             setTransactionId(charge, transactionId);
             sessionIdentifier.ifPresent(charge::setProviderSessionId);
             auth3dsDetails.ifPresent(charge::set3dsDetails);
@@ -353,7 +350,7 @@ public class ChargeService {
             CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
             charge.setCardDetails(detailsEntity);
 
-            chargeEventDao.persistChargeEventOf(charge);
+            transitionChargeState(charge, status);
 
             logger.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeExternalId);
@@ -368,9 +365,8 @@ public class ChargeService {
                                                          Optional<String> transactionId) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             try {
-                charge.setStatus(status);
                 setTransactionId(charge, transactionId);
-                chargeEventDao.persistChargeEventOf(charge);
+                transitionChargeState(charge, status);
             } catch (InvalidStateTransitionException e) {
                 if (chargeIsInLockedStatus(operationType, charge)) {
                     throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), charge.getExternalId());
@@ -389,7 +385,7 @@ public class ChargeService {
                         transitionChargeState(chargeEntity, CAPTURED);
                     } else {
                         transitionChargeState(chargeEntity, nextStatus);
-                    }                    
+                    }
                     return chargeEntity;
                 })
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
@@ -410,7 +406,7 @@ public class ChargeService {
 
                 GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 
-                // Used by Sumo Logic saved search
+                // Used by Splunk saved search
                 logger.info("Card pre-operation - charge_external_id={}, charge_status={}, account_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
                         chargeEntity.getExternalId(),
                         fromString(chargeEntity.getStatus()),
