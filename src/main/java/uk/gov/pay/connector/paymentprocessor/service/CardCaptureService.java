@@ -83,7 +83,7 @@ public class CardCaptureService {
 
         if (!charge.isDelayedCapture())
             addChargeToCaptureQueue(charge);
-        
+
         return charge;
     }
 
@@ -91,7 +91,7 @@ public class CardCaptureService {
     void markChargeAsCaptureError(String chargeId) {
         LOG.error("CAPTURE_ERROR for charge [charge_external_id={}] - reached maximum number of capture attempts",
                 chargeId);
-        chargeService.updateChargeStatus(chargeId, CAPTURE_ERROR);
+        chargeService.transitionChargeState(chargeId, CAPTURE_ERROR);
     }
 
     public ChargeEntity markChargeAsCaptureApproved(String externalId) {
