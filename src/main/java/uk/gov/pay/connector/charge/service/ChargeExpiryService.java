@@ -14,7 +14,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage;
-import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
@@ -56,24 +55,24 @@ public class ChargeExpiryService {
     private static final String EXPIRY_SUCCESS = "expiry-success";
     private static final String EXPIRY_FAILED = "expiry-failed";
     private static final long TOKEN_EXPIRY_DAYS = 7;
-    
+
     private final ChargeDao chargeDao;
-    private final ChargeEventDao chargeEventDao;
+    private final ChargeService chargeService;
     private final TokenDao tokenDao;
     private final PaymentProviders providers;
     private final QueryService queryService;
-    
+
     private final ChargeSweepConfig chargeSweepConfig;
 
     @Inject
     public ChargeExpiryService(ChargeDao chargeDao,
-                               ChargeEventDao chargeEventDao,
+                               ChargeService chargeService,
                                TokenDao tokenDao,
                                PaymentProviders providers,
                                QueryService queryService,
                                ConnectorConfiguration config) {
         this.chargeDao = chargeDao;
-        this.chargeEventDao = chargeEventDao;
+        this.chargeService = chargeService;
         this.tokenDao = tokenDao;
         this.providers = providers;
         this.chargeSweepConfig = config.getChargeSweepConfig();
@@ -85,11 +84,11 @@ public class ChargeExpiryService {
                 .stream()
                 .collect(Collectors.groupingBy(this::getAuthorisationStage));
 
-        Map<Boolean, List<ChargeEntity>> chargesPartitionedByNeedForExpiryWithGateway = 
+        Map<Boolean, List<ChargeEntity>> chargesPartitionedByNeedForExpiryWithGateway =
                 getNullSafeList(chargesGroupedByAuthStage.get(DURING_AUTHORISATION))
                         .stream()
                         .collect(Collectors.partitioningBy(this::isExpirableWithGateway));
-        
+
         List<ChargeEntity> toExpireWithoutGateway = new ImmutableList.Builder<ChargeEntity>()
                 .addAll(getNullSafeList(chargesGroupedByAuthStage.get(PRE_AUTHORISATION)))
                 .addAll(getNullSafeList(chargesPartitionedByNeedForExpiryWithGateway.get(Boolean.FALSE)))
@@ -135,19 +134,19 @@ public class ChargeExpiryService {
                 .addAll(getChargesToExpireWithRegularExpiryThreshold())
                 .addAll(getChargesToExpireWithDelayedExpiryThreshold())
                 .build();
-        
+
         deleteTokensOlderThanSpecifiedDate();
         logger.info("Charges found for expiry - number_of_charges={}, since_date={}, awaiting_capture_date{}",
                 chargesToExpire.size(), getExpiryDateForRegularCharges(), getExpiryDateForAwaitingCaptureRequest());
-        
+
         return expire(chargesToExpire);
     }
-    
+
     private int deleteTokensOlderThanSpecifiedDate() {
         ZonedDateTime cutOffDate = ZonedDateTime.now(ZoneId.of("UTC")).minusDays(TOKEN_EXPIRY_DAYS);
         return tokenDao.deleteTokensOlderThanSpecifiedDate(cutOffDate);
     }
-    
+
 
     private List<ChargeEntity> getChargesToExpireWithDelayedExpiryThreshold() {
         return chargeDao.findBeforeDateWithStatusIn(getExpiryDateForAwaitingCaptureRequest(),
@@ -167,7 +166,7 @@ public class ChargeExpiryService {
 
     private int expireChargesWithoutGateway(List<ChargeEntity> nonAuthSuccessCharges) {
         List<ChargeEntity> processedEntities = nonAuthSuccessCharges
-                .stream().map(chargeEntity -> changeStatusTo(chargeEntity.getExternalId(), EXPIRED))
+                .stream().map(chargeEntity -> chargeService.transitionChargeState(chargeEntity.getExternalId(), EXPIRED))
                 .collect(Collectors.toList());
 
         return processedEntities.size();
@@ -192,7 +191,7 @@ public class ChargeExpiryService {
                         chargeEntity.getExternalId(), e.getMessage());
             }
 
-            ChargeEntity expiredCharge = changeStatusTo(processedEntity.getExternalId(), newStatus);
+            ChargeEntity expiredCharge = chargeService.transitionChargeState(processedEntity.getExternalId(), newStatus);
 
             if (EXPIRED.getValue().equals(expiredCharge.getStatus())) {
                 expireCancelled.add(processedEntity);
@@ -219,7 +218,7 @@ public class ChargeExpiryService {
             }
         }).orElse(EXPIRE_FLOW.getFailureTerminalState());
     }
-    
+
     public Boolean forceCancelWithGateway(ChargeEntity charge) {
         try {
             GatewayResponse<BaseCancelResponse> cancelResponse = doGatewayCancel(charge);
@@ -269,21 +268,6 @@ public class ChargeExpiryService {
         return providers.byName(chargeEntity.getPaymentGatewayName()).cancel(CancelGatewayRequest.valueOf(chargeEntity));
     }
 
-    // Only methods marked as public will be picked up by GuicePersist
-    @Transactional
-    @SuppressWarnings("WeakerAccess")
-    public ChargeEntity changeStatusTo(String chargeId, ChargeStatus targetStatus) {
-        return chargeDao.findByExternalId(chargeId)
-                .map(chargeEntity -> {
-                    logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
-                            chargeEntity.getExternalId(), chargeEntity.getStatus(), targetStatus);
-                    chargeEntity.setStatus(targetStatus);
-                    chargeEventDao.persistChargeEventOf(chargeEntity);
-                    return chargeEntity;
-                })
-                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
-    }
-
     @Transactional
     @SuppressWarnings("WeakerAccess")
     public ChargeEntity prepareForTermination(String chargeId) {
@@ -302,7 +286,7 @@ public class ChargeExpiryService {
 
                 throw new IllegalStateRuntimeException(chargeId);
             }
-            chargeEntity.setStatus(newStatus);
+            chargeService.transitionChargeState(chargeEntity, newStatus);
 
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 
@@ -318,7 +302,6 @@ public class ChargeExpiryService {
                     gatewayAccount.getType(),
                     newStatus);
 
-            chargeEventDao.persistChargeEventOf(chargeEntity);
 
             return chargeEntity;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));

@@ -1,11 +1,9 @@
 package uk.gov.pay.connector.charge.service;
 
 import com.google.common.collect.ImmutableList;
-import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
@@ -101,7 +99,7 @@ public class ChargeCancelService {
                 chargeEntity.getGatewayAccount().getAnalyticsId(), chargeEntity.getGatewayAccount().getId(),
                 stringifiedResponse, chargeEntity.getStatus(), chargeStatus);
 
-        setChargeStatusTo(chargeEntity.getExternalId(), chargeStatus);
+        chargeService.transitionChargeState(chargeEntity.getExternalId(), chargeStatus);
     }
 
     private GatewayResponse<BaseCancelResponse> doGatewayCancel(ChargeEntity chargeEntity) throws GatewayException {
@@ -125,7 +123,7 @@ public class ChargeCancelService {
         logger.info("Charge status to update - charge_external_id={}, status={}, to_status={}",
                 chargeEntity.getExternalId(), chargeEntity.getStatus(), completeStatus);
 
-        setChargeStatusTo(chargeEntity.getExternalId(), completeStatus);
+        chargeService.transitionChargeState(chargeEntity.getExternalId(), completeStatus);
     }
 
     private boolean gatewayIsNotAwareOfCharge(ChargeEntity chargeEntity) {
@@ -150,17 +148,7 @@ public class ChargeCancelService {
                 chargeEntity.getGatewayAccount().getType(),
                 newStatus);
 
-        setChargeStatusTo(chargeEntity.getExternalId(), newStatus);
-    }
-
-    @Transactional
-    @SuppressWarnings("WeakerAccess") // Guice requires @Transactional methods to be public
-    public void setChargeStatusTo(String chargeEntityExternalId, ChargeStatus chargeStatus) {
-        chargeDao.findByExternalId(chargeEntityExternalId).ifPresentOrElse(chargeEntity -> {
-            chargeService.transitionChargeState(chargeEntity, chargeStatus);
-        }, () -> {
-            throw new ChargeNotFoundRuntimeException(chargeEntityExternalId);
-        });
+        chargeService.transitionChargeState(chargeEntity.getExternalId(), newStatus);
     }
 
     private void validateChargeStatus(StatusFlow statusFlow, ChargeEntity chargeEntity, ChargeStatus newStatus, ChargeStatus oldStatus) {
