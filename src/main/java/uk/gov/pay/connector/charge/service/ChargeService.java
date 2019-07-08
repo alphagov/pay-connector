@@ -2,6 +2,7 @@ package uk.gov.pay.connector.charge.service;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
+import com.stripe.model.Charge;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -438,23 +439,35 @@ public class ChargeService {
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    public ChargeEntity updateChargeStatus(ChargeEntity chargeEntity, ChargeStatus chargeStatus) {
-        if (chargeStatus == CAPTURED) {
-            chargeEntity.setStatus(CAPTURE_SUBMITTED);
-            chargeEventDao.persistChargeEventOf(chargeEntity);
-            chargeEntity.setStatus(CAPTURED);
-            chargeEventDao.persistChargeEventOf(chargeEntity, ZonedDateTime.now());
-        } else {
-            chargeEntity.setStatus(chargeStatus);
-            chargeEventDao.persistChargeEventOf(chargeEntity);
-        }
-        return chargeEntity;
+    // 1. update charge status
+    // 2. persist charge event for change
+    // 3. queue payment event emit for this action
+    // q.u.e.s.t.i.o.n should this be transactional or rely on lower level code to manage this?
+    // @FIXME(sfount) will there be any branching logic that requires testing?
+    @Transactional
+    public ChargeEntity transitionChargeState(ChargeEntity charge, ChargeStatus targetChargeState) {
+        charge.setStatus(targetChargeState);
+        chargeEventDao.persistChargeEventOf(charge);
+        return charge;
     }
 
-    public ChargeEntity updateChargeStatus(String chargeId, ChargeStatus chargeStatus) {
+    public ChargeEntity transitionChargeState(String chargeId, ChargeStatus targetChargeState) {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity ->
-                updateChargeStatus(chargeEntity, chargeStatus)
+                transitionChargeState(chargeEntity, targetChargeState)
         ).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+    }
+
+    // @FIXME(sfount) re-name to describe what is actually going here
+    public ChargeEntity updateChargeStatus(ChargeEntity chargeEntity, ChargeStatus chargeStatus) {
+        if (chargeStatus == CAPTURED) {
+            transitionChargeState(chargeEntity, CAPTURE_SUBMITTED);
+
+            // @WHAT(sfount) was -- ZonedDateTime.now() is the default behaviour? chargeEventDao.persistChargeEventOf(chargeEntity, ZonedDateTime.now());
+            transitionChargeState(chargeEntity, CAPTURED);
+        } else {
+            transitionChargeState(chargeEntity, chargeStatus);
+        }
+        return chargeEntity;
     }
 
     public Optional<ChargeEntity> findByProviderAndTransactionId(String paymentGatewayName, String transactionId) {
@@ -467,7 +480,7 @@ public class ChargeService {
             ChargeStatus targetStatus = charge.isDelayedCapture() ? AWAITING_CAPTURE_REQUEST : CAPTURE_APPROVED;
 
             try {
-                updateChargeStatus(charge, targetStatus);
+                transitionChargeState(charge, targetStatus);
             } catch (InvalidStateTransitionException e) {
                 throw new IllegalStateRuntimeException(charge.getExternalId());
             }
@@ -488,7 +501,7 @@ public class ChargeService {
             }
 
             try {
-                updateChargeStatus(charge, CAPTURE_APPROVED);
+                transitionChargeState(charge, CAPTURE_APPROVED);
             } catch (InvalidStateTransitionException e) {
                 throw new ConflictRuntimeException(charge.getExternalId(),
                         format("attempt to perform delayed capture on charge not in %s state.", AWAITING_CAPTURE_REQUEST));

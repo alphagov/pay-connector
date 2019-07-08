@@ -48,7 +48,8 @@ public class ChargeCancelService {
     @Inject
     public ChargeCancelService(ChargeDao chargeDao,
                                ChargeEventDao chargeEventDao,
-                               PaymentProviders providers) {
+                               PaymentProviders providers,
+                               ChargeService cha) {
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
         this.providers = providers;
@@ -158,6 +159,7 @@ public class ChargeCancelService {
     @SuppressWarnings("WeakerAccess") // Guice requires @Transactional methods to be public
     public void setChargeStatusTo(String chargeEntityExternalId, ChargeStatus chargeStatus) {
         chargeDao.findByExternalId(chargeEntityExternalId).ifPresentOrElse(chargeEntity -> {
+            
             chargeEntity.setStatus(chargeStatus);
             chargeEventDao.persistChargeEventOf(chargeEntity);
         }, () -> {
