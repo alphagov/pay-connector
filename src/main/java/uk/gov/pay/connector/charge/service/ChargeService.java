@@ -70,7 +70,6 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
@@ -182,12 +181,6 @@ public class ChargeService {
         prefilledCardHolderDetails.getCardHolderName().ifPresent(cardDetailsEntity::setCardHolderName);
         prefilledCardHolderDetails.getAddress().map(AddressEntity::new).ifPresent(cardDetailsEntity::setBillingAddress);
         return cardDetailsEntity;
-    }
-
-    @Transactional
-    public void abortCharge(ChargeEntity charge) {
-        // @TODO(sfount) this could be moved one level higher
-        transitionChargeState(charge, AUTHORISATION_ABORTED);
     }
 
     @Transactional
