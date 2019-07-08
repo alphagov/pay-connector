@@ -95,13 +95,15 @@ pipeline {
 
       post {
         always {
-          shell(
-              '''|#!/bin/bash
-                 |set -e
-                 |bundle install --path gems
-                 |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb down
-              '''.stripMargin()
-          )
+          dir('e2e-pay-scripts') {
+            sh(
+                '''|#!/bin/bash
+                   |set -e
+                   |bundle install --path gems
+                   |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb down
+                '''.stripMargin()
+            )
+          }
 
           archiveArtifacts artifacts: '**/target/docker*.log,**/target/screenshots/*.png'
           junit testResults: "**/target/surefire-reports/*.xml,**/target/failsafe-reports/*.xml"
