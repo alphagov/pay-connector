@@ -41,7 +41,7 @@ import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.Event;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.PaymentCreated;
-import uk.gov.pay.connector.events.PaymentDetailsEvent;
+import uk.gov.pay.connector.events.PaymentDetailsEntered;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
@@ -327,7 +327,7 @@ public class ChargeService {
         ChargeEntity chargeEntity = updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId,
                 auth3dsDetails, sessionIdentifier, walletType, emailAddress);
 
-        emitEvent(PaymentDetailsEvent.from(chargeEntity));
+        emitEvent(PaymentDetailsEntered.from(chargeEntity));
 
         return chargeEntity;
     }

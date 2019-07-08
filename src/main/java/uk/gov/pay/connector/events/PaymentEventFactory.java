@@ -11,8 +11,8 @@ public class PaymentEventFactory {
         try {
             if (eventClass == PaymentCreated.class) {
                 return PaymentCreated.from(chargeEvent);
-            } else if (eventClass == PaymentDetailsEvent.class) {
-                return PaymentDetailsEvent.from(chargeEvent);
+            } else if (eventClass == PaymentDetailsEntered.class) {
+                return PaymentDetailsEntered.from(chargeEvent);
             } else {
                 return eventClass.getConstructor(String.class, ZonedDateTime.class).newInstance(
                         chargeEvent.getChargeEntity().getExternalId(),
