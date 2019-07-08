@@ -95,7 +95,7 @@ pipeline {
 
       post {
         always {
-          shell(
+          sh(
               '''|#!/bin/bash
                  |set -e
                  |bundle install --path gems
