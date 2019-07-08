@@ -58,7 +58,6 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -385,7 +384,12 @@ public class ChargeService {
     public ChargeEntity updateChargePostCapture(String chargeId, ChargeStatus nextStatus) {
         return chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
-                    updateChargeStatus(chargeEntity, nextStatus);
+                    if (nextStatus == CAPTURED) {
+                        transitionChargeState(chargeEntity, CAPTURE_SUBMITTED);
+                        transitionChargeState(chargeEntity, CAPTURED);
+                    } else {
+                        transitionChargeState(chargeEntity, nextStatus);
+                    }                    
                     return chargeEntity;
                 })
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
@@ -438,22 +442,16 @@ public class ChargeService {
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    public ChargeEntity updateChargeStatus(ChargeEntity chargeEntity, ChargeStatus chargeStatus) {
-        if (chargeStatus == CAPTURED) {
-            chargeEntity.setStatus(CAPTURE_SUBMITTED);
-            chargeEventDao.persistChargeEventOf(chargeEntity);
-            chargeEntity.setStatus(CAPTURED);
-            chargeEventDao.persistChargeEventOf(chargeEntity, ZonedDateTime.now());
-        } else {
-            chargeEntity.setStatus(chargeStatus);
-            chargeEventDao.persistChargeEventOf(chargeEntity);
-        }
-        return chargeEntity;
+    @Transactional
+    public ChargeEntity transitionChargeState(ChargeEntity charge, ChargeStatus targetChargeState) {
+        charge.setStatus(targetChargeState);
+        chargeEventDao.persistChargeEventOf(charge);
+        return charge;
     }
 
-    public ChargeEntity updateChargeStatus(String chargeId, ChargeStatus chargeStatus) {
+    public ChargeEntity transitionChargeState(String chargeId, ChargeStatus targetChargeState) {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity ->
-                updateChargeStatus(chargeEntity, chargeStatus)
+                transitionChargeState(chargeEntity, targetChargeState)
         ).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
@@ -467,7 +465,7 @@ public class ChargeService {
             ChargeStatus targetStatus = charge.isDelayedCapture() ? AWAITING_CAPTURE_REQUEST : CAPTURE_APPROVED;
 
             try {
-                updateChargeStatus(charge, targetStatus);
+                transitionChargeState(charge, targetStatus);
             } catch (InvalidStateTransitionException e) {
                 throw new IllegalStateRuntimeException(charge.getExternalId());
             }
@@ -488,7 +486,7 @@ public class ChargeService {
             }
 
             try {
-                updateChargeStatus(charge, CAPTURE_APPROVED);
+                transitionChargeState(charge, CAPTURE_APPROVED);
             } catch (InvalidStateTransitionException e) {
                 throw new ConflictRuntimeException(charge.getExternalId(),
                         format("attempt to perform delayed capture on charge not in %s state.", AWAITING_CAPTURE_REQUEST));

@@ -186,18 +186,13 @@ public class CardCaptureServiceTest extends CardServiceTest {
         inOrder.verify(chargeSpy).setStatus(CAPTURED);
 
         ArgumentCaptor<ChargeEntity> chargeEntityCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        ArgumentCaptor<ZonedDateTime> bookingDateCaptor = ArgumentCaptor.forClass(ZonedDateTime.class);
 
         // charge progresses from CAPTURE_SUBMITTED to CAPTURED, so two calls
         // first invocation will add a captured date
-        verify(mockedChargeEventDao, times(1)).persistChargeEventOf(chargeEntityCaptor.capture(), bookingDateCaptor.capture());
+        verify(mockedChargeEventDao, times(2)).persistChargeEventOf(chargeEntityCaptor.capture());
         // second invocation will NOT add a captured date
-        verify(mockedChargeEventDao, times(1)).persistChargeEventOf(chargeEntityCaptor.capture());
         assertThat(chargeEntityCaptor.getValue().getStatus(), is(CAPTURED.getValue()));
-
         // only the CAPTURED has a bookingDate, so there's only one value captured
-        assertThat(bookingDateCaptor.getAllValues().size(), is(1));
-        assertThat(bookingDateCaptor.getAllValues().get(0), is(notNullValue()));
 
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
