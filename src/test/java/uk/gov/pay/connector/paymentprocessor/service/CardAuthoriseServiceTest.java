@@ -50,6 +50,8 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -155,7 +157,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
-        verify(mockedChargeEventDao).persistChargeEventOf(charge);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
@@ -174,7 +176,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
-        verify(mockedChargeEventDao).persistChargeEventOf(charge);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
@@ -196,7 +198,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
-        verify(mockedChargeEventDao).persistChargeEventOf(charge);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
         assertThat(charge.getCardDetails().getBillingAddress().isPresent(), is(false));
@@ -222,7 +224,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
-        verify(mockedChargeEventDao).persistChargeEventOf(charge);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
@@ -266,7 +268,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
-        verify(mockedChargeEventDao).persistChargeEventOf(charge);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
         assertThat(charge.getCorporateSurcharge().get(), is(250L));
@@ -291,7 +293,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
-        verify(mockedChargeEventDao).persistChargeEventOf(charge);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
         assertThat(charge.getCorporateSurcharge().get(), is(50L));
@@ -319,7 +321,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getWalletType(), is(nullValue()));
-        verify(mockedChargeEventDao).persistChargeEventOf(charge);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
     }
 
     @Test
@@ -334,7 +336,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.REQUIRES_3DS));
 
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
-        verify(mockedChargeEventDao).persistChargeEventOf(charge);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsDetails().getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
         assertThat(charge.get3dsDetails().getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
     }
@@ -350,7 +352,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.REQUIRES_3DS));
 
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
-        verify(mockedChargeEventDao).persistChargeEventOf(charge);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsDetails().getHtmlOut(), is(notNullValue()));
         assertThat(charge.getWalletType(), is(nullValue()));
     }
@@ -367,7 +369,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.REQUIRES_3DS));
 
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
-        verify(mockedChargeEventDao).persistChargeEventOf(charge);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsDetails().getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
         assertThat(charge.get3dsDetails().getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
     }
@@ -420,7 +422,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
             fail("Expected test to fail with ConflictRuntimeException due to configuration conflicting in 3ds requirements");
         } catch (IllegalStateRuntimeException e) {
             assertThat(charge.getStatus(), is(AUTHORISATION_ABORTED.toString()));
-            verify(mockedChargeEventDao).persistChargeEventOf(charge);
+            verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         }
     }
 
