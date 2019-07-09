@@ -79,4 +79,22 @@ public class PaymentStateTransitionEmitterProcessTest {
 
         verify(paymentStateTransitionQueue).offer(paymentStateTransition);
     }
+
+    @Test
+    public void shouldNotPutPaymentTransitionBackOnQueueIfItHasExceededMaxAttempts() throws Exception {
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition<>(100L, PaymentEvent.class);
+
+        when(paymentStateTransitionQueue.poll()).thenReturn(paymentStateTransition);
+        when(chargeEventDao.findById(ChargeEventEntity.class, 100L)).thenReturn(Optional.empty());
+
+        int maximumStateTransitionMessageRetries = 10;
+        // try until message attempt limit
+        for (int i = 0; i < maximumStateTransitionMessageRetries; i++) {
+            paymentStateTransitionEmitterProcess.handleStateTransitionMessages();
+            verify(paymentStateTransitionQueue, times(i + 1)).offer(paymentStateTransition);
+        }
+
+        paymentStateTransitionEmitterProcess.handleStateTransitionMessages();
+        verify(paymentStateTransitionQueue, atMost(maximumStateTransitionMessageRetries)).offer(any());
+    }
 }

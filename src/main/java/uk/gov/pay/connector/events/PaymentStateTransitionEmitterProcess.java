@@ -36,23 +36,33 @@ public class PaymentStateTransitionEmitterProcess {
     }
 
     private void emitEvent(PaymentStateTransition paymentStateTransition) {
-        try {
-            PaymentEvent paymentEvent = createEvent(paymentStateTransition);
-            eventQueue.emitEvent(paymentEvent);
-        } catch (ChargeEventNotFoundRuntimeException | QueueException e) {
-            LOGGER.warn(
-                    "Failed to emit payment event for state transition [chargeEventId={}] [eventType={}]",
+        if (paymentStateTransition.shouldAttempt()) {
+            paymentStateTransition.markAttempt();
+
+            try {
+                PaymentEvent paymentEvent = createEvent(paymentStateTransition);
+                eventQueue.emitEvent(paymentEvent);
+            } catch (ChargeEventNotFoundRuntimeException | QueueException e) {
+                LOGGER.warn(
+                        "Failed to emit payment event for state transition [chargeEventId={}] [eventType={}]",
+                        paymentStateTransition.getChargeEventId(),
+                        paymentStateTransition.getStateTransitionEventClass().getSimpleName()
+                );
+                paymentStateTransitionQueue.offer(paymentStateTransition);
+            }
+        } else {
+            LOGGER.error(
+                    "Payment state transition message failed to process beyond max retries [chargeEventId={}] [eventType={}]:",
                     paymentStateTransition.getChargeEventId(),
                     paymentStateTransition.getStateTransitionEventClass().getSimpleName()
             );
-            paymentStateTransitionQueue.offer(paymentStateTransition);
         }
     }
 
     private PaymentEvent createEvent(PaymentStateTransition paymentStateTransition) throws ChargeEventNotFoundRuntimeException {
-        return chargeEventDao.findById(ChargeEventEntity.class, paymentStateTransition.getChargeEventId())
-                .map(chargeEvent -> createEvent(chargeEvent, paymentStateTransition.getStateTransitionEventClass()))
-                .orElseThrow(() -> new ChargeEventNotFoundRuntimeException("No external charge ID"));
+            return chargeEventDao.findById(ChargeEventEntity.class, paymentStateTransition.getChargeEventId())
+                    .map(chargeEvent -> createEvent(chargeEvent, paymentStateTransition.getStateTransitionEventClass()))
+                    .orElseThrow(() -> new ChargeEventNotFoundRuntimeException("No external charge ID"));
     }
 
     private PaymentEvent createEvent(ChargeEventEntity chargeEvent, Class<? extends PaymentEvent> paymentEventClass) {

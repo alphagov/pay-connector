@@ -10,7 +10,10 @@ public class PaymentStateTransition<T extends PaymentEvent> implements Delayed {
     private final Class<T> stateTransitionEventClass;
     private final Long readTime;
 
+    private static final int MAXIMUM_NUMBER_OF_ATTEMPTS = 10;
+
     private long delayDurationInMilliseconds = 100L;
+    private int attempts = 0;
 
     public PaymentStateTransition(long chargeEventId, Class<T> stateTransitionEventClass) {
         this.chargeEventId = chargeEventId;
@@ -27,6 +30,14 @@ public class PaymentStateTransition<T extends PaymentEvent> implements Delayed {
     @Override
     public int compareTo(Delayed o) {
         return (int) (readTime - ((PaymentStateTransition) o).readTime);
+    }
+
+    public void markAttempt() {
+        attempts += 1;
+    }
+
+    public boolean shouldAttempt() {
+        return attempts < MAXIMUM_NUMBER_OF_ATTEMPTS;
     }
 
     public long getChargeEventId() {
