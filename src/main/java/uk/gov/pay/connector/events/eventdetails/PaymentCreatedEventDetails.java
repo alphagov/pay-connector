@@ -55,8 +55,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
         return returnUrl;
     }
 
-    public Long getGatewayAccountId() {
-        return gatewayAccountId;
+    public String getGatewayAccountId() {
+        return gatewayAccountId.toString();
     }
 
     public String getPaymentProvider() {
