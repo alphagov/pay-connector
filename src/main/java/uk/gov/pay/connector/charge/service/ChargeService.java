@@ -450,11 +450,12 @@ public class ChargeService {
             ChargeStatus targetChargeState,
             ZonedDateTime gatewayEventTime
     ) {
+        ChargeStatus fromChargeState = ChargeStatus.fromString(charge.getStatus());
         charge.setStatus(targetChargeState);
         ChargeEventEntity chargeEventEntity = chargeEventDao.persistChargeEventOf(charge, gatewayEventTime);
 
         PaymentGatewayStateTransitions.getInstance()
-                .getEventForTransition(ChargeStatus.fromString(charge.getStatus()), targetChargeState)
+                .getEventForTransition(fromChargeState, targetChargeState)
                 .map(eventType -> {
                     PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventType);
                     paymentStateTransitionQueue.offer(transition);

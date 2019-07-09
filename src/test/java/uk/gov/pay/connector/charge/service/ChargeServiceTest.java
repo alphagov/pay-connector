@@ -39,6 +39,7 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
@@ -119,6 +120,9 @@ public class ChargeServiceTest {
     @Mock
     private EventQueue eventQueue;
 
+    @Mock
+    private PaymentStateTransitionQueue paymentStateTransitionQueue;
+
     private ChargeService service;
 
     private GatewayAccountEntity gatewayAccount;
@@ -161,7 +165,7 @@ public class ChargeServiceTest {
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, eventQueue);
+                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, eventQueue, paymentStateTransitionQueue);
     }
 
     @Test
@@ -195,7 +199,7 @@ public class ChargeServiceTest {
     public void createChargeShouldPutPaymentCreatedEventOnQueue() throws Exception {
         // ACT
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
-        
+
         // ASSERT
         verify(eventQueue).emitEvent(any(PaymentCreated.class));
     }
@@ -203,9 +207,9 @@ public class ChargeServiceTest {
     @Test(expected = WebApplicationException.class)
     public void createChargeThrowsWebApplicationExceptionIfEmittingPaymentCreatedEventFails() throws Exception {
         doThrow(new QueueException("Queue badness")).when(eventQueue).emitEvent(any(Event.class));
-        
+
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
-        
+
         // assert that DB record got written
         verify(mockedChargeDao).persist(any(ChargeEntity.class));
     }
