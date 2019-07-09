@@ -122,7 +122,7 @@ public class CardAuthoriseService {
         if (gatewayCardBrand3DSMismatch(chargeEntity, cardBrand)) {
             logger.error("AuthCardDetails authorisation failed pre operation. Card brand requires 3ds but Gateway account has 3ds disabled - charge_external_id={}, operation_type={}, card_brand={}",
                     chargeEntity.getExternalId(), OperationType.AUTHORISATION.getValue(), cardBrand);
-            chargeService.abortCharge(chargeEntity);
+            chargeService.transitionChargeState(chargeEntity, ChargeStatus.AUTHORISATION_ABORTED);
             throw new IllegalStateRuntimeException(chargeEntity.getExternalId());
         }
     }
