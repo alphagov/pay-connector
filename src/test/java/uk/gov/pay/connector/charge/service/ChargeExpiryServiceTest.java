@@ -140,13 +140,13 @@ public class ChargeExpiryServiceTest {
 
         verify(mockPaymentProvider).cancel(cancelCaptor.capture());
         assertThat(cancelCaptor.getValue().getTransactionId(), is(chargeEntity.getGatewayTransactionId()));
-        verify(mockChargeService).transitionChargeState(chargeEntity.getExternalId(), ChargeStatus.EXPIRED);
+        verify(mockChargeService).transitionChargeState(chargeEntity.getExternalId(), EXPIRED);
     }
 
     private ChargeEntity mockExpiredChargeEntity() {
-        
+
         ChargeEntity expiredCharge = mock(ChargeEntity.class);
-        when(expiredCharge.getStatus()).thenReturn(ChargeStatus.EXPIRED.toString());
+        when(expiredCharge.getStatus()).thenReturn(EXPIRED.toString());
         return expiredCharge;
     }
 
@@ -167,7 +167,7 @@ public class ChargeExpiryServiceTest {
 
         ChargeEntity expiredCharge = mockExpiredChargeEntity();
         when(mockChargeService.transitionChargeState(any(String.class), any())).thenReturn(expiredCharge);
-        
+
         chargeExpiryService.expire(singletonList(chargeEntity));
 
         verify(mockPaymentProvider).cancel(cancelCaptor.capture());
@@ -209,9 +209,9 @@ public class ChargeExpiryServiceTest {
         when(mockPaymentProvider.cancel(any())).thenThrow(new GatewayException.GenericGatewayException("something went wrong"));
 
         ChargeEntity expireFailedCharge = mock(ChargeEntity.class);
-        when(expireFailedCharge.getStatus()).thenReturn(ChargeStatus.EXPIRE_CANCEL_FAILED.toString());
+        when(expireFailedCharge.getStatus()).thenReturn(EXPIRE_CANCEL_FAILED.toString());
         when(mockChargeService.transitionChargeState(eq(chargeEntity.getExternalId()), any())).thenReturn(expireFailedCharge);
-        
+
         chargeExpiryService.expire(singletonList(chargeEntity));
 
         verify(mockChargeService).transitionChargeState(chargeEntity.getExternalId(), EXPIRE_CANCEL_FAILED);
@@ -222,14 +222,14 @@ public class ChargeExpiryServiceTest {
         ChargeEntity chargeEntityAwaitingCapture = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
                 .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
-                .withStatus(ChargeStatus.AWAITING_CAPTURE_REQUEST)
+                .withStatus(AWAITING_CAPTURE_REQUEST)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
         ChargeEntity chargeEntityAuthorisationSuccess = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
                 .withCreatedDate(ZonedDateTime.now().minusHours(48L).plusMinutes(1L))
-                .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .withStatus(AUTHORISATION_SUCCESS)
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
@@ -246,8 +246,8 @@ public class ChargeExpiryServiceTest {
         when(mockChargeService.transitionChargeState(any(String.class), any())).thenReturn(expiredCharge);
         chargeExpiryService.sweepAndExpireChargesAndTokens();
 
-        verify(mockChargeService).transitionChargeState(chargeEntityAwaitingCapture.getExternalId(), ChargeStatus.EXPIRED);
-        verify(mockChargeService).transitionChargeState(chargeEntityAuthorisationSuccess.getExternalId(), ChargeStatus.EXPIRED);
+        verify(mockChargeService).transitionChargeState(chargeEntityAwaitingCapture.getExternalId(), EXPIRED);
+        verify(mockChargeService).transitionChargeState(chargeEntityAuthorisationSuccess.getExternalId(), EXPIRED);
     }
 
     @Test
@@ -260,11 +260,11 @@ public class ChargeExpiryServiceTest {
                 .build();
 
         ChargeEntity expiredCharge = mock(ChargeEntity.class);
-        when(expiredCharge.getStatus()).thenReturn(ChargeStatus.EXPIRED.toString());
+        when(expiredCharge.getStatus()).thenReturn(EXPIRED.toString());
 
         when(mockChargeDao.findByExternalId(preAuthorisationCharge.getExternalId())).thenReturn(Optional.of(preAuthorisationCharge));
 
-        when(mockQueryService.getChargeGatewayStatus(preAuthorisationCharge)).thenReturn(new ChargeQueryResponse(ChargeStatus.AUTHORISATION_SUCCESS, "Raw response"));
+        when(mockQueryService.getChargeGatewayStatus(preAuthorisationCharge)).thenReturn(new ChargeQueryResponse(AUTHORISATION_SUCCESS, "Raw response"));
         when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
 
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
@@ -275,7 +275,7 @@ public class ChargeExpiryServiceTest {
 
         Map<String, Integer> sweepResult = chargeExpiryService.sweepAndExpireChargesAndTokens();
 
-        verify(mockChargeService).transitionChargeState(preAuthorisationCharge.getExternalId(), ChargeStatus.EXPIRED);
+        verify(mockChargeService).transitionChargeState(preAuthorisationCharge.getExternalId(),     EXPIRED);
         assertThat(sweepResult.get("expiry-success"), is(1));
         assertNull(sweepResult.get("expiry-failure"));
     }
