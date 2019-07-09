@@ -31,6 +31,7 @@ import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
@@ -43,11 +44,14 @@ import uk.gov.pay.connector.events.Event;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.PaymentCreated;
 import uk.gov.pay.connector.events.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.PaymentEvent;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
+import uk.gov.pay.connector.queue.PaymentStateTransition;
+import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
@@ -106,11 +110,13 @@ public class ChargeService {
     private final PaymentProviders providers;
 
     private final EventQueue eventQueue;
+    private final PaymentStateTransitionQueue paymentStateTransitionQueue;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
-                         ConnectorConfiguration config, PaymentProviders providers, EventQueue eventQueue) {
+                         ConnectorConfiguration config, PaymentProviders providers, EventQueue eventQueue,
+                         PaymentStateTransitionQueue paymentStateTransitionQueue) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -120,6 +126,7 @@ public class ChargeService {
         this.providers = providers;
         this.captureProcessConfig = config.getCaptureProcessConfig();
         this.eventQueue = eventQueue;
+        this.paymentStateTransitionQueue = paymentStateTransitionQueue;
     }
 
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
@@ -444,7 +451,15 @@ public class ChargeService {
             ZonedDateTime gatewayEventTime
     ) {
         charge.setStatus(targetChargeState);
-        chargeEventDao.persistChargeEventOf(charge, gatewayEventTime);
+        ChargeEventEntity chargeEventEntity = chargeEventDao.persistChargeEventOf(charge, gatewayEventTime);
+
+        PaymentGatewayStateTransitions.getInstance()
+                .getEventForTransition(ChargeStatus.fromString(charge.getStatus()), targetChargeState)
+                .map(eventType -> {
+                    PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventType);
+                    paymentStateTransitionQueue.offer(transition);
+                    return transition;
+                });
         return charge;
     }
 
