@@ -44,7 +44,6 @@ import uk.gov.pay.connector.events.Event;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.PaymentCreated;
 import uk.gov.pay.connector.events.PaymentDetailsEntered;
-import uk.gov.pay.connector.events.PaymentEvent;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
@@ -457,9 +456,20 @@ public class ChargeService {
         PaymentGatewayStateTransitions.getInstance()
                 .getEventForTransition(fromChargeState, targetChargeState)
                 .map(eventType -> {
-                    PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventType);
-                    paymentStateTransitionQueue.offer(transition);
-                    return transition;
+                    try {
+                        PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventType);
+                        paymentStateTransitionQueue.offer(transition);
+                        logger.info("Offered payment state transition to emitter queue [from={}] [to={}] [chargeId={}]", fromChargeState, targetChargeState, chargeEventEntity.getId());
+                        return transition;
+                    } catch (Exception e) {
+                        logger.warn(
+                                "Failed to write state transition to queue [from={}] [to={}] [error={}]",
+                                fromChargeState,
+                                targetChargeState,
+                                e.getMessage()
+                        );
+                        return null;
+                    }
                 });
         return charge;
     }
