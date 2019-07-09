@@ -389,7 +389,7 @@ public class ChargeService {
                         transitionChargeState(chargeEntity, CAPTURED);
                     } else {
                         transitionChargeState(chargeEntity, nextStatus);
-                    }                    
+                    }
                     return chargeEntity;
                 })
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
@@ -449,6 +449,7 @@ public class ChargeService {
         return charge;
     }
 
+    @Transactional
     public ChargeEntity transitionChargeState(String chargeId, ChargeStatus targetChargeState) {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity ->
                 transitionChargeState(chargeEntity, targetChargeState)
