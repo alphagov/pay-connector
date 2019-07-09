@@ -62,7 +62,6 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -391,7 +390,7 @@ public class ChargeService {
                         transitionChargeState(chargeEntity, CAPTURED);
                     } else {
                         transitionChargeState(chargeEntity, nextStatus);
-                    }                    
+                    }
                     return chargeEntity;
                 })
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
@@ -455,11 +454,7 @@ public class ChargeService {
             ZonedDateTime gatewayEventTime
     ) {
         charge.setStatus(targetChargeState);
-        if (Objects.nonNull(gatewayEventTime)) {
-            chargeEventDao.persistChargeEventOf(charge, gatewayEventTime);
-        } else {
-            chargeEventDao.persistChargeEventOf(charge);
-        }
+        chargeEventDao.persistChargeEventOf(charge, gatewayEventTime);
         return charge;
     }
 
