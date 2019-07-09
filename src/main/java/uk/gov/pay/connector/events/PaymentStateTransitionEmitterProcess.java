@@ -2,9 +2,9 @@ package uk.gov.pay.connector.events;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.exception.ChargeEventNotFoundRuntimeException;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.events.exception.StateTransitionMessageProcessException;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
 import uk.gov.pay.connector.queue.QueueException;
@@ -42,7 +42,7 @@ public class PaymentStateTransitionEmitterProcess {
             try {
                 PaymentEvent paymentEvent = createEvent(paymentStateTransition);
                 eventQueue.emitEvent(paymentEvent);
-            } catch (ChargeEventNotFoundRuntimeException | QueueException e) {
+            } catch (StateTransitionMessageProcessException | QueueException e) {
                 LOGGER.warn(
                         "Failed to emit payment event for state transition [chargeEventId={}] [eventType={}]",
                         paymentStateTransition.getChargeEventId(),
@@ -59,10 +59,10 @@ public class PaymentStateTransitionEmitterProcess {
         }
     }
 
-    private PaymentEvent createEvent(PaymentStateTransition paymentStateTransition) throws ChargeEventNotFoundRuntimeException {
+    private PaymentEvent createEvent(PaymentStateTransition paymentStateTransition) throws StateTransitionMessageProcessException {
             return chargeEventDao.findById(ChargeEventEntity.class, paymentStateTransition.getChargeEventId())
                     .map(chargeEvent -> createEvent(chargeEvent, paymentStateTransition.getStateTransitionEventClass()))
-                    .orElseThrow(() -> new ChargeEventNotFoundRuntimeException("No external charge ID"));
+                    .orElseThrow(() -> new StateTransitionMessageProcessException(paymentStateTransition.getChargeEventId()));
     }
 
     private PaymentEvent createEvent(ChargeEventEntity chargeEvent, Class<? extends PaymentEvent> paymentEventClass) {
