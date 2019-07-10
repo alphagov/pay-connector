@@ -26,6 +26,7 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.model.domain.Address;
@@ -33,12 +34,14 @@ import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.Event;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.PaymentCreated;
+import uk.gov.pay.connector.events.PaymentStarted;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.token.dao.TokenDao;
@@ -67,12 +70,16 @@ import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
@@ -118,10 +125,10 @@ public class ChargeServiceTest {
     @Mock
     private PaymentProvider mockedPaymentProvider;
     @Mock
-    private EventQueue eventQueue;
+    private EventQueue mockedEventQueue;
 
     @Mock
-    private PaymentStateTransitionQueue paymentStateTransitionQueue;
+    private PaymentStateTransitionQueue mockedPaymentStateTransitionQueue;
 
     private ChargeService service;
 
@@ -165,7 +172,7 @@ public class ChargeServiceTest {
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, eventQueue, paymentStateTransitionQueue);
+                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, mockedEventQueue, mockedPaymentStateTransitionQueue);
     }
 
     @Test
@@ -201,12 +208,12 @@ public class ChargeServiceTest {
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
         // ASSERT
-        verify(eventQueue).emitEvent(any(PaymentCreated.class));
+        verify(mockedEventQueue).emitEvent(any(PaymentCreated.class));
     }
 
     @Test(expected = WebApplicationException.class)
     public void createChargeThrowsWebApplicationExceptionIfEmittingPaymentCreatedEventFails() throws Exception {
-        doThrow(new QueueException("Queue badness")).when(eventQueue).emitEvent(any(Event.class));
+        doThrow(new QueueException("Queue badness")).when(mockedEventQueue).emitEvent(any(Event.class));
 
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
@@ -687,5 +694,49 @@ public class ChargeServiceTest {
         when(mockedChargeDao.countCaptureRetriesForChargeExternalId(any())).thenReturn(MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS + 1);
 
         assertThat(service.isChargeRetriable(anyString()), is(false));
+    }
+
+    @Test
+    public void shouldUpdateChargeEntityAndPersistChargeEventForAValidStateTransition() {
+        ChargeEntity chargeSpy = spy(ChargeEntityFixture.aValidChargeEntity().build());
+
+        service.transitionChargeState(chargeSpy, ENTERING_CARD_DETAILS);
+
+        verify(chargeSpy).setStatus(ENTERING_CARD_DETAILS);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
+    }
+
+    @Test
+    public void shouldOfferStateTransitionMessageForAValidStateTransitionIntoNonLockingState() {
+        ChargeEntity chargeSpy = spy(ChargeEntityFixture.aValidChargeEntity().build());
+        ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
+
+        when(chargeEvent.getId()).thenReturn(100L);
+        when(mockedChargeEventDao.persistChargeEventOf(chargeSpy, null)).thenReturn(chargeEvent);
+
+        service.transitionChargeState(chargeSpy, ENTERING_CARD_DETAILS);
+
+        ArgumentCaptor<PaymentStateTransition> paymentStateTransitionArgumentCaptor = ArgumentCaptor.forClass(PaymentStateTransition.class);
+        verify(mockedPaymentStateTransitionQueue).offer(paymentStateTransitionArgumentCaptor.capture());
+
+        assertThat(paymentStateTransitionArgumentCaptor.getValue().getChargeEventId(), is(100L));
+        assertThat(paymentStateTransitionArgumentCaptor.getValue().getStateTransitionEventClass(), is(PaymentStarted.class));
+    }
+
+    @Test
+    public void shouldNotOfferStateTransitionMessageForAValidStateTransitionIntoLockingState() {
+        ChargeEntity chargeSpy = spy(
+                ChargeEntityFixture
+                        .aValidChargeEntity()
+                        .withStatus(ENTERING_CARD_DETAILS)
+                        .build()
+        );
+        ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
+
+        when(mockedChargeEventDao.persistChargeEventOf(chargeSpy, null)).thenReturn(chargeEvent);
+
+        service.transitionChargeState(chargeSpy, AUTHORISATION_READY);
+
+        verifyNoMoreInteractions(mockedPaymentStateTransitionQueue);
     }
 }

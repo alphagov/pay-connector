@@ -455,12 +455,11 @@ public class ChargeService {
 
         PaymentGatewayStateTransitions.getInstance()
                 .getEventForTransition(fromChargeState, targetChargeState)
-                .map(eventType -> {
+                .ifPresent(eventType -> {
                     try {
                         PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventType);
                         paymentStateTransitionQueue.offer(transition);
                         logger.info("Offered payment state transition to emitter queue [from={}] [to={}] [chargeId={}]", fromChargeState, targetChargeState, chargeEventEntity.getId());
-                        return transition;
                     } catch (Exception e) {
                         logger.warn(
                                 "Failed to write state transition to queue [from={}] [to={}] [error={}]",
@@ -468,7 +467,6 @@ public class ChargeService {
                                 targetChargeState,
                                 e.getMessage()
                         );
-                        return null;
                     }
                 });
         return charge;
