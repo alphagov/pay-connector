@@ -110,6 +110,7 @@ public class ChargeService {
 
     private final EventQueue eventQueue;
     private final PaymentStateTransitionQueue paymentStateTransitionQueue;
+    private final Boolean shouldEmitPaymentStateTransitionEvents;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
@@ -126,6 +127,7 @@ public class ChargeService {
         this.captureProcessConfig = config.getCaptureProcessConfig();
         this.eventQueue = eventQueue;
         this.paymentStateTransitionQueue = paymentStateTransitionQueue;
+        this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
     }
 
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
@@ -456,17 +458,19 @@ public class ChargeService {
         PaymentGatewayStateTransitions.getInstance()
                 .getEventForTransition(fromChargeState, targetChargeState)
                 .ifPresent(eventType -> {
-                    try {
-                        PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventType);
-                        paymentStateTransitionQueue.offer(transition);
-                        logger.info("Offered payment state transition to emitter queue [from={}] [to={}] [chargeId={}]", fromChargeState, targetChargeState, chargeEventEntity.getId());
-                    } catch (Exception e) {
-                        logger.warn(
-                                "Failed to write state transition to queue [from={}] [to={}] [error={}]",
-                                fromChargeState,
-                                targetChargeState,
-                                e.getMessage()
-                        );
+                    if (shouldEmitPaymentStateTransitionEvents) {
+                        try {
+                            PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventType);
+                            paymentStateTransitionQueue.offer(transition);
+                            logger.info("Offered payment state transition to emitter queue [from={}] [to={}] [chargeId={}]", fromChargeState, targetChargeState, chargeEventEntity.getId());
+                        } catch (Exception e) {
+                            logger.warn(
+                                    "Failed to write state transition to queue [from={}] [to={}] [error={}]",
+                                    fromChargeState,
+                                    targetChargeState,
+                                    e.getMessage()
+                            );
+                        }
                     }
                 });
         return charge;

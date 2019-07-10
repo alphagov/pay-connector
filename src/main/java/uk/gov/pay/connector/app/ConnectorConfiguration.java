@@ -81,6 +81,9 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     private Boolean xrayEnabled;
 
+    @NotNull
+    private Boolean emitPaymentStateTransitionEvents;
+
     @Valid
     @NotNull
     @JsonProperty("sqsConfig")
@@ -184,5 +187,9 @@ public class ConnectorConfiguration extends Configuration {
 
     public EventQueueConfig getEventQueueConfig() {
         return eventQueueConfig;
+    }
+
+    public Boolean getEmitPaymentStateTransitionEvents() {
+        return emitPaymentStateTransitionEvents;
     }
 }

@@ -170,6 +170,7 @@ public class ChargeServiceTest {
 
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedConfig.getEmitPaymentStateTransitionEvents()).thenReturn(true);
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, mockedEventQueue, mockedPaymentStateTransitionQueue);
