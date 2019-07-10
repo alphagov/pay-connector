@@ -25,7 +25,7 @@ public class PaymentStateTransitionEmitterProcessTest {
     private final ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
 
     @Mock
-    PaymentStateTransitionQueue paymentStateTransitionQueue;
+    PaymentStateTransitionQueue mockPaymentStateTransitionQueue;
 
     @Mock
     EventQueue eventQueue;
@@ -43,7 +43,7 @@ public class PaymentStateTransitionEmitterProcessTest {
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition<>(chargeEventId, PaymentCreated.class);
 
         when(chargeEvent.getChargeEntity()).thenReturn(charge);
-        when(paymentStateTransitionQueue.poll()).thenReturn(paymentStateTransition);
+        when(mockPaymentStateTransitionQueue.poll()).thenReturn(paymentStateTransition);
         when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventId)).thenReturn(Optional.of(chargeEvent));
 
         paymentStateTransitionEmitterProcess.handleStateTransitionMessages();
@@ -55,13 +55,13 @@ public class PaymentStateTransitionEmitterProcessTest {
     public void shouldPutPaymentTransitionBackOnQueueIfChargeEventNotFound() {
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition<>(100L, PaymentEvent.class);
 
-        when(paymentStateTransitionQueue.poll()).thenReturn(paymentStateTransition);
+        when(mockPaymentStateTransitionQueue.poll()).thenReturn(paymentStateTransition);
         when(chargeEventDao.findById(ChargeEventEntity.class, 100L)).thenReturn(Optional.empty());
 
         paymentStateTransitionEmitterProcess.handleStateTransitionMessages();
 
         verifyNoMoreInteractions(eventQueue);
-        verify(paymentStateTransitionQueue).offer(paymentStateTransition);
+        verify(mockPaymentStateTransitionQueue).offer(any(PaymentStateTransition.class));
     }
 
     @Test
@@ -69,7 +69,7 @@ public class PaymentStateTransitionEmitterProcessTest {
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition<>(100L, PaymentEvent.class);
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
 
-        when(paymentStateTransitionQueue.poll()).thenReturn(paymentStateTransition);
+        when(mockPaymentStateTransitionQueue.poll()).thenReturn(paymentStateTransition);
         when(chargeEvent.getUpdated()).thenReturn(ZonedDateTime.now());
         when(chargeEvent.getChargeEntity()).thenReturn(charge);
         when(chargeEventDao.findById(ChargeEventEntity.class, 100L)).thenReturn(Optional.of(chargeEvent));
@@ -77,24 +77,27 @@ public class PaymentStateTransitionEmitterProcessTest {
 
         paymentStateTransitionEmitterProcess.handleStateTransitionMessages();
 
-        verify(paymentStateTransitionQueue).offer(paymentStateTransition);
+        verify(mockPaymentStateTransitionQueue).offer(any(PaymentStateTransition.class));
     }
 
     @Test
-    public void shouldNotPutPaymentTransitionBackOnQueueIfItHasExceededMaxAttempts() throws Exception {
-        PaymentStateTransition paymentStateTransition = new PaymentStateTransition<>(100L, PaymentEvent.class);
+    public void shouldNotPutPaymentTransitionBackOnQueueIfItHasExceededMaxAttempts() {
+        PaymentStateTransitionQueue spyQueue = spy(new PaymentStateTransitionQueue());
+        PaymentStateTransitionEmitterProcess paymentStateTransitionEmitterProcess = new PaymentStateTransitionEmitterProcess(spyQueue, eventQueue, chargeEventDao);
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition<>(100L, PaymentEvent.class, 0);
 
-        when(paymentStateTransitionQueue.poll()).thenReturn(paymentStateTransition);
         when(chargeEventDao.findById(ChargeEventEntity.class, 100L)).thenReturn(Optional.empty());
 
+        spyQueue.offer(paymentStateTransition);
+
         int maximumStateTransitionMessageRetries = 10;
-        // try until message attempt limit
+
+        // try until message attempt limit, factor in initial offer
         for (int i = 0; i < maximumStateTransitionMessageRetries; i++) {
+            verify(spyQueue, times(i + 1)).offer(any(PaymentStateTransition.class));
             paymentStateTransitionEmitterProcess.handleStateTransitionMessages();
-            verify(paymentStateTransitionQueue, times(i + 1)).offer(paymentStateTransition);
         }
 
-        paymentStateTransitionEmitterProcess.handleStateTransitionMessages();
-        verify(paymentStateTransitionQueue, atMost(maximumStateTransitionMessageRetries)).offer(any());
+        verify(spyQueue, atMost(maximumStateTransitionMessageRetries)).offer(any());
     }
 }

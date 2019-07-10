@@ -37,7 +37,6 @@ public class PaymentStateTransitionEmitterProcess {
 
     private void emitEvent(PaymentStateTransition paymentStateTransition) {
         if (paymentStateTransition.shouldAttempt()) {
-            paymentStateTransition.markAttempt();
 
             try {
                 PaymentEvent paymentEvent = createEvent(paymentStateTransition);
@@ -48,7 +47,7 @@ public class PaymentStateTransitionEmitterProcess {
                         paymentStateTransition.getChargeEventId(),
                         paymentStateTransition.getStateTransitionEventClass().getSimpleName()
                 );
-                paymentStateTransitionQueue.offer(paymentStateTransition);
+                paymentStateTransitionQueue.offer(PaymentStateTransition.incrementAttempts(paymentStateTransition));
             }
         } else {
             LOGGER.error(

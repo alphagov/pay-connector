@@ -5,20 +5,39 @@ import uk.gov.pay.connector.events.PaymentEvent;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
-public class PaymentStateTransition<T extends PaymentEvent> implements Delayed {
+public final class PaymentStateTransition<T extends PaymentEvent> implements Delayed {
     private final long chargeEventId;
     private final Class<T> stateTransitionEventClass;
     private final Long readTime;
+    private final long delayDurationInMilliseconds;
+    private final int attempts;
 
     private static final int MAXIMUM_NUMBER_OF_ATTEMPTS = 10;
+    private static final int BASE_ATTEMPTS = 1;
+    private static final long DEFAULT_DELAY_DURATION_IN_MILLISECONDS = 100L;
 
-    private long delayDurationInMilliseconds = 100L;
-    private int attempts = 0;
-
-    public PaymentStateTransition(long chargeEventId, Class<T> stateTransitionEventClass) {
+    private PaymentStateTransition(long chargeEventId, Class<T> stateTransitionEventClass, int numberOfProcessAttempts, long delayDurationInMilliseconds) {
         this.chargeEventId = chargeEventId;
         this.stateTransitionEventClass = stateTransitionEventClass;
+        this.attempts = numberOfProcessAttempts;
+        this.delayDurationInMilliseconds = delayDurationInMilliseconds;
         this.readTime = System.currentTimeMillis() + delayDurationInMilliseconds;
+    }
+
+    public PaymentStateTransition(long chargeEventId, Class<T> stateTransitionEventClass) {
+        this(chargeEventId, stateTransitionEventClass, BASE_ATTEMPTS, DEFAULT_DELAY_DURATION_IN_MILLISECONDS);
+    }
+
+    public PaymentStateTransition(long chargeEventId, Class<T> stateTransitionEventClass, long delayDurationInMilliseconds) {
+        this(chargeEventId, stateTransitionEventClass, BASE_ATTEMPTS, delayDurationInMilliseconds);
+    }
+
+    public static PaymentStateTransition incrementAttempts(PaymentStateTransition<? extends PaymentEvent> paymentStateTransition) {
+        return new PaymentStateTransition<>(
+                paymentStateTransition.getChargeEventId(),
+                paymentStateTransition.getStateTransitionEventClass(),
+                paymentStateTransition.getAttempts() + 1,
+                paymentStateTransition.getDelayDurationInMilliseconds());
     }
 
     @Override
@@ -32,12 +51,12 @@ public class PaymentStateTransition<T extends PaymentEvent> implements Delayed {
         return (int) (readTime - ((PaymentStateTransition) o).readTime);
     }
 
-    public void markAttempt() {
-        attempts += 1;
-    }
-
     public boolean shouldAttempt() {
         return attempts < MAXIMUM_NUMBER_OF_ATTEMPTS;
+    }
+
+    public int getAttempts() {
+        return attempts;
     }
 
     public long getChargeEventId() {
