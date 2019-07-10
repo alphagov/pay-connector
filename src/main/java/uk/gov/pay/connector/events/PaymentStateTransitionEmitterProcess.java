@@ -41,6 +41,11 @@ public class PaymentStateTransitionEmitterProcess {
             try {
                 PaymentEvent paymentEvent = createEvent(paymentStateTransition);
                 eventQueue.emitEvent(paymentEvent);
+                LOGGER.info(
+                        "Emitted payment state transition event for [chargeEventId={}] [eventType={}]",
+                        paymentStateTransition.getChargeEventId(),
+                        paymentStateTransition.getStateTransitionEventClass().getSimpleName()
+                );
             } catch (StateTransitionMessageProcessException | QueueException e) {
                 LOGGER.warn(
                         "Failed to emit payment event for state transition [chargeEventId={}] [eventType={}] [error={}]",
