@@ -36,6 +36,7 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
+import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
@@ -94,6 +95,9 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     @Mock
     private EventQueue eventQueue;
 
+    @Mock
+    private PaymentStateTransitionQueue paymentStateTransitionQueue;
+
     private WalletAuthoriseService walletAuthoriseService;
 
     private final AppleDecryptedPaymentData validApplePayDetails =
@@ -116,7 +120,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null, eventQueue);
+                null, null, mockConfiguration, null, eventQueue, paymentStateTransitionQueue);
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,
