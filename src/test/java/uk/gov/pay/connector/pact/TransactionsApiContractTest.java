@@ -421,4 +421,8 @@ public class TransactionsApiContractTest {
                 .withCorporateSurcharge(250L)
                 .build());
     }
+
+    @State("a charge does not exist")
+    public void chargeDoesNotExist() {
+    }
 }
