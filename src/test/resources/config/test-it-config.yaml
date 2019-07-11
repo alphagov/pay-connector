@@ -8,7 +8,7 @@ server:
   registerDefaultExceptionMappers: false
 
 logging:
-  level: WARN
+  level: INFO
   appenders:
     - type: console
       threshold: ALL
@@ -154,7 +154,7 @@ graphiteHost: ${METRICS_HOST:-localhost}
 graphitePort: ${METRICS_PORT:-8092}
 
 xrayEnabled: false
-emitPaymentStateTransitionEvents: ${EMIT_PAYMENT_STATE_TRANSITION_EVENTS:-false}
+emitPaymentStateTransitionEvents: ${EMIT_PAYMENT_STATE_TRANSITION_EVENTS:-true}
 
 chargesSweepConfig:
   defaultChargeExpiryThreshold: ${CHARGE_EXPIRY_WINDOW_SECONDS:-5400}
