@@ -31,14 +31,12 @@ import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
-import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
-import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.Event;
 import uk.gov.pay.connector.events.EventQueue;
@@ -49,8 +47,6 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
-import uk.gov.pay.connector.queue.PaymentStateTransition;
-import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
@@ -62,7 +58,6 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +70,7 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
@@ -109,14 +105,11 @@ public class ChargeService {
     private final PaymentProviders providers;
 
     private final EventQueue eventQueue;
-    private final PaymentStateTransitionQueue paymentStateTransitionQueue;
-    private final Boolean shouldEmitPaymentStateTransitionEvents;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
-                         ConnectorConfiguration config, PaymentProviders providers, EventQueue eventQueue,
-                         PaymentStateTransitionQueue paymentStateTransitionQueue) {
+                         ConnectorConfiguration config, PaymentProviders providers, EventQueue eventQueue) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -126,8 +119,6 @@ public class ChargeService {
         this.providers = providers;
         this.captureProcessConfig = config.getCaptureProcessConfig();
         this.eventQueue = eventQueue;
-        this.paymentStateTransitionQueue = paymentStateTransitionQueue;
-        this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
     }
 
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
@@ -179,9 +170,8 @@ public class ChargeService {
                     .ifPresent(chargeEntity::setCardDetails);
 
             chargeDao.persist(chargeEntity);
-
-            chargeEventDao.persistChargeEventOf(chargeEntity);
-
+            transitionChargeState(chargeEntity, CREATED);
+            
             return chargeEntity;
         });
     }
@@ -191,6 +181,12 @@ public class ChargeService {
         prefilledCardHolderDetails.getCardHolderName().ifPresent(cardDetailsEntity::setCardHolderName);
         prefilledCardHolderDetails.getAddress().map(AddressEntity::new).ifPresent(cardDetailsEntity::setBillingAddress);
         return cardDetailsEntity;
+    }
+
+    @Transactional
+    public void abortCharge(ChargeEntity charge) {
+        charge.setStatus(AUTHORISATION_ABORTED);
+        chargeEventDao.persistChargeEventOf(charge);
     }
 
     @Transactional
@@ -218,11 +214,12 @@ public class ChargeService {
                 .map(chargeEntity -> {
                     final ChargeStatus oldChargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
                     if (CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS.contains(oldChargeStatus)) {
-                        transitionChargeState(chargeEntity, newChargeStatus);
-                        return chargeEntity;
+                        chargeEntity.setStatus(newChargeStatus);
+                        chargeEventDao.persistChargeEventOf(chargeEntity);
+                        return Optional.of(chargeEntity);
                     }
-                    return null;
-                });
+                    return Optional.<ChargeEntity>empty();
+                }).orElse(Optional.empty());
     }
 
     public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity, boolean buildForSearchResult) {
@@ -344,6 +341,8 @@ public class ChargeService {
                                                       Optional<WalletType> walletType,
                                                       Optional<String> emailAddress) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
+            charge.setStatus(status);
+
             setTransactionId(charge, transactionId);
             sessionIdentifier.ifPresent(charge::setProviderSessionId);
             auth3dsDetails.ifPresent(charge::set3dsDetails);
@@ -353,7 +352,7 @@ public class ChargeService {
             CardDetailsEntity detailsEntity = buildCardDetailsEntity(authCardDetails);
             charge.setCardDetails(detailsEntity);
 
-            transitionChargeState(charge, status);
+            chargeEventDao.persistChargeEventOf(charge);
 
             logger.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeExternalId);
@@ -368,8 +367,9 @@ public class ChargeService {
                                                          Optional<String> transactionId) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             try {
+                charge.setStatus(status);
                 setTransactionId(charge, transactionId);
-                transitionChargeState(charge, status);
+                chargeEventDao.persistChargeEventOf(charge);
             } catch (InvalidStateTransitionException e) {
                 if (chargeIsInLockedStatus(operationType, charge)) {
                     throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), charge.getExternalId());
@@ -388,7 +388,7 @@ public class ChargeService {
                         transitionChargeState(chargeEntity, CAPTURED);
                     } else {
                         transitionChargeState(chargeEntity, nextStatus);
-                    }
+                    }                    
                     return chargeEntity;
                 })
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
@@ -409,7 +409,7 @@ public class ChargeService {
 
                 GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 
-                // Used by Splunk saved search
+                // Used by Sumo Logic saved search
                 logger.info("Card pre-operation - charge_external_id={}, charge_status={}, account_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
                         chargeEntity.getExternalId(),
                         fromString(chargeEntity.getStatus()),
@@ -441,42 +441,14 @@ public class ChargeService {
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
-    public ChargeEntity transitionChargeState(ChargeEntity charge, ChargeStatus targetChargeState) {
-        return transitionChargeState(charge, targetChargeState, null);
-    }
-
     @Transactional
-    public ChargeEntity transitionChargeState(
-            ChargeEntity charge,
-            ChargeStatus targetChargeState,
-            ZonedDateTime gatewayEventTime
-    ) {
-        ChargeStatus fromChargeState = ChargeStatus.fromString(charge.getStatus());
+    public ChargeEntity transitionChargeState(ChargeEntity charge, ChargeStatus targetChargeState) {
         charge.setStatus(targetChargeState);
-        ChargeEventEntity chargeEventEntity = chargeEventDao.persistChargeEventOf(charge, gatewayEventTime);
-
-        PaymentGatewayStateTransitions.getInstance()
-                .getEventForTransition(fromChargeState, targetChargeState)
-                .ifPresent(eventType -> {
-                    if (shouldEmitPaymentStateTransitionEvents) {
-                        try {
-                            PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventType);
-                            paymentStateTransitionQueue.offer(transition);
-                            logger.info("Offered payment state transition to emitter queue [from={}] [to={}] [chargeId={}]", fromChargeState, targetChargeState, chargeEventEntity.getId());
-                        } catch (Exception e) {
-                            logger.warn(
-                                    "Failed to write state transition to queue [from={}] [to={}] [error={}]",
-                                    fromChargeState,
-                                    targetChargeState,
-                                    e.getMessage()
-                            );
-                        }
-                    }
-                });
+        chargeEventDao.persistChargeEventOf(charge);
+        chargeDao.merge(charge);
         return charge;
     }
 
-    @Transactional
     public ChargeEntity transitionChargeState(String chargeId, ChargeStatus targetChargeState) {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity ->
                 transitionChargeState(chargeEntity, targetChargeState)

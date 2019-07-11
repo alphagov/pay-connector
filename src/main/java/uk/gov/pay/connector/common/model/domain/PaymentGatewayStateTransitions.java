@@ -16,6 +16,7 @@ import uk.gov.pay.connector.events.Event;
 import uk.gov.pay.connector.events.GatewayErrorDuringAuthorisation;
 import uk.gov.pay.connector.events.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.GatewayTimeoutDuringAuthorisation;
+import uk.gov.pay.connector.events.PaymentCreated;
 import uk.gov.pay.connector.events.PaymentExpired;
 import uk.gov.pay.connector.events.PaymentStarted;
 import uk.gov.pay.connector.events.ServiceApprovedForCapture;
@@ -26,7 +27,6 @@ import uk.gov.pay.connector.events.UserApprovedForCapture;
 import uk.gov.pay.connector.events.UserApprovedForCaptureAwaitingServiceApproval;
 import uk.gov.pay.connector.events.UserCancelled;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -58,6 +58,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_READY;
@@ -84,6 +85,7 @@ public class PaymentGatewayStateTransitions {
                 .directed()
                 .build();
 
+        graph.putEdgeValue(UNDEFINED, CREATED, ModelledEvent.of(PaymentCreated.class));
         graph.putEdgeValue(CREATED, EXPIRED, ModelledEvent.of(PaymentExpired.class));
         graph.putEdgeValue(ENTERING_CARD_DETAILS, EXPIRED, ModelledEvent.of(PaymentExpired.class));
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, EXPIRED, ModelledEvent.of(PaymentExpired.class));
@@ -156,7 +158,7 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(USER_CANCEL_READY, USER_CANCELLED, ModelledEvent.of(UserCancelled.class));
         graph.putEdgeValue(USER_CANCEL_SUBMITTED, USER_CANCEL_ERROR, ModelledEvent.of(UserCancelled.class));
         graph.putEdgeValue(USER_CANCEL_SUBMITTED, USER_CANCELLED, ModelledEvent.of(UserCancelled.class));
-
+        
         return ImmutableValueGraph.copyOf(graph);
     }
 
@@ -173,18 +175,6 @@ public class PaymentGatewayStateTransitions {
                         edge.nodeV(),
                         graph.edgeValue(edge.nodeU(), edge.nodeV()).map(e -> e.toString()).orElse("")))
                 .collect(Collectors.toSet());
-    }
-
-    public <T extends Event> Optional<Class<T>> getEventForTransition(ChargeStatus fromStatus, ChargeStatus toStatus) {
-        return graph.edgeValue(fromStatus , toStatus)
-                .map(modelledEvent -> {
-                    try {
-                        ModelledTypedEvent<T> modelledTypedEvent = (ModelledTypedEvent) modelledEvent;
-                        return modelledTypedEvent.getClazz();
-                    } catch (ClassCastException e) {
-                        return null;
-                    }
-                });
     }
 
     public static boolean isValidTransition(ChargeStatus state, ChargeStatus targetState, Event event) {
@@ -241,8 +231,5 @@ public class PaymentGatewayStateTransitions {
             return clazz.getSimpleName();
         }
 
-        public Class<T> getClazz() {
-            return clazz;
-        }
     }
 }
