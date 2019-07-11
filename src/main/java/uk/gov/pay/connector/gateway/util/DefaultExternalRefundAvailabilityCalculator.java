@@ -20,6 +20,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READ
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_FULL;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_PENDING;
@@ -28,6 +29,7 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailabi
 public class DefaultExternalRefundAvailabilityCalculator implements ExternalRefundAvailabilityCalculator {
 
     private static final List<ChargeStatus> STATUSES_THAT_MAP_TO_EXTERNAL_PENDING = ImmutableList.of(
+            UNDEFINED,
             CREATED,
             ENTERING_CARD_DETAILS,
             AUTHORISATION_READY,

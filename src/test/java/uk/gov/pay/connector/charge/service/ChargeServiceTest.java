@@ -200,7 +200,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getCorporateSurcharge().isPresent(), is(false));
         assertThat(createdChargeEntity.getWalletType(), is(nullValue()));
 
-        verify(mockedChargeEventDao).persistChargeEventOf(createdChargeEntity);
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(createdChargeEntity), isNull());
     }
 
     @Test

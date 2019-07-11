@@ -52,7 +52,7 @@ import java.util.Optional;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions.isValidTransition;
 
@@ -148,7 +148,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     public ChargeEntity(Long amount, String returnUrl, String description, ServicePaymentReference reference,
                         GatewayAccountEntity gatewayAccount, String email, SupportedLanguage language,
                         boolean delayedCapture, ExternalMetadata externalMetadata) {
-        this(amount, CREATED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture, externalMetadata);
+        this(amount, UNDEFINED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture, externalMetadata);
     }
 
     // Only the ChargeEntityFixture should directly call this constructor

@@ -16,6 +16,7 @@ import uk.gov.pay.connector.events.Event;
 import uk.gov.pay.connector.events.GatewayErrorDuringAuthorisation;
 import uk.gov.pay.connector.events.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.GatewayTimeoutDuringAuthorisation;
+import uk.gov.pay.connector.events.PaymentCreated;
 import uk.gov.pay.connector.events.PaymentExpired;
 import uk.gov.pay.connector.events.PaymentStarted;
 import uk.gov.pay.connector.events.ServiceApprovedForCapture;
@@ -58,6 +59,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_READY;
@@ -84,6 +86,7 @@ public class PaymentGatewayStateTransitions {
                 .directed()
                 .build();
 
+        graph.putEdgeValue(UNDEFINED, CREATED, ModelledEvent.of(PaymentCreated.class));
         graph.putEdgeValue(CREATED, EXPIRED, ModelledEvent.of(PaymentExpired.class));
         graph.putEdgeValue(ENTERING_CARD_DETAILS, EXPIRED, ModelledEvent.of(PaymentExpired.class));
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, EXPIRED, ModelledEvent.of(PaymentExpired.class));
