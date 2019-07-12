@@ -8,7 +8,7 @@ server:
   registerDefaultExceptionMappers: false
 
 logging:
-  level: INFO
+  level: WARN
   appenders:
     - type: console
       threshold: ALL

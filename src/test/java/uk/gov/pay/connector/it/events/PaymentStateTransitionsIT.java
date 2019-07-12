@@ -14,10 +14,13 @@ import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(
@@ -36,27 +39,21 @@ public class PaymentStateTransitionsIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldPutPaymentStateTransitionMessageOntoQueueGivenAuthSuccess() throws Exception {
-        String chargeId = authoriseNewCharge();
-        givenSetup()
-                .post(captureChargeUrlFor(chargeId))
-                .then()
-                .statusCode(204);
+    public void shouldPutPaymentStateTransitionMessageOntoQueueGivenAuthCancel() throws InterruptedException {
+        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id-transition-it");
 
-        Thread.sleep(400);
+        cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
+
+        Thread.sleep(200);
 
         List<Message> messages = readMessagesFromEventQueue();
-        assertThat(messages.size(), is(2));
 
-        JsonObject approvedMessage = new JsonParser().parse(messages.get(0).getBody()).getAsJsonObject();
-        JsonObject submittedMessage = new JsonParser().parse(messages.get(1).getBody()).getAsJsonObject();
+        assertThat(messages.size(), is(1));
 
-        assertThat(approvedMessage.get("resource_external_id").getAsString(), is(chargeId));
-        assertThat(approvedMessage.get("event_type").getAsString(), is("USER_APPROVED_FOR_CAPTURE"));
+        JsonObject message = new JsonParser().parse(messages.get(0).getBody()).getAsJsonObject();
 
-        assertThat(submittedMessage.get("resource_external_id").getAsString(), is(chargeId));
-        assertThat(submittedMessage.get("event_type").getAsString(), is("CAPTURE_SUBMITTED"));
-
+        assertThat(message.get("resource_external_id").getAsString(), is(chargeId));
+        assertThat(message.get("event_type").getAsString(), is("SYSTEM_CANCELLED"));
     }
 
     private List<Message> readMessagesFromEventQueue() {
