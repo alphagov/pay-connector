@@ -179,7 +179,7 @@ public class ChargeServiceTest {
         when(mockedConfig.getEmitPaymentStateTransitionEvents()).thenReturn(true);
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, mockedEventQueue, mockedPaymentStateTransitionQueue);
+                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, mockedPaymentStateTransitionQueue);
     }
 
     @Test
@@ -208,27 +208,7 @@ public class ChargeServiceTest {
 
         verify(mockedChargeEventDao).persistChargeEventOf(eq(createdChargeEntity), isNull());
     }
-
-    @Test
-    public void createChargeShouldPutPaymentCreatedEventOnQueue() throws Exception {
-        // ACT
-        service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
-
-        // ASSERT
-        verify(mockedEventQueue).emitEvent(any(PaymentCreated.class));
-    }
-
-    @Test(expected = WebApplicationException.class)
-    public void createChargeThrowsWebApplicationExceptionIfEmittingPaymentCreatedEventFails() throws Exception {
-        doThrow(new QueueException("Queue badness")).when(mockedEventQueue).emitEvent(any(Event.class));
-
-        service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
-
-        // assert that DB record got written
-        verify(mockedChargeDao).persist(any(ChargeEntity.class));
-    }
-
-
+    
     @Test
     public void shouldCreateAChargeWithDelayedCaptureTrue() {
         final ChargeCreateRequest request = requestBuilder.withDelayedCapture(true).build();

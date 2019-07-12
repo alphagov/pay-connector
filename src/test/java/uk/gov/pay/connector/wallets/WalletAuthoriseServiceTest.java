@@ -22,11 +22,10 @@ import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
-import uk.gov.pay.connector.events.Event;
-import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -36,6 +35,7 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
+import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
@@ -59,6 +59,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -92,8 +93,6 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private Counter mockCounter;
-    @Mock
-    private EventQueue eventQueue;
 
     @Mock
     private PaymentStateTransitionQueue paymentStateTransitionQueue;
@@ -117,10 +116,14 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
+        when(mockConfiguration.getEmitPaymentStateTransitionEvents()).thenReturn(true);
 
+        ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
+        when(chargeEventEntity.getId()).thenReturn(123L);
+        when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
-        ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null, eventQueue, paymentStateTransitionQueue);
+        ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
+                null, null, mockConfiguration, null, paymentStateTransitionQueue));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,
@@ -153,7 +156,10 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     @Test
     public void doAuthoriseCard_ApplePay_shouldRespondAuthorisationSuccess() throws Exception {
         providerWillAuthorise();
-
+        ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
+        when(chargeEventEntity.getId()).thenReturn(1L);
+        when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
+        
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 
         assertThat(response.isSuccessful(), is(true));
@@ -169,16 +175,17 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(validApplePayDetails.getPaymentInfo().getEmail()));
-
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+        
+        verify(paymentStateTransitionQueue).offer(any(PaymentStateTransition.class));
     }
 
     @Test
     public void doAuthoriseCard_GooglePay_shouldRespondAuthorisationSuccess() throws Exception {
         providerWillAuthorise();
+        ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
+        when(chargeEventEntity.getId()).thenReturn(1L);
+        when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
+        
         WalletAuthorisationData authorisationData =
                 Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
@@ -198,10 +205,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(authorisationData.getPaymentInfo().getEmail()));
 
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+        verify(paymentStateTransitionQueue).offer(any(PaymentStateTransition.class));
     }
 
     @Test

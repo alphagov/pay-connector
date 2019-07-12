@@ -9,6 +9,7 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
@@ -35,7 +36,11 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
 
 @RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml", withDockerSQS = true)
+@DropwizardConfig(
+        app = ConnectorApp.class,
+        config = "config/test-it-config.yaml",
+        withDockerSQS = true
+)
 public class WorldpayCardResourceIT extends ChargingITestBase {
 
     private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
@@ -232,7 +237,6 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
         assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
 

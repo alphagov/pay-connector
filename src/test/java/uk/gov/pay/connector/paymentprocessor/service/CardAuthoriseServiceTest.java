@@ -6,7 +6,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -20,8 +19,6 @@ import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.events.Event;
-import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -56,7 +53,6 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -96,9 +92,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private Counter mockCounter;
 
     @Mock
-    private EventQueue eventQueue;
-
-    @Mock
     private PaymentStateTransitionQueue paymentStateTransitionQueue;
 
     private CardAuthoriseService cardAuthorisationService;
@@ -110,7 +103,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null, eventQueue, paymentStateTransitionQueue);
+                null, null, mockConfiguration, null, paymentStateTransitionQueue);
 
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         cardAuthorisationService = new CardAuthoriseService(
@@ -232,25 +225,6 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.get3dsDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(notNullValue()));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
-    }
-
-    @Test
-    public void doAuthorise_shouldPublishEvent() throws Exception {
-
-        providerWillAuthorise();
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
-                .withAddress(null)
-                .build();
-
-        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
-
-        assertTrue(response.getAuthoriseStatus().isPresent());
-        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
-
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
     }
 
     @Test
