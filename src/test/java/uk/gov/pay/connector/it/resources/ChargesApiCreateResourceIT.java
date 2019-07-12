@@ -97,9 +97,9 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
     
     @Before
     @Override
-    public void setup() {
+    public void setUp() {
         purgeEventQueue();
-        super.setup();
+        super.setUp();
     }
 
     @Test

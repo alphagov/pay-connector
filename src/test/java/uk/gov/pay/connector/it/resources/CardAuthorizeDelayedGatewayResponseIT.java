@@ -58,7 +58,7 @@ public class CardAuthorizeDelayedGatewayResponseIT extends ChargingITestBase {
     }
 
     @Before
-    public void setup() {
+    public void setUp() {
         databaseTestHelper = app.getDatabaseTestHelper();
         databaseTestHelper.addGatewayAccount(accountId, "sandbox", ImmutableMap.of(
                 CREDENTIALS_MERCHANT_ID, "merchant-id",

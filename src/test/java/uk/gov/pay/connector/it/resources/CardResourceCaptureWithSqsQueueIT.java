@@ -45,8 +45,10 @@ public class CardResourceCaptureWithSqsQueueIT extends ChargingITestBase {
         super("sandbox");
     }
 
+    @Override
     @Before
     public void setUp() {
+        super.setUp();
         Logger root = (Logger) LoggerFactory.getLogger(CaptureQueue.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);

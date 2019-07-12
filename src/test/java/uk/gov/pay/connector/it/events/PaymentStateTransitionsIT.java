@@ -2,10 +2,12 @@ package uk.gov.pay.connector.it.events;
 
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -38,6 +40,13 @@ public class PaymentStateTransitionsIT extends ChargingITestBase {
         super("sandbox");
     }
 
+    @Override
+    @Before
+    public void setUp() {
+        super.setUp();
+        purgeEventQueue();
+    }
+
     @Test
     public void shouldPutPaymentStateTransitionMessageOntoQueueGivenAuthCancel() throws InterruptedException {
         String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id-transition-it");
@@ -68,5 +77,10 @@ public class PaymentStateTransitionsIT extends ChargingITestBase {
         ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
 
         return receiveMessageResult.getMessages();
+    }
+
+    private void purgeEventQueue() {
+        AmazonSQS sqsClient = testContext.getInstanceFromGuiceContainer(AmazonSQS.class);
+        sqsClient.purgeQueue(new PurgeQueueRequest(testContext.getEventQueueUrl()));
     }
 }

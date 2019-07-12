@@ -90,7 +90,7 @@ public class ChargingITestBase {
     }
 
     @Before
-    public void setup() {
+    public void setUp() {
         credentials = ImmutableMap.of(
                 CREDENTIALS_MERCHANT_ID, "merchant-id",
                 CREDENTIALS_USERNAME, "test-user",

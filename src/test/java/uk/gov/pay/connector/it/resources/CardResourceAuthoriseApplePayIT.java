@@ -42,8 +42,10 @@ public class CardResourceAuthoriseApplePayIT extends ChargingITestBase {
         super("sandbox");
     }
 
+    @Override
     @Before
     public void setUp() {
+        super.setUp();
         Logger root = (Logger) LoggerFactory.getLogger(CardResource.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
