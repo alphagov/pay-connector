@@ -19,6 +19,7 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 
 public enum ChargeStatus implements Status {
+    UNDEFINED("UNDEFINED", EXTERNAL_CREATED),
     CREATED("CREATED", EXTERNAL_CREATED),
     ENTERING_CARD_DETAILS("ENTERING CARD DETAILS", EXTERNAL_STARTED),
     AUTHORISATION_ABORTED("AUTHORISATION ABORTED", EXTERNAL_FAILED_REJECTED),

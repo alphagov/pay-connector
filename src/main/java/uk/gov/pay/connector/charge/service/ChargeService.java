@@ -179,9 +179,8 @@ public class ChargeService {
                     .ifPresent(chargeEntity::setCardDetails);
 
             chargeDao.persist(chargeEntity);
-
-            chargeEventDao.persistChargeEventOf(chargeEntity);
-
+            transitionChargeState(chargeEntity, CREATED);
+            chargeDao.merge(chargeEntity);
             return chargeEntity;
         });
     }
