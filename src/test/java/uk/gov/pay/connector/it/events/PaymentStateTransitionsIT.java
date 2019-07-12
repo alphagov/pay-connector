@@ -42,8 +42,8 @@ public class PaymentStateTransitionsIT extends ChargingITestBase {
 
     @Override
     @Before
-    public void setup() {
-        super.setup();
+    public void setUp() {
+        super.setUp();
         purgeEventQueue();
     }
 

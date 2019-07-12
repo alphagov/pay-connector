@@ -46,8 +46,8 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthIT extends Charg
     }
 
     @Before
-    public void setup() {
-        super.setup();
+    public void setUp() {
+        super.setUp();
         givenSetup()
                 .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsbigsecret")))
                 .post("/v1/api/accounts/" + accountId + "/notification-credentials")
