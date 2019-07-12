@@ -5,6 +5,7 @@ import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.events.PaymentStateTransitionEmitterProcess;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 
 import javax.inject.Inject;
@@ -13,56 +14,78 @@ import java.util.concurrent.TimeUnit;
 
 public class QueueMessageReceiver implements Managed {
 
-    private static final String SQS_MESSAGE_RECEIVER_THREAD_NAME = "sqs-message-receiver";
+    private static final String SQS_MESSAGE_RECEIVER_THREAD_NAME = "sqs-message-chargeCaptureMessageReceiver";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(QueueMessageReceiver.class);
 
     private final int queueSchedulerThreadDelayInSeconds;
 
-    private ScheduledExecutorService scheduledExecutorService;
-    private CardCaptureProcess cardCaptureProcess;
+    private ScheduledExecutorService chargeCaptureMessageExecutorService;
+    private ScheduledExecutorService stateTransitionMessageExecutorService;
+
+    private final CardCaptureProcess cardCaptureProcess;
+    private final PaymentStateTransitionEmitterProcess paymentStateTransitionEmitterProcess;
+
 
     @Inject
-    public QueueMessageReceiver(CardCaptureProcess cardCaptureProcess,
+    public QueueMessageReceiver(CardCaptureProcess cardCaptureProcess, PaymentStateTransitionEmitterProcess paymentStateTransitionEmitterProcess,
                                 Environment environment, ConnectorConfiguration connectorConfiguration) {
+        this.paymentStateTransitionEmitterProcess = paymentStateTransitionEmitterProcess;
+        this.cardCaptureProcess = cardCaptureProcess;
 
         int queueScheduleNumberOfThreads = connectorConfiguration.getCaptureProcessConfig().getQueueSchedulerNumberOfThreads();
 
-        this.cardCaptureProcess = cardCaptureProcess;
-
-        scheduledExecutorService = environment
+        chargeCaptureMessageExecutorService = environment
                 .lifecycle()
                 .scheduledExecutorService(SQS_MESSAGE_RECEIVER_THREAD_NAME)
                 .threads(queueScheduleNumberOfThreads)
                 .build();
+
+        stateTransitionMessageExecutorService = environment
+                .lifecycle()
+                .scheduledExecutorService("payment-state-transition-message-poller")
+                .threads(1)
+                .build();
+
         queueSchedulerThreadDelayInSeconds = connectorConfiguration.getCaptureProcessConfig().getQueueSchedulerThreadDelayInSeconds();
     }
 
     @Override
     public void start() {
         int initialDelay = queueSchedulerThreadDelayInSeconds;
-        scheduledExecutorService.scheduleWithFixedDelay(
-                receiver(),
+        chargeCaptureMessageExecutorService.scheduleWithFixedDelay(
+                chargeCaptureMessageReceiver(),
                 initialDelay,
                 queueSchedulerThreadDelayInSeconds,
                 TimeUnit.SECONDS);
+
+        stateTransitionMessageExecutorService.scheduleWithFixedDelay(
+                stateTransitionMessageReceiver(),
+                0,
+                100,
+                TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void stop() {
-        scheduledExecutorService.shutdown();
+        chargeCaptureMessageExecutorService.shutdown();
+        stateTransitionMessageExecutorService.shutdown();
     }
 
-    private Thread receiver() {
+    private Thread stateTransitionMessageReceiver() {
+        return new Thread(() -> paymentStateTransitionEmitterProcess.handleStateTransitionMessages());
+    }
+
+    private Thread chargeCaptureMessageReceiver() {
         return new Thread() {
             @Override
             public void run() {
-                LOGGER.info("Queue message receiver thread polling queue");
+                LOGGER.info("Queue message chargeCaptureMessageReceiver thread polling queue");
                 while (!isInterrupted()) {
                     try {
                         cardCaptureProcess.handleCaptureMessages();
                     } catch (Exception e) {
-                        LOGGER.error("Queue message receiver thread exception [{}]", e);
+                        LOGGER.error("Queue message chargeCaptureMessageReceiver thread exception [{}]", e);
                     }
                 }
             }
