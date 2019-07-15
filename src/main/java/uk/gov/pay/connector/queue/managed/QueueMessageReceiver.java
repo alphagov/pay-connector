@@ -60,7 +60,7 @@ public class QueueMessageReceiver implements Managed {
                 TimeUnit.SECONDS);
 
         stateTransitionMessageExecutorService.scheduleWithFixedDelay(
-                stateTransitionMessageReceiver(),
+                this::stateTransitionMessageReceiver,
                 0,
                 100,
                 TimeUnit.MILLISECONDS);
@@ -72,8 +72,12 @@ public class QueueMessageReceiver implements Managed {
         stateTransitionMessageExecutorService.shutdown();
     }
 
-    private Thread stateTransitionMessageReceiver() {
-        return new Thread(() -> paymentStateTransitionEmitterProcess.handleStateTransitionMessages());
+    private void stateTransitionMessageReceiver() {
+        try {
+            paymentStateTransitionEmitterProcess.handleStateTransitionMessages();
+        } catch (Exception e) {
+            LOGGER.error("State transition message polling thread failed for [exception={}]", e);
+        }
     }
 
     private Thread chargeCaptureMessageReceiver() {
