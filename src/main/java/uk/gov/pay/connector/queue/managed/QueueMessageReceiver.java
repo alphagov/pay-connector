@@ -54,7 +54,7 @@ public class QueueMessageReceiver implements Managed {
     public void start() {
         int initialDelay = queueSchedulerThreadDelayInSeconds;
         chargeCaptureMessageExecutorService.scheduleWithFixedDelay(
-                chargeCaptureMessageReceiver(),
+                this::chargeCaptureMessageReceiver,
                 initialDelay,
                 queueSchedulerThreadDelayInSeconds,
                 TimeUnit.SECONDS);
@@ -76,19 +76,11 @@ public class QueueMessageReceiver implements Managed {
         return new Thread(() -> paymentStateTransitionEmitterProcess.handleStateTransitionMessages());
     }
 
-    private Thread chargeCaptureMessageReceiver() {
-        return new Thread() {
-            @Override
-            public void run() {
-                LOGGER.info("Queue message chargeCaptureMessageReceiver thread polling queue");
-                while (!isInterrupted()) {
-                    try {
-                        cardCaptureProcess.handleCaptureMessages();
-                    } catch (Exception e) {
-                        LOGGER.error("Queue message chargeCaptureMessageReceiver thread exception [{}]", e);
-                    }
-                }
-            }
-        };
+    private void chargeCaptureMessageReceiver() {
+        try {
+            cardCaptureProcess.handleCaptureMessages();
+        } catch (Exception e) {
+            LOGGER.error("Queue message chargeCaptureMessageReceiver thread exception [{}]", e);
+        }
     }
 }
