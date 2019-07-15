@@ -76,7 +76,7 @@ public class QueueMessageReceiver implements Managed {
         try {
             paymentStateTransitionEmitterProcess.handleStateTransitionMessages();
         } catch (Exception e) {
-            LOGGER.error("State transition message polling thread failed for [exception={}]", e);
+            LOGGER.error("State transition message polling thread failed to process message due to [message={}]", e.getMessage());
         }
     }
 
@@ -84,7 +84,7 @@ public class QueueMessageReceiver implements Managed {
         try {
             cardCaptureProcess.handleCaptureMessages();
         } catch (Exception e) {
-            LOGGER.error("Queue message chargeCaptureMessageReceiver thread exception [{}]", e);
+            LOGGER.error("Queue message chargeCaptureMessageReceiver thread exception [message={}]", e.getMessage());
         }
     }
 }
