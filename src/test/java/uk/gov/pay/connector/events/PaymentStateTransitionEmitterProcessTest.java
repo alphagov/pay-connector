@@ -17,7 +17,14 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PaymentStateTransitionEmitterProcessTest {
@@ -40,7 +47,7 @@ public class PaymentStateTransitionEmitterProcessTest {
     public void shouldEmitPaymentEventGivenStateTransitionMessageOnQueue() throws Exception {
         Long chargeEventId = 100L;
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
-        PaymentStateTransition paymentStateTransition = new PaymentStateTransition<>(chargeEventId, PaymentCreated.class);
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventId, PaymentCreated.class);
 
         when(chargeEvent.getChargeEntity()).thenReturn(charge);
         when(mockPaymentStateTransitionQueue.poll()).thenReturn(paymentStateTransition);
@@ -53,7 +60,7 @@ public class PaymentStateTransitionEmitterProcessTest {
 
     @Test
     public void shouldPutPaymentTransitionBackOnQueueIfChargeEventNotFound() {
-        PaymentStateTransition paymentStateTransition = new PaymentStateTransition<>(100L, PaymentEvent.class);
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(100L, PaymentEvent.class);
 
         when(mockPaymentStateTransitionQueue.poll()).thenReturn(paymentStateTransition);
         when(chargeEventDao.findById(ChargeEventEntity.class, 100L)).thenReturn(Optional.empty());
@@ -66,7 +73,7 @@ public class PaymentStateTransitionEmitterProcessTest {
 
     @Test
     public void shouldPutPaymentTransitionBackOnQueueIfEventEmitFails() throws Exception {
-        PaymentStateTransition paymentStateTransition = new PaymentStateTransition<>(100L, PaymentEvent.class);
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(100L, PaymentEvent.class);
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
 
         when(mockPaymentStateTransitionQueue.poll()).thenReturn(paymentStateTransition);
@@ -84,7 +91,7 @@ public class PaymentStateTransitionEmitterProcessTest {
     public void shouldNotPutPaymentTransitionBackOnQueueIfItHasExceededMaxAttempts() {
         PaymentStateTransitionQueue spyQueue = spy(new PaymentStateTransitionQueue());
         PaymentStateTransitionEmitterProcess paymentStateTransitionEmitterProcess = new PaymentStateTransitionEmitterProcess(spyQueue, eventQueue, chargeEventDao);
-        PaymentStateTransition paymentStateTransition = new PaymentStateTransition<>(100L, PaymentEvent.class, 0);
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(100L, PaymentEvent.class, 0);
 
         when(chargeEventDao.findById(ChargeEventEntity.class, 100L)).thenReturn(Optional.empty());
 
