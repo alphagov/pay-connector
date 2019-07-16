@@ -13,6 +13,8 @@ public class PaymentEventFactory {
                 return PaymentCreated.from(chargeEvent);
             } else if (eventClass == PaymentDetailsEntered.class) {
                 return PaymentDetailsEntered.from(chargeEvent);
+            } else if (eventClass == CaptureConfirmed.class) {
+                return CaptureConfirmed.from(chargeEvent);
             } else {
                 return eventClass.getConstructor(String.class, ZonedDateTime.class).newInstance(
                         chargeEvent.getChargeEntity().getExternalId(),
