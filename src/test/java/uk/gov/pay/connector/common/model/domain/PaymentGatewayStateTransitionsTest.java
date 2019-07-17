@@ -4,7 +4,7 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.events.CaptureAbandonedAfterTooManyRetries;
-import uk.gov.pay.connector.events.CaptureError;
+import uk.gov.pay.connector.events.CaptureErrored;
 import uk.gov.pay.connector.events.CaptureSubmitted;
 import uk.gov.pay.connector.events.Event;
 import uk.gov.pay.connector.events.PaymentExpired;
@@ -51,7 +51,7 @@ public class PaymentGatewayStateTransitionsTest {
     @Test
     public void isValidTransition_deniesTransitionWithInvalidEvent() {
         assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureSubmitted("a", ZonedDateTime.now())), is(true));
-        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureError("a", ZonedDateTime.now())), is(false));
+        assertThat(PaymentGatewayStateTransitions.isValidTransition(CAPTURE_READY, CAPTURE_SUBMITTED, new CaptureErrored("a", ZonedDateTime.now())), is(false));
     }
 
     @Test

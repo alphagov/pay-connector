@@ -62,7 +62,7 @@ public class PaymentStateTransitionsIT extends ChargingITestBase {
         JsonObject message = new JsonParser().parse(messages.get(0).getBody()).getAsJsonObject();
 
         assertThat(message.get("resource_external_id").getAsString(), is(chargeId));
-        assertThat(message.get("event_type").getAsString(), is("SYSTEM_CANCELLED"));
+        assertThat(message.get("event_type").getAsString(), is("CANCELLED_BY_EXTERNAL_SERVICE"));
     }
 
     private List<Message> readMessagesFromEventQueue() {
