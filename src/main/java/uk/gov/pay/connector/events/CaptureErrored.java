@@ -3,8 +3,8 @@ package uk.gov.pay.connector.events;
 import java.time.ZonedDateTime;
 
 // In rare circumstances.. only smartpay?
-public class CaptureError extends PaymentEventWithoutDetails {
-    public CaptureError(String resourceExternalId, ZonedDateTime timestamp) {
+public class CaptureErrored extends PaymentEventWithoutDetails {
+    public CaptureErrored(String resourceExternalId, ZonedDateTime timestamp) {
         super(resourceExternalId, timestamp);
     }
 }
