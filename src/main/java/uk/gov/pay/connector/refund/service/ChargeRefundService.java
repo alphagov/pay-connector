@@ -97,12 +97,16 @@ public class ChargeRefundService {
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
 
+    public Optional<RefundEntity> findByProviderAndReference(String name, String reference) {
+        return refundDao.findByProviderAndReference(name, reference);
+    }
+
     private RefundEntity processRefund(GatewayRefundResponse gatewayRefundResponse, Long refundEntityId) {
         RefundStatus refundStatus = determineRefundStatus(gatewayRefundResponse);
 
         if (refundStatus == REFUNDED) {
-            // If the gateway confirms refunds immediately, the refund status needs 
-            // to be set to REFUND_SUBMITTED and then REFUNDED. This will  help 
+            // If the gateway confirms refunds immediately, the refund status needs
+            // to be set to REFUND_SUBMITTED and then REFUNDED. This will  help
             // services to view refund history in detail in self service.
             // see Javadoc (RefundHistory) for details on how history is handled
             setRefundStatus(refundEntityId, REFUND_SUBMITTED);
@@ -130,7 +134,7 @@ public class ChargeRefundService {
                 userNotificationService.sendRefundIssuedEmail(refundEntity);
             }
 
-            refundEntity.setStatus(refundStatus);
+            transitionRefundState(refundEntity, refundStatus);
             getRefundReference(refundEntity, gatewayRefundResponse).ifPresent(refundEntity::setReference);
         });
 
@@ -141,7 +145,7 @@ public class ChargeRefundService {
     @SuppressWarnings("WeakerAccess")
     public void setRefundStatus(Long refundEntityId, RefundStatus refundStatus) {
         refundDao.findById(refundEntityId).ifPresent(refundEntity -> {
-            refundEntity.setStatus(refundStatus);
+            transitionRefundState(refundEntity, refundStatus);
         });
     }
 
@@ -163,10 +167,15 @@ public class ChargeRefundService {
     @SuppressWarnings("WeakerAccess")
     public RefundEntity createRefundEntity(RefundRequest refundRequest, ChargeEntity charge) {
         RefundEntity refundEntity = new RefundEntity(charge, refundRequest.getAmount(), refundRequest.getUserExternalId());
+        transitionRefundState(refundEntity, RefundStatus.CREATED);
         charge.getRefunds().add(refundEntity);
         refundDao.persist(refundEntity);
 
         return refundEntity;
+    }
+
+    public void transitionRefundState(RefundEntity refundEntity, RefundStatus refundStatus) {
+        refundEntity.setStatus(refundStatus);
     }
 
     private void checkIfRefundRequestIsInConflictOrTerminate(RefundRequest refundRequest, ChargeEntity reloadedCharge, long totalAmountToBeRefunded) {
