@@ -111,6 +111,10 @@ public class ChargeServiceTest {
     @Mock
     private ChargeEventDao mockedChargeEventDao;
     @Mock
+    private ChargeEventEntity mockChargeEvent;
+
+
+    @Mock
     private GatewayAccountDao mockedGatewayAccountDao;
     @Mock
     private CardTypeDao mockedCardTypeDao;
@@ -146,6 +150,8 @@ public class ChargeServiceTest {
         gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+
+        when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(mockChargeEvent);
 
         // Populate ChargeEntity with ID when persisting
         doAnswer(invocation -> {
