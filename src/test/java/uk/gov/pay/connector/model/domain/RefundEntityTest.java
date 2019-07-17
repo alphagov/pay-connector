@@ -31,7 +31,6 @@ public class RefundEntityTest {
         assertThat(refundEntity.getChargeEntity(), is(chargeEntity));
         assertThat(refundEntity.getReference(), is(nullValue()));
         assertThat(refundEntity.getAmount(), is(amount));
-        assertThat(refundEntity.getStatus(), is(RefundStatus.CREATED));
         assertThat(refundEntity.getUserExternalId(), is(userExternalId));
         assertNotNull(refundEntity.getCreatedDate());
     }
