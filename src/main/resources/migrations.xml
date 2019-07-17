@@ -274,6 +274,9 @@
     <changeSet id="Seed database table card_types" author="">
         <loadData file="seed-data/card_types.csv"
                   tableName="card_types">
+            <column name="brand" type="string" />
+            <column name="type" type="string" />
+            <column name="label" type="string" />
         </loadData>
     </changeSet>
 
