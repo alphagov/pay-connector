@@ -29,12 +29,10 @@ import uk.gov.pay.connector.events.PaymentCreated;
 import uk.gov.pay.connector.events.PaymentExpired;
 import uk.gov.pay.connector.events.PaymentStarted;
 import uk.gov.pay.connector.events.ServiceApprovedForCapture;
-import uk.gov.pay.connector.events.SystemCancelled;
 import uk.gov.pay.connector.events.UnexpectedGatewayErrorDuringAuthorisation;
 import uk.gov.pay.connector.events.UnspecifiedEvent;
 import uk.gov.pay.connector.events.UserApprovedForCapture;
 import uk.gov.pay.connector.events.UserApprovedForCaptureAwaitingServiceApproval;
-import uk.gov.pay.connector.events.UserCancelled;
 
 import java.util.Optional;
 import java.util.Set;
@@ -105,7 +103,7 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(CREATED, SYSTEM_CANCELLED, ModelledEvent.of(CancelledByExternalService.class));
         graph.putEdgeValue(ENTERING_CARD_DETAILS, AUTHORISATION_READY, ModelledEvent.none());
         graph.putEdgeValue(ENTERING_CARD_DETAILS, AUTHORISATION_ABORTED, ModelledEvent.of(AuthorisationRejected.class));
-        graph.putEdgeValue(ENTERING_CARD_DETAILS, USER_CANCELLED, ModelledEvent.of(UserCancelled.class));
+        graph.putEdgeValue(ENTERING_CARD_DETAILS, USER_CANCELLED, ModelledEvent.of(CancelledByUser.class));
         graph.putEdgeValue(ENTERING_CARD_DETAILS, SYSTEM_CANCELLED, ModelledEvent.of(CancelledByExternalService.class));
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_ABORTED, ModelledEvent.of(AuthorisationRejected.class));
         graph.putEdgeValue(AUTHORISATION_READY, AUTHORISATION_SUCCESS, ModelledEvent.of(AuthorisationSucceeded.class));
@@ -125,7 +123,7 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, AUTHORISATION_CANCELLED, ModelledEvent.of(AuthorisationCancelled.class));
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, EXPIRE_CANCEL_READY, ModelledEvent.none());
-        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, USER_CANCELLED, ModelledEvent.of(UserCancelled.class));
+        graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, USER_CANCELLED, ModelledEvent.of(CancelledByUser.class));
         graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_SUCCESS, ModelledEvent.of(AuthorisationSucceeded.class));
         graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
         graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_ERROR, ModelledEvent.of(GatewayErrorDuringAuthorisation.class));

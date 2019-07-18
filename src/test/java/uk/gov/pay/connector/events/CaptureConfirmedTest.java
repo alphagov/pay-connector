@@ -34,5 +34,16 @@ public class CaptureConfirmedTest {
         assertEquals(captureConfirmedEventDetails.getGatewayEventDate(), gatewayEventTime);
     }
 
+    @Test
+    public void serializesGatewayEventTimeGivenNoGatewayEventDate() {
+        ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
+        when(chargeEvent.getChargeEntity()).thenReturn(chargeEntity);
+        when(chargeEvent.getGatewayEventDate()).thenReturn(Optional.empty());
+
+        CaptureConfirmed captureConfirmed = CaptureConfirmed.from(chargeEvent);
+        CaptureConfirmedEventDetails captureConfirmedEventDetails = (CaptureConfirmedEventDetails) captureConfirmed.getEventDetails();
+
+        assertEquals(captureConfirmed.getResourceExternalId(), chargeEvent.getChargeEntity().getExternalId());
+    }
 
 }
