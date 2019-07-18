@@ -66,6 +66,17 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .findFirst();
     }
 
+    public Optional<ChargeEntity> findByGatewayTransactionId(String gatewayTransactionId) {
+        String query = "SELECT c from ChargeEntity c WHERE c.gatewayTransactionId=:gatewayTransactionId";
+
+        return entityManager.get()
+                .createQuery(query, ChargeEntity.class)
+                .setParameter("gatewayTransactionId", gatewayTransactionId)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
+
     public Optional<ChargeEntity> findByExternalIdAndGatewayAccount(String externalId, Long accountId) {
 
         String query = "SELECT c FROM ChargeEntity c " +

@@ -39,6 +39,11 @@ public class ResponseUtil {
         return notFoundResponse(message);
     }
 
+    public static Response responseWithGatewayTransactionNotFound(String gatewayTransactionId) {
+        String message = format("Charge with gateway transaction id [%s] not found.", gatewayTransactionId);
+        return notFoundResponse(message);
+    }
+
     public static Response responseWithRefundNotFound(String refundId) {
         String message = format("Refund with id [%s] not found.", refundId);
         return notFoundResponse(message);
@@ -52,7 +57,7 @@ public class ResponseUtil {
         logger.error(messages.toString());
         return buildErrorResponse(BAD_REQUEST, messages);
     }
-    
+
     public static Response notFoundResponse(String message) {
         logger.error(message);
         return buildErrorResponse(NOT_FOUND, message);
