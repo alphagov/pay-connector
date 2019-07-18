@@ -41,7 +41,7 @@ public class ResponseUtil {
 
     public static Response responseWithGatewayTransactionNotFound(String gatewayTransactionId) {
         String message = format("Charge with gateway transaction id [%s] not found.", gatewayTransactionId);
-        return notFoundResponse(gatewayTransactionId);
+        return notFoundResponse(message);
     }
 
     public static Response responseWithRefundNotFound(String refundId) {
