@@ -5,6 +5,7 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.google.gson.JsonParser;
 import io.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,11 +30,13 @@ import java.util.Map;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static io.restassured.http.ContentType.JSON;
+import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -47,7 +50,6 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.junit.Assert.assertNull;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.events.MicrosecondPrecisionDateTimeSerializer.MICROSECOND_FORMATTER;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -59,7 +61,10 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
         app = ConnectorApp.class,
         config = "config/test-it-config.yaml",
         withDockerSQS = true, 
-        configOverrides = {@ConfigOverride(key = "eventQueue.eventQueueEnabled", value = "true")}
+        configOverrides = {
+                @ConfigOverride(key = "eventQueue.eventQueueEnabled", value = "true"),
+                @ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "true")
+        }
 )
 public class ChargesApiCreateResourceIT extends ChargingITestBase {
 
@@ -724,7 +729,7 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
     }
     
     @Test
-    public void shouldEmitPaymentCreatedEventWhenChargeIsSuccessfullyCreated() {
+    public void shouldEmitPaymentCreatedEventWhenChargeIsSuccessfullyCreated() throws Exception {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
@@ -740,12 +745,21 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
         final Map<String, Object> persistedCharge = databaseTestHelper.getChargeByExternalId(chargeExternalId);
         final ZonedDateTime persistedCreatedDate = ZonedDateTime.ofInstant(((Timestamp) persistedCharge.get("created_date")).toInstant(), ZoneOffset.UTC);
 
+        Thread.sleep(400);
         List<Message> messages = readMessagesFromEventQueue();
+        
         
         assertThat(messages.size(), is(1));
         final Message message = messages.get(0);
+        ZonedDateTime eventTimestamp = ZonedDateTime.parse(
+                new JsonParser()
+                        .parse(message.getBody())
+                        .getAsJsonObject()
+                        .get("timestamp")
+                        .getAsString()
+        );
         assertThat(message.getBody(), hasJsonPath("$.event_type", equalTo("PAYMENT_CREATED")));
-        assertThat(message.getBody(), hasJsonPath("$.timestamp", equalTo(MICROSECOND_FORMATTER.format(persistedCreatedDate))));
+        assertThat(eventTimestamp, is(within(200, MILLIS, persistedCreatedDate)));
     }
 
     private List<Message> readMessagesFromEventQueue() {

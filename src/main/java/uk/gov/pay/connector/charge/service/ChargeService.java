@@ -40,10 +40,6 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
-import uk.gov.pay.connector.events.Event;
-import uk.gov.pay.connector.events.EventQueue;
-import uk.gov.pay.connector.events.PaymentCreated;
-import uk.gov.pay.connector.events.PaymentDetailsEntered;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
@@ -51,13 +47,11 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
-import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
@@ -108,14 +102,13 @@ public class ChargeService {
     private final CaptureProcessConfig captureProcessConfig;
     private final PaymentProviders providers;
 
-    private final EventQueue eventQueue;
     private final PaymentStateTransitionQueue paymentStateTransitionQueue;
     private final Boolean shouldEmitPaymentStateTransitionEvents;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
-                         ConnectorConfiguration config, PaymentProviders providers, EventQueue eventQueue,
+                         ConnectorConfiguration config, PaymentProviders providers,
                          PaymentStateTransitionQueue paymentStateTransitionQueue) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
@@ -125,28 +118,17 @@ public class ChargeService {
         this.linksConfig = config.getLinks();
         this.providers = providers;
         this.captureProcessConfig = config.getCaptureProcessConfig();
-        this.eventQueue = eventQueue;
         this.paymentStateTransitionQueue = paymentStateTransitionQueue;
         this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
     }
 
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return createCharge(chargeRequest, accountId, uriInfo)
-                .map(charge -> {
-                    emitEvent(PaymentCreated.from(charge));
-                    return populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge, false).build();
-                });
+                .map(charge -> 
+                    populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge, false).build()
+                );
     }
-
-    private void emitEvent(Event event) {
-        try {
-            eventQueue.emitEvent(event);
-        } catch (QueueException e) {
-            logger.error("Error emitting {} event: {}", event.getEventType(), e.getMessage());
-            throw new WebApplicationException(String.format("Error emitting %s event: %s", event.getEventType(), e.getMessage()));
-        }
-    }
-
+    
     @Transactional
     private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
@@ -299,7 +281,7 @@ public class ChargeService {
                                                           Optional<Auth3dsDetailsEntity> auth3dsDetails,
                                                           Optional<String> sessionIdentifier,
                                                           AuthCardDetails authCardDetails) {
-        return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsDetails, sessionIdentifier,
+        return updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsDetails, sessionIdentifier,
                 Optional.empty(), Optional.empty());
 
     }
@@ -311,28 +293,10 @@ public class ChargeService {
                                                             AuthCardDetails authCardDetails,
                                                             WalletType walletType,
                                                             String emailAddress) {
-        ChargeEntity chargeEntity = updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, Optional.empty(), sessionIdentifier,
+        return updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, Optional.empty(), sessionIdentifier,
                 Optional.ofNullable(walletType), Optional.ofNullable(emailAddress));
-
-        return chargeEntity;
     }
-
-    private ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
-                                                                  ChargeStatus status,
-                                                                  AuthCardDetails authCardDetails,
-                                                                  Optional<String> transactionId,
-                                                                  Optional<Auth3dsDetailsEntity> auth3dsDetails,
-                                                                  Optional<String> sessionIdentifier,
-                                                                  Optional<WalletType> walletType,
-                                                                  Optional<String> emailAddress) {
-        ChargeEntity chargeEntity = updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId,
-                auth3dsDetails, sessionIdentifier, walletType, emailAddress);
-
-        emitEvent(PaymentDetailsEntered.from(chargeEntity));
-
-        return chargeEntity;
-    }
-
+    
     // cannot be private: Guice requires @Transactional methods to be public
     @Transactional
     public ChargeEntity updateChargePostAuthorisation(String chargeExternalId,
