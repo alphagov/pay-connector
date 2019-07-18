@@ -50,6 +50,7 @@ import static uk.gov.pay.connector.charge.service.SearchService.TYPE.CHARGE;
 import static uk.gov.pay.connector.charge.service.SearchService.TYPE.TRANSACTION;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
+import static uk.gov.pay.connector.util.ResponseUtil.responseWithGatewayTransactionNotFound;
 import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 
 @Path("/")
@@ -246,6 +247,15 @@ public class ChargesApiResource {
     public Response expireCharges(@Context UriInfo uriInfo) {
         Map<String, Integer> resultMap = chargeExpiryService.sweepAndExpireChargesAndTokens();
         return successResponseWithEntity(resultMap);
+    }
+
+    @GET
+    @Path("/v1/api/charges/gateway_transaction/{gatewayTransactionId}")
+    @Produces(APPLICATION_JSON)
+    public Response getChargeForGatewayTransactionId(@PathParam("gatewayTransactionId") String gatewayTransactionId, @Context UriInfo uriInfo) {
+        return chargeService.findChargeByGatewayTransactionId(gatewayTransactionId, uriInfo)
+                .map(chargeResponse -> Response.ok(chargeResponse).build())
+                .orElseGet(() -> responseWithGatewayTransactionNotFound(gatewayTransactionId));
     }
 
     private ZonedDateTime parseDate(String date) {

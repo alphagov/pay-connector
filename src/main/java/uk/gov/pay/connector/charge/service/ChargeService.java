@@ -200,6 +200,13 @@ public class ChargeService {
     }
 
     @Transactional
+    public Optional<ChargeResponse> findChargeByGatewayTransactionId(String gatewayTransactionId, UriInfo uriInfo) {
+        return chargeDao
+                .findByGatewayTransactionId(gatewayTransactionId)
+                .map(chargeEntity -> populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity, false).build());
+    }
+
+    @Transactional
     public Optional<ChargeEntity> updateCharge(String chargeId, PatchRequestBuilder.PatchRequest chargePatchRequest) {
         return chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
