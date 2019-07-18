@@ -13,8 +13,7 @@ public class CaptureConfirmedEventDetails extends EventDetails {
 
     public static CaptureConfirmedEventDetails from(ChargeEventEntity chargeEvent) {
         return new CaptureConfirmedEventDetails(
-                chargeEvent.getGatewayEventDate()
-                .orElseGet(null)
+                chargeEvent.getGatewayEventDate().orElse(null)
         );
     }
 
