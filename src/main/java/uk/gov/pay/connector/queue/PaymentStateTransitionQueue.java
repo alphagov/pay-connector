@@ -4,13 +4,13 @@ import java.util.Queue;
 import java.util.concurrent.DelayQueue;
 
 public class PaymentStateTransitionQueue {
-    private final Queue<PaymentStateTransition> queue = new DelayQueue<>();
+    private final Queue<StateTransition> queue = new DelayQueue<>();
     
-    public boolean offer(PaymentStateTransition paymentStateTransition) {
+    public boolean offer(StateTransition paymentStateTransition) {
         return queue.offer(paymentStateTransition);
     }
     
-    public PaymentStateTransition poll() {
+    public StateTransition poll() {
         return queue.poll();
     }
 }

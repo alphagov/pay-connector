@@ -5,11 +5,18 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.exception.StateTransitionMessageProcessException;
+import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.PaymentEvent;
 import uk.gov.pay.connector.events.model.charge.PaymentEventFactory;
+import uk.gov.pay.connector.events.model.refund.RefundEvent;
+import uk.gov.pay.connector.events.model.refund.RefundEventFactory;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
 import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.pay.connector.queue.RefundStateTransition;
+import uk.gov.pay.connector.queue.StateTransition;
+import uk.gov.pay.connector.refund.dao.RefundDao;
+import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
 import javax.inject.Inject;
 import java.util.Optional;
@@ -20,16 +27,19 @@ public class PaymentStateTransitionEmitterProcess {
     private final PaymentStateTransitionQueue paymentStateTransitionQueue;
     private final EventQueue eventQueue;
     private final ChargeEventDao chargeEventDao;
+    private final RefundDao refundDao;
 
     @Inject
     public PaymentStateTransitionEmitterProcess(
             PaymentStateTransitionQueue paymentStateTransitionQueue,
             EventQueue eventQueue,
-            ChargeEventDao chargeEventDao
+            ChargeEventDao chargeEventDao,
+            RefundDao refundDao
     ) {
         this.paymentStateTransitionQueue = paymentStateTransitionQueue;
         this.eventQueue = eventQueue;
         this.chargeEventDao = chargeEventDao;
+        this.refundDao = refundDao;
     }
 
     public void handleStateTransitionMessages() {
@@ -37,39 +47,56 @@ public class PaymentStateTransitionEmitterProcess {
                 .ifPresent(this::emitEvent);
     }
 
-    private void emitEvent(PaymentStateTransition paymentStateTransition) {
-        if (paymentStateTransition.shouldAttempt()) {
+    private void emitEvent(StateTransition stateTransition) {
+        if (stateTransition.shouldAttempt()) {
 
             try {
-                PaymentEvent paymentEvent = createEvent(paymentStateTransition);
-                eventQueue.emitEvent(paymentEvent);
+                Event event = createEvent(stateTransition);
+                eventQueue.emitEvent(event);
                 LOGGER.info(
                         "Emitted payment state transition event for [chargeEventId={}] [eventType={}]",
-                        paymentStateTransition.getChargeEventId(),
-                        paymentStateTransition.getStateTransitionEventClass().getSimpleName()
+                        stateTransition.getIdentifier(),
+                        stateTransition.getStateTransitionEventClass().getSimpleName()
                 );
             } catch (StateTransitionMessageProcessException | QueueException e) {
                 LOGGER.warn(
                         "Failed to emit payment event for state transition [chargeEventId={}] [eventType={}] [error={}]",
-                        paymentStateTransition.getChargeEventId(),
-                        paymentStateTransition.getStateTransitionEventClass().getSimpleName(),
+                        stateTransition.getIdentifier(),
+                        stateTransition.getStateTransitionEventClass().getSimpleName(),
                         e.getMessage()
                 );
-                paymentStateTransitionQueue.offer(PaymentStateTransition.incrementAttempts(paymentStateTransition));
+                paymentStateTransitionQueue.offer(stateTransition.getNext());
             }
         } else {
             LOGGER.error(
                     "Payment state transition message failed to process beyond max retries [chargeEventId={}] [eventType={}]:",
-                    paymentStateTransition.getChargeEventId(),
-                    paymentStateTransition.getStateTransitionEventClass().getSimpleName()
+                    stateTransition.getIdentifier(),
+                    stateTransition.getStateTransitionEventClass().getSimpleName()
             );
         }
     }
 
-    private PaymentEvent createEvent(PaymentStateTransition paymentStateTransition) throws StateTransitionMessageProcessException {
+    private Event createEvent(StateTransition stateTransition) throws StateTransitionMessageProcessException {
+        if (stateTransition instanceof PaymentStateTransition) {
+            PaymentStateTransition paymentStateTransition = (PaymentStateTransition) stateTransition;
             return chargeEventDao.findById(ChargeEventEntity.class, paymentStateTransition.getChargeEventId())
                     .map(chargeEvent -> createEvent(chargeEvent, paymentStateTransition.getStateTransitionEventClass()))
-                    .orElseThrow(() -> new StateTransitionMessageProcessException(paymentStateTransition.getChargeEventId()));
+                    .orElseThrow(() -> new StateTransitionMessageProcessException(String.valueOf(paymentStateTransition.getChargeEventId())));
+        } else if (stateTransition instanceof RefundStateTransition) {
+            RefundStateTransition refundStateTransition = (RefundStateTransition) stateTransition;
+            return refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
+                    refundStateTransition.getRefundExternalId(),
+                    refundStateTransition.getRefundStatus())
+                    .map(refundHistory -> createEvent(refundHistory, stateTransition.getStateTransitionEventClass()))
+                    .orElseThrow(() -> new StateTransitionMessageProcessException(refundStateTransition.getRefundExternalId()));
+        } else {
+            throw new RuntimeException("Unprocessable state transition");
+        }
+    }
+
+    private RefundEvent createEvent(RefundHistory refundHistory, Class<? extends RefundEvent> refundEventClass) {
+        return RefundEventFactory.create(refundEventClass, refundHistory);
+
     }
 
     private PaymentEvent createEvent(ChargeEventEntity chargeEvent, Class<? extends PaymentEvent> paymentEventClass) {

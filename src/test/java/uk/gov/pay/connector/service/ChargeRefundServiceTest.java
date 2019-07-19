@@ -21,6 +21,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayRefundResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
 import uk.gov.pay.connector.refund.model.RefundRequest;
@@ -77,6 +78,8 @@ public class ChargeRefundServiceTest {
     private PaymentProvider mockProvider;
     @Mock
     private UserNotificationService mockUserNotificationService;
+    @Mock
+    private PaymentStateTransitionQueue mockPaymentStateTransitionQueue;
 
     @Before
     public void setUp() {
@@ -84,7 +87,7 @@ public class ChargeRefundServiceTest {
         when(mockProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockProvider);
         when(mockProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
         chargeRefundService = new ChargeRefundService(
-                mockChargeDao, mockRefundDao, mockProviders, mockUserNotificationService
+                mockChargeDao, mockRefundDao, mockProviders, mockUserNotificationService, mockPaymentStateTransitionQueue
         );
     }
 

@@ -14,7 +14,7 @@ public class PaymentStateTransitionQueueTest {
 
         queue.offer(transition);
 
-        PaymentStateTransition readTransition = queue.poll();
+        PaymentStateTransition readTransition = (PaymentStateTransition) queue.poll();
 
         assertNull(readTransition);
     }
@@ -30,7 +30,7 @@ public class PaymentStateTransitionQueueTest {
 
         Thread.sleep(transition.getDelayDurationInMilliseconds() + delayBufferInMilliseconds);
 
-        PaymentStateTransition readTransition = queue.poll();
+        PaymentStateTransition readTransition = (PaymentStateTransition) queue.poll();
 
         assertThat(readTransition.getChargeEventId(), is(chargeEventId));
     }

@@ -14,6 +14,7 @@ import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
 import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -42,6 +43,9 @@ public class PaymentStateTransitionEmitterProcessTest {
     @Mock
     ChargeEventDao chargeEventDao;
 
+    @Mock
+    private RefundDao refundDao;
+    
     @InjectMocks
     PaymentStateTransitionEmitterProcess paymentStateTransitionEmitterProcess;
 
@@ -92,7 +96,7 @@ public class PaymentStateTransitionEmitterProcessTest {
     @Test
     public void shouldNotPutPaymentTransitionBackOnQueueIfItHasExceededMaxAttempts() {
         PaymentStateTransitionQueue spyQueue = spy(new PaymentStateTransitionQueue());
-        PaymentStateTransitionEmitterProcess paymentStateTransitionEmitterProcess = new PaymentStateTransitionEmitterProcess(spyQueue, eventQueue, chargeEventDao);
+        PaymentStateTransitionEmitterProcess paymentStateTransitionEmitterProcess = new PaymentStateTransitionEmitterProcess(spyQueue, eventQueue, chargeEventDao, refundDao);
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(100L, PaymentEvent.class, 0);
 
         when(chargeEventDao.findById(ChargeEventEntity.class, 100L)).thenReturn(Optional.empty());
