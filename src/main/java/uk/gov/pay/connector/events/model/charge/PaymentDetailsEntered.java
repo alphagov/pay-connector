@@ -4,7 +4,7 @@ import uk.gov.pay.connector.charge.exception.ChargeEventNotFoundRuntimeException
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.events.eventdetails.PaymentDetailsEnteredEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEventDetails;
 
 import java.time.ZonedDateTime;
 
