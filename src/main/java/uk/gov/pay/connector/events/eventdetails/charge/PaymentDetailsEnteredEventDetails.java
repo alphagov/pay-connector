@@ -1,7 +1,8 @@
-package uk.gov.pay.connector.events.eventdetails;
+package uk.gov.pay.connector.events.eventdetails.charge;
 
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
 import java.util.Objects;
 import java.util.Optional;

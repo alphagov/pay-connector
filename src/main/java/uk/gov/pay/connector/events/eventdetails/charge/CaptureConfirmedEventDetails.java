@@ -1,6 +1,7 @@
-package uk.gov.pay.connector.events.eventdetails;
+package uk.gov.pay.connector.events.eventdetails.charge;
 
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
 import java.time.ZonedDateTime;
 

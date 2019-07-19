@@ -8,11 +8,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.EmptyEventDetails;
-import uk.gov.pay.connector.events.eventdetails.PaymentCreatedEventDetails;
-import uk.gov.pay.connector.events.model.charge.CaptureAbandonedAfterTooManyRetries;
-import uk.gov.pay.connector.events.model.charge.PaymentCreated;
-import uk.gov.pay.connector.events.model.charge.PaymentEvent;
-import uk.gov.pay.connector.events.model.charge.PaymentEventFactory;
+import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
 import java.time.ZonedDateTime;
