@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.common.exception;
 
-import uk.gov.pay.connector.events.Event;
+import uk.gov.pay.connector.events.model.Event;
 
 import static java.lang.String.format;
 

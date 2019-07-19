@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.exception.StateTransitionMessageProcessException;
+import uk.gov.pay.connector.events.model.charge.PaymentEvent;
+import uk.gov.pay.connector.events.model.charge.PaymentEventFactory;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
 import uk.gov.pay.connector.queue.QueueException;

@@ -2,6 +2,7 @@ package uk.gov.pay.connector.events;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 

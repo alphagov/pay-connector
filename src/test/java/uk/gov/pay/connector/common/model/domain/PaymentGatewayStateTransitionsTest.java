@@ -3,12 +3,12 @@ package uk.gov.pay.connector.common.model.domain;
 import org.apache.commons.lang3.tuple.Triple;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.events.CaptureAbandonedAfterTooManyRetries;
-import uk.gov.pay.connector.events.CaptureErrored;
-import uk.gov.pay.connector.events.CaptureSubmitted;
-import uk.gov.pay.connector.events.Event;
-import uk.gov.pay.connector.events.PaymentExpired;
-import uk.gov.pay.connector.events.UnspecifiedEvent;
+import uk.gov.pay.connector.events.model.charge.CaptureAbandonedAfterTooManyRetries;
+import uk.gov.pay.connector.events.model.charge.CaptureErrored;
+import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
+import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.charge.PaymentExpired;
+import uk.gov.pay.connector.events.model.UnspecifiedEvent;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;

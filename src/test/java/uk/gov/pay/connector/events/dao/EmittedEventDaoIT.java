@@ -3,7 +3,7 @@ package uk.gov.pay.connector.events.dao;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.events.EmittedEventEntity;
-import uk.gov.pay.connector.events.PaymentCreated;
+import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.eventdetails.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 

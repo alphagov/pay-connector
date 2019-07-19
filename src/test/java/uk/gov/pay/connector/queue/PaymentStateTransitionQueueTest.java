@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.queue;
 
 import org.junit.Test;
-import uk.gov.pay.connector.events.PaymentEvent;
+import uk.gov.pay.connector.events.model.charge.PaymentEvent;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
