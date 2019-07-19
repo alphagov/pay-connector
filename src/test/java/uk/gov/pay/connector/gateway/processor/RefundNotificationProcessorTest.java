@@ -15,9 +15,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
-import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.service.ChargeRefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import java.util.List;
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.when;
 public class RefundNotificationProcessorTest {
 
     @Mock
-    private RefundDao refundDao;
+    private ChargeRefundService refundService;
     @Mock
     private UserNotificationService userNotificationService;
 
@@ -56,9 +56,9 @@ public class RefundNotificationProcessorTest {
         refundEntity = aValidRefundEntity().build();
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
 
-        when(refundDao.findByProviderAndReference(paymentGatewayName.getName(), reference)).thenReturn(optionalRefundEntity);
+        when(refundService.findByProviderAndReference(paymentGatewayName.getName(), reference)).thenReturn(optionalRefundEntity);
 
-        refundNotificationProcessor = new RefundNotificationProcessor(refundDao, userNotificationService);
+        refundNotificationProcessor = new RefundNotificationProcessor(refundService, userNotificationService);
 
         Logger root = (Logger) LoggerFactory.getLogger(RefundNotificationProcessor.class);
         root.setLevel(Level.INFO);

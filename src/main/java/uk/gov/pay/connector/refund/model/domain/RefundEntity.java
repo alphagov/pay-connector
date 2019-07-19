@@ -92,7 +92,6 @@ public class RefundEntity extends AbstractVersionedEntity {
         this.externalId = RandomIdGenerator.newId();
         this.chargeEntity = chargeEntity;
         this.amount = amount;
-        setStatus(RefundStatus.CREATED);
         this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
         this.userExternalId = userExternalId;
     }

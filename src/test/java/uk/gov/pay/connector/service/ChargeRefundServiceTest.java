@@ -138,6 +138,32 @@ public class ChargeRefundServiceTest {
     }
 
     @Test
+    public void shouldCreateARefundEntitySuccessfully() {
+        String externalChargeId = "chargeId";
+        Long refundAmount = 100L;
+        Long accountId = 2L;
+        String providerName = "worldpay";
+
+        GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
+        account.setId(accountId);
+        ChargeEntity charge = aValidChargeEntity()
+                .withGatewayAccountEntity(account)
+                .withTransactionId("transaction-id")
+                .withExternalId(externalChargeId)
+                .withStatus(CAPTURED)
+                .build();
+
+        doAnswer(invocation -> {
+            ((RefundEntity) invocation.getArgument(0)).setId(refundId);
+            return null;
+        }).when(mockRefundDao).persist(any(RefundEntity.class));
+        RefundEntity refundEntity = chargeRefundService.createRefundEntity(new RefundRequest(refundAmount, charge.getAmount(), userExternalId), charge);
+
+        assertThat(refundEntity.getAmount(), is(refundAmount));
+        assertThat(refundEntity.getStatus(), is(RefundStatus.CREATED));
+    }
+
+    @Test
     public void shouldRefundSuccessfully_forSmartpay() {
         String externalChargeId = "chargeId";
         Long amount = 100L;
