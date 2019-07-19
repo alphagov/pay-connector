@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.events.model.charge;
 
 import org.junit.Test;
+import uk.gov.pay.connector.events.model.charge.PaymentEvent;
 
 import static org.junit.Assert.assertEquals;
 
