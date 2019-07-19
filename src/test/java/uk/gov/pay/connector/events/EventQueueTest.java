@@ -8,6 +8,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.EventQueueConfig;
 import uk.gov.pay.connector.app.SqsConfig;
+import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.queue.sqs.SqsQueueService;
 
 import static org.mockito.ArgumentMatchers.eq;

@@ -10,7 +10,7 @@ import au.com.dius.pact.provider.junit.target.Target;
 import au.com.dius.pact.provider.junit.target.TestTarget;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.events.PaymentCreated;
+import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.eventdetails.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
