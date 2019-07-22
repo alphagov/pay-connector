@@ -10,7 +10,7 @@ import java.time.ZonedDateTime;
  *  Confirmed by notification from payment gateway
  **/
 public class CaptureConfirmed extends PaymentEvent {
-    private CaptureConfirmed(String resourceExternalId, CaptureConfirmedEventDetails captureConfirmedEventDetails, ZonedDateTime timestamp) {
+    public CaptureConfirmed(String resourceExternalId, CaptureConfirmedEventDetails captureConfirmedEventDetails, ZonedDateTime timestamp) {
         super(resourceExternalId, captureConfirmedEventDetails, timestamp);
     }
 
