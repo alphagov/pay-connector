@@ -28,13 +28,16 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a payment created message")
     public String verifyPaymentCreatedEvent() throws Exception{
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withCorporateSurcharge(55L)
+                .build();
+
         PaymentCreated paymentCreatedEvent = new PaymentCreated(
                 "anExternalResourceId",
                 PaymentCreatedEventDetails.from(charge),
                 ZonedDateTime.now()
         );
-        
+
         return paymentCreatedEvent.toJsonString();
     }
 }

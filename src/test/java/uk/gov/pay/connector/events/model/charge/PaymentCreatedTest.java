@@ -4,7 +4,6 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
 import java.time.ZonedDateTime;
@@ -25,6 +24,7 @@ public class PaymentCreatedTest {
             .withReference(ServicePaymentReference.of("myref"))
             .withReturnUrl("http://example.com")
             .withAmount(100L)
+            .withCorporateSurcharge(77L)
             .build();
 
     private final PaymentCreated paymentCreatedEvent = PaymentCreated.from(chargeEntity);
@@ -66,5 +66,7 @@ public class PaymentCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.payment_provider", equalTo(chargeEntity.getGatewayAccount().getGatewayName())));
         assertThat(actual, hasJsonPath("$.event_details.language", equalTo(chargeEntity.getLanguage().toString())));
         assertThat(actual, hasJsonPath("$.event_details.delayed_capture", equalTo(chargeEntity.isDelayedCapture())));
+        assertThat(actual, hasJsonPath("$.event_details.corporate_surcharge", equalTo(77)));
+        assertThat(actual, hasJsonPath("$.event_details.total_amount", equalTo(177)));
     }
 }
