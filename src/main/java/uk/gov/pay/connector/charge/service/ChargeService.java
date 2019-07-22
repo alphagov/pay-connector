@@ -124,11 +124,11 @@ public class ChargeService {
 
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return createCharge(chargeRequest, accountId, uriInfo)
-                .map(charge -> 
+                .map(charge ->
                     populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge, false).build()
                 );
     }
-    
+
     @Transactional
     private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
@@ -303,7 +303,7 @@ public class ChargeService {
         return updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, Optional.empty(), sessionIdentifier,
                 Optional.ofNullable(walletType), Optional.ofNullable(emailAddress));
     }
-    
+
     // cannot be private: Guice requires @Transactional methods to be public
     @Transactional
     public ChargeEntity updateChargePostAuthorisation(String chargeExternalId,
@@ -431,7 +431,7 @@ public class ChargeService {
                     if (shouldEmitPaymentStateTransitionEvents) {
                         PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventType);
                         paymentStateTransitionQueue.offer(transition);
-                        logger.info("Offered payment state transition to emitter queue [from={}] [to={}] [chargeId={}]", fromChargeState, targetChargeState, chargeEventEntity.getId());
+                        logger.info("Offered payment state transition to emitter queue [from={}] [to={}] [chargeEventId={}] [chargeId={}]", fromChargeState, targetChargeState, chargeEventEntity.getId(), charge.getExternalId());
                     }
                 });
         return charge;
