@@ -46,7 +46,7 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
-import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionQueue;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -102,14 +102,14 @@ public class ChargeService {
     private final CaptureProcessConfig captureProcessConfig;
     private final PaymentProviders providers;
 
-    private final PaymentStateTransitionQueue paymentStateTransitionQueue;
+    private final StateTransitionQueue stateTransitionQueue;
     private final Boolean shouldEmitPaymentStateTransitionEvents;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
                          ConnectorConfiguration config, PaymentProviders providers,
-                         PaymentStateTransitionQueue paymentStateTransitionQueue) {
+                         StateTransitionQueue stateTransitionQueue) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -118,7 +118,7 @@ public class ChargeService {
         this.linksConfig = config.getLinks();
         this.providers = providers;
         this.captureProcessConfig = config.getCaptureProcessConfig();
-        this.paymentStateTransitionQueue = paymentStateTransitionQueue;
+        this.stateTransitionQueue = stateTransitionQueue;
         this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
     }
 
@@ -430,7 +430,7 @@ public class ChargeService {
                 .ifPresent(eventType -> {
                     if (shouldEmitPaymentStateTransitionEvents) {
                         PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventType);
-                        paymentStateTransitionQueue.offer(transition);
+                        stateTransitionQueue.offer(transition);
                         logger.info("Offered payment state transition to emitter queue [from={}] [to={}] [chargeEventId={}] [chargeId={}]", fromChargeState, targetChargeState, chargeEventEntity.getId(), charge.getExternalId());
                     }
                 });

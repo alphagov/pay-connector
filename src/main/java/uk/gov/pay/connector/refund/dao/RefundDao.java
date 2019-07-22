@@ -74,9 +74,11 @@ public class RefundDao extends JpaDao<RefundEntity> {
     }
     
     public Optional<RefundHistory> getRefundHistoryByRefundExternalIdAndRefundStatus(String refundExternalId, RefundStatus refundStatus) {
-        String query = "SELECT id, external_id, amount, status, charge_id, created_date, version, reference, history_start_date, history_end_date, user_external_id, gateway_transaction_id " +
-                "FROM refunds_history r " +
-                "WHERE external_id = ?1 AND status = ?2";
+        String query = "SELECT rh.id, rh.external_id, rh.amount, rh.status, rh.charge_id, rh.created_date, " +
+                "rh.version, rh.reference, rh.history_start_date, rh.history_end_date, rh.user_external_id, " +
+                "rh.gateway_transaction_id, ch.external_id AS charge_external_id " +
+                "FROM refunds_history rh, charges ch " +
+                "WHERE rh.external_id = ?1 AND rh.status = ?2 AND rh.charge_id = ch.id";
 
         return entityManager.get()
                 .createNativeQuery(query, "RefundEntityHistoryMapping")

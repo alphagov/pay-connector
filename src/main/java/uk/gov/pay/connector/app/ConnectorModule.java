@@ -20,7 +20,7 @@ import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
-import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionQueue;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
 import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -48,7 +48,7 @@ public class ConnectorModule extends AbstractModule {
         bind(HashUtil.class);
         bind(RequestValidator.class);
         bind(GatewayAccountRequestValidator.class).in(Singleton.class);
-        bind(PaymentStateTransitionQueue.class).in(Singleton.class);
+        bind(StateTransitionQueue.class).in(Singleton.class);
 
         install(jpaModule(configuration));
         install(new FactoryModuleBuilder().build(GatewayAccountServicesFactory.class));

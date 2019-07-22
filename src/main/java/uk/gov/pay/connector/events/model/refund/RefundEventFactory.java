@@ -20,7 +20,7 @@ public class RefundEventFactory {
                 );
             }
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new IllegalArgumentException(String.format("Could not construct payment event: %s", eventClass));
+            throw new IllegalArgumentException(String.format("Could not construct refund event: %s", eventClass));
         }
     }
 }

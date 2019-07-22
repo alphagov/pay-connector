@@ -35,7 +35,7 @@ import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.queue.CaptureQueue;
-import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionQueue;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
@@ -100,7 +100,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private Environment mockEnvironment;
 
     @Mock
-    private PaymentStateTransitionQueue paymentStateTransitionQueue;
+    private StateTransitionQueue stateTransitionQueue;
 
     @Captor
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
@@ -112,7 +112,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null, paymentStateTransitionQueue);
+                null, null, mockConfiguration, null, stateTransitionQueue);
 
         cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService, mockEnvironment,
                 mockCaptureQueue);

@@ -40,7 +40,7 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
-import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionQueue;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -128,7 +128,7 @@ public class ChargeServiceTest {
     private EventQueue mockedEventQueue;
 
     @Mock
-    private PaymentStateTransitionQueue mockedPaymentStateTransitionQueue;
+    private StateTransitionQueue mockedStateTransitionQueue;
 
     private ChargeService service;
 
@@ -175,7 +175,7 @@ public class ChargeServiceTest {
         when(mockedConfig.getEmitPaymentStateTransitionEvents()).thenReturn(true);
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, mockedPaymentStateTransitionQueue);
+                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, mockedStateTransitionQueue);
     }
 
     @Test
@@ -700,7 +700,7 @@ public class ChargeServiceTest {
         service.transitionChargeState(chargeSpy, ENTERING_CARD_DETAILS);
 
         ArgumentCaptor<PaymentStateTransition> paymentStateTransitionArgumentCaptor = ArgumentCaptor.forClass(PaymentStateTransition.class);
-        verify(mockedPaymentStateTransitionQueue).offer(paymentStateTransitionArgumentCaptor.capture());
+        verify(mockedStateTransitionQueue).offer(paymentStateTransitionArgumentCaptor.capture());
 
         assertThat(paymentStateTransitionArgumentCaptor.getValue().getChargeEventId(), is(100L));
         assertThat(paymentStateTransitionArgumentCaptor.getValue().getStateTransitionEventClass(), is(PaymentStarted.class));
@@ -720,6 +720,6 @@ public class ChargeServiceTest {
 
         service.transitionChargeState(chargeSpy, AUTHORISATION_READY);
 
-        verifyNoMoreInteractions(mockedPaymentStateTransitionQueue);
+        verifyNoMoreInteractions(mockedStateTransitionQueue);
     }
 }

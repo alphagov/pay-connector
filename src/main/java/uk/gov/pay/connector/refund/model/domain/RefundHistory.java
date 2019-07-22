@@ -18,8 +18,7 @@ public class RefundHistory extends RefundEntity {
 
     public RefundHistory(Long id, String externalId, Long amount, String status, Long chargeId, Timestamp createdDate, 
                          Long version, String reference, Timestamp historyStartDate, Timestamp historyEndDate, 
-                         String userExternalId,
-                         String gatewayTransactionId) {
+                         String userExternalId, String gatewayTransactionId, String chargeExternalId) {
         super();
         setId(id);
         setExternalId(externalId);
@@ -28,6 +27,7 @@ public class RefundHistory extends RefundEntity {
 
         ChargeEntity charge = new ChargeEntity();
         charge.setId(chargeId);
+        charge.setExternalId(chargeExternalId);
         setChargeEntity(charge);
 
         setUserExternalId(userExternalId);

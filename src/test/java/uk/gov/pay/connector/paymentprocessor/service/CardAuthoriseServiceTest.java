@@ -33,7 +33,7 @@ import uk.gov.pay.connector.model.domain.AddressFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
-import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionQueue;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -92,7 +92,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private Counter mockCounter;
 
     @Mock
-    private PaymentStateTransitionQueue paymentStateTransitionQueue;
+    private StateTransitionQueue stateTransitionQueue;
 
     private CardAuthoriseService cardAuthorisationService;
 
@@ -103,7 +103,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null, paymentStateTransitionQueue);
+                null, null, mockConfiguration, null, stateTransitionQueue);
 
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         cardAuthorisationService = new CardAuthoriseService(

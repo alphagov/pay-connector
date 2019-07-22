@@ -17,8 +17,8 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
 import uk.gov.pay.connector.queue.RefundStateTransition;
+import uk.gov.pay.connector.queue.StateTransitionQueue;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
 import uk.gov.pay.connector.refund.model.RefundRequest;
@@ -63,17 +63,17 @@ public class ChargeRefundService {
     private final RefundDao refundDao;
     private final PaymentProviders providers;
     private final UserNotificationService userNotificationService;
-    private final PaymentStateTransitionQueue paymentStateTransitionQueue;
+    private final StateTransitionQueue stateTransitionQueue;
 
     @Inject
     public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders providers,
-                               UserNotificationService userNotificationService, PaymentStateTransitionQueue paymentStateTransitionQueue
+                               UserNotificationService userNotificationService, StateTransitionQueue stateTransitionQueue
     ) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.providers = providers;
         this.userNotificationService = userNotificationService;
-        this.paymentStateTransitionQueue = paymentStateTransitionQueue;
+        this.stateTransitionQueue = stateTransitionQueue;
     }
 
     public Response doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
@@ -184,13 +184,9 @@ public class ChargeRefundService {
     }
 
     public void transitionRefundState(RefundEntity refundEntity, RefundStatus refundStatus) {
-        // figure out refund event
-        Class refundEventClass = calculateRefundEventClass(refundEntity, refundStatus);
-
-        // add to internal queue
-
-        paymentStateTransitionQueue.offer(new RefundStateTransition(refundEntity.getExternalId(), refundStatus, refundEventClass));
         refundEntity.setStatus(refundStatus);
+        Class refundEventClass = calculateRefundEventClass(refundEntity, refundStatus);
+        stateTransitionQueue.offer(new RefundStateTransition(refundEntity.getExternalId(), refundStatus, refundEventClass));
     }
 
     private Class calculateRefundEventClass(RefundEntity refundEntity, RefundStatus refundStatus) {
@@ -208,7 +204,7 @@ public class ChargeRefundService {
             case REFUND_ERROR:
                 return RefundError.class;
             default:
-                throw new RuntimeException("Unexpected refund state transition");
+                throw new IllegalArgumentException("Unexpected refund state transition");
         }
     }
 

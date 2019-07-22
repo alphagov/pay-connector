@@ -11,7 +11,7 @@ import uk.gov.pay.connector.events.model.charge.PaymentEventFactory;
 import uk.gov.pay.connector.events.model.refund.RefundEvent;
 import uk.gov.pay.connector.events.model.refund.RefundEventFactory;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
-import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionQueue;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.RefundStateTransition;
 import uk.gov.pay.connector.queue.StateTransition;
@@ -21,29 +21,29 @@ import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import javax.inject.Inject;
 import java.util.Optional;
 
-public class PaymentStateTransitionEmitterProcess {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PaymentStateTransitionEmitterProcess.class);
+public class StateTransitionEmitterProcess {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StateTransitionEmitterProcess.class);
 
-    private final PaymentStateTransitionQueue paymentStateTransitionQueue;
+    private final StateTransitionQueue stateTransitionQueue;
     private final EventQueue eventQueue;
     private final ChargeEventDao chargeEventDao;
     private final RefundDao refundDao;
 
     @Inject
-    public PaymentStateTransitionEmitterProcess(
-            PaymentStateTransitionQueue paymentStateTransitionQueue,
+    public StateTransitionEmitterProcess(
+            StateTransitionQueue stateTransitionQueue,
             EventQueue eventQueue,
             ChargeEventDao chargeEventDao,
             RefundDao refundDao
     ) {
-        this.paymentStateTransitionQueue = paymentStateTransitionQueue;
+        this.stateTransitionQueue = stateTransitionQueue;
         this.eventQueue = eventQueue;
         this.chargeEventDao = chargeEventDao;
         this.refundDao = refundDao;
     }
 
     public void handleStateTransitionMessages() {
-        Optional.ofNullable(paymentStateTransitionQueue.poll())
+        Optional.ofNullable(stateTransitionQueue.poll())
                 .ifPresent(this::emitEvent);
     }
 
@@ -54,22 +54,22 @@ public class PaymentStateTransitionEmitterProcess {
                 Event event = createEvent(stateTransition);
                 eventQueue.emitEvent(event);
                 LOGGER.info(
-                        "Emitted payment state transition event for [chargeEventId={}] [eventType={}]",
+                        "Emitted new state transition event for [eventId={}] [eventType={}]",
                         stateTransition.getIdentifier(),
                         stateTransition.getStateTransitionEventClass().getSimpleName()
                 );
             } catch (StateTransitionMessageProcessException | QueueException e) {
                 LOGGER.warn(
-                        "Failed to emit payment event for state transition [chargeEventId={}] [eventType={}] [error={}]",
+                        "Failed to emit new event for state transition [eventId={}] [eventType={}] [error={}]",
                         stateTransition.getIdentifier(),
                         stateTransition.getStateTransitionEventClass().getSimpleName(),
                         e.getMessage()
                 );
-                paymentStateTransitionQueue.offer(stateTransition.getNext());
+                stateTransitionQueue.offer(stateTransition.getNext());
             }
         } else {
             LOGGER.error(
-                    "Payment state transition message failed to process beyond max retries [chargeEventId={}] [eventType={}]:",
+                    "State transition message failed to process beyond max retries [eventId={}] [eventType={}]:",
                     stateTransition.getIdentifier(),
                     stateTransition.getStateTransitionEventClass().getSimpleName()
             );
@@ -90,7 +90,7 @@ public class PaymentStateTransitionEmitterProcess {
                     .map(refundHistory -> createEvent(refundHistory, stateTransition.getStateTransitionEventClass()))
                     .orElseThrow(() -> new StateTransitionMessageProcessException(refundStateTransition.getRefundExternalId()));
         } else {
-            throw new RuntimeException("Unprocessable state transition");
+            throw new StateTransitionMessageProcessException(stateTransition.getIdentifier());
         }
     }
 
