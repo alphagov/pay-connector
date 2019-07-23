@@ -1,18 +1,21 @@
 package uk.gov.pay.connector.charge.service;
 
 import com.google.common.collect.ImmutableList;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import uk.gov.pay.connector.app.ChargeSweepConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -46,6 +49,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -54,11 +58,14 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(JUnitParamsRunner.class)
 public class ChargeExpiryServiceTest {
 
     private ChargeExpiryService chargeExpiryService;
 
+    @Rule
+    public MockitoRule rule = MockitoJUnit.rule();
+    
     @Mock
     private ChargeDao mockChargeDao;
 
@@ -89,16 +96,10 @@ public class ChargeExpiryServiceTest {
     private static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ImmutableList.of(
             CREATED,
             ENTERING_CARD_DETAILS,
+            AUTHORISATION_READY,
             AUTHORISATION_3DS_REQUIRED,
             AUTHORISATION_3DS_READY,
             AUTHORISATION_SUCCESS
-    );
-
-    private static final List<ChargeStatus> GATEWAY_CANCELLABLE_STATUSES = ImmutableList.of(
-            AUTHORISATION_3DS_READY,
-            AUTHORISATION_3DS_REQUIRED,
-            AUTHORISATION_SUCCESS,
-            AWAITING_CAPTURE_REQUEST
     );
 
     private static final List<ChargeStatus> EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS = ImmutableList.of(
@@ -176,24 +177,61 @@ public class ChargeExpiryServiceTest {
     }
 
     @Test
-    public void shouldExpireChargesWithoutCallingProviderToCancel() {
-        EXPIRABLE_REGULAR_STATUSES.stream()
-                .filter(status -> !GATEWAY_CANCELLABLE_STATUSES.contains(status))
-                .forEach(status -> {
-                    ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-                            .withAmount(200L)
-                            .withCreatedDate(ZonedDateTime.now())
-                            .withStatus(status)
-                            .withGatewayAccountEntity(gatewayAccount)
-                            .build();
-                    chargeExpiryService.expire(singletonList(chargeEntity));
+    @Parameters({
+            "CREATED",
+            "ENTERING CARD DETAILS",
+            "AUTHORISATION READY",
+            "AUTHORISATION 3DS REQUIRED",
+            "AUTHORISATION 3DS READY"
+    })
+    public void shouldExpireChargesWithoutCallingProviderToCancel(String chargeStatus) throws Exception {
+        var status = ChargeStatus.fromString(chargeStatus);
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withAmount(200L)
+                .withCreatedDate(ZonedDateTime.now())
+                .withStatus(status)
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
 
-                    try {
-                        verify(mockPaymentProvider, never()).cancel(any());
-                    } catch (GatewayException ignored) {}
+        when(mockQueryService.isTerminableWithGateway(chargeEntity)).thenReturn(false);
 
-                    verify(mockChargeService).transitionChargeState(chargeEntity.getExternalId(), EXPIRED);
-                });
+        chargeExpiryService.expire(singletonList(chargeEntity));
+        
+        verify(mockPaymentProvider, never()).cancel(any());
+        verify(mockChargeService).transitionChargeState(chargeEntity.getExternalId(), EXPIRED);
+    }
+
+    @Test
+    @Parameters({
+            "AUTHORISATION READY",
+            "AUTHORISATION 3DS REQUIRED",
+            "AUTHORISATION 3DS READY"
+    })
+    public void shouldExpireWithPaymentProvider_whenGatewayStateIsCancellable(String chargeStatus) throws Exception {
+        var status = ChargeStatus.fromString(chargeStatus);
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withAmount(200L)
+                .withCreatedDate(ZonedDateTime.now())
+                .withStatus(status)
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+
+        when(mockQueryService.isTerminableWithGateway(chargeEntity)).thenReturn(true);
+
+        when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
+
+        when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+        when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
+        ArgumentCaptor<CancelGatewayRequest> cancelCaptor = ArgumentCaptor.forClass(CancelGatewayRequest.class);
+
+        ChargeEntity expiredCharge = mockExpiredChargeEntity();
+        when(mockChargeService.transitionChargeState(any(String.class), any())).thenReturn(expiredCharge);
+
+        chargeExpiryService.expire(singletonList(chargeEntity));
+
+        verify(mockPaymentProvider).cancel(cancelCaptor.capture());
+        assertThat(cancelCaptor.getValue().getTransactionId(), is(chargeEntity.getGatewayTransactionId()));
+        verify(mockChargeService).transitionChargeState(chargeEntity.getExternalId(), EXPIRED);
     }
 
     @Test
@@ -264,7 +302,7 @@ public class ChargeExpiryServiceTest {
 
         when(mockChargeDao.findByExternalId(preAuthorisationCharge.getExternalId())).thenReturn(Optional.of(preAuthorisationCharge));
 
-        when(mockQueryService.getChargeGatewayStatus(preAuthorisationCharge)).thenReturn(new ChargeQueryResponse(AUTHORISATION_SUCCESS, "Raw response"));
+        when(mockQueryService.isTerminableWithGateway(preAuthorisationCharge)).thenReturn(true);
         when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
 
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
@@ -275,7 +313,7 @@ public class ChargeExpiryServiceTest {
 
         Map<String, Integer> sweepResult = chargeExpiryService.sweepAndExpireChargesAndTokens();
 
-        verify(mockChargeService).transitionChargeState(preAuthorisationCharge.getExternalId(),     EXPIRED);
+        verify(mockChargeService).transitionChargeState(preAuthorisationCharge.getExternalId(), EXPIRED);
         assertThat(sweepResult.get("expiry-success"), is(1));
         assertNull(sweepResult.get("expiry-failure"));
     }
