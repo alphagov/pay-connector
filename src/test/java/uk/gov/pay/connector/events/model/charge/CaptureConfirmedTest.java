@@ -1,15 +1,17 @@
 package uk.gov.pay.connector.events.model.charge;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.Test;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -19,38 +21,41 @@ public class CaptureConfirmedTest {
     private final ChargeEntityFixture chargeEntity = aValidChargeEntity();
 
     @Test
-    public void serializesEventDetailsGivenChargeEvent() {
-        ZonedDateTime gatewayEventTime = ZonedDateTime.now();
+    public void serializesEventDetailsGivenChargeEvent() throws JsonProcessingException {
+        ZonedDateTime gatewayEventTime = ZonedDateTime.parse("2018-03-12T16:25:01.123456Z");
         Long fee = 5L;
-        Long netAmount = 495L;
 
         chargeEntity.withFee(fee);
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
         when(chargeEvent.getChargeEntity()).thenReturn(chargeEntity.build());
         when(chargeEvent.getGatewayEventDate()).thenReturn(Optional.of(gatewayEventTime));
 
-        CaptureConfirmed captureConfirmed = CaptureConfirmed.from(chargeEvent);
-        CaptureConfirmedEventDetails captureConfirmedEventDetails = (CaptureConfirmedEventDetails) captureConfirmed.getEventDetails();
+        String actual = CaptureConfirmed.from(chargeEvent).toJsonString();
 
-        assertEquals(captureConfirmed.getResourceExternalId(), chargeEvent.getChargeEntity().getExternalId());
-        assertEquals(captureConfirmedEventDetails.getGatewayEventDate(), gatewayEventTime);
-        assertEquals(captureConfirmedEventDetails.getFee(), fee);
-        assertEquals(captureConfirmedEventDetails.getNetAmount(), netAmount);
+        assertThat(actual, hasJsonPath("$.event_type", equalTo("CAPTURE_CONFIRMED")));
+        assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
+        assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEvent.getChargeEntity().getExternalId())));
+
+        assertThat(actual, hasJsonPath("$.event_details.gateway_event_date", equalTo("2018-03-12T16:25:01.123456Z")));
+        assertThat(actual, hasJsonPath("$.event_details.fee", equalTo(5)));
+        assertThat(actual, hasJsonPath("$.event_details.net_amount", equalTo(495)));
     }
 
     @Test
-    public void serializesEventGivenNoDetailValues() {
+    public void serializesEventGivenNoDetailValues() throws JsonProcessingException {
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
         when(chargeEvent.getChargeEntity()).thenReturn(chargeEntity.build());
         when(chargeEvent.getGatewayEventDate()).thenReturn(Optional.empty());
 
-        CaptureConfirmed captureConfirmed = CaptureConfirmed.from(chargeEvent);
-        CaptureConfirmedEventDetails captureConfirmedEventDetails = (CaptureConfirmedEventDetails) captureConfirmed.getEventDetails();
+        String actual = CaptureConfirmed.from(chargeEvent).toJsonString();
 
-        assertEquals(captureConfirmed.getResourceExternalId(), chargeEvent.getChargeEntity().getExternalId());
-        assertNull(captureConfirmedEventDetails.getGatewayEventDate());
-        assertNull(captureConfirmedEventDetails.getFee());
-        assertNull(captureConfirmedEventDetails.getNetAmount());
+        assertThat(actual, hasJsonPath("$.event_type", equalTo("CAPTURE_CONFIRMED")));
+        assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
+        assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEvent.getChargeEntity().getExternalId())));
+
+        assertThat(actual, hasNoJsonPath("$.event_details.gateway_event_date"));
+        assertThat(actual, hasNoJsonPath("$.event_details.fee"));
+        assertThat(actual, hasNoJsonPath("$.event_details.net_amount"));
     }
 
 }
