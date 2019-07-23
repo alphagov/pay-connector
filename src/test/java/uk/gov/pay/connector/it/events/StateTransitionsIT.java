@@ -112,7 +112,7 @@ public class StateTransitionsIT extends ChargingITestBase {
         assertThat(message2.get("resource_external_id").getAsString(), is(refundId));
 
         JsonObject message3 = new JsonParser().parse(messages.get(2).getBody()).getAsJsonObject();
-        assertThat(message3.get("event_type").getAsString(), is("REFUND_SUCCESSFUL"));
+        assertThat(message3.get("event_type").getAsString(), is("REFUND_SUCCEEDED"));
         assertThat(message3.get("resource_external_id").getAsString(), is(refundId));
     }
 

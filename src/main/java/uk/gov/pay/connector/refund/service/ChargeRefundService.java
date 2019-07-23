@@ -12,7 +12,7 @@ import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
 import uk.gov.pay.connector.events.model.refund.RefundError;
 import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
-import uk.gov.pay.connector.events.model.refund.RefundSuccessful;
+import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
@@ -200,7 +200,7 @@ public class ChargeRefundService {
             case REFUND_SUBMITTED:
                 return RefundSubmitted.class;
             case REFUNDED:
-                return RefundSuccessful.class;
+                return RefundSucceeded.class;
             case REFUND_ERROR:
                 return RefundError.class;
             default:
