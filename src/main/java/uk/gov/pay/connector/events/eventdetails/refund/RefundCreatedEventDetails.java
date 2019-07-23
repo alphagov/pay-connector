@@ -4,13 +4,13 @@ import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
 abstract class RefundCreatedEventDetails extends EventDetails {
 
-    private Long refundAmount;
+    private Long amount;
 
-    public RefundCreatedEventDetails(Long refundAmount) {
-        this.refundAmount = refundAmount;
+    public RefundCreatedEventDetails(Long amount) {
+        this.amount = amount;
     }
 
-    public Long getRefundAmount() {
-        return refundAmount;
+    public Long getAmount() {
+        return amount;
     }
 }

@@ -8,10 +8,17 @@ import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
+import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
+import uk.gov.pay.connector.events.model.refund.RefundError;
+import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
+import uk.gov.pay.connector.events.model.refund.RefundSuccessful;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.queue.RefundStateTransition;
+import uk.gov.pay.connector.queue.StateTransitionQueue;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
 import uk.gov.pay.connector.refund.model.RefundRequest;
@@ -56,15 +63,17 @@ public class ChargeRefundService {
     private final RefundDao refundDao;
     private final PaymentProviders providers;
     private final UserNotificationService userNotificationService;
+    private final StateTransitionQueue stateTransitionQueue;
 
     @Inject
     public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders providers,
-                               UserNotificationService userNotificationService
+                               UserNotificationService userNotificationService, StateTransitionQueue stateTransitionQueue
     ) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.providers = providers;
         this.userNotificationService = userNotificationService;
+        this.stateTransitionQueue = stateTransitionQueue;
     }
 
     public Response doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
@@ -118,7 +127,7 @@ public class ChargeRefundService {
     @Transactional
     @SuppressWarnings("WeakerAccess")
     public RefundEntity updateRefund(GatewayRefundResponse gatewayRefundResponse, Long refundEntityId,
-                                           RefundStatus refundStatus) {
+                                     RefundStatus refundStatus) {
         Optional<RefundEntity> refund = refundDao.findById(refundEntityId);
 
         refund.ifPresent(refundEntity -> {
@@ -176,6 +185,27 @@ public class ChargeRefundService {
 
     public void transitionRefundState(RefundEntity refundEntity, RefundStatus refundStatus) {
         refundEntity.setStatus(refundStatus);
+        Class refundEventClass = calculateRefundEventClass(refundEntity, refundStatus);
+        stateTransitionQueue.offer(new RefundStateTransition(refundEntity.getExternalId(), refundStatus, refundEventClass));
+    }
+
+    private Class calculateRefundEventClass(RefundEntity refundEntity, RefundStatus refundStatus) {
+        switch (refundStatus) {
+            case CREATED:
+                if (refundEntity.getUserExternalId() != null) {
+                    return RefundCreatedByUser.class;
+                } else {
+                    return RefundCreatedByService.class;
+                }
+            case REFUND_SUBMITTED:
+                return RefundSubmitted.class;
+            case REFUNDED:
+                return RefundSuccessful.class;
+            case REFUND_ERROR:
+                return RefundError.class;
+            default:
+                throw new IllegalArgumentException("Unexpected refund state transition");
+        }
     }
 
     private void checkIfRefundRequestIsInConflictOrTerminate(RefundRequest refundRequest, ChargeEntity reloadedCharge, long totalAmountToBeRefunded) {

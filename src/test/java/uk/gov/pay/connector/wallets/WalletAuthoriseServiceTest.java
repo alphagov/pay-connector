@@ -36,7 +36,7 @@ import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
-import uk.gov.pay.connector.queue.PaymentStateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionQueue;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
@@ -95,7 +95,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     private Counter mockCounter;
 
     @Mock
-    private PaymentStateTransitionQueue paymentStateTransitionQueue;
+    private StateTransitionQueue stateTransitionQueue;
 
     private WalletAuthoriseService walletAuthoriseService;
 
@@ -123,7 +123,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null, paymentStateTransitionQueue));
+                null, null, mockConfiguration, null, stateTransitionQueue));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,
@@ -176,7 +176,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(validApplePayDetails.getPaymentInfo().getEmail()));
         
-        verify(paymentStateTransitionQueue).offer(any(PaymentStateTransition.class));
+        verify(stateTransitionQueue).offer(any(PaymentStateTransition.class));
     }
 
     @Test
@@ -205,7 +205,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(authorisationData.getPaymentInfo().getEmail()));
 
-        verify(paymentStateTransitionQueue).offer(any(PaymentStateTransition.class));
+        verify(stateTransitionQueue).offer(any(PaymentStateTransition.class));
     }
 
     @Test

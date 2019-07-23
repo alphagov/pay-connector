@@ -5,7 +5,7 @@ import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.events.PaymentStateTransitionEmitterProcess;
+import uk.gov.pay.connector.events.StateTransitionEmitterProcess;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 
 import javax.inject.Inject;
@@ -24,13 +24,13 @@ public class QueueMessageReceiver implements Managed {
     private ScheduledExecutorService stateTransitionMessageExecutorService;
 
     private final CardCaptureProcess cardCaptureProcess;
-    private final PaymentStateTransitionEmitterProcess paymentStateTransitionEmitterProcess;
+    private final StateTransitionEmitterProcess stateTransitionEmitterProcess;
 
 
     @Inject
-    public QueueMessageReceiver(CardCaptureProcess cardCaptureProcess, PaymentStateTransitionEmitterProcess paymentStateTransitionEmitterProcess,
+    public QueueMessageReceiver(CardCaptureProcess cardCaptureProcess, StateTransitionEmitterProcess stateTransitionEmitterProcess,
                                 Environment environment, ConnectorConfiguration connectorConfiguration) {
-        this.paymentStateTransitionEmitterProcess = paymentStateTransitionEmitterProcess;
+        this.stateTransitionEmitterProcess = stateTransitionEmitterProcess;
         this.cardCaptureProcess = cardCaptureProcess;
 
         int queueScheduleNumberOfThreads = connectorConfiguration.getCaptureProcessConfig().getQueueSchedulerNumberOfThreads();
@@ -74,7 +74,7 @@ public class QueueMessageReceiver implements Managed {
 
     private void stateTransitionMessageReceiver() {
         try {
-            paymentStateTransitionEmitterProcess.handleStateTransitionMessages();
+            stateTransitionEmitterProcess.handleStateTransitionMessages();
         } catch (Exception e) {
             LOGGER.error("State transition message polling thread failed to process message due to [message={}]", e.getMessage());
         }

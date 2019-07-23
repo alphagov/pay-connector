@@ -745,9 +745,8 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
         final Map<String, Object> persistedCharge = databaseTestHelper.getChargeByExternalId(chargeExternalId);
         final ZonedDateTime persistedCreatedDate = ZonedDateTime.ofInstant(((Timestamp) persistedCharge.get("created_date")).toInstant(), ZoneOffset.UTC);
 
-        Thread.sleep(400);
+        Thread.sleep(100);
         List<Message> messages = readMessagesFromEventQueue();
-        
         
         assertThat(messages.size(), is(1));
         final Message message = messages.get(0);
