@@ -6,7 +6,6 @@ import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.wallets.WalletType;
 
@@ -63,6 +62,7 @@ public class PaymentDetailsEnteredTest {
         assertThat(actual, hasJsonPath("$.description", equalTo("The event happens when the payment details are entered")));
 
         assertThat(actual, hasJsonPath("$.event_details.corporate_surcharge", equalTo(10)));
+        assertThat(actual, hasJsonPath("$.event_details.total_amount", equalTo(110)));
         assertThat(actual, hasJsonPath("$.event_details.email", equalTo("test@email.invalid")));
         assertThat(actual, hasJsonPath("$.event_details.card_brand", equalTo("visa")));
         assertThat(actual, hasJsonPath("$.event_details.gateway_transaction_id", equalTo(validTransactionId)));
@@ -97,6 +97,7 @@ public class PaymentDetailsEnteredTest {
         assertThat(actual, hasJsonPath("$.description", equalTo("The event happens when the payment details are entered")));
 
         assertThat(actual, hasNoJsonPath("$.event_details.corporate_surcharge"));
+        assertThat(actual, hasJsonPath("$.event_details.total_amount", equalTo(100)));
         assertThat(actual, hasJsonPath("$.event_details.email", equalTo("test@email.invalid")));
         assertThat(actual, hasJsonPath("$.event_details.card_brand", equalTo("visa")));
         assertThat(actual, hasJsonPath("$.event_details.gateway_transaction_id", equalTo(validTransactionId)));

@@ -14,12 +14,16 @@ import org.junit.runner.RunWith;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEventDetails;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
+import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
 import java.time.ZonedDateTime;
+
+import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
 @RunWith(PactRunner.class)
 @Provider("connector")
@@ -59,6 +63,22 @@ public class QueueMessageContractTest {
         CaptureConfirmed captureConfirmedEvent = new CaptureConfirmed(
                 resourceId,
                 CaptureConfirmedEventDetails.from(chargeEventEntity),
+                ZonedDateTime.now()
+        );
+
+        return captureConfirmedEvent.toJsonString();
+    }
+
+    @PactVerifyProvider("a payment details entered message")
+    public String verifyPaymentDetailsEnteredEvent() throws JsonProcessingException {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withCorporateSurcharge(55L)
+                .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
+                .build();
+
+        PaymentDetailsEntered captureConfirmedEvent = new PaymentDetailsEntered(
+                resourceId,
+                PaymentDetailsEnteredEventDetails.from(charge),
                 ZonedDateTime.now()
         );
 
