@@ -21,14 +21,12 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
@@ -99,7 +97,7 @@ public class StateTransitionsIT extends ChargingITestBase {
 
         assertThat(messages.size(), is(3));
 
-        messages.sort(Comparator.comparing(message -> getTimestampFromMessage(message)));
+        messages.sort(Comparator.comparing(this::getTimestampFromMessage));
 
         JsonObject message1 = new JsonParser().parse(messages.get(0).getBody()).getAsJsonObject();
         assertThat(message1.get("event_type").getAsString(), is("REFUND_CREATED_BY_SERVICE"));
@@ -114,6 +112,7 @@ public class StateTransitionsIT extends ChargingITestBase {
         JsonObject message3 = new JsonParser().parse(messages.get(2).getBody()).getAsJsonObject();
         assertThat(message3.get("event_type").getAsString(), is("REFUND_SUCCEEDED"));
         assertThat(message3.get("resource_external_id").getAsString(), is(refundId));
+        assertThat(message3.get("event_details").getAsJsonObject().get("reference").getAsString(), is(notNullValue()));
     }
 
     private ZonedDateTime getTimestampFromMessage(Message message) {

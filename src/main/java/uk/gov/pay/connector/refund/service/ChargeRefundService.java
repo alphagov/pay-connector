@@ -143,8 +143,8 @@ public class ChargeRefundService {
                 userNotificationService.sendRefundIssuedEmail(refundEntity);
             }
 
-            transitionRefundState(refundEntity, refundStatus);
             getRefundReference(refundEntity, gatewayRefundResponse).ifPresent(refundEntity::setReference);
+            transitionRefundState(refundEntity, refundStatus);
         });
 
         return refund.get();

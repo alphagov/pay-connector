@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.events.model.refund;
 
+import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithReferenceDetails;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
 import java.lang.reflect.InvocationTargetException;
@@ -13,9 +14,10 @@ public class RefundEventFactory {
             } else if (eventClass == RefundCreatedByUser.class) {
                 return RefundCreatedByUser.from(refundHistory);
             } else {
-                return eventClass.getConstructor(String.class, String.class, ZonedDateTime.class).newInstance(
+                return eventClass.getConstructor(String.class, String.class, RefundEventWithReferenceDetails.class, ZonedDateTime.class).newInstance(
                         refundHistory.getExternalId(),
                         refundHistory.getChargeEntity().getExternalId(),
+                        new RefundEventWithReferenceDetails(refundHistory.getReference()),
                         refundHistory.getHistoryStartDate()
                 );
             }
