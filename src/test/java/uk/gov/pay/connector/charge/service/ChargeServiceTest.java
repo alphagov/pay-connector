@@ -70,7 +70,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -175,7 +174,7 @@ public class ChargeServiceTest {
         when(mockedConfig.getEmitPaymentStateTransitionEvents()).thenReturn(true);
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, mockedStateTransitionQueue);
+                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, mockedStateTransitionQueue, mockedEventQueue);
     }
 
     @Test
@@ -204,7 +203,7 @@ public class ChargeServiceTest {
 
         verify(mockedChargeEventDao).persistChargeEventOf(eq(createdChargeEntity), isNull());
     }
-    
+
     @Test
     public void shouldCreateAChargeWithDelayedCaptureTrue() {
         final ChargeCreateRequest request = requestBuilder.withDelayedCapture(true).build();

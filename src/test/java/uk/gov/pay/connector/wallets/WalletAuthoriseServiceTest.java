@@ -26,6 +26,8 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
+import uk.gov.pay.connector.events.EventQueue;
+import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -97,6 +99,9 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     @Mock
     private StateTransitionQueue stateTransitionQueue;
 
+    @Mock
+    private EventQueue eventQueue;
+
     private WalletAuthoriseService walletAuthoriseService;
 
     private final AppleDecryptedPaymentData validApplePayDetails =
@@ -123,7 +128,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null, stateTransitionQueue));
+                null, null, mockConfiguration, null, stateTransitionQueue, eventQueue));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,
@@ -159,7 +164,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(chargeEventEntity.getId()).thenReturn(1L);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
-        
+
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 
         assertThat(response.isSuccessful(), is(true));
@@ -175,8 +180,13 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(validApplePayDetails.getPaymentInfo().getEmail()));
-        
+
         verify(stateTransitionQueue).offer(any(PaymentStateTransition.class));
+
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
     }
 
     @Test
@@ -185,7 +195,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(chargeEventEntity.getId()).thenReturn(1L);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
-        
+
         WalletAuthorisationData authorisationData =
                 Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
@@ -206,6 +216,11 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getEmail(), is(authorisationData.getPaymentInfo().getEmail()));
 
         verify(stateTransitionQueue).offer(any(PaymentStateTransition.class));
+
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
     }
 
     @Test

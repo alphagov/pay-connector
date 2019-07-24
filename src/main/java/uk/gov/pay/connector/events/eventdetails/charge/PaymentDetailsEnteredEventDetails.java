@@ -2,6 +2,7 @@ package uk.gov.pay.connector.events.eventdetails.charge;
 
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
 import java.util.Objects;
@@ -24,13 +25,14 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
     private final String addressCounty;
     private final String addressCountry;
     private final String wallet;
+    private final Long totalAmount;
 
     public PaymentDetailsEnteredEventDetails(Long corporateSurcharge, String email, String cardBrand,
                                              String gatewayTransactionId, String firstDigitsCardNumber,
                                              String lastDigitsCardNumber, String cardholderName, String expiryDate,
                                              String addressLine1, String addressLine2, String addressPostcode,
                                              String addressCity, String addressCounty, String addressCountry,
-                                             String wallet) {
+                                             String wallet, Long totalAmount) {
 
         this.corporateSurcharge = corporateSurcharge;
         this.email = email;
@@ -47,6 +49,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
         this.addressCounty = addressCounty;
         this.addressCountry = addressCountry;
         this.wallet = wallet;
+        this.totalAmount = totalAmount;
     }
 
     public static PaymentDetailsEnteredEventDetails from(ChargeEntity charge) {
@@ -65,8 +68,8 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
                 charge.getCardDetails().getBillingAddress().map(a -> a.getCity()).orElse(null),
                 charge.getCardDetails().getBillingAddress().map(a -> a.getCounty()).orElse(null),
                 charge.getCardDetails().getBillingAddress().map(a -> a.getCountry()).orElse(null),
-                Optional.ofNullable(charge.getWalletType()).map(Enum::toString).orElse(null)
-        );
+                Optional.ofNullable(charge.getWalletType()).map(Enum::toString).orElse(null),
+                CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
     }
 
     public Long getCorporateSurcharge() {
@@ -129,6 +132,10 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
         return wallet;
     }
 
+    public Long getTotalAmount() {
+        return totalAmount;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -148,13 +155,14 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
                 Objects.equals(addressCity, that.addressCity) &&
                 Objects.equals(addressCounty, that.addressCounty) &&
                 Objects.equals(addressCountry, that.addressCountry) &&
-                Objects.equals(wallet, that.wallet);
+                Objects.equals(wallet, that.wallet) &&
+                Objects.equals(totalAmount, that.totalAmount);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(corporateSurcharge, email, cardBrand, firstDigitsCardNumber, lastDigitsCardNumber,
                 gatewayTransactionId, cardholderName, expiryDate, addressLine1, addressLine2, addressPostcode,
-                addressCounty, addressCountry, wallet);
+                addressCounty, addressCountry, wallet, totalAmount);
     }
 }

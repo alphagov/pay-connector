@@ -40,6 +40,9 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
+import uk.gov.pay.connector.events.EventQueue;
+import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
@@ -47,11 +50,13 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.StateTransitionQueue;
+import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
@@ -104,12 +109,13 @@ public class ChargeService {
 
     private final StateTransitionQueue stateTransitionQueue;
     private final Boolean shouldEmitPaymentStateTransitionEvents;
+    private EventQueue eventQueue;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
                          ConnectorConfiguration config, PaymentProviders providers,
-                         StateTransitionQueue stateTransitionQueue) {
+                         StateTransitionQueue stateTransitionQueue, EventQueue eventQueue) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -120,6 +126,7 @@ public class ChargeService {
         this.captureProcessConfig = config.getCaptureProcessConfig();
         this.stateTransitionQueue = stateTransitionQueue;
         this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
+        this.eventQueue = eventQueue;
     }
 
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
@@ -288,7 +295,7 @@ public class ChargeService {
                                                           Optional<Auth3dsDetailsEntity> auth3dsDetails,
                                                           Optional<String> sessionIdentifier,
                                                           AuthCardDetails authCardDetails) {
-        return updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsDetails, sessionIdentifier,
+        return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsDetails, sessionIdentifier,
                 Optional.empty(), Optional.empty());
 
     }
@@ -300,15 +307,42 @@ public class ChargeService {
                                                             AuthCardDetails authCardDetails,
                                                             WalletType walletType,
                                                             String emailAddress) {
-        return updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, Optional.empty(), sessionIdentifier,
+        return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, Optional.empty(), sessionIdentifier,
                 Optional.ofNullable(walletType), Optional.ofNullable(emailAddress));
+    }
+
+    public ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
+                                                                  ChargeStatus status,
+                                                                  AuthCardDetails authCardDetails,
+                                                                  Optional<String> transactionId,
+                                                                  Optional<Auth3dsDetailsEntity> auth3dsDetails,
+                                                                  Optional<String> sessionIdentifier,
+                                                                  Optional<WalletType> walletType,
+                                                                  Optional<String> emailAddress) {
+        updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId,
+                auth3dsDetails, sessionIdentifier, walletType, emailAddress);
+        ChargeEntity chargeEntity = findChargeById(chargeExternalId);
+
+        emitEvent(PaymentDetailsEntered.from(chargeEntity));
+
+        return chargeEntity;
+    }
+
+    private void emitEvent(Event event) {
+        try {
+            eventQueue.emitEvent(event);
+        } catch (QueueException e) {
+            logger.error("Error emitting {} event: {}", event.getEventType(), e.getMessage());
+            throw new WebApplicationException(format("Error emitting %s event: %s", event.getEventType(), e.getMessage()));
+        }
     }
 
     // cannot be private: Guice requires @Transactional methods to be public
     @Transactional
     public ChargeEntity updateChargePostAuthorisation(String chargeExternalId,
                                                       ChargeStatus status,
-                                                      AuthCardDetails authCardDetails, Optional<String> transactionId,
+                                                      AuthCardDetails authCardDetails,
+                                                      Optional<String> transactionId,
                                                       Optional<Auth3dsDetailsEntity> auth3dsDetails,
                                                       Optional<String> sessionIdentifier,
                                                       Optional<WalletType> walletType,
