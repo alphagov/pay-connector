@@ -73,7 +73,7 @@ public class StateTransitionsIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldBeAbleToRequestARefund_partialAmount() throws Exception{
+    public void shouldEmitCorrectRefundEvents() throws Exception{
         String chargeId = addCharge(CAPTURED, "ref", ZonedDateTime.now().minusHours(1), "transaction-id-transition-it");
         Long refundAmount = 50L;
         Long refundAmountAvailable = AMOUNT;
@@ -95,24 +95,42 @@ public class StateTransitionsIT extends ChargingITestBase {
         
         List<Message> messages = readMessagesFromEventQueue();
 
-        assertThat(messages.size(), is(3));
+        assertThat(messages.size(), is(4));
 
-        messages.sort(Comparator.comparing(this::getTimestampFromMessage));
-
-        JsonObject message1 = new JsonParser().parse(messages.get(0).getBody()).getAsJsonObject();
+        JsonObject message1 = messages.stream()
+                .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
+                .filter(m -> "REFUND_CREATED_BY_SERVICE".equals(m.get("event_type").getAsString()))
+                .findFirst().get();
         assertThat(message1.get("event_type").getAsString(), is("REFUND_CREATED_BY_SERVICE"));
         assertThat(message1.get("resource_external_id").getAsString(), is(refundId));
         assertThat(message1.get("parent_resource_external_id").getAsString(), is(chargeId));
         assertThat(message1.get("event_details").getAsJsonObject().get("amount").getAsInt(), is(50));
 
-        JsonObject message2 = new JsonParser().parse(messages.get(1).getBody()).getAsJsonObject();
-        assertThat(message2.get("event_type").getAsString(), is("REFUND_SUBMITTED"));
-        assertThat(message2.get("resource_external_id").getAsString(), is(refundId));
+        JsonObject message2 = messages.stream()
+                .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
+                .filter(m -> "REFUND_AVAILABILITY_UPDATED".equals(m.get("event_type").getAsString()))
+                .findFirst().get();
+        assertThat(message2.get("event_type").getAsString(), is("REFUND_AVAILABILITY_UPDATED"));
+        assertThat(message2.get("resource_external_id").getAsString(), is(chargeId));
+        assertThat(message2.get("event_details").getAsJsonObject().get("refund_amount_available").getAsInt(), is(6184));
+        assertThat(message2.get("event_details").getAsJsonObject().get("refund_amount_refunded").getAsInt(), is(50));
+        assertThat(message2.get("event_details").getAsJsonObject().get("refund_status").getAsString(), is("available"));
 
-        JsonObject message3 = new JsonParser().parse(messages.get(2).getBody()).getAsJsonObject();
-        assertThat(message3.get("event_type").getAsString(), is("REFUND_SUCCEEDED"));
+        JsonObject message3 = messages.stream()
+                .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
+                .filter(m -> "REFUND_SUBMITTED".equals(m.get("event_type").getAsString()))
+                .findFirst().get();
+        assertThat(message3.get("event_type").getAsString(), is("REFUND_SUBMITTED"));
         assertThat(message3.get("resource_external_id").getAsString(), is(refundId));
-        assertThat(message3.get("event_details").getAsJsonObject().get("reference").getAsString(), is(notNullValue()));
+
+        JsonObject message4 = messages.stream()
+                .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
+                .filter(m -> "REFUND_SUCCEEDED".equals(m.get("event_type").getAsString()))
+                .findFirst().get();
+
+        assertThat(message4.get("event_type").getAsString(), is("REFUND_SUCCEEDED"));
+        assertThat(message4.get("resource_external_id").getAsString(), is(refundId));
+        assertThat(message4.get("event_details").getAsJsonObject().get("reference").getAsString(), is(notNullValue()));
     }
 
     private ZonedDateTime getTimestampFromMessage(Message message) {
