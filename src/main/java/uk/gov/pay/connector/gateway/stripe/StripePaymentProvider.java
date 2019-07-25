@@ -127,12 +127,12 @@ public class StripePaymentProvider implements PaymentProvider {
                 Stripe3dsSourceResponse sourceResponse = jsonObjectMapper.getObject(source3dsResponse, Stripe3dsSourceResponse.class);
 
                 Stripe3dsSourceAuthorisationResponse response = new Stripe3dsSourceAuthorisationResponse(sourceResponse);
-                
+
                 if(AUTHORISED.equals(response.authoriseStatus())){
                     StripeAuthorisationResponse stripeAuthResponse = createCharge(request, response.getTransactionId());
                     return responseBuilder.withResponse(stripeAuthResponse).build();
                 }
-                
+
                 return responseBuilder.withResponse(new Stripe3dsSourceAuthorisationResponse(sourceResponse)).build();
             } else {
                 StripeAuthorisationResponse stripeAuthResponse = createCharge(request, stripeSourcesResponse.getId());
@@ -151,7 +151,7 @@ public class StripePaymentProvider implements PaymentProvider {
 
                 return responseBuilder.withResponse(StripeAuthorisationFailedResponse.of(stripeErrorResponse)).build();
             }
-            
+
             logger.info("Unrecognised response status when authorising. Charge_id={}, status={}, response={}",
                     request.getChargeExternalId(), e.getStatus(), e.getResponseFromGateway());
             throw new RuntimeException("Unrecognised response status when authorising.");
@@ -193,7 +193,7 @@ public class StripePaymentProvider implements PaymentProvider {
             if (e.getStatus().isPresent() && e.getStatus().get() == SC_UNAUTHORIZED) {
                 return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.ERROR);
             }
-            
+
             if (e.getFamily() == SERVER_ERROR) {
                 return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION);
             }
@@ -205,8 +205,8 @@ public class StripePaymentProvider implements PaymentProvider {
 
                 return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.REJECTED);
             }
-            
-            logger.info("Unrecognised response status when authorising 3DS source. Charge_id={}, status={}, response={}", 
+
+            logger.info("Unrecognised response status when authorising 3DS source. Charge_id={}, status={}, response={}",
                     request.getChargeExternalId(), e.getStatus(), e.getResponseFromGateway());
             throw new RuntimeException("Unrecognised response status when authorising 3DS source.");
 
@@ -274,16 +274,16 @@ public class StripePaymentProvider implements PaymentProvider {
         return jsonObjectMapper.getObject(jsonResponse, StripeTokenResponse.class);
     }
 
-    private GatewayClient.Response postToStripe(String path, 
-                                                String payload, 
-                                                boolean isLiveAccount, 
-                                                GatewayAccountEntity gatewayAccountEntity, 
-                                                OrderRequestType orderRequestType) 
+    private GatewayClient.Response postToStripe(String path,
+                                                String payload,
+                                                boolean isLiveAccount,
+                                                GatewayAccountEntity gatewayAccountEntity,
+                                                OrderRequestType orderRequestType)
             throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
         return client.postRequestFor(
-                URI.create(stripeGatewayConfig.getUrl() + path), 
-                gatewayAccountEntity, 
-                new GatewayOrder(orderRequestType, payload, APPLICATION_FORM_URLENCODED_TYPE), 
+                URI.create(stripeGatewayConfig.getUrl() + path),
+                gatewayAccountEntity,
+                new GatewayOrder(orderRequestType, payload, APPLICATION_FORM_URLENCODED_TYPE),
                 AuthUtil.getStripeAuthHeader(stripeGatewayConfig, isLiveAccount)
         );
     }

@@ -33,7 +33,7 @@ public class StripeAuthoriseRequest extends StripeRequest {
         this.transferGroup = transferGroup;
         this.orderRequestType = orderRequestType;
     }
-    
+
     public static StripeAuthoriseRequest of(String sourceId, CardAuthorisationGatewayRequest authorisationRequest, StripeGatewayConfig stripeGatewayConfig) {
         return new StripeAuthoriseRequest(
                 authorisationRequest.getAmount(),
@@ -46,7 +46,7 @@ public class StripeAuthoriseRequest extends StripeRequest {
                 stripeGatewayConfig
         );
     }
-    
+
     public static StripeAuthoriseRequest of(String sourceId, Auth3dsResponseGatewayRequest authorisationRequest, StripeGatewayConfig stripeGatewayConfig) {
         return new StripeAuthoriseRequest(
                 authorisationRequest.getAmount(),
