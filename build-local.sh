@@ -4,5 +4,5 @@ set -e
 
 cd "$(dirname "$0")"
 
-mvn -DskipITs clean verify
+mvn -DskipTests clean verify
 docker build -t govukpay/connector:local .

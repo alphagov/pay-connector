@@ -44,6 +44,9 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTokenResponse;
 import uk.gov.pay.connector.gateway.stripe.request.StripeAuthoriseRequest;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsSourceResponse;
+import uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentConfirmationResponse;
+import uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentResponse;
+import uk.gov.pay.connector.gateway.stripe.response.StripePaymentMethodResponse;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
@@ -120,24 +123,13 @@ public class StripePaymentProvider implements PaymentProvider {
                 .responseBuilder();
 
         try {
-            StripeTokenResponse tokenResponse = createToken(request);
-            StripeSourcesResponse stripeSourcesResponse = createSource(request, tokenResponse.getId());
-            if (stripeSourcesResponse.require3ds()) {
-                String source3dsResponse = create3dsSource(request, stripeSourcesResponse.getId());
-                Stripe3dsSourceResponse sourceResponse = jsonObjectMapper.getObject(source3dsResponse, Stripe3dsSourceResponse.class);
-
-                Stripe3dsSourceAuthorisationResponse response = new Stripe3dsSourceAuthorisationResponse(sourceResponse);
+            StripePaymentMethodResponse stripePaymentMethodResponse = createPaymentMethod(request);
+            StripePaymentIntentResponse stripePaymentIntentResponse = createPaymentIntent(request, stripePaymentMethodResponse.getId());
+            StripePaymentIntentConfirmationResponse stripePaymentIntentConfirmationResponse = confirmPaymentIntent(request, stripePaymentIntentResponse.getId());
                 
-                if(AUTHORISED.equals(response.authoriseStatus())){
-                    StripeAuthorisationResponse stripeAuthResponse = createCharge(request, response.getTransactionId());
-                    return responseBuilder.withResponse(stripeAuthResponse).build();
-                }
-                
-                return responseBuilder.withResponse(new Stripe3dsSourceAuthorisationResponse(sourceResponse)).build();
-            } else {
-                StripeAuthorisationResponse stripeAuthResponse = createCharge(request, stripeSourcesResponse.getId());
-                return responseBuilder.withResponse(stripeAuthResponse).build();
-            }
+            logger.info(stripePaymentIntentConfirmationResponse.toString());
+            return responseBuilder.withResponse(new Stripe3dsSourceAuthorisationResponse(stripePaymentIntentConfirmationResponse)).build();
+           
         } catch (GatewayErrorException e) {
 
             if ((e.getStatus().isPresent() && e.getStatus().get() == SC_UNAUTHORIZED) || e.getFamily() == SERVER_ERROR) {
@@ -160,6 +152,66 @@ public class StripePaymentProvider implements PaymentProvider {
             logger.error("GatewayException occurred for charge external id {}, error:\n {}", request.getChargeExternalId(), e);
             return responseBuilder.withGatewayError(e.toGatewayError()).build();
         }
+    }
+
+    private StripePaymentIntentResponse createPaymentIntent(CardAuthorisationGatewayRequest request, String paymentMethodId)
+            throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
+        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
+        String jsonResponse =  postToStripe(
+                "/v1/payment_intents",
+                paymentIntentPayload(request, paymentMethodId),
+                gatewayAccount.isLive(),
+                gatewayAccount,
+                OrderRequestType.STRIPE_CREATE_3DS_SOURCE).getEntity();
+
+        return jsonObjectMapper.getObject(jsonResponse, StripePaymentIntentResponse.class);
+    }
+
+    private StripePaymentIntentConfirmationResponse confirmPaymentIntent(CardAuthorisationGatewayRequest request, String paymentIntentId)
+            throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
+        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
+        String jsonResponse = postToStripe(
+                "/v1/payment_intents/" + paymentIntentId + "/confirm",
+                paymentIntentConfirmPayload(request),
+                gatewayAccount.isLive(),
+                gatewayAccount,
+                OrderRequestType.STRIPE_CREATE_3DS_SOURCE).getEntity();
+
+        return jsonObjectMapper.getObject(jsonResponse, StripePaymentIntentConfirmationResponse.class);
+
+    }
+
+    private String paymentIntentConfirmPayload(CardAuthorisationGatewayRequest request) {
+        String frontend3dsIncomingUrl = String.format("%s/card_details/%s/3ds_required_in", frontendUrl, request.getChargeExternalId());
+        List<BasicNameValuePair> params = new ArrayList<>();
+
+        params.add(new BasicNameValuePair("return_url", frontend3dsIncomingUrl));
+
+        return URLEncodedUtils.format(params, UTF_8);
+    }
+
+    private String paymentIntentPayload(CardAuthorisationGatewayRequest request, String paymentMethodId) {
+        List<BasicNameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("payment_method", paymentMethodId));
+        params.add(new BasicNameValuePair("amount", request.getAmount()));
+        params.add(new BasicNameValuePair("confirmation_method", "manual"));
+        params.add(new BasicNameValuePair("capture_method", "manual"));
+        params.add(new BasicNameValuePair("currency", "GBP"));
+        return URLEncodedUtils.format(params, UTF_8);
+    }
+
+    private StripePaymentMethodResponse createPaymentMethod(CardAuthorisationGatewayRequest request)
+            throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
+        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
+        String jsonResponse = postToStripe(
+                "/v1/payment_methods",
+                paymentMethodPayload(request),
+                gatewayAccount.isLive(),
+                gatewayAccount,
+                OrderRequestType.STRIPE_CREATE_3DS_SOURCE).getEntity();
+
+        return jsonObjectMapper.getObject(jsonResponse, StripePaymentMethodResponse.class);
+
     }
 
     @Override
@@ -351,6 +403,18 @@ public class StripePaymentProvider implements PaymentProvider {
             params.add(new BasicNameValuePair("card[address_country]", address.getCountry()));
             params.add(new BasicNameValuePair("card[address_zip]", address.getPostcode()));
         });
+
+        return URLEncodedUtils.format(params, UTF_8);
+    }
+    
+    private String paymentMethodPayload(CardAuthorisationGatewayRequest request) {
+        List<BasicNameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("card[cvc]", request.getAuthCardDetails().getCvc()));
+        params.add(new BasicNameValuePair("card[exp_month]", request.getAuthCardDetails().expiryMonth()));
+        params.add(new BasicNameValuePair("card[exp_year]", request.getAuthCardDetails().expiryYear()));
+        params.add(new BasicNameValuePair("card[number]", request.getAuthCardDetails().getCardNo()));
+        params.add(new BasicNameValuePair("type", "card"));
+
 
         return URLEncodedUtils.format(params, UTF_8);
     }

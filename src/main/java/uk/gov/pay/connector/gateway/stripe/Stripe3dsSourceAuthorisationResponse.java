@@ -4,14 +4,16 @@ import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsSourceResponse;
 import uk.gov.pay.connector.gateway.stripe.response.StripeParamsFor3ds;
+import uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentConfirmationResponse;
 
 import java.util.Optional;
 
 public class Stripe3dsSourceAuthorisationResponse implements BaseAuthoriseResponse {
 
-    private Stripe3dsSourceResponse jsonResponse;
+    private StripePaymentIntentConfirmationResponse jsonResponse;
 
-    Stripe3dsSourceAuthorisationResponse(Stripe3dsSourceResponse jsonResponse) {
+
+    Stripe3dsSourceAuthorisationResponse(StripePaymentIntentConfirmationResponse jsonResponse) {
         this.jsonResponse = jsonResponse;
     }
 
@@ -22,13 +24,7 @@ public class Stripe3dsSourceAuthorisationResponse implements BaseAuthoriseRespon
 
     @Override
     public AuthoriseStatus authoriseStatus() {
-        if ("pending".equals(jsonResponse.getStatus())) {
-            return AuthoriseStatus.REQUIRES_3DS;
-        }
-        if ("chargeable".equals(jsonResponse.getStatus())) {
-            return AuthoriseStatus.AUTHORISED;
-        }
-        return AuthoriseStatus.ERROR;
+        return AuthoriseStatus.REQUIRES_3DS;
     }
 
     @Override
