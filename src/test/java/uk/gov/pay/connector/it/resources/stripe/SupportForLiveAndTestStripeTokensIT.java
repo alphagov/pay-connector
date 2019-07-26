@@ -73,6 +73,7 @@ public class SupportForLiveAndTestStripeTokensIT {
                 .withPaymentGateway(paymentProvider)
                 .withCredentials(credentials)
                 .withProviderUrlType(Type.fromString(accountType))
+                .withIntegrationVersion3ds(1)
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
 

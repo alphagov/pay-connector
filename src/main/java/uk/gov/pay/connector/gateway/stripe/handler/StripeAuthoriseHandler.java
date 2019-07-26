@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
+import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
@@ -24,7 +25,11 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTokenResponse;
 import uk.gov.pay.connector.gateway.stripe.request.StripeAuthoriseRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripePaymentMethodRequest;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsSourceResponse;
+import uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentResponse;
+import uk.gov.pay.connector.gateway.stripe.response.StripePaymentMethodResponse;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -50,9 +55,9 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
     private final StripeGatewayConfig stripeGatewayConfig;
     private final JsonObjectMapper jsonObjectMapper;
     private final String frontendUrl;
-
+    @Inject
     public StripeAuthoriseHandler(GatewayClient client,
-                                  StripeGatewayConfig stripeGatewayConfig, 
+                                  StripeGatewayConfig stripeGatewayConfig,
                                   ConnectorConfiguration configuration,
                                   JsonObjectMapper jsonObjectMapper) {
         this.client = client;
@@ -64,46 +69,35 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
     @Override
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
         logger.info("Calling Stripe for authorisation of charge [{}]", request.getChargeExternalId());
-
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
                 .GatewayResponseBuilder
                 .responseBuilder();
-
         try {
-            StripeTokenResponse tokenResponse = createToken(request);
-            StripeSourcesResponse stripeSourcesResponse = createSource(request, tokenResponse.getId());
-            if (stripeSourcesResponse.require3ds()) {
-                String source3dsResponse = create3dsSource(request, stripeSourcesResponse.getId());
-                Stripe3dsSourceResponse sourceResponse = jsonObjectMapper.getObject(source3dsResponse, Stripe3dsSourceResponse.class);
-
-                Stripe3dsSourceAuthorisationResponse response = new Stripe3dsSourceAuthorisationResponse(sourceResponse);
-
-                if(AUTHORISED.equals(response.authoriseStatus())){
-                    StripeAuthorisationResponse stripeAuthResponse = createCharge(request, response.getTransactionId());
-                    return responseBuilder.withResponse(stripeAuthResponse).build();
-                }
-
-                return responseBuilder.withResponse(new Stripe3dsSourceAuthorisationResponse(sourceResponse)).build();
+            if (usePaymentIntents(request)) {
+                return authoriseWithPaymentIntent(request);
             } else {
-                StripeAuthorisationResponse stripeAuthResponse = createCharge(request, stripeSourcesResponse.getId());
-                return responseBuilder.withResponse(stripeAuthResponse).build();
+                return authoriseWithCharge(request);
             }
         } catch (GatewayException.GatewayErrorException e) {
+            String chargeExternalId = request.getChargeExternalId();
 
             if ((e.getStatus().isPresent() && e.getStatus().get() == SC_UNAUTHORIZED) || e.getFamily() == SERVER_ERROR) {
-                return unexpectedGatewayResponse(request.getChargeExternalId(), responseBuilder, e.getMessage(), e.getStatus());
+                logger.error("Authorisation failed for charge {}. Reason: {}. Status code from Stripe: {}.",
+                        chargeExternalId, e.getMessage(), e.getStatus().map(String::valueOf).orElse("no status code"));
+                GatewayError gatewayError = gatewayConnectionError("There was an internal server error authorising charge_external_id: " + chargeExternalId);
+                return responseBuilder.withGatewayError(gatewayError).build();
             }
 
             if (e.getFamily() == CLIENT_ERROR) {
                 StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), StripeErrorResponse.class);
                 logger.error("Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
-                        request.getChargeExternalId(), stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), e.getStatus());
-
+                        chargeExternalId, stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), e.getStatus());
+    
                 return responseBuilder.withResponse(StripeAuthorisationFailedResponse.of(stripeErrorResponse)).build();
             }
 
             logger.info("Unrecognised response status when authorising. Charge_id={}, status={}, response={}",
-                    request.getChargeExternalId(), e.getStatus(), e.getResponseFromGateway());
+                    chargeExternalId, e.getStatus(), e.getResponseFromGateway());
             throw new RuntimeException("Unrecognised response status when authorising.");
 
         } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
@@ -112,14 +106,33 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
         }
     }
 
-    private GatewayResponse unexpectedGatewayResponse(String chargeExternalId,
-                                                      GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder,
-                                                      String errorMessage,
-                                                      Optional<Integer> statusCode) {
-        logger.error("Authorisation failed for charge {}. Reason: {}. Status code from Stripe: {}.",
-                chargeExternalId, errorMessage, statusCode.map(String::valueOf).orElse("no status code"));
-        GatewayError gatewayError = gatewayConnectionError("There was an internal server error authorising charge_external_id: " + chargeExternalId);
-        return responseBuilder.withGatewayError(gatewayError).build();
+    private GatewayResponse authoriseWithCharge(CardAuthorisationGatewayRequest request)
+            throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
+        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
+                .GatewayResponseBuilder
+                .responseBuilder();
+        StripeTokenResponse tokenResponse = createToken(request);
+        StripeSourcesResponse stripeSourcesResponse = createSource(request, tokenResponse.getId());
+        if (stripeSourcesResponse.require3ds()) {
+            String source3dsResponse = create3dsSource(request, stripeSourcesResponse.getId());
+            Stripe3dsSourceResponse sourceResponse = jsonObjectMapper.getObject(source3dsResponse, Stripe3dsSourceResponse.class);
+
+            Stripe3dsSourceAuthorisationResponse response = new Stripe3dsSourceAuthorisationResponse(sourceResponse);
+
+            if(AUTHORISED.equals(response.authoriseStatus())){
+                StripeAuthorisationResponse stripeAuthResponse = createCharge(request, response.getTransactionId());
+                return responseBuilder.withResponse(stripeAuthResponse).build();
+            }
+
+            return responseBuilder.withResponse(new Stripe3dsSourceAuthorisationResponse(sourceResponse)).build();
+        } else {
+            StripeAuthorisationResponse stripeAuthResponse = createCharge(request, stripeSourcesResponse.getId());
+            return responseBuilder.withResponse(stripeAuthResponse).build();
+        }
+    }
+
+    private boolean usePaymentIntents(CardAuthorisationGatewayRequest request) {
+        return request.getGatewayAccount().getIntegrationVersion3ds() == 2;
     }
 
     private String create3dsSource(CardAuthorisationGatewayRequest request, String sourceId)
@@ -137,7 +150,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
             throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
         String jsonResponse = client.postRequestFor(StripeAuthoriseRequest.of(sourceId, request, stripeGatewayConfig)).getEntity();
         final StripeCharge createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCharge.class);
-        return new StripeAuthorisationResponse(createChargeResponse);
+        return StripeAuthorisationResponse.of(createChargeResponse);
     }
 
     private StripeSourcesResponse createSource(CardAuthorisationGatewayRequest request, String tokenId)
@@ -219,6 +232,27 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
 
         return URLEncodedUtils.format(params, UTF_8);
     }
-    
-    
+
+    private GatewayResponse authoriseWithPaymentIntent(CardAuthorisationGatewayRequest request)
+            throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
+        StripePaymentMethodResponse stripePaymentMethodResponse = createPaymentMethod(request);
+        StripePaymentIntentResponse stripePaymentIntentResponse = createPaymentIntent(request, stripePaymentMethodResponse.getId());
+
+        return GatewayResponse
+                .GatewayResponseBuilder
+                .responseBuilder()
+                .withResponse(StripeAuthorisationResponse.of(stripePaymentIntentResponse)).build();
+    }
+
+    private StripePaymentIntentResponse createPaymentIntent(CardAuthorisationGatewayRequest request, String paymentMethodId)
+            throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
+        String jsonResponse = client.postRequestFor(StripePaymentIntentRequest.of(request, paymentMethodId, stripeGatewayConfig, frontendUrl)).getEntity();
+        return jsonObjectMapper.getObject(jsonResponse, StripePaymentIntentResponse.class);
+    }
+
+    private StripePaymentMethodResponse createPaymentMethod(CardAuthorisationGatewayRequest request)
+            throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
+        String jsonResponse = client.postRequestFor(StripePaymentMethodRequest.of(request, stripeGatewayConfig)).getEntity();
+        return jsonObjectMapper.getObject(jsonResponse, StripePaymentMethodResponse.class);
+    }
 }
