@@ -11,6 +11,7 @@ import au.com.dius.pact.provider.junit.target.Target;
 import au.com.dius.pact.provider.junit.target.TestTarget;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.runner.RunWith;
+import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
@@ -19,11 +20,17 @@ import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
+import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
+import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.refund.model.domain.RefundHistory;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.time.ZonedDateTime;
 
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
+import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
 
 @RunWith(PactRunner.class)
 @Provider("connector")
@@ -83,5 +90,35 @@ public class QueueMessageContractTest {
         );
 
         return captureConfirmedEvent.toJsonString();
+    }
+
+    @PactVerifyProvider("a refund created by user message")
+    public String verifyRefundCreatedByUserEvent() throws JsonProcessingException {
+        RefundHistory refundHistory = aValidRefundHistoryEntity()
+                .withUserExternalId(RandomStringUtils.randomAlphanumeric(10))
+                .build();
+        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory);
+
+        return refundCreatedByUser.toJsonString();
+    }
+
+    @PactVerifyProvider("a refund submitted message")
+    public String verifyRefundSubmittedEvent() throws JsonProcessingException {
+        RefundHistory refundHistory = aValidRefundHistoryEntity()
+                .build();
+        RefundSubmitted refundSubmitted = RefundSubmitted.from(refundHistory);
+
+        return refundSubmitted.toJsonString();
+    }
+
+    @PactVerifyProvider("a refund succeeded message")
+    public String verifyRefundedEvent() throws JsonProcessingException {
+        RefundHistory refundHistory = aValidRefundHistoryEntity()
+                .withStatus(RefundStatus.REFUNDED.getValue())
+                .withReference(RandomStringUtils.randomAlphanumeric(14))
+                .build();
+        RefundSucceeded refundSucceeded = RefundSucceeded.from(refundHistory);
+
+        return refundSucceeded.toJsonString();
     }
 }
