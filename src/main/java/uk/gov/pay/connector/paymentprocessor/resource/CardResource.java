@@ -142,7 +142,7 @@ public class CardResource {
                                                 @PathParam("chargeId") String chargeId,
                                                 @Context UriInfo uriInfo) {
         logger.info("Mark charge as CAPTURE APPROVED [charge_external_id={}]", chargeId);
-        cardCaptureService.markChargeAsCaptureApproved(chargeId);
+        cardCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeId);
         return ResponseUtil.noContentResponse();
     }
 

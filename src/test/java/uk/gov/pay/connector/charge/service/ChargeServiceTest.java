@@ -4,7 +4,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -27,6 +29,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.model.domain.Address;
@@ -98,6 +101,9 @@ public class ChargeServiceTest {
     private static final int MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS = 10;
 
     private ChargeCreateRequestBuilder requestBuilder;
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Mock
     private TokenDao mockedTokenDao;
@@ -720,5 +726,19 @@ public class ChargeServiceTest {
         service.transitionChargeState(chargeSpy, AUTHORISATION_READY);
 
         verifyNoMoreInteractions(mockedStateTransitionQueue);
+    }
+
+    @Test
+    public void shouldNotTransitionChargeStateForNonSkippableNonConfirmedCharge() {
+        ChargeEntity createdChargeEntity = aValidChargeEntity()
+                .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .build();
+
+        final String chargeEntityExternalId = createdChargeEntity.getExternalId();
+        when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(createdChargeEntity));
+
+        thrown.expect(ConflictRuntimeException.class);
+        thrown.expectMessage("HTTP 409 Conflict");
+        service.markDelayedCaptureChargeAsCaptureApproved(chargeEntityExternalId);
     }
 }

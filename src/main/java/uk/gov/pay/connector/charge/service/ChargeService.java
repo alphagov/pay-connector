@@ -498,7 +498,7 @@ public class ChargeService {
     }
 
     @Transactional
-    public ChargeEntity markChargeAsCaptureApproved(String externalId) {
+    public ChargeEntity markDelayedCaptureChargeAsCaptureApproved(String externalId) {
         return chargeDao.findByExternalId(externalId).map(charge -> {
 
             ChargeStatus currentStatus = fromString(charge.getStatus());
@@ -508,12 +508,18 @@ public class ChargeService {
                 return charge;
             }
 
-            try {
-                transitionChargeState(charge, CAPTURE_APPROVED);
-            } catch (InvalidStateTransitionException e) {
+            if (currentStatus == AWAITING_CAPTURE_REQUEST) {
+                try {
+                    transitionChargeState(charge, CAPTURE_APPROVED);
+                } catch (InvalidStateTransitionException e) {
+                    throw new ConflictRuntimeException(charge.getExternalId(),
+                            format("attempt to perform delayed capture on invalid charge state"));
+                }
+            } else {
                 throw new ConflictRuntimeException(charge.getExternalId(),
                         format("attempt to perform delayed capture on charge not in %s state.", AWAITING_CAPTURE_REQUEST));
             }
+
 
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
