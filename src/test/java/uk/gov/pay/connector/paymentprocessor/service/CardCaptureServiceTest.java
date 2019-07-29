@@ -402,7 +402,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AWAITING_CAPTURE_REQUEST, "gatewayTxId"));
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 
-        ChargeEntity result = cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());
+        ChargeEntity result = cardCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId());
 
         verify(chargeEntity).setStatus(CAPTURE_APPROVED);
         verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(CAPTURE_APPROVED)), isNull());
@@ -414,7 +414,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, CAPTURE_APPROVED, "gatewayTxId"));
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 
-        ChargeEntity result = cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());
+        ChargeEntity result = cardCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId());
 
         verifyNoMoreInteractions(mockedChargeEventDao);
         assertThat(result.getStatus(), is(CAPTURE_APPROVED.getValue()));
@@ -426,7 +426,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(externalId)).thenReturn(Optional.empty());
 
         exception.expect(ChargeNotFoundRuntimeException.class);
-        cardCaptureService.markChargeAsCaptureApproved(externalId);
+        cardCaptureService.markDelayedCaptureChargeAsCaptureApproved(externalId);
 
         verify(mockedChargeDao).findByExternalId(externalId);
         verifyNoMoreInteractions(mockedChargeDao);
@@ -440,7 +440,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(externalId)).thenReturn(Optional.of(charge));
 
         exception.expect(ConflictRuntimeException.class);
-        cardCaptureService.markChargeAsCaptureApproved(externalId);
+        cardCaptureService.markDelayedCaptureChargeAsCaptureApproved(externalId);
 
         verify(mockedChargeDao).findByExternalId(externalId);
         verifyNoMoreInteractions(mockedChargeDao);
@@ -505,7 +505,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId"));
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 
-        ChargeEntity result = cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());
+        ChargeEntity result = cardCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
 
         verify(mockCaptureQueue).sendForCapture(chargeEntity);
 
@@ -517,14 +517,13 @@ public class CardCaptureServiceTest extends CardServiceTest {
     public void markChargeAsCaptureApproved_shouldThrowException_WithFeatureFlagEnabledAndUnableToAddChargeToQueue() throws QueueException {
         ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId"));
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
-        doThrow(new QueueException()).when(mockCaptureQueue).sendForCapture(chargeEntity);
 
         CardCaptureService cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService,
                 mockEnvironment, mockCaptureQueue
         );
 
         try {
-            cardCaptureService.markChargeAsCaptureApproved(chargeEntity.getExternalId());
+            cardCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId());
         } catch (WebApplicationException e) {
             verify(mockedChargeDao).findByExternalId(chargeEntity.getExternalId());
             verifyNoMoreInteractions(mockedChargeDao);

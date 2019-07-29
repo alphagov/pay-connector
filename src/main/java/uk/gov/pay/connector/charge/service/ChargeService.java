@@ -90,14 +90,6 @@ public class ChargeService {
 
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
 
-    private static final List<ChargeStatus> IGNORABLE_CAPTURE_STATES = ImmutableList.of(
-            CAPTURE_APPROVED,
-            CAPTURE_APPROVED_RETRY,
-            CAPTURE_READY,
-            CAPTURE_SUBMITTED,
-            CAPTURED
-    );
-
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
     private final CardTypeDao cardTypeDao;
@@ -498,24 +490,32 @@ public class ChargeService {
     }
 
     @Transactional
-    public ChargeEntity markChargeAsCaptureApproved(String externalId) {
+    public ChargeEntity markDelayedCaptureChargeAsCaptureApproved(String externalId) {
         return chargeDao.findByExternalId(externalId).map(charge -> {
+            switch (fromString(charge.getStatus())) {
+                case AWAITING_CAPTURE_REQUEST:
+                    try {
+                        transitionChargeState(charge, CAPTURE_APPROVED);
+                    } catch (InvalidStateTransitionException e) {
+                        throw new ConflictRuntimeException(charge.getExternalId(),
+                                "attempt to perform delayed capture on invalid charge state " + e.getMessage());
+                    }
 
-            ChargeStatus currentStatus = fromString(charge.getStatus());
+                    return charge;
 
-            if (chargeCanBeSkipped(charge)) {
-                logger.info("Skipping charge [charge_external_id={}] with status [{}] from marking as CAPTURE APPROVED", currentStatus, externalId);
-                return charge;
+                case CAPTURE_APPROVED:
+                case CAPTURE_APPROVED_RETRY:
+                case CAPTURE_READY:
+                case CAPTURE_SUBMITTED:
+                case CAPTURED:
+                    return charge;
+
+                default:
+                    throw new ConflictRuntimeException(charge.getExternalId(),
+                            format("attempt to perform delayed capture on charge not in %s state.", AWAITING_CAPTURE_REQUEST)
+                    );
             }
 
-            try {
-                transitionChargeState(charge, CAPTURE_APPROVED);
-            } catch (InvalidStateTransitionException e) {
-                throw new ConflictRuntimeException(charge.getExternalId(),
-                        format("attempt to perform delayed capture on charge not in %s state.", AWAITING_CAPTURE_REQUEST));
-            }
-
-            return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
 
@@ -617,9 +617,5 @@ public class ChargeService {
 
     private boolean chargeIsInLockedStatus(OperationType operationType, ChargeEntity chargeEntity) {
         return operationType.getLockingStatus().equals(ChargeStatus.fromString(chargeEntity.getStatus()));
-    }
-
-    private boolean chargeCanBeSkipped(ChargeEntity charge) {
-        return IGNORABLE_CAPTURE_STATES.contains(ChargeStatus.fromString(charge.getStatus()));
     }
 }
