@@ -22,8 +22,10 @@ import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
+import uk.gov.pay.commons.utils.healthchecks.DatabaseHealthCheck;
 import uk.gov.pay.commons.utils.logging.LoggingFilter;
 import uk.gov.pay.commons.utils.xray.Xray;
+import uk.gov.pay.commons.utils.metrics.DatabaseMetricsService;
 import uk.gov.pay.connector.cardtype.resource.CardTypesResource;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountExceptionMapper;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
@@ -40,7 +42,6 @@ import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountResource;
 import uk.gov.pay.connector.gatewayaccount.resource.StripeAccountResource;
 import uk.gov.pay.connector.gatewayaccount.resource.StripeAccountSetupResource;
 import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
-import uk.gov.pay.connector.healthcheck.DatabaseHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.healthcheck.SQSHealthCheck;
 import uk.gov.pay.connector.healthcheck.resource.HealthCheckResource;
@@ -139,7 +140,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                 .addMappingForUrlPatterns(of(REQUEST), true, "/v1/*");
 
         environment.healthChecks().register("ping", new Ping());
-        environment.healthChecks().register("database", injector.getInstance(DatabaseHealthCheck.class));
+        environment.healthChecks().register("database", new DatabaseHealthCheck(configuration.getDataSourceFactory()));
         environment.healthChecks().register("cardExecutorService", injector.getInstance(CardExecutorServiceHealthCheck.class));
         environment.healthChecks().register("sqsQueue", injector.getInstance(SQSHealthCheck.class));
 
@@ -171,6 +172,15 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     private void initialiseMetrics(ConnectorConfiguration configuration, Environment environment) {
+        DatabaseMetricsService metricsService = new DatabaseMetricsService(configuration.getDataSourceFactory(), environment.metrics(), "connector");
+
+        environment
+                .lifecycle()
+                .scheduledExecutorService("metricscollector")
+                .threads(1)
+                .build()
+                .scheduleAtFixedRate(metricsService::updateMetricData, 0, GRAPHITE_SENDING_PERIOD_SECONDS / 2, TimeUnit.SECONDS);
+
         GraphiteSender graphiteUDP = new GraphiteUDP(configuration.getGraphiteHost(), Integer.valueOf(configuration.getGraphitePort()));
         GraphiteReporter.forRegistry(environment.metrics())
                 .prefixedWith(SERVICE_METRICS_NODE)
