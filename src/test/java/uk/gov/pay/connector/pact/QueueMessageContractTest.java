@@ -34,7 +34,7 @@ import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundH
 
 @RunWith(PactRunner.class)
 @Provider("connector")
-@PactBroker(scheme = "https", host = "pact-broker-test.cloudapps.digital", tags = {"${PACT_CONSUMER_TAG}", "test", "staging", "production"},
+@PactBroker(scheme = "https", host = "pact-broker-test.cloudapps.digital", tags = {"${PACT_CONSUMER_TAG}"},
         authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"),
         consumers = {"ledger"})
 @IgnoreNoPactsToVerify
@@ -46,7 +46,7 @@ public class QueueMessageContractTest {
     private String resourceId = "anExternalResourceId";
 
     @PactVerifyProvider("a payment created message")
-    public String verifyPaymentCreatedEvent() throws Exception{
+    public String verifyPaymentCreatedEvent() throws Exception {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withCorporateSurcharge(55L)
                 .build();
