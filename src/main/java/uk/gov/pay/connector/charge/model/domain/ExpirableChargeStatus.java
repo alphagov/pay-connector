@@ -7,18 +7,17 @@ import java.util.stream.Stream;
 public enum ExpirableChargeStatus {
     CREATED(ChargeStatus.CREATED, AuthorisationStage.PRE_AUTHORISATION, ExpiryThresholdType.REGULAR),
     ENTERING_CARD_DETAILS(ChargeStatus.ENTERING_CARD_DETAILS, AuthorisationStage.PRE_AUTHORISATION, ExpiryThresholdType.REGULAR),
-    AUTHORISATION_READY(ChargeStatus.AUTHORISATION_READY, AuthorisationStage.DURING_AUTHORISATION, ExpiryThresholdType.REGULAR),
     AUTHORISATION_3DS_REQUIRED(ChargeStatus.AUTHORISATION_3DS_REQUIRED, AuthorisationStage.DURING_AUTHORISATION, ExpiryThresholdType.REGULAR),
     AUTHORISATION_3DS_READY(ChargeStatus.AUTHORISATION_3DS_READY, AuthorisationStage.DURING_AUTHORISATION, ExpiryThresholdType.REGULAR),
     AUTHORISATION_SUCCESS(ChargeStatus.AUTHORISATION_SUCCESS, AuthorisationStage.POST_AUTHORISATION, ExpiryThresholdType.REGULAR),
     AWAITING_CAPTURE_REQUEST(ChargeStatus.AWAITING_CAPTURE_REQUEST, AuthorisationStage.POST_AUTHORISATION, ExpiryThresholdType.DELAYED);
-
+    
     ExpirableChargeStatus(ChargeStatus chargeStatus, AuthorisationStage authorisationStage, ExpiryThresholdType expiryThresholdType) {
         this.chargeStatus = chargeStatus;
         this.authorisationStage = authorisationStage;
         this.expiryThresholdType = expiryThresholdType;
     }
-
+    
     private final AuthorisationStage authorisationStage;
     private final ChargeStatus chargeStatus;
     private final ExpiryThresholdType expiryThresholdType;
@@ -26,7 +25,7 @@ public enum ExpirableChargeStatus {
     public static Stream<ExpirableChargeStatus> getValuesAsStream() {
         return Arrays.stream(values());
     }
-
+    
     public static ExpirableChargeStatus of(ChargeStatus chargeStatus) {
         return getValuesAsStream()
                 .filter(expirableChargeStatus -> expirableChargeStatus.getChargeStatus().equals(chargeStatus))
@@ -46,16 +45,16 @@ public enum ExpirableChargeStatus {
     public boolean isRegularThresholdType() {
         return expiryThresholdType.equals(ExpiryThresholdType.REGULAR);
     }
-
+    
     public boolean isDelayedThresholdType() {
         return expiryThresholdType.equals(ExpiryThresholdType.DELAYED);
     }
 
     public enum ExpiryThresholdType {
         REGULAR,
-        DELAYED
+        DELAYED 
     }
-
+    
     public enum AuthorisationStage {
         PRE_AUTHORISATION,
         DURING_AUTHORISATION,
