@@ -70,7 +70,7 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
     @Test
     public void respondWith204WithNoLockingState_whenCancellationBeforeAuth() {
 
-        String chargeId = addCharge(ENTERING_CARD_DETAILS, "ref", ZonedDateTime.now().minusHours(1), "irrelevant");
+        String chargeId = addCharge(ENTERING_CARD_DETAILS, "ref", ZonedDateTime.now().minusHours(1), "irrelvant");
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
         List<String> events = databaseTestHelper.getInternalEvents(chargeId);
         assertThat(events.size(), is(2));
@@ -93,7 +93,7 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
 
     @Test
     public void respondWith202_whenCancelAlreadyInProgress() {
-        String chargeId = addCharge(USER_CANCEL_READY, "ref", ZonedDateTime.now().minusHours(1), "irrelevant");
+        String chargeId = addCharge(USER_CANCEL_READY, "ref", ZonedDateTime.now().minusHours(1), "irrelvant");
         String expectedMessage = "User Cancellation for charge already in progress, " + chargeId;
         connectorRestApiClient
                 .withChargeId(chargeId)
@@ -121,13 +121,29 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void respondWith204With3DSRequiredState_whenCancellationBeforeAuth() {
+    public void respondWith204With3DSRequeirdState_whenCancellationBeforeAuth() {
 
-        String chargeId = addCharge(AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusHours(1), "irrelevant");
+        String chargeId = addCharge(AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusHours(1), "irrelvant");
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
         List<String> events = databaseTestHelper.getInternalEvents(chargeId);
         assertThat(events.size(), is(2));
         assertThat(events, hasItems(AUTHORISATION_3DS_REQUIRED.getValue(), USER_CANCELLED.getValue()));
+    }
+
+    @Test
+    public void respondWith409_whenCancellationDuringAuth3DSReady() {
+        String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        worldpayMockClient.mockCancelSuccess();
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .postFrontendChargeCancellation()
+                .statusCode(409);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getCharge()
+                .body("state.status", is("started"));
     }
 
     private String userCancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int httpStatusCode) {
@@ -161,6 +177,22 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body("message", contains("Charge with id [" + unknownChargeId + "] not found."))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+
+    @Test
+    public void respondWith409_whenCancellationDuringAuthReady() {
+        String chargeId = addCharge(AUTHORISATION_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        worldpayMockClient.mockCancelSuccess();
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .postFrontendChargeCancellation()
+                .statusCode(409);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getCharge()
+                .body("state.status", is("started"));
     }
 
     @Test
