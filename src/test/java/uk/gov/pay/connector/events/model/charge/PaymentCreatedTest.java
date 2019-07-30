@@ -66,7 +66,5 @@ public class PaymentCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.payment_provider", equalTo(chargeEntity.getGatewayAccount().getGatewayName())));
         assertThat(actual, hasJsonPath("$.event_details.language", equalTo(chargeEntity.getLanguage().toString())));
         assertThat(actual, hasJsonPath("$.event_details.delayed_capture", equalTo(chargeEntity.isDelayedCapture())));
-        assertThat(actual, hasJsonPath("$.event_details.corporate_surcharge", equalTo(77)));
-        assertThat(actual, hasJsonPath("$.event_details.total_amount", equalTo(177)));
     }
 }
