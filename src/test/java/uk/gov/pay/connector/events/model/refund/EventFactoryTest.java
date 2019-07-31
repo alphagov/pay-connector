@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.events.model.refund;
 
+import org.hamcrest.core.Is;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -7,19 +9,32 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.events.eventdetails.EmptyEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundCreatedByUserEventDetails;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithReferenceDetails;
 import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.events.model.ResourceType;
+import uk.gov.pay.connector.events.model.charge.CaptureAbandonedAfterTooManyRetries;
+import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
+import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
+import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.pact.RefundHistoryEntityFixture;
+import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.RefundStateTransition;
+import uk.gov.pay.connector.queue.StateTransition;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
@@ -34,7 +49,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class RefundEventFactoryTest {
+public class EventFactoryTest {
 
     private final ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
 
@@ -43,9 +58,11 @@ public class RefundEventFactoryTest {
     @Mock
     private RefundDao refundDao;
     @Mock
+    private ChargeEventDao chargeEventDao;
+    @Mock
     private PaymentProviders paymentProviders;
     
-    private RefundEventFactory refundEventFactory;
+    private EventFactory eventFactory;
     
     @Before
     public void setUp() {
@@ -54,7 +71,7 @@ public class RefundEventFactoryTest {
         PaymentProvider paymentProvider = new SandboxPaymentProvider();
         when(paymentProviders.byName(any(PaymentGatewayName.class))).thenReturn(paymentProvider);
         
-        refundEventFactory = new RefundEventFactory(chargeService, refundDao, paymentProviders);
+        eventFactory = new EventFactory(chargeService, refundDao, chargeEventDao, paymentProviders);
     }
     
     @Test
@@ -71,10 +88,10 @@ public class RefundEventFactoryTest {
         ).thenReturn(Optional.of(refundCreatedHistory));
         
         
-        RefundStateTransition refundStateTransition = new RefundStateTransition(
+        StateTransition refundStateTransition = new RefundStateTransition(
                 refundCreatedHistory.getExternalId(), refundCreatedHistory.getStatus(), RefundCreatedByUser.class
         );
-        List<Event> refundEvents = refundEventFactory.create(refundStateTransition);
+        List<Event> refundEvents = eventFactory.createEvents(refundStateTransition);
         
         
         assertThat(refundEvents.size(), is(2));
@@ -109,10 +126,10 @@ public class RefundEventFactoryTest {
         ).thenReturn(Optional.of(refundSubmittedHistory));
         
         
-        RefundStateTransition refundStateTransition = new RefundStateTransition(
+        StateTransition refundStateTransition = new RefundStateTransition(
                 refundSubmittedHistory.getExternalId(), refundSubmittedHistory.getStatus(), RefundSubmitted.class
         );
-        List<Event> refundEvents = refundEventFactory.create(refundStateTransition);
+        List<Event> refundEvents = eventFactory.createEvents(refundStateTransition);
 
         
         assertThat(refundEvents.size(), is(1));
@@ -139,10 +156,10 @@ public class RefundEventFactoryTest {
         ).thenReturn(Optional.of(refundSucceededHistory));
         
         
-        RefundStateTransition refundStateTransition = new RefundStateTransition(
+        StateTransition refundStateTransition = new RefundStateTransition(
                 refundSucceededHistory.getExternalId(), refundSucceededHistory.getStatus(), RefundSucceeded.class
         );
-        List<Event> refundEvents = refundEventFactory.create(refundStateTransition);
+        List<Event> refundEvents = eventFactory.createEvents(refundStateTransition);
 
         
         assertThat(refundEvents.size(), is(1));
@@ -169,10 +186,10 @@ public class RefundEventFactoryTest {
         ).thenReturn(Optional.of(refundErrorHistory));
         
         
-        RefundStateTransition refundStateTransition = new RefundStateTransition(
+        StateTransition refundStateTransition = new RefundStateTransition(
                 refundErrorHistory.getExternalId(), refundErrorHistory.getStatus(), RefundError.class
         );
-        List<Event> refundEvents = refundEventFactory.create(refundStateTransition);
+        List<Event> refundEvents = eventFactory.createEvents(refundStateTransition);
 
         
         assertThat(refundEvents.size(), is(2));
@@ -191,5 +208,95 @@ public class RefundEventFactoryTest {
         assertThat(refundAvailabilityUpdated.getResourceExternalId(), is(charge.getExternalId()));
         assertThat(refundAvailabilityUpdated.getResourceType(), is(ResourceType.PAYMENT));
         assertThat(refundAvailabilityUpdated.getEventDetails(), is(instanceOf(RefundAvailabilityUpdatedEventDetails.class)));
+    }
+
+    @Test
+    public void shouldCreatePaymentCreatedEventWithCorrectPayloadForPaymentCreatedStateTransition() throws Exception{
+        Long chargeEventEntityId = 100L;
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withId(chargeEventEntityId)
+                .build();
+        when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
+                Optional.of(chargeEventEntity)
+        );
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, PaymentCreated.class);
+        
+        List<Event> events = eventFactory.createEvents(paymentStateTransition);
+
+        assertThat(events.size(), is(1));
+        PaymentCreated event = (PaymentCreated) events.get(0); 
+        Assert.assertThat(event, instanceOf(PaymentCreated.class));
+        Assert.assertThat(event.getEventDetails(), instanceOf(PaymentCreatedEventDetails.class));
+        Assert.assertThat(event.getResourceExternalId(), Is.is(chargeEventEntity.getChargeEntity().getExternalId()));
+    }
+
+    @Test
+    public void shouldCreateEventWithNoPayloadForNonPayloadEventStateTransition() throws Exception {
+        Long chargeEventEntityId = 100L;
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withId(chargeEventEntityId)
+                .build();
+        when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
+                Optional.of(chargeEventEntity)
+        );
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, CaptureAbandonedAfterTooManyRetries.class);
+
+        List<Event> events = eventFactory.createEvents(paymentStateTransition);
+
+        assertThat(events.size(), is(1));
+        CaptureAbandonedAfterTooManyRetries event = (CaptureAbandonedAfterTooManyRetries) events.get(0);
+        Assert.assertThat(event, instanceOf(CaptureAbandonedAfterTooManyRetries.class));
+        Assert.assertThat(event.getEventDetails(), instanceOf(EmptyEventDetails.class));
+    }
+
+    @Test
+    public void shouldCreatedARefundAvailabilityUpdatedEventForCaptureConfirmedStateTransition() throws Exception {
+        Long chargeEventEntityId = 100L;
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withCharge(charge)
+                .withId(chargeEventEntityId)
+                .build();
+        when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
+                Optional.of(chargeEventEntity)
+        );
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, CaptureConfirmed.class);
+
+        List<Event> events = eventFactory.createEvents(paymentStateTransition);
+
+        assertThat(events.size(), is(2));
+        CaptureConfirmed event1 = (CaptureConfirmed) events.get(0);
+        Assert.assertThat(event1, instanceOf(CaptureConfirmed.class));
+        Assert.assertThat(event1.getEventDetails(), instanceOf(CaptureConfirmedEventDetails.class));
+
+        RefundAvailabilityUpdated event2 = (RefundAvailabilityUpdated) events.get(1);
+        Assert.assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
+        Assert.assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
+    }
+    
+    @Test
+    public void shouldCreatedARefundAvailabilityUpdatedEventForCaptureSubmittedStateTransition() throws Exception {
+        Long chargeEventEntityId = 100L;
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withCharge(charge)
+                .withId(chargeEventEntityId)
+                .build();
+        when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
+                Optional.of(chargeEventEntity)
+        );
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, CaptureSubmitted.class);
+
+        List<Event> events = eventFactory.createEvents(paymentStateTransition);
+
+        assertThat(events.size(), is(2));
+        CaptureSubmitted event1 = (CaptureSubmitted) events.get(0);
+        Assert.assertThat(event1, instanceOf(CaptureSubmitted.class));
+
+        RefundAvailabilityUpdated event2 = (RefundAvailabilityUpdated) events.get(1);
+        Assert.assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
+        Assert.assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
     }
 }
