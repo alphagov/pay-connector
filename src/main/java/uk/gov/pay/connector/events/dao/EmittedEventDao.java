@@ -19,7 +19,7 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
         super(entityManager);
     }
 
-    public boolean hasBeenEmittedBefore(Event paymentCreatedEvent) {
+    public boolean hasBeenEmittedBefore(Event event) {
         final List<Integer> singleResult = entityManager.get()
                 .createQuery("select 1 from EmittedEventEntity e where " +
                         "e.resourceType = :resource_type AND " +
@@ -27,12 +27,12 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
                         "e.resourceExternalId = :resource_external_id AND " +
                         "e.eventType = :event_type", Integer.class)
                 .setMaxResults(1)
-                .setParameter("resource_type", paymentCreatedEvent.getResourceType().getLowercase())
-                .setParameter("resource_external_id", paymentCreatedEvent.getResourceExternalId())
-                .setParameter("event_type", paymentCreatedEvent.getEventType())
-                .setParameter("event_date", paymentCreatedEvent.getTimestamp())
+                .setParameter("resource_type", event.getResourceType().getLowercase())
+                .setParameter("resource_external_id", event.getResourceExternalId())
+                .setParameter("event_type", event.getEventType())
+                .setParameter("event_date", event.getTimestamp())
                 .getResultList();
-        return singleResult.size() > 0;
+        return !singleResult.isEmpty();
     }
 
     public void recordEmission(Event event) {
@@ -42,7 +42,7 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
                 event.getTimestamp(),
                 ZonedDateTime.now()
         );
-        
+
         persist(emittedEvent);
     }
 }

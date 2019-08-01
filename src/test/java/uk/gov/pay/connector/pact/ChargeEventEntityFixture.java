@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.pact;
 
+import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
@@ -13,7 +14,7 @@ public class ChargeEventEntityFixture {
     private ChargeStatus chargeStatus = ChargeStatus.CAPTURED;
     private ZonedDateTime updated = ZonedDateTime.now();
     private ZonedDateTime gatewayEventDate;
-    private Long id;
+    private Long id = RandomUtils.nextLong();
     private ChargeEntity charge = aValidChargeEntity()
             .withFee(42L)
             .build();
@@ -23,10 +24,9 @@ public class ChargeEventEntityFixture {
     }
 
     public ChargeEventEntity build() {
-
         ChargeEventEntity chargeEventEntity = new ChargeEventEntity(charge, chargeStatus, updated, Optional.ofNullable(gatewayEventDate));
         chargeEventEntity.setId(id);
-        
+
         return chargeEventEntity;
     }
 
@@ -34,8 +34,7 @@ public class ChargeEventEntityFixture {
         this.gatewayEventDate = value;
         return this;
     }
-    
-    
+
     public ChargeEventEntityFixture withId(Long id) {
         this.id = id;
         return this;
@@ -45,8 +44,14 @@ public class ChargeEventEntityFixture {
         this.charge = charge;
         return this;
     }
-    
-    
-    
-    
+
+    public ChargeEventEntityFixture withTimestamp(ZonedDateTime updated) {
+        this.updated = updated;
+        return this;
+    }
+
+    public ChargeEventEntityFixture withChargeStatus(ChargeStatus chargeStatus) {
+        this.chargeStatus = chargeStatus;
+        return this;
+    }
 }

@@ -99,7 +99,7 @@ public class EventFactory {
                 .collect(Collectors.toList());
     }
 
-    private static PaymentEvent createPaymentEvent(ChargeEventEntity chargeEvent, Class<? extends PaymentEvent> eventClass) {
+    public static PaymentEvent createPaymentEvent(ChargeEventEntity chargeEvent, Class<? extends PaymentEvent> eventClass) {
         try {
             if (eventClass == PaymentCreated.class) {
                 return PaymentCreated.from(chargeEvent);
