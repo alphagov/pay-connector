@@ -22,6 +22,7 @@ public class RefundHistoryEntityFixture {
     private String userExternalId;
     private String gatewayTransactionId = null;
     private String chargeExternalId = RandomStringUtils.randomAlphanumeric(10);
+    private Long gatewayAccountId = 123456L;
 
     private RefundHistoryEntityFixture() {}
 
@@ -32,7 +33,7 @@ public class RefundHistoryEntityFixture {
     public RefundHistory build() {
         return new RefundHistory(id, externalId, amount, status, chargeId, Timestamp.valueOf(createdDate.toLocalDateTime()),
                 version, reference, Timestamp.valueOf(historyStartDate.toLocalDateTime()), Timestamp.valueOf(historyEndDate.toLocalDateTime()),
-                userExternalId, gatewayTransactionId, chargeExternalId);
+                userExternalId, gatewayTransactionId, chargeExternalId, gatewayAccountId);
     }
 
     public RefundHistoryEntityFixture withStatus(String status) {
