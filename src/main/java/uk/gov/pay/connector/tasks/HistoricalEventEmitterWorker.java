@@ -7,12 +7,16 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.EventQueue;
+import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.queue.QueueException;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -23,20 +27,23 @@ public class HistoricalEventEmitterWorker {
 
     private final ChargeDao chargeDao;
     private final EmittedEventDao emittedEventDao;
+    private final ChargeEventDao chargeEventDao;
     private final EventQueue eventQueue;
     private long maxId;
 
     @Inject
-    public HistoricalEventEmitterWorker(ChargeDao chargeDao, EmittedEventDao emittedEventDao, EventQueue eventQueue) {
+    public HistoricalEventEmitterWorker(ChargeDao chargeDao, EmittedEventDao emittedEventDao,
+                                        ChargeEventDao chargeEventDao, EventQueue eventQueue) {
         this.chargeDao = chargeDao;
         this.emittedEventDao = emittedEventDao;
+        this.chargeEventDao = chargeEventDao;
         this.eventQueue = eventQueue;
     }
 
     public void execute(Long startId, OptionalLong maybeMaxId) {
         try {
             MDC.put(HEADER_REQUEST_ID, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
-            
+
             maxId = maybeMaxId.orElseGet(() -> chargeDao.findMaxId());
             logger.info("Starting from {} up to {}", startId, maxId);
             for (long i = startId; i <= maxId; i++) {
@@ -53,12 +60,13 @@ public class HistoricalEventEmitterWorker {
     @Transactional
     public void emitEventFor(long i) {
         final Optional<ChargeEntity> maybeCharge = chargeDao.findById(i);
-        
+
         try {
             maybeCharge.ifPresent((c) -> MDC.put("chargeId", c.getExternalId()) );
 
             if (maybeCharge.isPresent()) {
                 final ChargeEntity charge = maybeCharge.get();
+
                 final PaymentCreated event = PaymentCreated.from(charge);
                 final boolean emittedBefore = emittedEventDao.hasBeenEmittedBefore(event);
                 if (emittedBefore) {
@@ -71,7 +79,7 @@ public class HistoricalEventEmitterWorker {
             else {
                 logger.info("[{}/{}] - not found", i, maxId);
             }
-        } 
+        }
         finally {
             MDC.remove("chargeId");
         }

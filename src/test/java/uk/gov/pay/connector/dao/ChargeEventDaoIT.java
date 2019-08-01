@@ -2,6 +2,7 @@ package uk.gov.pay.connector.dao;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,6 +13,7 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.ZonedDateTime;
@@ -127,6 +129,36 @@ public class ChargeEventDaoIT extends DaoITestBase {
         assertThat(events, shouldIncludeStatus(AUTHORISATION_SUCCESS));
         assertThat(events, shouldIncludeStatus(AWAITING_CAPTURE_REQUEST));
         assertDateMatch(events.get(0).getUpdated());
+    }
+
+    @Test
+    public void shouldListAllEventsForAGivenChargeId() {
+        Long chargeId = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(nextLong())
+                .withExternalChargeId(RandomIdGenerator.newId())
+                .insert()
+                .getChargeId();
+
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withChargeId(chargeId)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build();
+
+        ChargeEventEntity secondChargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withChargeId(chargeId)
+                .build();
+
+        chargeEventDao.persist(chargeEventEntity);
+        chargeEventDao.persist(secondChargeEventEntity);
+
+        List<ChargeEventEntity> chargeEventEntities = chargeEventDao.findEventsByChargeId(chargeId);
+        assertThat(chargeEventEntities, hasSize(2));
+        assertThat(chargeEventEntities.get(0).getStatus(), Matchers.is(ChargeStatus.fromString("AUTHORISATION SUCCESS")));
     }
 
     private void assertDateMatch(ZonedDateTime createdDateTime) {
