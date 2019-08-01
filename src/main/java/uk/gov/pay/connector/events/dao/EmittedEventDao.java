@@ -23,12 +23,14 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
         final List<Integer> singleResult = entityManager.get()
                 .createQuery("select 1 from EmittedEventEntity e where " +
                         "e.resourceType = :resource_type AND " +
+                        "e.eventDate = :event_date AND " +
                         "e.resourceExternalId = :resource_external_id AND " +
                         "e.eventType = :event_type", Integer.class)
                 .setMaxResults(1)
                 .setParameter("resource_type", paymentCreatedEvent.getResourceType().getLowercase())
                 .setParameter("resource_external_id", paymentCreatedEvent.getResourceExternalId())
                 .setParameter("event_type", paymentCreatedEvent.getEventType())
+                .setParameter("event_date", paymentCreatedEvent.getTimestamp())
                 .getResultList();
         return singleResult.size() > 0;
     }
