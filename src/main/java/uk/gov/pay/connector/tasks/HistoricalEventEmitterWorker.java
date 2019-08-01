@@ -10,9 +10,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.EventQueue;
-import uk.gov.pay.connector.events.model.Event;
-import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
+import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.queue.QueueException;
 
 import javax.inject.Inject;
@@ -66,6 +65,7 @@ public class HistoricalEventEmitterWorker {
 
             if (maybeCharge.isPresent()) {
                 final ChargeEntity charge = maybeCharge.get();
+                List<ChargeEventEntity> chargeEventEntities = chargeEventDao.findEventsByChargeId(charge.getId());
 
                 final PaymentCreated event = PaymentCreated.from(charge);
                 final boolean emittedBefore = emittedEventDao.hasBeenEmittedBefore(event);

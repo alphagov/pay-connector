@@ -7,12 +7,14 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.queue.QueueException;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -29,6 +31,8 @@ import static org.mockito.Mockito.when;
 public class HistoricalEventEmitterWorkerTest {
 
     @Mock
+    ChargeEventDao chargeEventDao;
+    @Mock
     ChargeDao chargeDao;
     @Mock
     EmittedEventDao emittedEventDao;
@@ -43,6 +47,7 @@ public class HistoricalEventEmitterWorkerTest {
     public void execute_emitsEventAndRecordsEmission() throws QueueException {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+        when(chargeEventDao.findEventsByChargeId(chargeEntity.getId())).thenReturn(List.of());
 
         worker.execute(1L, OptionalLong.empty());
 
@@ -54,7 +59,8 @@ public class HistoricalEventEmitterWorkerTest {
     @Test
     public void iteratesThroughSpecifiedRange() throws QueueException {
         when(chargeDao.findById((any()))).thenReturn(Optional.of(chargeEntity));
-        
+        when(chargeEventDao.findEventsByChargeId(chargeEntity.getId())).thenReturn(List.of());
+
         worker.execute(1L, OptionalLong.of(100L));
 
         verify(chargeDao, times(100)).findById(and(geq(1L), leq(100L)));

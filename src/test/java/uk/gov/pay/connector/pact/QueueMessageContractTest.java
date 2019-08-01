@@ -65,6 +65,7 @@ public class QueueMessageContractTest {
         ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
                 .aValidChargeEventEntity()
                 .withGatewayEventDate(ZonedDateTime.now())
+                .withChargeFee(42L)
                 .build();
 
         CaptureConfirmed captureConfirmedEvent = new CaptureConfirmed(

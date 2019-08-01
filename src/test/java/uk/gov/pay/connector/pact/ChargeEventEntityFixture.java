@@ -15,6 +15,7 @@ public class ChargeEventEntityFixture {
     private ChargeStatus chargeStatus = ChargeStatus.CAPTURED;
     private ZonedDateTime updated = ZonedDateTime.now();
     private ZonedDateTime gatewayEventDate;
+    private Long chargeFee;
     private Long id;
     private ChargeEntity charge;
 
@@ -24,11 +25,13 @@ public class ChargeEventEntityFixture {
 
     public ChargeEventEntity build() {
         if (this.charge == null) {
-            ChargeEntityFixture chargeEntityFixture = aValidChargeEntity()
-                    .withFee(42L);
+            ChargeEntityFixture chargeEntityFixture = aValidChargeEntity();
 
             if (this.chargeId != null) {
                 chargeEntityFixture.withId(this.chargeId);
+            }
+            if (this.chargeFee != null) {
+                chargeEntityFixture.withFee(this.chargeFee);
             }
 
             this.charge = chargeEntityFixture.build();
@@ -62,6 +65,11 @@ public class ChargeEventEntityFixture {
 
     public ChargeEventEntityFixture withStatus(ChargeStatus value) {
         this.chargeStatus = value;
+        return this;
+    }
+
+    public ChargeEventEntityFixture withChargeFee(Long value) {
+        this.chargeFee = value;
         return this;
     }
 }
