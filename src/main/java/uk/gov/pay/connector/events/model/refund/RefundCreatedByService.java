@@ -7,7 +7,7 @@ import java.time.ZonedDateTime;
 
 public class RefundCreatedByService extends RefundEvent {
 
-    public RefundCreatedByService(String resourceExternalId, String parentResourceExternalId, RefundCreatedByServiceEventDetails eventDetails, ZonedDateTime timestamp) {
+    private RefundCreatedByService(String resourceExternalId, String parentResourceExternalId, RefundCreatedByServiceEventDetails eventDetails, ZonedDateTime timestamp) {
         super(resourceExternalId, parentResourceExternalId, eventDetails, timestamp);
     }
 
@@ -15,9 +15,11 @@ public class RefundCreatedByService extends RefundEvent {
         return new RefundCreatedByService(
                 refundHistory.getExternalId(),
                 refundHistory.getChargeEntity().getExternalId(),
-                new RefundCreatedByServiceEventDetails(refundHistory.getAmount()),
+                new RefundCreatedByServiceEventDetails(
+                        refundHistory.getAmount(),
+                        refundHistory.getChargeEntity().getGatewayAccount().getId().toString()),
                 refundHistory.getHistoryStartDate()
         );
-        
+
     }
 }

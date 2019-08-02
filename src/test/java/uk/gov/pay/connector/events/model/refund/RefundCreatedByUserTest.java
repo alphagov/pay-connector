@@ -3,7 +3,7 @@ package uk.gov.pay.connector.events.model.refund;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
-import uk.gov.pay.connector.events.eventdetails.refund.RefundCreatedByServiceEventDetails;
+import uk.gov.pay.connector.events.eventdetails.refund.RefundCreatedByUserEventDetails;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
@@ -13,7 +13,7 @@ import java.time.ZonedDateTime;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class RefundCreatedByServiceTest {
+public class RefundCreatedByUserTest {
 
     private final ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
             .withGatewayAccountEntity(ChargeEntityFixture.defaultGatewayAccountEntity()).build();
@@ -24,18 +24,20 @@ public class RefundCreatedByServiceTest {
             charge.getId(), timeConverter.convertToDatabaseColumn(createdDate), 1L,
             "reference", timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(1L)),
             timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(2L)),
-            null, "gateway_transaction_id", charge.getExternalId(), charge.getGatewayAccount().getId());
+            "user-external-id", "gateway_transaction_id", charge.getExternalId(), charge.getGatewayAccount().getId());
 
     @Test
-    public void serializesEventDetailsGivenRefund() {
-        RefundCreatedByService refundCreatedByService = RefundCreatedByService.from(refundHistory);
+    public void serializesEventDetailsForAGivenRefundEvent() {
+        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory);
 
-        assertThat(refundCreatedByService.getParentResourceExternalId(), is(charge.getExternalId()));
-        assertThat(refundCreatedByService.getResourceExternalId(), is("external_id"));
+        assertThat(refundCreatedByUser.getParentResourceExternalId(), is(charge.getExternalId()));
+        assertThat(refundCreatedByUser.getResourceExternalId(), is("external_id"));
 
-        RefundCreatedByServiceEventDetails details = (RefundCreatedByServiceEventDetails) refundCreatedByService.getEventDetails();
+        RefundCreatedByUserEventDetails details = (RefundCreatedByUserEventDetails) refundCreatedByUser.getEventDetails();
 
         assertThat(details.getAmount(), is(50L));
         assertThat(details.getGatewayAccountId(), is(charge.getGatewayAccount().getId().toString()));
+        assertThat(details.getRefundedBy(), is("user-external-id"));
     }
+
 }

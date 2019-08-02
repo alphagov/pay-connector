@@ -4,8 +4,8 @@ public class RefundCreatedByUserEventDetails extends RefundCreatedEventDetails {
 
     private String refundedBy;
 
-    public RefundCreatedByUserEventDetails(Long refundAmount, String refundedBy) {
-        super(refundAmount);
+    public RefundCreatedByUserEventDetails(Long refundAmount, String refundedBy, String gatewayAccountId) {
+        super(refundAmount, gatewayAccountId);
         this.refundedBy = refundedBy;
     }
 

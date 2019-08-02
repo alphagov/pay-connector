@@ -2,6 +2,7 @@ package uk.gov.pay.connector.refund.model.domain;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
@@ -18,16 +19,21 @@ public class RefundHistory extends RefundEntity {
 
     public RefundHistory(Long id, String externalId, Long amount, String status, Long chargeId, Timestamp createdDate, 
                          Long version, String reference, Timestamp historyStartDate, Timestamp historyEndDate, 
-                         String userExternalId, String gatewayTransactionId, String chargeExternalId) {
+                         String userExternalId, String gatewayTransactionId, String chargeExternalId, Long gatewayAccountId) {
         super();
         setId(id);
         setExternalId(externalId);
         setAmount(amount);
         setStatus(status);
 
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
+        gatewayAccount.setId(gatewayAccountId);
+        
         ChargeEntity charge = new ChargeEntity();
         charge.setId(chargeId);
         charge.setExternalId(chargeExternalId);
+        charge.setGatewayAccount(gatewayAccount);
+        
         setChargeEntity(charge);
 
         setUserExternalId(userExternalId);

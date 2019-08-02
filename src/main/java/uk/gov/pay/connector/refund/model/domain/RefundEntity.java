@@ -46,7 +46,8 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
                         @ColumnResult(name = "history_end_date", type = Timestamp.class),
                         @ColumnResult(name = "user_external_id", type = String.class),
                         @ColumnResult(name = "gateway_transaction_id", type = String.class),
-                        @ColumnResult(name = "charge_external_id", type = String.class)
+                        @ColumnResult(name = "charge_external_id", type = String.class),
+                        @ColumnResult(name = "gateway_account_id", type = Long.class)
                 }))
 
 @Entity
