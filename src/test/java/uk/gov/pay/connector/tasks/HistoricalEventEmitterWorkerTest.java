@@ -178,7 +178,7 @@ public class HistoricalEventEmitterWorkerTest {
         verify(eventQueue).emitEvent(any(PaymentDetailsEntered.class));
     }
 
-    @Test public void exectueShouldNotEmitManualEventsWithNoTerminalAuthenticationState() throws QueueException {
+    @Test public void executeShouldNotEmitManualEventsWithNoTerminalAuthenticationState() {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(1))
                 .withCharge(chargeEntity)

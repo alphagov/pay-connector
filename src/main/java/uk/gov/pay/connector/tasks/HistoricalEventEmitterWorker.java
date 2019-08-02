@@ -44,10 +44,16 @@ public class HistoricalEventEmitterWorker {
     private final EmittedEventDao emittedEventDao;
     private StateTransitionQueue stateTransitionQueue;
     private final EventQueue eventQueue;
-    private final List<ChargeStatus> TERMINAL_AUTHENTICATION_EVENTS = List.of(
-            AUTHORISATION_ABORTED, AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR,
-            AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR, AUTHORISATION_3DS_REQUIRED,
-            AUTHORISATION_CANCELLED, AUTHORISATION_SUBMITTED
+    private final List<ChargeStatus> TERMINAL_AUTHENTICATION_STATES = List.of(
+            AUTHORISATION_3DS_REQUIRED,
+            AUTHORISATION_SUBMITTED,
+            AUTHORISATION_SUCCESS,
+            AUTHORISATION_ABORTED,
+            AUTHORISATION_REJECTED,
+            AUTHORISATION_ERROR,
+            AUTHORISATION_UNEXPECTED_ERROR,
+            AUTHORISATION_TIMEOUT,
+            AUTHORISATION_CANCELLED
     );
     private long maxId;
 
@@ -88,7 +94,7 @@ public class HistoricalEventEmitterWorker {
                 final ChargeEntity charge = maybeCharge.get();
                 List<ChargeEventEntity> chargeEventEntities = getSortedChargeEvents(charge);
                 processChargeStateTransitionEvents(currentId, chargeEventEntities);
-                processManualPaymentEvents(chargeEventEntities);
+                processPaymentDetailEnteredEvent(chargeEventEntities);
             } else {
                 logger.info("[{}/{}] - not found", currentId, maxId);
             }
@@ -138,16 +144,16 @@ public class HistoricalEventEmitterWorker {
         } else {
             logger.info("[{}/{}] - found - emitting {} for charge event [{}] ", currentId, maxId, event, chargeEventEntity.getId());
             stateTransitionQueue.offer(transition);
-            persistEventEmitRecord(event);
+            persistEventEmittedRecord(event);
         }
     }
 
-    private void processManualPaymentEvents(List<ChargeEventEntity> chargeEventEntities) {
+    private void processPaymentDetailEnteredEvent(List<ChargeEventEntity> chargeEventEntities) {
         // transition to AUTHORISATION_READY does not record state transition, verify details have been entered by
         // checking against any terminal authentication transition
         chargeEventEntities
                 .stream()
-                .filter(event -> TERMINAL_AUTHENTICATION_EVENTS.contains(event.getStatus()))
+                .filter(event -> TERMINAL_AUTHENTICATION_STATES.contains(event.getStatus()))
                 .map(PaymentDetailsEntered::from)
                 .filter(event -> !emittedEventDao.hasBeenEmittedBefore(event))
                 .forEach(this::emitAndPersistEvent);
@@ -156,13 +162,13 @@ public class HistoricalEventEmitterWorker {
     private void emitAndPersistEvent(PaymentDetailsEntered event) {
         try {
             eventQueue.emitEvent(event);
-            persistEventEmitRecord(event);
+            persistEventEmittedRecord(event);
         } catch (QueueException e) {
-            logger.error("Failed to emit event {} due to {}", event, e);
+            logger.error("Failed to emit event {} due to {} [chargeId={}]", event, e.getMessage(), event.getResourceExternalId());
         }
     }
 
-    private void persistEventEmitRecord(Event event) {
+    private void persistEventEmittedRecord(Event event) {
         emittedEventDao.recordEmission(event);
     }
 }
