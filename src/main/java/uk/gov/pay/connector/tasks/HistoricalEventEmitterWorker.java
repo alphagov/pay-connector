@@ -10,12 +10,11 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
-import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
-import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.pay.connector.queue.StateTransitionQueue;
 
 import javax.inject.Inject;
 import java.util.Comparator;
@@ -31,14 +30,15 @@ public class HistoricalEventEmitterWorker {
 
     private final ChargeDao chargeDao;
     private final EmittedEventDao emittedEventDao;
-    private final EventQueue eventQueue;
+    private StateTransitionQueue stateTransitionQueue;
     private long maxId;
 
     @Inject
-    public HistoricalEventEmitterWorker(ChargeDao chargeDao, EmittedEventDao emittedEventDao, EventQueue eventQueue) {
+    public HistoricalEventEmitterWorker(ChargeDao chargeDao, EmittedEventDao emittedEventDao,
+                                        StateTransitionQueue stateTransitionQueue) {
         this.chargeDao = chargeDao;
         this.emittedEventDao = emittedEventDao;
-        this.eventQueue = eventQueue;
+        this.stateTransitionQueue = stateTransitionQueue;
     }
 
     public void execute(Long startId, OptionalLong maybeMaxId) {
@@ -103,29 +103,26 @@ public class HistoricalEventEmitterWorker {
         PaymentGatewayStateTransitions.getInstance()
                 .getEventForTransition(fromChargeState, chargeEventEntity.getStatus())
                 .ifPresent(eventType -> {
-                    Event event = getPaymentEvent(chargeEventEntity, eventType);
-                    final boolean emittedBefore = emittedEventDao.hasBeenEmittedBefore(event);
-
-                    if (emittedBefore) {
-                        logger.info("[{}/{}] - found - emitted before", currentId, maxId);
-                    } else {
-                        logger.info("[{}/{}] - found - emitting {} ", currentId, maxId, event);
-                        persistAndEmit(event);
-                    }
+                    PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventType);
+                    offerPaymentStateTransitionEvents(currentId, chargeEventEntity, transition);
                 });
     }
 
-    private Event getPaymentEvent(ChargeEventEntity chargeEventEntity, Class<Event> eventType) {
-        PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventType);
-        return EventFactory.createPaymentEvent(chargeEventEntity, transition.getStateTransitionEventClass());
+    private void offerPaymentStateTransitionEvents(long currentId, ChargeEventEntity chargeEventEntity, PaymentStateTransition transition) {
+        Event event = EventFactory.createPaymentEvent(chargeEventEntity, transition.getStateTransitionEventClass());
+
+        final boolean emittedBefore = emittedEventDao.hasBeenEmittedBefore(event);
+
+        if (emittedBefore) {
+            logger.info("[{}/{}] - found - charge event [{}] emitted before", currentId, maxId, chargeEventEntity.getId(), transition.getStateTransitionEventClass());
+        } else {
+            logger.info("[{}/{}] - found - emitting {} for charge event [{}] ", currentId, maxId, event, chargeEventEntity.getId());
+            stateTransitionQueue.offer(transition);
+            persistEvent(event);
+        }
     }
 
-    private void persistAndEmit(Event event) {
-        try {
-            eventQueue.emitEvent(event);
-            emittedEventDao.recordEmission(event);
-        } catch (QueueException e) {
-            logger.error("Failed to emit event {} due to {}", event, e);
-        }
+    private void persistEvent(Event event) {
+        emittedEventDao.recordEmission(event);
     }
 }
