@@ -22,7 +22,28 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.stream.Collectors;
+import uk.gov.pay.connector.events.EventQueue;
+import uk.gov.pay.connector.events.model.charge.PaymentCreated;
+import uk.gov.pay.connector.events.dao.EmittedEventDao;
+import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.queue.QueueException;
 
+import javax.inject.Inject;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Queue;
+
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUEST_ID;
 
 public class HistoricalEventEmitterWorker {
@@ -31,14 +52,21 @@ public class HistoricalEventEmitterWorker {
     private final ChargeDao chargeDao;
     private final EmittedEventDao emittedEventDao;
     private StateTransitionQueue stateTransitionQueue;
+    private final EventQueue eventQueue;
+    private final List<ChargeStatus> TERMINAL_AUTHENTICATION_EVENTS = List.of(
+            AUTHORISATION_ABORTED, AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR,
+            AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR, AUTHORISATION_3DS_REQUIRED,
+            AUTHORISATION_CANCELLED, AUTHORISATION_SUBMITTED
+    );
     private long maxId;
 
     @Inject
     public HistoricalEventEmitterWorker(ChargeDao chargeDao, EmittedEventDao emittedEventDao,
-                                        StateTransitionQueue stateTransitionQueue) {
+                                        StateTransitionQueue stateTransitionQueue, EventQueue eventQueue) {
         this.chargeDao = chargeDao;
         this.emittedEventDao = emittedEventDao;
         this.stateTransitionQueue = stateTransitionQueue;
+        this.eventQueue = eventQueue;
     }
 
     public void execute(Long startId, OptionalLong maybeMaxId) {
@@ -119,6 +147,26 @@ public class HistoricalEventEmitterWorker {
             logger.info("[{}/{}] - found - emitting {} for charge event [{}] ", currentId, maxId, event, chargeEventEntity.getId());
             stateTransitionQueue.offer(transition);
             persistEvent(event);
+        }
+    }
+
+    private void processManualPaymentEvents(List<ChargeEventEntity> chargeEventEntities) {
+        // transition to AUTHORISATION_READY does not record state transition, verify details have been entered by
+        // checking against any terminal authentication transition
+        chargeEventEntities
+                .stream()
+                .filter(event -> TERMINAL_AUTHENTICATION_EVENTS.contains(event.getStatus()))
+                .forEach(this::buildAndEmitPaymentDetailsEnteredEvent);
+    }
+
+    private void buildAndEmitPaymentDetailsEnteredEvent(ChargeEventEntity terminalAuthenticationEvent) {
+        PaymentDetailsEntered paymentDetailsEntered = PaymentDetailsEntered.from(terminalAuthenticationEvent);
+
+        try {
+            eventQueue.emitEvent(paymentDetailsEntered);
+            persistEvent(paymentDetailsEntered);
+        } catch (QueueException e) {
+            logger.error("Failed to emit event {} due to {}", paymentDetailsEntered, e);
         }
     }
 
