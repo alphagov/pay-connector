@@ -23,16 +23,8 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.stream.Collectors;
 import uk.gov.pay.connector.events.EventQueue;
-import uk.gov.pay.connector.events.model.charge.PaymentCreated;
-import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.queue.QueueException;
-
-import javax.inject.Inject;
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Queue;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
@@ -43,7 +35,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUEST_ID;
 
 public class HistoricalEventEmitterWorker {
@@ -76,10 +67,10 @@ public class HistoricalEventEmitterWorker {
             maxId = maybeMaxId.orElseGet(() -> chargeDao.findMaxId());
             logger.info("Starting from {} up to {}", startId, maxId);
             for (long i = startId; i <= maxId; i++) {
-                emitEventFor(i);
+                emitEventsFor(i);
             }
         } catch (Exception e) {
-            logger.error("Error: {}", e);
+            logger.error("Error attempting to process payment events on job [start={}] [max={}] [error={}]", startId, maxId, e);
         }
 
         logger.info("Terminating");
@@ -87,7 +78,7 @@ public class HistoricalEventEmitterWorker {
 
     // needs to be public for transactional annotation
     @Transactional
-    public void emitEventFor(long currentId) {
+    public void emitEventsFor(long currentId) {
         final Optional<ChargeEntity> maybeCharge = chargeDao.findById(currentId);
 
         try {
@@ -96,7 +87,8 @@ public class HistoricalEventEmitterWorker {
             if (maybeCharge.isPresent()) {
                 final ChargeEntity charge = maybeCharge.get();
                 List<ChargeEventEntity> chargeEventEntities = getSortedChargeEvents(charge);
-                processChargeEvents(currentId, chargeEventEntities);
+                processChargeStateTransitionEvents(currentId, chargeEventEntities);
+                processManualPaymentEvents(chargeEventEntities);
             } else {
                 logger.info("[{}/{}] - not found", currentId, maxId);
             }
@@ -112,7 +104,7 @@ public class HistoricalEventEmitterWorker {
                 .collect(Collectors.toList());
     }
 
-    private void processChargeEvents(long currentId, List<ChargeEventEntity> chargeEventEntities) {
+    private void processChargeStateTransitionEvents(long currentId, List<ChargeEventEntity> chargeEventEntities) {
         for (int index = 0; index < chargeEventEntities.size(); index++) {
             ChargeStatus fromChargeState;
             ChargeEventEntity chargeEventEntity = chargeEventEntities.get(index);
@@ -123,11 +115,11 @@ public class HistoricalEventEmitterWorker {
                 fromChargeState = chargeEventEntities.get(index - 1).getStatus();
             }
 
-            processSingleChargeEvent(currentId, fromChargeState, chargeEventEntity);
+            processSingleChargeStateTransitionEvent(currentId, fromChargeState, chargeEventEntity);
         }
     }
 
-    private void processSingleChargeEvent(long currentId, ChargeStatus fromChargeState, ChargeEventEntity chargeEventEntity) {
+    private void processSingleChargeStateTransitionEvent(long currentId, ChargeStatus fromChargeState, ChargeEventEntity chargeEventEntity) {
         PaymentGatewayStateTransitions.getInstance()
                 .getEventForTransition(fromChargeState, chargeEventEntity.getStatus())
                 .ifPresent(eventType -> {
@@ -146,7 +138,7 @@ public class HistoricalEventEmitterWorker {
         } else {
             logger.info("[{}/{}] - found - emitting {} for charge event [{}] ", currentId, maxId, event, chargeEventEntity.getId());
             stateTransitionQueue.offer(transition);
-            persistEvent(event);
+            persistEventEmitRecord(event);
         }
     }
 
@@ -156,21 +148,21 @@ public class HistoricalEventEmitterWorker {
         chargeEventEntities
                 .stream()
                 .filter(event -> TERMINAL_AUTHENTICATION_EVENTS.contains(event.getStatus()))
-                .forEach(this::buildAndEmitPaymentDetailsEnteredEvent);
+                .map(PaymentDetailsEntered::from)
+                .filter(event -> !emittedEventDao.hasBeenEmittedBefore(event))
+                .forEach(this::emitAndPersistEvent);
     }
 
-    private void buildAndEmitPaymentDetailsEnteredEvent(ChargeEventEntity terminalAuthenticationEvent) {
-        PaymentDetailsEntered paymentDetailsEntered = PaymentDetailsEntered.from(terminalAuthenticationEvent);
-
+    private void emitAndPersistEvent(PaymentDetailsEntered event) {
         try {
-            eventQueue.emitEvent(paymentDetailsEntered);
-            persistEvent(paymentDetailsEntered);
+            eventQueue.emitEvent(event);
+            persistEventEmitRecord(event);
         } catch (QueueException e) {
-            logger.error("Failed to emit event {} due to {}", paymentDetailsEntered, e);
+            logger.error("Failed to emit event {} due to {}", event, e);
         }
     }
 
-    private void persistEvent(Event event) {
+    private void persistEventEmitRecord(Event event) {
         emittedEventDao.recordEmission(event);
     }
 }
