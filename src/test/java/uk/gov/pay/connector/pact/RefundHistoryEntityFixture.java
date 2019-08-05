@@ -50,7 +50,7 @@ public class RefundHistoryEntityFixture {
         this.reference = reference;
         return this;
     }
-    
+
     public RefundHistoryEntityFixture withChargeExternalId(String chargeExternalId) {
         this.chargeExternalId = chargeExternalId;
         return this;
@@ -58,6 +58,11 @@ public class RefundHistoryEntityFixture {
 
     public RefundHistoryEntityFixture withAmount(Long amount) {
         this.amount = amount;
+        return this;
+    }
+
+    public RefundHistoryEntityFixture withChargeId(Long chargeId) {
+        this.chargeId = chargeId;
         return this;
     }
 }
