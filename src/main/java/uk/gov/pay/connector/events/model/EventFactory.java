@@ -63,11 +63,11 @@ public class EventFactory {
             throw new EventCreationException(stateTransition.getIdentifier());
         }
     }
-    
+
     private List<Event> createPaymentEvents(PaymentStateTransition paymentStateTransition) throws EventCreationException {
         ChargeEventEntity chargeEvent = chargeEventDao.findById(ChargeEventEntity.class, paymentStateTransition.getChargeEventId())
                 .orElseThrow(() -> new EventCreationException(String.valueOf(paymentStateTransition.getChargeEventId())));
-        
+
          PaymentEvent paymentEvent = createPaymentEvent(chargeEvent, paymentStateTransition.getStateTransitionEventClass());
 
         Optional<Event> refundAvailabilityEvent = createRefundAvailabilityUpdatedEvent(
@@ -78,7 +78,7 @@ public class EventFactory {
 
         return Stream.of(Optional.of(paymentEvent), refundAvailabilityEvent)
                 .flatMap(Optional::stream)
-                .collect(Collectors.toList());    
+                .collect(Collectors.toList());
     }
 
     private List<Event> createRefundEvents(RefundStateTransition refundStateTransition) throws EventCreationException {
@@ -118,7 +118,7 @@ public class EventFactory {
         }
     }
 
-    private static Event createRefundEvent(RefundHistory refundHistory, Class<? extends RefundEvent> eventClass) {
+    public static Event createRefundEvent(RefundHistory refundHistory, Class<? extends RefundEvent> eventClass) {
         try {
             if (eventClass == RefundCreatedByService.class) {
                 return RefundCreatedByService.from(refundHistory);
@@ -138,10 +138,10 @@ public class EventFactory {
     }
 
     private Optional<Event> createRefundAvailabilityUpdatedEvent(
-            String chargeExternalId, ZonedDateTime eventTimestamp, Class<? extends RefundEvent> eventClass) 
+            String chargeExternalId, ZonedDateTime eventTimestamp, Class<? extends RefundEvent> eventClass)
     throws EventCreationException {
         if (EVENTS_AFFECTING_REFUNDABILITY.contains(eventClass)) {
-            RefundAvailabilityUpdated refundAvailabilityUpdatedEvent = 
+            RefundAvailabilityUpdated refundAvailabilityUpdatedEvent =
                     Optional.ofNullable(chargeService.findChargeById(chargeExternalId))
                     .map(charge -> new RefundAvailabilityUpdated(
                             chargeExternalId,
@@ -155,7 +155,7 @@ public class EventFactory {
                         )
                     )
                     .orElseThrow(() -> new EventCreationException(chargeExternalId));
-            
+
             return Optional.of(refundAvailabilityUpdatedEvent);
         }
 

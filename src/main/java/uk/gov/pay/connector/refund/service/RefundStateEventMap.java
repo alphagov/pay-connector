@@ -9,7 +9,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 public class RefundStateEventMap {
 
-        static Class calculateRefundEventClass(String userExternalId, RefundStatus refundStatus) {
+        public static Class calculateRefundEventClass(String userExternalId, RefundStatus refundStatus) {
         switch (refundStatus) {
             case CREATED:
                 if (userExternalId != null) {

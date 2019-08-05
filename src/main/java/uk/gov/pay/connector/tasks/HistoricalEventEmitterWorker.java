@@ -17,7 +17,11 @@ import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.pay.connector.queue.RefundStateTransition;
 import uk.gov.pay.connector.queue.StateTransitionQueue;
+import uk.gov.pay.connector.refund.dao.RefundDao;
+import uk.gov.pay.connector.refund.model.domain.RefundHistory;
+import uk.gov.pay.connector.refund.service.RefundStateEventMap;
 
 import javax.inject.Inject;
 import java.util.Comparator;
@@ -49,7 +53,8 @@ public class HistoricalEventEmitterWorker {
     private final EmittedEventDao emittedEventDao;
     private StateTransitionQueue stateTransitionQueue;
     private final EventQueue eventQueue;
-    
+    private final RefundDao refundDao;
+
     private final List<ChargeStatus> TERMINAL_AUTHENTICATION_STATES = List.of(
             AUTHORISATION_3DS_REQUIRED,
             AUTHORISATION_SUBMITTED,
@@ -67,17 +72,19 @@ public class HistoricalEventEmitterWorker {
             EXPIRE_CANCEL_READY,
             SYSTEM_CANCEL_READY,
             USER_CANCEL_READY);
-    
+
     private long maxId;
     private PaymentGatewayStateTransitions paymentGatewayStateTransitions;
 
     @Inject
     public HistoricalEventEmitterWorker(ChargeDao chargeDao, EmittedEventDao emittedEventDao,
-                                        StateTransitionQueue stateTransitionQueue, EventQueue eventQueue) {
+                                        StateTransitionQueue stateTransitionQueue, EventQueue eventQueue,
+                                        RefundDao refundDao) {
         this.chargeDao = chargeDao;
         this.emittedEventDao = emittedEventDao;
         this.stateTransitionQueue = stateTransitionQueue;
         this.eventQueue = eventQueue;
+        this.refundDao = refundDao;
         this.paymentGatewayStateTransitions = PaymentGatewayStateTransitions.getInstance();
     }
 
@@ -107,14 +114,51 @@ public class HistoricalEventEmitterWorker {
 
             if (maybeCharge.isPresent()) {
                 final ChargeEntity charge = maybeCharge.get();
-                List<ChargeEventEntity> chargeEventEntities = getSortedChargeEvents(charge);
-                processChargeStateTransitionEvents(currentId, chargeEventEntities);
-                processPaymentDetailEnteredEvent(chargeEventEntities);
+
+                processPaymentEvents(charge);
+                processRefundEvents(charge);
             } else {
                 logger.info("[{}/{}] - not found", currentId, maxId);
             }
         } finally {
             MDC.remove("chargeId");
+        }
+    }
+
+    private void processPaymentEvents(ChargeEntity charge) {
+        List<ChargeEventEntity> chargeEventEntities = getSortedChargeEvents(charge);
+
+        processChargeStateTransitionEvents(charge.getId(), chargeEventEntities);
+        processPaymentDetailEnteredEvent(chargeEventEntities);
+    }
+
+    private void processRefundEvents(ChargeEntity charge) {
+        List<RefundHistory> refundHistories = refundDao.searchAllHistoryByChargeId(charge.getId());
+
+        refundHistories
+                .stream()
+                .sorted(Comparator.comparing(RefundHistory::getHistoryStartDate))
+                .forEach(this::emitAndPersistEventForRefundHistoryEntry);
+    }
+
+    private void emitAndPersistEventForRefundHistoryEntry(RefundHistory refundHistory) {
+        Class refundEventClass = RefundStateEventMap.calculateRefundEventClass(refundHistory.getUserExternalId(), refundHistory.getStatus());
+        Event event = EventFactory.createRefundEvent(refundHistory, refundEventClass);
+
+        Boolean emittedBefore = emittedEventDao.hasBeenEmittedBefore(event);
+
+        if (emittedBefore) {
+            logger.info("Refund history event emitted before [refundExternalId={}] [refundHistoryId={}]", refundHistory.getExternalId(), refundHistory.getId());
+        } else {
+            RefundStateTransition stateTransition = new RefundStateTransition(
+                    refundHistory.getExternalId(),
+                    refundHistory.getStatus(),
+                    refundEventClass);
+
+            logger.info("Processing new refund history event: [refundExternalId={}] [refundHistoryId={}]", refundHistory.getExternalId(), refundHistory.getId());
+
+            stateTransitionQueue.offer(stateTransition);
+            persistEventEmittedRecord(event);
         }
     }
 
