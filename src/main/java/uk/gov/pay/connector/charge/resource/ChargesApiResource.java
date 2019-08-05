@@ -14,6 +14,11 @@ import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
+import uk.gov.pay.connector.charge.model.telephone.State;
+import uk.gov.pay.connector.charge.model.telephone.Supplemental;
+import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
+import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeResponse;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.SearchService;
@@ -241,6 +246,45 @@ public class ChargesApiResource {
                 .orElseGet(() -> notFoundResponse("Unknown gateway account: " + accountId));
     }
 
+    @POST
+    @Path("/v1/api/accounts/{accountId}/telephone_charges")
+    @Produces(APPLICATION_JSON)
+    public Response createNewTelephoneCharge(
+            @PathParam(ACCOUNT_ID) Long accountId,
+            TelephoneChargeCreateRequest telephoneChargeCreateRequest,
+            @Context UriInfo uriInfo
+    ) {
+
+        final Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
+        final PaymentOutcome paymentOutcome = new PaymentOutcome("success", "P0010", supplemental);
+        final State state = new State("success", true, "created", "P0010");
+        final TelephoneChargeResponse createTelephoneChargeResponse = new TelephoneChargeResponse(
+                12000,
+                "MRPC12345",
+                "New passport application",
+                "2018-02-21T16:04:25Z",
+                "2018-02-21T16:05:33Z",
+                "183f2j8923j8",
+                "17498-8412u9-1273891239",
+                "666",
+                paymentOutcome,
+                "master-card",
+                "Jane Doe",
+                "jane_doe@example.com",
+                "02/19",
+                "1234",
+                "654321",
+                "+447700900796",
+                "hu20sqlact5260q2nanm0q8u93",
+                state
+        );
+        
+        return Response
+                .status(200)
+                .entity(createTelephoneChargeResponse)
+                .build(); 
+    }
+    
     @POST
     @Path("/v1/tasks/expired-charges-sweep")
     @Produces(APPLICATION_JSON)
