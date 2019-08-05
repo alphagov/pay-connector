@@ -72,7 +72,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
                         refund.get(STATUS).in(statuses));
         return entityManager.get().createQuery(criteriaQuery).getResultList();
     }
-    
+
     public Optional<RefundHistory> getRefundHistoryByRefundExternalIdAndRefundStatus(String refundExternalId, RefundStatus refundStatus) {
         String query = "SELECT rh.id, rh.external_id, rh.amount, rh.status, rh.charge_id, rh.created_date, " +
                 "rh.version, rh.reference, rh.history_start_date, rh.history_end_date, rh.user_external_id, " +
@@ -87,7 +87,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
                 .getResultList()
                 .stream()
                 .findFirst();
-        
+
     }
 
     public List<RefundHistory> searchHistoryByChargeId(Long chargeId) {
@@ -104,8 +104,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
     }
 
     public List<RefundHistory> searchAllHistoryByChargeId(Long chargeId) {
-
-        String query = "SELECT id, external_id, amount, status, charge_id, created_date, version, reference, history_start_date, history_end_date, user_external_id, gateway_transaction_id" +
+        String query = "SELECT id, external_id, amount, status, charge_id, created_date, version, reference, history_start_date, history_end_date, user_external_id, gateway_transaction_id " +
                 "FROM refunds_history r " +
                 "WHERE charge_id = ?1";
 
