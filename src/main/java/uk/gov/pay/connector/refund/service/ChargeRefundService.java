@@ -8,11 +8,6 @@ import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
-import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
-import uk.gov.pay.connector.events.model.refund.RefundError;
-import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
-import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
@@ -185,27 +180,8 @@ public class ChargeRefundService {
 
     public void transitionRefundState(RefundEntity refundEntity, RefundStatus refundStatus) {
         refundEntity.setStatus(refundStatus);
-        Class refundEventClass = calculateRefundEventClass(refundEntity, refundStatus);
+        Class refundEventClass = RefundStateEventMap.calculateRefundEventClass(refundEntity.getUserExternalId(), refundStatus);
         stateTransitionQueue.offer(new RefundStateTransition(refundEntity.getExternalId(), refundStatus, refundEventClass));
-    }
-
-    private Class calculateRefundEventClass(RefundEntity refundEntity, RefundStatus refundStatus) {
-        switch (refundStatus) {
-            case CREATED:
-                if (refundEntity.getUserExternalId() != null) {
-                    return RefundCreatedByUser.class;
-                } else {
-                    return RefundCreatedByService.class;
-                }
-            case REFUND_SUBMITTED:
-                return RefundSubmitted.class;
-            case REFUNDED:
-                return RefundSucceeded.class;
-            case REFUND_ERROR:
-                return RefundError.class;
-            default:
-                throw new IllegalArgumentException("Unexpected refund state transition");
-        }
     }
 
     private void checkIfRefundRequestIsInConflictOrTerminate(RefundRequest refundRequest, ChargeEntity reloadedCharge, long totalAmountToBeRefunded) {
