@@ -104,9 +104,10 @@ public class RefundDao extends JpaDao<RefundEntity> {
     }
 
     public List<RefundHistory> searchAllHistoryByChargeId(Long chargeId) {
-        String query = "SELECT id, external_id, amount, status, charge_id, created_date, version, reference, history_start_date, history_end_date, user_external_id, gateway_transaction_id " +
-                "FROM refunds_history r " +
-                "WHERE charge_id = ?1";
+        String query = "SELECT r.id, r.external_id, r.amount, r.status, charge_id, r.created_date, r.version, r.reference, history_start_date, history_end_date, user_external_id, r.gateway_transaction_id, c.external_id AS charge_external_id, c.gateway_account_id " +
+                " FROM refunds_history r , charges c" +
+                " WHERE charge_id = ?1" +
+                " and r.charge_id = c.id";
 
         return entityManager.get()
                 .createNativeQuery(query, "RefundEntityHistoryMapping")
