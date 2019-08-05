@@ -4,6 +4,8 @@ package uk.gov.pay.connector.charge.model;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.jackson.Jackson;
 import org.junit.Test;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.State;
@@ -50,7 +52,7 @@ public class TelephonePaymentJSONTest {
     public void correctlySerializesToJSON() throws Exception {
         final Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
         final PaymentOutcome paymentOutcome = new PaymentOutcome("success", "P0010", supplemental);
-        final State state = new State("success", true, "created", "POO10");
+        final State state = new State("success", true, "created", "P0010");
         final TelephoneChargeResponse createTelephoneChargeResponse = new TelephoneChargeResponse(
                 12000,
                 "MRPC12345",

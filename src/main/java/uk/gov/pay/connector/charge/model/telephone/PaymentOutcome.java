@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.charge.model.telephone;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class PaymentOutcome {
     
     private String status;
