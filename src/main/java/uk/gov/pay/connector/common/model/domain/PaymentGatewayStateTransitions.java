@@ -5,6 +5,8 @@ import com.google.common.graph.MutableValueGraph;
 import com.google.common.graph.ValueGraphBuilder;
 import org.apache.commons.lang3.tuple.Triple;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.UnspecifiedEvent;
 import uk.gov.pay.connector.events.model.charge.AuthorisationCancelled;
 import uk.gov.pay.connector.events.model.charge.AuthorisationRejected;
 import uk.gov.pay.connector.events.model.charge.AuthorisationSucceeded;
@@ -21,7 +23,6 @@ import uk.gov.pay.connector.events.model.charge.CaptureAbandonedAfterTooManyRetr
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureErrored;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
-import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.GatewayErrorDuringAuthorisation;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.GatewayTimeoutDuringAuthorisation;
@@ -30,7 +31,6 @@ import uk.gov.pay.connector.events.model.charge.PaymentExpired;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
 import uk.gov.pay.connector.events.model.charge.ServiceApprovedForCapture;
 import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuthorisation;
-import uk.gov.pay.connector.events.model.UnspecifiedEvent;
 import uk.gov.pay.connector.events.model.charge.UserApprovedForCapture;
 import uk.gov.pay.connector.events.model.charge.UserApprovedForCaptureAwaitingServiceApproval;
 
@@ -190,7 +190,7 @@ public class PaymentGatewayStateTransitions {
     }
 
     public <T extends Event> Optional<Class<T>> getEventForTransition(ChargeStatus fromStatus, ChargeStatus toStatus) {
-        return graph.edgeValue(fromStatus , toStatus)
+        return graph.edgeValue(fromStatus, toStatus)
                 .map(modelledEvent -> {
                     try {
                         ModelledTypedEvent<T> modelledTypedEvent = (ModelledTypedEvent) modelledEvent;
@@ -203,6 +203,24 @@ public class PaymentGatewayStateTransitions {
 
     public static boolean isValidTransition(ChargeStatus state, ChargeStatus targetState, Event event) {
         return getInstance().isValidTransitionImpl(state, targetState, event);
+    }
+
+    public Optional<ChargeStatus> getIntermediateChargeStatus(ChargeStatus fromStatus, ChargeStatus toStatus) {
+        
+        // Multiple intermediate states possible : (EXPIRE CANCEL READY, AUTHORISATION 3DS READY)
+        if (fromStatus.equals(AUTHORISATION_3DS_REQUIRED) && toStatus.equals(EXPIRED)) {
+            return Optional.of(EXPIRE_CANCEL_READY);
+        }
+        
+        // Multiple intermediate states possible : (CAPTURE READY, CAPTURE APPROVED)
+        if (fromStatus.equals(AUTHORISATION_SUCCESS) && toStatus.equals(CAPTURE_ERROR)) {
+            return Optional.of(CAPTURE_READY);
+        } 
+        
+        return graph.successors(fromStatus)
+                .stream()
+                .filter(chargeStatus -> graph.predecessors(toStatus).contains(chargeStatus))
+                .findFirst();
     }
 
     private boolean isValidTransitionImpl(ChargeStatus state, ChargeStatus targetState, Event event) {

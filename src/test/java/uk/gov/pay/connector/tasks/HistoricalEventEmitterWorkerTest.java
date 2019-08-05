@@ -16,6 +16,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.charge.AuthorisationSucceeded;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
@@ -178,7 +179,8 @@ public class HistoricalEventEmitterWorkerTest {
         verify(eventQueue).emitEvent(any(PaymentDetailsEntered.class));
     }
 
-    @Test public void executeShouldNotEmitManualEventsWithNoTerminalAuthenticationState() {
+    @Test
+    public void executeShouldNotEmitManualEventsWithNoTerminalAuthenticationState() {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(1))
                 .withCharge(chargeEntity)
@@ -193,5 +195,38 @@ public class HistoricalEventEmitterWorkerTest {
         worker.execute(1L, OptionalLong.empty());
 
         verifyZeroInteractions(eventQueue);
+    }
+
+    @Test
+    public void executeShouldOfferEventsWithIntermediateState() {
+        ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now())
+                .withCharge(chargeEntity)
+                .withChargeStatus(ChargeStatus.ENTERING_CARD_DETAILS)
+                .build();
+
+        ChargeEventEntity secondEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(2))
+                .withCharge(chargeEntity)
+                .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .build();
+
+        chargeEntity.getEvents().clear();
+        chargeEntity.getEvents().add(firstEvent);
+        chargeEntity.getEvents().add(secondEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+
+        worker.execute(1L, OptionalLong.empty());
+
+        ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
+        verify(stateTransitionQueue, times(1)).offer(argument.capture());
+
+        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(AuthorisationSucceeded.class));
+
+        ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(emittedEventDao, times(2)).recordEmission(daoArgumentCaptor.capture()); // 2 times due to paymentDetailsEnteredEvent
+        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("AUTHORISATION_SUCCEEDED"));
     }
 }
