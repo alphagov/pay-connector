@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.charge.model;
+package uk.gov.pay.connector.charge.model.telephone;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
