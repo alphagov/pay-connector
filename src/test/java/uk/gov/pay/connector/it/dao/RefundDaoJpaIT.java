@@ -330,6 +330,25 @@ public class RefundDaoJpaIT extends DaoITestBase {
         assertThat(refundHistory.getGatewayTransactionId(), is(refundEntity.getGatewayTransactionId()));
     }
 
+    @Test
+    public void shouldSearchAllHistoryStatusTypesByChargeId() {
+        ChargeEntity chargeEntity = new ChargeEntity();
+        chargeEntity.setId(chargeTestRecord.getChargeId());
+
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId);
+
+        refundEntity.setReference("test-refund-entity");
+        refundEntity.setStatus(CREATED);
+        refundDao.persist(refundEntity);
+
+        refundEntity.setStatus(REFUND_SUBMITTED);
+        refundDao.merge(refundEntity);
+
+        List<RefundHistory> refundHistoryList = refundDao.searchAllHistoryByChargeId(chargeEntity.getId());
+
+        assertThat(refundHistoryList.size(), is(2));
+    }
+
     // CREATED to REFUND_SUBMITTED happens synchronously so not needed to return history for CREATED status
     // Causing issues since reference is not populated for CREATED is also being removed as is detected as
     // duplicated.
@@ -368,7 +387,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     public void getRefundHistoryByRefundExternalIdAndRefundStatus_shouldReturnResultCorrectly() {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity();
         gatewayAccountEntity.setId(sandboxAccount.getAccountId());
-        
+
         ChargeEntity chargeEntity = new ChargeEntity();
         chargeEntity.setGatewayAccount(gatewayAccountEntity);
         chargeEntity.setId(chargeTestRecord.getChargeId());
