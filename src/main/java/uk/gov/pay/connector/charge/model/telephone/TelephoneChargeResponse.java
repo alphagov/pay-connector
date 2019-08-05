@@ -1,50 +1,66 @@
 package uk.gov.pay.connector.charge.model.telephone;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
+public class TelephoneChargeResponse {
 
-@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
-public class TelephoneChargeCreateRequest {
-    
     private int amount;
-    
+
     private String reference;
-    
+
     private String description;
-    
+
     private String createdDate;
-    
+
     private String authorisedDate;
-    
+
     private String processorId;
-    
+
     private String providerId;
-    
+
     private String authCode;
-    
+
     private PaymentOutcome paymentOutcome;
-    
+
     private String cardType;
-    
+
     private String nameOnCard;
-    
+
     private String emailAddress;
-    
+
     private String cardExpiry;
-    
+
     private String lastFourDigits;
-    
+
     private String firstSixDigits;
-    
+
     private String telephoneNumber;
 
-    public TelephoneChargeCreateRequest() {
-        // To enable Jackson serialisation we need a default constructor
+    private String paymentId;
+
+    private State state;
+
+    public TelephoneChargeResponse() {
+        // For Jackson
     }
 
-    public TelephoneChargeCreateRequest(int amount, String reference, String description, String createdDate, String authorisedDate, String processorId, String providerId, String authCode, PaymentOutcome paymentOutcome, String cardType, String nameOnCard, String emailAddress, String cardExpiry, String lastFourDigits, String firstSixDigits, String telephoneNumber) {
-        // For testing deserialization
+    public TelephoneChargeResponse(int amount,
+                                    String reference,
+                                    String description,
+                                    String createdDate,
+                                    String authorisedDate,
+                                    String processorId,
+                                    String providerId,
+                                    String authCode,
+                                    PaymentOutcome paymentOutcome,
+                                    String cardType,
+                                    String nameOnCard,
+                                    String emailAddress,
+                                    String cardExpiry,
+                                    String lastFourDigits,
+                                    String firstSixDigits,
+                                    String telephoneNumber,
+                                    String paymentId,
+                                    State state) {
+        // For testing serialization
         this.amount = amount;
         this.reference = reference;
         this.description = description;
@@ -61,6 +77,8 @@ public class TelephoneChargeCreateRequest {
         this.lastFourDigits = lastFourDigits;
         this.firstSixDigits = firstSixDigits;
         this.telephoneNumber = telephoneNumber;
+        this.paymentId = paymentId;
+        this.state = state;
     }
 
     public int getAmount() {
@@ -125,6 +143,12 @@ public class TelephoneChargeCreateRequest {
 
     public String getTelephoneNumber() {
         return telephoneNumber;
+    }
+
+    public String getPaymentId() { return paymentId; }
+
+    public State getState() {
+        return state;
     }
     
 }

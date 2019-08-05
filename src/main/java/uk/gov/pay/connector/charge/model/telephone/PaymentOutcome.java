@@ -3,14 +3,11 @@ package uk.gov.pay.connector.charge.model.telephone;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class PaymentOutcome {
-
-    @JsonProperty("status")
+    
     private String status;
-
-    @JsonProperty("code")
+    
     private String code;
-
-    @JsonProperty("supplemental")
+    
     private Supplemental supplemental;
 
     public PaymentOutcome() {
