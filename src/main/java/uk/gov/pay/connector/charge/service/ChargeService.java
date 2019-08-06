@@ -124,7 +124,9 @@ public class ChargeService {
     }
 
     public TelephoneChargeResponse createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest) {
-
+        
+        // At the moment this is hardcoded but we will remove it once we connect this up to the DAO layer
+        
         final Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
         final PaymentOutcome paymentOutcome = new PaymentOutcome("success", "P0010", supplemental);
         final State state = new State("success", true, "created", "P0010");
@@ -150,6 +152,41 @@ public class ChargeService {
                 state
         );
     }
+    
+    @Transactional
+    private Optional<ChargeEntity> createTelephoneChargeEntity(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
+        return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
+
+            if (telephoneChargeRequest.getAmount() == 0L && !gatewayAccount.isAllowZeroAmount()) {
+                throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
+            }
+            
+            /*
+            ChargeEntity chargeEntity = new ChargeEntity(
+                    telephoneChargeRequest.getAmount(),
+                    telephoneChargeRequest.getDescription(),
+                    ServicePaymentReference.of(telephoneChargeRequest.getReference()),
+                    gatewayAccount,
+                    telephoneChargeRequest.getEmail(),
+                    language,
+                    telephoneChargeRequest.isDelayedCapture(),
+                    telephoneChargeRequest.getExternalMetadata().orElse(null));
+
+            telephoneChargeRequest.getPrefilledCardHolderDetails()
+                    .map(this::createCardDetailsEntity)
+                    .ifPresent(chargeEntity::setCardDetails);
+
+            chargeDao.persist(chargeEntity);
+            transitionChargeState(chargeEntity, CREATED);
+            chargeDao.merge(chargeEntity);
+            return chargeEntity;
+            
+             */
+            
+            return null;
+        });
+    }
+    
     
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return createCharge(chargeRequest, accountId, uriInfo)

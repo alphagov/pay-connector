@@ -150,7 +150,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                         boolean delayedCapture, ExternalMetadata externalMetadata) {
         this(amount, UNDEFINED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture, externalMetadata);
     }
-
+    
     // Only the ChargeEntityFixture should directly call this constructor
     public ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, ServicePaymentReference reference,
                         GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate, SupportedLanguage language,
