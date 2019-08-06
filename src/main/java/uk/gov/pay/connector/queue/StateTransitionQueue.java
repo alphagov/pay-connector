@@ -1,10 +1,11 @@
 package uk.gov.pay.connector.queue;
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.TimeUnit;
 
 public class StateTransitionQueue {
-    private final DelayQueue<StateTransition> queue = new DelayQueue<>();
+    private final BlockingQueue<StateTransition> queue = new DelayQueue<>();
 
     public boolean offer(StateTransition stateTransition) {
         return queue.offer(stateTransition);

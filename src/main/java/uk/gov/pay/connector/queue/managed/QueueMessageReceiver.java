@@ -9,7 +9,6 @@ import uk.gov.pay.connector.events.StateTransitionEmitterProcess;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 
 import javax.inject.Inject;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
