@@ -15,8 +15,10 @@ import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEventDetails;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
+import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
@@ -91,6 +93,22 @@ public class QueueMessageContractTest {
         );
 
         return captureConfirmedEvent.toJsonString();
+    }
+
+    @PactVerifyProvider("a capture submitted message")
+    public String verifyCaptureSubmittedEvent() throws JsonProcessingException {
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withGatewayEventDate(ZonedDateTime.now())
+                .build();
+
+        CaptureSubmitted captureSubmittedEvent = new CaptureSubmitted(
+                resourceId,
+                CaptureSubmittedEventDetails.from(chargeEventEntity),
+                ZonedDateTime.now()
+        );
+
+        return captureSubmittedEvent.toJsonString();
     }
 
     @PactVerifyProvider("a refund created by user message")
