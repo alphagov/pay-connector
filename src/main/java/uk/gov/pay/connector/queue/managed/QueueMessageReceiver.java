@@ -60,10 +60,7 @@ public class QueueMessageReceiver implements Managed {
                 TimeUnit.SECONDS);
 
         stateTransitionMessageExecutorService.scheduleWithFixedDelay(
-                this::stateTransitionMessageReceiver,
-                0,
-                100,
-                TimeUnit.MILLISECONDS);
+                this::stateTransitionMessageReceiver, 1, 1, TimeUnit.MILLISECONDS);
     }
 
     @Override
