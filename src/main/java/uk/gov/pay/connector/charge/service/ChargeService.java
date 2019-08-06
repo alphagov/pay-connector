@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.charge.service;
 
-import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -82,8 +81,6 @@ import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBu
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
@@ -153,9 +150,6 @@ public class ChargeService {
                 state
         );
     }
-    
-    
-    
     
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return createCharge(chargeRequest, accountId, uriInfo)
