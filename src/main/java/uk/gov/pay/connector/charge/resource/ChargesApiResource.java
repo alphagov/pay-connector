@@ -255,30 +255,9 @@ public class ChargesApiResource {
             @Context UriInfo uriInfo
     ) {
 
-        final Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
-        final PaymentOutcome paymentOutcome = new PaymentOutcome("success", "P0010", supplemental);
-        final State state = new State("success", true, "created", "P0010");
-        final TelephoneChargeResponse createTelephoneChargeResponse = new TelephoneChargeResponse(
-                telephoneChargeCreateRequest.getAmount(),
-                telephoneChargeCreateRequest.getReference(),
-                telephoneChargeCreateRequest.getDescription(),
-                telephoneChargeCreateRequest.getCreatedDate(),
-                telephoneChargeCreateRequest.getAuthorisedDate(),
-                telephoneChargeCreateRequest.getProcessorId(),
-                telephoneChargeCreateRequest.getProviderId(),
-                telephoneChargeCreateRequest.getAuthCode(),
-                paymentOutcome,
-                telephoneChargeCreateRequest.getCardType(),
-                telephoneChargeCreateRequest.getNameOnCard(),
-                telephoneChargeCreateRequest.getEmailAddress(),
-                telephoneChargeCreateRequest.getCardExpiry(),
-                telephoneChargeCreateRequest.getLastFourDigits(),
-                telephoneChargeCreateRequest.getFirstSixDigits(),
-                telephoneChargeCreateRequest.getTelephoneNumber(),
-                "hu20sqlact5260q2nanm0q8u93",
-                state
+        TelephoneChargeResponse createTelephoneChargeResponse = chargeService.createTelephoneCharge(
+                telephoneChargeCreateRequest
         );
-        
         return Response
                 .status(200)
                 .entity(createTelephoneChargeResponse)

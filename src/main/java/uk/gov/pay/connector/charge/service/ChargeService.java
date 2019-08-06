@@ -27,6 +27,11 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
+import uk.gov.pay.connector.charge.model.telephone.State;
+import uk.gov.pay.connector.charge.model.telephone.Supplemental;
+import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
+import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeResponse;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
@@ -121,6 +126,37 @@ public class ChargeService {
         this.eventQueue = eventQueue;
     }
 
+    public TelephoneChargeResponse createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest) {
+
+        final Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
+        final PaymentOutcome paymentOutcome = new PaymentOutcome("success", "P0010", supplemental);
+        final State state = new State("success", true, "created", "P0010");
+        
+        return new TelephoneChargeResponse(
+                telephoneChargeCreateRequest.getAmount(),
+                telephoneChargeCreateRequest.getReference(),
+                telephoneChargeCreateRequest.getDescription(),
+                telephoneChargeCreateRequest.getCreatedDate(),
+                telephoneChargeCreateRequest.getAuthorisedDate(),
+                telephoneChargeCreateRequest.getProcessorId(),
+                telephoneChargeCreateRequest.getProviderId(),
+                telephoneChargeCreateRequest.getAuthCode(),
+                paymentOutcome,
+                telephoneChargeCreateRequest.getCardType(),
+                telephoneChargeCreateRequest.getNameOnCard(),
+                telephoneChargeCreateRequest.getEmailAddress(),
+                telephoneChargeCreateRequest.getCardExpiry(),
+                telephoneChargeCreateRequest.getLastFourDigits(),
+                telephoneChargeCreateRequest.getFirstSixDigits(),
+                telephoneChargeCreateRequest.getTelephoneNumber(),
+                "hu20sqlact5260q2nanm0q8u93",
+                state
+        );
+    }
+    
+    
+    
+    
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return createCharge(chargeRequest, accountId, uriInfo)
                 .map(charge ->
