@@ -158,10 +158,6 @@ public class TelephoneChargeCreateRequest {
 
         private String telephoneNumber;
         
-        public ChargeBuilder() {
-            
-        }
-        
         public ChargeBuilder amount(int amount) {
             this.amount = amount;
             return this;

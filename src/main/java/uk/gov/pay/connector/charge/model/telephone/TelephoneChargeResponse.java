@@ -196,10 +196,6 @@ public class TelephoneChargeResponse {
         private String telephoneNumber;
         private String paymentId;
         private State state;
-        
-        public ChargeBuilder() {
-            
-        }
 
         public ChargeBuilder amount(int amount) {
             this.amount = amount;
