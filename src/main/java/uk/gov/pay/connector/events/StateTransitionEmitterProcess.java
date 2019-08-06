@@ -10,10 +10,12 @@ import uk.gov.pay.connector.queue.StateTransitionQueue;
 
 import javax.inject.Inject;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 public class StateTransitionEmitterProcess {
     private static final Logger LOGGER = LoggerFactory.getLogger(StateTransitionEmitterProcess.class);
 
+    private final long STATE_TRANSITION_PROCESS_DELAY_IN_MILLISECONDS = 100;
     private final StateTransitionQueue stateTransitionQueue;
     private final EventQueue eventQueue;
     private final EventFactory eventFactory;
@@ -29,8 +31,8 @@ public class StateTransitionEmitterProcess {
         this.eventFactory = eventFactory;
     }
 
-    public void handleStateTransitionMessages() {
-        Optional.ofNullable(stateTransitionQueue.poll())
+    public void handleStateTransitionMessages() throws InterruptedException {
+        Optional.ofNullable(stateTransitionQueue.poll(STATE_TRANSITION_PROCESS_DELAY_IN_MILLISECONDS, TimeUnit.MILLISECONDS))
                 .ifPresent(this::emitEvents);
     }
 
