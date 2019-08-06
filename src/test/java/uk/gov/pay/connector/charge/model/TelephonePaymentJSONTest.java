@@ -24,27 +24,27 @@ public class TelephonePaymentJSONTest {
     public void correctlyDeserializesFromJSON() throws Exception {
         final Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
         final PaymentOutcome paymentOutcome = new PaymentOutcome("success", "P0010", supplemental);
-        final TelephoneChargeCreateRequest createTelephonePaymentRequest = new TelephoneChargeCreateRequest(
-                12000,
-                "MRPC12345",
-                "New passport application",
-                "2018-02-21T16:04:25Z",
-                "2018-02-21T16:05:33Z",
-                "183f2j8923j8",
-                "17498-8412u9-1273891239",
-                "666",
-                paymentOutcome,
-                "master-card",
-                "Jane Doe",
-                "jane_doe@example.com",
-                "02/19",
-                "1234",
-                "654321",
-                "+447700900796");
-
+        final TelephoneChargeCreateRequest createTelephonePaymentRequest = new TelephoneChargeCreateRequest.ChargeBuilder()
+                .amount(12000)
+                .reference("MRPC12345")
+                .description("New passport application")
+                .createdDate("2018-02-21T16:04:25Z")
+                .authorisedDate("2018-02-21T16:05:33Z")
+                .processorId("183f2j8923j8")
+                .providerId("17498-8412u9-1273891239")
+                .authCode("666")
+                .paymentOutcome(paymentOutcome)
+                .cardType("master-card")
+                .nameOnCard("Jane Doe")
+                .emailAddress("jane_doe@example.com")
+                .cardExpiry("02/19")
+                .lastFourDigits("1234")
+                .firstSixDigits("654321")
+                .telephoneNumber("+447700900796")
+                .build();
+        
         TelephoneChargeCreateRequest deserializedCreateTelephonePaymentRequest = MAPPER.readValue(fixture("fixtures/TelephoneChargeCreateRequest.json"), TelephoneChargeCreateRequest.class);
-
-
+        
         assertThat(createTelephonePaymentRequest).isEqualToComparingFieldByFieldRecursively(deserializedCreateTelephonePaymentRequest);
     }
 
