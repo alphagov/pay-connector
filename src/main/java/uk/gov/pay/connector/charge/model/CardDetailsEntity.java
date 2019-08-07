@@ -44,6 +44,16 @@ public class CardDetailsEntity {
     public CardDetailsEntity() {
     }
     
+    // For telephone payments
+    public CardDetailsEntity(LastDigitsCardNumber lastDigitsCardNumber, FirstDigitsCardNumber firstDigitsCardNumber, String cardHolderName, String expiryDate, String cardBrand) {
+        this.lastDigitsCardNumber = lastDigitsCardNumber;
+        this.firstDigitsCardNumber = firstDigitsCardNumber;
+        this.cardHolderName = cardHolderName;
+        this.expiryDate = expiryDate;
+        this.cardBrand = cardBrand;
+    }
+    
+    
     public CardDetailsEntity(FirstDigitsCardNumber firstDigitsCardNumber, LastDigitsCardNumber lastDigitsCardNumber, String cardHolderName, String expiryDate, String cardBrand, AddressEntity billingAddress) {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
         this.firstDigitsCardNumber = firstDigitsCardNumber;
