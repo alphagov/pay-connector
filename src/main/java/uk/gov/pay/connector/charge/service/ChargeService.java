@@ -697,6 +697,11 @@ public class ChargeService {
         telephoneJSON.put("processor_id", telephoneChargeRequest.getProcessorId());
         telephoneJSON.put("auth_code", telephoneChargeRequest.getAuthCode());
         
+        if(telephoneChargeRequest.getPaymentOutcome().getCode() != null) {
+            HashMap<String, Object> paymentOutcome = new HashMap<>();
+            paymentOutcome.put("code", telephoneChargeRequest.getPaymentOutcome().getCode());
+        }
+        
         if (telephoneChargeRequest.getPaymentOutcome().getSupplemental() != null) {
             HashMap<String, Object> supplemental = new HashMap<>();
             supplemental.put("error_code", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorCode());
