@@ -163,7 +163,11 @@ public class ChargeService {
             }
             
             CardDetailsEntity cardDetails = new CardDetailsEntity(
-                    
+                    LastDigitsCardNumber.of(telephoneChargeRequest.getLastFourDigits()),
+                    FirstDigitsCardNumber.of(telephoneChargeRequest.getFirstSixDigits()),
+                    telephoneChargeRequest.getNameOnCard(),
+                    telephoneChargeRequest.getCardExpiry(),
+                    telephoneChargeRequest.getCardType()
             );
             
             // Hard coded AUTHORISATION_SUCCESS for the time being
