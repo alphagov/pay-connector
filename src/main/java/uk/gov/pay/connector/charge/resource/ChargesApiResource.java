@@ -256,7 +256,7 @@ public class ChargesApiResource {
     ) {
 
         TelephoneChargeResponse createTelephoneChargeResponse = chargeService.createTelephoneCharge(
-                telephoneChargeCreateRequest
+                telephoneChargeCreateRequest, accountId, uriInfo
         );
         return Response
                 .status(200)

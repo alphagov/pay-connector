@@ -124,13 +124,17 @@ public class ChargeService {
         this.eventQueue = eventQueue;
     }
 
-    public TelephoneChargeResponse createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest) {
+    public TelephoneChargeResponse createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
         
         // At the moment this is hardcoded but we will remove it once we connect this up to the DAO layer
         
         final Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
         final PaymentOutcome paymentOutcome = new PaymentOutcome("success", "P0010", supplemental);
         final State state = new State("success", true, "created", "P0010");
+
+        logger.info(String.format("Starting createTelephoneChargeEntity method"));
+        createTelephoneChargeEntity(telephoneChargeCreateRequest, accountId, uriInfo);
+        logger.info(String.format("Starting createTelephoneChargeEntity method"));
         
         return new TelephoneChargeResponse.ChargeBuilder()
                 .amount(telephoneChargeCreateRequest.getAmount())
@@ -175,18 +179,22 @@ public class ChargeService {
                     telephoneChargeRequest.getAmount(),
                     ServicePaymentReference.of(telephoneChargeRequest.getReference()),
                     telephoneChargeRequest.getDescription(),
-                    ChargeStatus.AUTHORISATION_SUCCESS,
+                    ChargeStatus.CREATED,
                     telephoneChargeRequest.getEmailAddress(),
+                    ZonedDateTime.parse(telephoneChargeRequest.getCreatedDate()),
                     cardDetails,
                     metaDataForTelephonePayments(telephoneChargeRequest),
-                    gatewayAccount
+                    gatewayAccount,
+                    SupportedLanguage.ENGLISH
             );
 
-           
-
+            logger.info(String.format("Charge entity has been created"));
             chargeDao.persist(chargeEntity);
-            transitionChargeState(chargeEntity, CREATED);
+            logger.info(String.format("Charge entity has been persisted"));
+            // transitionChargeState(chargeEntity, CREATED);
+            
             chargeDao.merge(chargeEntity);
+            logger.info(String.format("Final charge entity has been merged"));
             return chargeEntity;
         });
     }

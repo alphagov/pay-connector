@@ -156,18 +156,23 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                         ServicePaymentReference reference, 
                         String description, 
                         ChargeStatus status, 
-                        String email, 
+                        String email,
+                        ZonedDateTime createdDate,
                         CardDetailsEntity cardDetails, 
                         ExternalMetadata externalMetadata, 
-                        GatewayAccountEntity gatewayAccount) {
+                        GatewayAccountEntity gatewayAccount,
+                        SupportedLanguage language) {
         this.amount = amount;
         this.reference = reference;
         this.description = description;
         this.status = status.getValue();
         this.email = email;
+        this.createdDate = createdDate;
         this.cardDetails = cardDetails;
         this.externalMetadata = externalMetadata;
         this.gatewayAccount = gatewayAccount;
+        this.externalId = RandomIdGenerator.newId();
+        this.language = language;
     }
     
     // Only the ChargeEntityFixture should directly call this constructor
