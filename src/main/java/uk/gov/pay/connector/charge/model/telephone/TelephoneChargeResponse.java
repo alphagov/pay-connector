@@ -67,46 +67,6 @@ public class TelephoneChargeResponse {
         this.state = chargeBuilder.state;
     }
     
-    /*
-    public TelephoneChargeResponse(int amount,
-                                    String reference,
-                                    String description,
-                                    String createdDate,
-                                    String authorisedDate,
-                                    String processorId,
-                                    String providerId,
-                                    String authCode,
-                                    PaymentOutcome paymentOutcome,
-                                    String cardType,
-                                    String nameOnCard,
-                                    String emailAddress,
-                                    String cardExpiry,
-                                    String lastFourDigits,
-                                    String firstSixDigits,
-                                    String telephoneNumber,
-                                    String paymentId,
-                                    State state) {
-        this.amount = amount;
-        this.reference = reference;
-        this.description = description;
-        this.createdDate = createdDate;
-        this.authorisedDate = authorisedDate;
-        this.processorId = processorId;
-        this.providerId = providerId;
-        this.authCode = authCode;
-        this.paymentOutcome = paymentOutcome;
-        this.cardType = cardType;
-        this.nameOnCard = nameOnCard;
-        this.emailAddress = emailAddress;
-        this.cardExpiry = cardExpiry;
-        this.lastFourDigits = lastFourDigits;
-        this.firstSixDigits = firstSixDigits;
-        this.telephoneNumber = telephoneNumber;
-        this.paymentId = paymentId;
-        this.state = state;
-    }
-     */
-
     public int getAmount() {
         return amount;
     }
