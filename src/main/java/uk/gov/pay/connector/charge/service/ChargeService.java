@@ -161,33 +161,29 @@ public class ChargeService {
             if (telephoneChargeRequest.getAmount() == 0L && !gatewayAccount.isAllowZeroAmount()) {
                 throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
             }
-
-           
             
+            CardDetailsEntity cardDetails = new CardDetailsEntity(
+                    
+            );
             
-            /*
+            // Hard coded AUTHORISATION_SUCCESS for the time being
             ChargeEntity chargeEntity = new ChargeEntity(
                     telephoneChargeRequest.getAmount(),
-                    telephoneChargeRequest.getDescription(),
                     ServicePaymentReference.of(telephoneChargeRequest.getReference()),
-                    gatewayAccount,
-                    telephoneChargeRequest.getEmail(),
-                    language,
-                    telephoneChargeRequest.isDelayedCapture(),
-                    telephoneChargeRequest.getExternalMetadata().orElse(null));
+                    telephoneChargeRequest.getDescription(),
+                    ChargeStatus.AUTHORISATION_SUCCESS,
+                    telephoneChargeRequest.getEmailAddress(),
+                    cardDetails,
+                    metaDataForTelephonePayments(telephoneChargeRequest),
+                    gatewayAccount
+            );
 
-            telephoneChargeRequest.getPrefilledCardHolderDetails()
-                    .map(this::createCardDetailsEntity)
-                    .ifPresent(chargeEntity::setCardDetails);
+           
 
             chargeDao.persist(chargeEntity);
             transitionChargeState(chargeEntity, CREATED);
             chargeDao.merge(chargeEntity);
             return chargeEntity;
-            
-             */
-            
-            return null;
         });
     }
     
