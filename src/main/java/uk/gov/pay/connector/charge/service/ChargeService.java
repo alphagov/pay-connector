@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -131,26 +132,26 @@ public class ChargeService {
         final PaymentOutcome paymentOutcome = new PaymentOutcome("success", "P0010", supplemental);
         final State state = new State("success", true, "created", "P0010");
         
-        return new TelephoneChargeResponse(
-                telephoneChargeCreateRequest.getAmount(),
-                telephoneChargeCreateRequest.getReference(),
-                telephoneChargeCreateRequest.getDescription(),
-                telephoneChargeCreateRequest.getCreatedDate(),
-                telephoneChargeCreateRequest.getAuthorisedDate(),
-                telephoneChargeCreateRequest.getProcessorId(),
-                telephoneChargeCreateRequest.getProviderId(),
-                telephoneChargeCreateRequest.getAuthCode(),
-                paymentOutcome,
-                telephoneChargeCreateRequest.getCardType(),
-                telephoneChargeCreateRequest.getNameOnCard(),
-                telephoneChargeCreateRequest.getEmailAddress(),
-                telephoneChargeCreateRequest.getCardExpiry(),
-                telephoneChargeCreateRequest.getLastFourDigits(),
-                telephoneChargeCreateRequest.getFirstSixDigits(),
-                telephoneChargeCreateRequest.getTelephoneNumber(),
-                "hu20sqlact5260q2nanm0q8u93",
-                state
-        );
+        return new TelephoneChargeResponse.ChargeBuilder()
+                .amount(telephoneChargeCreateRequest.getAmount())
+                .reference(telephoneChargeCreateRequest.getReference())
+                .description(telephoneChargeCreateRequest.getDescription())
+                .createdDate(telephoneChargeCreateRequest.getCreatedDate())
+                .authorisedDate(telephoneChargeCreateRequest.getAuthorisedDate())
+                .processorId(telephoneChargeCreateRequest.getProcessorId())
+                .providerId(telephoneChargeCreateRequest.getProviderId())
+                .authCode(telephoneChargeCreateRequest.getAuthCode())
+                .paymentOutcome(paymentOutcome)
+                .cardType(telephoneChargeCreateRequest.getCardType())
+                .nameOnCard(telephoneChargeCreateRequest.getNameOnCard())
+                .emailAddress(telephoneChargeCreateRequest.getEmailAddress())
+                .cardExpiry(telephoneChargeCreateRequest.getCardExpiry())
+                .lastFourDigits(telephoneChargeCreateRequest.getLastFourDigits())
+                .firstSixDigits(telephoneChargeCreateRequest.getFirstSixDigits())
+                .telephoneNumber(telephoneChargeCreateRequest.getTelephoneNumber())
+                .paymentId("hu20sqlact5260q2nanm0q8u93")
+                .state(state)
+                .build();
     }
     
     @Transactional
@@ -160,6 +161,9 @@ public class ChargeService {
             if (telephoneChargeRequest.getAmount() == 0L && !gatewayAccount.isAllowZeroAmount()) {
                 throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
             }
+
+           
+            
             
             /*
             ChargeEntity chargeEntity = new ChargeEntity(
@@ -684,5 +688,24 @@ public class ChargeService {
 
     private boolean chargeIsInLockedStatus(OperationType operationType, ChargeEntity chargeEntity) {
         return operationType.getLockingStatus().equals(ChargeStatus.fromString(chargeEntity.getStatus()));
+    }
+    
+    private ExternalMetadata metaDataForTelephonePayments(TelephoneChargeCreateRequest telephoneChargeRequest) {
+
+        HashMap<String, Object> telephoneJSON = new HashMap<>();
+        telephoneJSON.put("authorised_date", telephoneChargeRequest.getAuthorisedDate());
+        telephoneJSON.put("processor_id", telephoneChargeRequest.getProcessorId());
+        telephoneJSON.put("auth_code", telephoneChargeRequest.getAuthCode());
+        
+        if (telephoneChargeRequest.getPaymentOutcome().getSupplemental() != null) {
+            HashMap<String, Object> supplemental = new HashMap<>();
+            supplemental.put("error_code", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorCode());
+            supplemental.put("error_message", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorMessage());
+            telephoneJSON.put("supplemental", supplemental);
+        }
+        
+        telephoneJSON.put("telephone_number", telephoneChargeRequest.getTelephoneNumber());
+        
+        return new ExternalMetadata(telephoneJSON);
     }
 }
