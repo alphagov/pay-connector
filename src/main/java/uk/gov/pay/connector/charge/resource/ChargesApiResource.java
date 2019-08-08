@@ -49,6 +49,7 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.model.TransactionSearchStrategyTransactionType.inferTransactionTypeFrom;
 import static uk.gov.pay.connector.charge.service.SearchService.TYPE.CHARGE;
@@ -109,7 +110,7 @@ public class ChargesApiResource {
     @Produces(APPLICATION_JSON)
     public Response getCharge(@PathParam(ACCOUNT_ID) Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         return chargeService.findChargeForAccount(chargeId, accountId, uriInfo)
-                .map(chargeResponse -> Response.ok(chargeResponse).build())
+                .map(chargeResponse -> ok(chargeResponse).build())
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
@@ -255,13 +256,16 @@ public class ChargesApiResource {
             @Context UriInfo uriInfo
     ) {
 
-        TelephoneChargeResponse createTelephoneChargeResponse = chargeService.createTelephoneCharge(
-                telephoneChargeCreateRequest, accountId, uriInfo
-        );
+        TelephoneChargeResponse telephoneChargeResponse = chargeService.createTelephoneCharge(
+                telephoneChargeCreateRequest, 
+                accountId, 
+                uriInfo
+        ).get();
+        
         return Response
                 .status(200)
-                .entity(createTelephoneChargeResponse)
-                .build(); 
+                .entity(telephoneChargeResponse)
+                .build();
     }
     
     @POST
@@ -277,7 +281,7 @@ public class ChargesApiResource {
     @Produces(APPLICATION_JSON)
     public Response getChargeForGatewayTransactionId(@PathParam("gatewayTransactionId") String gatewayTransactionId, @Context UriInfo uriInfo) {
         return chargeService.findChargeByGatewayTransactionId(gatewayTransactionId, uriInfo)
-                .map(chargeResponse -> Response.ok(chargeResponse).build())
+                .map(chargeResponse -> ok(chargeResponse).build())
                 .orElseGet(() -> responseWithGatewayTransactionNotFound(gatewayTransactionId));
     }
 

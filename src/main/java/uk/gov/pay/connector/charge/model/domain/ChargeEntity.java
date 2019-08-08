@@ -161,6 +161,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                         CardDetailsEntity cardDetails, 
                         ExternalMetadata externalMetadata, 
                         GatewayAccountEntity gatewayAccount,
+                        String providerSessionId,
                         SupportedLanguage language) {
         this.amount = amount;
         this.reference = reference;
@@ -172,6 +173,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.externalMetadata = externalMetadata;
         this.gatewayAccount = gatewayAccount;
         this.externalId = RandomIdGenerator.newId();
+        this.providerSessionId = providerSessionId;
         this.language = language;
     }
     

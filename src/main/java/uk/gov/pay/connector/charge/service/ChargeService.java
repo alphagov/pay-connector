@@ -79,13 +79,7 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 
 public class ChargeService {
@@ -124,38 +118,11 @@ public class ChargeService {
         this.eventQueue = eventQueue;
     }
 
-    public TelephoneChargeResponse createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
+    public Optional<TelephoneChargeResponse> createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
         
-        // At the moment this is hardcoded but we will remove it once we connect this up to the DAO layer
-        
-        final Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
-        final PaymentOutcome paymentOutcome = new PaymentOutcome("success", "P0010", supplemental);
-        final State state = new State("success", true, "created", "P0010");
-
-        logger.info(String.format("Starting createTelephoneChargeEntity method"));
-        createTelephoneChargeEntity(telephoneChargeCreateRequest, accountId, uriInfo);
-        logger.info(String.format("Starting createTelephoneChargeEntity method"));
-        
-        return new TelephoneChargeResponse.ChargeBuilder()
-                .amount(telephoneChargeCreateRequest.getAmount())
-                .reference(telephoneChargeCreateRequest.getReference())
-                .description(telephoneChargeCreateRequest.getDescription())
-                .createdDate(telephoneChargeCreateRequest.getCreatedDate())
-                .authorisedDate(telephoneChargeCreateRequest.getAuthorisedDate())
-                .processorId(telephoneChargeCreateRequest.getProcessorId())
-                .providerId(telephoneChargeCreateRequest.getProviderId())
-                .authCode(telephoneChargeCreateRequest.getAuthCode())
-                .paymentOutcome(paymentOutcome)
-                .cardType(telephoneChargeCreateRequest.getCardType())
-                .nameOnCard(telephoneChargeCreateRequest.getNameOnCard())
-                .emailAddress(telephoneChargeCreateRequest.getEmailAddress())
-                .cardExpiry(telephoneChargeCreateRequest.getCardExpiry())
-                .lastFourDigits(telephoneChargeCreateRequest.getLastFourDigits())
-                .firstSixDigits(telephoneChargeCreateRequest.getFirstSixDigits())
-                .telephoneNumber(telephoneChargeCreateRequest.getTelephoneNumber())
-                .paymentId("hu20sqlact5260q2nanm0q8u93")
-                .state(state)
-                .build();
+        return createTelephoneChargeEntity(telephoneChargeCreateRequest, accountId, uriInfo)
+                .map(charge ->
+                        populateTelephoneCharge(charge).build());
     }
     
     @Transactional
@@ -174,7 +141,7 @@ public class ChargeService {
                     telephoneChargeRequest.getCardType()
             );
             
-            // Hard coded AUTHORISATION_SUCCESS for the time being
+            // Hard coded CREATED for the time being
             ChargeEntity chargeEntity = new ChargeEntity(
                     telephoneChargeRequest.getAmount(),
                     ServicePaymentReference.of(telephoneChargeRequest.getReference()),
@@ -185,16 +152,13 @@ public class ChargeService {
                     cardDetails,
                     metaDataForTelephonePayments(telephoneChargeRequest),
                     gatewayAccount,
+                    telephoneChargeRequest.getProviderId(),
                     SupportedLanguage.ENGLISH
             );
-
-            logger.info(String.format("Charge entity has been created"));
-            chargeDao.persist(chargeEntity);
-            logger.info(String.format("Charge entity has been persisted"));
-            // transitionChargeState(chargeEntity, CREATED);
             
+            chargeDao.persist(chargeEntity);
+            //transitionChargeState(chargeEntity, AUTHORISATION_SUCCESS);
             chargeDao.merge(chargeEntity);
-            logger.info(String.format("Final charge entity has been merged"));
             return chargeEntity;
         });
     }
@@ -289,6 +253,45 @@ public class ChargeService {
                     }
                     return null;
                 });
+    }
+    
+    private TelephoneChargeResponse.ChargeBuilder populateTelephoneCharge(ChargeEntity chargeEntity) {
+
+        final Supplemental supplemental = new Supplemental(
+                ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("supplemental")).get("error_code").toString(),
+                ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("supplemental")).get("error_message").toString()
+        );
+        final PaymentOutcome paymentOutcome = new PaymentOutcome(
+                ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome")).get("status").toString(),
+                ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome")).get("code").toString(), 
+                supplemental
+        );
+        final State state = new State(
+                ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome")).get("status").toString(), 
+                true, 
+                "created",
+                ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome")).get("code").toString()
+        );
+
+        return new TelephoneChargeResponse.ChargeBuilder()
+                .amount(chargeEntity.getAmount())
+                .reference(chargeEntity.getReference().toString())
+                .description(chargeEntity.getDescription())
+                .createdDate(chargeEntity.getCreatedDate().toString()) // Change later
+                .authorisedDate(chargeEntity.getExternalMetadata().get().getMetadata().get("authorised_date").toString())
+                .processorId(chargeEntity.getExternalMetadata().get().getMetadata().get("processor_id").toString())
+                .providerId(chargeEntity.getProviderSessionId())
+                .authCode(chargeEntity.getExternalMetadata().get().getMetadata().get("auth_code").toString())
+                .paymentOutcome(paymentOutcome)
+                .cardType(chargeEntity.getCardDetails().getCardBrand())
+                .nameOnCard(chargeEntity.getCardDetails().getCardHolderName())
+                .emailAddress(chargeEntity.getEmail())
+                .cardExpiry(chargeEntity.getCardDetails().getExpiryDate())
+                .lastFourDigits(chargeEntity.getCardDetails().getLastDigitsCardNumber().toString())
+                .firstSixDigits(chargeEntity.getCardDetails().getFirstDigitsCardNumber().toString())
+                .telephoneNumber(chargeEntity.getExternalMetadata().get().getMetadata().get("telephone_number").toString())
+                .paymentId("hu20sqlact5260q2nanm0q8u93")
+                .state(state);
     }
 
     public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity, boolean buildForSearchResult) {
@@ -707,7 +710,9 @@ public class ChargeService {
         
         if(telephoneChargeRequest.getPaymentOutcome().getCode() != null) {
             HashMap<String, Object> paymentOutcome = new HashMap<>();
+            paymentOutcome.put("status", telephoneChargeRequest.getPaymentOutcome().getStatus());
             paymentOutcome.put("code", telephoneChargeRequest.getPaymentOutcome().getCode());
+            telephoneJSON.put("payment_outcome", paymentOutcome);
         }
         
         if (telephoneChargeRequest.getPaymentOutcome().getSupplemental() != null) {
