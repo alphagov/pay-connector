@@ -5,7 +5,6 @@ pipeline {
 
   parameters {
     booleanParam(defaultValue: false, description: '', name: 'runEndToEndTestsOnPR')
-    booleanParam(defaultValue: false, description: '', name: 'runZap')
     string(defaultValue: 'master', description: 'Branch of pay-scripts to use when running e2e', name: 'payScriptsBranch')
   }
 
@@ -20,7 +19,6 @@ pipeline {
   environment {
     DOCKER_HOST = "unix:///var/run/docker.sock"
     RUN_END_TO_END_ON_PR = "${params.runEndToEndTestsOnPR}"
-    RUN_ZAP = "${params.runZap}"
     JAVA_HOME="/usr/lib/jvm/java-1.11.0-openjdk-amd64"
     PAY_SCRIPTS_BRANCH="${params.payScriptsBranch}"
   }
@@ -85,7 +83,7 @@ pipeline {
                      |bundle install --path gems
                      |rm -rf target
                      |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb up
-                     |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb run --end-to-end=card
+                     |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb run --end-to-end=card,zap
                   '''.stripMargin()
               )
             }
@@ -111,17 +109,6 @@ pipeline {
       }
     }
     
-    stage('ZAP Tests') {
-      when {
-          anyOf {
-            environment name: 'RUN_ZAP', value: 'true'
-          }
-      }
-      steps {
-          runZap("connector")
-      }
-    }
-
     stage('Docker Tag') {
       steps {
         script {
