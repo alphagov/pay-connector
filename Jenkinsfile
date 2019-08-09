@@ -66,7 +66,7 @@ pipeline {
                 }
             }
             steps {
-                runAppE2E("publicauth", "card,zap")
+                runAppE2E("connector", "card,zap")
             }
         }
       }
