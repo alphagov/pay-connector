@@ -166,7 +166,19 @@ public class HistoricalEventEmitterWorker {
         return charge.getEvents()
                 .stream()
                 .sorted(Comparator.comparing(ChargeEventEntity::getUpdated))
+                .sorted(HistoricalEventEmitterWorker::sortOutOfOrderCaptureEvents)
                 .collect(Collectors.toList());
+    }
+
+    private static int sortOutOfOrderCaptureEvents(ChargeEventEntity lhs, ChargeEventEntity rhs) {
+        // puts CAPTURE_SUBMITTED at top of the events list (after first pass of sorting)
+        // when timestamp for CAPTURED is same or before CAPTURE_SUBMITTED timestamp 
+        if (lhs.getStatus().equals(ChargeStatus.CAPTURE_SUBMITTED)
+                && rhs.getStatus().equals(ChargeStatus.CAPTURED)) {
+            return -1;
+        } else {
+            return 0;
+        }
     }
 
     private void processChargeStateTransitionEvents(long currentId, List<ChargeEventEntity> chargeEventEntities) {
