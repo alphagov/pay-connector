@@ -17,6 +17,8 @@ import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.AuthorisationSucceeded;
+import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
+import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
@@ -204,6 +206,50 @@ public class HistoricalEventEmitterWorkerTest {
         worker.execute(1L, OptionalLong.empty());
 
         verifyZeroInteractions(eventQueue);
+    }
+
+    @Test
+    public void executeShouldOfferOutOfOrderCaptureStatesInOrder() {
+        ChargeEntity chargeEntity = ChargeEntityFixture
+                .aValidChargeEntity()
+                .build();
+        ChargeEventEntity authSuccessEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().minusDays(10))
+                .withCharge(chargeEntity)
+                .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .build();
+        ChargeEventEntity capturedEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().minusSeconds(2))
+                .withCharge(chargeEntity)
+                .withChargeStatus(ChargeStatus.CAPTURED)
+                .build();
+
+        ChargeEventEntity captureSubmittedEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now())
+                .withCharge(chargeEntity)
+                .withChargeStatus(ChargeStatus.CAPTURE_SUBMITTED)
+                .build();
+
+        chargeEntity.getEvents().clear();
+        chargeEntity.getEvents().add(capturedEvent);
+        chargeEntity.getEvents().add(authSuccessEvent);
+        chargeEntity.getEvents().add(captureSubmittedEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+
+        worker.execute(1L, OptionalLong.empty());
+
+        ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
+        verify(stateTransitionQueue, times(2)).offer(argument.capture());
+
+        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(CaptureSubmitted.class));
+        assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(CaptureConfirmed.class));
+
+        ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(emittedEventDao, times(2)).recordEmission(daoArgumentCaptor.capture());
+        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("CAPTURE_SUBMITTED"));
+        assertThat(daoArgumentCaptor.getAllValues().get(1).getEventType(), is("CAPTURE_CONFIRMED"));
     }
 
     @Test
