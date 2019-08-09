@@ -55,60 +55,22 @@ pipeline {
         }
       }
     }
-    stage('Card Payment End-to-End Tests inline') {
-      environment {
-        MODULE_NAME="connector"
-        MODULE_TAG="${gitCommit()}-${env.BUILD_NUMBER}"
-      }
-      
-      when {
-          anyOf {
-            branch 'master'
-            environment name: 'RUN_END_TO_END_ON_PR', value: 'true'
-          }
-      }
-
-      steps {
-        dir('e2e-pay-scripts') {
-          git(url: '/opt/govukpay/repos/pay-scripts', branch: env.PAY_SCRIPTS_BRANCH)
-
-          script {
-            withCredentials([
-              string(credentialsId: 'graphite_account_id', variable: 'HOSTED_GRAPHITE_ACCOUNT_ID'),
-              string(credentialsId: 'graphite_api_key', variable: 'HOSTED_GRAPHITE_API_KEY') ])
-            {
-              sh(
-                  '''|#!/bin/bash
-                     |set -e
-                     |bundle install --path gems
-                     |rm -rf target
-                     |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb up
-                     |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb run --end-to-end=card,zap
-                  '''.stripMargin()
-              )
+    stage('Tests') {
+      failFast true
+      stages {
+        stage('End-to-End Tests') {
+            when {
+                anyOf {
+                  branch 'master'
+                  environment name: 'RUN_END_TO_END_ON_PR', value: 'true'
+                }
             }
-          }
-        }
-      }
-
-      post {
-        always {
-          dir('e2e-pay-scripts') {
-            sh(
-                '''|#!/bin/bash
-                   |set -e
-                   |bundle install --path gems
-                   |bundle exec ruby ./jenkins/ruby-scripts/pay-tests.rb down
-                '''.stripMargin()
-            )
-          }
-
-          archiveArtifacts artifacts: '**/target/docker*.log,**/target/screenshots/*.png'
-          junit testResults: "**/target/surefire-reports/*.xml,**/target/failsafe-reports/*.xml"
+            steps {
+                runAppE2E("publicauth", "card,zap")
+            }
         }
       }
     }
-    
     stage('Docker Tag') {
       steps {
         script {
