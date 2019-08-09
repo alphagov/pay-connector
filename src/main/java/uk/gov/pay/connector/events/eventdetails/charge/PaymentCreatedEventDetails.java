@@ -1,8 +1,10 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
+import java.util.Map;
 import java.util.Objects;
 
 public class PaymentCreatedEventDetails extends EventDetails {
@@ -14,10 +16,11 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private final String paymentProvider;
     private final String language;
     private final boolean delayedCapture;
+    private final Map<String, Object> externalMetadata;
 
     public PaymentCreatedEventDetails(Long amount, String description, String reference, String returnUrl,
                                       Long gatewayAccountId, String paymentProvider, String language,
-                                      boolean delayedCapture) {
+                                      boolean delayedCapture, Map<String, Object> externalMetadata) {
         this.amount = amount;
         this.description = description;
         this.reference = reference;
@@ -26,6 +29,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         this.paymentProvider = paymentProvider;
         this.language = language;
         this.delayedCapture = delayedCapture;
+        this.externalMetadata = externalMetadata;
     }
 
     public static PaymentCreatedEventDetails from(ChargeEntity charge) {
@@ -37,7 +41,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 charge.getGatewayAccount().getId(),
                 charge.getGatewayAccount().getGatewayName(),
                 charge.getLanguage().toString(),
-                charge.isDelayedCapture());
+                charge.isDelayedCapture(),
+                charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null));
     }
 
     public Long getAmount() {
@@ -72,6 +77,10 @@ public class PaymentCreatedEventDetails extends EventDetails {
         return delayedCapture;
     }
 
+    public Map<String, Object> getExternalMetadata() {
+        return externalMetadata;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -84,12 +93,13 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 Objects.equals(gatewayAccountId, that.gatewayAccountId) &&
                 Objects.equals(paymentProvider, that.paymentProvider) &&
                 Objects.equals(language, that.language) &&
-                Objects.equals(delayedCapture, that.delayedCapture);
+                Objects.equals(delayedCapture, that.delayedCapture) &&
+                Objects.equals(externalMetadata, that.externalMetadata);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(amount, description, reference, returnUrl, gatewayAccountId, paymentProvider, language,
-                delayedCapture);
+                delayedCapture, externalMetadata);
     }
 }
