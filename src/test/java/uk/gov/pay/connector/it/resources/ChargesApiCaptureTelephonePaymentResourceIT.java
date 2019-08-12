@@ -42,7 +42,7 @@ public class ChargesApiCaptureTelephonePaymentResourceIT extends ChargingITestBa
     }
 
     @Test
-    public void makeTelephoneCharge() {
+    public void createTelephoneChargeForStatusOfSuccess() {
         HashMap<String, Object> postBody = new HashMap<>();
         postBody.put("amount", 12000);
         postBody.put("reference", "MRPC12345");
@@ -54,13 +54,7 @@ public class ChargesApiCaptureTelephonePaymentResourceIT extends ChargingITestBa
         postBody.put("auth_code", "666");
         postBody.put("payment_outcome", 
                 Map.of(
-                        "status", "success",
-                        "code", "P0010",
-                        "supplemental", 
-                            Map.of(
-                                    "error_code", "ECKOH01234",
-                                    "error_message", "textual message describing error code"
-                            )
+                        "status", "success"
                 )
         );
         postBody.put("card_type", "master-card");
@@ -86,9 +80,6 @@ public class ChargesApiCaptureTelephonePaymentResourceIT extends ChargingITestBa
                 .body("provider_id", is("17498-8412u9-1273891239"))
                 .body("auth_code", is("666"))
                 .body("payment_outcome.status", is("success"))
-                .body("payment_outcome.code", is("P0010"))
-                .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
-                .body("payment_outcome.supplemental.error_message", is("textual message describing error code"))
                 .body("card_type", is("master-card"))
                 .body("name_on_card", is("Jane Doe"))
                 .body("email_address", is("jane_doe@example.com"))
@@ -99,7 +90,6 @@ public class ChargesApiCaptureTelephonePaymentResourceIT extends ChargingITestBa
                 .body("payment_id", is("hu20sqlact5260q2nanm0q8u93"))
                 .body("state.status", is("success"))
                 .body("state.finished", is(true))
-                .body("state.message", is("created"))
-                .body("state.code", is("P0010"));
+                .body("state.message", is("created"));
     }
 }
