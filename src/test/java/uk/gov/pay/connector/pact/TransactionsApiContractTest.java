@@ -22,6 +22,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.SQSMockClient;
 import uk.gov.pay.connector.util.AddChargeParams;
@@ -38,6 +39,7 @@ import static io.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.rules.AppWithPostgresRule.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
@@ -150,24 +152,11 @@ public class TransactionsApiContractTest {
         setUpSingleCharge(accountId, chargeId, chargeExternalId, chargeStatus, createdDate, delayedCapture, "aName", "0001", "123456", "aGatewayTransactionId");
     }
 
-    private void setUpChargeAndRefunds(int numberOfRefunds, String accountID, ZonedDateTime createdDate) {
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
-        dbHelper.addCharge(anAddChargeParams()
-                .withChargeId(chargeId)
-                .withExternalChargeId(Long.toString(chargeId))
-                .withGatewayAccountId(accountID)
-                .withAmount(100)
-                .withStatus(ChargeStatus.CREATED)
-                .withReturnUrl("aReturnUrl")
-                .withReference(ServicePaymentReference.of("aReference"))
-                .withCreatedDate(ZonedDateTime.now().minusHours(12))
-                .withTransactionId("aTransactionId")
-                .withEmail("test@test.com")
-                .build());
-
+    private void setUpRefunds(int numberOfRefunds, Long chargeId,
+                              ZonedDateTime createdDate, RefundStatus refundStatus) {
         for (int i = 0; i < numberOfRefunds; i++) {
-            dbHelper.addRefund("external" + RandomUtils.nextInt(), "reference", 1L, REFUNDED,
-                    chargeId, randomAlphanumeric(10), createdDate);
+            dbHelper.addRefund("external" + RandomUtils.nextInt(), "reference", 1L, refundStatus,
+                    chargeId, randomAlphanumeric(10), createdDate, "user_external_id1234");
         }
     }
 
@@ -388,12 +377,27 @@ public class TransactionsApiContractTest {
 
     @State("Refunds exist")
     public void refundsExist(Map<String, String> params) {
-        long accountId = Long.parseLong(params.get("account_id"));
+        String accountId = params.get("account_id");
         ZonedDateTime createdDate = Optional.ofNullable(params.get("created_date"))
                 .map(ZonedDateTime::parse)
                 .orElse(ZonedDateTime.now());
-        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
-        setUpChargeAndRefunds(2, params.get("account_id"), createdDate);
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(accountId));
+
+        Long chargeId = 1234L;
+        setUpSingleCharge(accountId, chargeId, chargeId.toString(), ChargeStatus.CREATED, createdDate, false);
+        setUpRefunds(2, chargeId, createdDate, REFUNDED);
+    }
+
+    @State("Refunds exist for a charge")
+    public void refundsExistForACharge(Map<String, String> params) {
+        String accountId = params.get("account_id");
+        String chargeExternalId = params.get("charge_id");
+
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(accountId));
+        long chargeId = 1234L;
+        setUpSingleCharge(accountId, chargeId, chargeExternalId, ChargeStatus.CAPTURED, ZonedDateTime.now(), false);
+        setUpRefunds(1, chargeId, ZonedDateTime.parse("2016-01-25T13:23:55Z"), REFUNDED);
+        setUpRefunds(1, chargeId, ZonedDateTime.parse("2016-01-25T16:23:55Z"), REFUND_ERROR);
     }
 
     @State("Account exists")
