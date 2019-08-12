@@ -433,6 +433,54 @@ public class ChargeServiceTest {
         assertThat(tokenEntity.getChargeEntity().getId(), is(CHARGE_ENTITY_ID));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
     }
+
+    @Test
+    public void shouldCreateATelephoneChargeForSuccess() {
+        PaymentOutcome paymentOutcome = new PaymentOutcome("success");
+
+        Map<String, Object> metadata = Map.of(
+                "authorised_date", "2018-02-21T16:05:33Z",
+                "processor_id", "1PROC",
+                "auth_code", "666",
+                "telephone_number", "+447700900796",
+                "payment_outcome", Map.of(
+                        "status", "success"
+                ));
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .paymentOutcome(paymentOutcome)
+                .build();
+
+        service.createTelephoneCharge(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        assertThat(createdChargeEntity.getId(), is(CHARGE_ENTITY_ID));
+
+        assertThat(createdChargeEntity.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
+        assertThat(createdChargeEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
+        assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
+        assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
+        assertThat(createdChargeEntity.getAmount(), is(100L));
+        assertThat(createdChargeEntity.getReference(), is(ServicePaymentReference.of("Some reference")));
+        assertThat(createdChargeEntity.getDescription(), is("Some description"));
+        assertThat(createdChargeEntity.getStatus(), is("CREATED"));
+        assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
+        assertThat(createdChargeEntity.getCreatedDate().toString(), is("2018-02-21T16:04:25Z"));
+        assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
+        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
+        assertThat(createdChargeEntity.getProviderSessionId(), is("1PROV"));
+        assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
+        assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
+    }
+    
+    
+    
     
     
     @Test
