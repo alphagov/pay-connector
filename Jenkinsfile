@@ -66,7 +66,7 @@ pipeline {
                 }
             }
             steps {
-                runAppE2E("connector", "card,zap")
+                runAppE2E("connector", "card")
             }
         }
       }
