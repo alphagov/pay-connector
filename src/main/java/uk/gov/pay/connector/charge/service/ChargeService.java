@@ -255,32 +255,8 @@ public class ChargeService {
     }
     
     private TelephoneChargeResponse.ChargeBuilder populateTelephoneCharge(ChargeEntity chargeEntity) {
-
-        final Supplemental supplemental = new Supplemental(
-                ((Map) ((Map) chargeEntity.getExternalMetadata().get().getMetadata()
-                        .get("payment_outcome"))
-                        .get("supplemental"))
-                        .get("error_code")
-                        .toString(),
-                ((Map) ((Map) chargeEntity.getExternalMetadata().get().getMetadata()
-                        .get("payment_outcome"))
-                        .get("supplemental"))
-                        .get("error_message")
-                        .toString()
-        );
-        final PaymentOutcome paymentOutcome = new PaymentOutcome(
-                ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome")).get("status").toString(),
-                ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome")).get("code").toString(), 
-                supplemental
-        );
-        final State state = new State(
-                ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome")).get("status").toString(), 
-                true, 
-                "created",
-                ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome")).get("code").toString()
-        );
-
-        return new TelephoneChargeResponse.ChargeBuilder()
+        
+        final TelephoneChargeResponse.ChargeBuilder telephoneChargeResponse = new TelephoneChargeResponse.ChargeBuilder()
                 .amount(chargeEntity.getAmount())
                 .reference(chargeEntity.getReference().toString())
                 .description(chargeEntity.getDescription())
@@ -289,7 +265,6 @@ public class ChargeService {
                 .processorId(chargeEntity.getExternalMetadata().get().getMetadata().get("processor_id").toString())
                 .providerId(chargeEntity.getProviderSessionId())
                 .authCode(chargeEntity.getExternalMetadata().get().getMetadata().get("auth_code").toString())
-                .paymentOutcome(paymentOutcome)
                 .cardType(chargeEntity.getCardDetails().getCardBrand())
                 .nameOnCard(chargeEntity.getCardDetails().getCardHolderName())
                 .emailAddress(chargeEntity.getEmail())
@@ -297,8 +272,46 @@ public class ChargeService {
                 .lastFourDigits(chargeEntity.getCardDetails().getLastDigitsCardNumber().toString())
                 .firstSixDigits(chargeEntity.getCardDetails().getFirstDigitsCardNumber().toString())
                 .telephoneNumber(chargeEntity.getExternalMetadata().get().getMetadata().get("telephone_number").toString())
-                .paymentId("hu20sqlact5260q2nanm0q8u93")
-                .state(state);
+                .paymentId("hu20sqlact5260q2nanm0q8u93");
+        
+        Map<String, Object> paymentOutcomeMap = ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome"));
+        
+        if (paymentOutcomeMap.get("status").toString().equals("failed")) {
+
+            final Supplemental supplemental = new Supplemental(
+                    ((Map) paymentOutcomeMap
+                            .get("supplemental"))
+                            .get("error_code")
+                            .toString(),
+                    ((Map) paymentOutcomeMap
+                            .get("supplemental"))
+                            .get("error_message")
+                            .toString()
+            );
+            
+            return telephoneChargeResponse
+                    .paymentOutcome(new PaymentOutcome(
+                            paymentOutcomeMap.get("status").toString(),
+                            paymentOutcomeMap.get("code").toString(),
+                            supplemental
+                    ))
+                    .state(new State(
+                            paymentOutcomeMap.get("status").toString(),
+                            false,
+                            "created",
+                            paymentOutcomeMap.get("code").toString()
+                    ));
+        }
+        
+        return telephoneChargeResponse
+                .paymentOutcome(new PaymentOutcome(
+                        paymentOutcomeMap.get("status").toString()
+                ))
+                .state(new State(
+                        paymentOutcomeMap.get("status").toString(),
+                        true,
+                        "created"
+                ));
     }
 
     public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity, boolean buildForSearchResult) {
@@ -714,15 +727,12 @@ public class ChargeService {
         telephoneJSON.put("authorised_date", telephoneChargeRequest.getAuthorisedDate());
         telephoneJSON.put("processor_id", telephoneChargeRequest.getProcessorId());
         telephoneJSON.put("auth_code", telephoneChargeRequest.getAuthCode());
-        HashMap<String, Object> paymentOutcome = new HashMap<>();
         
+        HashMap<String, Object> paymentOutcome = new HashMap<>();
         paymentOutcome.put("status", telephoneChargeRequest.getPaymentOutcome().getStatus());
         
-        if(telephoneChargeRequest.getPaymentOutcome().getCode() != null) {
-            paymentOutcome.put("code", telephoneChargeRequest.getPaymentOutcome().getCode());
-        }
-        
         if (telephoneChargeRequest.getPaymentOutcome().getSupplemental() != null) {
+            paymentOutcome.put("code", telephoneChargeRequest.getPaymentOutcome().getCode());
             HashMap<String, Object> supplemental = new HashMap<>();
             supplemental.put("error_code", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorCode());
             supplemental.put("error_message", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorMessage());

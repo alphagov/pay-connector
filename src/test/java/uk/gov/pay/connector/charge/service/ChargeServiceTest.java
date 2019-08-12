@@ -434,6 +434,7 @@ public class ChargeServiceTest {
         assertThat(tokenEntity.getToken(), is(notNullValue()));
     }
 
+    
     @Test
     public void shouldCreateATelephoneChargeForSuccess() {
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
@@ -478,10 +479,6 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
     }
-    
-    
-    
-    
     
     @Test
     public void shouldCreateATelephoneChargeForFailure() {
