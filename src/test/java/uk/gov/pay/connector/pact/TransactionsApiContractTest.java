@@ -396,6 +396,32 @@ public class TransactionsApiContractTest {
         setUpChargeAndRefunds(2, params.get("account_id"), createdDate);
     }
 
+    @State("a payment refund exists")
+    public void paymentRefundExists(Map<String, String> params) {
+        Long accountId = Long.parseLong(params.get("gateway_account_id"));
+        Long paymentId = Long.parseLong(params.get("charge_id"));
+        String refundId = params.get("refund_id");
+        ZonedDateTime createdDate = Optional.ofNullable(params.get("created_date"))
+                .map(ZonedDateTime::parse)
+                .orElse(ZonedDateTime.now());
+
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
+        dbHelper.addCharge(anAddChargeParams()
+                .withChargeId(paymentId)
+                .withExternalChargeId(Long.toString(paymentId))
+                .withGatewayAccountId(accountId.toString())
+                .withAmount(100)
+                .withStatus(ChargeStatus.CREATED)
+                .withReturnUrl("aReturnUrl")
+                .withReference(ServicePaymentReference.of("aReference"))
+                .withCreatedDate(ZonedDateTime.now().minusHours(12))
+                .withTransactionId("aTransactionId")
+                .withEmail("test@test.com")
+                .build());
+        dbHelper.addRefund(refundId, "reference", 100L, REFUNDED,
+                paymentId, randomAlphanumeric(10), createdDate);
+    }
+
     @State("Account exists")
     public void accountExists(Map<String, String> params) {
         Long accountId = Long.valueOf(params.get("account_id"));
