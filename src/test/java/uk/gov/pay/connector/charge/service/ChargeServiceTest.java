@@ -27,6 +27,9 @@ import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
+import uk.gov.pay.connector.charge.model.telephone.Supplemental;
+import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
@@ -101,6 +104,7 @@ public class ChargeServiceTest {
     private static final int MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS = 10;
 
     private ChargeCreateRequestBuilder requestBuilder;
+    private TelephoneChargeCreateRequest.ChargeBuilder telephoneRequestBuilder;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -147,7 +151,24 @@ public class ChargeServiceTest {
                 .withReturnUrl("http://return-service.com")
                 .withDescription("This is a description")
                 .withReference("Pay reference");
-
+        
+        telephoneRequestBuilder = new TelephoneChargeCreateRequest.ChargeBuilder()
+                .amount(100L)
+                .reference("Some reference")
+                .description("Some description")
+                .createdDate("2018-02-21T16:04:25Z")
+                .authorisedDate("2018-02-21T16:05:33Z")
+                .processorId("1PROC")
+                .providerId("1PROV")
+                .authCode("666")
+                .nameOnCard("Jane Doe")
+                .emailAddress("jane.doe@example.com")
+                .telephoneNumber("+447700900796")
+                .cardType("visa")
+                .cardExpiry("01/19")
+                .lastFourDigits("1234")
+                .firstSixDigits("123456");
+        
         gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
@@ -410,6 +431,42 @@ public class ChargeServiceTest {
         TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
         assertThat(tokenEntity.getChargeEntity().getId(), is(CHARGE_ENTITY_ID));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
+    }
+    
+    @Test
+    public void shouldCreateATelephoneChargeForFailure() {
+        Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
+        PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0010", supplemental);
+        
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .paymentOutcome(paymentOutcome)
+                .build();
+        
+        service.createTelephoneCharge(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        assertThat(createdChargeEntity.getId(), is(CHARGE_ENTITY_ID));
+        
+        assertThat(createdChargeEntity.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
+        assertThat(createdChargeEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
+        assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
+        assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
+        assertThat(createdChargeEntity.getAmount(), is(100L));
+        assertThat(createdChargeEntity.getReference(), is(ServicePaymentReference.of("Some reference")));
+        assertThat(createdChargeEntity.getDescription(), is("Some description"));
+        assertThat(createdChargeEntity.getStatus(), is("CREATED"));
+        assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
+        assertThat(createdChargeEntity.getCreatedDate().toString(), is("2018-02-21T16:04:25Z"));
+        assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
+        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
+        assertThat(createdChargeEntity.getProviderSessionId(), is("1PROV"));
+        assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
     }
 
     @Test

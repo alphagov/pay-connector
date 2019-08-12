@@ -157,7 +157,6 @@ public class ChargeService {
             );
             
             chargeDao.persist(chargeEntity);
-            //transitionChargeState(chargeEntity, AUTHORISATION_SUCCESS);
             chargeDao.merge(chargeEntity);
             return chargeEntity;
         });
