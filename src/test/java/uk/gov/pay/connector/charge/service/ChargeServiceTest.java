@@ -206,8 +206,9 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldCreateAChargeWithDefaultLanguageAndDefaultDelayedCapture() {
+        
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
-
+        
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
@@ -433,10 +434,25 @@ public class ChargeServiceTest {
         assertThat(tokenEntity.getToken(), is(notNullValue()));
     }
     
+    
     @Test
     public void shouldCreateATelephoneChargeForFailure() {
         Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
         PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0010", supplemental);
+
+        Map<String, Object> metadata = Map.of(
+                "authorised_date", "2018-02-21T16:05:33Z",
+                "processor_id", "1PROC",
+                "auth_code", "666",
+                "telephone_number", "+447700900796",
+                "payment_outcome", Map.of(
+                        "status", "failed",
+                        "code", "P0010",
+                        "supplemental", Map.of(
+                                "error_code", "ECKOH01234",
+                                "error_message", "textual message describing error code"
+                        )
+                ));
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .paymentOutcome(paymentOutcome)
@@ -466,6 +482,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is("01/19"));
         assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
         assertThat(createdChargeEntity.getProviderSessionId(), is("1PROV"));
+        assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
     }
 

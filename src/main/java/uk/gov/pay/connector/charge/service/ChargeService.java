@@ -257,8 +257,16 @@ public class ChargeService {
     private TelephoneChargeResponse.ChargeBuilder populateTelephoneCharge(ChargeEntity chargeEntity) {
 
         final Supplemental supplemental = new Supplemental(
-                ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("supplemental")).get("error_code").toString(),
-                ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("supplemental")).get("error_message").toString()
+                ((Map) ((Map) chargeEntity.getExternalMetadata().get().getMetadata()
+                        .get("payment_outcome"))
+                        .get("supplemental"))
+                        .get("error_code")
+                        .toString(),
+                ((Map) ((Map) chargeEntity.getExternalMetadata().get().getMetadata()
+                        .get("payment_outcome"))
+                        .get("supplemental"))
+                        .get("error_message")
+                        .toString()
         );
         final PaymentOutcome paymentOutcome = new PaymentOutcome(
                 ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome")).get("status").toString(),
@@ -706,21 +714,22 @@ public class ChargeService {
         telephoneJSON.put("authorised_date", telephoneChargeRequest.getAuthorisedDate());
         telephoneJSON.put("processor_id", telephoneChargeRequest.getProcessorId());
         telephoneJSON.put("auth_code", telephoneChargeRequest.getAuthCode());
+        HashMap<String, Object> paymentOutcome = new HashMap<>();
+        
+        paymentOutcome.put("status", telephoneChargeRequest.getPaymentOutcome().getStatus());
         
         if(telephoneChargeRequest.getPaymentOutcome().getCode() != null) {
-            HashMap<String, Object> paymentOutcome = new HashMap<>();
-            paymentOutcome.put("status", telephoneChargeRequest.getPaymentOutcome().getStatus());
             paymentOutcome.put("code", telephoneChargeRequest.getPaymentOutcome().getCode());
-            telephoneJSON.put("payment_outcome", paymentOutcome);
         }
         
         if (telephoneChargeRequest.getPaymentOutcome().getSupplemental() != null) {
             HashMap<String, Object> supplemental = new HashMap<>();
             supplemental.put("error_code", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorCode());
             supplemental.put("error_message", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorMessage());
-            telephoneJSON.put("supplemental", supplemental);
+            paymentOutcome.put("supplemental", supplemental);
         }
-        
+
+        telephoneJSON.put("payment_outcome", paymentOutcome);
         telephoneJSON.put("telephone_number", telephoneChargeRequest.getTelephoneNumber());
         
         return new ExternalMetadata(telephoneJSON);
