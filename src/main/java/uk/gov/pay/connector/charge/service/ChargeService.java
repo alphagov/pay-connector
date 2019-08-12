@@ -272,7 +272,7 @@ public class ChargeService {
                 .lastFourDigits(chargeEntity.getCardDetails().getLastDigitsCardNumber().toString())
                 .firstSixDigits(chargeEntity.getCardDetails().getFirstDigitsCardNumber().toString())
                 .telephoneNumber(chargeEntity.getExternalMetadata().get().getMetadata().get("telephone_number").toString())
-                .paymentId("hu20sqlact5260q2nanm0q8u93");
+                .paymentId("dummypaymentid123notpersisted");
         
         Map<String, Object> paymentOutcomeMap = ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome"));
         

@@ -559,7 +559,7 @@ public class ChargeServiceTest {
         assertThat(chargeResponse.getLastFourDigits(), is("1234"));
         assertThat(chargeResponse.getFirstSixDigits(), is("123456"));
         assertThat(chargeResponse.getTelephoneNumber(), is("+447700900796"));
-        assertThat(chargeResponse.getPaymentId(), is("hu20sqlact5260q2nanm0q8u93"));
+        assertThat(chargeResponse.getPaymentId(), is("dummypaymentid123notpersisted"));
         assertThat(chargeResponse.getState().getStatus(), is("success"));
         assertThat(chargeResponse.getState().getFinished(), is(true));
         assertThat(chargeResponse.getState().getMessage(), is("created"));
@@ -597,7 +597,7 @@ public class ChargeServiceTest {
         assertThat(chargeResponse.getLastFourDigits(), is("1234"));
         assertThat(chargeResponse.getFirstSixDigits(), is("123456"));
         assertThat(chargeResponse.getTelephoneNumber(), is("+447700900796"));
-        assertThat(chargeResponse.getPaymentId(), is("hu20sqlact5260q2nanm0q8u93"));
+        assertThat(chargeResponse.getPaymentId(), is("dummypaymentid123notpersisted"));
         assertThat(chargeResponse.getState().getStatus(), is("failed"));
         assertThat(chargeResponse.getState().getFinished(), is(false));
         assertThat(chargeResponse.getState().getMessage(), is("created"));
