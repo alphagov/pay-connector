@@ -113,7 +113,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     @Column(name = "description")
     private String description;
-
+    
     @Column(name = "reference")
     @Convert(converter = ServicePaymentReferenceConverter.class)
     @JsonSerialize(using = ToStringSerializer.class)
@@ -227,12 +227,20 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         return description;
     }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public ServicePaymentReference getReference() {
         return reference;
     }
 
     public ZonedDateTime getCreatedDate() {
         return createdDate;
+    }
+
+    public void setCreatedDate(ZonedDateTime createdDate) {
+        this.createdDate = createdDate;
     }
 
     public List<RefundEntity> getRefunds() {
@@ -257,6 +265,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     public Optional<ExternalMetadata> getExternalMetadata() {
         return Optional.ofNullable(externalMetadata);
+    }
+
+    public void setExternalMetadata(ExternalMetadata externalMetadata) {
+        this.externalMetadata = externalMetadata;
     }
 
     public void setExternalId(String externalId) {

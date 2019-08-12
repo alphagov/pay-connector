@@ -124,6 +124,49 @@ public class ChargeService {
                 .map(charge ->
                         populateTelephoneCharge(charge).build());
     }
+
+    @Transactional
+    public Optional<TelephoneChargeResponse> updateTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
+
+        Optional<ChargeEntity> chargeEntityOptional = chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId());
+
+        if (chargeEntityOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        ChargeEntity chargeEntity = chargeEntityOptional.get();
+
+        return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
+
+            if (telephoneChargeRequest.getAmount() == 0L && !gatewayAccount.isAllowZeroAmount()) {
+                throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
+            }
+
+            CardDetailsEntity cardDetails = new CardDetailsEntity(
+                    LastDigitsCardNumber.of(telephoneChargeRequest.getLastFourDigits()),
+                    FirstDigitsCardNumber.of(telephoneChargeRequest.getFirstSixDigits()),
+                    telephoneChargeRequest.getNameOnCard(),
+                    telephoneChargeRequest.getCardExpiry(),
+                    telephoneChargeRequest.getCardType()
+            );
+
+            // Hard coded CREATED for the time being
+            chargeEntity.setAmount(telephoneChargeRequest.getAmount());
+            chargeEntity.setDescription(telephoneChargeRequest.getDescription());
+            chargeEntity.setEmail(telephoneChargeRequest.getEmailAddress());
+            chargeEntity.setCreatedDate(ZonedDateTime.parse(telephoneChargeRequest.getCreatedDate()));
+            chargeEntity.setCardDetails(cardDetails);
+            chargeEntity.setExternalMetadata(metaDataForTelephonePayments(telephoneChargeRequest));
+            chargeEntity.setGatewayAccount(gatewayAccount);
+            chargeEntity.setProviderSessionId(telephoneChargeRequest.getProviderId());
+            chargeEntity.setLanguage(SupportedLanguage.ENGLISH);
+
+            chargeDao.persist(chargeEntity);
+            chargeDao.merge(chargeEntity);
+            return chargeEntity;
+        }).map(charge ->
+                populateTelephoneCharge(charge).build());
+    }
     
     @Transactional
     private Optional<ChargeEntity> createTelephoneChargeEntity(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {

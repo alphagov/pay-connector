@@ -44,6 +44,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
@@ -256,15 +257,28 @@ public class ChargesApiResource {
             @Context UriInfo uriInfo
     ) {
 
-        TelephoneChargeResponse telephoneChargeResponse = chargeService.createTelephoneCharge(
+        Optional<TelephoneChargeResponse> telephoneChargeResponse = chargeService.updateTelephoneCharge(
+                telephoneChargeCreateRequest,
+                accountId,
+                uriInfo
+        );
+        
+        if (telephoneChargeResponse.isPresent()) {
+            return Response
+                    .status(200)
+                    .entity(telephoneChargeResponse.get())
+                    .build();
+        }
+        
+        telephoneChargeResponse = chargeService.createTelephoneCharge(
                 telephoneChargeCreateRequest, 
                 accountId, 
                 uriInfo
-        ).get();
+        );
         
         return Response
-                .status(200)
-                .entity(telephoneChargeResponse)
+                .status(201)
+                .entity(telephoneChargeResponse.get())
                 .build();
     }
     
