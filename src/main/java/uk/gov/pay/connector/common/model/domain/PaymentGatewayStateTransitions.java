@@ -34,6 +34,7 @@ import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuth
 import uk.gov.pay.connector.events.model.charge.UserApprovedForCapture;
 import uk.gov.pay.connector.events.model.charge.UserApprovedForCaptureAwaitingServiceApproval;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -199,6 +200,17 @@ public class PaymentGatewayStateTransitions {
                         return null;
                     }
                 });
+    }
+    
+    public static List<Class> getAllEventsResultingInTerminalState() {
+        return getInstance().graph.edges()
+                .stream()
+                .filter(endpointPair -> getInstance().graph.successors(endpointPair.nodeV()).isEmpty())
+                .map(getInstance().graph::edgeValue)
+                .flatMap(Optional::stream)
+                .map(me -> (ModelledTypedEvent) me)
+                .map(ModelledTypedEvent::getClazz)
+                .collect(Collectors.toList());
     }
 
     public static boolean isValidTransition(ChargeStatus state, ChargeStatus targetState, Event event) {
