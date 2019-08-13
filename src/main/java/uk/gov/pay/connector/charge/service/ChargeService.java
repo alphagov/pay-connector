@@ -618,6 +618,16 @@ public class ChargeService {
                 });
         return charge;
     }
+    
+    @Transactional
+    public ChargeEntity transitionTelephoneChargeState(
+            ChargeEntity charge,
+            ChargeStatus targetChargeState
+    ) {
+        ChargeStatus fromChargeState = ChargeStatus.fromString(charge.getStatus());
+        charge.setStatus(targetChargeState);
+        return charge;
+    }
 
     @Transactional
     public ChargeEntity transitionChargeState(String chargeId, ChargeStatus targetChargeState) {
