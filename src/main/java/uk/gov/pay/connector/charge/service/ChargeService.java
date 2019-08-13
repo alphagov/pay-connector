@@ -126,46 +126,16 @@ public class ChargeService {
     }
 
     @Transactional
-    public Optional<TelephoneChargeResponse> updateTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
+    public Optional<TelephoneChargeResponse> findTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
 
-        Optional<ChargeEntity> chargeEntityOptional = chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId());
+        Optional<ChargeEntity> chargeEntity = chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId());
 
-        if (chargeEntityOptional.isEmpty()) {
+        if (chargeEntity.isEmpty()) {
             return Optional.empty();
         }
         
-        ChargeEntity chargeEntity = chargeEntityOptional.get();
-
-        return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
-
-            if (telephoneChargeRequest.getAmount() == 0L && !gatewayAccount.isAllowZeroAmount()) {
-                throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
-            }
-
-            CardDetailsEntity cardDetails = new CardDetailsEntity(
-                    LastDigitsCardNumber.of(telephoneChargeRequest.getLastFourDigits()),
-                    FirstDigitsCardNumber.of(telephoneChargeRequest.getFirstSixDigits()),
-                    telephoneChargeRequest.getNameOnCard(),
-                    telephoneChargeRequest.getCardExpiry(),
-                    telephoneChargeRequest.getCardType()
-            );
-
-            // Hard coded CREATED for the time being
-            chargeEntity.setAmount(telephoneChargeRequest.getAmount());
-            chargeEntity.setDescription(telephoneChargeRequest.getDescription());
-            chargeEntity.setEmail(telephoneChargeRequest.getEmailAddress());
-            chargeEntity.setCreatedDate(ZonedDateTime.parse(telephoneChargeRequest.getCreatedDate()));
-            chargeEntity.setCardDetails(cardDetails);
-            chargeEntity.setExternalMetadata(metaDataForTelephonePayments(telephoneChargeRequest));
-            chargeEntity.setGatewayAccount(gatewayAccount);
-            chargeEntity.setProviderSessionId(telephoneChargeRequest.getProviderId());
-            chargeEntity.setLanguage(SupportedLanguage.ENGLISH);
-
-            chargeDao.persist(chargeEntity);
-            chargeDao.merge(chargeEntity);
-            return chargeEntity;
-        }).map(charge ->
-                populateTelephoneCharge(charge).build());
+        return chargeEntity.map(charge ->
+                    populateTelephoneCharge(charge).build()); 
     }
     
     @Transactional
@@ -175,6 +145,8 @@ public class ChargeService {
             if (telephoneChargeRequest.getAmount() == 0L && !gatewayAccount.isAllowZeroAmount()) {
                 throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
             }
+
+            Optional<ChargeEntity> chargeEntityExists = chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId());
             
             CardDetailsEntity cardDetails = new CardDetailsEntity(
                     LastDigitsCardNumber.of(telephoneChargeRequest.getLastFourDigits()),
@@ -184,12 +156,11 @@ public class ChargeService {
                     telephoneChargeRequest.getCardType()
             );
             
-            // Hard coded CREATED for the time being
             ChargeEntity chargeEntity = new ChargeEntity(
                     telephoneChargeRequest.getAmount(),
                     ServicePaymentReference.of(telephoneChargeRequest.getReference()),
                     telephoneChargeRequest.getDescription(),
-                    ChargeStatus.CREATED,
+                    internalChargeStatus(telephoneChargeRequest.getPaymentOutcome().getCode()),
                     telephoneChargeRequest.getEmailAddress(),
                     ZonedDateTime.parse(telephoneChargeRequest.getCreatedDate()),
                     cardDetails,
@@ -200,12 +171,19 @@ public class ChargeService {
             );
             
             chargeDao.persist(chargeEntity);
-            transitionTelephoneChargeState(chargeEntity);
-            chargeDao.merge(chargeEntity);
             return chargeEntity;
         });
     }
     
+    private ChargeStatus internalChargeStatus(String code) {
+        if(code == null) {
+            return AUTHORISATION_SUCCESS;
+        } else if (code.equals("P0010")) {
+            return AUTHORISATION_REJECTED;
+        } else {
+            return AUTHORISATION_ERROR;
+        }
+    }
     
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return createCharge(chargeRequest, accountId, uriInfo)
@@ -617,23 +595,6 @@ public class ChargeService {
                         logger.info("Offered payment state transition to emitter queue [from={}] [to={}] [chargeEventId={}] [chargeId={}]", fromChargeState, targetChargeState, chargeEventEntity.getId(), charge.getExternalId());
                     }
                 });
-        return charge;
-    }
-    
-    @Transactional
-    public ChargeEntity transitionTelephoneChargeState(
-            ChargeEntity charge
-    ) {
-        Map<String, Object> paymentOutcomeMap = ((Map) charge.getExternalMetadata().get().getMetadata().get("payment_outcome"));
-        
-        if(!paymentOutcomeMap.containsKey("code")) {
-            charge.setStatus(AUTHORISATION_SUCCESS);
-        } else if (paymentOutcomeMap.get("code").toString().equals("P0010")) {
-            charge.setStatus(AUTHORISATION_REJECTED);
-        } else if (paymentOutcomeMap.get("code").toString().equals("P0050")){
-            charge.setStatus(AUTHORISATION_ERROR);
-        }
-        
         return charge;
     }
 

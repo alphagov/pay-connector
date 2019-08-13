@@ -257,7 +257,7 @@ public class ChargesApiResource {
             @Context UriInfo uriInfo
     ) {
 
-        Optional<TelephoneChargeResponse> telephoneChargeResponse = chargeService.updateTelephoneCharge(
+        Optional<TelephoneChargeResponse> telephoneChargeResponse = chargeService.findTelephoneCharge(
                 telephoneChargeCreateRequest,
                 accountId,
                 uriInfo
