@@ -7,15 +7,18 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.dao.SearchParams;
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.CardHolderName;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -73,6 +76,7 @@ public class ChargeDaoIT extends DaoITestBase {
     public ExpectedException expectedEx = ExpectedException.none();
 
     private ChargeDao chargeDao;
+    private GatewayAccountDao gatewayAccountDao;
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestRefund defaultTestRefund;
@@ -82,6 +86,7 @@ public class ChargeDaoIT extends DaoITestBase {
     @Before
     public void setUp() {
         chargeDao = env.getInstance(ChargeDao.class);
+        gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
         defaultTestCardDetails = new DatabaseFixtures(databaseTestHelper).validTestCardDetails();
         insertTestAccount();
     }
@@ -1604,6 +1609,53 @@ public class ChargeDaoIT extends DaoITestBase {
         insertTestCharge();
 
         assertThat(chargeDao.findMaxId(), is(defaultTestCharge.getChargeId()));
+    }
+    
+    @Test
+    public void findChargeByProviderId() {
+
+        CardDetailsEntity cardDetails = new CardDetailsEntity(
+                LastDigitsCardNumber.of("1234"),
+                FirstDigitsCardNumber.of("123456"),
+                "Jane Doe",
+                "01/19",
+                "visa"
+        );
+
+        HashMap<String, Object> telephoneJSON = new HashMap<>();
+        HashMap<String, Object> paymentOutcome = new HashMap<>();
+        paymentOutcome.put("status", "success");
+        telephoneJSON.put("authorised_date", "2018-02-21T16:05:33Z");
+        telephoneJSON.put("processor_id", "183f2j8923j8");
+        telephoneJSON.put("auth_code", "666");
+        telephoneJSON.put("payment_outcome", paymentOutcome);
+        telephoneJSON.put("telephone_number", "+447700900796");
+        
+        ExternalMetadata externalMetadata = new ExternalMetadata(telephoneJSON);
+        String paymentProvider = "test provider";
+        GatewayAccountEntity account = new GatewayAccountEntity(paymentProvider, new HashMap<>(), TEST);
+        
+        gatewayAccountDao.persist(account);
+        
+        ChargeEntity chargeEntity = new ChargeEntity(
+                100L,
+                ServicePaymentReference.of("Some reference"),
+                "Some description",
+                ChargeStatus.AUTHORISATION_SUCCESS,
+                "jane.doe@example.com",
+                ZonedDateTime.parse("2018-02-21T16:04:25Z"),
+                cardDetails,
+                externalMetadata,
+                account,
+                "17498-8412u9-1273891239",
+                SupportedLanguage.ENGLISH
+        );
+        
+        chargeDao.persist(chargeEntity);
+        
+        Optional<ChargeEntity> actualChargeEntity = chargeDao.findByProviderSessionId("17498-8412u9-1273891239");
+        
+        assertThat(actualChargeEntity.isPresent(), is(true));
     }
 
     private void insertTestAccount() {
