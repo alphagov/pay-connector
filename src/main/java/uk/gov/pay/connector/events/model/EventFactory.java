@@ -40,6 +40,7 @@ public class EventFactory {
             RefundCreatedByUser.class,
             RefundCreatedByService.class,
             RefundError.class,
+            PaymentCreated.class,
             CaptureSubmitted.class,
             CaptureConfirmed.class
     );
