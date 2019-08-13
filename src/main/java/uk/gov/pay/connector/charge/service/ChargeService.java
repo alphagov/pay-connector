@@ -200,6 +200,7 @@ public class ChargeService {
             );
             
             chargeDao.persist(chargeEntity);
+            transitionTelephoneChargeState(chargeEntity);
             chargeDao.merge(chargeEntity);
             return chargeEntity;
         });
@@ -621,11 +622,18 @@ public class ChargeService {
     
     @Transactional
     public ChargeEntity transitionTelephoneChargeState(
-            ChargeEntity charge,
-            ChargeStatus targetChargeState
+            ChargeEntity charge
     ) {
-        ChargeStatus fromChargeState = ChargeStatus.fromString(charge.getStatus());
-        charge.setStatus(targetChargeState);
+        Map<String, Object> paymentOutcomeMap = ((Map) charge.getExternalMetadata().get().getMetadata().get("payment_outcome"));
+        
+        if(!paymentOutcomeMap.containsKey("code")) {
+            charge.setStatus(AUTHORISATION_SUCCESS);
+        } else if (paymentOutcomeMap.get("code").toString().equals("P0010")) {
+            charge.setStatus(AUTHORISATION_REJECTED);
+        } else if (paymentOutcomeMap.get("code").toString().equals("P0050")){
+            charge.setStatus(AUTHORISATION_ERROR);
+        }
+        
         return charge;
     }
 

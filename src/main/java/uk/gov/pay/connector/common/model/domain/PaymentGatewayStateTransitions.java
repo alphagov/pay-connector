@@ -97,6 +97,8 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(UNDEFINED, CREATED, ModelledEvent.of(PaymentCreated.class));
         graph.putEdgeValue(CREATED, EXPIRED, ModelledEvent.of(PaymentExpired.class));
         graph.putEdgeValue(CREATED, AUTHORISATION_SUCCESS, ModelledEvent.of(AuthorisationSucceeded.class));
+        graph.putEdgeValue(CREATED, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
+        graph.putEdgeValue(CREATED, AUTHORISATION_ERROR, ModelledEvent.of(GatewayErrorDuringAuthorisation.class));
         graph.putEdgeValue(ENTERING_CARD_DETAILS, EXPIRED, ModelledEvent.of(PaymentExpired.class));
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, EXPIRED, ModelledEvent.of(PaymentExpired.class));
         graph.putEdgeValue(AUTHORISATION_3DS_READY, EXPIRED, ModelledEvent.of(PaymentExpired.class));
