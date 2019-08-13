@@ -253,7 +253,7 @@ public class ChargesApiResource {
     @Produces(APPLICATION_JSON)
     public Response createNewTelephoneCharge(
             @PathParam(ACCOUNT_ID) Long accountId,
-            TelephoneChargeCreateRequest telephoneChargeCreateRequest,
+            @Valid TelephoneChargeCreateRequest telephoneChargeCreateRequest,
             @Context UriInfo uriInfo
     ) {
 

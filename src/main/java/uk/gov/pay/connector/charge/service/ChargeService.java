@@ -320,28 +320,39 @@ public class ChargeService {
         Map<String, Object> paymentOutcomeMap = ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome"));
         
         if (paymentOutcomeMap.get("status").toString().equals("failed")) {
-
-            final Supplemental supplemental = new Supplemental(
-                    ((Map) paymentOutcomeMap
-                            .get("supplemental"))
-                            .get("error_code")
-                            .toString(),
-                    ((Map) paymentOutcomeMap
-                            .get("supplemental"))
-                            .get("error_message")
-                            .toString()
-            );
             
-            return telephoneChargeResponse
-                    .paymentOutcome(new PaymentOutcome(
-                            paymentOutcomeMap.get("status").toString(),
-                            paymentOutcomeMap.get("code").toString(),
-                            supplemental
-                    ))
+            telephoneChargeResponse
                     .state(new State(
                             paymentOutcomeMap.get("status").toString(),
                             false,
                             "created",
+                            paymentOutcomeMap.get("code").toString()
+                    ));
+            
+            if (paymentOutcomeMap.containsKey("supplemental")) {
+                Supplemental supplemental = new Supplemental(
+                        ((Map) paymentOutcomeMap
+                                .get("supplemental"))
+                                .get("error_code")
+                                .toString(),
+                        ((Map) paymentOutcomeMap
+                                .get("supplemental"))
+                                .get("error_message")
+                                .toString()
+                );
+                
+                return telephoneChargeResponse
+                        .paymentOutcome(new PaymentOutcome(
+                                paymentOutcomeMap.get("status").toString(),
+                                paymentOutcomeMap.get("code").toString(),
+                                supplemental
+                        ));
+                        
+            }
+            
+            return telephoneChargeResponse
+                    .paymentOutcome(new PaymentOutcome(
+                            paymentOutcomeMap.get("status").toString(),
                             paymentOutcomeMap.get("code").toString()
                     ));
         }
@@ -774,8 +785,11 @@ public class ChargeService {
         HashMap<String, Object> paymentOutcome = new HashMap<>();
         paymentOutcome.put("status", telephoneChargeRequest.getPaymentOutcome().getStatus());
         
-        if (telephoneChargeRequest.getPaymentOutcome().getSupplemental() != null) {
+        if(telephoneChargeRequest.getPaymentOutcome().getCode() != null) {
             paymentOutcome.put("code", telephoneChargeRequest.getPaymentOutcome().getCode());
+        }
+        
+        if (telephoneChargeRequest.getPaymentOutcome().getSupplemental() != null) {
             HashMap<String, Object> supplemental = new HashMap<>();
             supplemental.put("error_code", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorCode());
             supplemental.put("error_message", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorMessage());

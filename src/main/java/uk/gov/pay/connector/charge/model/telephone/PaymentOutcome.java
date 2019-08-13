@@ -1,11 +1,17 @@
 package uk.gov.pay.connector.charge.model.telephone;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import uk.gov.pay.connector.charge.validation.telephone.ValidPaymentOutcome;
+
+@ValidPaymentOutcome
 public class PaymentOutcome {
     
     private String status;
-    
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String code;
-    
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Supplemental supplemental;
 
     public PaymentOutcome() {
@@ -13,6 +19,11 @@ public class PaymentOutcome {
 
     public PaymentOutcome(String status) {
         this.status = status;
+    }
+    
+    public PaymentOutcome(String status, String code) {
+        this.status = status;
+        this.code = code;
     }
     
     public PaymentOutcome(String status, String code, Supplemental supplemental) {

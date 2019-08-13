@@ -2,38 +2,64 @@ package uk.gov.pay.connector.charge.model.telephone;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import org.hibernate.validator.constraints.Length;
+import uk.gov.pay.connector.charge.validation.telephone.ValidCardExpiryDate;
+import uk.gov.pay.connector.charge.validation.telephone.ValidCardFirstSixDigits;
+import uk.gov.pay.connector.charge.validation.telephone.ValidCardLastFourDigits;
+import uk.gov.pay.connector.charge.validation.telephone.ValidCardType;
+
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class TelephoneChargeCreateRequest {
-    
+
+    @NotNull(message = "Field [amount] cannot be null")
+    @Min(value = 0, message = "Field [amount] can be between 0 and 10_000_000")
+    @Max(value = 10_000_000, message = "Field [amount] can be between 0 and 10_000_000")
     private Long amount;
-    
+
+    @NotNull(message = "Field [reference] cannot be null")
+    @Length(max = 255, message = "Field [reference] can have a size between 0 and 255")
     private String reference;
-    
+
+    @NotNull(message = "Field [description] cannot be null")
+    @Length(max = 255, message = "Field [description] can have a size between 0 and 255")
     private String description;
     
     private String createdDate;
     
     private String authorisedDate;
     
+    @NotNull
     private String processorId;
     
+    @NotNull
     private String providerId;
     
     private String authCode;
     
+    @Valid
+    @NotNull
     private PaymentOutcome paymentOutcome;
     
+    @ValidCardType
     private String cardType;
     
     private String nameOnCard;
-    
+
+    @Length(max = 254, message = "Field [email] can have a size between 0 and 254")
     private String emailAddress;
     
+    @ValidCardExpiryDate
     private String cardExpiry;
     
+    @ValidCardLastFourDigits
     private String lastFourDigits;
-    
+
+    @ValidCardFirstSixDigits
     private String firstSixDigits;
     
     private String telephoneNumber;
