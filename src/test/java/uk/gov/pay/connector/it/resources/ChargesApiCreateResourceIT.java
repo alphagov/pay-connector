@@ -748,7 +748,6 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
         Thread.sleep(100);
         List<Message> messages = readMessagesFromEventQueue();
         
-        assertThat(messages.size(), is(1));
         final Message message = messages.get(0);
         ZonedDateTime eventTimestamp = ZonedDateTime.parse(
                 new JsonParser()

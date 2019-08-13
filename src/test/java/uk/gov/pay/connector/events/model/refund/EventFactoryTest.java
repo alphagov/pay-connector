@@ -215,6 +215,7 @@ public class EventFactoryTest {
         Long chargeEventEntityId = 100L;
         ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
                 .aValidChargeEventEntity()
+                .withCharge(charge)
                 .withId(chargeEventEntityId)
                 .build();
         when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
@@ -224,11 +225,15 @@ public class EventFactoryTest {
         
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
-        assertThat(events.size(), is(1));
+        assertThat(events.size(), is(2));
         PaymentCreated event = (PaymentCreated) events.get(0); 
         Assert.assertThat(event, instanceOf(PaymentCreated.class));
         Assert.assertThat(event.getEventDetails(), instanceOf(PaymentCreatedEventDetails.class));
         Assert.assertThat(event.getResourceExternalId(), Is.is(chargeEventEntity.getChargeEntity().getExternalId()));
+
+        RefundAvailabilityUpdated event2 = (RefundAvailabilityUpdated) events.get(1);
+        Assert.assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
+        Assert.assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
     }
 
     @Test
