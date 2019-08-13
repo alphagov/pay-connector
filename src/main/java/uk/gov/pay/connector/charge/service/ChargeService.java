@@ -117,14 +117,7 @@ public class ChargeService {
         this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
         this.eventQueue = eventQueue;
     }
-
-    public Optional<TelephoneChargeResponse> createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
-        
-        return createTelephoneChargeEntity(telephoneChargeCreateRequest, accountId, uriInfo)
-                .map(charge ->
-                        populateTelephoneCharge(charge).build());
-    }
-
+    
     @Transactional
     public Optional<TelephoneChargeResponse> findTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
 
@@ -136,6 +129,13 @@ public class ChargeService {
         
         return chargeEntity.map(charge ->
                     populateTelephoneCharge(charge).build()); 
+    }
+
+    public Optional<TelephoneChargeResponse> createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
+
+        return createTelephoneChargeEntity(telephoneChargeCreateRequest, accountId, uriInfo)
+                .map(charge ->
+                        populateTelephoneCharge(charge).build());
     }
     
     @Transactional
@@ -303,7 +303,7 @@ public class ChargeService {
             telephoneChargeResponse
                     .state(new State(
                             paymentOutcomeMap.get("status").toString(),
-                            false,
+                            true,
                             "created",
                             paymentOutcomeMap.get("code").toString()
                     ));

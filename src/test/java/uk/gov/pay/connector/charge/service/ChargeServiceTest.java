@@ -650,7 +650,7 @@ public class ChargeServiceTest {
         assertThat(chargeResponse.getTelephoneNumber(), is("+447700900796"));
         assertThat(chargeResponse.getPaymentId(), is("dummypaymentid123notpersisted"));
         assertThat(chargeResponse.getState().getStatus(), is("failed"));
-        assertThat(chargeResponse.getState().getFinished(), is(false));
+        assertThat(chargeResponse.getState().getFinished(), is(true));
         assertThat(chargeResponse.getState().getMessage(), is("created"));
         assertThat(chargeResponse.getState().getCode(), is("P0010"));
     }
