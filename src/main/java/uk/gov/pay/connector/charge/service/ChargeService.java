@@ -2,6 +2,7 @@ package uk.gov.pay.connector.charge.service;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
+import net.logstash.logback.argument.StructuredArguments;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +73,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
@@ -406,15 +408,39 @@ public class ChargeService {
                 GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
 
                 // Used by Splunk saved search
-                logger.info("Card pre-operation - charge_external_id={}, charge_status={}, account_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
-                        chargeEntity.getExternalId(),
-                        fromString(chargeEntity.getStatus()),
-                        gatewayAccount.getId(),
-                        chargeEntity.getAmount(),
-                        operationType.getValue(),
-                        gatewayAccount.getGatewayName(),
-                        gatewayAccount.getType(),
-                        operationType.getLockingStatus());
+//                logger.info("Card pre-operation - charge_external_id={}, charge_status={}, account_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
+//                        chargeEntity.getExternalId(),
+//                        fromString(chargeEntity.getStatus()),
+//                        gatewayAccount.getId(),
+//                        chargeEntity.getAmount(),
+//                        operationType.getValue(),
+//                        gatewayAccount.getGatewayName(),
+//                        gatewayAccount.getType(),
+//                        operationType.getLockingStatus());
+                
+//                logger.info("Card pre-operation - {}", 
+//                        kv("charge_external_id", chargeEntity.getExternalId()),
+//                        kv("charge_status", fromString(chargeEntity.getStatus())),
+//                        kv("account_id", gatewayAccount.getId()),
+//                        kv("amount", chargeEntity.getAmount()),
+//                        kv("operation_type", operationType.getValue()),
+//                        kv("provider", gatewayAccount.getGatewayName()),
+//                        kv("provider_type", gatewayAccount.getType()),
+//                        kv("locking_status", operationType.getLockingStatus())
+//                );
+
+//                logger.info("Card pre-operation - {}",
+//                        Map.of("charge_external_id", chargeEntity.getExternalId(),
+//                                "charge_status", fromString(chargeEntity.getStatus()),
+//                                "account_id", gatewayAccount.getId(),
+//                                "amount", chargeEntity.getAmount(),
+//                                "operation_type", operationType.getValue(),
+//                                "provider", gatewayAccount.getGatewayName(),
+//                                "provider_type", gatewayAccount.getType(),
+//                                "locking_status", operationType.getLockingStatus())
+//                );
+                
+                logger.info("Card pre-operation {}", StructuredArguments.value("charge_external_id", chargeEntity.getExternalId()));
 
                 chargeEntity.setStatus(operationType.getLockingStatus());
 

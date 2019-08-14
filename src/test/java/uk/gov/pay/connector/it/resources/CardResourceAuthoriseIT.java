@@ -67,9 +67,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
 
     @Test
     public void shouldAuthoriseCharge_ForValidCards() {
-        for (String cardNo : VALID_SANDBOX_CARD_LIST) {
-            shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor(cardNo, "visa"));
-        }
+            shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("4444333322221111", "visa"));
     }
 
     @Test
