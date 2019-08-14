@@ -75,8 +75,6 @@ public class Transaction implements Nettable {
     private ZonedDateTime createdDate;
     private SupportedLanguage language;
     private boolean delayedCapture;
-
-    @Id
     private TransactionType transactionType;
     private String cardBrand;
     private String cardBrandLabel;
