@@ -89,6 +89,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         bootstrap.addCommand(new DependentResourceWaitCommand());
         bootstrap.addCommand(new RenderStateTransitionGraphCommand());
+        bootstrap.getObjectMapper().getSubtypeResolver().registerSubtypes(LogstashConsoleAppenderFactory.class);
     }
 
     @Override
