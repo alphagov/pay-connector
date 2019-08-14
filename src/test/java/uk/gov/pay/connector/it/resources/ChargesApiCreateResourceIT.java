@@ -5,6 +5,7 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.restassured.response.ValidatableResponse;
 import org.junit.Before;
@@ -27,8 +28,8 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
-import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.time.temporal.ChronoUnit.SECONDS;
@@ -756,7 +757,12 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
                         .get("timestamp")
                         .getAsString()
         );
-        assertThat(message.getBody(), hasJsonPath("$.event_type", equalTo("PAYMENT_CREATED")));
+
+        Optional<JsonObject> createdMessage = messages.stream()
+                .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
+                .filter(e -> e.get("event_type").getAsString().equals("PAYMENT_CREATED"))
+                .findFirst();
+        assertThat(createdMessage.isPresent(), is(true));
         assertThat(eventTimestamp, is(within(200, MILLIS, persistedCreatedDate)));
     }
 

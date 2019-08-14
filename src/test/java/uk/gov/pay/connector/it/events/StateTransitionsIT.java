@@ -21,8 +21,8 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import java.time.ZonedDateTime;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -64,12 +64,22 @@ public class StateTransitionsIT extends ChargingITestBase {
 
         List<Message> messages = readMessagesFromEventQueue();
 
-        assertThat(messages.size(), is(1));
+        assertThat(messages.size(), is(2));
 
-        JsonObject message = new JsonParser().parse(messages.get(0).getBody()).getAsJsonObject();
+        JsonObject cancelledMessage = messages.stream()
+                .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
+                .filter(e -> e.get("event_type").getAsString().equals("CANCELLED_BY_EXTERNAL_SERVICE"))
+                .findFirst().get();
 
-        assertThat(message.get("resource_external_id").getAsString(), is(chargeId));
-        assertThat(message.get("event_type").getAsString(), is("CANCELLED_BY_EXTERNAL_SERVICE"));
+        assertThat(cancelledMessage.get("resource_external_id").getAsString(), is(chargeId));
+        assertThat(cancelledMessage.get("event_type").getAsString(), is("CANCELLED_BY_EXTERNAL_SERVICE"));
+
+        Optional<JsonObject> refundMessage = messages.stream()
+                .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
+                .filter(e -> e.get("event_type").getAsString().equals("REFUND_AVAILABILITY_UPDATED"))
+                .findFirst();
+        assertThat(refundMessage.isPresent(), is(true));
+
     }
 
     @Test

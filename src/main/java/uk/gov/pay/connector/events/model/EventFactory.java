@@ -3,6 +3,7 @@ package uk.gov.pay.connector.events.model;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithReferenceDetails;
 import uk.gov.pay.connector.events.exception.EventCreationException;
@@ -41,9 +42,11 @@ public class EventFactory {
             RefundCreatedByService.class,
             RefundError.class,
             PaymentCreated.class,
-            CaptureSubmitted.class,
-            CaptureConfirmed.class
+            CaptureSubmitted.class
     );
+    
+    private static final List<Class> EVENTS_LEADING_TO_TERMINAL_STATE = 
+            PaymentGatewayStateTransitions.getAllEventsResultingInTerminalState();
 
     @Inject
     public EventFactory(ChargeService chargeService, RefundDao refundDao, ChargeEventDao chargeEventDao, PaymentProviders paymentProviders) {
@@ -141,9 +144,9 @@ public class EventFactory {
     }
 
     private Optional<Event> createRefundAvailabilityUpdatedEvent(
-            String chargeExternalId, ZonedDateTime eventTimestamp, Class<? extends RefundEvent> eventClass)
+            String chargeExternalId, ZonedDateTime eventTimestamp, Class eventClass)
     throws EventCreationException {
-        if (EVENTS_AFFECTING_REFUNDABILITY.contains(eventClass)) {
+        if (EVENTS_AFFECTING_REFUNDABILITY.contains(eventClass) || EVENTS_LEADING_TO_TERMINAL_STATE.contains(eventClass)) {
             RefundAvailabilityUpdated refundAvailabilityUpdatedEvent =
                     Optional.ofNullable(chargeService.findChargeById(chargeExternalId))
                     .map(charge -> new RefundAvailabilityUpdated(

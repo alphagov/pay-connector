@@ -20,6 +20,7 @@ import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithReferenceD
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.events.model.ResourceType;
+import uk.gov.pay.connector.events.model.charge.CancelByExternalServiceSubmitted;
 import uk.gov.pay.connector.events.model.charge.CaptureAbandonedAfterTooManyRetries;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
@@ -246,13 +247,13 @@ public class EventFactoryTest {
         when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
                 Optional.of(chargeEventEntity)
         );
-        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, CaptureAbandonedAfterTooManyRetries.class);
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, CancelByExternalServiceSubmitted.class);
 
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
         assertThat(events.size(), is(1));
-        CaptureAbandonedAfterTooManyRetries event = (CaptureAbandonedAfterTooManyRetries) events.get(0);
-        Assert.assertThat(event, instanceOf(CaptureAbandonedAfterTooManyRetries.class));
+        CancelByExternalServiceSubmitted event = (CancelByExternalServiceSubmitted) events.get(0);
+        Assert.assertThat(event, instanceOf(CancelByExternalServiceSubmitted.class));
         Assert.assertThat(event.getEventDetails(), instanceOf(EmptyEventDetails.class));
     }
 
@@ -299,6 +300,31 @@ public class EventFactoryTest {
         assertThat(events.size(), is(2));
         CaptureSubmitted event1 = (CaptureSubmitted) events.get(0);
         Assert.assertThat(event1, instanceOf(CaptureSubmitted.class));
+
+        RefundAvailabilityUpdated event2 = (RefundAvailabilityUpdated) events.get(1);
+        Assert.assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
+        Assert.assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
+    }
+
+    @Test
+    public void shouldCreatedARefundAvailabilityUpdatedEventForEventThatLeadsToTerminalState() throws Exception {
+        Long chargeEventEntityId = 100L;
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withCharge(charge)
+                .withId(chargeEventEntityId)
+                .build();
+        when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
+                Optional.of(chargeEventEntity)
+        );
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, CaptureAbandonedAfterTooManyRetries.class);
+
+        List<Event> events = eventFactory.createEvents(paymentStateTransition);
+
+        assertThat(events.size(), is(2));
+        CaptureAbandonedAfterTooManyRetries event = (CaptureAbandonedAfterTooManyRetries) events.get(0);
+        Assert.assertThat(event, instanceOf(CaptureAbandonedAfterTooManyRetries.class));
+        Assert.assertThat(event.getEventDetails(), instanceOf(EmptyEventDetails.class));
 
         RefundAvailabilityUpdated event2 = (RefundAvailabilityUpdated) events.get(1);
         Assert.assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
