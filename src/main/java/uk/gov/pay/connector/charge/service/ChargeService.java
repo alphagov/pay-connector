@@ -145,8 +145,6 @@ public class ChargeService {
             if (telephoneChargeRequest.getAmount() == 0L && !gatewayAccount.isAllowZeroAmount()) {
                 throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
             }
-
-            Optional<ChargeEntity> chargeEntityExists = chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId());
             
             CardDetailsEntity cardDetails = new CardDetailsEntity(
                     LastDigitsCardNumber.of(telephoneChargeRequest.getLastFourDigits()),
