@@ -1181,4 +1181,21 @@
                 columnName="return_url" />
     </changeSet>
 
+    <changeSet id="add integration_version_3ds column to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="integration_version_3ds" type="smallint">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add default to integration_version_3ds" author="">
+        <addDefaultValue tableName="gateway_accounts" columnName="integration_version_3ds" defaultValue="1"/>
+    </changeSet>
+
+    <changeSet id="update integration_version_3ds to be non-nullable" author="">
+        <addNotNullConstraint tableName="gateway_accounts"
+                              columnName="integration_version_3ds"
+                              defaultNullValue="1"/>
+    </changeSet>
+
 </databaseChangeLog>
