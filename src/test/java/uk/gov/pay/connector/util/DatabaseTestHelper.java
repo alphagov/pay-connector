@@ -47,7 +47,8 @@ public class DatabaseTestHelper {
                                   long corporateCreditCardSurchargeAmount,
                                   long corporateDebitCardSurchargeAmount,
                                   long corporatePrepaidCreditCardSurchargeAmount,
-                                  long corporatePrepaidDebitCardSurchargeAmount) {
+                                  long corporatePrepaidDebitCardSurchargeAmount,
+                                  int integrationVersion3ds) {
         try {
             PGobject jsonObject = new PGobject();
             jsonObject.setType("json");
@@ -68,8 +69,9 @@ public class DatabaseTestHelper {
                                     "                              corporate_credit_card_surcharge_amount,\n" +
                                     "                              corporate_debit_card_surcharge_amount,\n" +
                                     "                              corporate_prepaid_credit_card_surcharge_amount,\n" +
-                                    "                              corporate_prepaid_debit_card_surcharge_amount)\n" +
-                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                    "                              corporate_prepaid_debit_card_surcharge_amount," +
+                                    "                              integration_version_3ds)\n" +
+                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                             Long.valueOf(accountId),
                             paymentGateway,
                             jsonObject,
@@ -81,7 +83,8 @@ public class DatabaseTestHelper {
                             corporateCreditCardSurchargeAmount,
                             corporateDebitCardSurchargeAmount,
                             corporatePrepaidCreditCardSurchargeAmount,
-                            corporatePrepaidDebitCardSurchargeAmount)
+                            corporatePrepaidDebitCardSurchargeAmount,
+                            integrationVersion3ds)
             );
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -89,11 +92,11 @@ public class DatabaseTestHelper {
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials) {
-        addGatewayAccount(accountId, paymentProvider, credentials, null, TEST, null, null, EmailCollectionMode.MANDATORY, 0, 0, 0, 0);
+        addGatewayAccount(accountId, paymentProvider, credentials, null, TEST, null, null, EmailCollectionMode.MANDATORY, 0, 0, 0, 0,2);
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials, GatewayAccountEntity.Type gatewayAccountType) {
-        addGatewayAccount(accountId, paymentProvider, credentials, null, gatewayAccountType, null, null, EmailCollectionMode.MANDATORY, 0, 0, 0, 0);
+        addGatewayAccount(accountId, paymentProvider, credentials, null, gatewayAccountType, null, null, EmailCollectionMode.MANDATORY, 0, 0, 0, 0, 2);
     }
 
     public void addGatewayAccount(long accountId, String paymentProvider) {
@@ -101,15 +104,15 @@ public class DatabaseTestHelper {
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider) {
-        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, null, null, EmailCollectionMode.MANDATORY, 0, 0, 0, 0);
+        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, null, null, EmailCollectionMode.MANDATORY, 0, 0, 0, 0, 2);
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider, String description, String analyticsId, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount, long corporatePrepaidCreditCardSurchargeAmount, long corporatePrepaidDebitCardSurchargeAmount) {
-        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId, EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, corporatePrepaidCreditCardSurchargeAmount, corporatePrepaidDebitCardSurchargeAmount);
+        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId, EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, corporatePrepaidCreditCardSurchargeAmount, corporatePrepaidDebitCardSurchargeAmount, 2);
     }
 
     public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials, String serviceName, GatewayAccountEntity.Type type, String description, String analyticsId, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount, long corporatePrepaidCreditCardSurchargeAmount, long corporatePrepaidDebitCardSurchargeAmount) {
-        addGatewayAccount(accountId, paymentProvider, credentials, serviceName, type, description, analyticsId, EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, corporatePrepaidCreditCardSurchargeAmount, corporatePrepaidDebitCardSurchargeAmount);
+        addGatewayAccount(accountId, paymentProvider, credentials, serviceName, type, description, analyticsId, EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, corporatePrepaidCreditCardSurchargeAmount, corporatePrepaidDebitCardSurchargeAmount, 2);
     }
 
     public void updateGatewayAccountAllowZeroAmount(long gatewayAccountId, boolean allowZeroAmount) {

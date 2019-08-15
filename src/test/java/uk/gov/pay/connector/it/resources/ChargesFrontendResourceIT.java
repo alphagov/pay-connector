@@ -609,6 +609,7 @@ public class ChargesFrontendResourceIT {
                 .body("gateway_account.analytics_id", is(analyticsId))
                 .body("gateway_account.corporate_credit_card_surcharge_amount", isNumber(corporateCreditCardSurchargeAmount))
                 .body("gateway_account.corporate_debit_card_surcharge_amount", isNumber(corporateDebitCardSurchargeAmount))
+                .body("gateway_account.integration_version_3ds", is(2))
                 .body("gateway_account.card_types", is(notNullValue()))
                 .body("gateway_account.card_types", containsInAnyOrder(
                         allOf(

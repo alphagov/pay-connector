@@ -64,6 +64,9 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("allow_zero_amount")
     private boolean allowZeroAmount;
     
+    @JsonProperty("integration_version_3ds")
+    private int integrationVersion3ds;
+    
     public GatewayAccountResourceDTO() {
     }
 
@@ -82,7 +85,8 @@ public class GatewayAccountResourceDTO {
                                      Map<EmailNotificationType, EmailNotificationEntity> emailNotifications,
                                      EmailCollectionMode emailCollectionMode,
                                      boolean requires3ds,
-                                     boolean allowZeroAmount) {
+                                     boolean allowZeroAmount,
+                                     int integrationVersion3ds) {
         this.accountId = accountId;
         this.paymentProvider = paymentProvider;
         this.type = type;
@@ -99,6 +103,7 @@ public class GatewayAccountResourceDTO {
         this.emailCollectionMode = emailCollectionMode;
         this.requires3ds = requires3ds;
         this.allowZeroAmount = allowZeroAmount;
+        this.integrationVersion3ds = integrationVersion3ds;
     }
 
     public static GatewayAccountResourceDTO fromEntity(GatewayAccountEntity gatewayAccountEntity) {
@@ -118,7 +123,8 @@ public class GatewayAccountResourceDTO {
                 gatewayAccountEntity.getEmailNotifications(),
                 gatewayAccountEntity.getEmailCollectionMode(),
                 gatewayAccountEntity.isRequires3ds(),
-                gatewayAccountEntity.isAllowZeroAmount()
+                gatewayAccountEntity.isAllowZeroAmount(),
+                gatewayAccountEntity.getIntegrationVersion3ds()
         );
     }
 
@@ -192,5 +198,9 @@ public class GatewayAccountResourceDTO {
     
     public boolean isAllowZeroAmount() {
         return allowZeroAmount;
+    }
+
+    public int getIntegrationVersion3ds() {
+        return integrationVersion3ds;
     }
 }

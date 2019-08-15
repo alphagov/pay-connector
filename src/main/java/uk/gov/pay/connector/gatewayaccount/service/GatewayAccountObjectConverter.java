@@ -12,6 +12,8 @@ import java.util.Map;
 
 public class GatewayAccountObjectConverter {
 
+    private static final int DEFAULT_INTEGRATION_VERSION_3_DS = 1;
+
     public static GatewayAccountEntity createEntityFrom(GatewayAccountRequest gatewayAccountRequest) {
 
         Map<String, String> credentials = gatewayAccountRequest.getCredentialsAsMap();
@@ -25,6 +27,7 @@ public class GatewayAccountObjectConverter {
         gatewayAccountEntity.setDescription(gatewayAccountRequest.getDescription());
         gatewayAccountEntity.setAnalyticsId(gatewayAccountRequest.getAnalyticsId());
         gatewayAccountEntity.setRequires3ds(gatewayAccountRequest.getRequires3ds());
+        gatewayAccountEntity.setIntegrationVersion3ds(DEFAULT_INTEGRATION_VERSION_3_DS);
 
         gatewayAccountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(gatewayAccountEntity));
         gatewayAccountEntity.addNotification(EmailNotificationType.REFUND_ISSUED, new EmailNotificationEntity(gatewayAccountEntity));

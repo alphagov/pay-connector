@@ -316,6 +316,7 @@ public class  DatabaseFixtures {
         private long corporateDebitCardSurchargeAmount;
         private long corporatePrepaidCreditCardSurchargeAmount;
         private long corporatePrepaidDebitCardSurchargeAmount;
+        private int integrationVersion3ds = 2;
 
         public long getAccountId() {
             return accountId;
@@ -436,6 +437,11 @@ public class  DatabaseFixtures {
             return this;
         }
         
+        public TestAccount withIntegrationVersion3ds(int integrationVersion3ds) {
+            this.integrationVersion3ds = integrationVersion3ds;
+            return this;
+        }
+        
         public TestAccount insert() {
             databaseTestHelper.addGatewayAccount(
                     String.valueOf(accountId),
@@ -449,7 +455,8 @@ public class  DatabaseFixtures {
                     corporateCreditCardSurchargeAmount,
                     corporateDebitCardSurchargeAmount,
                     corporatePrepaidCreditCardSurchargeAmount,
-                    corporatePrepaidDebitCardSurchargeAmount);
+                    corporatePrepaidDebitCardSurchargeAmount,
+                    integrationVersion3ds);
             for (TestCardType cardType : cardTypes) {
                 databaseTestHelper.addAcceptedCardType(this.getAccountId(), cardType.getId());
             }

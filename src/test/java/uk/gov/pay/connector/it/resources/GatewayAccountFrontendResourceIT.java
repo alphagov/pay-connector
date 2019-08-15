@@ -76,7 +76,8 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
                 .body("corporate_debit_card_surcharge_amount", is(50))
                 .body("allow_apple_pay", is(true))
                 .body("allow_google_pay", is(false))
-                .body("allow_zero_amount", is(true));
+                .body("allow_zero_amount", is(true))
+                .body("integration_version_3ds", is(1));
     }
 
     @Test
