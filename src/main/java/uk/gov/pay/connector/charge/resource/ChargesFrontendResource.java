@@ -15,8 +15,10 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.inject.Inject;
@@ -52,12 +54,14 @@ public class ChargesFrontendResource {
     private final ChargeDao chargeDao;
     private final ChargeService chargeService;
     private final CardTypeDao cardTypeDao;
+    private final Worldpay3dsFlexJwtService worldpay3dsFlexJwtService;
 
     @Inject
-    public ChargesFrontendResource(ChargeDao chargeDao, ChargeService chargeService, CardTypeDao cardTypeDao) {
+    public ChargesFrontendResource(ChargeDao chargeDao, ChargeService chargeService, CardTypeDao cardTypeDao, Worldpay3dsFlexJwtService worldpay3dsFlexJwtService) {
         this.chargeDao = chargeDao;
         this.chargeService = chargeService;
         this.cardTypeDao = cardTypeDao;
+        this.worldpay3dsFlexJwtService = worldpay3dsFlexJwtService;
     }
 
     @GET
@@ -69,6 +73,17 @@ public class ChargesFrontendResource {
         return chargeDao.findByExternalId(chargeId)
                 .map(charge -> Response.ok(buildChargeResponse(uriInfo, charge)).build())
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
+    }
+
+    @GET
+    @Path("/v1/frontend/charges/{chargeId}/worldpay/3ds-flex/ddc")
+    @Produces(APPLICATION_JSON)
+    public Response getWorldpay3dsFlexDdcJwt(@PathParam("chargeId") String chargeId) {
+
+        ChargeEntity chargeEntity = chargeService.findChargeById(chargeId);
+        String token = worldpay3dsFlexJwtService.generateDdcToken(GatewayAccount.valueOf(chargeEntity.getGatewayAccount()));
+
+        return Response.ok().entity(Map.of("jwt", token)).build();
     }
 
     @PATCH
