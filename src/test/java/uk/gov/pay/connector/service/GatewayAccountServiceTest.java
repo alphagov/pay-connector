@@ -36,16 +36,22 @@ public class GatewayAccountServiceTest {
 
     @Mock
     private GatewayAccountDao mockGatewayAccountDao;
+    
     @Mock
     private CardTypeDao mockCardTypeDao;
+    
     @Mock
     private GatewayAccountEntity mockGatewayAccountEntity;
+    
     @Mock
     private GatewayAccountEntity getMockGatewayAccountEntity1;
+    
     @Mock
     private GatewayAccountEntity getMockGatewayAccountEntity2;
 
     private GatewayAccountService gatewayAccountService;
+    
+    private static final Long GATEWAY_ACCOUNT_ID = 100L;
 
     @Before
     public void setUp() {
@@ -58,11 +64,9 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldGetGatewayAccount() {
-        long gatewayAccountId = 42;
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
 
-        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(mockGatewayAccountEntity));
-
-        Optional<GatewayAccountEntity> gatewayAccountEntity = gatewayAccountService.getGatewayAccount(gatewayAccountId);
+        Optional<GatewayAccountEntity> gatewayAccountEntity = gatewayAccountService.getGatewayAccount(GATEWAY_ACCOUNT_ID);
 
         assertThat(gatewayAccountEntity.get(), is(this.mockGatewayAccountEntity));
     }
@@ -91,157 +95,154 @@ public class GatewayAccountServiceTest {
 
     @Test
     public void shouldUpdateNotifySettingsWhenUpdate() {
-        Long gatewayAccountId = 100L;
-        Map<String, String> settings = ImmutableMap.of("api_token", "anapitoken",
+        Map<String, String> settings = Map.of("api_token", "anapitoken",
                 "template_id", "atemplateid");
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "replace",
                 "path", "notify_settings",
                 "value", settings)));
-        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
 
-        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
 
-        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
 
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(entity).setNotifySettings(settings);
-        verify(mockGatewayAccountDao).merge(entity);
+        verify(mockGatewayAccountEntity).setNotifySettings(settings);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
     @Test
     public void shouldUpdateNotifySettingsWhenRemove() {
-        Long gatewayAccountId = 100L;
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "replace",
                 "path", "notify_settings")));
-        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
 
-        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
 
-        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
 
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(entity).setNotifySettings(null);
-        verify(mockGatewayAccountDao).merge(entity);
+        verify(mockGatewayAccountEntity).setNotifySettings(null);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
     @Test
     public void shouldUpdateEmailCollectionMode() {
-        Long gatewayAccountId = 100L;
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "replace",
                 "path", "email_collection_mode",
                 "value", "off")));
-        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
 
-        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
 
-        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
 
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        InOrder inOrder = Mockito.inOrder(entity, mockGatewayAccountDao);
-        inOrder.verify(entity).setEmailCollectionMode(EmailCollectionMode.OFF);
-        inOrder.verify(mockGatewayAccountDao).merge(entity);
+        InOrder inOrder = Mockito.inOrder(mockGatewayAccountEntity, mockGatewayAccountDao);
+        inOrder.verify(mockGatewayAccountEntity).setEmailCollectionMode(EmailCollectionMode.OFF);
+        inOrder.verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
     
     @Test
     public void shouldUpdateCorporateCreditCardSurchargeAmount() {
-        Long gatewayAccountId = 100L;
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "replace",
                 "path", "corporate_credit_card_surcharge_amount",
                 "value", 100)));
-        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
 
-        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
-        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(entity).setCorporateCreditCardSurchargeAmount(100L);
-        verify(mockGatewayAccountDao).merge(entity);
+        verify(mockGatewayAccountEntity).setCorporateCreditCardSurchargeAmount(100L);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
     @Test
     public void shouldUpdateCorporateDebitCardSurchargeAmount() {
-        Long gatewayAccountId = 100L;
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "replace",
                 "path", "corporate_debit_card_surcharge_amount",
                 "value", 100)));
-        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
 
-        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
-        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(entity).setCorporateDebitCardSurchargeAmount(100L);
-        verify(mockGatewayAccountDao).merge(entity);
+        verify(mockGatewayAccountEntity).setCorporateDebitCardSurchargeAmount(100L);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
     @Test
     public void shouldUpdateCorporatePrepaidDebitCardSurchargeAmount() {
-        Long gatewayAccountId = 100L;
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "replace",
                 "path", "corporate_prepaid_debit_card_surcharge_amount",
                 "value", 100)));
-        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
 
-        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
-        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(entity).setCorporatePrepaidDebitCardSurchargeAmount(100L);
-        verify(mockGatewayAccountDao).merge(entity);
+        verify(mockGatewayAccountEntity).setCorporatePrepaidDebitCardSurchargeAmount(100L);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
     @Test
     public void shouldUpdateCorporatePrepaidCreditCardSurchargeAmount() {
-        Long gatewayAccountId = 100L;
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "replace",
                 "path", "corporate_prepaid_credit_card_surcharge_amount",
                 "value", 100)));
-        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
 
-        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
-        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(entity).setCorporatePrepaidCreditCardSurchargeAmount(100L);
-        verify(mockGatewayAccountDao).merge(entity);
+        verify(mockGatewayAccountEntity).setCorporatePrepaidCreditCardSurchargeAmount(100L);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
     @Test(expected = DigitalWalletNotSupportedGatewayException.class)
     public void shouldNotAllowDigitalWalletForUnsupportedGateways() {
-        Long gatewayAccountId = 100L;
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "add",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "add",
                 "path", "allow_apple_pay",
                 "value", "true")));
-        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
-        when(entity.getGatewayName()).thenReturn("epdq");
-        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
-        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+
+        when(mockGatewayAccountEntity.getGatewayName()).thenReturn("epdq");
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(false));
     }
 
     @Test
     public void shouldUpdateAllowZeroAmountTrue() {
-        Long gatewayAccountId = 100L;
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "replace",
                 "path", "allow_zero_amount",
                 "value", true)));
-        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
 
-        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
-        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(entity).setAllowZeroAmount(true);
-        verify(mockGatewayAccountDao).merge(entity);
+        verify(mockGatewayAccountEntity).setAllowZeroAmount(true);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
     @Test
     public void shouldUpdateAllowZeroAmountFalse() {
-        Long gatewayAccountId = 100L;
-        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(ImmutableMap.of("op", "replace",
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "replace",
                 "path", "allow_zero_amount",
                 "value", false)));
-        GatewayAccountEntity entity = mock(GatewayAccountEntity.class);
 
-        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(entity));
-        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(gatewayAccountId, request);
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(entity).setAllowZeroAmount(false);
-        verify(mockGatewayAccountDao).merge(entity);
+        verify(mockGatewayAccountEntity).setAllowZeroAmount(false);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
+    public void shouldUpdateIntegrationVersion3ds() {
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
+                "op", "replace",
+                "path", "integration_version_3ds",
+                "value", 2
+        )));
+        
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        verify(mockGatewayAccountEntity).setIntegrationVersion3ds(2);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 }
