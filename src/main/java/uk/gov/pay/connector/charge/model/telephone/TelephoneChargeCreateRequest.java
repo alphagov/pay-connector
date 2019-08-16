@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class TelephoneChargeCreateRequest {
     
-    private int amount;
+    private Long amount;
     
     private String reference;
     
@@ -61,7 +61,7 @@ public class TelephoneChargeCreateRequest {
         this.telephoneNumber = chargeBuilder.telephoneNumber;
     }
     
-    public int getAmount() {
+    public Long getAmount() {
         return amount;
     }
 
@@ -126,7 +126,7 @@ public class TelephoneChargeCreateRequest {
     }
     
     public static class ChargeBuilder {
-        private int amount;
+        private Long amount;
 
         private String reference;
 
@@ -158,7 +158,7 @@ public class TelephoneChargeCreateRequest {
 
         private String telephoneNumber;
         
-        public ChargeBuilder amount(int amount) {
+        public ChargeBuilder amount(Long amount) {
             this.amount = amount;
             return this;
         }
