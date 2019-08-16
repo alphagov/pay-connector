@@ -6,10 +6,13 @@ import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.InjectorLookup;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -29,6 +32,7 @@ import static java.lang.Runtime.getRuntime;
  */
 final class DropwizardTestApplications {
 
+    private static final Logger logger = LoggerFactory.getLogger(DropwizardTestApplications.class);
     private static final Map<Pair<Class<? extends Application>, String>, DropwizardTestSupport> apps = new ConcurrentHashMap<>();
     private static Set<ConfigOverride> configs = Sets.newHashSet();
 
@@ -59,9 +63,13 @@ final class DropwizardTestApplications {
     }
 
     private static void shutdownIfConfigHasChanged(ConfigOverride[] configOverrides) {
-        if (!configs.equals(Sets.newHashSet(configOverrides))) {
+        var newConfigOverrides = Sets.newHashSet(configOverrides);
+        if (!configs.equals(newConfigOverrides)) {
+            logger.info("Shutting down dropwizard as config has changed");
             apps.values().forEach(DropwizardTestSupport::after);
             apps.clear();
+        } else {
+            logger.info("Config was not changed.");
         }
     }
 
