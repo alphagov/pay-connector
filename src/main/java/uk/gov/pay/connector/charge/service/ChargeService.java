@@ -621,7 +621,7 @@ public class ChargeService {
         return operationType.getLockingStatus().equals(ChargeStatus.fromString(chargeEntity.getStatus()));
     }
     
-    private ExternalMetadata metaDataForTelephonePayments(TelephoneChargeCreateRequest telephoneChargeRequest) {
+    private ExternalMetadata storeExtraFieldsInMetaDataForTelephonePayments(TelephoneChargeCreateRequest telephoneChargeRequest) {
         HashMap<String, Object> telephoneJSON = new HashMap<>();
         telephoneJSON.put("created_date", telephoneChargeRequest.getCreatedDate());
         telephoneJSON.put("authorised_date", telephoneChargeRequest.getAuthorisedDate());
