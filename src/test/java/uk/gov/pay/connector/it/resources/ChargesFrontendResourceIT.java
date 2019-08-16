@@ -63,6 +63,7 @@ import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
@@ -93,8 +94,16 @@ public class ChargesFrontendResourceIT {
         databaseTestHelper = testContext.getDatabaseTestHelper();
         CardTypeEntity mastercardCredit = databaseTestHelper.getMastercardCreditCard();
         CardTypeEntity visaCredit = databaseTestHelper.getVisaCreditCard();
-        databaseTestHelper.addGatewayAccount(accountId, paymentProvider, description, analyticsId,
-                corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, 0, 0);
+        var gatewayAccountParams = anAddGatewayAccountParams()
+                .withAccountId(accountId)
+                .withPaymentGateway(paymentProvider)
+                .withDescription(description)
+                .withAnalyticsId(analyticsId)
+                .withCorporateCreditCardSurchargeAmount(corporateCreditCardSurchargeAmount)
+                .withCorporateDebitCardSurchargeAmount(corporateDebitCardSurchargeAmount)
+                .withServiceName("a cool service")
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
         databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), mastercardCredit.getId());
         databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), visaCredit.getId());
         connectorRestApi = new RestAssuredClient(testContext.getPort(), accountId);
@@ -335,7 +344,11 @@ public class ChargesFrontendResourceIT {
         
         String anotherAccountId = String.valueOf(nextLong());
         Long chargeId3 = nextLong();
-        databaseTestHelper.addGatewayAccount(anotherAccountId, "worldpay");
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(anotherAccountId)
+                .withPaymentGateway("worldpay")
+                .withServiceName("a cool service")
+                .build());
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId3)
                 .withExternalChargeId(chargeId3.toString())

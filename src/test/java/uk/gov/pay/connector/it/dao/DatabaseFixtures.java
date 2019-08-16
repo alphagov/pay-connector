@@ -28,6 +28,7 @@ import java.util.UUID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 public class  DatabaseFixtures {
 
@@ -443,20 +444,21 @@ public class  DatabaseFixtures {
         }
         
         public TestAccount insert() {
-            databaseTestHelper.addGatewayAccount(
-                    String.valueOf(accountId),
-                    paymentProvider,
-                    credentials,
-                    serviceName,
-                    type,
-                    description,
-                    analyticsId,
-                    emailCollectionMode,
-                    corporateCreditCardSurchargeAmount,
-                    corporateDebitCardSurchargeAmount,
-                    corporatePrepaidCreditCardSurchargeAmount,
-                    corporatePrepaidDebitCardSurchargeAmount,
-                    integrationVersion3ds);
+            databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(accountId))
+                    .withPaymentGateway(paymentProvider)
+                    .withCredentials(credentials)
+                    .withServiceName(serviceName)
+                    .withProviderUrlType(type)
+                    .withDescription(description)
+                    .withAnalyticsId(analyticsId)
+                    .withEmailCollectionMode(emailCollectionMode)
+                    .withCorporateCreditCardSurchargeAmount(corporateCreditCardSurchargeAmount)
+                    .withCorporateDebitCardSurchargeAmount(corporateDebitCardSurchargeAmount)
+                    .withCorporatePrepaidCreditCardSurchargeAmount(corporatePrepaidCreditCardSurchargeAmount)
+                    .withCorporatePrepaidDebitCardSurchargeAmount(corporatePrepaidDebitCardSurchargeAmount)
+                    .withIntegrationVersion3ds(integrationVersion3ds)
+                    .build());
             for (TestCardType cardType : cardTypes) {
                 databaseTestHelper.addAcceptedCardType(this.getAccountId(), cardType.getId());
             }

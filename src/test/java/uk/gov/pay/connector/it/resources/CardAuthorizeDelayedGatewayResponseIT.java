@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -10,9 +9,11 @@ import uk.gov.pay.commons.testing.port.PortFactory;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.util.AddGatewayAccountParams;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 
 import static io.dropwizard.testing.ConfigOverride.config;
 import static io.restassured.RestAssured.given;
@@ -27,6 +28,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 public class CardAuthorizeDelayedGatewayResponseIT extends ChargingITestBase {
     private int port = PortFactory.findFreePort();
@@ -60,13 +62,18 @@ public class CardAuthorizeDelayedGatewayResponseIT extends ChargingITestBase {
     @Before
     public void setUp() {
         databaseTestHelper = app.getDatabaseTestHelper();
-        databaseTestHelper.addGatewayAccount(accountId, "sandbox", ImmutableMap.of(
-                CREDENTIALS_MERCHANT_ID, "merchant-id",
-                CREDENTIALS_USERNAME, "test-user",
-                CREDENTIALS_PASSWORD, "test-password",
-                CREDENTIALS_SHA_IN_PASSPHRASE, "test-sha-in-passphrase",
-                CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
-        ));
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withAccountId(accountId)
+                .withPaymentGateway("sandbox")
+                .withCredentials(Map.of(
+                        CREDENTIALS_MERCHANT_ID, "merchant-id",
+                        CREDENTIALS_USERNAME, "test-user",
+                        CREDENTIALS_PASSWORD, "test-password",
+                        CREDENTIALS_SHA_IN_PASSPHRASE, "test-sha-in-passphrase",
+                        CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
+                ))
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
         connectorRestApiClient = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 

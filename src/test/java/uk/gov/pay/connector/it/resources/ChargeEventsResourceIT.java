@@ -33,6 +33,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -50,7 +51,12 @@ public class ChargeEventsResourceIT {
     public void setUp() {
         databaseTestHelper = testContext.getDatabaseTestHelper();
         connectorApi = new RestAssuredClient(testContext.getPort(), accountId);
-        databaseTestHelper.addGatewayAccount(accountId, "sandbox");
+        var gatewayAccountParams = anAddGatewayAccountParams()
+                .withAccountId(accountId)
+                .withPaymentGateway("sandbox")
+                .withServiceName("a cool service")
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
     }
 
     @After

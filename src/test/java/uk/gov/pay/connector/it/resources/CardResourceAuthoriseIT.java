@@ -41,6 +41,7 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildDetailedJsonAuthori
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithFullAddress;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -241,8 +242,15 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
     public void shouldPersistCorporateSurcharge() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         long corporateCreditCardSurchargeAmount = 2222L;
-        databaseTestHelper.addGatewayAccount(accountId, "sandbox", "description", "",
-                corporateCreditCardSurchargeAmount, 0, 0, 0);
+        var gatewayAccountParams = anAddGatewayAccountParams()
+                .withAccountId(accountId)
+                .withPaymentGateway("sandbox")
+                .withDescription("description")
+                .withAnalyticsId("")
+                .withCorporateCreditCardSurchargeAmount(corporateCreditCardSurchargeAmount)
+                .withServiceName("a cool service")
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
 
         String externalChargeId = createNewChargeWithAccountId(ENTERING_CARD_DETAILS, randomId(), accountId, databaseTestHelper).toString();
         String cardDetails = buildCorporateJsonAuthorisationDetailsFor(PayersCardType.CREDIT);

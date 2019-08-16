@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.dao;
 
-import com.google.common.collect.ImmutableMap;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -33,6 +32,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 public class GatewayAccountDaoIT extends DaoITestBase {
 
@@ -191,7 +191,11 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     @Test
     public void findById_shouldUpdateEmptyCredentials() {
         String paymentProvider = "test provider";
-        databaseTestHelper.addGatewayAccount(gatewayAccountId, paymentProvider);
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .withPaymentGateway(paymentProvider)
+                .withServiceName("a cool service")
+                .build());
 
         final Optional<GatewayAccountEntity> maybeGatewayAccount = gatewayAccountDao.findById(gatewayAccountId);
         assertThat(maybeGatewayAccount.isPresent(), is(true));
@@ -216,11 +220,15 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     @Test
     public void findById_shouldUpdateAndRetrieveCredentialsWithSpecialCharacters() {
         String paymentProvider = "test provider";
-        databaseTestHelper.addGatewayAccount(gatewayAccountId, paymentProvider);
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .withPaymentGateway(paymentProvider)
+                .withServiceName("a cool service")
+                .build());
 
         String aUserNameWithSpecialChars = "someone@some{[]where&^%>?\\/";
         String aPasswordWithSpecialChars = "56g%%Bqv\\>/<wdUpi@#bh{[}]6JV+8w";
-        ImmutableMap<String, String> credMap = ImmutableMap.of("username", aUserNameWithSpecialChars, "password", aPasswordWithSpecialChars);
+        var credMap = Map.of("username", aUserNameWithSpecialChars, "password", aPasswordWithSpecialChars);
 
         final Optional<GatewayAccountEntity> maybeGatewayAccount = gatewayAccountDao.findById(gatewayAccountId);
         assertThat(maybeGatewayAccount.isPresent(), is(true));
@@ -239,7 +247,11 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     @Test
     public void findById_shouldFindAccountInfoByIdWhenFindingByIdReturningGatewayAccount() {
         String paymentProvider = "test provider";
-        databaseTestHelper.addGatewayAccount(gatewayAccountId, paymentProvider);
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .withPaymentGateway(paymentProvider)
+                .withServiceName("a cool service")
+                .build());
 
         Optional<GatewayAccountEntity> gatewayAccountOpt = gatewayAccountDao.findById(gatewayAccountId);
 
@@ -256,7 +268,11 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         credentials.put("username", "Username");
         credentials.put("password", "Password");
 
-        databaseTestHelper.addGatewayAccount(String.valueOf(gatewayAccountId), paymentProvider, credentials);
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .withPaymentGateway(paymentProvider)
+                .withCredentials(credentials)
+                .build());
 
         Optional<GatewayAccountEntity> gatewayAccount = gatewayAccountDao.findById(gatewayAccountId);
 
@@ -269,7 +285,11 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     @Test
     public void shouldSaveNotificationCredentials() {
         String paymentProvider = "test provider";
-        databaseTestHelper.addGatewayAccount(gatewayAccountId, paymentProvider);
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .withPaymentGateway(paymentProvider)
+                .withServiceName("a cool service")
+                .build());
 
         final Optional<GatewayAccountEntity> maybeGatewayAccount = gatewayAccountDao.findById(gatewayAccountId);
         assertThat(maybeGatewayAccount.isPresent(), is(true));
@@ -294,41 +314,39 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     @Test
     public void shouldListAllAccounts() {
         final long gatewayAccountId_1 = nextLong();
-        databaseTestHelper.addGatewayAccount(String.valueOf(gatewayAccountId_1),
-                "provider-1",
-                ImmutableMap.of("user", "fuser", "password", "word"),
-                "service-name-1",
-                TEST,
-                "description-1",
-                "analytics-id-1",
-                100,
-                200,
-                300,
-                400);
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withPaymentGateway("provider-1")
+                .withCredentials(Map.of("user", "fuser", "password", "word"))
+                .withServiceName("service-name-1")
+                .withDescription("description-1")
+                .withAnalyticsId("analytics-id-1")
+                .withCorporateCreditCardSurchargeAmount(100)
+                .withCorporateDebitCardSurchargeAmount(200)
+                .withCorporatePrepaidCreditCardSurchargeAmount(300)
+                .withCorporatePrepaidDebitCardSurchargeAmount(400)
+                .build());
         final long gatewayAccountId_2 = nextLong();
-        databaseTestHelper.addGatewayAccount(String.valueOf(gatewayAccountId_2),
-                "provider-2",
-                null,
-                "service-name-2",
-                TEST,
-                "description-2",
-                "analytics-id-2",
-                250,
-                50,
-                250,
-                50);
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_2))
+                .withPaymentGateway("provider-2")
+                .withServiceName("service-name-2")
+                .withDescription("description-2")
+                .withAnalyticsId("analytics-id-2")
+                .withCorporateCreditCardSurchargeAmount(250)
+                .withCorporateDebitCardSurchargeAmount(50)
+                .withCorporatePrepaidCreditCardSurchargeAmount(250)
+                .withCorporatePrepaidDebitCardSurchargeAmount(50)
+                .build());
         final long gatewayAccountId_3 = nextLong();
-        databaseTestHelper.addGatewayAccount(String.valueOf(gatewayAccountId_3),
-                "provider-3",
-                null,
-                "service-name-3",
-                GatewayAccountEntity.Type.LIVE,
-                "description-3",
-                "analytics-id-3",
-                0,
-                0,
-                0,
-                0);
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_3))
+                .withPaymentGateway("provider-3")
+                .withServiceName("service-name-3")
+                .withDescription("description-3")
+                .withAnalyticsId("analytics-id-3")
+                .withProviderUrlType(GatewayAccountEntity.Type.LIVE)
+                .build());
 
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.listAll();
 
@@ -370,35 +388,23 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     public void shouldListASubsetOfAccountsSingle() {
         long gatewayAccountId_1 = nextLong();
         databaseTestHelper.addGatewayAccount(
-                String.valueOf(gatewayAccountId_1),
-                "provider-1",
-                ImmutableMap.of(
-                        "user", "fuser",
-                        "password", "word"
-                ),
-                "service-name-1",
-                TEST,
-                "description-1",
-                "analytics-id-1",
-                0,
-                0,
-                0,
-                0
-        );
+                anAddGatewayAccountParams()
+                        .withAccountId(String.valueOf(gatewayAccountId_1))
+                        .withPaymentGateway("provider-1")
+                        .withCredentials(Map.of("user", "fuser","password", "word"))
+                        .withServiceName("service-name-1")
+                        .withDescription("description-1")
+                        .withAnalyticsId("analytics-id-1")
+                        .build());
         long gatewayAccountId_2 = nextLong();
         databaseTestHelper.addGatewayAccount(
-                String.valueOf(gatewayAccountId_2),
-                "provider-2",
-                null,
-                "service-name-2",
-                TEST,
-                "description-2",
-                "analytics-id-2",
-                0,
-                0,
-                0,
-                0
-        );
+                anAddGatewayAccountParams()
+                        .withAccountId(String.valueOf(gatewayAccountId_2))
+                        .withPaymentGateway("provider-2")
+                        .withServiceName("service-name-2")
+                        .withDescription("description-2")
+                        .withAnalyticsId("analytics-id-2")
+                        .build());
 
         List<Long> accountIds = Collections.singletonList(gatewayAccountId_2);
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.list(accountIds);
@@ -415,52 +421,34 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     @Test
     public void shouldListASubsetOfAccountsMultiple() {
         final long gatewayAccountId_1 = nextLong();
-
-        databaseTestHelper.addGatewayAccount(
-                String.valueOf(gatewayAccountId_1),
-                "provider-1",
-                ImmutableMap.of(
-                        "user", "fuser",
-                        "password", "word"
-                ),
-                "service-name-1",
-                TEST,
-                "description-1",
-                "analytics-id-1",
-                0,
-                0,
-                0,
-                0
-        );
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withPaymentGateway("provider-1")
+                .withCredentials(Map.of("user", "fuser","password", "word"))
+                .withServiceName("service-name-1")
+                .withDescription("description-1")
+                .withAnalyticsId("analytics-id-1")
+                .build());
         final long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        databaseTestHelper.addGatewayAccount(
-                String.valueOf(gatewayAccountId_2),
-                "provider-2",
-                null,
-                "service-name-2",
-                TEST,
-                "description-2",
-                "analytics-id-2",
-                100,
-                200,
-                300,
-                400
-        );
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_2))
+                .withPaymentGateway("provider-2")
+                .withServiceName("service-name-2")
+                .withDescription("description-2")
+                .withAnalyticsId("analytics-id-2")
+                .withCorporateCreditCardSurchargeAmount(100)
+                .withCorporateDebitCardSurchargeAmount(200)
+                .withCorporatePrepaidCreditCardSurchargeAmount(300)
+                .withCorporatePrepaidDebitCardSurchargeAmount(400)
+                .build());
         final long gatewayAccountId_3 = gatewayAccountId_2 + 1;
-
-        databaseTestHelper.addGatewayAccount(
-                String.valueOf(gatewayAccountId_3),
-                "provider-3",
-                null,
-                "service-name-3",
-                TEST,
-                "description-3",
-                "analytics-id-3",
-                0,
-                0,
-                0,
-                0
-        );
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_3))
+                .withPaymentGateway("provider-3")
+                .withServiceName("service-name-3")
+                .withDescription("description-3")
+                .withAnalyticsId("analytics-id-3")
+                .build());
 
         List<Long> accountIds = Arrays.asList(gatewayAccountId_2, gatewayAccountId_3);
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.list(accountIds);
@@ -492,23 +480,19 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         String notifyAPIToken = "a_token";
         String notifyTemplateId = "a_template_id";
 
-        databaseTestHelper.addGatewayAccount(
-                String.valueOf(gatewayAccountId),
-                "provider-1",
-                ImmutableMap.of("user", fuser, "password", "word"),
-                "service-name-1",
-                TEST,
-                "description-1",
-                "analytics-id-1",
-                0,
-                0,
-                0,
-                0);
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .withPaymentGateway("provider-1")
+                .withCredentials(Map.of("user", fuser, "password", "word"))
+                .withServiceName("service-name-1")
+                .withDescription("description-1")
+                .withAnalyticsId("analytics-id-1")
+                .build());
         Optional<GatewayAccountEntity> gatewayAccountOptional = gatewayAccountDao.findById(gatewayAccountId);
         assertThat(gatewayAccountOptional.isPresent(), is(true));
         GatewayAccountEntity gatewayAccountEntity = gatewayAccountOptional.get();
         assertThat(gatewayAccountEntity.getNotifySettings(), is(nullValue()));
-        Map<String, String> notifySettings = ImmutableMap.of("notify_api_token", notifyAPIToken, "notify_template_id", notifyTemplateId);
+        var notifySettings = Map.of("notify_api_token", notifyAPIToken, "notify_template_id", notifyTemplateId);
         gatewayAccountEntity.setNotifySettings(notifySettings);
         gatewayAccountDao.merge(gatewayAccountEntity);
 

@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.base;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
@@ -52,6 +51,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
@@ -91,7 +91,7 @@ public class ChargingITestBase {
 
     @Before
     public void setUp() {
-        credentials = ImmutableMap.of(
+        credentials = Map.of(
                 CREDENTIALS_MERCHANT_ID, "merchant-id",
                 CREDENTIALS_USERNAME, "test-user",
                 CREDENTIALS_PASSWORD, "test-password",
@@ -99,7 +99,11 @@ public class ChargingITestBase {
                 CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
         );
         databaseTestHelper = testContext.getDatabaseTestHelper();
-        databaseTestHelper.addGatewayAccount(accountId, paymentProvider, credentials);
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(accountId)
+                .withPaymentGateway(paymentProvider)
+                .withCredentials(credentials)
+                .build());
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
     }
 

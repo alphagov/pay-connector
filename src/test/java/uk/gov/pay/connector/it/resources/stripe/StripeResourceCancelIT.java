@@ -39,6 +39,7 @@ import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -129,7 +130,11 @@ public class StripeResourceCancelIT {
     }
 
     private void addGatewayAccount(Map credentials) {
-        databaseTestHelper.addGatewayAccount(accountId, paymentProvider, credentials);
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(accountId)
+                .withPaymentGateway(paymentProvider)
+                .withCredentials(credentials)
+                .build());
     }
 
     private String constructExpectedCancelRequestBody(String paymentId) {
