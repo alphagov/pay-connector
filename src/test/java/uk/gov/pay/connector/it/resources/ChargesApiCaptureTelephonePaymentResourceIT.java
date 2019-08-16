@@ -251,7 +251,7 @@ public class ChargesApiCaptureTelephonePaymentResourceIT extends ChargingITestBa
                 .body("amount", isNumber(12000))
                 .body("reference", is("MRPC12345"))
                 .body("description", is("New passport application"))
-                .body("created_date", is("2018-02-21T16:04:25Z[UTC]"))
+                .body("created_date", is("2018-02-21T16:04:25Z"))
                 .body("authorised_date", is("2018-02-21T16:05:33Z"))
                 .body("processor_id", is("183f2j8923j8"))
                 .body("provider_id", is("17498-8412u9-1273891239"))

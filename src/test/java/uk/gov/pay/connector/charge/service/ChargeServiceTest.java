@@ -440,6 +440,7 @@ public class ChargeServiceTest {
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
 
         Map<String, Object> metadata = Map.of(
+                "created_date", "2018-02-21T16:04:25Z",
                 "authorised_date", "2018-02-21T16:05:33Z",
                 "processor_id", "1PROC",
                 "auth_code", "666",
@@ -469,7 +470,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getDescription(), is("Some description"));
         assertThat(createdChargeEntity.getStatus(), is("AUTHORISATION SUCCESS"));
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
-        assertThat(createdChargeEntity.getCreatedDate().toString(), is("2018-02-21T16:04:25Z"));
+        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
@@ -486,6 +487,7 @@ public class ChargeServiceTest {
         PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0010", supplemental);
 
         Map<String, Object> metadata = Map.of(
+                "created_date", "2018-02-21T16:04:25Z",
                 "authorised_date", "2018-02-21T16:05:33Z",
                 "processor_id", "1PROC",
                 "auth_code", "666",
@@ -520,7 +522,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getDescription(), is("Some description"));
         assertThat(createdChargeEntity.getStatus(), is("AUTHORISATION REJECTED"));
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
-        assertThat(createdChargeEntity.getCreatedDate().toString(), is("2018-02-21T16:04:25Z"));
+        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
@@ -537,6 +539,7 @@ public class ChargeServiceTest {
         PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0050", supplemental);
 
         Map<String, Object> metadata = Map.of(
+                "created_date", "2018-02-21T16:04:25Z",
                 "authorised_date", "2018-02-21T16:05:33Z",
                 "processor_id", "1PROC",
                 "auth_code", "666",
@@ -571,7 +574,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getDescription(), is("Some description"));
         assertThat(createdChargeEntity.getStatus(), is("AUTHORISATION ERROR"));
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
-        assertThat(createdChargeEntity.getCreatedDate().toString(), is("2018-02-21T16:04:25Z"));
+        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));

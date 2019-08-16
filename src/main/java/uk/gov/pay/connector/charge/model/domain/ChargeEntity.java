@@ -157,7 +157,6 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                         String description, 
                         ChargeStatus status, 
                         String email,
-                        ZonedDateTime createdDate,
                         CardDetailsEntity cardDetails, 
                         ExternalMetadata externalMetadata, 
                         GatewayAccountEntity gatewayAccount,
@@ -168,7 +167,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.description = description;
         this.status = status.getValue();
         this.email = email;
-        this.createdDate = createdDate;
+        this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
         this.cardDetails = cardDetails;
         this.externalMetadata = externalMetadata;
         this.gatewayAccount = gatewayAccount;

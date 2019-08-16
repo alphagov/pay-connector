@@ -1643,7 +1643,6 @@ public class ChargeDaoIT extends DaoITestBase {
                 "Some description",
                 AUTHORISATION_SUCCESS,
                 "jane.doe@example.com",
-                ZonedDateTime.parse("2018-02-21T16:04:25Z"),
                 cardDetails,
                 externalMetadata,
                 account,

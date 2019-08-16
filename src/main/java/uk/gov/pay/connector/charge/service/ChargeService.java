@@ -160,7 +160,6 @@ public class ChargeService {
                     telephoneChargeRequest.getDescription(),
                     internalChargeStatus(telephoneChargeRequest.getPaymentOutcome().getCode()),
                     telephoneChargeRequest.getEmailAddress(),
-                    ZonedDateTime.parse(telephoneChargeRequest.getCreatedDate()),
                     cardDetails,
                     metaDataForTelephonePayments(telephoneChargeRequest),
                     gatewayAccount,
@@ -280,18 +279,18 @@ public class ChargeService {
                 .amount(chargeEntity.getAmount())
                 .reference(chargeEntity.getReference().toString())
                 .description(chargeEntity.getDescription())
-                .createdDate(chargeEntity.getCreatedDate().toString()) // Change later
-                .authorisedDate(chargeEntity.getExternalMetadata().get().getMetadata().get("authorised_date").toString())
-                .processorId(chargeEntity.getExternalMetadata().get().getMetadata().get("processor_id").toString())
+                .createdDate((String) chargeEntity.getExternalMetadata().get().getMetadata().get("created_date"))
+                .authorisedDate((String) chargeEntity.getExternalMetadata().get().getMetadata().get("authorised_date"))
+                .processorId((String) chargeEntity.getExternalMetadata().get().getMetadata().get("processor_id"))
                 .providerId(chargeEntity.getProviderSessionId())
-                .authCode(chargeEntity.getExternalMetadata().get().getMetadata().get("auth_code").toString())
+                .authCode((String) chargeEntity.getExternalMetadata().get().getMetadata().get("auth_code"))
                 .cardType(chargeEntity.getCardDetails().getCardBrand())
                 .nameOnCard(chargeEntity.getCardDetails().getCardHolderName())
                 .emailAddress(chargeEntity.getEmail())
                 .cardExpiry(chargeEntity.getCardDetails().getExpiryDate())
                 .lastFourDigits(chargeEntity.getCardDetails().getLastDigitsCardNumber().toString())
                 .firstSixDigits(chargeEntity.getCardDetails().getFirstDigitsCardNumber().toString())
-                .telephoneNumber(chargeEntity.getExternalMetadata().get().getMetadata().get("telephone_number").toString())
+                .telephoneNumber((String) chargeEntity.getExternalMetadata().get().getMetadata().get("telephone_number"))
                 .paymentId("dummypaymentid123notpersisted");
         
         Map<String, Object> paymentOutcomeMap = ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome"));
@@ -755,6 +754,7 @@ public class ChargeService {
     private ExternalMetadata metaDataForTelephonePayments(TelephoneChargeCreateRequest telephoneChargeRequest) {
 
         HashMap<String, Object> telephoneJSON = new HashMap<>();
+        telephoneJSON.put("created_date", telephoneChargeRequest.getCreatedDate());
         telephoneJSON.put("authorised_date", telephoneChargeRequest.getAuthorisedDate());
         telephoneJSON.put("processor_id", telephoneChargeRequest.getProcessorId());
         telephoneJSON.put("auth_code", telephoneChargeRequest.getAuthCode());

@@ -33,16 +33,16 @@ public class TelephoneChargeCreateRequest {
     
     private String authorisedDate;
     
-    @NotNull
+    @NotNull(message = "Field [processorId] cannot be null")
     private String processorId;
-    
-    @NotNull
+
+    @NotNull(message = "Field [providerId] cannot be null")
     private String providerId;
     
     private String authCode;
     
     @Valid
-    @NotNull
+    @NotNull(message = "Field [paymentOutcome] cannot be null")
     private PaymentOutcome paymentOutcome;
     
     @ValidCardType
