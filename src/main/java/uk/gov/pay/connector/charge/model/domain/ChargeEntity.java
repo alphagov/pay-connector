@@ -258,8 +258,16 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         return Optional.ofNullable(externalMetadata);
     }
 
+    public void setExternalMetadata(ExternalMetadata externalMetadata) {
+        this.externalMetadata = externalMetadata;
+    }
+
     public void setExternalId(String externalId) {
         this.externalId = externalId;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public void setStatus(ChargeStatus targetStatus) {
