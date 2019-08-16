@@ -105,7 +105,8 @@ public class ChargeServiceTest {
     private static final int MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS = 10;
 
     private ChargeCreateRequestBuilder requestBuilder;
-
+    private TelephoneChargeCreateRequest.ChargeBuilder telephoneRequestBuilder;
+    
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
@@ -151,6 +152,23 @@ public class ChargeServiceTest {
                 .withReturnUrl("http://return-service.com")
                 .withDescription("This is a description")
                 .withReference("Pay reference");
+
+        telephoneRequestBuilder = new TelephoneChargeCreateRequest.ChargeBuilder()
+                .amount(100L)
+                .reference("Some reference")
+                .description("Some description")
+                .createdDate("2018-02-21T16:04:25Z")
+                .authorisedDate("2018-02-21T16:05:33Z")
+                .processorId("1PROC")
+                .providerId("1PROV")
+                .authCode("666")
+                .nameOnCard("Jane Doe")
+                .emailAddress("jane.doe@example.com")
+                .telephoneNumber("+447700900796")
+                .cardType("visa")
+                .cardExpiry("01/19")
+                .lastFourDigits("1234")
+                .firstSixDigits("123456");
 
         gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
