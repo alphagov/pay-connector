@@ -28,7 +28,11 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
+import uk.gov.pay.connector.charge.model.telephone.State;
+import uk.gov.pay.connector.charge.model.telephone.Supplemental;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
+import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeResponse;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
@@ -212,6 +216,77 @@ public class ChargeService {
                     }
                     return null;
                 });
+    }
+
+    private TelephoneChargeResponse.ChargeBuilder populateTelephoneCharge(ChargeEntity chargeEntity) {
+
+        final TelephoneChargeResponse.ChargeBuilder telephoneChargeResponse = new TelephoneChargeResponse.ChargeBuilder()
+                .amount(chargeEntity.getAmount())
+                .reference(chargeEntity.getReference().toString())
+                .description(chargeEntity.getDescription())
+                .createdDate((String) chargeEntity.getExternalMetadata().get().getMetadata().get("created_date"))
+                .authorisedDate((String) chargeEntity.getExternalMetadata().get().getMetadata().get("authorised_date"))
+                .processorId((String) chargeEntity.getExternalMetadata().get().getMetadata().get("processor_id"))
+                .providerId(chargeEntity.getProviderSessionId())
+                .authCode((String) chargeEntity.getExternalMetadata().get().getMetadata().get("auth_code"))
+                .cardType(chargeEntity.getCardDetails().getCardBrand())
+                .nameOnCard(chargeEntity.getCardDetails().getCardHolderName())
+                .emailAddress(chargeEntity.getEmail())
+                .cardExpiry(chargeEntity.getCardDetails().getExpiryDate())
+                .lastFourDigits(chargeEntity.getCardDetails().getLastDigitsCardNumber().toString())
+                .firstSixDigits(chargeEntity.getCardDetails().getFirstDigitsCardNumber().toString())
+                .telephoneNumber((String) chargeEntity.getExternalMetadata().get().getMetadata().get("telephone_number"))
+                .paymentId("dummypaymentid123notpersisted");
+
+        Map<String, Object> paymentOutcomeMap = ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome"));
+
+        if (paymentOutcomeMap.get("status").toString().equals("failed")) {
+
+            telephoneChargeResponse
+                    .state(new State(
+                            paymentOutcomeMap.get("status").toString(),
+                            true,
+                            "created",
+                            paymentOutcomeMap.get("code").toString()
+                    ));
+
+            if (paymentOutcomeMap.containsKey("supplemental")) {
+                Supplemental supplemental = new Supplemental(
+                        ((Map) paymentOutcomeMap
+                                .get("supplemental"))
+                                .get("error_code")
+                                .toString(),
+                        ((Map) paymentOutcomeMap
+                                .get("supplemental"))
+                                .get("error_message")
+                                .toString()
+                );
+
+                return telephoneChargeResponse
+                        .paymentOutcome(new PaymentOutcome(
+                                paymentOutcomeMap.get("status").toString(),
+                                paymentOutcomeMap.get("code").toString(),
+                                supplemental
+                        ));
+
+            }
+
+            return telephoneChargeResponse
+                    .paymentOutcome(new PaymentOutcome(
+                            paymentOutcomeMap.get("status").toString(),
+                            paymentOutcomeMap.get("code").toString()
+                    ));
+        }
+
+        return telephoneChargeResponse
+                .paymentOutcome(new PaymentOutcome(
+                        paymentOutcomeMap.get("status").toString()
+                ))
+                .state(new State(
+                        paymentOutcomeMap.get("status").toString(),
+                        true,
+                        "created"
+                ));
     }
 
     public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity, boolean buildForSearchResult) {
