@@ -33,6 +33,7 @@ public class GatewayAccountResourceDTOTest {
         entity.setEmailCollectionMode(EmailCollectionMode.MANDATORY);
         entity.setRequires3ds(true);
         entity.setAllowZeroAmount(true);
+        entity.setIntegrationVersion3ds(2);
 
         Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
         emailNotifications.put(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(new GatewayAccountEntity(), "testTemplate", true));
@@ -56,5 +57,6 @@ public class GatewayAccountResourceDTOTest {
         assertThat(dto.getEmailCollectionMode(), is(entity.getEmailCollectionMode()));
         assertThat(dto.getEmailNotifications().size(), is(1));
         assertThat(dto.getEmailNotifications().get(EmailNotificationType.PAYMENT_CONFIRMED).getTemplateBody(), is("testTemplate"));
+        assertThat(dto.getIntegrationVersion3ds(), is(entity.getIntegrationVersion3ds()));
     }
 }

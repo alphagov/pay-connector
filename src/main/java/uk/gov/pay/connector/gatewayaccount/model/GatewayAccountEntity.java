@@ -42,13 +42,12 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 @SequenceGenerator(name = "gateway_accounts_gateway_account_id_seq",
         sequenceName = "gateway_accounts_gateway_account_id_seq", allocationSize = 1)
 public class GatewayAccountEntity extends AbstractVersionedEntity {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gateway_accounts_gateway_account_id_seq")
     @JsonIgnore
     private Long id;
 
-    //TODO: Should we rename the columns to be more consistent?
     @Column(name = "payment_provider")
     private String gatewayName;
 
@@ -92,6 +91,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @Column(name = "allow_zero_amount")
     private boolean allowZeroAmount;
+    
+    @Column(name = "integration_version_3ds")
+    private int integrationVersion3ds;
 
     @Column(name = "notify_settings", columnDefinition = "json")
     @Convert(converter = JsonToMapConverter.class)
@@ -120,7 +122,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public GatewayAccountEntity() {
     }
-    
+
     public GatewayAccountEntity(String gatewayName, Map<String, String> credentials, Type type) {
         this.gatewayName = gatewayName;
         this.credentials = credentials;
@@ -188,7 +190,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public EmailCollectionMode getEmailCollectionMode() {
         return emailCollectionMode;
     }
-    
+
     @JsonView(Views.ApiView.class)
     public NotificationCredentials getNotificationCredentials() {
         return notificationCredentials;
@@ -216,28 +218,34 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return allowZeroAmount;
     }
 
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     @JsonProperty("corporate_credit_card_surcharge_amount")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public long getCorporateNonPrepaidCreditCardSurchargeAmount() {
         return corporateCreditCardSurchargeAmount;
     }
 
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     @JsonProperty("corporate_debit_card_surcharge_amount")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public long getCorporateNonPrepaidDebitCardSurchargeAmount() {
         return corporateDebitCardSurchargeAmount;
     }
 
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     @JsonProperty("corporate_prepaid_credit_card_surcharge_amount")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public long getCorporatePrepaidCreditCardSurchargeAmount() {
         return corporatePrepaidCreditCardSurchargeAmount;
     }
 
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     @JsonProperty("corporate_prepaid_debit_card_surcharge_amount")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
     public long getCorporatePrepaidDebitCardSurchargeAmount() {
         return corporatePrepaidDebitCardSurchargeAmount;
+    }
+
+    @JsonProperty("integration_version_3ds")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public int getIntegrationVersion3ds() {
+        return integrationVersion3ds;
     }
 
     public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
@@ -316,7 +324,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public void setCorporateDebitCardSurchargeAmount(long corporateDebitCardSurchargeAmount) {
         this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
     }
-    
+
     public void setCorporatePrepaidCreditCardSurchargeAmount(long corporatePrepaidCreditCardSurchargeAmount) {
         this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
     }
@@ -335,6 +343,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setAllowZeroAmount(boolean allowZeroAmount) {
         this.allowZeroAmount = allowZeroAmount;
+    }
+
+    public void setIntegrationVersion3ds(int integrationVersion3ds) {
+        this.integrationVersion3ds = integrationVersion3ds;
     }
 
     public class Views {
