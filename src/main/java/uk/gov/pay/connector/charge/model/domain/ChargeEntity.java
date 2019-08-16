@@ -151,7 +151,6 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this(amount, UNDEFINED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture, externalMetadata);
     }
     
-    // For telephone payments
     public ChargeEntity(Long amount,
                         ServicePaymentReference reference,
                         String description,
@@ -258,18 +257,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         return Optional.ofNullable(externalMetadata);
     }
 
-    public void setExternalMetadata(ExternalMetadata externalMetadata) {
-        this.externalMetadata = externalMetadata;
-    }
-
     public void setExternalId(String externalId) {
         this.externalId = externalId;
     }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
+    
     public void setStatus(ChargeStatus targetStatus) {
         setStatus(targetStatus, new UnspecifiedEvent());
     }
