@@ -1605,6 +1605,15 @@ public class ChargeDaoIT extends DaoITestBase {
 
         assertThat(chargeDao.findMaxId(), is(defaultTestCharge.getChargeId()));
     }
+    
+    @Test
+    public void findChargeByProviderId() {
+        
+        insertTestCharge();
+        Optional<ChargeEntity> chargeEntity = chargeDao.findByProviderSessionId("providerId");
+        assertThat(chargeEntity.isPresent(), is(true));
+        
+    }
 
     private void insertTestAccount() {
         this.defaultTestAccount = DatabaseFixtures

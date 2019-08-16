@@ -470,6 +470,7 @@ public class  DatabaseFixtures {
         Long chargeId = RandomUtils.nextLong();
         private String description = "Test description";
         String email = "alice.111@mail.test";
+        String providerId = "providerId";
         String externalChargeId = RandomIdGenerator.newId();
         long amount = 101L;
         ChargeStatus chargeStatus = ChargeStatus.CREATED;
@@ -512,6 +513,11 @@ public class  DatabaseFixtures {
 
         public TestCharge withEmail(String email) {
             this.email = email;
+            return this;
+        }
+
+        public TestCharge withProviderId(String providerId) {
+            this.providerId = providerId;
             return this;
         }
 
@@ -574,6 +580,7 @@ public class  DatabaseFixtures {
                     .withLanguage(language)
                     .withDelayedCapture(false)
                     .withEmail(email)
+                    .withProviderId(providerId)
                     .withCorporateSurcharge(corporateCardSurcharge)
                     .build());
             
