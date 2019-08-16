@@ -80,15 +80,7 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 
 public class ChargeService {
@@ -125,6 +117,57 @@ public class ChargeService {
         this.stateTransitionQueue = stateTransitionQueue;
         this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
         this.eventQueue = eventQueue;
+    }
+
+    public Optional<TelephoneChargeResponse> createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
+
+        return createTelephoneChargeEntity(telephoneChargeCreateRequest, accountId, uriInfo)
+                .map(charge ->
+                        populateTelephoneCharge(charge).build());
+    }
+
+    @Transactional
+    private Optional<ChargeEntity> createTelephoneChargeEntity(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
+        return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
+
+            if (telephoneChargeRequest.getAmount() == 0L && !gatewayAccount.isAllowZeroAmount()) {
+                throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
+            }
+
+            CardDetailsEntity cardDetails = new CardDetailsEntity(
+                    LastDigitsCardNumber.of(telephoneChargeRequest.getLastFourDigits()),
+                    FirstDigitsCardNumber.of(telephoneChargeRequest.getFirstSixDigits()),
+                    telephoneChargeRequest.getNameOnCard(),
+                    telephoneChargeRequest.getCardExpiry(),
+                    telephoneChargeRequest.getCardType()
+            );
+
+            ChargeEntity chargeEntity = new ChargeEntity(
+                    telephoneChargeRequest.getAmount(),
+                    ServicePaymentReference.of(telephoneChargeRequest.getReference()),
+                    telephoneChargeRequest.getDescription(),
+                    internalChargeStatus(telephoneChargeRequest.getPaymentOutcome().getCode()),
+                    telephoneChargeRequest.getEmailAddress(),
+                    cardDetails,
+                    storeExtraFieldsInMetaDataForTelephonePayments(telephoneChargeRequest),
+                    gatewayAccount,
+                    telephoneChargeRequest.getProviderId(),
+                    SupportedLanguage.ENGLISH
+            );
+
+            chargeDao.persist(chargeEntity);
+            return chargeEntity;
+        });
+    }
+
+    private ChargeStatus internalChargeStatus(String code) {
+        if(code == null) {
+            return AUTHORISATION_SUCCESS;
+        } else if (code.equals("P0010")) {
+            return AUTHORISATION_REJECTED;
+        } else {
+            return AUTHORISATION_ERROR;
+        }
     }
 
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
