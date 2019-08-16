@@ -9,19 +9,22 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.inject.Inject;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static java.time.temporal.ChronoUnit.MINUTES;
+import static java.time.temporal.ChronoUnit.SECONDS;
 
 public class Worldpay3dsFlexJwtService {
 
     private final JwtGenerator jwtGenerator;
+    private final int tokenExpiryDurationSeconds;
 
     @Inject
-    public Worldpay3dsFlexJwtService(JwtGenerator jwtGenerator) {
+    public Worldpay3dsFlexJwtService(JwtGenerator jwtGenerator, int tokenExpiryDurationSeconds) {
         this.jwtGenerator = jwtGenerator;
+        this.tokenExpiryDurationSeconds = tokenExpiryDurationSeconds;
     }
 
     /**
@@ -31,7 +34,7 @@ public class Worldpay3dsFlexJwtService {
      * @see <a href="https://beta.developer.worldpay.com/docs/wpg/directintegration/3ds2#device-data-collection-ddc-"
      * >Worldpay DDC Documentation</a>
      */
-    public String generateDdcToken(GatewayAccount gatewayAccount) {
+    public String generateDdcToken(GatewayAccount gatewayAccount, ZonedDateTime chargeCreatedTime) {
         if (!gatewayAccount.getGatewayName().equals(PaymentGatewayName.WORLDPAY.toString())) {
             throw new Worldpay3dsFlexDdcJwtPaymentProviderException(gatewayAccount.getId());
         }
@@ -59,15 +62,15 @@ public class Worldpay3dsFlexJwtService {
             throw new Worldpay3dsFlexDdcJwtCredentialsException(gatewayAccount.getId(), missingCredentials);
         }
 
-        var claims = generateDdcClaims(issuer, organisationId);
+        var claims = generateDdcClaims(issuer, organisationId, chargeCreatedTime);
         return jwtGenerator.createJwt(claims, jwtMacId);
     }
 
-    private Map<String, Object> generateDdcClaims(String issuer, String organisationId) {
+    private Map<String, Object> generateDdcClaims(String issuer, String organisationId, ZonedDateTime chargeCreatedTime) {
         return Map.of(
                 "jti", RandomIdGenerator.newId(),
                 "iat", Instant.now().toEpochMilli(),
-                "exp", Instant.now().plus(90, MINUTES).toEpochMilli(),
+                "exp", chargeCreatedTime.plus(tokenExpiryDurationSeconds, SECONDS).toInstant().toEpochMilli(),
                 "iss", issuer,
                 "OrgUnitId", organisationId);
     }

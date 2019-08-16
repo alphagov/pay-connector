@@ -35,7 +35,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
 
     
     @Before
-    public void setup() {
+    public void setUp() {
         databaseTestHelper = testContext.getDatabaseTestHelper();
         connectorRestApi = new RestAssuredClient(testContext.getPort());
     }

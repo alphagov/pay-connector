@@ -13,6 +13,8 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
+import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
+import uk.gov.pay.connector.charge.util.JwtGenerator;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
@@ -101,6 +103,11 @@ public class ConnectorModule extends AbstractModule {
     @Provides
     public StripeGatewayConfig stripeGatewayConfig(ConnectorConfiguration connectorConfiguration) {
         return connectorConfiguration.getStripeConfig();
+    }
+
+    @Provides
+    public Worldpay3dsFlexJwtService worldpay3dsFlexJwtServiceGenerator() {
+        return new Worldpay3dsFlexJwtService(new JwtGenerator(), configuration.getChargeSweepConfig().getDefaultChargeExpiryThreshold());
     }
 
     @Provides
