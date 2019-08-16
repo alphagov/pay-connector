@@ -13,6 +13,12 @@ public class State {
     public State() {
         // For Jackson serialization
     }
+    
+    public State(String status, Boolean finished, String message) {
+        this.status = status;
+        this.finished = finished;
+        this.message = message;
+    }
 
     public State(String status, Boolean finished, String message, String code) {
         this.status = status;

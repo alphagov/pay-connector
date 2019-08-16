@@ -25,7 +25,7 @@ public class TelephonePaymentJSONTest {
         final Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
         final PaymentOutcome paymentOutcome = new PaymentOutcome("success", "P0010", supplemental);
         final TelephoneChargeCreateRequest createTelephonePaymentRequest = new TelephoneChargeCreateRequest.ChargeBuilder()
-                .amount(12000)
+                .amount(12000L)
                 .reference("MRPC12345")
                 .description("New passport application")
                 .createdDate("2018-02-21T16:04:25Z")
@@ -55,7 +55,7 @@ public class TelephonePaymentJSONTest {
         final State state = new State("success", true, "created", "P0010");
 
         final TelephoneChargeResponse createTelephoneChargeResponse = new TelephoneChargeResponse.ChargeBuilder()
-                .amount(12000)
+                .amount(12000L)
                 .reference("MRPC12345")
                 .description("New passport application")
                 .createdDate("2018-02-21T16:04:25Z")

@@ -150,6 +150,30 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                         boolean delayedCapture, ExternalMetadata externalMetadata) {
         this(amount, UNDEFINED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture, externalMetadata);
     }
+    
+    public ChargeEntity(Long amount,
+                        ServicePaymentReference reference,
+                        String description,
+                        ChargeStatus status,
+                        String email, 
+                        CardDetailsEntity cardDetails, 
+                        ExternalMetadata externalMetadata,
+                        GatewayAccountEntity gatewayAccount,
+                        String providerSessionId, 
+                        SupportedLanguage language) {
+        this.amount = amount;
+        this.reference = reference;
+        this.description = description;
+        this.status = status.getValue();
+        this.email = email;
+        this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        this.cardDetails = cardDetails;
+        this.externalMetadata = externalMetadata;
+        this.gatewayAccount = gatewayAccount;
+        this.externalId = RandomIdGenerator.newId();
+        this.providerSessionId = providerSessionId;
+        this.language = language;
+    }
 
     // Only the ChargeEntityFixture should directly call this constructor
     public ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, ServicePaymentReference reference,
@@ -236,7 +260,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     public void setExternalId(String externalId) {
         this.externalId = externalId;
     }
-
+    
     public void setStatus(ChargeStatus targetStatus) {
         setStatus(targetStatus, new UnspecifiedEvent());
     }
