@@ -113,12 +113,13 @@ public class DatabaseTestHelper {
                                 "        reference,\n" +
                                 "        version,\n" +
                                 "        email,\n" +
+                                "        provider_session_id,\n" +
                                 "        language,\n" +
                                 "        delayed_capture,\n" +
                                 "        corporate_surcharge,\n" +
                                 "        external_metadata\n" +
                                 "    )\n" +
-                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
+                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
                         addChargeParams.getChargeId(),
                         addChargeParams.getExternalChargeId(),
                         addChargeParams.getAmount(),
@@ -131,6 +132,7 @@ public class DatabaseTestHelper {
                         addChargeParams.getReference().toString(),
                         addChargeParams.getVersion(),
                         addChargeParams.getEmail(),
+                        addChargeParams.getProviderId(),
                         addChargeParams.getLanguage().toString(),
                         addChargeParams.isDelayedCapture(),
                         addChargeParams.getCorporateSurcharge(),

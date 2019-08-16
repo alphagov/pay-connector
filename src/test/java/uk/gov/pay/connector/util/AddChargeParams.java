@@ -24,6 +24,7 @@ public class AddChargeParams {
     private final ZonedDateTime createdDate;
     private final long version;
     private final String email;
+    private final String providerId;
     private final SupportedLanguage language;
     private final boolean delayedCapture;
     private final Long corporateSurcharge;
@@ -42,6 +43,7 @@ public class AddChargeParams {
         createdDate = builder.createdDate;
         version = builder.version;
         email = builder.email;
+        providerId = builder.providerId;
         language = builder.language;
         delayedCapture = builder.delayedCapture;
         corporateSurcharge = builder.corporateSurcharge;
@@ -96,6 +98,10 @@ public class AddChargeParams {
         return email;
     }
 
+    public String getProviderId() {
+        return providerId;
+    }
+
     public SupportedLanguage getLanguage() {
         return language;
     }
@@ -125,6 +131,7 @@ public class AddChargeParams {
         private ZonedDateTime createdDate = now();
         private long version = 1;
         private String email = "test@example.com";
+        private String providerId = "providerId";
         private SupportedLanguage language = SupportedLanguage.ENGLISH;
         private boolean delayedCapture = false;
         private Long corporateSurcharge;
@@ -196,6 +203,12 @@ public class AddChargeParams {
             this.email = email;
             return this;
         }
+
+
+        public AddChargeParamsBuilder withProviderId(String providerId) {
+            this.providerId = providerId;
+            return this;
+        }        
 
         public AddChargeParamsBuilder withLanguage(SupportedLanguage language) {
             this.language = language;
