@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -27,6 +28,7 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
@@ -617,5 +619,32 @@ public class ChargeService {
 
     private boolean chargeIsInLockedStatus(OperationType operationType, ChargeEntity chargeEntity) {
         return operationType.getLockingStatus().equals(ChargeStatus.fromString(chargeEntity.getStatus()));
+    }
+    
+    private ExternalMetadata metaDataForTelephonePayments(TelephoneChargeCreateRequest telephoneChargeRequest) {
+        HashMap<String, Object> telephoneJSON = new HashMap<>();
+        telephoneJSON.put("created_date", telephoneChargeRequest.getCreatedDate());
+        telephoneJSON.put("authorised_date", telephoneChargeRequest.getAuthorisedDate());
+        telephoneJSON.put("processor_id", telephoneChargeRequest.getProcessorId());
+        telephoneJSON.put("auth_code", telephoneChargeRequest.getAuthCode());
+        
+        HashMap<String, Object> paymentOutcome = new HashMap<>();
+        paymentOutcome.put("status", telephoneChargeRequest.getPaymentOutcome().getStatus());
+        
+        if(telephoneChargeRequest.getPaymentOutcome().getCode() != null) {
+            paymentOutcome.put("code", telephoneChargeRequest.getPaymentOutcome().getCode());
+        }
+
+        if(telephoneChargeRequest.getPaymentOutcome().getSupplemental() != null) {
+            HashMap<String, Object> supplemental = new HashMap<>();
+            supplemental.put("error_code", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorCode());
+            supplemental.put("error_message", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorMessage());
+            paymentOutcome.put("supplemental", supplemental);
+        }
+        
+        telephoneJSON.put("payment_outcome", paymentOutcome);
+        telephoneJSON.put("telephone_number", telephoneChargeRequest.getTelephoneNumber());
+        
+        return new ExternalMetadata(telephoneJSON);
     }
 }
