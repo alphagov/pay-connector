@@ -11,8 +11,6 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ExternalMetadataConverterException;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
@@ -26,7 +24,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static java.time.ZonedDateTime.now;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 
 public class DatabaseTestHelper {
 
@@ -36,26 +33,14 @@ public class DatabaseTestHelper {
         this.jdbi = jdbi;
     }
 
-    public void addGatewayAccount(String accountId,
-                                  String paymentGateway,
-                                  Map<String, String> credentials,
-                                  String serviceName,
-                                  GatewayAccountEntity.Type providerUrlType,
-                                  String description,
-                                  String analyticsId,
-                                  EmailCollectionMode emailCollectionMode,
-                                  long corporateCreditCardSurchargeAmount,
-                                  long corporateDebitCardSurchargeAmount,
-                                  long corporatePrepaidCreditCardSurchargeAmount,
-                                  long corporatePrepaidDebitCardSurchargeAmount,
-                                  int integrationVersion3ds) {
+    public void addGatewayAccount(AddGatewayAccountParams params) {
         try {
             PGobject jsonObject = new PGobject();
             jsonObject.setType("json");
-            if (credentials == null || credentials.size() == 0) {
+            if (params.getCredentials() == null || params.getCredentials().size() == 0) {
                 jsonObject.setValue("{}");
             } else {
-                jsonObject.setValue(new Gson().toJson(credentials));
+                jsonObject.setValue(new Gson().toJson(params.getCredentials()));
             }
             jdbi.withHandle(h ->
                     h.update("INSERT INTO gateway_accounts (id,\n" +
@@ -66,53 +51,29 @@ public class DatabaseTestHelper {
                                     "                              description,\n" +
                                     "                              analytics_id,\n" +
                                     "                              email_collection_mode,\n" +
+                                    "                              integration_version_3ds,\n" +            
                                     "                              corporate_credit_card_surcharge_amount,\n" +
                                     "                              corporate_debit_card_surcharge_amount,\n" +
                                     "                              corporate_prepaid_credit_card_surcharge_amount,\n" +
-                                    "                              corporate_prepaid_debit_card_surcharge_amount," +
-                                    "                              integration_version_3ds)\n" +
+                                    "                              corporate_prepaid_debit_card_surcharge_amount)\n" +
                                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                            Long.valueOf(accountId),
-                            paymentGateway,
+                            Long.valueOf(params.getAccountId()),
+                            params.getPaymentGateway(),
                             jsonObject,
-                            serviceName,
-                            providerUrlType,
-                            description,
-                            analyticsId,
-                            emailCollectionMode,
-                            corporateCreditCardSurchargeAmount,
-                            corporateDebitCardSurchargeAmount,
-                            corporatePrepaidCreditCardSurchargeAmount,
-                            corporatePrepaidDebitCardSurchargeAmount,
-                            integrationVersion3ds)
+                            params.getServiceName(),
+                            params.getProviderUrlType(),
+                            params.getDescription(),
+                            params.getAnalyticsId(),
+                            params.getEmailCollectionMode(),
+                            params.getIntegrationVersion3ds(),
+                            params.getCorporateCreditCardSurchargeAmount(),
+                            params.getCorporateDebitCardSurchargeAmount(),
+                            params.getCorporatePrepaidCreditCardSurchargeAmount(),
+                            params.getCorporatePrepaidDebitCardSurchargeAmount())
             );
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials) {
-        addGatewayAccount(accountId, paymentProvider, credentials, null, TEST, null, null, EmailCollectionMode.MANDATORY, 0, 0, 0, 0,2);
-    }
-
-    public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials, GatewayAccountEntity.Type gatewayAccountType) {
-        addGatewayAccount(accountId, paymentProvider, credentials, null, gatewayAccountType, null, null, EmailCollectionMode.MANDATORY, 0, 0, 0, 0, 2);
-    }
-
-    public void addGatewayAccount(long accountId, String paymentProvider) {
-        addGatewayAccount(String.valueOf(accountId), paymentProvider);
-    }
-
-    public void addGatewayAccount(String accountId, String paymentProvider) {
-        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, null, null, EmailCollectionMode.MANDATORY, 0, 0, 0, 0, 2);
-    }
-
-    public void addGatewayAccount(String accountId, String paymentProvider, String description, String analyticsId, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount, long corporatePrepaidCreditCardSurchargeAmount, long corporatePrepaidDebitCardSurchargeAmount) {
-        addGatewayAccount(accountId, paymentProvider, null, "a cool service", TEST, description, analyticsId, EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, corporatePrepaidCreditCardSurchargeAmount, corporatePrepaidDebitCardSurchargeAmount, 2);
-    }
-
-    public void addGatewayAccount(String accountId, String paymentProvider, Map<String, String> credentials, String serviceName, GatewayAccountEntity.Type type, String description, String analyticsId, long corporateCreditCardSurchargeAmount, long corporateDebitCardSurchargeAmount, long corporatePrepaidCreditCardSurchargeAmount, long corporatePrepaidDebitCardSurchargeAmount) {
-        addGatewayAccount(accountId, paymentProvider, credentials, serviceName, type, description, analyticsId, EmailCollectionMode.MANDATORY, corporateCreditCardSurchargeAmount, corporateDebitCardSurchargeAmount, corporatePrepaidCreditCardSurchargeAmount, corporatePrepaidDebitCardSurchargeAmount, 2);
     }
 
     public void updateGatewayAccountAllowZeroAmount(long gatewayAccountId, boolean allowZeroAmount) {

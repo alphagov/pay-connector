@@ -34,6 +34,7 @@ import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlF
 import static uk.gov.pay.connector.it.base.ChargingITestBase.cancelChargeUrlFor;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -67,7 +68,13 @@ public class SupportForLiveAndTestStripeTokensIT {
     @Test
     @Parameters({"TEST, Bearer sk_test", "LIVE, Bearer sk_live"}) //sk_test and sk_live are defined in test-it-config.yaml
     public void assertUsageOfCorrectToken(String accountType, String expectedAuthHeader) {
-        databaseTestHelper.addGatewayAccount(accountId, paymentProvider, credentials, Type.fromString(accountType));
+        var gatewayAccountParams = anAddGatewayAccountParams()
+                .withAccountId(accountId)
+                .withPaymentGateway(paymentProvider)
+                .withCredentials(credentials)
+                .withProviderUrlType(Type.fromString(accountType))
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
 
         String externalChargeId = addCharge();
 

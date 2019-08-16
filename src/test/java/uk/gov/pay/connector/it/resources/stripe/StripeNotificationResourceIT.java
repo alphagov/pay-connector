@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import com.google.common.collect.ImmutableMap;
 import io.restassured.response.Response;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
@@ -21,6 +20,8 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
+import java.util.Map;
+
 import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
@@ -36,6 +37,7 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_3DS_SOURCE;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -63,7 +65,12 @@ public class StripeNotificationResourceIT {
         accountId = String.valueOf(RandomUtils.nextInt());
 
         databaseTestHelper = testContext.getDatabaseTestHelper();
-        databaseTestHelper.addGatewayAccount(accountId, "stripe", ImmutableMap.of("stripe_account_id", "stripe_account_id"));
+        var gatewayAccountParams = anAddGatewayAccountParams()
+                .withAccountId(accountId)
+                .withPaymentGateway("stripe")
+                .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                .build();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
 
         stripeMockClient = new StripeMockClient();

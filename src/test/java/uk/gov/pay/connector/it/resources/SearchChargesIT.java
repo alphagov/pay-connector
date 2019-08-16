@@ -22,6 +22,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -37,7 +38,11 @@ public class SearchChargesIT {
     public void setupGatewayAccount() {
         databaseTestHelper = testContext.getDatabaseTestHelper();
         accountId = String.valueOf(nextLong());
-        databaseTestHelper.addGatewayAccount(accountId, "sandbox");
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(accountId)
+                .withPaymentGateway("sandbox")
+                .withServiceName("a cool service")
+                .build());
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
     }
 

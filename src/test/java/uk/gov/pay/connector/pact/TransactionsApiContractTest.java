@@ -42,6 +42,7 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.rules.AppWithPostgresRule.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 @RunWith(PactRunner.class)
 @Provider("connector")
@@ -272,7 +273,11 @@ public class TransactionsApiContractTest {
 
     @State("a gateway account with external id exists")
     public void createGatewayAccount(Map<String, String> params) {
-        dbHelper.addGatewayAccount(params.get("gateway_account_id"), "sandbox");
+        dbHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(params.get("gateway_account_id"))
+                .withPaymentGateway("sandbox")
+                .withServiceName("a cool service")
+                .build());
     }
 
     @State("a charge with fee and net_amount exists")

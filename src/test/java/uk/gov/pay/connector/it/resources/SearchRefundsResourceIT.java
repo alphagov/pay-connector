@@ -25,6 +25,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -42,7 +43,10 @@ public class SearchRefundsResourceIT extends ChargingITestBase {
     public void shouldReturnAllRefundsForGetRefundsByAccountId() {
         long chargeId = nextLong();
         long chargeId2 = nextLong();
-        databaseTestHelper.addGatewayAccount("123", "SANDBOX", credentials);
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId("123")
+                .withPaymentGateway("SANDBOX")
+                .withCredentials(credentials).build());
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId("charge1")
