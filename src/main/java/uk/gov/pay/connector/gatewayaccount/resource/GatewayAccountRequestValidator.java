@@ -37,40 +37,42 @@ public class GatewayAccountRequestValidator {
     public static final String FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT = "corporate_prepaid_credit_card_surcharge_amount";
     public static final String FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT = "corporate_prepaid_debit_card_surcharge_amount";
     public static final String FIELD_ALLOW_ZERO_AMOUNT = "allow_zero_amount";
-    
+    public static final String FIELD_INTEGRATION_VERSION_3DS = "integration_version_3ds";
+
     private static final List<String> VALID_PATHS = asList(
             CREDENTIALS_GATEWAY_MERCHANT_ID,
-            FIELD_NOTIFY_SETTINGS, 
-            FIELD_EMAIL_COLLECTION_MODE, 
+            FIELD_NOTIFY_SETTINGS,
+            FIELD_EMAIL_COLLECTION_MODE,
             FIELD_ALLOW_APPLE_PAY,
             FIELD_ALLOW_GOOGLE_PAY,
             FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT,
             FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT,
             FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT,
             FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT,
-            FIELD_ALLOW_ZERO_AMOUNT);
-    
+            FIELD_ALLOW_ZERO_AMOUNT,
+            FIELD_INTEGRATION_VERSION_3DS);
+
     private final RequestValidator requestValidator;
-    
+
     @Inject
-    public GatewayAccountRequestValidator(RequestValidator requestValidator){
+    public GatewayAccountRequestValidator(RequestValidator requestValidator) {
         this.requestValidator = requestValidator;
     }
 
-    public void validatePatchRequest(JsonNode payload){
+    public void validatePatchRequest(JsonNode payload) {
         List<String> pathCheck = requestValidator.checkIfExistsOrEmpty(payload, FIELD_OPERATION, FIELD_OPERATION_PATH);
-        if(!pathCheck.isEmpty()) 
+        if (!pathCheck.isEmpty())
             throw new ValidationException(pathCheck);
-        
+
         String path = payload.findValue(FIELD_OPERATION_PATH).asText().toLowerCase();
-        if(!VALID_PATHS.contains(path)) 
+        if (!VALID_PATHS.contains(path))
             throw new ValidationException(Collections.singletonList(format("Operation [%s] not supported for path [%s]", FIELD_OPERATION, path)));
-        
+
         switch (path) {
             case CREDENTIALS_GATEWAY_MERCHANT_ID:
                 validateGatewayMerchantId(payload, CREDENTIALS_GATEWAY_MERCHANT_ID);
                 break;
-            case FIELD_NOTIFY_SETTINGS: 
+            case FIELD_NOTIFY_SETTINGS:
                 validateNotifySettingsRequest(payload);
                 break;
             case FIELD_EMAIL_COLLECTION_MODE:
@@ -85,11 +87,14 @@ public class GatewayAccountRequestValidator {
             case FIELD_ALLOW_ZERO_AMOUNT:
                 validateReplaceBooleanValue(payload);
                 break;
-            case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT: 
+            case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT:
             case FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT:
             case FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT:
             case FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT:
                 validateCorporateCardSurchargePayload(payload);
+                break;
+            case FIELD_INTEGRATION_VERSION_3DS:
+                validateIntegrationVersion3ds(payload);
                 break;
         }
     }
@@ -102,17 +107,17 @@ public class GatewayAccountRequestValidator {
     }
 
     private void throwIfBlankFieldValue(JsonNode valueNode) {
-        if (isBlank(valueNode.asText())) 
+        if (isBlank(valueNode.asText()))
             throw new ValidationException(Collections.singletonList(format("Field [%s] cannot be empty", FIELD_VALUE)));
     }
 
     private void throwIfNotValidMerchantId(JsonNode valueNode, String field) {
         boolean isValidWorldpayMerchantId = valueNode.textValue().matches("[0-9a-f]{15}");
-        if(!isValidWorldpayMerchantId) {
+        if (!isValidWorldpayMerchantId) {
             throw new ValidationException(Collections.singletonList(format("Field [%s] value [%s] does not match that expected for a Worldpay Merchant ID; should be 15 characters and within range [0-9a-f]", field, valueNode.asText())));
         }
     }
-    
+
     private void validateNotifySettingsRequest(JsonNode payload) {
         throwIfInvalidFieldOperation(payload, REPLACE, REMOVE);
         String op = payload.get(FIELD_OPERATION).asText();
@@ -142,7 +147,7 @@ public class GatewayAccountRequestValidator {
         throwIfNullFieldValue(payload.get(FIELD_VALUE));
         throwIfNotBoolean(payload);
     }
-    
+
     private void validateCorporateCardSurchargePayload(JsonNode payload) {
         throwIfInvalidFieldOperation(payload, REPLACE);
         throwIfNullFieldValue(payload.get(FIELD_VALUE));
@@ -150,8 +155,14 @@ public class GatewayAccountRequestValidator {
         throwIfNegativeNumber(payload);
     }
 
+    private void validateIntegrationVersion3ds(JsonNode payload) {
+        throwIfInvalidFieldOperation(payload, REPLACE);
+        throwIfNotNumber(payload);
+        throwIfNotInRange(payload, 1, 2);
+    }
+
     private void throwIfNullFieldValue(JsonNode valueNode) {
-        if (null == valueNode || valueNode.isNull()) 
+        if (null == valueNode || valueNode.isNull())
             throw new ValidationException(Collections.singletonList(format("Field [%s] is required", FIELD_VALUE)));
     }
 
@@ -174,11 +185,18 @@ public class GatewayAccountRequestValidator {
             throw new ValidationException(Collections.singletonList(format("Value [%s] must be of type boolean for path [%s]", payload.get(FIELD_VALUE).asText(), payload.get(FIELD_OPERATION_PATH).asText())));
         }
     }
-    
+
     private void throwIfNegativeNumber(JsonNode payload) {
-        long amount = payload.get(FIELD_VALUE).longValue();
-        if (amount < 0) {
-            throw new ValidationException(Collections.singletonList(format("Value [%s] is not valid for path [%s]", amount, payload.get(FIELD_OPERATION_PATH).asText())));
+        long value = payload.get(FIELD_VALUE).longValue();
+        if (value < 0) {
+            throw new ValidationException(Collections.singletonList(format("Value [%s] is not valid for path [%s]", value, payload.get(FIELD_OPERATION_PATH).asText())));
+        }
+    }
+
+    private void throwIfNotInRange(JsonNode payload, int min, int max) {
+        int value = payload.get(FIELD_VALUE).intValue();
+        if (value < min || value > max) {
+            throw new ValidationException(Collections.singletonList(format("Value [%s] is not valid for path [%s]", value, payload.get(FIELD_OPERATION_PATH).asText())));
         }
     }
 }

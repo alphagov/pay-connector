@@ -34,6 +34,7 @@ import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequest
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_EMAIL_COLLECTION_MODE;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_INTEGRATION_VERSION_3DS;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_NOTIFY_SETTINGS;
 
 public class GatewayAccountService {
@@ -89,13 +90,13 @@ public class GatewayAccountService {
 
         return GatewayAccountObjectConverter.createResponseFrom(gatewayAccountEntity, uriInfo);
     }
-    
+
     private final Map<String, BiConsumer<JsonPatchRequest, GatewayAccountEntity>> attributeUpdater =
-            new HashMap<String, BiConsumer<JsonPatchRequest, GatewayAccountEntity>>() {{
+            new HashMap<>() {{
                 put(CREDENTIALS_GATEWAY_MERCHANT_ID,
                         (gatewayAccountRequest, gatewayAccountEntity) -> {
                             Map<String, String> credentials = gatewayAccountEntity.getCredentials();
-                            if(credentials.isEmpty()) {
+                            if (credentials.isEmpty()) {
                                 throw new MerchantIdWithoutCredentialsException();
                             }
                             throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
@@ -127,6 +128,8 @@ public class GatewayAccountService {
                         (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporatePrepaidDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong()));
                 put(FIELD_ALLOW_ZERO_AMOUNT,
                         (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowZeroAmount(Boolean.valueOf(gatewayAccountRequest.valueAsString())));
+                put(FIELD_INTEGRATION_VERSION_3DS,
+                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setIntegrationVersion3ds(gatewayAccountRequest.valueAsInt()));
             }};
 
     private void throwIfNotDigitalWalletSupportedGateway(GatewayAccountEntity gatewayAccountEntity) {

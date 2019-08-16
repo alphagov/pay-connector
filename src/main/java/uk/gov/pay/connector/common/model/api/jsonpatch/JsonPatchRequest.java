@@ -36,6 +36,13 @@ public class JsonPatchRequest {
         }
         throw new JsonNodeNotCorrectTypeException("JSON node " + value + " is not of type number");
     }
+    
+    public int valueAsInt() {
+        if(value != null && value.isNumber()) {
+            return Integer.valueOf(value.asText());
+        }
+        throw new JsonNodeNotCorrectTypeException("JSON node " + value + " is not of type number");
+    }
 
     public boolean valueAsBoolean() {
         if (value != null && value.isBoolean()) {

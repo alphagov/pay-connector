@@ -53,7 +53,11 @@ public class GatewayAccountRequestValidatorTest {
             "remove, credentials/gateway_merchant_id, gatewayMerchantId, Operation [remove] is not valid for path [credentials/gateway_merchant_id]",
             "add, credentials/gateway_merchant_id, , Field [value] cannot be empty",
             "add, credentials/gateway_merchant_id, zzzzz, Field [credentials/gateway_merchant_id] value [zzzzz] does not match that expected for a Worldpay Merchant ID; should be 15 characters and within range [0-9a-f]",
-            "replace, credentials/gateway_merchant_id, null, Field [value] is required"
+            "replace, credentials/gateway_merchant_id, null, Field [value] is required",
+            "add, integration_version_3ds, 1, Operation [add] is not valid for path [integration_version_3ds]",
+            "replace, integration_version_3ds, a-string, Value [a-string] is not valid for path [integration_version_3ds]",
+            "replace, integration_version_3ds, 0, Value [0] is not valid for path [integration_version_3ds]",
+            "replace, integration_version_3ds, 3, Value [3] is not valid for path [integration_version_3ds]",
     })
     public void shouldThrowWhenRequestsAreInvalid(String op, String path, @Nullable String value, String expectedErrorMessage) {
         Map<String, String> patch = new HashMap<String, String>() {{
