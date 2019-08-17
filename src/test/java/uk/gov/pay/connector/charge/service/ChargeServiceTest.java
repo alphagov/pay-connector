@@ -20,9 +20,12 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -85,11 +88,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -143,6 +142,8 @@ public class ChargeServiceTest {
     private ChargeService service;
 
     private GatewayAccountEntity gatewayAccount;
+    
+    private ChargeEntity returnedChargeEntity;
 
     @Before
     public void setUp() {
@@ -175,6 +176,42 @@ public class ChargeServiceTest {
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(mockChargeEvent);
+        
+        ExternalMetadata externalMetadata = new ExternalMetadata(
+                Map.of(
+                "created_date", "2018-02-21T16:04:25Z",
+                "authorised_date", "2018-02-21T16:05:33Z",
+                "processor_id", "1PROC",
+                "auth_code", "666",
+                "telephone_number", "+447700900796",
+                "payment_outcome", Map.of(
+                        "status", "success"
+                ))
+        );
+
+        CardDetailsEntity cardDetails = new CardDetailsEntity(
+                LastDigitsCardNumber.of("1234"),
+                FirstDigitsCardNumber.of("123456"),
+                "Jane Doe",
+                "01/19",
+                "visa"
+        );
+        
+        returnedChargeEntity = new ChargeEntity(
+                100L,
+                ServicePaymentReference.of("Some reference"),
+                "Some description",
+                AUTHORISATION_SUCCESS,
+                "jane.doe@example.com",
+                cardDetails,
+                externalMetadata,
+                gatewayAccount,
+                "1PROV",
+                SupportedLanguage.ENGLISH
+        );
+        
+        when(mockedChargeDao.findByProviderSessionId("1PROV")).thenReturn(Optional.of(returnedChargeEntity));
+        when(mockedChargeDao.findByProviderSessionId("new")).thenReturn(Optional.empty());
 
         // Populate ChargeEntity with ID when persisting
         doAnswer(invocation -> {
@@ -589,6 +626,7 @@ public class ChargeServiceTest {
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .providerId("new")
                 .paymentOutcome(paymentOutcome)
                 .build();
 
@@ -598,8 +636,46 @@ public class ChargeServiceTest {
         verify(mockedChargeDao).findByProviderSessionId(chargeEntityArgumentCaptor.capture());
 
         String providerId = chargeEntityArgumentCaptor.getValue();
-        assertThat(providerId, is("1PROV"));
+        assertThat(providerId, is("new"));
         assertThat(telephoneChargeResponse.isPresent(), is(false));
+    }
+
+    @Test
+    public void shouldReturnAResponseForExistingCharge() {
+        PaymentOutcome paymentOutcome = new PaymentOutcome("success");
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .paymentOutcome(paymentOutcome)
+                .build();
+        
+        service.createTelephoneCharge(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        Optional<TelephoneChargeResponse> telephoneChargeResponse = service.findTelephoneCharge(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        ArgumentCaptor<String> chargeEntityArgumentCaptor = forClass(String.class);
+        verify(mockedChargeDao).findByProviderSessionId(chargeEntityArgumentCaptor.capture());
+
+        String providerId = chargeEntityArgumentCaptor.getValue();
+        assertThat(providerId, is("1PROV"));
+        assertThat(telephoneChargeResponse.isPresent(), is(true));
+        assertThat(telephoneChargeResponse.get().getAmount(), is(100L));
+        assertThat(telephoneChargeResponse.get().getReference(), is("Some reference"));
+        assertThat(telephoneChargeResponse.get().getDescription(), is("Some description"));
+        assertThat(telephoneChargeResponse.get().getCreatedDate(), is("2018-02-21T16:04:25Z"));
+        assertThat(telephoneChargeResponse.get().getAuthorisedDate(), is("2018-02-21T16:05:33Z"));
+        assertThat(telephoneChargeResponse.get().getAuthCode(), is("666"));
+        assertThat(telephoneChargeResponse.get().getPaymentOutcome().getStatus(), is("success"));
+        assertThat(telephoneChargeResponse.get().getCardType(), is("visa"));
+        assertThat(telephoneChargeResponse.get().getNameOnCard(), is("Jane Doe"));
+        assertThat(telephoneChargeResponse.get().getEmailAddress(), is("jane.doe@example.com"));
+        assertThat(telephoneChargeResponse.get().getCardExpiry(), is("01/19"));
+        assertThat(telephoneChargeResponse.get().getLastFourDigits(), is("1234"));
+        assertThat(telephoneChargeResponse.get().getFirstSixDigits(), is("123456"));
+        assertThat(telephoneChargeResponse.get().getTelephoneNumber(), is("+447700900796"));
+        assertThat(telephoneChargeResponse.get().getPaymentId(), is("dummypaymentid123notpersisted"));
+        assertThat(telephoneChargeResponse.get().getState().getStatus(), is("success"));
+        assertThat(telephoneChargeResponse.get().getState().getFinished(), is(true));
+        assertThat(telephoneChargeResponse.get().getState().getMessage(), is("created"));
     }
 
     @Test
@@ -994,7 +1070,7 @@ public class ChargeServiceTest {
     @Test
     public void shouldNotTransitionChargeStateForNonSkippableNonConfirmedCharge() {
         ChargeEntity createdChargeEntity = aValidChargeEntity()
-                .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .withStatus(AUTHORISATION_SUCCESS)
                 .build();
 
         final String chargeEntityExternalId = createdChargeEntity.getExternalId();
