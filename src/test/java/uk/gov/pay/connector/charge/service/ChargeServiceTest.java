@@ -585,6 +585,24 @@ public class ChargeServiceTest {
     }
 
     @Test
+    public void shouldNotFindCharge() {
+        PaymentOutcome paymentOutcome = new PaymentOutcome("success");
+        
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .paymentOutcome(paymentOutcome)
+                .build();
+
+        Optional<TelephoneChargeResponse> telephoneChargeResponse = service.findTelephoneCharge(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        ArgumentCaptor<String> chargeEntityArgumentCaptor = forClass(String.class);
+        verify(mockedChargeDao).findByProviderSessionId(chargeEntityArgumentCaptor.capture());
+
+        String providerId = chargeEntityArgumentCaptor.getValue();
+        assertThat(providerId, is("1PROV"));
+        assertThat(telephoneChargeResponse.isPresent(), is(false));
+    }
+
+    @Test
     public void shouldCreateATelephoneChargeResponseForSuccess() {
 
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
