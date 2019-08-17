@@ -252,7 +252,20 @@ public class ChargesApiResource {
             TelephoneChargeCreateRequest telephoneChargeCreateRequest,
             @Context UriInfo uriInfo
     ) {
-        Optional<TelephoneChargeResponse> telephoneChargeResponse = chargeService.createTelephoneCharge(
+        Optional<TelephoneChargeResponse> telephoneChargeResponse = chargeService.findTelephoneCharge(
+                telephoneChargeCreateRequest,
+                accountId,
+                uriInfo
+        );
+
+        if (telephoneChargeResponse.isPresent()) {
+            return Response
+                    .status(200)
+                    .entity(telephoneChargeResponse.get())
+                    .build();
+        }
+
+        telephoneChargeResponse = chargeService.createTelephoneCharge(
                 telephoneChargeCreateRequest,
                 accountId,
                 uriInfo
