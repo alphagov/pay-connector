@@ -252,7 +252,16 @@ public class ChargesApiResource {
             TelephoneChargeCreateRequest telephoneChargeCreateRequest,
             @Context UriInfo uriInfo
     ) {
-        return null;
+        Optional<TelephoneChargeResponse> telephoneChargeResponse = chargeService.createTelephoneCharge(
+                telephoneChargeCreateRequest,
+                accountId,
+                uriInfo
+        );
+
+        return Response
+                .status(201)
+                .entity(telephoneChargeResponse.get())
+                .build();
     }
 
     @POST
