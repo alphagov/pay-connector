@@ -1,10 +1,11 @@
-package uk.gov.pay.connector.charge.validation;
+package uk.gov.pay.connector.charge.validation.telephone;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.util.HashSet;
 
-public class CardTypeValidator implements ConstraintValidator<ValidCardType, String> {
+public class CardLastFourDigitsValidator implements ConstraintValidator<ValidCardExpiryDate, String> {
+
     private final static HashSet<String> CARD_TYPES = new HashSet<>();
 
     static {
@@ -25,4 +26,5 @@ public class CardTypeValidator implements ConstraintValidator<ValidCardType, Str
         return CARD_TYPES.contains(value);
 
     }
+    
 }

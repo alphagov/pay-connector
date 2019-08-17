@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.charge.validation.telephone;
 
-import uk.gov.pay.connector.charge.validation.ValidCardExpiryDate;
-
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.util.regex.Pattern;

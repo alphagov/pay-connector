@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.charge.validation;
+package uk.gov.pay.connector.charge.validation.telephone;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
@@ -13,15 +13,16 @@ import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Target({ FIELD, METHOD, PARAMETER, ANNOTATION_TYPE, TYPE_USE })
+@Target({FIELD, METHOD, PARAMETER, ANNOTATION_TYPE, TYPE_USE})
 @Retention(RUNTIME)
-@Constraint(validatedBy = CardTypeValidator.class)
+@Constraint(validatedBy = CardExpiryValidator.class)
 @Documented
-public @interface ValidCardType {
+public @interface ValidCardExpiryDate {
+
+    String message() default "Must be MM/YY";
+
+    Class<?>[] groups() default{};
+
+    Class<? extends Payload>[] payload() default{};
     
-    String message() default "Must be either master-card, visa, maestro, diners-club or american-express";
-
-    Class<?>[] groups() default {};
-
-    Class<? extends Payload>[] payload() default {};
 }
