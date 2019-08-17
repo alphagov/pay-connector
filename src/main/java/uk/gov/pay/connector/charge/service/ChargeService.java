@@ -80,7 +80,18 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.*;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 
 public class ChargeService {
