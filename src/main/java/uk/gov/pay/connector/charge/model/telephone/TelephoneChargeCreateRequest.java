@@ -2,6 +2,7 @@ package uk.gov.pay.connector.charge.model.telephone;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import uk.gov.pay.connector.charge.validation.ValidCardExpiryDate;
 import uk.gov.pay.connector.charge.validation.ValidCardType;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
@@ -32,6 +33,7 @@ public class TelephoneChargeCreateRequest {
     
     private String emailAddress;
     
+    @ValidCardExpiryDate
     private String cardExpiry;
     
     private String lastFourDigits;
