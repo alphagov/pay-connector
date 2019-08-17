@@ -2,12 +2,11 @@ package uk.gov.pay.connector.charge.validation.telephone;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
-import java.util.HashSet;
 import java.util.regex.Pattern;
 
-public class CardLastFourDigitsValidator implements ConstraintValidator<ValidCardExpiryDate, String> {
+public class CardFirstSixDigitsValidator implements ConstraintValidator<ValidCardExpiryDate, String> {
 
-    private Pattern pattern = Pattern.compile("\\d{4}");
+    private Pattern pattern = Pattern.compile("\\d{6}");
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {

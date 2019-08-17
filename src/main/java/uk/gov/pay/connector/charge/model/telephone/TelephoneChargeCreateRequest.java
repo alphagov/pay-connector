@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.model.telephone;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardExpiryDate;
+import uk.gov.pay.connector.charge.validation.telephone.ValidCardFirstSixDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardLastFourDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardType;
 
@@ -40,6 +41,7 @@ public class TelephoneChargeCreateRequest {
     @ValidCardLastFourDigits
     private String lastFourDigits;
     
+    @ValidCardFirstSixDigits
     private String firstSixDigits;
     
     private String telephoneNumber;
