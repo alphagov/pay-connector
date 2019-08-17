@@ -118,7 +118,19 @@ public class ChargeService {
         this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
         this.eventQueue = eventQueue;
     }
-
+    
+    @Transactional
+    public Optional<TelephoneChargeResponse> findTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
+        Optional<ChargeEntity> chargeEntity = chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId());
+        
+        if(chargeEntity.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        return chargeEntity.map(charge ->
+                populateTelephoneCharge(charge).build());
+    }
+    
     public Optional<TelephoneChargeResponse> createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
 
         return createTelephoneChargeEntity(telephoneChargeCreateRequest, accountId, uriInfo)
