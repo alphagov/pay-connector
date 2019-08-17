@@ -241,6 +241,17 @@ public class ChargesApiResource {
                 .map(response -> created(response.getLink("self")).entity(response).build())
                 .orElseGet(() -> notFoundResponse("Unknown gateway account: " + accountId));
     }
+    
+    @POST
+    @Path("v1/api/accounts{accountId}/telephone_charges")
+    @Produces(APPLICATION_JSON)
+    public Response createNewTelephoneCharge(
+            @PathParam(ACCOUNT_ID) Long accountId,
+            TelephoneChargeCreateRequest telephoneChargeCreateRequest,
+            @Context UriInfo uriInfo
+    ) {
+        return null;
+    }
 
     @POST
     @Path("/v1/tasks/expired-charges-sweep")
