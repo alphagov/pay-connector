@@ -6,6 +6,10 @@ import uk.gov.pay.connector.charge.validation.telephone.ValidCardExpiryDate;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardFirstSixDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardLastFourDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardType;
+import uk.gov.pay.connector.charge.validation.telephone.ValidPaymentOutcome;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class TelephoneChargeCreateRequest {
@@ -26,6 +30,8 @@ public class TelephoneChargeCreateRequest {
     
     private String authCode;
     
+    @Valid
+    @NotNull
     private PaymentOutcome paymentOutcome;
     
     @ValidCardType

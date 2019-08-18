@@ -1,11 +1,16 @@
 package uk.gov.pay.connector.charge.model.telephone;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import uk.gov.pay.connector.charge.validation.telephone.ValidPaymentOutcome;
+
+@ValidPaymentOutcome
 public class PaymentOutcome {
     
     private String status;
     
     private String code;
-    
+
+    @JsonInclude(JsonInclude.Include.NON_ABSENT)
     private Supplemental supplemental;
 
     public PaymentOutcome() {
