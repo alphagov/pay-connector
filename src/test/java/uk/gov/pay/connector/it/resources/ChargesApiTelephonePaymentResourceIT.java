@@ -531,5 +531,40 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .postCreateTelephoneCharge(payload)
                 .statusCode(422);
     }
+
+    @Test
+    public void shouldReturn422ForMissingReference() {
+        HashMap<String, Object> postBody = new HashMap<>();
+        postBody.put("amount", 12000);
+        postBody.put("description", "New passport application");
+        postBody.put("created_date", "2018-02-21T16:04:25Z");
+        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
+        postBody.put("processor_id", "183f2j8923j8");
+        postBody.put("provider_id", "17498-8412u9-1273891239");
+        postBody.put("auth_code", "666");
+        postBody.put("payment_outcome",
+                Map.of(
+                        "status", "failed",
+                        "code", "error",
+                        "supplemental", Map.of(
+                                "error_code", "ECKOH01234",
+                                "error_message", "textual message describing error code"
+                        )
+                )
+        );
+        postBody.put("card_type", "visa");
+        postBody.put("name_on_card", "Jane Doe");
+        postBody.put("email_address", "jane_doe@example.com");
+        postBody.put("card_expiry", "02/19");
+        postBody.put("last_four_digits", "1234");
+        postBody.put("first_six_digits", "123456");
+        postBody.put("telephone_number", "+447700900796");
+
+        String payload = toJson(postBody);
+
+        connectorRestApiClient
+                .postCreateTelephoneCharge(payload)
+                .statusCode(422);
+    }
     
 }
