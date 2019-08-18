@@ -6,7 +6,6 @@ import uk.gov.pay.connector.charge.validation.telephone.ValidCardExpiryDate;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardFirstSixDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardLastFourDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardType;
-import uk.gov.pay.connector.charge.validation.telephone.ValidPaymentOutcome;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;

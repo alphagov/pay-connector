@@ -2,7 +2,6 @@ package uk.gov.pay.connector.charge.validation.telephone;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
-import java.util.HashSet;
 import java.util.regex.Pattern;
 
 public class CardLastFourDigitsValidator implements ConstraintValidator<ValidCardLastFourDigits, String> {
