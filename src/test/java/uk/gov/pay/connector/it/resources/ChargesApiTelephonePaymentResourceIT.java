@@ -42,6 +42,42 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
     }
 
     @Test
+    public void createTelephoneChargeForOnlyRequiredFields() {
+        HashMap<String, Object> postBody = new HashMap<>();
+        postBody.put("amount", 12000);
+        postBody.put("reference", "MRPC12345");
+        postBody.put("description", "New passport application");
+        postBody.put("processor_id", "183f2j8923j8");
+        postBody.put("provider_id", "17498-8412u9-1273891239");
+        postBody.put("payment_outcome",
+                Map.of(
+                        "status", "success"
+                )
+        );
+        postBody.put("card_type", "master-card");
+        postBody.put("card_expiry", "02/19");
+        postBody.put("last_four_digits", "1234");
+        postBody.put("first_six_digits", "123456");
+
+        String payload = toJson(postBody);
+
+        connectorRestApiClient
+                .postCreateTelephoneCharge(payload)
+                .statusCode(201)
+                .contentType(JSON)
+                .body("amount", isNumber(12000))
+                .body("reference", is("MRPC12345"))
+                .body("description", is("New passport application"))
+                .body("processor_id", is("183f2j8923j8"))
+                .body("provider_id", is("17498-8412u9-1273891239"))
+                .body("card_type", is("master-card"))
+                .body("card_expiry", is("02/19"))
+                .body("last_four_digits", is("1234"))
+                .body("first_six_digits", is("123456"))
+                .body("payment_outcome.status", is("success"));
+    }
+    
+    @Test
     public void createTelephoneChargeForStatusOfSuccess() {
         HashMap<String, Object> postBody = new HashMap<>();
         postBody.put("amount", 12000);
