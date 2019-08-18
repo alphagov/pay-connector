@@ -14,18 +14,23 @@ import javax.validation.constraints.NotNull;
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class TelephoneChargeCreateRequest {
     
+    @NotNull
     private Long amount;
     
+    @NotNull
     private String reference;
     
+    @NotNull
     private String description;
     
     private String createdDate;
     
     private String authorisedDate;
     
+    @NotNull
     private String processorId;
     
+    @NotNull
     private String providerId;
     
     private String authCode;
