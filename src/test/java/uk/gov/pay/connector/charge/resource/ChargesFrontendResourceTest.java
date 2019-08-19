@@ -9,6 +9,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 
 import javax.ws.rs.client.Entity;
@@ -27,13 +28,15 @@ public class ChargesFrontendResourceTest {
     @Mock
     private static ChargeService chargeService;
     @Mock
-    private static  ChargeDao chargeDao;
+    private static ChargeDao chargeDao;
     @Mock
     private static CardTypeDao cardTypeDao;
+    @Mock
+    private static Worldpay3dsFlexJwtService worldpay3dsFlexJwtService;
     
     @ClassRule
     public static ResourceTestRule resources = ResourceTestRuleWithCustomExceptionMappersBuilder.getBuilder()
-            .addResource(new ChargesFrontendResource(chargeDao, chargeService, cardTypeDao))
+            .addResource(new ChargesFrontendResource(chargeDao, chargeService, cardTypeDao, worldpay3dsFlexJwtService))
             .build();
 
     @Test

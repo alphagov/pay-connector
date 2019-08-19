@@ -25,6 +25,10 @@ public class RestAssuredClient {
         this.headers = new HashMap<>();
     }
 
+    public RestAssuredClient(int port) {
+        this(port, null);
+    }
+
     public RestAssuredClient withAccountId(String accountId) {
         this.accountId = accountId;
         return this;
@@ -157,6 +161,14 @@ public class RestAssuredClient {
         return given()
                 .port(port)
                 .get(requestPath)
+                .then();
+    }
+
+    public ValidatableResponse getWorldpay3dsFlexDdcJwt() {
+        return given()
+                .port(port)
+                .get("/v1/frontend/charges/{chargeId}/worldpay/3ds-flex/ddc"
+                .replace("{chargeId}", chargeId))
                 .then();
     }
 

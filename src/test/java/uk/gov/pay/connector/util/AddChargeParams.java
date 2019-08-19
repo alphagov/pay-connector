@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 
 import static java.time.ZonedDateTime.now;
 
@@ -119,7 +120,7 @@ public class AddChargeParams {
     }
 
     public static final class AddChargeParamsBuilder {
-        private Long chargeId = 1L;
+        private Long chargeId = new Random().nextLong();
         private String externalChargeId = "anExternalChargeId";
         private String gatewayAccountId;
         private long amount = 1000;
