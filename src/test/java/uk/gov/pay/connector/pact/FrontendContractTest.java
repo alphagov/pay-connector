@@ -19,7 +19,6 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.ZonedDateTime;
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
@@ -29,7 +28,7 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 @PactBroker(scheme = "https", host = "pact-broker-test.cloudapps.digital", tags = {"${PACT_CONSUMER_TAG}", "test", "staging", "production"},
         authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"),
         consumers = {"frontend"})
-public class WalletApiContractTest {
+public class FrontendContractTest {
 
     @ClassRule
     public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
@@ -50,7 +49,7 @@ public class WalletApiContractTest {
     }
 
     @State("a sandbox account exists with a charge with id testChargeId that is in state ENTERING_CARD_DETAILS.")
-    public void aChangeExistsAwaitingAuthorisation() {
+    public void aChargeExistsAwaitingAuthorisation() {
         long gatewayAccountId = 666L;
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, gatewayAccountId);
 
