@@ -43,6 +43,13 @@
                 </browser>
             </shopper>
             </#if>
+            <#if authCardDetails.worldpay3dsFlexDdcResult.isPresent()>
+            <additional3DSData
+                dfReferenceId="${authCardDetails.worldpay3dsFlexDdcResult.get()}"
+                challengeWindowSize="390x400"
+                challengePreference="noPreference"
+            />
+            </#if>
         </order>
     </submit>
 </paymentService>

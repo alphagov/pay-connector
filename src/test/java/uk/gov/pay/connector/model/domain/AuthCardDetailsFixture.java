@@ -22,6 +22,7 @@ public final class AuthCardDetailsFixture {
     private PayersCardType payersCardType = PayersCardType.DEBIT;
     private PayersCardPrepaidStatus payersCardPrepaidStatus = PayersCardPrepaidStatus.UNKNOWN;
     private Boolean corporateCard = Boolean.FALSE;
+    private String worldpay3dsFlexDdcResult;
 
     private AuthCardDetailsFixture() {
     }
@@ -84,6 +85,11 @@ public final class AuthCardDetailsFixture {
         this.payersCardPrepaidStatus = payersCardPrepaidStatus;
         return this;
     }
+    
+    public AuthCardDetailsFixture withWorldpay3dsFlexDdcResult(String worldpay3dsFlexDdcResult) {
+        this.worldpay3dsFlexDdcResult = worldpay3dsFlexDdcResult;
+        return this;
+    }
 
     public CardDetailsEntity getCardDetailsEntity() {
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
@@ -116,6 +122,7 @@ public final class AuthCardDetailsFixture {
         authCardDetails.setPayersCardType(payersCardType);
         authCardDetails.setPayersCardPrepaidStatus(payersCardPrepaidStatus);
         authCardDetails.setCorporateCard(corporateCard);
+        authCardDetails.setWorldpay3dsFlexDdcResult(worldpay3dsFlexDdcResult);
         return authCardDetails;
     }
 }
