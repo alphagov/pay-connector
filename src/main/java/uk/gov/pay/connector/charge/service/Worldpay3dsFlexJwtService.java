@@ -14,8 +14,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static java.time.temporal.ChronoUnit.SECONDS;
-
 public class Worldpay3dsFlexJwtService {
 
     private final JwtGenerator jwtGenerator;
@@ -69,8 +67,8 @@ public class Worldpay3dsFlexJwtService {
     private Map<String, Object> generateDdcClaims(String issuer, String organisationId, ZonedDateTime chargeCreatedTime) {
         return Map.of(
                 "jti", RandomIdGenerator.newId(),
-                "iat", Instant.now().toEpochMilli(),
-                "exp", chargeCreatedTime.plus(tokenExpiryDurationSeconds, SECONDS).toInstant().toEpochMilli(),
+                "iat", Instant.now().getEpochSecond(),
+                "exp", chargeCreatedTime.plusSeconds(tokenExpiryDurationSeconds).toInstant().getEpochSecond(),
                 "iss", issuer,
                 "OrgUnitId", organisationId);
     }

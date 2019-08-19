@@ -13,9 +13,11 @@ import uk.gov.pay.connector.charge.util.JwtGenerator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
+import static java.time.ZoneOffset.UTC;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
@@ -24,12 +26,11 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 
 public class Worldpay3dsFlexJwtServiceTest {
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
     private static final int tokenExpiryDurationSeconds = 5400;
     private static Worldpay3dsFlexJwtService worldpay3dsFlexJwtService = new Worldpay3dsFlexJwtService(new JwtGenerator(), tokenExpiryDurationSeconds);
 
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void shouldCreateCorrectTokenForWorldpay3dsFlexDdc() {
@@ -39,9 +40,11 @@ public class Worldpay3dsFlexJwtServiceTest {
                 "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
         );
         var gatewayAccount = new GatewayAccount(1L, WORLDPAY.toString(), validCredentials);
-        var paymentCreationTime = ZonedDateTime.now();
+        int paymentCreationTimeEpochSeconds19August2029 = 1881821916;
+        int expectedTokenExpirationTimeEpochSeconds = paymentCreationTimeEpochSeconds19August2029 + tokenExpiryDurationSeconds;
+        var paymentCreationZonedDateTime = ZonedDateTime.ofInstant(Instant.ofEpochSecond((long) paymentCreationTimeEpochSeconds19August2029), UTC);
 
-        String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, paymentCreationTime);
+        String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, paymentCreationZonedDateTime);
 
         Jws<Claims> jws = Jwts.parser()
                 .setSigningKey(new SecretKeySpec(validCredentials.get("jwt_mac_id").getBytes(), "HmacSHA256"))
@@ -49,9 +52,9 @@ public class Worldpay3dsFlexJwtServiceTest {
 
         assertThat(jws.getHeader().getAlgorithm(), is("HS256"));
         assertThat(jws.getHeader().get("typ"), is("JWT"));
-        assertThat(jws.getBody().get("jti"), is (notNullValue()));
-        assertThat(jws.getBody().get("iat"), is (notNullValue()));
-        assertThat(jws.getBody().get("exp"), is (paymentCreationTime.plusSeconds(tokenExpiryDurationSeconds).toInstant().toEpochMilli()));
+        assertThat(jws.getBody().get("jti"), is(notNullValue()));
+        assertThat(jws.getBody().get("iat"), is(notNullValue()));
+        assertThat(jws.getBody().get("exp"), is(expectedTokenExpirationTimeEpochSeconds));
         assertThat(jws.getBody().get("iss"), is(validCredentials.get("issuer")));
         assertThat(jws.getBody().get("OrgUnitId"), is(validCredentials.get("organisational_unit_id")));
     }
