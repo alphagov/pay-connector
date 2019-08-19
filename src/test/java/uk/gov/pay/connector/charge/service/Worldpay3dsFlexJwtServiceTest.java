@@ -39,7 +39,7 @@ public class Worldpay3dsFlexJwtServiceTest {
                 "organisational_unit_id", "myOrg",
                 "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
         );
-        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.toString(), validCredentials);
+        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), validCredentials);
         int paymentCreationTimeEpochSeconds19August2029 = 1881821916;
         int expectedTokenExpirationTimeEpochSeconds = paymentCreationTimeEpochSeconds19August2029 + tokenExpiryDurationSeconds;
         var paymentCreationZonedDateTime = ZonedDateTime.ofInstant(Instant.ofEpochSecond((long) paymentCreationTimeEpochSeconds19August2029), UTC);
@@ -65,7 +65,7 @@ public class Worldpay3dsFlexJwtServiceTest {
                 "organisational_unit_id", "myOrg",
                 "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
         );
-        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.toString(), credentialsMissingIssuer);
+        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), credentialsMissingIssuer);
 
         expectedException.expect(Worldpay3dsFlexDdcJwtCredentialsException.class);
         expectedException.expectMessage("Cannot generate Worldpay 3ds Flex DDC JWT for account 1 because the " +
@@ -80,7 +80,7 @@ public class Worldpay3dsFlexJwtServiceTest {
                 "issuer", "me",
                 "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
         );
-        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.toString(), credentialsMissingOrgId);
+        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), credentialsMissingOrgId);
 
         expectedException.expect(Worldpay3dsFlexDdcJwtCredentialsException.class);
         expectedException.expectMessage(
@@ -96,7 +96,7 @@ public class Worldpay3dsFlexJwtServiceTest {
                 "issuer", "me",
                 "organisational_unit_id", "myOrg"
         );
-        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.toString(), credentialsMissingJwtMacId);
+        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), credentialsMissingJwtMacId);
 
         expectedException.expect(Worldpay3dsFlexDdcJwtCredentialsException.class);
         expectedException.expectMessage("Cannot generate Worldpay 3ds Flex DDC JWT for account 1 because the " +
@@ -112,7 +112,7 @@ public class Worldpay3dsFlexJwtServiceTest {
                 "organisational_unit_id", "myOrg",
                 "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
         );
-        var gatewayAccount = new GatewayAccount(1L, SMARTPAY.toString(), validCredentials);
+        var gatewayAccount = new GatewayAccount(1L, SMARTPAY.getName(), validCredentials);
 
         expectedException.expect(Worldpay3dsFlexDdcJwtPaymentProviderException.class);
         expectedException.expectMessage("Cannot provide a Worldpay 3ds flex DDC JWT for account 1 because the " +

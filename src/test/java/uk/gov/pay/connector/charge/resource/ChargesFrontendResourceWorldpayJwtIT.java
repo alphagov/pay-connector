@@ -96,7 +96,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
     private void setUpChargeAndAccount(String gatewayAccountId, PaymentGatewayName paymentProvider, Map<String, String> credentials, String chargeId) {
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(gatewayAccountId)
-                .withPaymentGateway(paymentProvider.toString())
+                .withPaymentGateway(paymentProvider.getName())
                 .withCredentials(credentials)
                 .build());
 

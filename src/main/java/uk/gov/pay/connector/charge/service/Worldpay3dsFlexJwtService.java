@@ -33,7 +33,7 @@ public class Worldpay3dsFlexJwtService {
      * >Worldpay DDC Documentation</a>
      */
     public String generateDdcToken(GatewayAccount gatewayAccount, ZonedDateTime chargeCreatedTime) {
-        if (!gatewayAccount.getGatewayName().equals(PaymentGatewayName.WORLDPAY.toString())) {
+        if (!gatewayAccount.getGatewayName().equals(PaymentGatewayName.WORLDPAY.getName())) {
             throw new Worldpay3dsFlexDdcJwtPaymentProviderException(gatewayAccount.getId());
         }
 
