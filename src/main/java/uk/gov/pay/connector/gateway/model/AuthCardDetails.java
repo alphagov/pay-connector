@@ -23,6 +23,7 @@ public class AuthCardDetails implements AuthorisationDetails {
     private PayersCardType payersCardType;
     private PayersCardPrepaidStatus payersCardPrepaidStatus;
     private Boolean corporateCard;
+    private String worldpay3dsFlexDdcResult;
 
     public static AuthCardDetails anAuthCardDetails() {
         return new AuthCardDetails();
@@ -83,6 +84,11 @@ public class AuthCardDetails implements AuthorisationDetails {
         this.payersCardPrepaidStatus = payersCardPrepaidStatus;
     }
 
+    @JsonProperty("worldpay_3ds_flex_ddc_result")
+    public void setWorldpay3dsFlexDdcResult(String worldpay3dsFlexDdcResult) {
+        this.worldpay3dsFlexDdcResult = worldpay3dsFlexDdcResult;
+    }
+
     public String getCardNo() {
         return cardNo;
     }
@@ -135,5 +141,9 @@ public class AuthCardDetails implements AuthorisationDetails {
 
     public PayersCardPrepaidStatus getPayersCardPrepaidStatus() {
         return payersCardPrepaidStatus == null ? PayersCardPrepaidStatus.UNKNOWN : payersCardPrepaidStatus;
+    }
+
+    public Optional<String> getWorldpay3dsFlexDdcResult() {
+        return Optional.ofNullable(worldpay3dsFlexDdcResult);
     }
 }

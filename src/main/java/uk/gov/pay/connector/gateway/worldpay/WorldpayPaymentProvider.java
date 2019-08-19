@@ -116,8 +116,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayException {
         GatewayOrder gatewayOrder = buildAuthoriseOrder(request);
-        GatewayClient.Response response = authoriseClient.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                request.getGatewayAccount(), gatewayOrder, getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+        GatewayClient.Response response = authoriseClient.postRequestFor(
+                gatewayUrlMap.get(request.getGatewayAccount().getType()), 
+                request.getGatewayAccount(), 
+                gatewayOrder, 
+                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
         return getWorldpayGatewayResponse(response);
     }
 
@@ -128,8 +131,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     .map(providerSessionId -> singletonList(new HttpCookie(WORLDPAY_MACHINE_COOKIE_NAME, providerSessionId)))
                     .orElse(emptyList());
             
-            GatewayClient.Response response = authoriseClient.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                    request.getGatewayAccount(), build3dsResponseAuthOrder(request), cookies, 
+            GatewayClient.Response response = authoriseClient.postRequestFor(
+                    gatewayUrlMap.get(request.getGatewayAccount().getType()), 
+                    request.getGatewayAccount(), 
+                    build3dsResponseAuthOrder(request), 
+                    cookies, 
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getWorldpayGatewayResponse(response);
