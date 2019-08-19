@@ -8,7 +8,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
         QueueMessageContractTest.class,
         TransactionsApiContractTest.class,
-        WalletApiContractTest.class
+        FrontendContractTest.class
 })
 public class ContractTestSuite {
 
