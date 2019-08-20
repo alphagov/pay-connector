@@ -14,11 +14,14 @@ import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
@@ -52,12 +55,10 @@ public class FrontendContractTest {
     public void aChargeExistsAwaitingAuthorisation() {
         long gatewayAccountId = 666L;
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, gatewayAccountId);
-
-        long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        
         String chargeExternalId = "testChargeId";
 
         dbHelper.addCharge(anAddChargeParams()
-                .withChargeId(chargeId)
                 .withExternalChargeId(chargeExternalId)
                 .withGatewayAccountId(String.valueOf(gatewayAccountId))
                 .withAmount(100)
@@ -69,6 +70,30 @@ public class FrontendContractTest {
                 .withCreatedDate(ZonedDateTime.now())
                 .withEmail("test@test.com")
                 .withDelayedCapture(false)
+                .build());
+    }
+
+    @State("a Worldpay account exists with 3DS flex credentials and a charge with id testChargeId")
+    public void aWorldpayChargeExists() {
+        long gatewayAccountId = 666L;
+        DatabaseFixtures
+                .withDatabaseTestHelper(dbHelper)
+                .aTestAccount()
+                .withAccountId(gatewayAccountId)
+                .withPaymentProvider("worldpay")
+                .withCardTypeEntities(Collections.singletonList(dbHelper.getVisaDebitCard()))
+                .withCredentials(Map.of(
+                        "jwt_mac_id", "1A4rIZWXzXxqH7hZQUJ5aIUlFgPJFKLfrOGKxASaaV3YWMrcS616L7H86UhnTg5u",
+                        "organisational_unit_id", "a-org-unit-id",
+                        "issuer", "an-issuer"
+                ))
+                .insert();
+
+        String chargeExternalId = "testChargeId";
+
+        dbHelper.addCharge(anAddChargeParams()
+                .withExternalChargeId(chargeExternalId)
+                .withGatewayAccountId(String.valueOf(gatewayAccountId))
                 .build());
     }
 }
