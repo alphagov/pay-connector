@@ -12,7 +12,8 @@ import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 import javax.ws.rs.core.MediaType;
 
 public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
-    Logger logger = Logger.getLogger(WorldpayOrderRequestBuilder.class);
+    
+    private static final Logger logger = Logger.getLogger(WorldpayOrderRequestBuilder.class);
 
     static public class WorldpayTemplateData extends TemplateData {
         private String reference;
@@ -23,6 +24,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String userAgentHeader;
         private boolean requires3ds;
         private String paResponse3ds;
+        private AuthenticationDate authenticationDate;
 
         public String getReference() {
             return reference;
@@ -89,6 +91,14 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         public void setPaResponse3ds(String paResponse3ds) {
             this.paResponse3ds = paResponse3ds;
         }
+
+        public void setAuthenticationDate(AuthenticationDate authenticationDate) {
+            this.authenticationDate = authenticationDate;
+        }
+
+        public AuthenticationDate getAuthenticationDate() {
+            return authenticationDate;
+        }
     }
 
     public static final TemplateBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseOrderTemplate.xml");
@@ -146,6 +156,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public WorldpayOrderRequestBuilder withDate(DateTime date) {
         worldpayTemplateData.setCaptureDate(date);
+        worldpayTemplateData.setAuthenticationDate(new AuthenticationDate(date));
         return this;
     }
 
@@ -183,5 +194,55 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     @Override
     public MediaType getMediaType() {
         return MediaType.APPLICATION_XML_TYPE;
+    }
+
+    public static class AuthenticationDate {
+        private final String second;
+        private final String minute;
+        private final String hour;
+        private final String day;
+        private final String month;
+        private final String year;
+
+        private AuthenticationDate(DateTime date) {
+            second = convert(date.getSecondOfMinute());
+            minute = convert(date.getMinuteOfHour());
+            hour = convert(date.getHourOfDay());
+            day = convert(date.getDayOfMonth());
+            month = convert(date.getMonthOfYear());
+            year = String.valueOf(date.getYear());
+        }
+
+        private String convert(int number) {
+            if (number < 10) {
+                return "0" + number;
+            } else {
+                return String.valueOf(number);
+            }
+        }
+
+        public String getSecond() {
+            return second;
+        }
+
+        public String getMinute() {
+            return minute;
+        }
+
+        public String getHour() {
+            return hour;
+        }
+
+        public String getDay() {
+            return day;
+        }
+
+        public String getMonth() {
+            return month;
+        }
+
+        public String getYear() {
+            return year;
+        }
     }
 }

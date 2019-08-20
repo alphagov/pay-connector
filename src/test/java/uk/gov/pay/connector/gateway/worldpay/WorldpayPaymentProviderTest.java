@@ -46,6 +46,7 @@ import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -57,6 +58,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.util.DateComponentMatcher.isValidDayOfMonth;
+import static uk.gov.pay.connector.util.DateComponentMatcher.isValidHour;
+import static uk.gov.pay.connector.util.DateComponentMatcher.isValidMinute;
+import static uk.gov.pay.connector.util.DateComponentMatcher.isValidMonth;
+import static uk.gov.pay.connector.util.DateComponentMatcher.isValidSecond;
+import static uk.gov.pay.connector.util.DateComponentMatcher.isValidYear;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS;
@@ -225,6 +232,18 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
                 is("390x400"));
         assertThat(xPath.evaluate("/paymentService/submit/order/additional3DSData/@challengePreference", document),
                 is("noPreference"));
+        assertThat(xPath.evaluate("/paymentService/submit/order/riskData/authenticationRiskData/authenticationTimestamp/date/@second", document),
+                isValidSecond());
+        assertThat(xPath.evaluate("/paymentService/submit/order/riskData/authenticationRiskData/authenticationTimestamp/date/@minute", document),
+                isValidMinute());
+        assertThat(xPath.evaluate("/paymentService/submit/order/riskData/authenticationRiskData/authenticationTimestamp/date/@hour", document),
+                isValidHour());
+        assertThat(xPath.evaluate("/paymentService/submit/order/riskData/authenticationRiskData/authenticationTimestamp/date/@dayOfMonth", document),
+                isValidDayOfMonth());
+        assertThat(xPath.evaluate("/paymentService/submit/order/riskData/authenticationRiskData/authenticationTimestamp/date/@month", document),
+                isValidMonth());
+        assertThat(xPath.evaluate("/paymentService/submit/order/riskData/authenticationRiskData/authenticationTimestamp/date/@year", document),
+                isValidYear());
     }
 
     @Test
