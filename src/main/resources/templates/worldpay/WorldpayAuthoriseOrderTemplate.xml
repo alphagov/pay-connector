@@ -44,17 +44,6 @@
             </shopper>
             </#if>
             <#if authCardDetails.worldpay3dsFlexDdcResult.isPresent()>
-            <riskData>
-                <authenticationRiskData authenticationMethod="localAccount">
-                    <authenticationTimestamp><date second="${authenticationDate.getSecond()}"
-                                                   minute="${authenticationDate.getMinute()}"
-                                                   hour="${authenticationDate.getHour()}"
-                                                   dayOfMonth="${authenticationDate.getDay()}"
-                                                   month="${authenticationDate.getMonth()}"
-                                                   year="${authenticationDate.getYear()}"/>
-                    </authenticationTimestamp>
-                </authenticationRiskData>
-            </riskData>
             <additional3DSData
                 dfReferenceId="${authCardDetails.worldpay3dsFlexDdcResult.get()}"
                 challengeWindowSize="390x400"
