@@ -44,7 +44,9 @@ import java.util.UUID;
 
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -61,6 +63,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTH
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS;
+import static uk.gov.pay.connector.util.XPathUtils.getNodeListFromExpression;
 
 @RunWith(MockitoJUnitRunner.class)
 public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest {
@@ -196,6 +199,69 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     }
     
     @Test
+    public void shouldNotIncludeElementsWhen3DSecureNotEnabled() throws Exception {
+
+        var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
+
+        GatewayClient.Response gatewayResponse = mock(GatewayClient.Response.class);
+        when(gatewayResponse.getEntity()).thenReturn(TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+        when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
+                .thenReturn(gatewayResponse);
+
+        worldpayPaymentProvider.authorise(new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), getValidTestCard()));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+
+        verify(mockGatewayClient).postRequestFor(
+                eq(WORLDPAY_URL),
+                eq(gatewayAccountEntity),
+                gatewayOrderArgumentCaptor.capture(),
+                anyMap());
+
+        Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
+        assertThat(getNodeListFromExpression(document, "/paymentService/submit/order/paymentDetails/session").getLength(),
+                is(0));
+        assertThat(getNodeListFromExpression(document, "/paymentService/submit/order/shopper/browser/acceptHeader").getLength(),
+                is(0));
+        assertThat(getNodeListFromExpression(document, "/paymentService/submit/order/shopper/browser/userAgentHeader").getLength(),
+                is(0));
+    }
+    
+    @Test
+    public void shouldNotIncludeElementsWhenWorldpay3dsFlexDdcResultIsNotPresent() throws Exception {
+
+        gatewayAccountEntity.setRequires3ds(true);
+        
+        var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
+
+        GatewayClient.Response gatewayResponse = mock(GatewayClient.Response.class);
+        when(gatewayResponse.getEntity()).thenReturn(TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+        when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
+                .thenReturn(gatewayResponse);
+
+        worldpayPaymentProvider.authorise(new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), getValidTestCard()));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+
+        verify(mockGatewayClient).postRequestFor(
+                eq(WORLDPAY_URL),
+                eq(gatewayAccountEntity),
+                gatewayOrderArgumentCaptor.capture(),
+                anyMap());
+
+        Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        assertThat(getNodeListFromExpression(document, "/paymentService/submit/order/additional3DSData").getLength(), 
+                is(0));
+        assertThat(xPath.evaluate("/paymentService/submit/order/paymentDetails/session/@id", document),
+                not(emptyString()));
+        assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/acceptHeader", document),
+                not(emptyString()));
+        assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/userAgentHeader", document),
+                not(emptyString()));
+    }
+    
+    @Test
     public void shouldInclude3DS2FlexElementsWhenWorldpay3dsFlexDdcResultIsPresent() throws Exception {
         
         var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
@@ -225,6 +291,12 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
                 is("390x400"));
         assertThat(xPath.evaluate("/paymentService/submit/order/additional3DSData/@challengePreference", document),
                 is("noPreference"));
+        assertThat(xPath.evaluate("/paymentService/submit/order/paymentDetails/session/@id", document),
+                not(emptyString()));
+        assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/acceptHeader", document),
+                not(emptyString()));
+        assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/userAgentHeader", document),
+                not(emptyString()));
     }
 
     @Test

@@ -12,7 +12,8 @@ import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 import javax.ws.rs.core.MediaType;
 
 public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
-    Logger logger = Logger.getLogger(WorldpayOrderRequestBuilder.class);
+    
+    private static final Logger logger = Logger.getLogger(WorldpayOrderRequestBuilder.class);
 
     static public class WorldpayTemplateData extends TemplateData {
         private String reference;

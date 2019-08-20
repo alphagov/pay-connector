@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import io.dropwizard.setup.Environment;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
@@ -179,9 +181,12 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     private GatewayOrder buildAuthoriseOrder(CardAuthorisationGatewayRequest request) {
+        boolean is3dsRequired = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() || 
+                request.getGatewayAccount().isRequires3ds();
         return aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId(request.getChargeExternalId())
-                .with3dsRequired(request.getGatewayAccount().isRequires3ds())
+                .with3dsRequired(is3dsRequired)
+                .withDate(DateTime.now(DateTimeZone.UTC))
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withDescription(request.getDescription())
