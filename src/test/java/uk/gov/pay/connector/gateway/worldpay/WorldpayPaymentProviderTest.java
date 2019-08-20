@@ -247,6 +247,10 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
                 isValidYear());
         assertThat(xPath.evaluate("/paymentService/submit/order/paymentDetails/session/@id", document),
                 not(emptyString()));
+        assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/acceptHeader", document),
+                not(emptyString()));
+        assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/userAgentHeader", document),
+                not(emptyString()));
     }
 
     @Test
