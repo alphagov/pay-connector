@@ -44,9 +44,10 @@ import java.util.UUID;
 
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -244,6 +245,8 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
                 isValidMonth());
         assertThat(xPath.evaluate("/paymentService/submit/order/riskData/authenticationRiskData/authenticationTimestamp/date/@year", document),
                 isValidYear());
+        assertThat(xPath.evaluate("/paymentService/submit/order/paymentDetails/session/@id", document),
+                not(emptyString()));
     }
 
     @Test
