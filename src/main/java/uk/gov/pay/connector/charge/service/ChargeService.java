@@ -142,9 +142,7 @@ public class ChargeService {
     private Optional<ChargeEntity> createChargeEntity(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
 
-            if (telephoneChargeRequest.getAmount() == 0L && !gatewayAccount.isAllowZeroAmount()) {
-                throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
-            }
+            checkIfZeroAmountAllowed(telephoneChargeRequest.getAmount(), gatewayAccount);
 
             CardDetailsEntity cardDetails = new CardDetailsEntity(
                     LastDigitsCardNumber.of(telephoneChargeRequest.getLastFourDigits()),
@@ -193,9 +191,7 @@ public class ChargeService {
     private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
 
-            if (chargeRequest.getAmount() == 0L && !gatewayAccount.isAllowZeroAmount()) {
-                throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
-            }
+            checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
 
             if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
                 logger.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
@@ -772,5 +768,11 @@ public class ChargeService {
         telephoneJSON.put("telephone_number", telephoneChargeRequest.getTelephoneNumber());
         
         return new ExternalMetadata(telephoneJSON);
+    }
+
+    private void checkIfZeroAmountAllowed(Long amount, GatewayAccountEntity gatewayAccount) {
+        if (amount == 0L && !gatewayAccount.isAllowZeroAmount()) {
+            throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
+        }
     }
 }
