@@ -131,15 +131,15 @@ public class ChargeService {
                 .map(charge -> populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
     
-    public Optional<ChargeResponse> createCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
+    public Optional<ChargeResponse> create(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
 
-        return createChargeEntity(telephoneChargeCreateRequest, accountId, uriInfo)
+        return createCharge(telephoneChargeCreateRequest, accountId, uriInfo)
                 .map(charge ->
                         populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
 
     @Transactional
-    private Optional<ChargeEntity> createChargeEntity(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
+    private Optional<ChargeEntity> createCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
 
             checkIfZeroAmountAllowed(telephoneChargeRequest.getAmount(), gatewayAccount);
