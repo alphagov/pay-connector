@@ -128,6 +128,8 @@ public class ChargeResponse {
         this.dataLinks = builder.getLinks();
         this.chargeId = builder.getChargeId();
         this.amount = builder.getAmount();
+        this.paymentOutcome = builder.getPaymentOutcome();
+        this.authCode = builder.getAuthCode();
         this.state = builder.getState();
         this.cardBrand = builder.getCardBrand();
         this.gatewayTransactionId = builder.getGatewayTransactionId();
@@ -135,8 +137,12 @@ public class ChargeResponse {
         this.description = builder.getDescription();
         this.reference = builder.getReference();
         this.providerName = builder.getProviderName();
+        this.providerId = builder.getProviderId();
+        this.processorId = builder.getProcessorId();
         this.createdDate = builder.getCreatedDate();
+        this.authorisedDate = builder.getAuthorisedDate();
         this.email = builder.getEmail();
+        this.telephoneNumber = builder.getTelephoneNumber();
         this.refundSummary = builder.getRefundSummary();
         this.settlementSummary = builder.getSettlementSummary();
         this.cardDetails = builder.getCardDetails();
