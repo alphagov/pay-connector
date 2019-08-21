@@ -280,7 +280,6 @@ public class ChargeService {
             persistedCard = chargeEntity.getCardDetails().toCard();
         }
         
-        
         T builderOfResponse = responseBuilder
                 .withAmount(chargeEntity.getAmount())
                 .withReference(chargeEntity.getReference())
