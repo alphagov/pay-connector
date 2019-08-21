@@ -128,14 +128,14 @@ public class ChargeService {
     @Transactional
     public Optional<ChargeResponse> findCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
         return chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId())
-                .map(charge -> populateTelephoneResponseBuilderWith(aChargeResponseBuilder(), charge).build());
+                .map(charge -> populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
     
     public Optional<ChargeResponse> createCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
 
         return createChargeEntity(telephoneChargeCreateRequest, accountId, uriInfo)
                 .map(charge ->
-                        populateTelephoneResponseBuilderWith(aChargeResponseBuilder(), charge).build());
+                        populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
 
     @Transactional
@@ -273,7 +273,7 @@ public class ChargeService {
                 });
     }
 
-    private <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateTelephoneResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, ChargeEntity chargeEntity) {
+    private <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, ChargeEntity chargeEntity) {
         
         PersistedCard persistedCard = null;
         if (chargeEntity.getCardDetails() != null) {
