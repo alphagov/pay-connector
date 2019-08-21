@@ -247,9 +247,10 @@ public class HistoricalEventEmitterWorkerTest {
         assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(CaptureConfirmed.class));
 
         ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(emittedEventDao, times(2)).recordEmission(daoArgumentCaptor.capture());
+        verify(emittedEventDao, times(3)).recordEmission(daoArgumentCaptor.capture());
         assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("CAPTURE_SUBMITTED"));
         assertThat(daoArgumentCaptor.getAllValues().get(1).getEventType(), is("CAPTURE_CONFIRMED"));
+        assertThat(daoArgumentCaptor.getAllValues().get(2).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
     }
 
     @Test
