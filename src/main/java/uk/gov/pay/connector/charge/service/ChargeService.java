@@ -131,7 +131,7 @@ public class ChargeService {
     }
     
     @Transactional
-    public Optional<TelephoneChargeResponse> findTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
+    public Optional<ChargeResponse> findTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
         return chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId())
                 .map(charge -> populateTelephoneCharge(charge).build());
     }
@@ -278,7 +278,7 @@ public class ChargeService {
                 });
     }
 
-    private TelephoneChargeResponse.ChargeBuilder populateTelephoneCharge(ChargeEntity chargeEntity) {
+    private ChargeResponse populateTelephoneCharge(ChargeEntity chargeEntity) {
 
         final TelephoneChargeResponse.ChargeBuilder builder = new TelephoneChargeResponse.ChargeBuilder()
                 .amount(chargeEntity.getAmount())

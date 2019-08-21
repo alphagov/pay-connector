@@ -248,6 +248,34 @@ public class ChargeResponse {
         return externalMetadata;
     }
 
+    public String getTelephoneNumber() {
+        return telephoneNumber;
+    }
+
+    public String getProcessorId() {
+        return processorId;
+    }
+
+    public String getProviderId() {
+        return providerId;
+    }
+
+    public ZonedDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public ZonedDateTime getAuthorisedDate() {
+        return authorisedDate;
+    }
+
+    public PaymentOutcome getPaymentOutcome() {
+        return paymentOutcome;
+    }
+
+    public String getAuthCode() {
+        return authCode;
+    }
+
     public URI getLink(String rel) {
         return dataLinks.stream()
                 .filter(map -> rel.equals(map.get("rel")))
