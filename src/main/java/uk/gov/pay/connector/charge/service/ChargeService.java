@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.charge.service;
 
-import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -29,10 +28,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
-import uk.gov.pay.connector.charge.model.telephone.State;
 import uk.gov.pay.connector.charge.model.telephone.Supplemental;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
-import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeResponse;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
@@ -83,8 +80,6 @@ import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBu
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
@@ -131,20 +126,20 @@ public class ChargeService {
     }
     
     @Transactional
-    public Optional<ChargeResponse> findTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
+    public Optional<ChargeResponse> findCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
         return chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId())
                 .map(charge -> populateTelephoneResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
     
-    public Optional<ChargeResponse> createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
+    public Optional<ChargeResponse> createCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
 
-        return createTelephoneChargeEntity(telephoneChargeCreateRequest, accountId, uriInfo)
+        return createChargeEntity(telephoneChargeCreateRequest, accountId, uriInfo)
                 .map(charge ->
                         populateTelephoneResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
 
     @Transactional
-    private Optional<ChargeEntity> createTelephoneChargeEntity(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
+    private Optional<ChargeEntity> createChargeEntity(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
 
             if (telephoneChargeRequest.getAmount() == 0L && !gatewayAccount.isAllowZeroAmount()) {
@@ -166,7 +161,7 @@ public class ChargeService {
                     internalChargeStatus(telephoneChargeRequest.getPaymentOutcome().getCode()),
                     telephoneChargeRequest.getEmailAddress(),
                     cardDetails,
-                    storeExtraFieldsInMetaDataForTelephonePayments(telephoneChargeRequest),
+                    storeExtraFieldsInMetaData(telephoneChargeRequest),
                     gatewayAccount,
                     telephoneChargeRequest.getProviderId(),
                     SupportedLanguage.ENGLISH
@@ -753,7 +748,7 @@ public class ChargeService {
         return operationType.getLockingStatus().equals(ChargeStatus.fromString(chargeEntity.getStatus()));
     }
     
-    private ExternalMetadata storeExtraFieldsInMetaDataForTelephonePayments(TelephoneChargeCreateRequest telephoneChargeRequest) {
+    private ExternalMetadata storeExtraFieldsInMetaData(TelephoneChargeCreateRequest telephoneChargeRequest) {
         HashMap<String, Object> telephoneJSON = new HashMap<>();
         telephoneJSON.put("created_date", telephoneChargeRequest.getCreatedDate());
         telephoneJSON.put("authorised_date", telephoneChargeRequest.getAuthorisedDate());
