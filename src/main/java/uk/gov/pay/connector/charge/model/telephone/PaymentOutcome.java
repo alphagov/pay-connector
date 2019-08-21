@@ -35,7 +35,15 @@ public class PaymentOutcome {
         return code;
     }
 
+    public void setCode(String code) {
+        this.code = code;
+    }
+
     public Supplemental getSupplemental() {
         return supplemental;
+    }
+
+    public void setSupplemental(Supplemental supplemental) {
+        this.supplemental = supplemental;
     }
 }

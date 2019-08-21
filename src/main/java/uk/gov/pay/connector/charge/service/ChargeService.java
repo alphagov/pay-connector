@@ -286,38 +286,37 @@ public class ChargeService {
 
     private TelephoneChargeResponse.ChargeBuilder populateTelephoneCharge(ChargeEntity chargeEntity) {
 
-        final TelephoneChargeResponse.ChargeBuilder telephoneChargeResponse = new TelephoneChargeResponse.ChargeBuilder()
+        final TelephoneChargeResponse.ChargeBuilder builder = new TelephoneChargeResponse.ChargeBuilder()
                 .amount(chargeEntity.getAmount())
                 .reference(chargeEntity.getReference().toString())
                 .description(chargeEntity.getDescription())
-                .createdDate((String) chargeEntity.getExternalMetadata().get().getMetadata().get("created_date"))
-                .authorisedDate((String) chargeEntity.getExternalMetadata().get().getMetadata().get("authorised_date"))
-                .processorId((String) chargeEntity.getExternalMetadata().get().getMetadata().get("processor_id"))
                 .providerId(chargeEntity.getProviderSessionId())
-                .authCode((String) chargeEntity.getExternalMetadata().get().getMetadata().get("auth_code"))
                 .cardType(chargeEntity.getCardDetails().getCardBrand())
                 .nameOnCard(chargeEntity.getCardDetails().getCardHolderName())
                 .emailAddress(chargeEntity.getEmail())
                 .cardExpiry(chargeEntity.getCardDetails().getExpiryDate())
                 .lastFourDigits(chargeEntity.getCardDetails().getLastDigitsCardNumber().toString())
                 .firstSixDigits(chargeEntity.getCardDetails().getFirstDigitsCardNumber().toString())
-                .telephoneNumber((String) chargeEntity.getExternalMetadata().get().getMetadata().get("telephone_number"))
                 .paymentId("dummypaymentid123notpersisted");
 
-        Map<String, Object> paymentOutcomeMap = ((Map) chargeEntity.getExternalMetadata().get().getMetadata().get("payment_outcome"));
 
-        if (paymentOutcomeMap.get("status").toString().equals("failed")) {
 
-            telephoneChargeResponse
-                    .state(new State(
-                            paymentOutcomeMap.get("status").toString(),
-                            true,
-                            "created",
-                            paymentOutcomeMap.get("code").toString()
-                    ));
+        chargeEntity.getExternalMetadata().ifPresent(externalMetadata -> {
+
+            final Map<String, Object> paymentOutcomeMap = ((Map) externalMetadata.getMetadata().get("payment_outcome"));
+
+            final PaymentOutcome paymentOutcome = new PaymentOutcome(
+                    paymentOutcomeMap.get("status").toString()
+            );
+
+            final State state = new State(
+                    paymentOutcomeMap.get("status").toString(),
+                    true,
+                    "created"
+            );
 
             if (paymentOutcomeMap.containsKey("supplemental")) {
-                Supplemental supplemental = new Supplemental(
+                paymentOutcome.setSupplemental(new Supplemental(
                         ((Map) paymentOutcomeMap
                                 .get("supplemental"))
                                 .get("error_code")
@@ -326,33 +325,24 @@ public class ChargeService {
                                 .get("supplemental"))
                                 .get("error_message")
                                 .toString()
-                );
-
-                return telephoneChargeResponse
-                        .paymentOutcome(new PaymentOutcome(
-                                paymentOutcomeMap.get("status").toString(),
-                                paymentOutcomeMap.get("code").toString(),
-                                supplemental
-                        ));
-
+                ));
             }
 
-            return telephoneChargeResponse
-                    .paymentOutcome(new PaymentOutcome(
-                            paymentOutcomeMap.get("status").toString(),
-                            paymentOutcomeMap.get("code").toString()
-                    ));
-        }
+            if (paymentOutcomeMap.containsKey("code")) {
+                paymentOutcome.setCode(paymentOutcomeMap.get("code").toString());
+                state.setCode(paymentOutcomeMap.get("code").toString());
+            }
 
-        return telephoneChargeResponse
-                .paymentOutcome(new PaymentOutcome(
-                        paymentOutcomeMap.get("status").toString()
-                ))
-                .state(new State(
-                        paymentOutcomeMap.get("status").toString(),
-                        true,
-                        "created"
-                ));
+            builder.authorisedDate((String) externalMetadata.getMetadata().get("authorised_date"))
+                    .createdDate((String) externalMetadata.getMetadata().get("created_date"))
+                    .processorId((String) externalMetadata.getMetadata().get("processor_id"))
+                    .authCode((String) externalMetadata.getMetadata().get("auth_code"))
+                    .telephoneNumber((String) externalMetadata.getMetadata().get("telephone_number"))
+                    .state(state)
+                    .paymentOutcome(paymentOutcome);
+        });
+
+        return builder;
     }
 
     public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity, boolean buildForSearchResult) {
