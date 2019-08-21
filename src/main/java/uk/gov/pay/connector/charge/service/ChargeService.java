@@ -132,14 +132,8 @@ public class ChargeService {
     
     @Transactional
     public Optional<TelephoneChargeResponse> findTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
-        Optional<ChargeEntity> chargeEntity = chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId());
-        
-        if(chargeEntity.isEmpty()) {
-            return Optional.empty();
-        }
-        
-        return chargeEntity.map(charge ->
-                populateTelephoneCharge(charge).build());
+        return chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId())
+                .map(charge -> populateTelephoneCharge(charge).build());
     }
     
     public Optional<TelephoneChargeResponse> createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
@@ -298,9 +292,7 @@ public class ChargeService {
                 .lastFourDigits(chargeEntity.getCardDetails().getLastDigitsCardNumber().toString())
                 .firstSixDigits(chargeEntity.getCardDetails().getFirstDigitsCardNumber().toString())
                 .paymentId("dummypaymentid123notpersisted");
-
-
-
+        
         chargeEntity.getExternalMetadata().ifPresent(externalMetadata -> {
 
             final Map<String, Object> paymentOutcomeMap = ((Map) externalMetadata.getMetadata().get("payment_outcome"));
