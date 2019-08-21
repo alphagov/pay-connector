@@ -268,7 +268,7 @@ public class ChargeService {
                     return null;
                 });
     }
-
+    
     private <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, ChargeEntity chargeEntity) {
         
         PersistedCard persistedCard = null;
