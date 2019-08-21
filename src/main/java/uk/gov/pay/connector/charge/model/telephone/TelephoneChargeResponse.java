@@ -6,41 +6,41 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class TelephoneChargeResponse {
 
-    private Long amount;
+    private Long amount; // Yes
 
-    private String reference;
+    private String reference; // Yes
 
-    private String description;
+    private String description; // Yes
 
-    private String createdDate;
+    private String createdDate; // Yes
 
-    private String authorisedDate;
+    private String authorisedDate; // Yes
 
-    private String processorId;
+    private String processorId; // Yes
 
-    private String providerId;
+    private String providerId; // Yes
 
-    private String authCode;
+    private String authCode; // Yes
 
-    private PaymentOutcome paymentOutcome;
+    private PaymentOutcome paymentOutcome; // Yes
 
-    private String cardType;
+    private String cardType; // In PersistedCard
 
-    private String nameOnCard;
+    private String nameOnCard; // In PersistedCard
 
-    private String emailAddress;
+    private String emailAddress; // Yes
 
-    private String cardExpiry;
+    private String cardExpiry; // In PersistedCard
 
-    private String lastFourDigits;
+    private String lastFourDigits; // In PersistedCard
 
-    private String firstSixDigits;
+    private String firstSixDigits; // In PersistedCard
 
-    private String telephoneNumber;
+    private String telephoneNumber; // Yes
 
-    private String paymentId;
+    private String paymentId; // Store as charge_id?
 
-    private State state;
+    private State state; // ExternalTransactionState
 
     public TelephoneChargeResponse() {
         // For Jackson
