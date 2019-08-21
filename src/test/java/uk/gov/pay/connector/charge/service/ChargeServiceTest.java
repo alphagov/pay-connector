@@ -664,23 +664,22 @@ public class ChargeServiceTest {
         assertThat(providerId, is("1PROV"));
         assertThat(telephoneChargeResponse.isPresent(), is(true));
         assertThat(telephoneChargeResponse.get().getAmount(), is(100L));
-        assertThat(telephoneChargeResponse.get().getReference(), is("Some reference"));
+        assertThat(telephoneChargeResponse.get().getReference().toString(), is("Some reference"));
         assertThat(telephoneChargeResponse.get().getDescription(), is("Some description"));
-        assertThat(telephoneChargeResponse.get().getCreatedDate(), is("2018-02-21T16:04:25Z"));
-        assertThat(telephoneChargeResponse.get().getAuthorisedDate(), is("2018-02-21T16:05:33Z"));
+        assertThat(telephoneChargeResponse.get().getCreatedDate().toString(), is("2018-02-21T16:04:25Z"));
+        assertThat(telephoneChargeResponse.get().getAuthorisedDate().toString(), is("2018-02-21T16:05:33Z"));
         assertThat(telephoneChargeResponse.get().getAuthCode(), is("666"));
         assertThat(telephoneChargeResponse.get().getPaymentOutcome().getStatus(), is("success"));
         assertThat(telephoneChargeResponse.get().getCardDetails().getCardBrand(), is("visa"));
         assertThat(telephoneChargeResponse.get().getCardDetails().getCardHolderName(), is("Jane Doe"));
         assertThat(telephoneChargeResponse.get().getEmail(), is("jane.doe@example.com"));
         assertThat(telephoneChargeResponse.get().getCardDetails().getExpiryDate(), is("01/19"));
-        assertThat(telephoneChargeResponse.get().getCardDetails().getLastDigitsCardNumber(), is("1234"));
-        assertThat(telephoneChargeResponse.get().getCardDetails().getFirstDigitsCardNumber(), is("123456"));
+        assertThat(telephoneChargeResponse.get().getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(telephoneChargeResponse.get().getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(telephoneChargeResponse.get().getTelephoneNumber(), is("+447700900796"));
         assertThat(telephoneChargeResponse.get().getChargeId(), is("dummypaymentid123notpersisted"));
         assertThat(telephoneChargeResponse.get().getState().getStatus(), is("success"));
         assertThat(telephoneChargeResponse.get().getState().isFinished(), is(true));
-        assertThat(telephoneChargeResponse.get().getState().getMessage(), is("created"));
     }
 
     @Test
@@ -692,29 +691,28 @@ public class ChargeServiceTest {
                 .paymentOutcome(paymentOutcome)
                 .build();
 
-        TelephoneChargeResponse chargeResponse = service.createTelephoneCharge(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
+        ChargeResponse chargeResponse = service.createTelephoneCharge(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
         assertThat(chargeResponse.getAmount(), is(100L));
-        assertThat(chargeResponse.getReference(), is("Some reference"));
+        assertThat(chargeResponse.getReference().toString(), is("Some reference"));
         assertThat(chargeResponse.getDescription(), is("Some description"));
-        assertThat(chargeResponse.getCreatedDate(), is("2018-02-21T16:04:25Z"));
-        assertThat(chargeResponse.getAuthorisedDate(), is("2018-02-21T16:05:33Z"));
+        assertThat(chargeResponse.getCreatedDate().toString(), is("2018-02-21T16:04:25Z"));
+        assertThat(chargeResponse.getAuthorisedDate().toString(), is("2018-02-21T16:05:33Z"));
         assertThat(chargeResponse.getAuthCode(), is("666"));
         assertThat(chargeResponse.getPaymentOutcome().getStatus(), is("success"));
-        assertThat(chargeResponse.getCardType(), is("visa"));
-        assertThat(chargeResponse.getNameOnCard(), is("Jane Doe"));
-        assertThat(chargeResponse.getEmailAddress(), is("jane.doe@example.com"));
-        assertThat(chargeResponse.getCardExpiry(), is("01/19"));
-        assertThat(chargeResponse.getLastFourDigits(), is("1234"));
-        assertThat(chargeResponse.getFirstSixDigits(), is("123456"));
+        assertThat(chargeResponse.getCardDetails().getCardBrand(), is("visa"));
+        assertThat(chargeResponse.getCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(chargeResponse.getEmail(), is("jane.doe@example.com"));
+        assertThat(chargeResponse.getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(chargeResponse.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(chargeResponse.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(chargeResponse.getTelephoneNumber(), is("+447700900796"));
-        assertThat(chargeResponse.getPaymentId(), is("dummypaymentid123notpersisted"));
+        assertThat(chargeResponse.getChargeId(), is("dummypaymentid123notpersisted"));
         assertThat(chargeResponse.getState().getStatus(), is("success"));
-        assertThat(chargeResponse.getState().getFinished(), is(true));
-        assertThat(chargeResponse.getState().getMessage(), is("created"));
+        assertThat(chargeResponse.getState().isFinished(), is(true));
     }
 
     @Test
@@ -727,32 +725,32 @@ public class ChargeServiceTest {
                 .paymentOutcome(paymentOutcome)
                 .build();
 
-        TelephoneChargeResponse chargeResponse = service.createTelephoneCharge(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
+        ChargeResponse chargeResponse = service.createTelephoneCharge(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo).get();
 
         ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
 
         assertThat(chargeResponse.getAmount(), is(100L));
-        assertThat(chargeResponse.getReference(), is("Some reference"));
+        assertThat(chargeResponse.getReference().toString(), is("Some reference"));
         assertThat(chargeResponse.getDescription(), is("Some description"));
-        assertThat(chargeResponse.getCreatedDate(), is("2018-02-21T16:04:25Z"));
-        assertThat(chargeResponse.getAuthorisedDate(), is("2018-02-21T16:05:33Z"));
+        assertThat(chargeResponse.getCreatedDate().toString(), is("2018-02-21T16:04:25Z"));
+        assertThat(chargeResponse.getAuthorisedDate().toString(), is("2018-02-21T16:05:33Z"));
         assertThat(chargeResponse.getAuthCode(), is("666"));
         assertThat(chargeResponse.getPaymentOutcome().getStatus(), is("failed"));
         assertThat(chargeResponse.getPaymentOutcome().getCode(), is("P0010"));
         assertThat(chargeResponse.getPaymentOutcome().getSupplemental().getErrorCode(), is("ECKOH01234"));
         assertThat(chargeResponse.getPaymentOutcome().getSupplemental().getErrorMessage(), is("textual message describing error code"));
-        assertThat(chargeResponse.getCardType(), is("visa"));
-        assertThat(chargeResponse.getNameOnCard(), is("Jane Doe"));
-        assertThat(chargeResponse.getEmailAddress(), is("jane.doe@example.com"));
-        assertThat(chargeResponse.getCardExpiry(), is("01/19"));
-        assertThat(chargeResponse.getLastFourDigits(), is("1234"));
-        assertThat(chargeResponse.getFirstSixDigits(), is("123456"));
+        assertThat(chargeResponse.getCardDetails().getCardBrand(), is("visa"));
+        assertThat(chargeResponse.getCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(chargeResponse.getEmail(), is("jane.doe@example.com"));
+        assertThat(chargeResponse.getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(chargeResponse.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(chargeResponse.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(chargeResponse.getTelephoneNumber(), is("+447700900796"));
-        assertThat(chargeResponse.getPaymentId(), is("dummypaymentid123notpersisted"));
+        assertThat(chargeResponse.getChargeId(), is("dummypaymentid123notpersisted"));
         assertThat(chargeResponse.getState().getStatus(), is("failed"));
-        assertThat(chargeResponse.getState().getFinished(), is(true));
-        assertThat(chargeResponse.getState().getMessage(), is("created"));
+        assertThat(chargeResponse.getState().isFinished(), is(true));
+        assertThat(chargeResponse.getState().getMessage(), is("error message"));
         assertThat(chargeResponse.getState().getCode(), is("P0010"));
     }
 

@@ -165,6 +165,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         this.auth3dsData = auth3dsData;
         return thisObject();
     }
+    
+    public T withAuthCode(String authCode) {
+        this.authCode = authCode;
+        return thisObject();
+    }
 
     public T withLanguage(SupportedLanguage language) {
         this.language = language;

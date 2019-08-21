@@ -133,14 +133,14 @@ public class ChargeService {
     @Transactional
     public Optional<ChargeResponse> findTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
         return chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId())
-                .map(charge -> populateTelephoneCharge(charge).build());
+                .map(charge -> populateTelephoneResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
     
-    public Optional<TelephoneChargeResponse> createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
+    public Optional<ChargeResponse> createTelephoneCharge(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
 
         return createTelephoneChargeEntity(telephoneChargeCreateRequest, accountId, uriInfo)
                 .map(charge ->
-                        populateTelephoneCharge(charge).build());
+                        populateTelephoneResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
 
     @Transactional
@@ -278,21 +278,23 @@ public class ChargeService {
                 });
     }
 
-    private ChargeResponse populateTelephoneCharge(ChargeEntity chargeEntity) {
-
-        final TelephoneChargeResponse.ChargeBuilder builder = new TelephoneChargeResponse.ChargeBuilder()
-                .amount(chargeEntity.getAmount())
-                .reference(chargeEntity.getReference().toString())
-                .description(chargeEntity.getDescription())
-                .providerId(chargeEntity.getProviderSessionId())
-                .cardType(chargeEntity.getCardDetails().getCardBrand())
-                .nameOnCard(chargeEntity.getCardDetails().getCardHolderName())
-                .emailAddress(chargeEntity.getEmail())
-                .cardExpiry(chargeEntity.getCardDetails().getExpiryDate())
-                .lastFourDigits(chargeEntity.getCardDetails().getLastDigitsCardNumber().toString())
-                .firstSixDigits(chargeEntity.getCardDetails().getFirstDigitsCardNumber().toString())
-                .paymentId("dummypaymentid123notpersisted");
+    private <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateTelephoneResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, ChargeEntity chargeEntity) {
         
+        PersistedCard persistedCard = null;
+        if (chargeEntity.getCardDetails() != null) {
+            persistedCard = chargeEntity.getCardDetails().toCard();
+        }
+        
+        
+        T builderOfResponse = responseBuilder
+                .withAmount(chargeEntity.getAmount())
+                .withReference(chargeEntity.getReference())
+                .withDescription(chargeEntity.getDescription())
+                .withProviderId(chargeEntity.getProviderSessionId())
+                .withCardDetails(persistedCard)
+                .withEmail(chargeEntity.getEmail())
+                .withChargeId("dummypaymentid123notpersisted");
+                
         chargeEntity.getExternalMetadata().ifPresent(externalMetadata -> {
 
             final Map<String, Object> paymentOutcomeMap = ((Map) externalMetadata.getMetadata().get("payment_outcome"));
@@ -300,12 +302,23 @@ public class ChargeService {
             final PaymentOutcome paymentOutcome = new PaymentOutcome(
                     paymentOutcomeMap.get("status").toString()
             );
-
-            final State state = new State(
-                    paymentOutcomeMap.get("status").toString(),
-                    true,
-                    "created"
-            );
+            
+            ExternalTransactionState state;
+            
+            if (paymentOutcomeMap.get("status").toString().equals("success")) {
+                state = new ExternalTransactionState(
+                        paymentOutcomeMap.get("status").toString(),
+                        true  
+                );
+            } else {
+                state = new ExternalTransactionState(
+                        paymentOutcomeMap.get("status").toString(),
+                        true,
+                        paymentOutcomeMap.get("code").toString(),
+                        "error message"
+                );
+                paymentOutcome.setCode(paymentOutcomeMap.get("code").toString());
+            }
 
             if (paymentOutcomeMap.containsKey("supplemental")) {
                 paymentOutcome.setSupplemental(new Supplemental(
@@ -319,22 +332,18 @@ public class ChargeService {
                                 .toString()
                 ));
             }
-
-            if (paymentOutcomeMap.containsKey("code")) {
-                paymentOutcome.setCode(paymentOutcomeMap.get("code").toString());
-                state.setCode(paymentOutcomeMap.get("code").toString());
-            }
-
-            builder.authorisedDate((String) externalMetadata.getMetadata().get("authorised_date"))
-                    .createdDate((String) externalMetadata.getMetadata().get("created_date"))
-                    .processorId((String) externalMetadata.getMetadata().get("processor_id"))
-                    .authCode((String) externalMetadata.getMetadata().get("auth_code"))
-                    .telephoneNumber((String) externalMetadata.getMetadata().get("telephone_number"))
-                    .state(state)
-                    .paymentOutcome(paymentOutcome);
+            
+            builderOfResponse
+                    .withAuthorisedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("authorised_date"))))
+                    .withCreatedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("created_date"))))
+                    .withProcessorId((String) externalMetadata.getMetadata().get("processor_id"))
+                    .withAuthCode((String) externalMetadata.getMetadata().get("auth_code"))
+                    .withTelephoneNumber((String) externalMetadata.getMetadata().get("telephone_number"))
+                    .withState(state)
+                    .withPaymentOutcome(paymentOutcome);
         });
-
-        return builder;
+        
+        return builderOfResponse;
     }
 
     public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity, boolean buildForSearchResult) {
