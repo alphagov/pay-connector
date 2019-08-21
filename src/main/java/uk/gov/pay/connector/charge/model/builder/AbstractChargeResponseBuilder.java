@@ -6,6 +6,7 @@ import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.wallets.WalletType;
 
@@ -18,20 +19,26 @@ import java.util.Map;
 public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResponseBuilder<T, R>, R> {
     protected String chargeId;
     protected Long amount;
+    protected PaymentOutcome paymentOutcome;
     protected ExternalTransactionState state;
     protected String cardBrand;
     protected String gatewayTransactionId;
     protected String returnUrl;
     protected String description;
+    protected String telephoneNumber;
     protected ZonedDateTime createdDate;
+    protected ZonedDateTime authorisedDate;
     protected List<Map<String, Object>> links = new ArrayList<>();
     protected ServicePaymentReference reference;
+    protected String processorId;
+    protected String providerId;
     protected String providerName;
     protected String email;
     protected ChargeResponse.RefundSummary refundSummary;
     protected ChargeResponse.SettlementSummary settlementSummary;
     protected PersistedCard cardDetails;
     protected ChargeResponse.Auth3dsData auth3dsData;
+    protected String authCode;
     protected SupportedLanguage language;
     protected boolean delayedCapture;
     protected Long corporateCardSurcharge;
@@ -50,6 +57,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public T withAmount(Long amount) {
         this.amount = amount;
+        return thisObject();
+    }
+    
+    public T withPaymentOutcome(PaymentOutcome paymentOutcome) {
+        this.paymentOutcome = paymentOutcome;
         return thisObject();
     }
 
@@ -78,13 +90,33 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
 
+    public T withTelephoneNumber(String telephoneNumber) {
+        this.telephoneNumber = telephoneNumber;
+        return thisObject();
+    }
+
     public T withReference(ServicePaymentReference reference) {
         this.reference = reference;
         return thisObject();
     }
 
+    public T withProcessorId(String processorId) {
+        this.processorId = processorId;
+        return thisObject();
+    }
+
+    public T withProviderId(String providerId) {
+        this.providerId = providerId;
+        return thisObject();
+    }
+
     public T withCreatedDate(ZonedDateTime createdDate) {
         this.createdDate = createdDate;
+        return thisObject();
+    }
+
+    public T withAuthorisedDate(ZonedDateTime authorisedDate) {
+        this.authorisedDate = authorisedDate;
         return thisObject();
     }
 
