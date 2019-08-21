@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
@@ -59,7 +60,9 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
                 charge.getCardDetails().getCardBrand(),
                 charge.getGatewayTransactionId(),
                 Optional.ofNullable(charge.getCardDetails().getFirstDigitsCardNumber()).map(FirstDigitsCardNumber::toString).orElse(null),
-                charge.getCardDetails().getLastDigitsCardNumber().toString(),
+                Optional.ofNullable(charge.getCardDetails().getLastDigitsCardNumber())
+                        .map(LastDigitsCardNumber::toString)
+                        .orElse(null),
                 charge.getCardDetails().getCardHolderName(),
                 charge.getCardDetails().getExpiryDate(),
                 charge.getCardDetails().getBillingAddress().map(a -> a.getLine1()).orElse(null),
