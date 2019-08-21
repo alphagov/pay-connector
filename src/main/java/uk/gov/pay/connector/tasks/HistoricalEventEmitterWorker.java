@@ -97,6 +97,13 @@ public class HistoricalEventEmitterWorker {
             for (long i = startId; i <= maxId; i++) {
                 emitEventsFor(i);
             }
+        } catch (NullPointerException e) {
+            for (StackTraceElement s: e.getStackTrace()) {
+                logger.error("Null pointer exception stack trace: {}", s);
+            }
+            logger.error(
+                    "Null pointer exception [start={}] [max={}] [error={}]",
+                    startId, maxId, e);
         } catch (Exception e) {
             logger.error("Error attempting to process payment events on job [start={}] [max={}] [error={}]", startId, maxId, e);
         }
