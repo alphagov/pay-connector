@@ -11,11 +11,11 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.charge.model.CardHolderName;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
+import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
-import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeResponse;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.SearchService;
@@ -252,20 +252,20 @@ public class ChargesApiResource {
             @Valid TelephoneChargeCreateRequest telephoneChargeCreateRequest,
             @Context UriInfo uriInfo
     ) {
-        Optional<TelephoneChargeResponse> telephoneChargeResponse = chargeService.findTelephoneCharge(
+        Optional<ChargeResponse> chargeResponse = chargeService.findCharge(
                 telephoneChargeCreateRequest,
                 accountId,
                 uriInfo
         );
 
-        if (telephoneChargeResponse.isPresent()) {
+        if (chargeResponse.isPresent()) {
             return Response
                     .status(200)
-                    .entity(telephoneChargeResponse.get())
+                    .entity(chargeResponse.get())
                     .build();
         }
 
-        telephoneChargeResponse = chargeService.createTelephoneCharge(
+        chargeResponse = chargeService.createCharge(
                 telephoneChargeCreateRequest,
                 accountId,
                 uriInfo
@@ -273,7 +273,7 @@ public class ChargesApiResource {
 
         return Response
                 .status(201)
-                .entity(telephoneChargeResponse.get())
+                .entity(chargeResponse.get())
                 .build();
     }
 
