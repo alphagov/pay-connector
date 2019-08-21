@@ -322,10 +322,16 @@ public class ChargeService {
                                 .toString()
                 ));
             }
+
+            if (externalMetadata.getMetadata().get("authorised_date") != null) {
+                builderOfResponse.withAuthorisedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("authorised_date"))));
+            }
+
+            if (externalMetadata.getMetadata().get("created_date") != null) {
+                builderOfResponse.withCreatedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("created_date"))));
+            }
             
             builderOfResponse
-                    .withAuthorisedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("authorised_date"))))
-                    .withCreatedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("created_date"))))
                     .withProcessorId((String) externalMetadata.getMetadata().get("processor_id"))
                     .withAuthCode((String) externalMetadata.getMetadata().get("auth_code"))
                     .withTelephoneNumber((String) externalMetadata.getMetadata().get("telephone_number"))
