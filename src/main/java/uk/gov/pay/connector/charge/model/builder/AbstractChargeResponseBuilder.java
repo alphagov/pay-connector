@@ -303,4 +303,28 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     public ExternalMetadata getExternalMetadata() {
         return externalMetadata;
     }
+
+    public PaymentOutcome getPaymentOutcome() {
+        return paymentOutcome;
+    }
+
+    public String getTelephoneNumber() {
+        return telephoneNumber;
+    }
+
+    public ZonedDateTime getAuthorisedDate() {
+        return authorisedDate;
+    }
+
+    public String getProcessorId() {
+        return processorId;
+    }
+
+    public String getProviderId() {
+        return providerId;
+    }
+
+    public String getAuthCode() {
+        return authCode;
+    }
 }
