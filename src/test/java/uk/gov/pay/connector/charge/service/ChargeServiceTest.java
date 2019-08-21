@@ -670,16 +670,16 @@ public class ChargeServiceTest {
         assertThat(telephoneChargeResponse.get().getAuthorisedDate(), is("2018-02-21T16:05:33Z"));
         assertThat(telephoneChargeResponse.get().getAuthCode(), is("666"));
         assertThat(telephoneChargeResponse.get().getPaymentOutcome().getStatus(), is("success"));
-        assertThat(telephoneChargeResponse.get().getCardType(), is("visa"));
-        assertThat(telephoneChargeResponse.get().getNameOnCard(), is("Jane Doe"));
-        assertThat(telephoneChargeResponse.get().getEmailAddress(), is("jane.doe@example.com"));
-        assertThat(telephoneChargeResponse.get().getCardExpiry(), is("01/19"));
-        assertThat(telephoneChargeResponse.get().getLastFourDigits(), is("1234"));
-        assertThat(telephoneChargeResponse.get().getFirstSixDigits(), is("123456"));
+        assertThat(telephoneChargeResponse.get().getCardDetails().getCardBrand(), is("visa"));
+        assertThat(telephoneChargeResponse.get().getCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(telephoneChargeResponse.get().getEmail(), is("jane.doe@example.com"));
+        assertThat(telephoneChargeResponse.get().getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(telephoneChargeResponse.get().getCardDetails().getLastDigitsCardNumber(), is("1234"));
+        assertThat(telephoneChargeResponse.get().getCardDetails().getFirstDigitsCardNumber(), is("123456"));
         assertThat(telephoneChargeResponse.get().getTelephoneNumber(), is("+447700900796"));
-        assertThat(telephoneChargeResponse.get().getPaymentId(), is("dummypaymentid123notpersisted"));
+        assertThat(telephoneChargeResponse.get().getChargeId(), is("dummypaymentid123notpersisted"));
         assertThat(telephoneChargeResponse.get().getState().getStatus(), is("success"));
-        assertThat(telephoneChargeResponse.get().getState().getFinished(), is(true));
+        assertThat(telephoneChargeResponse.get().getState().isFinished(), is(true));
         assertThat(telephoneChargeResponse.get().getState().getMessage(), is("created"));
     }
 
