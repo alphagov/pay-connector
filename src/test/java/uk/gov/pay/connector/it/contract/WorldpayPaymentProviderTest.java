@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.contract;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
-import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.junit.Assume;
 import org.junit.Before;
@@ -29,13 +28,13 @@ import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalcul
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import javax.ws.rs.client.ClientBuilder;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
+import java.util.UUID;
 
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.not;
@@ -50,6 +49,7 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
@@ -73,12 +73,12 @@ public class WorldpayPaymentProviderTest {
     @Before
     public void checkThatWorldpayIsUp() throws IOException {
         try {
-            validCredentials = ImmutableMap.of(
+            validCredentials = Map.of(
                     "merchant_id", envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID"),
                     "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
                     "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"));
 
-            validCredentials3ds = ImmutableMap.of(
+            validCredentials3ds = Map.of(
                     "merchant_id", envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID_3DS"),
                     "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER_3DS"),
                     "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD_3DS"));
@@ -113,41 +113,44 @@ public class WorldpayPaymentProviderTest {
                 .withGatewayAccountEntity(validGatewayAccount)
                 .build();
     }
+    
+    @Test
+    public void submit3DS2FlexAuthRequest() throws Exception {
+        WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
+        var authCardDetails = anAuthCardDetails().withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString()).build();
+        CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        assertTrue(response.getBaseResponse().isPresent());
+    }
 
     @Test
     public void shouldBeAbleToSendAuthorisationRequestForMerchant() throws Exception {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+        AuthCardDetails authCardDetails = anAuthCardDetails().build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertTrue(response.isSuccessful());
+        assertTrue(response.getBaseResponse().isPresent());
     }
 
     @Test
     public void shouldBeAbleToSendAuthorisationRequestForMerchantWithoutAddress() throws Exception {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
-                .withAddress(null)
-                .build();
-
+        AuthCardDetails authCardDetails = anAuthCardDetails().withAddress(null).build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-
-        assertTrue(response.isSuccessful());
+        assertTrue(response.getBaseResponse().isPresent());
     }
 
     @Test
     public void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3ds() throws Exception {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+        AuthCardDetails authCardDetails = anAuthCardDetails()
                 .withCardHolder(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS)
                 .build();
 
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequestWithRequired3ds(authCardDetails);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
 
-        assertTrue(response.isSuccessful());
         assertTrue(response.getBaseResponse().isPresent());
         assertTrue(response.getSessionIdentifier().isPresent());
         response.getBaseResponse().ifPresent(res -> {
@@ -160,7 +163,7 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithoutAddress() throws Exception {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
+        AuthCardDetails authCardDetails = anAuthCardDetails()
                 .withCardHolder(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS)
                 .withAddress(null)
                 .build();
@@ -168,7 +171,6 @@ public class WorldpayPaymentProviderTest {
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequestWithRequired3ds(authCardDetails);
 
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-        assertTrue(response.isSuccessful());
         assertTrue(response.getBaseResponse().isPresent());
         assertTrue(response.getSessionIdentifier().isPresent());
         response.getBaseResponse().ifPresent(res -> {
@@ -186,21 +188,19 @@ public class WorldpayPaymentProviderTest {
     public void shouldBeAbleToSendCaptureRequestForMerchant() {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         CaptureResponse response = paymentProvider.capture(CaptureGatewayRequest.valueOf(chargeEntity));
-
         assertTrue(response.isSuccessful());
     }
 
     @Test
     public void shouldBeAbleToSubmitAPartialRefundAfterACaptureHasBeenSubmitted() throws Exception {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+        AuthCardDetails authCardDetails = anAuthCardDetails().build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         String transactionId = response.getBaseResponse().get().getTransactionId();
 
         assertThat(response.getBaseResponse().isPresent(), is(true));
-
-        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         assertThat(transactionId, is(not(nullValue())));
 
         chargeEntity.setGatewayTransactionId(transactionId);
@@ -218,11 +218,10 @@ public class WorldpayPaymentProviderTest {
     @Test
     public void shouldBeAbleToSendCancelRequestForMerchant() throws Exception {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+        AuthCardDetails authCardDetails = anAuthCardDetails().build();
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
 
-        assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().isPresent(), is(true));
         String transactionId = response.getBaseResponse().get().getTransactionId();
         assertThat(transactionId, is(not(nullValue())));
@@ -232,7 +231,7 @@ public class WorldpayPaymentProviderTest {
         CancelGatewayRequest cancelGatewayRequest = CancelGatewayRequest.valueOf(chargeEntity);
         GatewayResponse cancelResponse = paymentProvider.cancel(cancelGatewayRequest);
 
-        assertThat(cancelResponse.isSuccessful(), is(true));
+        assertThat(cancelResponse.getBaseResponse().isPresent(), is(true));
     }
 
     @Test
@@ -242,7 +241,7 @@ public class WorldpayPaymentProviderTest {
 
         Long gatewayAccountId = 112233L;
         String providerName = "worldpay";
-        ImmutableMap<String, String> credentials = ImmutableMap.of(
+        var credentials = Map.of(
                 "merchant_id", "non-existent-id",
                 "username", "non-existent-username",
                 "password", "non-existent-password"
@@ -251,16 +250,10 @@ public class WorldpayPaymentProviderTest {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity(providerName, credentials, TEST);
         gatewayAccountEntity.setId(gatewayAccountId);
 
-        ChargeEntity charge = aValidChargeEntity()
-                .withGatewayAccountEntity(gatewayAccountEntity)
-                .build();
-
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-
+        ChargeEntity charge = aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).build();
+        AuthCardDetails authCardDetails = anAuthCardDetails().build();
         CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
-        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
-
-        assertFalse(response.isSuccessful());
+        assertFalse(paymentProvider.authorise(request).getBaseResponse().isPresent());
     }
 
     private CardAuthorisationGatewayRequest getCardAuthorisationRequest(AuthCardDetails authCardDetails) {
@@ -281,10 +274,7 @@ public class WorldpayPaymentProviderTest {
     }
 
     private WorldpayPaymentProvider getValidWorldpayPaymentProvider() {
-        GatewayClient gatewayClient = new GatewayClient(
-                ClientBuilder.newClient(),
-                mockMetricRegistry
-        );
+        GatewayClient gatewayClient = new GatewayClient(ClientBuilder.newClient(), mockMetricRegistry);
 
         ConnectorConfiguration configuration = mock(ConnectorConfiguration.class);
         when(configuration.getGatewayConfigFor(PaymentGatewayName.WORLDPAY)).thenReturn(getWorldpayConfig());
@@ -306,7 +296,7 @@ public class WorldpayPaymentProviderTest {
     private static final WorldpayConfig WORLDPAY_CREDENTIALS = new WorldpayConfig() {
         @Override
         public Map<String, String> getUrls() {
-            return ImmutableMap.of(TEST.toString(), "https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp");
+            return Map.of(TEST.toString(), "https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp");
         }
     };
 }
