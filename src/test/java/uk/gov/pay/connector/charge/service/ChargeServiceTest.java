@@ -634,7 +634,7 @@ public class ChargeServiceTest {
                 .paymentOutcome(paymentOutcome)
                 .build();
 
-        Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(telephoneChargeCreateRequest);
 
         ArgumentCaptor<String> chargeEntityArgumentCaptor = forClass(String.class);
         verify(mockedChargeDao).findByProviderSessionId(chargeEntityArgumentCaptor.capture());
@@ -654,7 +654,7 @@ public class ChargeServiceTest {
         
         service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 
-        Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(telephoneChargeCreateRequest);
 
         ArgumentCaptor<String> chargeEntityArgumentCaptor = forClass(String.class);
         verify(mockedChargeDao).findByProviderSessionId(chargeEntityArgumentCaptor.capture());

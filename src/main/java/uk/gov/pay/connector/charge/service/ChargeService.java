@@ -126,20 +126,20 @@ public class ChargeService {
     }
     
     @Transactional
-    public Optional<ChargeResponse> findCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
+    public Optional<ChargeResponse> findCharge(TelephoneChargeCreateRequest telephoneChargeRequest) {
         return chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId())
                 .map(charge -> populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
     
     public Optional<ChargeResponse> create(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
 
-        return createCharge(telephoneChargeCreateRequest, accountId, uriInfo)
+        return createCharge(telephoneChargeCreateRequest, accountId)
                 .map(charge ->
                         populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
 
     @Transactional
-    private Optional<ChargeEntity> createCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId, UriInfo uriInfo) {
+    private Optional<ChargeEntity> createCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
 
             checkIfZeroAmountAllowed(telephoneChargeRequest.getAmount(), gatewayAccount);
@@ -173,7 +173,7 @@ public class ChargeService {
     private ChargeStatus internalChargeStatus(String code) {
         if(code == null) {
             return AUTHORISATION_SUCCESS;
-        } else if (code.equals("P0010")) {
+        } else if ("P0010".equals(code)) {
             return AUTHORISATION_REJECTED;
         } else {
             return AUTHORISATION_ERROR;
