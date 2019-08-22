@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.charge.service;
 
-import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -27,6 +27,9 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
+import uk.gov.pay.connector.charge.model.telephone.Supplemental;
+import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
@@ -77,11 +80,12 @@ import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBu
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 
@@ -120,6 +124,61 @@ public class ChargeService {
         this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
         this.eventQueue = eventQueue;
     }
+    
+    @Transactional
+    public Optional<ChargeResponse> findCharge(TelephoneChargeCreateRequest telephoneChargeRequest) {
+        return chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId())
+                .map(charge -> populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
+    }
+    
+    public Optional<ChargeResponse> create(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId) {
+
+        return createCharge(telephoneChargeCreateRequest, accountId)
+                .map(charge ->
+                        populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
+    }
+
+    @Transactional
+    private Optional<ChargeEntity> createCharge(TelephoneChargeCreateRequest telephoneChargeRequest, Long accountId) {
+        return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
+
+            checkIfZeroAmountAllowed(telephoneChargeRequest.getAmount(), gatewayAccount);
+
+            CardDetailsEntity cardDetails = new CardDetailsEntity(
+                    LastDigitsCardNumber.of(telephoneChargeRequest.getLastFourDigits()),
+                    FirstDigitsCardNumber.of(telephoneChargeRequest.getFirstSixDigits()),
+                    telephoneChargeRequest.getNameOnCard(),
+                    telephoneChargeRequest.getCardExpiry(),
+                    telephoneChargeRequest.getCardType()
+            );
+
+            ChargeEntity chargeEntity = new ChargeEntity(
+                    telephoneChargeRequest.getAmount(),
+                    ServicePaymentReference.of(telephoneChargeRequest.getReference()),
+                    telephoneChargeRequest.getDescription(),
+                    internalChargeStatus(telephoneChargeRequest.getPaymentOutcome().getCode()),
+                    telephoneChargeRequest.getEmailAddress(),
+                    cardDetails,
+                    storeExtraFieldsInMetaData(telephoneChargeRequest),
+                    gatewayAccount,
+                    telephoneChargeRequest.getProviderId(),
+                    SupportedLanguage.ENGLISH
+            );
+
+            chargeDao.persist(chargeEntity);
+            return chargeEntity;
+        });
+    }
+
+    private ChargeStatus internalChargeStatus(String code) {
+        if(code == null) {
+            return AUTHORISATION_SUCCESS;
+        } else if ("P0010".equals(code)) {
+            return AUTHORISATION_REJECTED;
+        } else {
+            return AUTHORISATION_ERROR;
+        }
+    }
 
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return createCharge(chargeRequest, accountId, uriInfo)
@@ -132,9 +191,7 @@ public class ChargeService {
     private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
 
-            if (chargeRequest.getAmount() == 0L && !gatewayAccount.isAllowZeroAmount()) {
-                throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
-            }
+            checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
 
             if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
                 logger.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
@@ -210,6 +267,79 @@ public class ChargeService {
                     }
                     return null;
                 });
+    }
+
+    private <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, ChargeEntity chargeEntity) {
+        
+        PersistedCard persistedCard = null;
+        if (chargeEntity.getCardDetails() != null) {
+            persistedCard = chargeEntity.getCardDetails().toCard();
+        }
+        
+        T builderOfResponse = responseBuilder
+                .withAmount(chargeEntity.getAmount())
+                .withReference(chargeEntity.getReference())
+                .withDescription(chargeEntity.getDescription())
+                .withProviderId(chargeEntity.getProviderSessionId())
+                .withCardDetails(persistedCard)
+                .withEmail(chargeEntity.getEmail())
+                .withChargeId("dummypaymentid123notpersisted");
+                
+        chargeEntity.getExternalMetadata().ifPresent(externalMetadata -> {
+
+            final Map<String, Object> paymentOutcomeMap = ((Map) externalMetadata.getMetadata().get("payment_outcome"));
+
+            final PaymentOutcome paymentOutcome = new PaymentOutcome(
+                    paymentOutcomeMap.get("status").toString()
+            );
+            
+            ExternalTransactionState state;
+            
+            if (paymentOutcomeMap.get("status").toString().equals("success")) {
+                state = new ExternalTransactionState(
+                        paymentOutcomeMap.get("status").toString(),
+                        true  
+                );
+            } else {
+                state = new ExternalTransactionState(
+                        paymentOutcomeMap.get("status").toString(),
+                        true,
+                        paymentOutcomeMap.get("code").toString(),
+                        "error message"
+                );
+                paymentOutcome.setCode(paymentOutcomeMap.get("code").toString());
+            }
+
+            if (paymentOutcomeMap.containsKey("supplemental")) {
+                paymentOutcome.setSupplemental(new Supplemental(
+                        ((Map) paymentOutcomeMap
+                                .get("supplemental"))
+                                .get("error_code")
+                                .toString(),
+                        ((Map) paymentOutcomeMap
+                                .get("supplemental"))
+                                .get("error_message")
+                                .toString()
+                ));
+            }
+
+            if (externalMetadata.getMetadata().get("authorised_date") != null) {
+                builderOfResponse.withAuthorisedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("authorised_date"))));
+            }
+
+            if (externalMetadata.getMetadata().get("created_date") != null) {
+                builderOfResponse.withCreatedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("created_date"))));
+            }
+            
+            builderOfResponse
+                    .withProcessorId((String) externalMetadata.getMetadata().get("processor_id"))
+                    .withAuthCode((String) externalMetadata.getMetadata().get("auth_code"))
+                    .withTelephoneNumber((String) externalMetadata.getMetadata().get("telephone_number"))
+                    .withState(state)
+                    .withPaymentOutcome(paymentOutcome);
+        });
+        
+        return builderOfResponse;
     }
 
     public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity, boolean buildForSearchResult) {
@@ -617,5 +747,38 @@ public class ChargeService {
 
     private boolean chargeIsInLockedStatus(OperationType operationType, ChargeEntity chargeEntity) {
         return operationType.getLockingStatus().equals(ChargeStatus.fromString(chargeEntity.getStatus()));
+    }
+    
+    private ExternalMetadata storeExtraFieldsInMetaData(TelephoneChargeCreateRequest telephoneChargeRequest) {
+        HashMap<String, Object> telephoneJSON = new HashMap<>();
+        telephoneJSON.put("created_date", telephoneChargeRequest.getCreatedDate());
+        telephoneJSON.put("authorised_date", telephoneChargeRequest.getAuthorisedDate());
+        telephoneJSON.put("processor_id", telephoneChargeRequest.getProcessorId());
+        telephoneJSON.put("auth_code", telephoneChargeRequest.getAuthCode());
+        
+        HashMap<String, Object> paymentOutcome = new HashMap<>();
+        paymentOutcome.put("status", telephoneChargeRequest.getPaymentOutcome().getStatus());
+        
+        if(telephoneChargeRequest.getPaymentOutcome().getCode() != null) {
+            paymentOutcome.put("code", telephoneChargeRequest.getPaymentOutcome().getCode());
+        }
+
+        if(telephoneChargeRequest.getPaymentOutcome().getSupplemental() != null) {
+            HashMap<String, Object> supplemental = new HashMap<>();
+            supplemental.put("error_code", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorCode());
+            supplemental.put("error_message", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorMessage());
+            paymentOutcome.put("supplemental", supplemental);
+        }
+        
+        telephoneJSON.put("payment_outcome", paymentOutcome);
+        telephoneJSON.put("telephone_number", telephoneChargeRequest.getTelephoneNumber());
+        
+        return new ExternalMetadata(telephoneJSON);
+    }
+
+    private void checkIfZeroAmountAllowed(Long amount, GatewayAccountEntity gatewayAccount) {
+        if (amount == 0L && !gatewayAccount.isAllowZeroAmount()) {
+            throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
+        }
     }
 }

@@ -20,13 +20,19 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
+import uk.gov.pay.connector.charge.model.telephone.Supplemental;
+import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
@@ -86,6 +92,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAP
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -101,7 +108,8 @@ public class ChargeServiceTest {
     private static final int MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS = 10;
 
     private ChargeCreateRequestBuilder requestBuilder;
-
+    private TelephoneChargeCreateRequest.ChargeBuilder telephoneRequestBuilder;
+    
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
@@ -138,6 +146,8 @@ public class ChargeServiceTest {
     private ChargeService service;
 
     private GatewayAccountEntity gatewayAccount;
+    
+    private ChargeEntity returnedChargeEntity;
 
     @Before
     public void setUp() {
@@ -148,11 +158,64 @@ public class ChargeServiceTest {
                 .withDescription("This is a description")
                 .withReference("Pay reference");
 
+        telephoneRequestBuilder = new TelephoneChargeCreateRequest.ChargeBuilder()
+                .amount(100L)
+                .reference("Some reference")
+                .description("Some description")
+                .createdDate("2018-02-21T16:04:25Z")
+                .authorisedDate("2018-02-21T16:05:33Z")
+                .processorId("1PROC")
+                .providerId("1PROV")
+                .authCode("666")
+                .nameOnCard("Jane Doe")
+                .emailAddress("jane.doe@example.com")
+                .telephoneNumber("+447700900796")
+                .cardType("visa")
+                .cardExpiry("01/19")
+                .lastFourDigits("1234")
+                .firstSixDigits("123456");
+
         gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(mockChargeEvent);
+        
+        ExternalMetadata externalMetadata = new ExternalMetadata(
+                Map.of(
+                "created_date", "2018-02-21T16:04:25Z",
+                "authorised_date", "2018-02-21T16:05:33Z",
+                "processor_id", "1PROC",
+                "auth_code", "666",
+                "telephone_number", "+447700900796",
+                "payment_outcome", Map.of(
+                        "status", "success"
+                ))
+        );
+
+        CardDetailsEntity cardDetails = new CardDetailsEntity(
+                LastDigitsCardNumber.of("1234"),
+                FirstDigitsCardNumber.of("123456"),
+                "Jane Doe",
+                "01/19",
+                "visa"
+        );
+        
+        returnedChargeEntity = new ChargeEntity(
+                100L,
+                ServicePaymentReference.of("Some reference"),
+                "Some description",
+                AUTHORISATION_SUCCESS,
+                "jane.doe@example.com",
+                cardDetails,
+                externalMetadata,
+                gatewayAccount,
+                "1PROV",
+                SupportedLanguage.ENGLISH
+        );
+        
+        when(mockedChargeDao.findByProviderSessionId("1PROV")).thenReturn(Optional.of(returnedChargeEntity));
+        when(mockedChargeDao.findByProviderSessionId("new")).thenReturn(Optional.empty());
 
         // Populate ChargeEntity with ID when persisting
         doAnswer(invocation -> {
@@ -410,6 +473,284 @@ public class ChargeServiceTest {
         TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
         assertThat(tokenEntity.getChargeEntity().getId(), is(CHARGE_ENTITY_ID));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
+    }
+
+    @Test
+    public void shouldCreateATelephoneChargeForSuccess() {
+        PaymentOutcome paymentOutcome = new PaymentOutcome("success");
+
+        Map<String, Object> metadata = Map.of(
+                "created_date", "2018-02-21T16:04:25Z",
+                "authorised_date", "2018-02-21T16:05:33Z",
+                "processor_id", "1PROC",
+                "auth_code", "666",
+                "telephone_number", "+447700900796",
+                "payment_outcome", Map.of(
+                        "status", "success"
+                ));
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .paymentOutcome(paymentOutcome)
+                .build();
+
+        service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        assertThat(createdChargeEntity.getId(), is(CHARGE_ENTITY_ID));
+
+        assertThat(createdChargeEntity.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
+        assertThat(createdChargeEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
+        assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
+        assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
+        assertThat(createdChargeEntity.getAmount(), is(100L));
+        assertThat(createdChargeEntity.getReference(), is(ServicePaymentReference.of("Some reference")));
+        assertThat(createdChargeEntity.getDescription(), is("Some description"));
+        assertThat(createdChargeEntity.getStatus(), is("AUTHORISATION SUCCESS"));
+        assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
+        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
+        assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
+        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
+        assertThat(createdChargeEntity.getProviderSessionId(), is("1PROV"));
+        assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
+        assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
+    }
+
+    @Test
+    public void shouldCreateATelephoneChargeForFailureCodeOfP0010() {
+        Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
+        PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0010", supplemental);
+
+        Map<String, Object> metadata = Map.of(
+                "created_date", "2018-02-21T16:04:25Z",
+                "authorised_date", "2018-02-21T16:05:33Z",
+                "processor_id", "1PROC",
+                "auth_code", "666",
+                "telephone_number", "+447700900796",
+                "payment_outcome", Map.of(
+                        "status", "failed",
+                        "code", "P0010",
+                        "supplemental", Map.of(
+                                "error_code", "ECKOH01234",
+                                "error_message", "textual message describing error code"
+                        )
+                ));
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .paymentOutcome(paymentOutcome)
+                .build();
+
+        service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        assertThat(createdChargeEntity.getId(), is(CHARGE_ENTITY_ID));
+
+        assertThat(createdChargeEntity.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
+        assertThat(createdChargeEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
+        assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
+        assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
+        assertThat(createdChargeEntity.getAmount(), is(100L));
+        assertThat(createdChargeEntity.getReference(), is(ServicePaymentReference.of("Some reference")));
+        assertThat(createdChargeEntity.getDescription(), is("Some description"));
+        assertThat(createdChargeEntity.getStatus(), is("AUTHORISATION REJECTED"));
+        assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
+        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
+        assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
+        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
+        assertThat(createdChargeEntity.getProviderSessionId(), is("1PROV"));
+        assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
+        assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
+    }
+
+    @Test
+    public void shouldCreateATelephoneChargeForFailureCodeOfP0050() {
+        Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
+        PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0050", supplemental);
+
+        Map<String, Object> metadata = Map.of(
+                "created_date", "2018-02-21T16:04:25Z",
+                "authorised_date", "2018-02-21T16:05:33Z",
+                "processor_id", "1PROC",
+                "auth_code", "666",
+                "telephone_number", "+447700900796",
+                "payment_outcome", Map.of(
+                        "status", "failed",
+                        "code", "P0050",
+                        "supplemental", Map.of(
+                                "error_code", "ECKOH01234",
+                                "error_message", "textual message describing error code"
+                        )
+                ));
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .paymentOutcome(paymentOutcome)
+                .build();
+
+        service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        assertThat(createdChargeEntity.getId(), is(CHARGE_ENTITY_ID));
+
+        assertThat(createdChargeEntity.getGatewayAccount().getId(), is(GATEWAY_ACCOUNT_ID));
+        assertThat(createdChargeEntity.getExternalId(), is(EXTERNAL_CHARGE_ID[0]));
+        assertThat(createdChargeEntity.getGatewayAccount().getCredentials(), is(emptyMap()));
+        assertThat(createdChargeEntity.getGatewayAccount().getGatewayName(), is("sandbox"));
+        assertThat(createdChargeEntity.getAmount(), is(100L));
+        assertThat(createdChargeEntity.getReference(), is(ServicePaymentReference.of("Some reference")));
+        assertThat(createdChargeEntity.getDescription(), is("Some description"));
+        assertThat(createdChargeEntity.getStatus(), is("AUTHORISATION ERROR"));
+        assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
+        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
+        assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
+        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
+        assertThat(createdChargeEntity.getProviderSessionId(), is("1PROV"));
+        assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
+        assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
+    }
+
+    @Test
+    public void shouldNotFindCharge() {
+        PaymentOutcome paymentOutcome = new PaymentOutcome("success");
+        
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .providerId("new")
+                .paymentOutcome(paymentOutcome)
+                .build();
+
+        Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(telephoneChargeCreateRequest);
+
+        ArgumentCaptor<String> chargeEntityArgumentCaptor = forClass(String.class);
+        verify(mockedChargeDao).findByProviderSessionId(chargeEntityArgumentCaptor.capture());
+
+        String providerId = chargeEntityArgumentCaptor.getValue();
+        assertThat(providerId, is("new"));
+        assertThat(telephoneChargeResponse.isPresent(), is(false));
+    }
+
+    @Test
+    public void shouldReturnAResponseForExistingCharge() {
+        PaymentOutcome paymentOutcome = new PaymentOutcome("success");
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .paymentOutcome(paymentOutcome)
+                .build();
+        
+        service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
+
+        Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(telephoneChargeCreateRequest);
+
+        ArgumentCaptor<String> chargeEntityArgumentCaptor = forClass(String.class);
+        verify(mockedChargeDao).findByProviderSessionId(chargeEntityArgumentCaptor.capture());
+
+        String providerId = chargeEntityArgumentCaptor.getValue();
+        assertThat(providerId, is("1PROV"));
+        assertThat(telephoneChargeResponse.isPresent(), is(true));
+        assertThat(telephoneChargeResponse.get().getAmount(), is(100L));
+        assertThat(telephoneChargeResponse.get().getReference().toString(), is("Some reference"));
+        assertThat(telephoneChargeResponse.get().getDescription(), is("Some description"));
+        assertThat(telephoneChargeResponse.get().getCreatedDate().toString(), is("2018-02-21T16:04:25Z"));
+        assertThat(telephoneChargeResponse.get().getAuthorisedDate().toString(), is("2018-02-21T16:05:33Z"));
+        assertThat(telephoneChargeResponse.get().getAuthCode(), is("666"));
+        assertThat(telephoneChargeResponse.get().getPaymentOutcome().getStatus(), is("success"));
+        assertThat(telephoneChargeResponse.get().getCardDetails().getCardBrand(), is("visa"));
+        assertThat(telephoneChargeResponse.get().getCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(telephoneChargeResponse.get().getEmail(), is("jane.doe@example.com"));
+        assertThat(telephoneChargeResponse.get().getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(telephoneChargeResponse.get().getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(telephoneChargeResponse.get().getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
+        assertThat(telephoneChargeResponse.get().getTelephoneNumber(), is("+447700900796"));
+        assertThat(telephoneChargeResponse.get().getChargeId(), is("dummypaymentid123notpersisted"));
+        assertThat(telephoneChargeResponse.get().getState().getStatus(), is("success"));
+        assertThat(telephoneChargeResponse.get().getState().isFinished(), is(true));
+    }
+
+    @Test
+    public void shouldCreateATelephoneChargeResponseForSuccess() {
+
+        PaymentOutcome paymentOutcome = new PaymentOutcome("success");
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .paymentOutcome(paymentOutcome)
+                .build();
+
+        ChargeResponse chargeResponse = service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID).get();
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        assertThat(chargeResponse.getAmount(), is(100L));
+        assertThat(chargeResponse.getReference().toString(), is("Some reference"));
+        assertThat(chargeResponse.getDescription(), is("Some description"));
+        assertThat(chargeResponse.getCreatedDate().toString(), is("2018-02-21T16:04:25Z"));
+        assertThat(chargeResponse.getAuthorisedDate().toString(), is("2018-02-21T16:05:33Z"));
+        assertThat(chargeResponse.getAuthCode(), is("666"));
+        assertThat(chargeResponse.getPaymentOutcome().getStatus(), is("success"));
+        assertThat(chargeResponse.getCardDetails().getCardBrand(), is("visa"));
+        assertThat(chargeResponse.getCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(chargeResponse.getEmail(), is("jane.doe@example.com"));
+        assertThat(chargeResponse.getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(chargeResponse.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(chargeResponse.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
+        assertThat(chargeResponse.getTelephoneNumber(), is("+447700900796"));
+        assertThat(chargeResponse.getChargeId(), is("dummypaymentid123notpersisted"));
+        assertThat(chargeResponse.getState().getStatus(), is("success"));
+        assertThat(chargeResponse.getState().isFinished(), is(true));
+    }
+
+    @Test
+    public void shouldCreateATelephoneChargeResponseForFailure() {
+
+        Supplemental supplemental = new Supplemental("ECKOH01234", "textual message describing error code");
+        PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0010", supplemental);
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .paymentOutcome(paymentOutcome)
+                .build();
+
+        ChargeResponse chargeResponse = service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID).get();
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        assertThat(chargeResponse.getAmount(), is(100L));
+        assertThat(chargeResponse.getReference().toString(), is("Some reference"));
+        assertThat(chargeResponse.getDescription(), is("Some description"));
+        assertThat(chargeResponse.getCreatedDate().toString(), is("2018-02-21T16:04:25Z"));
+        assertThat(chargeResponse.getAuthorisedDate().toString(), is("2018-02-21T16:05:33Z"));
+        assertThat(chargeResponse.getAuthCode(), is("666"));
+        assertThat(chargeResponse.getPaymentOutcome().getStatus(), is("failed"));
+        assertThat(chargeResponse.getPaymentOutcome().getCode(), is("P0010"));
+        assertThat(chargeResponse.getPaymentOutcome().getSupplemental().getErrorCode(), is("ECKOH01234"));
+        assertThat(chargeResponse.getPaymentOutcome().getSupplemental().getErrorMessage(), is("textual message describing error code"));
+        assertThat(chargeResponse.getCardDetails().getCardBrand(), is("visa"));
+        assertThat(chargeResponse.getCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(chargeResponse.getEmail(), is("jane.doe@example.com"));
+        assertThat(chargeResponse.getCardDetails().getExpiryDate(), is("01/19"));
+        assertThat(chargeResponse.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(chargeResponse.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
+        assertThat(chargeResponse.getTelephoneNumber(), is("+447700900796"));
+        assertThat(chargeResponse.getChargeId(), is("dummypaymentid123notpersisted"));
+        assertThat(chargeResponse.getState().getStatus(), is("failed"));
+        assertThat(chargeResponse.getState().isFinished(), is(true));
+        assertThat(chargeResponse.getState().getMessage(), is("error message"));
+        assertThat(chargeResponse.getState().getCode(), is("P0010"));
     }
 
     @Test
@@ -731,7 +1072,7 @@ public class ChargeServiceTest {
     @Test
     public void shouldNotTransitionChargeStateForNonSkippableNonConfirmedCharge() {
         ChargeEntity createdChargeEntity = aValidChargeEntity()
-                .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .withStatus(AUTHORISATION_SUCCESS)
                 .build();
 
         final String chargeEntityExternalId = createdChargeEntity.getExternalId();

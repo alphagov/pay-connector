@@ -11,6 +11,7 @@ import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -52,6 +53,9 @@ public class ChargeResponse {
     @JsonProperty("email")
     private String email;
 
+    @JsonProperty("telephone_number")
+    private String telephoneNumber;
+
     @JsonProperty
     private String description;
 
@@ -62,15 +66,31 @@ public class ChargeResponse {
     @JsonProperty("payment_provider")
     private String providerName;
 
+    @JsonProperty("processor_id")
+    private String processorId;
+
+    @JsonProperty("provider_id")
+    private String providerId;
+    
     @JsonProperty("created_date")
     @JsonSerialize(using = ApiResponseDateTimeSerializer.class)
     private ZonedDateTime createdDate;
 
+    @JsonProperty("authorised_date")
+    @JsonSerialize(using = ApiResponseDateTimeSerializer.class)
+    private ZonedDateTime authorisedDate;
+    
+    @JsonProperty("payment_outcome")
+    private PaymentOutcome paymentOutcome;
+    
     @JsonProperty("refund_summary")
     private RefundSummary refundSummary;
 
     @JsonProperty("settlement_summary")
     private SettlementSummary settlementSummary;
+    
+    @JsonProperty("auth_code")
+    private String authCode;
 
     @JsonProperty("auth_3ds_data")
     private Auth3dsData auth3dsData;
@@ -108,6 +128,8 @@ public class ChargeResponse {
         this.dataLinks = builder.getLinks();
         this.chargeId = builder.getChargeId();
         this.amount = builder.getAmount();
+        this.paymentOutcome = builder.getPaymentOutcome();
+        this.authCode = builder.getAuthCode();
         this.state = builder.getState();
         this.cardBrand = builder.getCardBrand();
         this.gatewayTransactionId = builder.getGatewayTransactionId();
@@ -115,8 +137,12 @@ public class ChargeResponse {
         this.description = builder.getDescription();
         this.reference = builder.getReference();
         this.providerName = builder.getProviderName();
+        this.providerId = builder.getProviderId();
+        this.processorId = builder.getProcessorId();
         this.createdDate = builder.getCreatedDate();
+        this.authorisedDate = builder.getAuthorisedDate();
         this.email = builder.getEmail();
+        this.telephoneNumber = builder.getTelephoneNumber();
         this.refundSummary = builder.getRefundSummary();
         this.settlementSummary = builder.getSettlementSummary();
         this.cardDetails = builder.getCardDetails();
@@ -220,6 +246,34 @@ public class ChargeResponse {
 
     public ExternalMetadata getExternalMetadata() {
         return externalMetadata;
+    }
+
+    public String getTelephoneNumber() {
+        return telephoneNumber;
+    }
+
+    public String getProcessorId() {
+        return processorId;
+    }
+
+    public String getProviderId() {
+        return providerId;
+    }
+
+    public ZonedDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public ZonedDateTime getAuthorisedDate() {
+        return authorisedDate;
+    }
+
+    public PaymentOutcome getPaymentOutcome() {
+        return paymentOutcome;
+    }
+
+    public String getAuthCode() {
+        return authCode;
     }
 
     public URI getLink(String rel) {
