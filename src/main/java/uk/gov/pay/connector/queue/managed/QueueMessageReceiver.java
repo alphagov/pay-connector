@@ -34,6 +34,7 @@ public class QueueMessageReceiver implements Managed {
         this.cardCaptureProcess = cardCaptureProcess;
 
         int queueScheduleNumberOfThreads = connectorConfiguration.getCaptureProcessConfig().getQueueSchedulerNumberOfThreads();
+        int paymentStateTransitionPollerNumberOfThreads = connectorConfiguration.getEventQueueConfig().getPaymentStateTransitionPollerNumberOfThreads();
 
         chargeCaptureMessageExecutorService = environment
                 .lifecycle()
@@ -44,7 +45,7 @@ public class QueueMessageReceiver implements Managed {
         stateTransitionMessageExecutorService = environment
                 .lifecycle()
                 .scheduledExecutorService("payment-state-transition-message-poller")
-                .threads(1)
+                .threads(paymentStateTransitionPollerNumberOfThreads)
                 .build();
 
         queueSchedulerThreadDelayInSeconds = connectorConfiguration.getCaptureProcessConfig().getQueueSchedulerThreadDelayInSeconds();
