@@ -36,6 +36,9 @@ public class StateTransitionEmitterProcessTest {
     StateTransitionQueue stateTransitionQueue;
 
     @Mock
+    StateTransitionQueueMetricEmitter stateTransitionQueueMetricEmitter;
+
+    @Mock
     EventQueue eventQueue;
 
     @Mock
@@ -91,11 +94,10 @@ public class StateTransitionEmitterProcessTest {
     }
 
 
-
     @Test
     public void shouldNotPutPaymentTransitionBackOnQueueIfItHasExceededMaxAttempts() throws Exception {
         StateTransitionQueue spyQueue = spy(new StateTransitionQueue());
-        StateTransitionEmitterProcess stateTransitionEmitterProcess = new StateTransitionEmitterProcess(spyQueue, eventQueue, eventFactory);
+        StateTransitionEmitterProcess stateTransitionEmitterProcess = new StateTransitionEmitterProcess(spyQueue, eventQueue, eventFactory, stateTransitionQueueMetricEmitter);
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(100L, PaymentEvent.class, 0);
 
         when(eventFactory.createEvents(any(PaymentStateTransition.class))).thenThrow(EventCreationException.class);
