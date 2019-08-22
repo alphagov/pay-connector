@@ -131,7 +131,7 @@ public class ChargeService {
                 .map(charge -> populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
     
-    public Optional<ChargeResponse> create(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId, UriInfo uriInfo) {
+    public Optional<ChargeResponse> create(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId) {
 
         return createCharge(telephoneChargeCreateRequest, accountId)
                 .map(charge ->
