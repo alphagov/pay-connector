@@ -11,7 +11,6 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.charge.model.CardHolderName;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
-import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -41,7 +40,6 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
@@ -253,17 +251,14 @@ public class ChargesApiResource {
             @Context UriInfo uriInfo
     ) {
         return chargeService.findCharge(
-                telephoneChargeCreateRequest,
-                accountId,
-                uriInfo
+                telephoneChargeCreateRequest
         ).map(
                 response -> Response.status(200).entity(response).build()
         ).orElse(Response
                 .status(201)
                 .entity(chargeService.create(
                         telephoneChargeCreateRequest,
-                        accountId,
-                        uriInfo
+                        accountId
                 ).get())
                 .build());
     }
