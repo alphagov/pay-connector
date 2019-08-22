@@ -22,4 +22,8 @@ public class StateTransitionQueue {
     public int size() {
         return queue.size();
     }
+    
+    public boolean isEmpty() {
+        return queue.isEmpty();
+    }
 }

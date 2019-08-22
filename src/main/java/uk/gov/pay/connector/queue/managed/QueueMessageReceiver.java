@@ -15,6 +15,8 @@ import java.util.concurrent.TimeUnit;
 public class QueueMessageReceiver implements Managed {
 
     private static final String SQS_MESSAGE_RECEIVER_THREAD_NAME = "sqs-message-chargeCaptureMessageReceiver";
+    private static final int MAX_NUMBER_OF_SHUTDOWN_READINESS_CHECKS = 5;
+    private static final int DELAY_BETWEEN_SHUTDOWN_CHECKS_IN_MILLISECONDS = 1000;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(QueueMessageReceiver.class);
 
@@ -66,7 +68,41 @@ public class QueueMessageReceiver implements Managed {
     @Override
     public void stop() {
         chargeCaptureMessageExecutorService.shutdown();
+        stopStateTransitionExecutor();
+    }
+
+    private void stopStateTransitionExecutor() {
+        int numberOfAttempts = 0;
+        while (!stateTransitionEmitterProcess.isReadyForShutdown() && numberOfAttempts < MAX_NUMBER_OF_SHUTDOWN_READINESS_CHECKS) {
+            LOGGER.info("State transition receiver is not ready for shutdown");
+            numberOfAttempts++;
+
+            try {
+                Thread.sleep(DELAY_BETWEEN_SHUTDOWN_CHECKS_IN_MILLISECONDS);
+            } catch (InterruptedException e) {
+                handleInterruptedException();
+                return;
+            }
+        }
+
         stateTransitionMessageExecutorService.shutdown();
+
+        try {
+            if (!stateTransitionMessageExecutorService.awaitTermination(2L, TimeUnit.SECONDS)) {
+                stateTransitionMessageExecutorService.shutdownNow();
+            }
+
+            LOGGER.info("State transition receiver - number of not processed messages {}", stateTransitionEmitterProcess.getNumberOfNotProcessedMessages());
+        } catch (InterruptedException e) {
+            handleInterruptedException();
+        }
+    }
+
+    private void handleInterruptedException() {
+        stateTransitionMessageExecutorService.shutdownNow();
+        LOGGER.info("State transition receiver - number of not processed messages {}", stateTransitionEmitterProcess.getNumberOfNotProcessedMessages());
+        // Preserve interrupt status
+        Thread.currentThread().interrupt();
     }
 
     private void stateTransitionMessageReceiver() {
