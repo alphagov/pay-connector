@@ -24,11 +24,14 @@ public class StateTransitionEmitterProcess {
     public StateTransitionEmitterProcess(
             StateTransitionQueue stateTransitionQueue,
             EventQueue eventQueue,
-            EventFactory eventFactory
+            EventFactory eventFactory,
+            StateTransitionQueueMetricEmitter stateTransitionQueueMetricEmitter
     ) {
         this.stateTransitionQueue = stateTransitionQueue;
         this.eventQueue = eventQueue;
         this.eventFactory = eventFactory;
+
+        stateTransitionQueueMetricEmitter.register();
     }
 
     public void handleStateTransitionMessages() throws InterruptedException {

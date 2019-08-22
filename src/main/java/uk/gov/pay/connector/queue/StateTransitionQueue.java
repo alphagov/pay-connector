@@ -18,4 +18,8 @@ public class StateTransitionQueue {
     public StateTransition poll() throws InterruptedException {
         return poll(0L, TimeUnit.MILLISECONDS);
     }
+
+    public int size() {
+        return queue.size();
+    }
 }
