@@ -76,6 +76,7 @@ captureProcessConfig:
 
 eventQueue:
   eventQueueEnabled: ${EVENT_QUEUE_ENABLED:-false}
+  paymentStateTransitionPollerNumberOfThreads: ${PAYMENT_STATE_TRANSITION_POLLER_NUMBER_OF_THREADS:-1}
 
 sqsConfig:
   nonStandardServiceEndpoint: ${AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT:-true}
