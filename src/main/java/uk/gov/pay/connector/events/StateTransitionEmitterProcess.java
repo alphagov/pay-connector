@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 public class StateTransitionEmitterProcess {
     private static final Logger LOGGER = LoggerFactory.getLogger(StateTransitionEmitterProcess.class);
 
-    private final long STATE_TRANSITION_PROCESS_DELAY_IN_MILLISECONDS = 100;
+    private final long STATE_TRANSITION_PROCESS_DELAY_IN_MILLISECONDS = 1000;
     private final StateTransitionQueue stateTransitionQueue;
     private final EventQueue eventQueue;
     private final EventFactory eventFactory;
