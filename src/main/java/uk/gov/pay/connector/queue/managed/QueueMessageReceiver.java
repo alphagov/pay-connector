@@ -19,6 +19,8 @@ public class QueueMessageReceiver implements Managed {
     private static final Logger LOGGER = LoggerFactory.getLogger(QueueMessageReceiver.class);
 
     private final int queueSchedulerThreadDelayInSeconds;
+    private final int paymentStateTransitionPollerNumberOfThreads;
+
 
     private ScheduledExecutorService chargeCaptureMessageExecutorService;
     private ScheduledExecutorService stateTransitionMessageExecutorService;
@@ -34,7 +36,7 @@ public class QueueMessageReceiver implements Managed {
         this.cardCaptureProcess = cardCaptureProcess;
 
         int queueScheduleNumberOfThreads = connectorConfiguration.getCaptureProcessConfig().getQueueSchedulerNumberOfThreads();
-        int paymentStateTransitionPollerNumberOfThreads = connectorConfiguration.getEventQueueConfig().getPaymentStateTransitionPollerNumberOfThreads();
+        this.paymentStateTransitionPollerNumberOfThreads = connectorConfiguration.getEventQueueConfig().getPaymentStateTransitionPollerNumberOfThreads();
 
         chargeCaptureMessageExecutorService = environment
                 .lifecycle()
@@ -44,7 +46,7 @@ public class QueueMessageReceiver implements Managed {
 
         stateTransitionMessageExecutorService = environment
                 .lifecycle()
-                .scheduledExecutorService("payment-state-transition-message-poller")
+                .scheduledExecutorService("payment-state-transition-message-poller-%d")
                 .threads(paymentStateTransitionPollerNumberOfThreads)
                 .build();
 
@@ -59,9 +61,11 @@ public class QueueMessageReceiver implements Managed {
                 initialDelay,
                 queueSchedulerThreadDelayInSeconds,
                 TimeUnit.SECONDS);
-
-        stateTransitionMessageExecutorService.scheduleWithFixedDelay(
-                this::stateTransitionMessageReceiver, 1, 1, TimeUnit.MILLISECONDS);
+            
+        for (int i = 0; i < this.paymentStateTransitionPollerNumberOfThreads; i++) {
+            stateTransitionMessageExecutorService.scheduleWithFixedDelay(
+                    this::stateTransitionMessageReceiver, 1, 1, TimeUnit.MILLISECONDS);
+        }
     }
 
     @Override
