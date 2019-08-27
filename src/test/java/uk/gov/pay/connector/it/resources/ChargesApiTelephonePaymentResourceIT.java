@@ -5,27 +5,21 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(
         app = ConnectorApp.class,
-        config = "config/test-it-config.yaml",
-        withDockerSQS = true,
-        configOverrides = {
-                @ConfigOverride(key = "eventQueue.eventQueueEnabled", value = "true"),
-                @ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "true")
-        }
+        config = "config/test-it-config.yaml"
 )
 public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
