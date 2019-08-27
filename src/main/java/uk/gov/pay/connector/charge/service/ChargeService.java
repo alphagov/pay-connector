@@ -322,14 +322,6 @@ public class ChargeService {
                                 .toString()
                 ));
             }
-
-            if (externalMetadata.getMetadata().get("authorised_date") != null) {
-                builderOfResponse.withAuthorisedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("authorised_date"))));
-            }
-
-            if (externalMetadata.getMetadata().get("created_date") != null) {
-                builderOfResponse.withCreatedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("created_date"))));
-            }
             
             if (externalMetadata.getMetadata().get("authorised_date") != null) {
                 builderOfResponse.withAuthorisedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("authorised_date"))));
