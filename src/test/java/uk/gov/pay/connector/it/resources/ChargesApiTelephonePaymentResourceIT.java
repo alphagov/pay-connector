@@ -333,7 +333,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(payload)
-                .statusCode(422);
+                .statusCode(422)
+                .body("message[0]", is("Must be either master-card, visa, maestro, diners-club or american-express"));
     }
 
     @Test
@@ -364,7 +365,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(payload)
-                .statusCode(422);
+                .statusCode(422)
+                .body("message[0]", is("Must be MM/YY"));
     }
 
     @Test
@@ -395,7 +397,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(payload)
-                .statusCode(422);
+                .statusCode(422)
+                .body("message[0]", is("Must be exactly 4 digits"));
     }
 
     @Test
@@ -426,7 +429,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(payload)
-                .statusCode(422);
+                .statusCode(422)
+                .body("message[0]", is("Must be exactly 6 digits"));
     }
 
     @Test
@@ -457,7 +461,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(payload)
-                .statusCode(422);
+                .statusCode(422)
+                .body("message[0]", is("Must include a valid status and error code"));
     }
 
     @Test
@@ -493,7 +498,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(payload)
-                .statusCode(422);
+                .statusCode(422)
+                .body("message[0]", is("Must include a valid status and error code"));
     }
 
     @Test
@@ -509,7 +515,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         postBody.put("payment_outcome",
                 Map.of(
                         "status", "failed",
-                        "code", "error",
+                        "code", "P0010",
                         "supplemental", Map.of(
                                 "error_code", "ECKOH01234",
                                 "error_message", "textual message describing error code"
@@ -528,7 +534,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(payload)
-                .statusCode(422);
+                .statusCode(422)
+                .body("message[0]", is("may not be null"));
     }
 
     @Test
@@ -544,7 +551,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         postBody.put("payment_outcome",
                 Map.of(
                         "status", "failed",
-                        "code", "error",
+                        "code", "P0010",
                         "supplemental", Map.of(
                                 "error_code", "ECKOH01234",
                                 "error_message", "textual message describing error code"
@@ -563,7 +570,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(payload)
-                .statusCode(422);
+                .statusCode(422)
+                .body("message[0]", is("may not be null"));
     }
 
     @Test
@@ -579,7 +587,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         postBody.put("payment_outcome",
                 Map.of(
                         "status", "failed",
-                        "code", "error",
+                        "code", "P0010",
                         "supplemental", Map.of(
                                 "error_code", "ECKOH01234",
                                 "error_message", "textual message describing error code"
@@ -598,7 +606,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(payload)
-                .statusCode(422);
+                .statusCode(422)
+                .body("message[0]", is("may not be null"));
     }
 
     @Test
@@ -614,7 +623,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         postBody.put("payment_outcome",
                 Map.of(
                         "status", "failed",
-                        "code", "error",
+                        "code", "P0010",
                         "supplemental", Map.of(
                                 "error_code", "ECKOH01234",
                                 "error_message", "textual message describing error code"
@@ -633,7 +642,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(payload)
-                .statusCode(422);
+                .statusCode(422)
+                .body("message[0]", is("may not be null"));
     }
 
     @Test
@@ -649,7 +659,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         postBody.put("payment_outcome",
                 Map.of(
                         "status", "failed",
-                        "code", "error",
+                        "code", "P0010",
                         "supplemental", Map.of(
                                 "error_code", "ECKOH01234",
                                 "error_message", "textual message describing error code"
@@ -668,7 +678,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(payload)
-                .statusCode(422);
+                .statusCode(422)
+                .body("message[0]", is("may not be null"));
     }
 
     @Test
@@ -678,6 +689,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(payload)
-                .statusCode(422);
+                .statusCode(422)
+                .contentType(JSON)
+                .body("message[0]", is("may not be null"));
     }
 }
