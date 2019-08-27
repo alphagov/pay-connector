@@ -90,7 +90,7 @@ public class PaymentOutcomeValidatorTest {
     public void failsValidationForInvalidErrorCode() {
 
         PaymentOutcome paymentOutcome = new PaymentOutcome(
-                "success",
+                "failed",
                 "error",
                 new Supplemental(
                         "ECKOH01234",
@@ -106,5 +106,26 @@ public class PaymentOutcomeValidatorTest {
 
         assertThat(constraintViolations.size(), isNumber(1));
         assertThat(constraintViolations.iterator().next().getMessage(), is("Must include a valid status and error code"));
+    }
+
+    @Test
+    public void passesValidationForCorrectErrorCode() {
+
+        PaymentOutcome paymentOutcome = new PaymentOutcome(
+                "failed",
+                "P0010",
+                new Supplemental(
+                        "ECKOH01234",
+                        "textual message describing error code"
+                )
+        );
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .paymentOutcome(paymentOutcome)
+                .build();
+
+        Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
+
+        assertThat(constraintViolations.isEmpty(), is(true));
     }
 }
