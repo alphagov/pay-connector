@@ -63,4 +63,16 @@ public class CardExpiryValidatorTest {
         assertThat(constraintViolations.iterator().next().getMessage(), is("Must be MM/YY"));
     }
 
+    @Test
+    public void passesValidationForValidCardType() {
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .cardExpiry("01/99")
+                .build();
+
+        Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
+
+        assertThat(constraintViolations.isEmpty(), is(true));
+    }
+
 }
