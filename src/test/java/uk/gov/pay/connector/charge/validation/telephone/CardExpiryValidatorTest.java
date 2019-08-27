@@ -74,5 +74,4 @@ public class CardExpiryValidatorTest {
 
         assertThat(constraintViolations.isEmpty(), is(true));
     }
-
 }
