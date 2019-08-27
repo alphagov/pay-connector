@@ -29,11 +29,13 @@ public class CardTypeValidatorTest {
     public static final DropwizardAppRule<ConnectorConfiguration> app =
             new DropwizardAppRule<>(ConnectorApp.class, resourceFilePath("config/test-config.yaml"));
     
-    
     private static TelephoneChargeCreateRequest.ChargeBuilder telephoneRequestBuilder = new TelephoneChargeCreateRequest.ChargeBuilder();
+    
+    private static Validator validator; 
     
     @BeforeClass
     public static void setUpValidator() {
+        validator = app.getEnvironment().getValidator();
         telephoneRequestBuilder = telephoneRequestBuilder
                 .amount(1200L)
                 .description("Some description")
@@ -54,20 +56,15 @@ public class CardTypeValidatorTest {
     
     @Test
     public void failsValidationForInvalidCardType() {
-        Validator validator = app.getEnvironment().getValidator();
         
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .cardType("bad-card")
                 .build();
-
         
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
 
         assertThat(constraintViolations.size(), isNumber(1));
         assertThat(constraintViolations.iterator().next().getMessage(), is("Card type must be either master-card, visa, maestro, diners-club or american-express"));
-        
     }
-    
-
 }
