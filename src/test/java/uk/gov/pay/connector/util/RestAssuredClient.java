@@ -83,7 +83,7 @@ public class RestAssuredClient {
     }
 
     public ValidatableResponse postCreateTelephoneCharge(String postBody) {
-        String requestPath = "/v1/api/accounts/{accountId}/telephone_charges"
+        String requestPath = "/v1/api/accounts/{accountId}/telephone-charges"
                 .replace("{accountId}", accountId);
 
         return given().port(port)

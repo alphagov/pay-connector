@@ -243,7 +243,7 @@ public class ChargesApiResource {
     }
     
     @POST
-    @Path("v1/api/accounts/{accountId}/telephone_charges")
+    @Path("v1/api/accounts/{accountId}/telephone-charges")
     @Produces(APPLICATION_JSON)
     public Response createNewTelephoneCharge(
             @PathParam(ACCOUNT_ID) Long accountId,
