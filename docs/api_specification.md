@@ -696,6 +696,172 @@ ref2,500.00,IN PROGRESS,DFG98-FG8J-R78HJ-8JUG9,1,05/02/2016 14:17:00
 
 -----------------------------------------------------------------------------------------------------------
 
+## POST /v1/api/accounts/{accountId}/telephone-charges
+
+This endpoint searches for transactions for the given account id and specified filters in query params and responds with JSON or CSV according to the Accept header
+
+### Request example for JSON response
+
+```
+POST /v1/api/accounts/3121/charges
+Accept application/json
+
+```
+
+#### Query Parameters description
+
+| Field                    | required | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `email`                  | X        | The end-user email used in the charge.    |
+| `reference`              | X        | There (partial or full) reference issued by the government service for this payment. |
+| `status`                 | X        | The transaction status |
+| `from_date`              | X        | The initial date to search transactions |
+| `to_date`                | X        | The end date we should search transactions|
+
+### Response example
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+    "results": [{     
+        "charge_id": "1",
+        "description": "Breathing licence",
+        "reference": "Ref-1234",
+        "amount": 5000,
+        "gateway_account_id": "10",
+        "gateway_transaction_id": "DFG98-FG8J-R78HJ-8JUG9",
+        "delayed_capture": true,
+        "language": "en",
+        "state": {
+                "finished": false,
+                "status": "submitted"
+        },
+        "card_brand": "Visa",
+        "card_details": {
+            "billing_address": {
+                "city": "TEST",
+                "country": "GB",
+                "line1": "TEST",
+                "line2": "TEST - DO NOT PROCESS",
+                "postcode": "SE1 3UZ"
+            },
+            "card_brand": "Visa",
+            "cardholder_name": "TEST",
+            "expiry_date": "12/19",
+            "last_digits_card_number": "4242",
+            "first_digits_card_number": "424242"
+        },
+        "payment_provider": "sandbox",
+        "return_url": "https://govservice.example.com/return_from_payments",
+        "links": [
+            {
+                "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn",
+                "method": "GET",
+                "rel": "self"
+            },
+            {
+                "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/refunds",
+                "method": "GET",
+                "rel": "refunds"
+            },
+            {
+                "href": "https://connector.example.com/v1/api/accounts/1/charges/uqu4s24383qkod35rsb06gv3cn/capture",
+                "method": "POST",
+                "rel": "capture"
+            }
+        ],
+        "refund_summary": {
+            "amount_available": 5000,
+            "amount_submitted": 0,
+            "status": "available"
+        },
+        "settlement_summary": {
+                "capture_submit_time": "2016-01-02T15:02:00Z",
+                "captured_date": "2016-01-02"
+        },
+        "fee": 5
+     }]
+}
+```
+
+#### Response field description
+
+| Field                    | always present | Description                                                                                                          |
+| ------------------------ |:--------:| ---------------------------------------------------------------------------------------------------------------------------|
+| `results`                | X | List of payments                                                                                                                  |
+| `charge_id`              | X | The unique identifier for this charge                                                                                             |
+| `amount`                 | X | The amount of this charge                                                                                                         |
+| `description`            | X | The payment description                                                                                                           |
+| `reference`              | X | There reference issued by the government service for this payment                                                                 |
+| `gateway_account_id`     | X | The ID of the gateway account to use with this charge                                                                             |
+| `gateway_transaction_id` | X | The gateway transaction reference associated to this charge                                                                       |
+| `status`                 | X | The current external status of the charge                                                                                         |
+| `language`               | X | The ISO-639-1 code representing the language of the payment e.g. `"en"`                                                           |
+| `delayed_capture`        | X | Whether the payment requires or required an explicit request to capture                                                           |
+| `card_brand`             |   | The brand label of the card                                                                                                       |
+| `card_details.card_brand`      |           | The card brand used for this payment                                                                                |
+| `card_details.cardholder_name` |           | The card card holder name of this payment                                                                           |
+| `card_details.expiry_date`     |           | The expiry date of this card                                                                                        |
+| `card_details.last_digits_card_number`  |  | The last 4 digits of this card                                                                                      |
+| `card_details.first_digits_card_number`  |  | The first 6 digits of this card                                                                                      |
+| `card_details.billing_address` | | Not present when no billing address is collected |
+| `card_details.billing_address.line1`    |  | The line 1 of the billing address                                                                                   |
+| `card_details.billing_address.line2`    |  | The line 2 of the billing address                                                                                   |
+| `card_details.billing_address.postcode` |  | The postcode of the billing address                                                                                 |
+| `card_details.billing_address.city`     |  | The city of the billing address                                                                                     |
+| `card_details.billing_address.country`  |  | The country of the billing address                                                                                  |
+| `payment_provider`       | X | The gateway provider used by this transaction                                                                                     |
+| `return_url`             | X | The url to return the user to after the payment process has completed                                                             |
+| `refund_summary`         | X | Provides a refund summary of the total refund amount still available and how much has already been refunded, plus a refund status |
+| `settlement_summary`     | X | Provides a settlement summary of the charge containing date and time of capture, if present.                                      |
+| `links.rel.capture`      |   | Present when a charge is available for capture. Otherwise                                       |
+| `fee`                    |  | The fee charged by payment service provider, if available    |
+-----------------------------------------------------------------------------------------------------------
+
+
+### Request example for CSV response
+
+```
+GET /v1/api/accounts/3121/charges
+Accept: text/csv
+
+```
+
+#### Query Parameters description
+
+| Field                    | required | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `reference`              | X | There (partial or full) reference issued by the government service for this payment. |
+| `status`                 | X | The transaction status |
+| `from_date`               | X | The initial date to search transactions |
+| `to_date`                 | X | The end date we should search transactions|
+
+### Response example
+
+```
+HTTP/1.1 200 OK
+Content-Type: text/csv
+
+Service Payment Reference,Amount,Status,Gateway Transaction ID,GOV.UK Pay ID,Date Created
+ref2,500.00,IN PROGRESS,DFG98-FG8J-R78HJ-8JUG9,1,05/02/2016 14:17:00
+
+```
+
+#### Response field description
+
+| Field                    | always present | Description                               |
+| ------------------------ |:--------:| ----------------------------------------- |
+| `GOV.UK Pay ID`              | X | The unique identifier for this charge       |
+| `amount`                 | X | The amount of this charge       |
+| `Service Payment Reference`              | X | There reference issued by the government service for this payment       |
+| `Service Payment Reference` | X | The gateway transaction reference associated to this charge       |
+| `status`                 | X | The current external status of the charge       |
+| `Date Created`                 | X | Date the charge was created       |
+
+-----------------------------------------------------------------------------------------------------------
+
 ## GET /v1/api/accounts/{accountId}/refunds
 
 Returns all the refunds.
