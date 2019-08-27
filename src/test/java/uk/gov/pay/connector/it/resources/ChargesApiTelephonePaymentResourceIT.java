@@ -671,4 +671,13 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .statusCode(422);
     }
 
+    @Test
+    public void shouldReturn422ForTelephoneChargeCreateRequestNull() {
+        HashMap<String, Object> postBody = null;
+        String payload = toJson(postBody);
+
+        connectorRestApiClient
+                .postCreateTelephoneCharge(payload)
+                .statusCode(422);
+    }
 }
