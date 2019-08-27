@@ -50,10 +50,23 @@ public class CardFirstSixDigitsValidatorTest {
     }
 
     @Test
-    public void failsValidationForFirstCardSixFourDigits() {
+    public void failsValidationForFiveDigitsGiven() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .firstSixDigits("12345")
+                .build();
+
+        Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
+
+        assertThat(constraintViolations.size(), isNumber(1));
+        assertThat(constraintViolations.iterator().next().getMessage(), is("Must be exactly 6 digits"));
+    }
+
+    @Test
+    public void failsValidationForSevenDigitsGiven() {
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .firstSixDigits("1234567")
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
