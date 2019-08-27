@@ -64,12 +64,14 @@ The following variables control the background process:
 
 ## Graceful shutdown
 When the connector is being stopped it needs to gracefully terminate its background tasks (managed in `QueueMessageReceiver`).
-The main concern it to drain the in-memory queue that stores all the state transition events. Killing the emitter task
-(that reads from this in-memory queue) without making sure the queue is empty would cause state transition events to be
-lost and Ledger not having the full history of changes that happened to the payment.
-The current logic will check whether the emitter process is being ready for shutdown (by verifying whether the queue is
+The main concern is to drain the in-memory queue (StateTransitionQueue) that stores all the state transition events.
+Killing the `stateTransitionMessageExecutorService` of QueueMessageReceiver (that reads from this in-memory queue)
+without making sure the queue is empty would cause state transition events to be lost and Ledger not having the full
+history of changes that happened to the payment.
+The current logic will check whether the emitter process is ready for shutdown (by verifying whether the queue is
 empty) before actually invoking it.
-In order to make sure that it eventually happens there is a limit to the number of checks.
+In order to make sure that the `StateTransitionEmitterProcess` is shutdown eventually, there is a limit to the number of
+attempts to check readiness for shutdown.
 
 Example log from the connector shutdown:
  ```shell script

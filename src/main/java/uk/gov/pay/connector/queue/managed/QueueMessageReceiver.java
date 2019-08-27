@@ -81,7 +81,6 @@ public class QueueMessageReceiver implements Managed {
                 Thread.sleep(DELAY_BETWEEN_SHUTDOWN_CHECKS_IN_MILLISECONDS);
             } catch (InterruptedException e) {
                 handleInterruptedException();
-                return;
             }
         }
 
