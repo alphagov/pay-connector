@@ -65,10 +65,10 @@ public class PaymentOutcomeValidatorTest {
     }
 
     @Test
-    public void failsValidationForInvalidPaymentOutcomeErrorCode() {
+    public void failsValidationForPaymentOutcomeStatusSuccessAndErrorCodeGiven() {
 
         PaymentOutcome paymentOutcome = new PaymentOutcome(
-                "failed",
+                "success",
                 "error",
                 new Supplemental(
                         "ECKOH01234",
