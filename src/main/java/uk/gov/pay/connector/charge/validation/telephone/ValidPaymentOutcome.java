@@ -13,7 +13,7 @@ import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Target({FIELD, METHOD, PARAMETER, ANNOTATION_TYPE, TYPE_USE})
+@Target({ANNOTATION_TYPE, TYPE_USE})
 @Retention(RUNTIME)
 @Constraint(validatedBy = PaymentOutcomeValidator.class)
 @Documented
