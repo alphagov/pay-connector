@@ -33,24 +33,28 @@ public class TelephoneChargeCreateRequest {
     private String providerId;
     
     private String authCode;
-    
-    @Valid
+
     @NotNull
+    @Valid
     private PaymentOutcome paymentOutcome;
     
+    @NotNull
     @ValidCardType
     private String cardType;
     
     private String nameOnCard;
     
     private String emailAddress;
-    
+
+    @NotNull
     @ValidCardExpiryDate
     private String cardExpiry;
-    
+
+    @NotNull
     @ValidCardLastFourDigits
     private String lastFourDigits;
-    
+
+    @NotNull
     @ValidCardFirstSixDigits
     private String firstSixDigits;
     
