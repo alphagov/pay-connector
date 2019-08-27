@@ -247,7 +247,7 @@ public class ChargesApiResource {
     @Produces(APPLICATION_JSON)
     public Response createNewTelephoneCharge(
             @PathParam(ACCOUNT_ID) Long accountId,
-            @Valid TelephoneChargeCreateRequest telephoneChargeCreateRequest,
+            @NotNull @Valid TelephoneChargeCreateRequest telephoneChargeCreateRequest,
             @Context UriInfo uriInfo
     ) {
         return chargeService.findCharge(
