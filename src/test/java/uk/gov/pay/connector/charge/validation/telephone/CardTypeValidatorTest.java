@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.charge.validation.telephone;
 
-import io.dropwizard.setup.Environment;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -11,11 +9,8 @@ import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.rules.DropwizardAppRule;
 
-import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
 import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
 import java.util.Set;
 
 import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
@@ -36,7 +31,7 @@ public class CardTypeValidatorTest {
     @BeforeClass
     public static void setUpValidator() {
         validator = app.getEnvironment().getValidator();
-        telephoneRequestBuilder = telephoneRequestBuilder
+        telephoneRequestBuilder
                 .amount(1200L)
                 .description("Some description")
                 .reference("Some reference")
@@ -57,7 +52,6 @@ public class CardTypeValidatorTest {
     @Test
     public void failsValidationForInvalidCardType() {
         
-        
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .cardType("bad-card")
                 .build();
@@ -66,5 +60,17 @@ public class CardTypeValidatorTest {
 
         assertThat(constraintViolations.size(), isNumber(1));
         assertThat(constraintViolations.iterator().next().getMessage(), is("Card type must be either master-card, visa, maestro, diners-club or american-express"));
+    }
+
+    @Test
+    public void passesValidationForValidCardType() {
+        
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .cardType("visa")
+                .build();
+
+        Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
+
+        assertThat(constraintViolations.isEmpty(), is(true));
     }
 }
