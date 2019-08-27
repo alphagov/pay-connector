@@ -2,38 +2,56 @@ package uk.gov.pay.connector.charge.model.telephone;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import uk.gov.pay.connector.charge.validation.telephone.ValidCardExpiryDate;
+import uk.gov.pay.connector.charge.validation.telephone.ValidCardFirstSixDigits;
+import uk.gov.pay.connector.charge.validation.telephone.ValidCardLastFourDigits;
+import uk.gov.pay.connector.charge.validation.telephone.ValidCardType;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class TelephoneChargeCreateRequest {
     
+    @NotNull
     private Long amount;
     
+    @NotNull
     private String reference;
     
+    @NotNull
     private String description;
     
     private String createdDate;
     
     private String authorisedDate;
     
+    @NotNull
     private String processorId;
     
+    @NotNull
     private String providerId;
     
     private String authCode;
     
+    @Valid
+    @NotNull
     private PaymentOutcome paymentOutcome;
     
+    @ValidCardType
     private String cardType;
     
     private String nameOnCard;
     
     private String emailAddress;
     
+    @ValidCardExpiryDate
     private String cardExpiry;
     
+    @ValidCardLastFourDigits
     private String lastFourDigits;
     
+    @ValidCardFirstSixDigits
     private String firstSixDigits;
     
     private String telephoneNumber;

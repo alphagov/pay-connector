@@ -268,7 +268,7 @@ public class ChargeService {
                     return null;
                 });
     }
-
+    
     private <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, ChargeEntity chargeEntity) {
         
         PersistedCard persistedCard = null;
@@ -322,7 +322,7 @@ public class ChargeService {
                                 .toString()
                 ));
             }
-
+            
             if (externalMetadata.getMetadata().get("authorised_date") != null) {
                 builderOfResponse.withAuthorisedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("authorised_date"))));
             }
