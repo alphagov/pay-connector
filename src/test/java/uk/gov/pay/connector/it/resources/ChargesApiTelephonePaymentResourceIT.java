@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,6 +25,7 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
     private static final String PROVIDER_NAME = "sandbox";
+    private static final HashMap<String, Object> postBody = new HashMap<>();
 
     public ChargesApiTelephonePaymentResourceIT() {
         super(PROVIDER_NAME);
@@ -33,11 +35,6 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
     @Override
     public void setUp() {
         super.setUp();
-    }
-
-    @Test
-    public void createTelephoneChargeForOnlyRequiredFields() {
-        HashMap<String, Object> postBody = new HashMap<>();
         postBody.put("amount", 12000);
         postBody.put("reference", "MRPC12345");
         postBody.put("description", "New passport application");
@@ -52,11 +49,19 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         postBody.put("card_expiry", "02/19");
         postBody.put("last_four_digits", "1234");
         postBody.put("first_six_digits", "123456");
+    }
+    
+    @After
+    @Override
+    public void tearDown() {
+        super.tearDown();
+        postBody.clear();
+    }
 
-        String payload = toJson(postBody);
-
+    @Test
+    public void createTelephoneChargeForOnlyRequiredFields() {
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
                 .contentType(JSON)
                 .body("amount", isNumber(12000))
@@ -71,35 +76,18 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("payment_outcome.status", is("success"))
                 .body("charge_id", is("dummypaymentid123notpersisted"));
     }
-
+    
     @Test
-    public void createTelephoneChargeForStatusOfSuccess() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("reference", "MRPC12345");
-        postBody.put("description", "New passport application");
+    public void createTelephoneChargeForStatusOfSuccessForAllFields() {
+        postBody.put("auth_code", "666");
         postBody.put("created_date", "2018-02-21T16:04:25Z");
         postBody.put("authorised_date", "2018-02-21T16:05:33Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
-                Map.of(
-                        "status", "success"
-                )
-        );
-        postBody.put("card_type", "master-card");
         postBody.put("name_on_card", "Jane Doe");
         postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
         postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
                 .contentType(JSON)
                 .body("amount", isNumber(12000))
@@ -125,16 +113,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
     @Test
     public void createTelephoneChargeForFailedStatusP0010() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("reference", "MRPC12345");
-        postBody.put("description", "New passport application");
-        postBody.put("created_date", "2018-02-21T16:04:25.000Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33.000Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
+        postBody.replace("payment_outcome",
                 Map.of(
                         "status", "failed",
                         "code", "P0010",
@@ -144,39 +123,24 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                         )
                 )
         );
-        postBody.put("card_type", "master-card");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
                 .contentType(JSON)
                 .body("amount", isNumber(12000))
                 .body("reference", is("MRPC12345"))
                 .body("description", is("New passport application"))
-                .body("created_date", is("2018-02-21T16:04:25.000Z"))
-                .body("authorised_date", is("2018-02-21T16:05:33.000Z"))
                 .body("processor_id", is("183f2j8923j8"))
                 .body("provider_id", is("17498-8412u9-1273891239"))
-                .body("auth_code", is("666"))
                 .body("payment_outcome.status", is("failed"))
                 .body("payment_outcome.code", is("P0010"))
                 .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
                 .body("payment_outcome.supplemental.error_message", is("textual message describing error code"))
                 .body("card_details.card_brand", is("master-card"))
-                .body("card_details.cardholder_name", is("Jane Doe"))
-                .body("email", is("jane_doe@example.com"))
                 .body("card_details.expiry_date", is("02/19"))
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
-                .body("telephone_number", is("+447700900796"))
                 .body("charge_id", is("dummypaymentid123notpersisted"))
                 .body("state.status", is("failed"))
                 .body("state.code", is("P0010"))
@@ -186,16 +150,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
     @Test
     public void createTelephoneChargeForFailedStatusP0050() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("reference", "MRPC12345");
-        postBody.put("description", "New passport application");
-        postBody.put("created_date", "2018-02-21T16:04:25Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
+        postBody.replace("payment_outcome",
                 Map.of(
                         "status", "failed",
                         "code", "P0050",
@@ -205,39 +160,24 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                         )
                 )
         );
-        postBody.put("card_type", "master-card");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
                 .contentType(JSON)
                 .body("amount", isNumber(12000))
                 .body("reference", is("MRPC12345"))
                 .body("description", is("New passport application"))
-                .body("created_date", is("2018-02-21T16:04:25.000Z"))
-                .body("authorised_date", is("2018-02-21T16:05:33.000Z"))
                 .body("processor_id", is("183f2j8923j8"))
                 .body("provider_id", is("17498-8412u9-1273891239"))
-                .body("auth_code", is("666"))
                 .body("payment_outcome.status", is("failed"))
                 .body("payment_outcome.code", is("P0050"))
                 .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
                 .body("payment_outcome.supplemental.error_message", is("textual message describing error code"))
                 .body("card_details.card_brand", is("master-card"))
-                .body("card_details.cardholder_name", is("Jane Doe"))
-                .body("email", is("jane_doe@example.com"))
                 .body("card_details.expiry_date", is("02/19"))
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
-                .body("telephone_number", is("+447700900796"))
                 .body("charge_id", is("dummypaymentid123notpersisted"))
                 .body("state.status", is("failed"))
                 .body("state.code", is("P0050"))
@@ -247,53 +187,24 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldReturnResponseForAlreadyExistingTelephoneCharge() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("reference", "MRPC12345");
-        postBody.put("description", "New passport application");
-        postBody.put("created_date", "2018-02-21T16:04:25Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
-                Map.of(
-                        "status", "success"
-                )
-        );
-        postBody.put("card_type", "master-card");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201);
 
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(200)
                 .contentType(JSON)
                 .body("amount", isNumber(12000))
                 .body("reference", is("MRPC12345"))
                 .body("description", is("New passport application"))
-                .body("created_date", is("2018-02-21T16:04:25.000Z"))
-                .body("authorised_date", is("2018-02-21T16:05:33.000Z"))
                 .body("processor_id", is("183f2j8923j8"))
                 .body("provider_id", is("17498-8412u9-1273891239"))
-                .body("auth_code", is("666"))
                 .body("payment_outcome.status", is("success"))
                 .body("card_details.card_brand", is("master-card"))
-                .body("card_details.cardholder_name", is("Jane Doe"))
-                .body("email", is("jane_doe@example.com"))
                 .body("card_details.expiry_date", is("02/19"))
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
-                .body("telephone_number", is("+447700900796"))
                 .body("charge_id", is("dummypaymentid123notpersisted"))
                 .body("state.status", is("success"))
                 .body("state.finished", is(true));
@@ -301,209 +212,78 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422ForInvalidCardType() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("reference", "MRPC12345");
-        postBody.put("description", "New passport application");
-        postBody.put("created_date", "2018-02-21T16:04:25Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
-                Map.of(
-                        "status", "success"
-                )
-        );
-        postBody.put("card_type", "invalid-card");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        
+        postBody.replace("card_type", "invalid-card");
+        
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Card type must be either master-card, visa, maestro, diners-club or american-express"));
     }
 
     @Test
     public void shouldReturn422ForInvalidCardExpiryDate() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("reference", "MRPC12345");
-        postBody.put("description", "New passport application");
-        postBody.put("created_date", "2018-02-21T16:04:25.000Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33.000Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
-                Map.of(
-                        "status", "success"
-                )
-        );
-        postBody.put("card_type", "visa");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "99/99");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        postBody.replace("card_expiry", "99/99");
+        
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Must be MM/YY"));
     }
 
     @Test
     public void shouldReturn422ForInvalidCardLastFourDigits() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("reference", "MRPC12345");
-        postBody.put("description", "New passport application");
-        postBody.put("created_date", "2018-02-21T16:04:25Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
-                Map.of(
-                        "status", "success"
-                )
-        );
-        postBody.put("card_type", "visa");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "12345");
-        postBody.put("first_six_digits", "123456");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        postBody.replace("last_four_digits", "12345");
+        
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Must be exactly 4 digits"));
     }
 
     @Test
     public void shouldReturn422ForInvalidCardFirstSixDigits() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("reference", "MRPC12345");
-        postBody.put("description", "New passport application");
-        postBody.put("created_date", "2018-02-21T16:04:25Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
-                Map.of(
-                        "status", "success"
-                )
-        );
-        postBody.put("card_type", "visa");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "1234567");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        postBody.replace("first_six_digits", "1234567");
+        
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Must be exactly 6 digits"));
     }
 
     @Test
     public void shouldReturn422ForInvalidPaymentOutcomeStatus() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("reference", "MRPC12345");
-        postBody.put("description", "New passport application");
-        postBody.put("created_date", "2018-02-21T16:04:25Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
+        postBody.replace("payment_outcome",
                 Map.of(
                         "status", "invalid"
                 )
         );
-        postBody.put("card_type", "visa");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Must include a valid status and error code"));
     }
 
     @Test
     public void shouldReturn422ForInvalidPaymentOutcomeStatusAndCode() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("reference", "MRPC12345");
-        postBody.put("description", "New passport application");
-        postBody.put("created_date", "2018-02-21T16:04:25Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
+        postBody.replace("payment_outcome",
                 Map.of(
                         "status", "success",
                         "code", "P0010"
                 )
         );
-        postBody.put("card_type", "visa");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Must include a valid status and error code"));
     }
 
     @Test
     public void shouldReturn422ForInvalidPaymentOutcomeErrorCode() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("reference", "MRPC12345");
-        postBody.put("description", "New passport application");
-        postBody.put("created_date", "2018-02-21T16:04:25Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
+        
+        postBody.replace("payment_outcome",
                 Map.of(
                         "status", "failed",
                         "code", "error",
@@ -513,206 +293,66 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                         )
                 )
         );
-        postBody.put("card_type", "visa");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Must include a valid status and error code"));
     }
 
     @Test
     public void shouldReturn422ForMissingAmount() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("reference", "MRPC12345");
-        postBody.put("description", "New passport application");
-        postBody.put("created_date", "2018-02-21T16:04:25Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
-                Map.of(
-                        "status", "failed",
-                        "code", "P0010",
-                        "supplemental", Map.of(
-                                "error_code", "ECKOH01234",
-                                "error_message", "textual message describing error code"
-                        )
-                )
-        );
-        postBody.put("card_type", "visa");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        postBody.remove("amount");
+        
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("may not be null"));
     }
 
     @Test
     public void shouldReturn422ForMissingReference() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("description", "New passport application");
-        postBody.put("created_date", "2018-02-21T16:04:25Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
-                Map.of(
-                        "status", "failed",
-                        "code", "P0010",
-                        "supplemental", Map.of(
-                                "error_code", "ECKOH01234",
-                                "error_message", "textual message describing error code"
-                        )
-                )
-        );
-        postBody.put("card_type", "visa");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        postBody.remove("reference");
+        
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("may not be null"));
     }
 
     @Test
     public void shouldReturn422ForMissingDescription() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("reference", "MRPC12345");
-        postBody.put("created_date", "2018-02-21T16:04:25Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
-                Map.of(
-                        "status", "failed",
-                        "code", "P0010",
-                        "supplemental", Map.of(
-                                "error_code", "ECKOH01234",
-                                "error_message", "textual message describing error code"
-                        )
-                )
-        );
-        postBody.put("card_type", "visa");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        postBody.remove("description");
+        
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("may not be null"));
     }
 
     @Test
     public void shouldReturn422ForMissingProcessorID() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("description", "New passport application");
-        postBody.put("reference", "MRPC12345");
-        postBody.put("created_date", "2018-02-21T16:04:25Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
-                Map.of(
-                        "status", "failed",
-                        "code", "P0010",
-                        "supplemental", Map.of(
-                                "error_code", "ECKOH01234",
-                                "error_message", "textual message describing error code"
-                        )
-                )
-        );
-        postBody.put("card_type", "visa");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        postBody.remove("processor_id");
+                
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("may not be null"));
     }
 
     @Test
     public void shouldReturn422ForMissingProviderID() {
-        HashMap<String, Object> postBody = new HashMap<>();
-        postBody.put("amount", 12000);
-        postBody.put("description", "New passport application");
-        postBody.put("reference", "MRPC12345");
-        postBody.put("created_date", "2018-02-21T16:04:25Z");
-        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
-        postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("auth_code", "666");
-        postBody.put("payment_outcome",
-                Map.of(
-                        "status", "failed",
-                        "code", "P0010",
-                        "supplemental", Map.of(
-                                "error_code", "ECKOH01234",
-                                "error_message", "textual message describing error code"
-                        )
-                )
-        );
-        postBody.put("card_type", "visa");
-        postBody.put("name_on_card", "Jane Doe");
-        postBody.put("email_address", "jane_doe@example.com");
-        postBody.put("card_expiry", "02/19");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
-        postBody.put("telephone_number", "+447700900796");
-
-        String payload = toJson(postBody);
-
+        postBody.remove("processor_id");
+        
         connectorRestApiClient
-                .postCreateTelephoneCharge(payload)
+                .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("may not be null"));
     }
 
     @Test
     public void shouldReturn422ForTelephoneChargeCreateRequestNull() {
-        HashMap<String, Object> postBody = null;
-        String payload = toJson(postBody);
+        String payload = toJson(null);
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(payload)
