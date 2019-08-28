@@ -218,7 +218,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("Card type must be either master-card, visa, maestro, diners-club or american-express"));
+                .body("message[0]", is("Field [card_type] must be either master-card, visa, maestro, diners-club or american-express"));
     }
 
     @Test
@@ -228,7 +228,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("Must be MM/YY"));
+                .body("message[0]", is("Field [card_expiry] must have valid MM/YY"));
     }
 
     @Test
@@ -238,7 +238,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("Must be exactly 4 digits"));
+                .body("message[0]", is("Field [last_four_digits] must be exactly 4 digits"));
     }
 
     @Test
@@ -248,7 +248,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("Must be exactly 6 digits"));
+                .body("message[0]", is("Field [first_six_digits] must be exactly 6 digits"));
     }
 
     @Test
@@ -262,7 +262,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("Must include a valid status and error code"));
+                .body("message[0]", is("Field [payment_outcome] must include a valid status and error code"));
     }
 
     @Test
@@ -277,7 +277,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("Must include a valid status and error code"));
+                .body("message[0]", is("Field [payment_outcome] must include a valid status and error code"));
     }
 
     @Test
@@ -297,7 +297,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("Must include a valid status and error code"));
+                .body("message[0]", is("Field [payment_outcome] must include a valid status and error code"));
     }
 
     @Test
@@ -307,7 +307,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("may not be null"));
+                .body("message[0]", is("Field [amount] cannot be null"));
     }
 
     @Test
@@ -317,7 +317,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("may not be null"));
+                .body("message[0]", is("Field [reference] cannot be null"));
     }
 
     @Test
@@ -327,7 +327,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("may not be null"));
+                .body("message[0]", is("Field [description] cannot be null"));
     }
 
     @Test
@@ -337,17 +337,57 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("may not be null"));
+                .body("message[0]", is("Field [processor_id] cannot be null"));
     }
-
+    
     @Test
     public void shouldReturn422ForMissingProviderID() {
-        postBody.remove("processor_id");
+        postBody.remove("provider_id");
         
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("may not be null"));
+                .body("message[0]", is("Field [provider_id] cannot be null"));
+    }
+
+    @Test
+    public void shouldReturn422ForMissingPaymentOutcome() {
+        postBody.remove("payment_outcome");
+
+        connectorRestApiClient
+                .postCreateTelephoneCharge(toJson(postBody))
+                .statusCode(422)
+                .body("message[0]", is("Field [payment_outcome] cannot be null"));
+    }
+
+    @Test
+    public void shouldReturn422ForMissingCardExpiryDate() {
+        postBody.remove("card_expiry");
+
+        connectorRestApiClient
+                .postCreateTelephoneCharge(toJson(postBody))
+                .statusCode(422)
+                .body("message[0]", is("Field [card_expiry] cannot be null"));
+    }
+
+    @Test
+    public void shouldReturn422ForMissingLastFourDigits() {
+        postBody.remove("last_four_digits");
+
+        connectorRestApiClient
+                .postCreateTelephoneCharge(toJson(postBody))
+                .statusCode(422)
+                .body("message[0]", is("Field [last_four_digits] cannot be null"));
+    }
+
+    @Test
+    public void shouldReturn422ForMissingFirstSixDigits() {
+        postBody.remove("first_six_digits");
+
+        connectorRestApiClient
+                .postCreateTelephoneCharge(toJson(postBody))
+                .statusCode(422)
+                .body("message[0]", is("Field [first_six_digits] cannot be null"));
     }
 
     @Test

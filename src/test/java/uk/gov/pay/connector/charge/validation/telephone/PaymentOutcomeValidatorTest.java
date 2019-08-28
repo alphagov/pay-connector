@@ -134,4 +134,17 @@ public class PaymentOutcomeValidatorTest {
 
         assertThat(constraintViolations.isEmpty(), is(true));
     }
+
+    @Test
+    public void passesValidationForNullPaymentOutcome() {
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .paymentOutcome(null)
+                .build();
+
+        Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
+
+        assertThat(constraintViolations.size(), isNumber(1));
+        assertThat(constraintViolations.iterator().next().getMessage().equals("Field [payment_outcome] must include a valid status and error code"), is(false));
+    }
 }

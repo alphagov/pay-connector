@@ -13,49 +13,49 @@ import javax.validation.constraints.NotNull;
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class TelephoneChargeCreateRequest {
     
-    @NotNull
+    @NotNull(message = "Field [amount] cannot be null")
     private Long amount;
     
-    @NotNull
+    @NotNull(message = "Field [reference] cannot be null")
     private String reference;
     
-    @NotNull
+    @NotNull(message = "Field [description] cannot be null")
     private String description;
     
     private String createdDate;
     
     private String authorisedDate;
     
-    @NotNull
+    @NotNull(message = "Field [processor_id] cannot be null")
     private String processorId;
     
-    @NotNull
+    @NotNull(message = "Field [provider_id] cannot be null")
     private String providerId;
     
     private String authCode;
 
-    @NotNull
+    @NotNull(message = "Field [payment_outcome] cannot be null")
     @Valid
     private PaymentOutcome paymentOutcome;
     
-    @NotNull
-    @ValidCardType
+    @NotNull(message = "Field [card_type] cannot be null")
+    @ValidCardType(message = "Field [card_type] must be either master-card, visa, maestro, diners-club or american-express")
     private String cardType;
     
     private String nameOnCard;
     
     private String emailAddress;
-
-    @NotNull
-    @ValidCardExpiryDate
+    
+    @NotNull(message = "Field [card_expiry] cannot be null")
+    @ValidCardExpiryDate(message = "Field [card_expiry] must have valid MM/YY")
     private String cardExpiry;
 
-    @NotNull
-    @ValidCardLastFourDigits
+    @NotNull(message = "Field [last_four_digits] cannot be null")
+    @ValidCardLastFourDigits(message = "Field [last_four_digits] must be exactly 4 digits")
     private String lastFourDigits;
 
-    @NotNull
-    @ValidCardFirstSixDigits
+    @NotNull(message = "Field [first_six_digits] cannot be null")
+    @ValidCardFirstSixDigits(message = "Field [first_six_digits] must be exactly 6 digits")
     private String firstSixDigits;
     
     private String telephoneNumber;

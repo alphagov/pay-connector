@@ -67,4 +67,17 @@ public class CardTypeValidatorTest {
 
         assertThat(constraintViolations.isEmpty(), is(true));
     }
+
+    @Test
+    public void passesValidationForNullCardType() {
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .cardType(null)
+                .build();
+
+        Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
+
+        assertThat(constraintViolations.size(), isNumber(1));
+        assertThat(constraintViolations.iterator().next().getMessage().equals("Field [card_type] must be either master-card, visa, maestro, diners-club or american-express"), is(false));
+    }
 }

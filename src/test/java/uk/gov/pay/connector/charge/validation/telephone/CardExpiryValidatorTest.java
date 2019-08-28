@@ -54,7 +54,7 @@ public class CardExpiryValidatorTest {
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
 
         assertThat(constraintViolations.size(), isNumber(1));
-        assertThat(constraintViolations.iterator().next().getMessage(), is("Must be MM/YY"));
+        assertThat(constraintViolations.iterator().next().getMessage(), is("Field [card_expiry] must have valid MM/YY"));
     }
 
     @Test
@@ -67,5 +67,18 @@ public class CardExpiryValidatorTest {
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
 
         assertThat(constraintViolations.isEmpty(), is(true));
+    }
+
+    @Test
+    public void passesValidationForNullCardType() {
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .cardExpiry(null)
+                .build();
+
+        Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
+
+        assertThat(constraintViolations.size(), isNumber(1));
+        assertThat(constraintViolations.iterator().next().getMessage().equals("Field [card_expiry] must have valid MM/YY"), is(false));
     }
 }

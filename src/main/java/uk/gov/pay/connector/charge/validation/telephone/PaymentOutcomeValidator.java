@@ -19,6 +19,10 @@ public class PaymentOutcomeValidator implements ConstraintValidator<ValidPayment
     @Override
     public boolean isValid(PaymentOutcome paymentOutcome, ConstraintValidatorContext context) {
 
+        if(paymentOutcome == null) {
+            return true;
+        }
+        
         if(paymentOutcome.getStatus() == null) {
             return false;
         }

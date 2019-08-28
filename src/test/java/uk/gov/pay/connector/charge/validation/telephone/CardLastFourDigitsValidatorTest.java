@@ -81,4 +81,17 @@ public class CardLastFourDigitsValidatorTest {
 
         assertThat(constraintViolations.isEmpty(), is(true));
     }
+
+    @Test
+    public void passesValidationForNullDigits() {
+
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .lastFourDigits(null)
+                .build();
+
+        Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
+
+        assertThat(constraintViolations.size(), isNumber(1));
+        assertThat(constraintViolations.iterator().next().getMessage().equals("Field [last_four_digits] must be exactly 4 digits"), is(false));
+    }
 }
