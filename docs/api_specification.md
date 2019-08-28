@@ -825,23 +825,29 @@ Content-Type: application/json
 | Field                    | always present | Description                               |
 | ------------------------ |:--------:| ----------------------------------------- |
 | `amount`                 | X | The unique identifier for this charge       |
-| `reference`      |           | Not present when no billing address and cardholder name is posted |                                                                                |
-| `description` |           | The cardholder name of this payment                                                                           |
-| `processor_id` | | Not present when no billing address field(s) is posted |
-| `cprovider_id`    |  | The line 1 of the billing address                                                                                   |
-| `payment_outcome.status`    |  | The line 2 of the billing address                                                                                   |
-| `payment_outcome.code` |  | The postcode of the billing address                                                                                 |
-| `payment_outcome.supplemental.error_code`     |  | The city of the billing address                                                                                     |
-| `card_type`  |  | The country of the billing address                                               |
-| `card_expiry`  |  | The country of the billing address                                               |
-| `last_four_digits`  |  | The country of the billing address                                               |
-| `first_six_digits`  |  | The country of the billing address                                               |
-| `payment_id`  |  | The country of the billing address                                               |
-| `state.status`  |  | The country of the billing address                                               |
-| `state.finished`  |  | The country of the billing address                                               |
+| `reference`              | X | Not present when no billing address and cardholder name is posted |                                                                                |
+| `description`            | X | The cardholder name of this payment |
+| `processor_id`           | X | Not present when no billing address field(s) is posted |
+| `provider_id`            | X | The line 1 of the billing address    |
+| `payment_outcome.status` | X | The line 2 of the billing address   |
+| `payment_outcome.code`   |  | This is present when payment_outcome.status is failed  |
+| `payment_outcome.supplemental.error_code`     |  | The city of the billing address  |
+| `payment_outcome.supplemental.error_message`  |  | The city of the billing address  |
+| `card_type`              | X | The country of the billing address                                               |
+| `card_expiry`            | X | The country of the billing address                                               |
+| `last_four_digits`  | X | The country of the billing address                                               |
+| `first_six_digits`  | X | The country of the billing address                                               |
+| `payment_id`  | X | The country of the billing address                                               |
+| `state.status`  | X | The country of the billing address                                               |
+| `state.finished`  | X | The country of the billing address                                               |
 | `state.message`  |  | The country of the billing address                                               |
 | `state.code`  |  | The country of the billing address                                               |
-
+| `created_date`  |  | The country of the billing address                                               |
+| `authorised_date`  |  | The country of the billing address                                               |
+| `auth_code`  |  | The country of the billing address                                               |
+| `name_on_card`  |  | The country of the billing address                                               |
+| `email_address`  |  | The country of the billing address                                               |
+| `telephone_number`  |  | The country of the billing address                                               |
 -----------------------------------------------------------------------------------------------------------
 
 ## GET /v1/api/accounts/{accountId}/refunds
