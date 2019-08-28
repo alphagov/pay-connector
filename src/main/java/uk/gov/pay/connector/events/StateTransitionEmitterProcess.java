@@ -34,6 +34,14 @@ public class StateTransitionEmitterProcess {
         stateTransitionQueueMetricEmitter.register();
     }
 
+    public int getNumberOfNotProcessedMessages() {
+        return stateTransitionQueue.size();
+    }
+
+    public boolean isReadyForShutdown() {
+        return stateTransitionQueue.isEmpty();
+    }
+
     public void handleStateTransitionMessages() throws InterruptedException {
         Optional.ofNullable(stateTransitionQueue.poll(STATE_TRANSITION_PROCESS_DELAY_IN_MILLISECONDS, TimeUnit.MILLISECONDS))
                 .ifPresent(this::emitEvents);

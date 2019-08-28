@@ -62,6 +62,42 @@ The following variables control the background process:
 | `CAPTURE_PROCESS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS` | `1` | the duration in seconds that the queue message receiver should wait between running threads. |
 | `CAPTURE_PROCESS_QUEUE_SCHEDULER_NUMBER_OF_THREADS` | `1` | the number of polling threads started by the queue message scheduler. |
 
+## Graceful shutdown
+When the connector is being stopped it needs to gracefully terminate its background tasks (managed in `QueueMessageReceiver`).
+The main concern is to drain the in-memory queue (StateTransitionQueue) that stores all the state transition events.
+Killing the `stateTransitionMessageExecutorService` of QueueMessageReceiver (that reads from this in-memory queue)
+without making sure the queue is empty would cause state transition events to be lost and Ledger not having the full
+history of changes that happened to the payment.
+The current logic will check whether the emitter process is ready for shutdown (by verifying whether the queue is
+empty) before actually invoking it.
+In order to make sure that the `StateTransitionEmitterProcess` is shutdown eventually, there is a limit to the number of
+attempts to check readiness for shutdown.
+
+Example log from the connector shutdown:
+ ```shell script
+[2019-08-27 10:53:01.231] [thread=Thread-1] [logger=u.g.p.c.p.s.CardExecutorService] - Shutting down CardExecutorService
+[2019-08-27 10:53:01.285] [thread=Thread-1] [logger=u.g.p.c.p.s.CardExecutorService] - Awaiting for CardExecutorService threads to terminate
+[2019-08-27 10:53:01.369] [thread=Thread-11] [logger=o.e.j.s.AbstractConnector] - Stopped application@72fedd85{HTTP/1.1,[http/1.1]}{0.0.0.0:9300}
+[2019-08-27 10:53:01.400] [thread=Thread-11] [logger=o.e.j.s.AbstractConnector] - Stopped admin@5cd9439a{HTTP/1.1,[http/1.1]}{0.0.0.0:9301}
+[2019-08-27 10:53:01.405] [thread=Thread-11] [logger=o.e.j.s.h.ContextHandler] - Stopped i.d.j.MutableServletContextHandler@2b843043{/,null,UNAVAILABLE}
+[2019-08-27 10:53:01.455] [thread=Thread-11] [logger=o.e.j.s.h.ContextHandler] - Stopped i.d.j.MutableServletContextHandler@35ac70a{/,null,UNAVAILABLE}
+[2019-08-27 10:53:01.460] [thread=Thread-11] [logger=u.g.p.c.q.m.QueueMessageReceiver] - State transition receiver is not ready for shutdown
+[2019-08-27 10:53:01.514] [thread=Thread-11] [logger=u.g.p.c.q.m.QueueMessageReceiver] - State transition receiver is not ready for shutdown
+[2019-08-27 10:53:01.561] [thread=payment-state-transition-message-poller] [logger=u.g.p.c.e.StateTransitionEmitterProcess] - Emitted new state transition event for [eventId=0] [eventType=PaymentCreated]
+[2019-08-27 10:53:01.563] [thread=payment-state-transition-message-poller] [logger=u.g.p.c.e.StateTransitionEmitterProcess] - Emitted new state transition event for [eventId=9] [eventType=PaymentCreated]
+[2019-08-27 10:53:01.564] [thread=Thread-11] [logger=u.g.p.c.q.m.QueueMessageReceiver] - State transition receiver is not ready for shutdown
+[2019-08-27 10:53:01.566] [thread=payment-state-transition-message-poller] [logger=u.g.p.c.e.StateTransitionEmitterProcess] - Emitted new state transition event for [eventId=8] [eventType=PaymentCreated]
+[2019-08-27 10:53:01.568] [thread=payment-state-transition-message-poller] [logger=u.g.p.c.e.StateTransitionEmitterProcess] - Emitted new state transition event for [eventId=7] [eventType=PaymentCreated]
+[2019-08-27 10:53:01.570] [thread=payment-state-transition-message-poller] [logger=u.g.p.c.e.StateTransitionEmitterProcess] - Emitted new state transition event for [eventId=6] [eventType=PaymentCreated]
+[2019-08-27 10:53:01.573] [thread=payment-state-transition-message-poller] [logger=u.g.p.c.e.StateTransitionEmitterProcess] - Emitted new state transition event for [eventId=5] [eventType=PaymentCreated]
+[2019-08-27 10:53:01.574] [thread=payment-state-transition-message-poller] [logger=u.g.p.c.e.StateTransitionEmitterProcess] - Emitted new state transition event for [eventId=4] [eventType=PaymentCreated]
+[2019-08-27 10:53:01.576] [thread=payment-state-transition-message-poller] [logger=u.g.p.c.e.StateTransitionEmitterProcess] - Emitted new state transition event for [eventId=3] [eventType=PaymentCreated]
+[2019-08-27 10:53:01.578] [thread=payment-state-transition-message-poller] [logger=u.g.p.c.e.StateTransitionEmitterProcess] - Emitted new state transition event for [eventId=2] [eventType=PaymentCreated]
+[2019-08-27 10:53:01.580] [thread=payment-state-transition-message-poller] [logger=u.g.p.c.e.StateTransitionEmitterProcess] - Emitted new state transition event for [eventId=1] [eventType=PaymentCreated]
+[2019-08-27 10:53:01.617] [thread=Thread-11] [logger=u.g.p.c.q.m.QueueMessageReceiver] - State transition receiver - number of not processed messages 0
+
+```
+
 ## Integration tests
 
 To run the integration tests, the `DOCKER_HOST` and `DOCKER_CERT_PATH` environment variables must be set up correctly. On OS X the environment can be set up with:
