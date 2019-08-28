@@ -132,8 +132,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         environment.jersey().register(ChargeIdMDCLoggingFeature.class);
         
-        environment.jersey().register(environment.getValidator());
-
         if(configuration.getCaptureProcessConfig().getBackgroundProcessingEnabled()) {
             setupSchedulers(environment, injector);
         }

@@ -1,37 +1,31 @@
 package uk.gov.pay.connector.charge.validation.telephone;
 
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.Supplemental;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
-import uk.gov.pay.connector.rules.DropwizardAppRule;
 
 import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
 import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import java.util.Set;
 
-import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 public class PaymentOutcomeValidatorTest {
-
-    @ClassRule
-    public static final DropwizardAppRule<ConnectorConfiguration> app =
-            new DropwizardAppRule<>(ConnectorApp.class, resourceFilePath("config/test-config.yaml"));
-
+    
     private static TelephoneChargeCreateRequest.ChargeBuilder telephoneRequestBuilder = new TelephoneChargeCreateRequest.ChargeBuilder();
 
     private static Validator validator;
 
     @BeforeClass
     public static void setUpValidator() {
-        validator = app.getEnvironment().getValidator();
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
         telephoneRequestBuilder
                 .amount(1200L)
                 .description("Some description")
