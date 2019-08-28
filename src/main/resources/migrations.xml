@@ -1198,4 +1198,11 @@
                               defaultNullValue="1"/>
     </changeSet>
 
+    <changeSet id="add integration_version_3ds column to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="integration_version_3ds" type="smallint">
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
