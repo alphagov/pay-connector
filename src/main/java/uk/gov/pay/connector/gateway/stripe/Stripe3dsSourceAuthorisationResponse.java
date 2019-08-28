@@ -11,7 +11,7 @@ public class Stripe3dsSourceAuthorisationResponse implements BaseAuthoriseRespon
 
     private Stripe3dsSourceResponse jsonResponse;
 
-    Stripe3dsSourceAuthorisationResponse(Stripe3dsSourceResponse jsonResponse) {
+    public Stripe3dsSourceAuthorisationResponse(Stripe3dsSourceResponse jsonResponse) {
         this.jsonResponse = jsonResponse;
     }
 
