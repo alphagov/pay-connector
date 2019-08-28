@@ -22,10 +22,6 @@ public class PaymentOutcomeValidator implements ConstraintValidator<ValidPayment
         if(paymentOutcome == null) {
             return true;
         }
-        
-        if(paymentOutcome.getStatus() == null) {
-            return false;
-        }
 
         if("success".equals(paymentOutcome.getStatus()) && paymentOutcome.getCode() == null) {
             return true;
