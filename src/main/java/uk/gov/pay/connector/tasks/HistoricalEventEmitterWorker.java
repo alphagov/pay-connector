@@ -256,10 +256,24 @@ public class HistoricalEventEmitterWorker {
         // checking against any terminal authentication transition
         chargeEventEntities
                 .stream()
-                .filter(event -> TERMINAL_AUTHENTICATION_STATES.contains(event.getStatus()))
+                .filter(event -> isValidPaymentDetailsEnteredTransition(chargeEventEntities, event))
                 .map(PaymentDetailsEntered::from)
                 .filter(event -> !emittedEventDao.hasBeenEmittedBefore(event))
                 .forEach(this::emitAndPersistEvent);
+    }
+
+    private boolean isValidPaymentDetailsEnteredTransition(List<ChargeEventEntity> chargeEventEntities, ChargeEventEntity event) {
+        return TERMINAL_AUTHENTICATION_STATES.contains(event.getStatus())
+                && isNotDuplicatePaymentDetailsEvent(chargeEventEntities, event);
+    }
+
+    private boolean isNotDuplicatePaymentDetailsEvent(List<ChargeEventEntity> chargeEventEntities, ChargeEventEntity event) {
+        return !event.getStatus().equals(AUTHORISATION_SUCCESS)
+                || event.getStatus().equals(AUTHORISATION_SUCCESS)
+                && !chargeEventEntities
+                .stream()
+                .map(ChargeEventEntity::getStatus)
+                .collect(Collectors.toList()).contains(AUTHORISATION_3DS_REQUIRED);
     }
 
     private void emitAndPersistEvent(PaymentDetailsEntered event) {

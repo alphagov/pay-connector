@@ -19,6 +19,7 @@ import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.AuthorisationSucceeded;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
+import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
@@ -308,5 +309,48 @@ public class HistoricalEventEmitterWorkerTest {
         assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(RefundCreatedByService.class));
 
         verify(emittedEventDao, atMostOnce()).recordEmission(any());
+    }
+
+    @Test
+    public void shouldEmitPaymentDetailsEnteredOnlyOnce_IfChargeEventsContainsBothAuth3DSRequiredAndAuthSuccessEvents() {
+        ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now())
+                .withCharge(chargeEntity)
+                .withChargeStatus(ChargeStatus.ENTERING_CARD_DETAILS)
+                .build();
+        
+        ChargeEventEntity secondEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now())
+                .withCharge(chargeEntity)
+                .withChargeStatus(ChargeStatus.AUTHORISATION_3DS_REQUIRED)
+                .build();
+
+        ChargeEventEntity thirdEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(2))
+                .withCharge(chargeEntity)
+                .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .build();
+
+        chargeEntity.getEvents().clear();
+        chargeEntity.getEvents().add(firstEvent);
+        chargeEntity.getEvents().add(secondEvent);
+        chargeEntity.getEvents().add(thirdEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+
+        worker.execute(1L, OptionalLong.empty());
+
+        ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
+        verify(stateTransitionQueue, times(2)).offer(argument.capture());
+
+        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(GatewayRequires3dsAuthorisation.class));
+        assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(AuthorisationSucceeded.class));
+
+        ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(emittedEventDao, times(3)).recordEmission(daoArgumentCaptor.capture());
+        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("GATEWAY_REQUIRES_3DS_AUTHORISATION"));
+        assertThat(daoArgumentCaptor.getAllValues().get(1).getEventType(), is("AUTHORISATION_SUCCEEDED"));
+        assertThat(daoArgumentCaptor.getAllValues().get(2).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
     }
 }
