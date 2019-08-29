@@ -2,7 +2,6 @@ package uk.gov.pay.connector.charge.validation.telephone;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
-import javax.validation.constraints.NotNull;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
