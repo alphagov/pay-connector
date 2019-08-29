@@ -3,7 +3,7 @@ package uk.gov.pay.connector.charge.model.telephone;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import uk.gov.pay.connector.charge.validation.telephone.ValidPaymentOutcome;
 
-@ValidPaymentOutcome
+@ValidPaymentOutcome(message = "Field [payment_outcome] must include a valid status and error code")
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 public class PaymentOutcome {
     
