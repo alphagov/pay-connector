@@ -30,22 +30,16 @@ public class CardLastFourDigitsValidatorTest {
                 .amount(1200L)
                 .description("Some description")
                 .reference("Some reference")
-                .createdDate("2018-02-21T16:04:25Z")
-                .authorisedDate("2018-02-21T16:05:33Z")
-                .authCode("666")
                 .processorId("1PROC")
                 .providerId("1PROV")
                 .cardExpiry("01/99")
                 .firstSixDigits("123456")
                 .cardType("visa")
-                .nameOnCard("Jane Doe")
-                .emailAddress("jane_doe@example.com")
-                .telephoneNumber("+447700900796")
                 .paymentOutcome(new PaymentOutcome("success"));
     }
 
     @Test
-    public void failsValidationForThreeDigitsGiven() {
+    public void failsValidationForThreeDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .lastFourDigits("123")
@@ -58,7 +52,7 @@ public class CardLastFourDigitsValidatorTest {
     }
 
     @Test
-    public void failsValidationForFiveDigitsGiven() {
+    public void failsValidationForFiveDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .lastFourDigits("12345")
@@ -71,7 +65,7 @@ public class CardLastFourDigitsValidatorTest {
     }
 
     @Test
-    public void passesValidationForFourDigitsGiven() {
+    public void passesValidationForFourDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .lastFourDigits("1234")

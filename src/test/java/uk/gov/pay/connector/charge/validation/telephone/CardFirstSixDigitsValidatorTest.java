@@ -29,22 +29,16 @@ public class CardFirstSixDigitsValidatorTest {
                 .amount(1200L)
                 .description("Some description")
                 .reference("Some reference")
-                .createdDate("2018-02-21T16:04:25Z")
-                .authorisedDate("2018-02-21T16:05:33Z")
-                .authCode("666")
                 .processorId("1PROC")
                 .providerId("1PROV")
                 .cardExpiry("01/99")
                 .lastFourDigits("1234")
                 .cardType("visa")
-                .nameOnCard("Jane Doe")
-                .emailAddress("jane_doe@example.com")
-                .telephoneNumber("+447700900796")
                 .paymentOutcome(new PaymentOutcome("success"));
     }
 
     @Test
-    public void failsValidationForFiveDigitsGiven() {
+    public void failsValidationForFiveDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .firstSixDigits("12345")
@@ -57,7 +51,7 @@ public class CardFirstSixDigitsValidatorTest {
     }
 
     @Test
-    public void failsValidationForSevenDigitsGiven() {
+    public void failsValidationForSevenDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .firstSixDigits("1234567")
@@ -70,7 +64,7 @@ public class CardFirstSixDigitsValidatorTest {
     }
 
     @Test
-    public void passesValidationForSixDigitsGiven() {
+    public void passesValidationForSixDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .firstSixDigits("123456")
