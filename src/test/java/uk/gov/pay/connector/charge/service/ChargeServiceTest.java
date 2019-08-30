@@ -108,7 +108,7 @@ public class ChargeServiceTest {
     private static final int MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS = 10;
 
     private ChargeCreateRequestBuilder requestBuilder;
-    private TelephoneChargeCreateRequest.ChargeBuilder telephoneRequestBuilder;
+    private TelephoneChargeCreateRequest.Builder telephoneRequestBuilder;
     
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -158,22 +158,22 @@ public class ChargeServiceTest {
                 .withDescription("This is a description")
                 .withReference("Pay reference");
 
-        telephoneRequestBuilder = new TelephoneChargeCreateRequest.ChargeBuilder()
-                .amount(100L)
-                .reference("Some reference")
-                .description("Some description")
-                .createdDate("2018-02-21T16:04:25Z")
-                .authorisedDate("2018-02-21T16:05:33Z")
-                .processorId("1PROC")
-                .providerId("1PROV")
-                .authCode("666")
-                .nameOnCard("Jane Doe")
-                .emailAddress("jane.doe@example.com")
-                .telephoneNumber("+447700900796")
-                .cardType("visa")
-                .cardExpiry("01/19")
-                .lastFourDigits("1234")
-                .firstSixDigits("123456");
+        telephoneRequestBuilder = new TelephoneChargeCreateRequest.Builder()
+                .withAmount(100L)
+                .withReference("Some reference")
+                .withDescription("Some description")
+                .withCreatedDate("2018-02-21T16:04:25Z")
+                .withAuthorisedDate("2018-02-21T16:05:33Z")
+                .withProcessorId("1PROC")
+                .withProviderId("1PROV")
+                .withAuthCode("666")
+                .withNameOnCard("Jane Doe")
+                .withEmailAddress("jane.doe@example.com")
+                .withTelephoneNumber("+447700900796")
+                .withCardType("visa")
+                .withCardExpiry("01/19")
+                .withLastFourDigits("1234")
+                .withFirstSixDigits("123456");
 
         gatewayAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
@@ -490,7 +490,7 @@ public class ChargeServiceTest {
                 ));
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .paymentOutcome(paymentOutcome)
+                .withPaymentOutcome(paymentOutcome)
                 .build();
 
         service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
@@ -542,7 +542,7 @@ public class ChargeServiceTest {
                 ));
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .paymentOutcome(paymentOutcome)
+                .withPaymentOutcome(paymentOutcome)
                 .build();
 
         service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
@@ -594,7 +594,7 @@ public class ChargeServiceTest {
                 ));
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .paymentOutcome(paymentOutcome)
+                .withPaymentOutcome(paymentOutcome)
                 .build();
 
         service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
@@ -630,8 +630,8 @@ public class ChargeServiceTest {
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .providerId("new")
-                .paymentOutcome(paymentOutcome)
+                .withProviderId("new")
+                .withPaymentOutcome(paymentOutcome)
                 .build();
 
         Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(telephoneChargeCreateRequest);
@@ -649,7 +649,7 @@ public class ChargeServiceTest {
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .paymentOutcome(paymentOutcome)
+                .withPaymentOutcome(paymentOutcome)
                 .build();
         
         service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
@@ -687,7 +687,7 @@ public class ChargeServiceTest {
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .paymentOutcome(paymentOutcome)
+                .withPaymentOutcome(paymentOutcome)
                 .build();
 
         ChargeResponse chargeResponse = service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID).get();
@@ -721,7 +721,7 @@ public class ChargeServiceTest {
         PaymentOutcome paymentOutcome = new PaymentOutcome("failed", "P0010", supplemental);
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .paymentOutcome(paymentOutcome)
+                .withPaymentOutcome(paymentOutcome)
                 .build();
 
         ChargeResponse chargeResponse = service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID).get();

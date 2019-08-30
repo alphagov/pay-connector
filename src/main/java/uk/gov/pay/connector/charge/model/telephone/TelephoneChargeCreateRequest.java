@@ -64,23 +64,23 @@ public class TelephoneChargeCreateRequest {
         // To enable Jackson serialisation we need a default constructor
     }
     
-    public TelephoneChargeCreateRequest(ChargeBuilder chargeBuilder) {
-        this.amount = chargeBuilder.amount;
-        this.reference = chargeBuilder.reference;
-        this.description = chargeBuilder.description;
-        this.createdDate = chargeBuilder.createdDate;
-        this.authorisedDate = chargeBuilder.authorisedDate;
-        this.processorId = chargeBuilder.processorId;
-        this.providerId = chargeBuilder.providerId;
-        this.authCode = chargeBuilder.authCode;
-        this.paymentOutcome = chargeBuilder.paymentOutcome;
-        this.cardType = chargeBuilder.cardType;
-        this.nameOnCard = chargeBuilder.nameOnCard;
-        this.emailAddress = chargeBuilder.emailAddress;
-        this.cardExpiry = chargeBuilder.cardExpiry;
-        this.lastFourDigits = chargeBuilder.lastFourDigits;
-        this.firstSixDigits = chargeBuilder.firstSixDigits;
-        this.telephoneNumber = chargeBuilder.telephoneNumber;
+    public TelephoneChargeCreateRequest(Builder builder) {
+        this.amount = builder.amount;
+        this.reference = builder.reference;
+        this.description = builder.description;
+        this.createdDate = builder.createdDate;
+        this.authorisedDate = builder.authorisedDate;
+        this.processorId = builder.processorId;
+        this.providerId = builder.providerId;
+        this.authCode = builder.authCode;
+        this.paymentOutcome = builder.paymentOutcome;
+        this.cardType = builder.cardType;
+        this.nameOnCard = builder.nameOnCard;
+        this.emailAddress = builder.emailAddress;
+        this.cardExpiry = builder.cardExpiry;
+        this.lastFourDigits = builder.lastFourDigits;
+        this.firstSixDigits = builder.firstSixDigits;
+        this.telephoneNumber = builder.telephoneNumber;
     }
     
     public Long getAmount() {
@@ -147,7 +147,7 @@ public class TelephoneChargeCreateRequest {
         return telephoneNumber;
     }
     
-    public static class ChargeBuilder {
+    public static class Builder {
         private Long amount;
 
         private String reference;
@@ -180,82 +180,82 @@ public class TelephoneChargeCreateRequest {
 
         private String telephoneNumber;
         
-        public ChargeBuilder amount(Long amount) {
+        public Builder withAmount(Long amount) {
             this.amount = amount;
             return this;
         }
 
-        public ChargeBuilder reference(String reference) {
+        public Builder withReference(String reference) {
             this.reference = reference;
             return this;
         }
         
-        public ChargeBuilder description(String description) {
+        public Builder withDescription(String description) {
             this.description = description;
             return this;
         }
         
-        public ChargeBuilder createdDate(String createdDate) {
+        public Builder withCreatedDate(String createdDate) {
             this.createdDate = createdDate;
             return this;
         }
         
-        public ChargeBuilder authorisedDate(String authorisedDate) {
+        public Builder withAuthorisedDate(String authorisedDate) {
             this.authorisedDate = authorisedDate;
             return this;
         }
         
-        public ChargeBuilder processorId(String processorId) {
+        public Builder withProcessorId(String processorId) {
             this.processorId = processorId;
             return this;
         }
         
-        public ChargeBuilder providerId(String providerId) {
+        public Builder withProviderId(String providerId) {
             this.providerId = providerId;
             return this;
         }
         
-        public ChargeBuilder authCode(String authCode) {
+        public Builder withAuthCode(String authCode) {
             this.authCode = authCode;
             return this;
         }
         
-        public ChargeBuilder paymentOutcome(PaymentOutcome paymentOutcome) {
+        public Builder withPaymentOutcome(PaymentOutcome paymentOutcome) {
             this.paymentOutcome = paymentOutcome;
             return this;
         }
         
-        public ChargeBuilder cardType(String cardType) {
+        public Builder withCardType(String cardType) {
             this.cardType = cardType;
             return this;
         }
         
-        public ChargeBuilder nameOnCard(String nameOnCard) {
+        public Builder withNameOnCard(String nameOnCard) {
             this.nameOnCard = nameOnCard;
             return this;
         }
         
-        public ChargeBuilder emailAddress(String emailAddress) {
+        public Builder withEmailAddress(String emailAddress) {
             this.emailAddress = emailAddress;
             return this;
         }
         
-        public ChargeBuilder cardExpiry(String cardExpiry) {
+        public Builder withCardExpiry(String cardExpiry) {
             this.cardExpiry = cardExpiry;
             return this;
         }
         
-        public ChargeBuilder lastFourDigits(String lastFourDigits) {
+        public Builder withLastFourDigits(String lastFourDigits) {
             this.lastFourDigits = lastFourDigits;
             return this;
         }
         
-        public ChargeBuilder firstSixDigits(String firstSixDigits) {
+        public Builder withFirstSixDigits(String firstSixDigits) {
             this.firstSixDigits = firstSixDigits;
             return this;
         }
         
-        public ChargeBuilder telephoneNumber(String telephoneNumber) {
+        public Builder withTelephoneNumber(String telephoneNumber) {
             this.telephoneNumber = telephoneNumber;
             return this;
         }
