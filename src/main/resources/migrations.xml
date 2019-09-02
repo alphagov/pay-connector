@@ -1205,4 +1205,10 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add lower-case index to charges.reference" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_lower_charges_reference ON charges (LOWER(reference));
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
