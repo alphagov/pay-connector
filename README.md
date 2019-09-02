@@ -13,6 +13,7 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 | `NOTIFY_PAYMENT_RECEIPT_EMAIL_TEMPLATE_ID` | - | ID of the email template specified in the GOV.UK Notify to be used for sending emails. An email template can accept personalisation (placeholder values which are passed in by the code). |
 | `NOTIFY_API_KEY` | - | API Key for the account created at GOV.UK Notify |
 | `NOTIFY_BASE_URL` | `https://api.notifications.service.gov.uk` | Base URL of GOV.UK Notify API to be used|
+| `LEDGER_URL` | - | Base URL of Ledger |
 | `GDS_CONNECTOR_WORLDPAY_3DS_FLEX_CHALLENGE_TEST_URL` | `https://secure-test.worldpay.com/shopper/3ds/challenge.html` | Pointing to Worldpay's TEST 3ds flex challenge URL. |
 | `GDS_CONNECTOR_WORLDPAY_3DS_FLEX_CHALLENGE_LIVE_URL` | - | Pointing to Worldpay's LIVE 3ds flex challenge URL. |
 | `GDS_CONNECTOR_WORLDPAY_TEST_URL` | - | Pointing to the TEST gateway URL of Worldpay payment provider. |
@@ -24,6 +25,7 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 | `COLLECT_FEE_FEATURE_FLAG` | false | enable or disable collecting fees for the Stripe payment gateway. |
 | `STRIPE_TRANSACTION_FEE_PERCENTAGE` | - | percentage of total charge amount to recover GOV.UK Pay platform costs. |
 | `STRIPE_PLATFORM_ACCOUNT_ID` | - | the account ID for the Stripe Connect GOV.UK Pay platform. |
+| `DISABLE_INTERNAL_HTTPS` | false | disable secure connection for calls to internal APIs |
 
 
 ### Queues

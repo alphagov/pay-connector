@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.db.DataSourceFactory;
+import uk.gov.pay.connector.app.config.RestClientConfig;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
 import javax.validation.Valid;
@@ -93,6 +94,18 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     @JsonProperty("eventQueue")
     private EventQueueConfig eventQueueConfig;
+
+    @Valid
+    @NotNull
+    private RestClientConfig restClientConfig;
+
+    @NotNull
+    @JsonProperty("ledgerBaseURL")
+    private String ledgerBaseUrl;
+
+    public String getLedgerBaseUrl() {
+        return ledgerBaseUrl;
+    }
 
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {
@@ -191,5 +204,9 @@ public class ConnectorConfiguration extends Configuration {
 
     public Boolean getEmitPaymentStateTransitionEvents() {
         return emitPaymentStateTransitionEvents;
+    }
+
+    public RestClientConfig getRestClientConfig() {
+        return restClientConfig;
     }
 }
