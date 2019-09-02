@@ -532,6 +532,45 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
     }
 
     @Test
+    public void shouldReturn201AndNoCountryWhenSuppliedCountryIsTooLong() {
+        String cardholderName = "Joe Bogs";
+        String line1 = "Line 1";
+        String postCode = "AB1 CD2";
+        String countryThatIsTooLong = "GBR";
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, Map.of(
+                        JSON_CARDHOLDER_NAME_KEY, cardholderName,
+                        JSON_BILLING_ADDRESS_KEY, Map.of(
+                                JSON_ADDRESS_LINE_1_KEY, line1,
+                                JSON_ADDRESS_POST_CODE_KEY, postCode,
+                                JSON_ADDRESS_LINE_COUNTRY_CODE, countryThatIsTooLong
+                        )
+                )
+        ));
+
+        connectorRestApiClient.postCreateCharge(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .contentType(JSON)
+                .body(JSON_CHARGE_KEY, is(notNullValue()))
+                .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
+                .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
+                .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
+                .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
+                .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
+                .body("card_details." + JSON_CARDHOLDER_NAME_KEY, is(cardholderName))
+                .body("card_details.billing_address." + JSON_ADDRESS_LINE_1_KEY, is(line1))
+                .body("card_details.billing_address." + JSON_ADDRESS_LINE_2_KEY, is(nullValue()))
+                .body("card_details.billing_address." + JSON_ADDRESS_POST_CODE_KEY, is(postCode))
+                .body("card_details.billing_address." + JSON_ADDRESS_LINE_CITY, is(nullValue()))
+                .body("card_details.billing_address." + JSON_ADDRESS_LINE_COUNTRY_CODE, is(nullValue()));
+    }
+
+    @Test
     public void shouldReturn201WithNoCardDetailsWhenPrefilledCardHolderDetailsFieldsAreNotPresent() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
