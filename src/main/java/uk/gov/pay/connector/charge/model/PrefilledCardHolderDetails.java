@@ -3,7 +3,7 @@ package uk.gov.pay.connector.charge.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.validator.constraints.Length;
-import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 
 import javax.validation.Valid;
 import java.util.Optional;
@@ -17,7 +17,7 @@ public class PrefilledCardHolderDetails {
 
     @JsonProperty("billing_address")
     @Valid
-    private Address address;
+    private PrefilledAddress address;
 
     public Optional<String> getCardHolderName() {
         return Optional.ofNullable(cardHolderName);
@@ -27,11 +27,11 @@ public class PrefilledCardHolderDetails {
         this.cardHolderName = cardHolderName;
     }
 
-    public Optional<Address> getAddress() {
+    public Optional<PrefilledAddress> getAddress() {
         return Optional.ofNullable(address);
     }
 
-    public void setAddress(Address address) {
+    public void setAddress(PrefilledAddress address) {
         this.address = address;
     }
 }

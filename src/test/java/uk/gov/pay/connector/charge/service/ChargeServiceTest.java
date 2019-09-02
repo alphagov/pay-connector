@@ -38,7 +38,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
-import uk.gov.pay.connector.common.model.domain.Address;
+import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
@@ -88,11 +88,11 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -366,9 +366,9 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldCreateAChargeWithAllPrefilledCardHolderDetails() {
-        PrefilledCardHolderDetails cardHolderDetails = new PrefilledCardHolderDetails();
+        var cardHolderDetails = new PrefilledCardHolderDetails();
         cardHolderDetails.setCardHolderName("Joe Bogs");
-        Address address = new Address("Line1", "Line2", "AB1 CD2", "London", null, "GB");
+        var address = new PrefilledAddress("Line1", "Line2", "AB1 CD2", "London", null, "GB");
         cardHolderDetails.setAddress(address);
         final ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
         service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
@@ -390,9 +390,9 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldCreateAChargeWithPrefilledCardHolderDetailsAndSomeAddressMissing() {
-        PrefilledCardHolderDetails cardHolderDetails = new PrefilledCardHolderDetails();
+        var cardHolderDetails = new PrefilledCardHolderDetails();
         cardHolderDetails.setCardHolderName("Joe Bogs");
-        Address address = new Address("Line1", null, "AB1 CD2", "London", null, null);
+        var address = new PrefilledAddress("Line1", null, "AB1 CD2", "London", null, null);
         cardHolderDetails.setAddress(address);
 
         ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
@@ -414,6 +414,31 @@ public class ChargeServiceTest {
     }
 
     @Test
+    public void shouldCreateAChargeWithNoCountryWhenPrefilledAddressCountryIsMoreThanTwoCharacters() {
+        var cardHolderDetails = new PrefilledCardHolderDetails();
+        cardHolderDetails.setCardHolderName("Joe Bogs");
+        var address = new PrefilledAddress("Line1", "Line2", "AB1 CD2", "London", "county", "123");
+        cardHolderDetails.setAddress(address);
+
+        ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+
+        assertThat(createdChargeEntity.getCardDetails(), is(notNullValue()));
+        assertThat(createdChargeEntity.getCardDetails().getBillingAddress().isPresent(), is(true));
+        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Joe Bogs"));
+        AddressEntity addressEntity = createdChargeEntity.getCardDetails().getBillingAddress().get();
+        assertThat(addressEntity.getLine1(), is("Line1"));
+        assertThat(addressEntity.getLine2(), is("Line2"));
+        assertThat(addressEntity.getPostcode(), is("AB1 CD2"));
+        assertThat(addressEntity.getCity(), is("London"));
+        assertThat(addressEntity.getCounty(), is("county"));
+        assertThat(addressEntity.getCountry(), is(nullValue()));
+    }
+
+    @Test
     public void shouldCreateAChargeWithPrefilledCardHolderDetailsCardholderNameOnly() {
         PrefilledCardHolderDetails cardHolderDetails = new PrefilledCardHolderDetails();
         cardHolderDetails.setCardHolderName("Joe Bogs");
@@ -431,8 +456,8 @@ public class ChargeServiceTest {
 
     @Test
     public void shouldCreateAChargeWhenPrefilledCardHolderDetailsCardholderNameAndSomeAddressNotPresent() {
-        PrefilledCardHolderDetails cardHolderDetails = new PrefilledCardHolderDetails();
-        Address address = new Address("Line1", null, "AB1 CD2", "London", null, null);
+        var cardHolderDetails = new PrefilledCardHolderDetails();
+        var address = new PrefilledAddress("Line1", null, "AB1 CD2", "London", null, null);
         cardHolderDetails.setAddress(address);
 
         ChargeCreateRequest request = requestBuilder.withPrefilledCardHolderDetails(cardHolderDetails).build();

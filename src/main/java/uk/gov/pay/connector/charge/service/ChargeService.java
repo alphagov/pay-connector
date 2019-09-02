@@ -42,6 +42,7 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
+import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.model.Event;
@@ -225,7 +226,7 @@ public class ChargeService {
     private CardDetailsEntity createCardDetailsEntity(PrefilledCardHolderDetails prefilledCardHolderDetails) {
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
         prefilledCardHolderDetails.getCardHolderName().ifPresent(cardDetailsEntity::setCardHolderName);
-        prefilledCardHolderDetails.getAddress().map(AddressEntity::new).ifPresent(cardDetailsEntity::setBillingAddress);
+        prefilledCardHolderDetails.getAddress().map(PrefilledAddress::toAddress).map(AddressEntity::new).ifPresent(cardDetailsEntity::setBillingAddress);
         return cardDetailsEntity;
     }
 
