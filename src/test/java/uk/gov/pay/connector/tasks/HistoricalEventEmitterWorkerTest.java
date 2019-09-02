@@ -4,7 +4,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -70,14 +69,14 @@ public class HistoricalEventEmitterWorkerTest {
     EventQueue eventQueue;
     @Mock
     RefundDao refundDao;
-    @InjectMocks
-    HistoricalEventEmitter historicalEventEmitter;
 
+    HistoricalEventEmitter historicalEventEmitter;
     HistoricalEventEmitterWorker worker;
     private ChargeEntity chargeEntity;
 
     @Before
     public void setUp() {
+        historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, stateTransitionQueue, eventQueue, refundDao);
         worker = new HistoricalEventEmitterWorker(chargeDao, refundDao, chargeEventDao, historicalEventEmitter);
         CardDetailsEntity cardDetails = mock(CardDetailsEntity.class);
         when(cardDetails.getLastDigitsCardNumber()).thenReturn(LastDigitsCardNumber.of("1234"));

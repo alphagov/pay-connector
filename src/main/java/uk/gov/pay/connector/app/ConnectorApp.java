@@ -55,6 +55,7 @@ import uk.gov.pay.connector.report.resource.PerformanceReportResource;
 import uk.gov.pay.connector.report.resource.TransactionsSummaryResource;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitterByDateRangeTask;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitterTask;
+import uk.gov.pay.connector.tasks.ParityCheckTask;
 import uk.gov.pay.connector.token.resource.SecurityTokensResource;
 import uk.gov.pay.connector.usernotification.resource.EmailNotificationResource;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
@@ -149,6 +150,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         environment.admin().addTask(injector.getInstance(HistoricalEventEmitterTask.class));
         environment.admin().addTask(injector.getInstance(HistoricalEventEmitterByDateRangeTask.class));
+        environment.admin().addTask(injector.getInstance(ParityCheckTask.class));
 
         if (configuration.isXrayEnabled())
             Xray.init(environment, "pay-connector", Optional.empty(), "/v1/*");

@@ -48,6 +48,7 @@ public class HistoricalEventEmitter {
     private StateTransitionQueue stateTransitionQueue;
     private final EventQueue eventQueue;
     private final RefundDao refundDao;
+    private boolean doNotForceEmission;
 
     private final List<ChargeStatus> TERMINAL_AUTHENTICATION_STATES = List.of(
             AUTHORISATION_3DS_REQUIRED,
@@ -73,11 +74,18 @@ public class HistoricalEventEmitter {
     public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
                                   StateTransitionQueue stateTransitionQueue, EventQueue eventQueue,
                                   RefundDao refundDao) {
+        this(emittedEventDao, stateTransitionQueue, eventQueue, refundDao, false);
+    }
+    
+    public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
+                                  StateTransitionQueue stateTransitionQueue, EventQueue eventQueue,
+                                  RefundDao refundDao, boolean shouldForceEmission) {
         this.emittedEventDao = emittedEventDao;
         this.stateTransitionQueue = stateTransitionQueue;
         this.eventQueue = eventQueue;
         this.refundDao = refundDao;
         this.paymentGatewayStateTransitions = PaymentGatewayStateTransitions.getInstance();
+        this.doNotForceEmission = !shouldForceEmission;
     }
 
     public void processPaymentEvents(ChargeEntity charge) {
@@ -103,7 +111,7 @@ public class HistoricalEventEmitter {
 
         Boolean emittedBefore = emittedEventDao.hasBeenEmittedBefore(event);
 
-        if (emittedBefore) {
+        if (doNotForceEmission && emittedBefore) {
             logger.info("Refund history event emitted before [refundExternalId={}] [refundHistoryId={}]", refundHistory.getExternalId(), refundHistory.getId());
         } else {
             RefundStateTransition stateTransition = new RefundStateTransition(
@@ -191,7 +199,7 @@ public class HistoricalEventEmitter {
 
         final boolean emittedBefore = emittedEventDao.hasBeenEmittedBefore(event);
 
-        if (emittedBefore) {
+        if (doNotForceEmission && emittedBefore) {
             logger.info("[{}] - found - charge event [{}] emitted before", currentId, chargeEventEntity.getId());
         } else {
             logger.info("[{}] - found - emitting {} for charge event [{}] ", currentId, event, chargeEventEntity.getId());
