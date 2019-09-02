@@ -230,7 +230,7 @@ public class TransactionsApiContractTest {
     }
 
     @State("Account 42 exists in the database and has 1 available transaction with a payment state of success, a reference matching the partial search payment1 and falls between the date range 2018-05-03T00:00:00.000Z amd 2018-05-04T00:00:01.000Z")
-    public void accountWithTransactionWithStateAndReferenceInDateRange() {
+    public void accountWithTransactionWithStateAndPartialReferenceInDateRange() {
         long accountId = 42;
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
         AddChargeParams addChargeParams = anAddChargeParams()
@@ -238,6 +238,22 @@ public class TransactionsApiContractTest {
                 .withTransactionId("aGatewayTransactionId")
                 .withStatus(ChargeStatus.CAPTURED)
                 .withReference(ServicePaymentReference.of("payment1-andsomeotherstuff"))
+                .withCreatedDate(ZonedDateTime.of(2018, 5, 3, 12, 1, 1, 1, ZoneId.systemDefault()))
+                .build();
+        dbHelper.addCharge(addChargeParams);
+        dbHelper.updateChargeCardDetails(addChargeParams.getChargeId(),
+                AuthCardDetailsFixture.anAuthCardDetails().build());
+    }
+
+    @State("Account 42 exists in the database and has 1 available transaction with a payment state of success, a reference matching the search payment1 and falls between the date range 2018-05-03T00:00:00.000Z amd 2018-05-04T00:00:01.000Z")
+    public void accountWithTransactionWithStateAndReferenceInDateRange() {
+        long accountId = 42;
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, accountId);
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withGatewayAccountId(String.valueOf(accountId))
+                .withTransactionId("aGatewayTransactionId")
+                .withStatus(ChargeStatus.CAPTURED)
+                .withReference(ServicePaymentReference.of("payment1"))
                 .withCreatedDate(ZonedDateTime.of(2018, 5, 3, 12, 1, 1, 1, ZoneId.systemDefault()))
                 .build();
         dbHelper.addCharge(addChargeParams);
