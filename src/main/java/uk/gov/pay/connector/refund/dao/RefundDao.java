@@ -178,7 +178,8 @@ public class RefundDao extends JpaDao<RefundEntity> {
         String query = "SELECT id, external_id, amount, status, charge_id, created_date, version, reference, " +
                 "       history_start_date, history_end_date, user_external_id, gateway_transaction_id " +
                 " FROM refunds_history rh " +
-                " WHERE rh.history_start_date >= ?1 AND rh.history_start_date <= ?2 " +
+                " WHERE rh.history_start_date >= ?1 AND rh.history_start_date <= ?2" +
+                " order by rh.history_start_date asc " +
                 " limit ?3 offset ?4";
 
         int offset = (page - 1) * size;
