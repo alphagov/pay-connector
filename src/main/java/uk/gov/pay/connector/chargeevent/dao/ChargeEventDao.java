@@ -10,6 +10,7 @@ import uk.gov.pay.connector.common.dao.JpaDao;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Transactional
@@ -29,5 +30,20 @@ public class ChargeEventDao extends JpaDao<ChargeEventEntity> {
                 ZonedDateTime.now(), Optional.ofNullable(gatewayEventDate));
         this.persist(chargeEventEntity);
         return chargeEventEntity;
+    }
+
+    public List<ChargeEventEntity> findChargeEvents(ZonedDateTime startDate, ZonedDateTime endDate, int page, int size) {
+        String query = "SELECT ce FROM ChargeEventEntity ce " +
+                "WHERE ce.updated >= :startDate and ce.updated <= :endDate";
+
+        int firstResult = (page - 1) * size;
+
+        return entityManager.get()
+                .createQuery(query, ChargeEventEntity.class)
+                .setParameter("startDate", startDate)
+                .setParameter("endDate", endDate)
+                .setFirstResult(firstResult)
+                .setMaxResults(size)
+                .getResultList();
     }
 }
