@@ -2,6 +2,7 @@ package uk.gov.pay.connector.dao;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,6 +19,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
@@ -27,8 +29,10 @@ import static org.hamcrest.Matchers.hasSize;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 
 public class ChargeEventDaoIT extends DaoITestBase {
 
@@ -129,8 +133,47 @@ public class ChargeEventDaoIT extends DaoITestBase {
         assertDateMatch(events.get(0).getUpdated());
     }
 
+    @Test
+    public void findChargeEventsByDateRangeShouldReturnResultCorrectly() {
+        ZonedDateTime eventDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
+
+        DatabaseFixtures.TestCharge testCharge = createTestCharge();
+
+        createTestChargeEvent(testCharge, ENTERING_CARD_DETAILS, eventDate.minusHours(10));
+        createTestChargeEvent(testCharge, AUTHORISATION_READY, eventDate);
+        createTestChargeEvent(testCharge, AUTHORISATION_SUCCESS, eventDate.plusMinutes(1));
+        createTestChargeEvent(testCharge, CAPTURE_APPROVED, eventDate.plusHours(10));
+
+        List<ChargeEventEntity> events = chargeEventDao.findChargeEvents(eventDate, eventDate.plusMinutes(1), 1, 2);
+
+        assertThat(events, hasSize(2));
+        assertThat(events, shouldIncludeStatus(AUTHORISATION_READY));
+        assertThat(events.get(0).getChargeEntity().getId(), Matchers.is(testCharge.getChargeId()));
+        assertThat(events, shouldIncludeStatus(AUTHORISATION_SUCCESS));
+        assertThat(events.get(1).getChargeEntity().getId(), Matchers.is(testCharge.getChargeId()));
+    }
+
+    private DatabaseFixtures.TestCharge createTestCharge() {
+        DatabaseFixtures.TestAccount testAccount = withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount().insert();
+        return withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(testAccount)
+                .insert();
+    }
+
+    private void createTestChargeEvent(DatabaseFixtures.TestCharge testCharge,
+                                       ChargeStatus status, ZonedDateTime eventDate) {
+        withDatabaseTestHelper(databaseTestHelper)
+                .aTestChargeEvent()
+                .withChargeStatus(status)
+                .withDate(eventDate)
+                .withTestCharge(testCharge)
+                .insert();
+    }
+
     private void assertDateMatch(ZonedDateTime createdDateTime) {
-        assertThat(createdDateTime, within(1, ChronoUnit.MINUTES, ZonedDateTime.now()));
+        assertThat(createdDateTime, within(1, ChronoUnit.MINUTES, now()));
     }
 
     private Matcher<? super List<ChargeEventEntity>> shouldIncludeStatus(ChargeStatus... expectedStatuses) {
