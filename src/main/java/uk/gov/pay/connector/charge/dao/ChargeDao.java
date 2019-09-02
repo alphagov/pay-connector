@@ -173,7 +173,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         if (params.getGatewayAccountId() != null)
             predicates.add(cb.equal(charge.get(GATEWAY_ACCOUNT).get("id"), params.getGatewayAccountId()));
         if (params.getReference() != null && StringUtils.isNotBlank(params.getReference().toString()))
-            predicates.add(likePredicate(cb, charge.get(REFERENCE), params.getReference().toString()));
+            predicates.add(cb.equal(cb.lower(charge.get(REFERENCE)), params.getReference().toString().toLowerCase()));
         if (StringUtils.isNotBlank(params.getEmail()))
             predicates.add(likePredicate(cb, charge.get(EMAIL), params.getEmail()));
         if (params.getInternalStates() != null && !params.getInternalStates().isEmpty())

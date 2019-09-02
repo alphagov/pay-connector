@@ -148,7 +148,7 @@ public class TransactionDao {
 
         if (params.getReference() != null && isNotBlank(params.getReference().toString())) {
             queryFilters = queryFilters.and(
-                    field("c.reference").lower().like(buildLikeClauseContaining(params.getReference().toString().toLowerCase())));
+                    field("c.reference").lower().eq(params.getReference().toString().toLowerCase()));
         }
 
         Condition queryFiltersForCharges = queryFilters;

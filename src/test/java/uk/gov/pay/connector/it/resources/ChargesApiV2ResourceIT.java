@@ -88,7 +88,7 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
 
         String transactionIdCharge1 = "transaction-id-ref-3-que";
         String transactionIdCharge2 = "transaction-id-ref-3";
-        String externalChargeId1 = addChargeAndCardDetails(nextLong(), EXPIRED, ServicePaymentReference.of("ref-3-que"), transactionIdCharge1, now(),
+        String externalChargeId1 = addChargeAndCardDetails(nextLong(), EXPIRED, ServicePaymentReference.of("ref-3"), transactionIdCharge1, now(),
                 "", returnUrl, email);
         addChargeAndCardDetails(nextLong(), CAPTURED, ServicePaymentReference.of("ref-7"), "transaction-id-ref-7", now(),
                 "master-card", returnUrl, email);
@@ -124,7 +124,7 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
                 .body("results[0].charge_id", is(externalChargeId1))
                 .body("results[0].amount", is(6234))
                 .body("results[0].description", is("Test description"))
-                .body("results[0].reference", is("ref-3-que"))
+                .body("results[0].reference", is("ref-3"))
                 .body("results[0].state.finished", is(true))
                 .body("results[0].state.status", is("timedout"))
                 .body("results[0].state.code", is("P0020"))
@@ -165,7 +165,7 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
 
         String transactionIdCharge2 = "transaction-id-ref-3";
         String transactionIdCharge1 = "transaction-id-ref-3-que";
-        ServicePaymentReference referenceCharge1 = ServicePaymentReference.of("ref-3-que");
+        ServicePaymentReference referenceCharge1 = ServicePaymentReference.of("ref-3");
         ServicePaymentReference referenceCharge2 = ServicePaymentReference.of("ref-3");
         String externalChargeId1 = addChargeAndCardDetails(nextLong(), CREATED, referenceCharge1, transactionIdCharge1, now(), "", returnUrl, email);
         addChargeAndCardDetails(nextLong(), CAPTURED, ServicePaymentReference.of("ref-7"), "transaction-id-ref-7", now(), "master-card",

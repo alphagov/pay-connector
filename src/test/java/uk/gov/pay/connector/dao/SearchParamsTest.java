@@ -66,7 +66,7 @@ public class SearchParamsTest {
                 .withPage(2L)
                 .withLastDigitsCardNumber(LastDigitsCardNumber.of("1234"))
                 .withFirstDigitsCardNumber(FirstDigitsCardNumber.of("123456"))
-                .withReferenceLike(ServicePaymentReference.of("ref"))
+                .withReference(ServicePaymentReference.of("ref"))
                 .withEmailLike("user")
                 .withCardHolderNameLike(CardHolderName.of("bla"))
                 .withFromDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[UTC]"))
@@ -97,7 +97,7 @@ public class SearchParamsTest {
                 .withCardBrand("visa")
                 .withGatewayAccountId(111L)
                 .withPage(2L)
-                .withReferenceLike(ServicePaymentReference.of("ref"))
+                .withReference(ServicePaymentReference.of("ref"))
                 .withEmailLike("user")
                 .withFromDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[UTC]"))
                 .withToDate(ZonedDateTime.parse("2012-07-30T12:30:40Z[UTC]"));
@@ -160,7 +160,7 @@ public class SearchParamsTest {
                 .withCardBrands(asList("visa", "master-card"))
                 .withGatewayAccountId(111L)
                 .withPage(2L)
-                .withReferenceLike(ServicePaymentReference.of("ref"))
+                .withReference(ServicePaymentReference.of("ref"))
                 .withEmailLike("user@example.com")
                 .withFromDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[UTC]"))
                 .withToDate(ZonedDateTime.parse("2012-07-30T12:30:40Z[UTC]"));
@@ -183,7 +183,7 @@ public class SearchParamsTest {
                 .addExternalRefundStates(singletonList("success"))
                 .withGatewayAccountId(111L)
                 .withPage(2L)
-                .withReferenceLike(ServicePaymentReference.of("ref"))
+                .withReference(ServicePaymentReference.of("ref"))
                 .withEmailLike("user@example.com");
 
         assertThat(params.buildQueryParams(), is(expectedQueryString));

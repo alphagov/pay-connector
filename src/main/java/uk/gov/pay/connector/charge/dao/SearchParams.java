@@ -192,7 +192,7 @@ public class SearchParams {
         return email;
     }
 
-    public SearchParams withReferenceLike(ServicePaymentReference reference) {
+    public SearchParams withReference(ServicePaymentReference reference) {
         this.reference = reference;
         return this;
     }

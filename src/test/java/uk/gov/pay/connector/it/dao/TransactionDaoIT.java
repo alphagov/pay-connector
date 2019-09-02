@@ -462,7 +462,7 @@ public class TransactionDaoIT extends DaoITestBase {
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
         insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusHours(2));
         SearchParams params = new SearchParams()
-                .withReferenceLike(testCharge.getReference());
+                .withReference(testCharge.getReference());
 
         // when
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
@@ -480,48 +480,7 @@ public class TransactionDaoIT extends DaoITestBase {
         assertThat(charge.getTransactionType(), is(TransactionType.CHARGE));
         assertThat(charge.getUserExternalId(), is(nullValue()));
     }
-
-    @Test
-    public void searchChargesByPartialReferenceOnly() {
-
-        // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
-        insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusHours(2));
-
-        ServicePaymentReference partialPaymentReference = ServicePaymentReference.of("Council Tax");
-
-        DatabaseFixtures.TestCharge partialReferenceCharge =
-                withDatabaseTestHelper(databaseTestHelper)
-                        .aTestCharge()
-                        .withReference(ServicePaymentReference.of(partialPaymentReference.toString() + " whatever"))
-                        .withTestAccount(defaultTestAccount)
-                        .withCreatedDate(now().plusHours(3))
-                        .insert();
-
-        SearchParams params = new SearchParams()
-                .withReferenceLike(partialPaymentReference);
-
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(3));
-        assertThat(transactions.get(0).getExternalId(), is(partialReferenceCharge.getExternalChargeId()));
-        assertThat(transactions.get(0).getReference(), is(partialReferenceCharge.getReference()));
-        assertThat(transactions.get(0).getTransactionType(), is(TransactionType.CHARGE));
-        assertThat(transactions.get(0).getUserExternalId(), is(nullValue()));
-
-        assertThat(transactions.get(1).getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(transactions.get(1).getTransactionType(), is(TransactionType.REFUND));
-        assertThat(transactions.get(1).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
-
-        assertThat(transactions.get(2).getExternalId(), is(testCharge.getExternalChargeId()));
-        assertThat(transactions.get(2).getReference(), is(testCharge.getReference()));
-        assertThat(transactions.get(2).getTransactionType(), is(TransactionType.CHARGE));
-        assertThat(transactions.get(2).getUserExternalId(), is(nullValue()));
-
-    }
-
+    
     @Test
     public void shouldSearchChargesByFullCardHolderName() {
 
@@ -672,19 +631,16 @@ public class TransactionDaoIT extends DaoITestBase {
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withReference(ServicePaymentReference.of("under_score_ref"))
                 .withEmail("under_score@mail.test")
                 .insert();
 
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withReference(ServicePaymentReference.of("understand"))
                 .withEmail("undertaker@mail.test")
                 .insert();
 
         SearchParams params = new SearchParams()
-                .withReferenceLike(ServicePaymentReference.of("under_"))
                 .withEmailLike("under_");
 
         // when
@@ -694,38 +650,9 @@ public class TransactionDaoIT extends DaoITestBase {
         assertThat(transactions.size(), is(1));
 
         Transaction transaction = transactions.get(0);
-        assertThat(transaction.getReference(), is(ServicePaymentReference.of("under_score_ref")));
         assertThat(transaction.getEmail(), is("under_score@mail.test"));
     }
-
-    @Test
-    public void searchChargesByReferenceWithPercentSign() {
-        // since '%' have special meaning in like queries of postgres this was resulting in undesired results
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withReference(ServicePaymentReference.of("percent%ref"))
-                .insert();
-
-        withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withReference(ServicePaymentReference.of("percentref"))
-                .insert();
-
-        SearchParams params = new SearchParams()
-                .withReferenceLike(ServicePaymentReference.of("percent%"));
-
-        // when
-        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
-
-        // then
-        assertThat(transactions.size(), is(1));
-
-        Transaction transaction = transactions.get(0);
-        assertThat(transaction.getReference(), is(ServicePaymentReference.of("percent%ref")));
-    }
-
+    
     @Test
     public void searchTransactionsByReferenceWithBackslash() {
         // since '\' is an escape character in postgres (and java) this was resulting in undesired results
@@ -744,7 +671,7 @@ public class TransactionDaoIT extends DaoITestBase {
                 .insert();
 
         SearchParams params = new SearchParams()
-                .withReferenceLike(ServicePaymentReference.of("backslash\\ref"));
+                .withReference(ServicePaymentReference.of("backslash\\ref"));
 
         // when
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
@@ -774,7 +701,7 @@ public class TransactionDaoIT extends DaoITestBase {
                 .insert();
 
         SearchParams params = new SearchParams()
-                .withReferenceLike(ServicePaymentReference.of("cASe-insEnsiTIve"))
+                .withReference(ServicePaymentReference.of("cASe-insEnsiTIve-ref"))
                 .withEmailLike("EMAIL-ID@mail.test");
 
         // when
@@ -798,19 +725,19 @@ public class TransactionDaoIT extends DaoITestBase {
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withReference(ServicePaymentReference.of("Test reference"))
+                .withEmail("alice.111@mail.test")
                 .insert();
         SearchParams params = new SearchParams()
-                .withReferenceLike(ServicePaymentReference.of("reference"));
+                .withEmailLike("alice.111@mail.test");
         // when passed in a simple reference string
         List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
         // then it fetches a single result
         assertThat(transactions.size(), is(1));
 
         // when passed in a non existent reference with an sql injected string
-        String sqlInjectionReferenceString = "reffff%' or 1=1 or c.reference like '%1";
+        String sqlInjectionEmailString = "alice.111@mail.testttt%' or 1=1 or c.email like '%1";
         params = new SearchParams()
-                .withReferenceLike(ServicePaymentReference.of(sqlInjectionReferenceString));
+                .withEmailLike(sqlInjectionEmailString);
         transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
         // then it fetches no result
         // with a typical sql injection vulnerable query doing this should fetch all results
@@ -826,7 +753,7 @@ public class TransactionDaoIT extends DaoITestBase {
         DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusSeconds(1));
 
         SearchParams params = new SearchParams()
-                .withReferenceLike(testCharge.getReference())
+                .withReference(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()));
 
         // when
@@ -867,7 +794,7 @@ public class TransactionDaoIT extends DaoITestBase {
         DatabaseFixtures.TestRefund testRefund = insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusSeconds(1));
 
         SearchParams params = new SearchParams()
-                .withReferenceLike(testCharge.getReference())
+                .withReference(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
                 .withFromDate(ZonedDateTime.parse(FROM_DATE))
                 .withToDate(ZonedDateTime.parse(TO_DATE));
@@ -909,7 +836,7 @@ public class TransactionDaoIT extends DaoITestBase {
 
         SearchParams params = new SearchParams()
                 .withTransactionType(TransactionSearchStrategyTransactionType.PAYMENT)
-                .withReferenceLike(testCharge.getReference())
+                .withReference(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
                 .withFromDate(ZonedDateTime.parse(FROM_DATE));
 
@@ -940,7 +867,7 @@ public class TransactionDaoIT extends DaoITestBase {
 
         SearchParams params = new SearchParams()
                 .withTransactionType(TransactionSearchStrategyTransactionType.REFUND)
-                .withReferenceLike(testCharge.getReference())
+                .withReference(testCharge.getReference())
                 .addExternalRefundStates(singletonList(EXTERNAL_SUBMITTED.getStatus()))
                 .withFromDate(ZonedDateTime.parse(FROM_DATE));
 
@@ -1326,7 +1253,7 @@ public class TransactionDaoIT extends DaoITestBase {
 
         SearchParams params = new SearchParams()
                 .withTransactionType(TransactionSearchStrategyTransactionType.PAYMENT)
-                .withReferenceLike(testCharge.getReference())
+                .withReference(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
                 .withCardBrand(testCardDetails.getCardBrand())
                 .withEmailLike(testCharge.getEmail())
@@ -1361,7 +1288,7 @@ public class TransactionDaoIT extends DaoITestBase {
 
         SearchParams params = new SearchParams()
                 .withTransactionType(TransactionSearchStrategyTransactionType.PAYMENT)
-                .withReferenceLike(testCharge.getReference())
+                .withReference(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
                 .withToDate(ZonedDateTime.parse(TO_DATE));
 
@@ -1392,7 +1319,7 @@ public class TransactionDaoIT extends DaoITestBase {
         insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusHours(2));
 
         SearchParams params = new SearchParams()
-                .withReferenceLike(testCharge.getReference())
+                .withReference(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
                 .withFromDate(ZonedDateTime.parse(TO_DATE));
 
@@ -1411,7 +1338,7 @@ public class TransactionDaoIT extends DaoITestBase {
         insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusHours(2));
 
         SearchParams params = new SearchParams()
-                .withReferenceLike(testCharge.getReference())
+                .withReference(testCharge.getReference())
                 .addExternalChargeStates(singletonList(EXTERNAL_CREATED.getStatus()))
                 .withToDate(ZonedDateTime.parse(FROM_DATE));
 
