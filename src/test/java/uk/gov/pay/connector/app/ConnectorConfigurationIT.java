@@ -6,7 +6,9 @@ import io.dropwizard.util.Duration;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
 
 public class ConnectorConfigurationIT {
@@ -26,6 +28,8 @@ public class ConnectorConfigurationIT {
         CaptureProcessConfig captureProcessConfig = RULE.getConfiguration().getCaptureProcessConfig();
         assertThat(captureProcessConfig.getChargesConsideredOverdueForCaptureAfter(), is(60));
         assertThat(captureProcessConfig.getMaximumRetries(), is(48));
+        assertThat(RULE.getConfiguration().getLedgerBaseUrl(), is(not(emptyString())));
+        assertThat(RULE.getConfiguration().getRestClientConfig().isDisabledSecureConnection(), is(true));
     }
 
 }

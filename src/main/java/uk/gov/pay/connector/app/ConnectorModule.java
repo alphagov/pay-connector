@@ -29,6 +29,7 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.XrayUtils;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 
+import javax.ws.rs.client.Client;
 import java.util.Properties;
 
 public class ConnectorModule extends AbstractModule {
@@ -114,6 +115,12 @@ public class ConnectorModule extends AbstractModule {
     @Singleton
     public JsonObjectMapper jsonObjectMapper() {
         return new JsonObjectMapper(provideObjectMapper());
+    }
+
+    @Provides
+    @Singleton
+    public Client provideClient() {
+        return RestClientFactory.buildClient(configuration.getRestClientConfig());
     }
 
     @Provides
