@@ -70,13 +70,15 @@ public class HistoricalEventEmitterWorkerTest {
     EventQueue eventQueue;
     @Mock
     RefundDao refundDao;
-
     @InjectMocks
+    HistoricalEventEmitter historicalEventEmitter;
+
     HistoricalEventEmitterWorker worker;
     private ChargeEntity chargeEntity;
 
     @Before
     public void setUp() {
+        worker = new HistoricalEventEmitterWorker(chargeDao, refundDao, chargeEventDao, historicalEventEmitter);
         CardDetailsEntity cardDetails = mock(CardDetailsEntity.class);
         when(cardDetails.getLastDigitsCardNumber()).thenReturn(LastDigitsCardNumber.of("1234"));
         chargeEntity = ChargeEntityFixture
