@@ -17,7 +17,7 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 public class CardLastFourDigitsValidatorTest {
     
-    private static TelephoneChargeCreateRequest.ChargeBuilder telephoneRequestBuilder = new TelephoneChargeCreateRequest.ChargeBuilder();
+    private static TelephoneChargeCreateRequest.Builder telephoneRequestBuilder = new TelephoneChargeCreateRequest.Builder();
 
     private static Validator validator;
 
@@ -27,28 +27,22 @@ public class CardLastFourDigitsValidatorTest {
         validator = factory.getValidator();
         
         telephoneRequestBuilder
-                .amount(1200L)
-                .description("Some description")
-                .reference("Some reference")
-                .createdDate("2018-02-21T16:04:25Z")
-                .authorisedDate("2018-02-21T16:05:33Z")
-                .authCode("666")
-                .processorId("1PROC")
-                .providerId("1PROV")
-                .cardExpiry("01/99")
-                .firstSixDigits("123456")
-                .cardType("visa")
-                .nameOnCard("Jane Doe")
-                .emailAddress("jane_doe@example.com")
-                .telephoneNumber("+447700900796")
-                .paymentOutcome(new PaymentOutcome("success"));
+                .withAmount(1200L)
+                .withDescription("Some description")
+                .withReference("Some reference")
+                .withProcessorId("1PROC")
+                .withProviderId("1PROV")
+                .withCardExpiry("01/99")
+                .withFirstSixDigits("123456")
+                .withCardType("visa")
+                .withPaymentOutcome(new PaymentOutcome("success"));
     }
 
     @Test
-    public void failsValidationForThreeDigitsGiven() {
+    public void failsValidationForThreeDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .lastFourDigits("123")
+                .withLastFourDigits("123")
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
@@ -58,10 +52,10 @@ public class CardLastFourDigitsValidatorTest {
     }
 
     @Test
-    public void failsValidationForFiveDigitsGiven() {
+    public void failsValidationForFiveDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .lastFourDigits("12345")
+                .withLastFourDigits("12345")
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
@@ -71,10 +65,10 @@ public class CardLastFourDigitsValidatorTest {
     }
 
     @Test
-    public void passesValidationForFourDigitsGiven() {
+    public void passesValidationForFourDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .lastFourDigits("1234")
+                .withLastFourDigits("1234")
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
@@ -86,12 +80,12 @@ public class CardLastFourDigitsValidatorTest {
     public void passesValidationForNullDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .lastFourDigits(null)
+                .withLastFourDigits(null)
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
 
         assertThat(constraintViolations.size(), isNumber(1));
-        assertThat(constraintViolations.iterator().next().getMessage().equals("Field [last_four_digits] must be exactly 4 digits"), is(false));
+        assertThat(constraintViolations.iterator().next().getMessage(), is("Field [last_four_digits] cannot be null"));
     }
 }

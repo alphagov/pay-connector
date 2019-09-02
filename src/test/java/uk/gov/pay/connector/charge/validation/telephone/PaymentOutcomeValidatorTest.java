@@ -18,7 +18,7 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 public class PaymentOutcomeValidatorTest {
     
-    private static TelephoneChargeCreateRequest.ChargeBuilder telephoneRequestBuilder = new TelephoneChargeCreateRequest.ChargeBuilder();
+    private static TelephoneChargeCreateRequest.Builder telephoneRequestBuilder = new TelephoneChargeCreateRequest.Builder();
 
     private static Validator validator;
 
@@ -27,21 +27,15 @@ public class PaymentOutcomeValidatorTest {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
         telephoneRequestBuilder
-                .amount(1200L)
-                .description("Some description")
-                .reference("Some reference")
-                .createdDate("2018-02-21T16:04:25Z")
-                .authorisedDate("2018-02-21T16:05:33Z")
-                .authCode("666")
-                .processorId("1PROC")
-                .providerId("1PROV")
-                .cardExpiry("01/99")
-                .cardType("visa")
-                .lastFourDigits("1234")
-                .firstSixDigits("123456")
-                .nameOnCard("Jane Doe")
-                .emailAddress("jane_doe@example.com")
-                .telephoneNumber("+447700900796");
+                .withAmount(1200L)
+                .withDescription("Some description")
+                .withReference("Some reference")
+                .withProcessorId("1PROC")
+                .withProviderId("1PROV")
+                .withCardExpiry("01/99")
+                .withCardType("visa")
+                .withLastFourDigits("1234")
+                .withFirstSixDigits("123456");
                 
     }
 
@@ -49,7 +43,7 @@ public class PaymentOutcomeValidatorTest {
     public void failsValidationForInvalidPaymentOutcomeStatus() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .paymentOutcome(new PaymentOutcome("invalid"))
+                .withPaymentOutcome(new PaymentOutcome("invalid"))
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
@@ -71,7 +65,7 @@ public class PaymentOutcomeValidatorTest {
         );
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .paymentOutcome(paymentOutcome)
+                .withPaymentOutcome(paymentOutcome)
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
@@ -93,7 +87,7 @@ public class PaymentOutcomeValidatorTest {
         );
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .paymentOutcome(paymentOutcome)
+                .withPaymentOutcome(paymentOutcome)
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
@@ -115,7 +109,7 @@ public class PaymentOutcomeValidatorTest {
         );
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .paymentOutcome(paymentOutcome)
+                .withPaymentOutcome(paymentOutcome)
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
@@ -127,7 +121,7 @@ public class PaymentOutcomeValidatorTest {
     public void passesValidationForPaymentOutcomeStatusOfSuccess() {
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .paymentOutcome(new PaymentOutcome("success"))
+                .withPaymentOutcome(new PaymentOutcome("success"))
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
@@ -139,12 +133,12 @@ public class PaymentOutcomeValidatorTest {
     public void passesValidationForNullPaymentOutcome() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .paymentOutcome(null)
+                .withPaymentOutcome(null)
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
 
         assertThat(constraintViolations.size(), isNumber(1));
-        assertThat(constraintViolations.iterator().next().getMessage().equals("Field [payment_outcome] must include a valid status and error code"), is(false));
+        assertThat(constraintViolations.iterator().next().getMessage(), is("Field [payment_outcome] cannot be null"));
     }
 }

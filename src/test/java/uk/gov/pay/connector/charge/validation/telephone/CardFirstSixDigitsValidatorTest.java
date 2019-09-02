@@ -17,7 +17,7 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 public class CardFirstSixDigitsValidatorTest {
     
-    private static TelephoneChargeCreateRequest.ChargeBuilder telephoneRequestBuilder = new TelephoneChargeCreateRequest.ChargeBuilder();
+    private static TelephoneChargeCreateRequest.Builder telephoneRequestBuilder = new TelephoneChargeCreateRequest.Builder();
 
     private static Validator validator;
 
@@ -26,28 +26,22 @@ public class CardFirstSixDigitsValidatorTest {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
         telephoneRequestBuilder
-                .amount(1200L)
-                .description("Some description")
-                .reference("Some reference")
-                .createdDate("2018-02-21T16:04:25Z")
-                .authorisedDate("2018-02-21T16:05:33Z")
-                .authCode("666")
-                .processorId("1PROC")
-                .providerId("1PROV")
-                .cardExpiry("01/99")
-                .lastFourDigits("1234")
-                .cardType("visa")
-                .nameOnCard("Jane Doe")
-                .emailAddress("jane_doe@example.com")
-                .telephoneNumber("+447700900796")
-                .paymentOutcome(new PaymentOutcome("success"));
+                .withAmount(1200L)
+                .withDescription("Some description")
+                .withReference("Some reference")
+                .withProcessorId("1PROC")
+                .withProviderId("1PROV")
+                .withCardExpiry("01/99")
+                .withLastFourDigits("1234")
+                .withCardType("visa")
+                .withPaymentOutcome(new PaymentOutcome("success"));
     }
 
     @Test
-    public void failsValidationForFiveDigitsGiven() {
+    public void failsValidationForFiveDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .firstSixDigits("12345")
+                .withFirstSixDigits("12345")
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
@@ -57,10 +51,10 @@ public class CardFirstSixDigitsValidatorTest {
     }
 
     @Test
-    public void failsValidationForSevenDigitsGiven() {
+    public void failsValidationForSevenDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .firstSixDigits("1234567")
+                .withFirstSixDigits("1234567")
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
@@ -70,10 +64,10 @@ public class CardFirstSixDigitsValidatorTest {
     }
 
     @Test
-    public void passesValidationForSixDigitsGiven() {
+    public void passesValidationForSixDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .firstSixDigits("123456")
+                .withFirstSixDigits("123456")
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
@@ -85,12 +79,12 @@ public class CardFirstSixDigitsValidatorTest {
     public void passesValidationForNullDigits() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .firstSixDigits(null)
+                .withFirstSixDigits(null)
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
 
         assertThat(constraintViolations.size(), isNumber(1));
-        assertThat(constraintViolations.iterator().next().getMessage().equals("Field [first_six_digits] must be exactly 6 digits"), is(false));
+        assertThat(constraintViolations.iterator().next().getMessage(), is("Field [first_six_digits] cannot be null"));
     }
 }
