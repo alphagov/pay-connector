@@ -25,6 +25,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
+import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
+import static uk.gov.pay.connector.it.resources.ChargeEventsResourceIT.SUBMITTED_BY;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
@@ -415,5 +417,45 @@ public class RefundDaoJpaIT extends DaoITestBase {
         assertThat(refundHistory.getChargeEntity().getId(), is(refundEntity.getChargeEntity().getId()));
         assertThat(refundHistory.getChargeEntity().getExternalId(), is(chargeTestRecord.getExternalChargeId()));
         assertThat(refundHistory.getChargeEntity().getGatewayAccount().getId(), is(gatewayAccountEntity.getId()));
+    }
+
+    @Test
+    public void getRefundHistoryByDateRangeShouldReturnResultCorrectly() {
+
+        ZonedDateTime historyDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
+
+        DatabaseFixtures.TestAccount testAccount = withDatabaseTestHelper(databaseTestHelper).aTestAccount().insert();
+        DatabaseFixtures.TestCharge testCharge = withDatabaseTestHelper(databaseTestHelper).aTestCharge().withTestAccount(testAccount).insert();
+        DatabaseFixtures.TestRefund testRefund = withDatabaseTestHelper(databaseTestHelper)
+                .aTestRefund()
+                .withTestCharge(testCharge)
+                .withType(REFUNDED)
+                .withCreatedDate(now())
+                .insert();
+
+        withDatabaseTestHelper(databaseTestHelper)
+                .aTestRefundHistory(testRefund)
+                .insert(REFUNDED, "history-tobe-excluded", historyDate.minusDays(10), historyDate.minusDays(10))
+                .insert(CREATED, "ref-1",  historyDate, historyDate, SUBMITTED_BY)
+                .insert(REFUND_SUBMITTED, "ref-2", historyDate.plusMinutes(10), historyDate.plusMinutes(10), SUBMITTED_BY)
+                .insert(REFUNDED, "history-tobe-excluded", historyDate.plusHours(1), historyDate.plusHours(1), SUBMITTED_BY);
+
+        List<RefundHistory> refundHistoryList = refundDao.getRefundHistoryByDateRange(historyDate, historyDate.plusMinutes(11), 1, 2);
+
+        assertThat(refundHistoryList.size(), is(2));
+
+        RefundHistory refundHistory = refundHistoryList.get(0);
+        assertThat(refundHistory.getStatus(), is(CREATED));
+        assertThat(refundHistory.getReference(), is("ref-1"));
+        assertNotNull(refundHistory.getChargeEntity());
+        assertThat(refundHistory.getChargeEntity().getId(), is(testCharge.getChargeId()));
+        assertThat(refundHistory.getId(), is(testRefund.getId()));
+
+        refundHistory = refundHistoryList.get(1);
+        assertThat(refundHistory.getStatus(), is(REFUND_SUBMITTED));
+        assertThat(refundHistory.getReference(), is("ref-2"));
+        assertNotNull(refundHistory.getChargeEntity());
+        assertThat(refundHistory.getChargeEntity().getId(), is(testCharge.getChargeId()));
+        assertThat(refundHistory.getId(), is(testRefund.getId()));
     }
 }

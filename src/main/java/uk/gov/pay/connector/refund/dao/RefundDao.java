@@ -11,10 +11,12 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import javax.persistence.TemporalType;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.sql.Date;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -169,5 +171,23 @@ public class RefundDao extends JpaDao<RefundEntity> {
             query.setMaxResults((int) displaySize);
         }
         return query.getResultList();
+    }
+
+    public List<RefundHistory> getRefundHistoryByDateRange(ZonedDateTime startDate, ZonedDateTime endDate, int page, int size) {
+
+        String query = "SELECT id, external_id, amount, status, charge_id, created_date, version, reference, " +
+                "       history_start_date, history_end_date, user_external_id, gateway_transaction_id " +
+                " FROM refunds_history rh " +
+                " WHERE rh.history_start_date >= ?1 AND rh.history_start_date <= ?2 " +
+                " limit ?3 offset ?4";
+
+        int offset = (page - 1) * size;
+        return entityManager.get()
+                .createNativeQuery(query, "RefundEntityHistoryMapping")
+                .setParameter(1, Date.from(startDate.toInstant()), TemporalType.TIMESTAMP)
+                .setParameter(2, Date.from(endDate.toInstant()), TemporalType.TIMESTAMP)
+                .setParameter(3, size)
+                .setParameter(4, offset)
+                .getResultList();
     }
 }
