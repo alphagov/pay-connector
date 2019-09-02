@@ -435,9 +435,9 @@ public class RefundDaoJpaIT extends DaoITestBase {
 
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestRefundHistory(testRefund)
-                .insert(REFUNDED, "history-tobe-excluded", historyDate.minusDays(10), historyDate.minusDays(10))
-                .insert(CREATED, "ref-1",  historyDate, historyDate, SUBMITTED_BY)
                 .insert(REFUND_SUBMITTED, "ref-2", historyDate.plusMinutes(10), historyDate.plusMinutes(10), SUBMITTED_BY)
+                .insert(CREATED, "ref-1",  historyDate, historyDate, SUBMITTED_BY)
+                .insert(REFUNDED, "history-tobe-excluded", historyDate.minusDays(10), historyDate.minusDays(10))
                 .insert(REFUNDED, "history-tobe-excluded", historyDate.plusHours(1), historyDate.plusHours(1), SUBMITTED_BY);
 
         List<RefundHistory> refundHistoryList = refundDao.getRefundHistoryByDateRange(historyDate, historyDate.plusMinutes(11), 1, 2);

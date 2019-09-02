@@ -12,6 +12,7 @@ import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
@@ -22,7 +23,9 @@ import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.model.charge.PaymentStarted;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
+import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.pact.RefundHistoryEntityFixture;
@@ -57,6 +60,8 @@ public class HistoricalEventEmitterWorkerTest {
 
     @Mock
     ChargeDao chargeDao;
+    @Mock
+    ChargeEventDao chargeEventDao;
     @Mock
     EmittedEventDao emittedEventDao;
     @Mock
@@ -318,7 +323,7 @@ public class HistoricalEventEmitterWorkerTest {
                 .withCharge(chargeEntity)
                 .withChargeStatus(ChargeStatus.ENTERING_CARD_DETAILS)
                 .build();
-        
+
         ChargeEventEntity secondEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now())
                 .withCharge(chargeEntity)
@@ -352,5 +357,78 @@ public class HistoricalEventEmitterWorkerTest {
         assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("GATEWAY_REQUIRES_3DS_AUTHORISATION"));
         assertThat(daoArgumentCaptor.getAllValues().get(1).getEventType(), is("AUTHORISATION_SUCCEEDED"));
         assertThat(daoArgumentCaptor.getAllValues().get(2).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+    }
+
+    @Test
+    public void executeForDateRange_ShouldEmitAllEventsOfAChargeWithEventWithinDateRange() {
+        ZonedDateTime eventDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
+
+        ChargeEventEntity firstEvent = getChargeEventEntity(chargeEntity, ChargeStatus.CREATED, eventDate);
+        ChargeEventEntity secondEvent = getChargeEventEntity(chargeEntity, ChargeStatus.ENTERING_CARD_DETAILS, eventDate);
+        List<ChargeEventEntity> chargeEventEntities = List.of(firstEvent);
+
+        chargeEntity.getEvents().clear();
+        chargeEntity.getEvents().add(firstEvent);
+        chargeEntity.getEvents().add(secondEvent);
+
+        when(chargeDao.findById(any())).thenReturn(Optional.of(chargeEntity));
+        when(chargeEventDao.findChargeEvents(eventDate, eventDate, 1, 100)).thenReturn(chargeEventEntities);
+
+        worker.executeForDateRange(eventDate, eventDate);
+
+        ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
+        verify(stateTransitionQueue, times(2)).offer(argument.capture());
+
+        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(PaymentCreated.class));
+        assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(PaymentStarted.class));
+
+        ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(emittedEventDao, times(2)).recordEmission(daoArgumentCaptor.capture());
+        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_CREATED"));
+        assertThat(daoArgumentCaptor.getAllValues().get(1).getEventType(), is("PAYMENT_STARTED"));
+    }
+
+    @Test
+    public void executeForDateRange_ShouldEmitAllRefundsEventsOfAChargeWithRefundEventWithinDateRange() {
+        ZonedDateTime eventDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
+
+        RefundHistory refundHistory = getRefundHistoryEntity(chargeEntity, RefundStatus.CREATED);
+        RefundHistory refundHistory2 = getRefundHistoryEntity(chargeEntity, RefundStatus.REFUNDED);
+
+        chargeEntity.getEvents().clear();
+        when(chargeDao.findById(any())).thenReturn(Optional.of(chargeEntity));
+        when(refundDao.getRefundHistoryByDateRange(eventDate, eventDate, 1, 100)).thenReturn(List.of(refundHistory));
+        when(refundDao.searchAllHistoryByChargeId(chargeEntity.getId())).thenReturn(List.of(refundHistory, refundHistory2));
+
+        worker.executeForDateRange(eventDate, eventDate);
+
+        ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
+        verify(stateTransitionQueue, times(2)).offer(argument.capture());
+
+        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(RefundCreatedByService.class));
+        assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(RefundSucceeded.class));
+
+        ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(emittedEventDao, times(2)).recordEmission(daoArgumentCaptor.capture());
+        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("REFUND_CREATED_BY_SERVICE"));
+        assertThat(daoArgumentCaptor.getAllValues().get(1).getEventType(), is("REFUND_SUCCEEDED"));
+    }
+
+    private RefundHistory getRefundHistoryEntity(ChargeEntity chargeEntity, RefundStatus refundStatus) {
+        return RefundHistoryEntityFixture
+                .aValidRefundHistoryEntity()
+                .withChargeExternalId(chargeEntity.getExternalId())
+                .withChargeId(chargeEntity.getId())
+                .withStatus(refundStatus.toString())
+                .build();
+    }
+
+    private ChargeEventEntity getChargeEventEntity(ChargeEntity chargeEntity, ChargeStatus status,
+                                                   ZonedDateTime eventDate) {
+        return ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(eventDate)
+                .withCharge(chargeEntity)
+                .withChargeStatus(status)
+                .build();
     }
 }

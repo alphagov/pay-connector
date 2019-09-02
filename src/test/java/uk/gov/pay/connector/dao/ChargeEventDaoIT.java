@@ -139,10 +139,10 @@ public class ChargeEventDaoIT extends DaoITestBase {
 
         DatabaseFixtures.TestCharge testCharge = createTestCharge();
 
-        createTestChargeEvent(testCharge, ENTERING_CARD_DETAILS, eventDate.minusHours(10));
-        createTestChargeEvent(testCharge, AUTHORISATION_READY, eventDate);
-        createTestChargeEvent(testCharge, AUTHORISATION_SUCCESS, eventDate.plusMinutes(1));
         createTestChargeEvent(testCharge, CAPTURE_APPROVED, eventDate.plusHours(10));
+        createTestChargeEvent(testCharge, AUTHORISATION_READY, eventDate);
+        createTestChargeEvent(testCharge, ENTERING_CARD_DETAILS, eventDate.minusHours(10));
+        createTestChargeEvent(testCharge, AUTHORISATION_SUCCESS, eventDate.plusMinutes(1));
 
         List<ChargeEventEntity> events = chargeEventDao.findChargeEvents(eventDate, eventDate.plusMinutes(1), 1, 2);
 

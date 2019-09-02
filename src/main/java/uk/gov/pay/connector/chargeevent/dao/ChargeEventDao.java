@@ -34,7 +34,8 @@ public class ChargeEventDao extends JpaDao<ChargeEventEntity> {
 
     public List<ChargeEventEntity> findChargeEvents(ZonedDateTime startDate, ZonedDateTime endDate, int page, int size) {
         String query = "SELECT ce FROM ChargeEventEntity ce " +
-                "WHERE ce.updated >= :startDate and ce.updated <= :endDate";
+                "WHERE ce.updated >= :startDate and ce.updated <= :endDate" +
+                " order by ce.updated asc";
 
         int firstResult = (page - 1) * size;
 
