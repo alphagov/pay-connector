@@ -387,39 +387,6 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturn422WhenPrefilledCardHolderDetailsFieldsAreLongerThanMaximum() {
-        String postBody = toJson(Map.of(
-                JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_RETURN_URL_KEY, RETURN_URL,
-                JSON_PREFILLED_CARDHOLDER_DETAILS_KEY, Map.of(
-                        JSON_CARDHOLDER_NAME_KEY, randomAlphanumeric(256),
-                        JSON_BILLING_ADDRESS_KEY, Map.of(
-                                JSON_ADDRESS_LINE_1_KEY, randomAlphanumeric(256),
-                                JSON_ADDRESS_LINE_2_KEY, randomAlphanumeric(256),
-                                JSON_ADDRESS_LINE_CITY, randomAlphanumeric(256),
-                                JSON_ADDRESS_POST_CODE_KEY, randomAlphanumeric(26),
-                                JSON_ADDRESS_LINE_COUNTRY_CODE, randomAlphanumeric(3)
-                        )
-                )
-        ));
-
-        connectorRestApiClient.postCreateCharge(postBody)
-                .statusCode(422)
-                .contentType(JSON)
-                .header("Location", is(nullValue()))
-                .body(JSON_CHARGE_KEY, is(nullValue()))
-                .body(JSON_MESSAGE_KEY, containsInAnyOrder(
-                        "Field [line1] can have a size between 0 and 255",
-                        "Field [line2] can have a size between 0 and 255",
-                        "Field [postcode] can have a size between 0 and 25",
-                        "Field [country] can have an exact size of 2",
-                        "Field [city] can have a size between 0 and 255",
-                        "Field [cardholder_name] can have a size between 0 and 255"));
-    }
-
-    @Test
     public void shouldReturn201WhenPrefilledCardHolderDetailsFieldsAreMaximum() {
         String line1 = randomAlphanumeric(255);
         String city = randomAlphanumeric(255);
