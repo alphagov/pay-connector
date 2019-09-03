@@ -9,6 +9,7 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
+import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -51,6 +52,7 @@ public class ChargeEntityFixture {
     private WalletType walletType = null;
     private ExternalMetadata externalMetadata = null;
     private CardDetailsEntity cardDetails = null;
+    private ParityCheckStatus parityCheckStatus = null;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -78,8 +80,12 @@ public class ChargeEntityFixture {
             chargeEntity.setFee(fee);
         }
 
-        if(cardDetails != null) {
+        if (cardDetails != null) {
             chargeEntity.setCardDetails(cardDetails);
+        }
+
+        if (parityCheckStatus != null) {
+            chargeEntity.updateParityCheck(parityCheckStatus);
         }
 
         chargeEntity.setWalletType(walletType);
@@ -200,5 +206,10 @@ public class ChargeEntityFixture {
         accountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, emailNotificationEntity);
         accountEntity.addNotification(EmailNotificationType.REFUND_ISSUED, emailNotificationEntity);
         return accountEntity;
+    }
+
+    public ChargeEntityFixture withParityStatus(ParityCheckStatus parityCheckStatus) {
+        this.parityCheckStatus = parityCheckStatus;
+        return this;
     }
 }
