@@ -1016,7 +1016,7 @@
             alter table gateway_accounts drop column allow_web_payments;
         </sql>
     </changeSet>
-    
+
     <changeSet id="add fee table" author="">
         <createTable tableName="fees">
             <column name="id" type="bigserial" autoIncrement="true">
@@ -1044,7 +1044,7 @@
             <column name="gateway_processing_details" type="jsonb" />
         </createTable>
     </changeSet>
-    
+
     <changeSet id="index gateway_transaction_id, external_id and charge_id columns for fee table" author="">
         <createIndex tableName="fees" indexName="idx_fees_gateway_transaction_id">
             <column name="gateway_transaction_id" />
@@ -1066,7 +1066,7 @@
             </column>
         </addColumn>
     </changeSet>
-    
+
     <changeSet id="add index concurrently to new refunds gateway_transaction_id column" runInTransaction="false" author="">
         <sql>
             CREATE INDEX CONCURRENTLY idx_refunds_gateway_transaction_id on refunds(gateway_transaction_id);
@@ -1209,6 +1209,27 @@
         <sql>
             CREATE INDEX CONCURRENTLY idx_lower_charges_reference ON charges (LOWER(reference));
         </sql>
+    </changeSet>
+
+    <changeSet id="add parity-check columns" author="">
+        <addColumn tableName="charges">
+            <column name="parity_check_status" type="varchar(100)">
+            </column>
+        </addColumn>
+        <addColumn tableName="charges">
+            <column name="parity_check_date" type="timestamp without timezone">
+            </column>
+        </addColumn>
+        <createIndex indexName="idx_charges_parity_check_status"
+                     tableName="charges"
+                     unique="false">
+            <column name="parity_check_status"/>
+        </createIndex>
+        <createIndex indexName="idx_charges_parity_check_date"
+                     tableName="charges"
+                     unique="false">
+            <column name="parity_check_date"/>
+        </createIndex>
     </changeSet>
 
 </databaseChangeLog>
