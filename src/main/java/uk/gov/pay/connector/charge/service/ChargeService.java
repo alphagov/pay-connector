@@ -754,22 +754,10 @@ public class ChargeService {
         telephoneJSON.put("authorised_date", telephoneChargeRequest.getAuthorisedDate());
         telephoneJSON.put("processor_id", telephoneChargeRequest.getProcessorId());
         telephoneJSON.put("auth_code", telephoneChargeRequest.getAuthCode());
-        
-        HashMap<String, Object> paymentOutcome = new HashMap<>();
-        paymentOutcome.put("status", telephoneChargeRequest.getPaymentOutcome().getStatus());
-        
-        if(telephoneChargeRequest.getPaymentOutcome().getCode() != null) {
-            paymentOutcome.put("code", telephoneChargeRequest.getPaymentOutcome().getCode());
-        }
-
-        if(telephoneChargeRequest.getPaymentOutcome().getSupplemental() != null) {
-            HashMap<String, Object> supplemental = new HashMap<>();
-            supplemental.put("error_code", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorCode());
-            supplemental.put("error_message", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorMessage());
-            paymentOutcome.put("supplemental", supplemental);
-        }
-        
-        telephoneJSON.put("payment_outcome", paymentOutcome);
+        telephoneJSON.put("status", telephoneChargeRequest.getPaymentOutcome().getStatus());
+        telephoneJSON.put("code", telephoneChargeRequest.getPaymentOutcome().getCode());
+        telephoneJSON.put("error_code", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorCode());
+        telephoneJSON.put("error_message", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorMessage());
         telephoneJSON.put("telephone_number", telephoneChargeRequest.getTelephoneNumber());
         
         return new ExternalMetadata(telephoneJSON);
