@@ -392,6 +392,53 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
                 .body("results[0].metadata", is(nullValue()));
     }
 
+    @Test
+    public void shouldReturnChargesWhen_PartialCaseInsensitiveReferenceSearchIsPerformed() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(100)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .withReturnUrl(RETURN_URL)
+                .withDescription("Test description")
+                .withReference(ServicePaymentReference.of("partial-reference"))
+                .withLanguage(SupportedLanguage.ENGLISH)
+                .withDelayedCapture(false)
+                .withCorporateSurcharge(100L)
+                .build());
+
+        chargeId = nextInt();
+        externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(100)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .withReturnUrl(RETURN_URL)
+                .withDescription("Test description")
+                .withReference(ServicePaymentReference.of("not-a-ref"))
+                .withLanguage(SupportedLanguage.ENGLISH)
+                .withDelayedCapture(false)
+                .withCorporateSurcharge(100L)
+                .build());
+
+        connectorRestApiClient
+                .withQueryParam(
+                        "reference"
+                , "pArTiAl")
+                .getChargesV2()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(1))
+                .body("results[0].reference", is("partial-reference"));
+    }
+    
     private String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, String transactionId, ZonedDateTime fromDate,
                                            String cardBrand, String returnUrl, String email) {
         String externalChargeId = "charge" + chargeId;

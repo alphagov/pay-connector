@@ -49,6 +49,8 @@ public class TransactionDaoIT extends DaoITestBase {
     private static final String TO_DATE = "2026-01-08T01:00:00Z";
     private static final String DEFAULT_TEST_CHARGE_DESCRIPTION = "Charge description";
     private static final String DEFAULT_TEST_CHARGE_REFERENCE = "Council tax thing";
+    private static final String DEFAULT_TEST_CHARGE_PARTIAL_REFERENCE = "tax";
+    private static final String DEFAULT_TEST_CHARGE_PARTIAL_CASE_INSENSITIVE_REFERENCE = "TAX";
     private static final String REFUND_USER_EXTERNAL_ID = "user";
     private TransactionDao transactionDao;
     private DatabaseFixtures.TestAccount defaultTestAccount;
@@ -112,7 +114,8 @@ public class TransactionDaoIT extends DaoITestBase {
     public void searchChargesWithCorporateCardSurcargeByGatewayAccount() {
 
         // given
-        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithIdAndCorporateCardSurcharge(1L, now(), 250L);
+        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithIdAndReferenceAndCorporateCardSurcharge(1L, 
+                now(), ServicePaymentReference.of(DEFAULT_TEST_CHARGE_REFERENCE), 250L);
 
         SearchParams params = new SearchParams();
 
@@ -456,9 +459,9 @@ public class TransactionDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void searchChargesByFullReferenceOnly() {
-
+    public void searchChargesByFullReference() {
         // given
+        insertNewChargeWithIdAndReference(1L, now().plusHours(1), "notvalid");
         DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
         insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusHours(2));
         SearchParams params = new SearchParams()
@@ -480,7 +483,63 @@ public class TransactionDaoIT extends DaoITestBase {
         assertThat(charge.getTransactionType(), is(TransactionType.CHARGE));
         assertThat(charge.getUserExternalId(), is(nullValue()));
     }
-    
+
+    @Test
+    public void searchChargesByPartialReference() {
+        // given
+        insertNewChargeWithIdAndReference(1L, now().plusHours(1), "notvalid");
+        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
+        insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusHours(2));
+        
+        SearchParams params = new SearchParams()
+                .withReferenceLike(ServicePaymentReference.of(DEFAULT_TEST_CHARGE_PARTIAL_REFERENCE));
+
+        // when
+        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+
+        // then
+        assertThat(transactions.size(), is(2));
+
+        Transaction refund = transactions.get(0);
+        Transaction charge = transactions.get(1);
+
+        assertThat(refund.getExternalId(), is(testCharge.getExternalChargeId()));
+        assertThat(charge.getReference(), is(testCharge.getReference()));
+        assertThat(refund.getTransactionType(), is(TransactionType.REFUND));
+        assertThat(refund.getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
+        assertThat(charge.getExternalId(), is(testCharge.getExternalChargeId()));
+        assertThat(charge.getTransactionType(), is(TransactionType.CHARGE));
+        assertThat(charge.getUserExternalId(), is(nullValue()));
+    }
+
+    @Test
+    public void searchChargesByCaseInsensitivePartialReference() {
+        // given
+        insertNewChargeWithIdAndReference(1L, now().plusHours(1), "notvalid");
+        DatabaseFixtures.TestCharge testCharge = insertNewChargeWithId(1L, now().plusHours(1));
+        insertNewRefundForCharge(testCharge, REFUND_USER_EXTERNAL_ID, 2L, now().plusHours(2));
+
+        SearchParams params = new SearchParams()
+                .withReferenceLike(ServicePaymentReference.of(DEFAULT_TEST_CHARGE_PARTIAL_CASE_INSENSITIVE_REFERENCE));
+
+        // when
+        List<Transaction> transactions = transactionDao.findAllBy(defaultTestAccount.getAccountId(), params);
+
+        // then
+        assertThat(transactions.size(), is(2));
+
+        Transaction refund = transactions.get(0);
+        Transaction charge = transactions.get(1);
+
+        assertThat(refund.getExternalId(), is(testCharge.getExternalChargeId()));
+        assertThat(charge.getReference(), is(testCharge.getReference()));
+        assertThat(refund.getTransactionType(), is(TransactionType.REFUND));
+        assertThat(refund.getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
+        assertThat(charge.getExternalId(), is(testCharge.getExternalChargeId()));
+        assertThat(charge.getTransactionType(), is(TransactionType.CHARGE));
+        assertThat(charge.getUserExternalId(), is(nullValue()));
+    }
+
     @Test
     public void shouldSearchChargesByFullCardHolderName() {
 
@@ -1359,18 +1418,27 @@ public class TransactionDaoIT extends DaoITestBase {
 
     private DatabaseFixtures.TestCharge insertNewChargeWithId(long amount, ZonedDateTime creationDate) {
         return
-                insertNewChargeWithIdAndCorporateCardSurcharge(amount, creationDate, null);
+                insertNewChargeWithIdAndReferenceAndCorporateCardSurcharge(amount, creationDate, 
+                        ServicePaymentReference.of(DEFAULT_TEST_CHARGE_REFERENCE), null);
     }
 
-    private DatabaseFixtures.TestCharge insertNewChargeWithIdAndCorporateCardSurcharge(
+    private DatabaseFixtures.TestCharge insertNewChargeWithIdAndReference(long amount, ZonedDateTime creationDate, String reference) {
+        return
+                insertNewChargeWithIdAndReferenceAndCorporateCardSurcharge(amount, creationDate,
+                        ServicePaymentReference.of(reference), null);
+    }
+    
+    
+    private DatabaseFixtures.TestCharge insertNewChargeWithIdAndReferenceAndCorporateCardSurcharge(
             long amount,
             ZonedDateTime creationDate,
+            ServicePaymentReference reference,
             Long corporateSurcharge) {
 
         return withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withDescription(DEFAULT_TEST_CHARGE_DESCRIPTION)
-                .withReference(ServicePaymentReference.of(DEFAULT_TEST_CHARGE_REFERENCE))
+                .withReference(reference)
                 .withAmount(amount)
                 .withTestAccount(defaultTestAccount)
                 .withCreatedDate(creationDate)

@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -60,6 +61,45 @@ public class SearchChargesIT {
                 .body("results.size()", is(1))
                 .body("results[0].gateway_transaction_id", Is.is("txId-1234"));
     }
+    
+    @Test
+    public void searchCharges_doesNotMatchOnPartialReferenceMatch() {
+        addCharge(ServicePaymentReference.of("partial_reference"));
+
+        connectorRestApiClient
+                .withQueryParam("reference", "ref")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getChargesV1()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(0));
+    }
+
+    @Test
+    public void searchCharges_doesReturnOnExactReferenceMatch() {
+        addCharge(ServicePaymentReference.of("reference"));
+
+        connectorRestApiClient
+                .withQueryParam("reference", "reference")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getChargesV1()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(1));
+    }
+    
+    @Test
+    public void searchCharges_doesReturnOnCaseInsensitiveExactReferenceMatch() {
+        addCharge(ServicePaymentReference.of("rEfeReNcE"));
+
+        connectorRestApiClient
+                .withQueryParam("reference", "refERenCe")
+                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
+                .getChargesV1()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(1));
+    }
 
     private void addCharge(String gatewayTransactionId, ChargeStatus chargeStatus) {
         long chargeId = RandomUtils.nextInt();
@@ -71,6 +111,20 @@ public class SearchChargesIT {
                 .withAmount(100)
                 .withStatus(chargeStatus)
                 .withTransactionId(gatewayTransactionId)
+                .build());
+    }
+    
+    private void addCharge(ServicePaymentReference reference) {
+        long chargeId = RandomUtils.nextInt();
+        String externalChargeId = "charge" + chargeId;
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withReference(reference)
+                .withAmount(100)
+                .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .withTransactionId("gateway transaction id")
                 .build());
     }
 }

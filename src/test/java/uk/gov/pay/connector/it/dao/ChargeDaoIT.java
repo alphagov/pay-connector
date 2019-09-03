@@ -781,6 +781,57 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(charges.size(), is(0));
     }
 
+    @Test
+    public void searchChargeByPartialReference_ShouldReturnCharge() {
+        insertTestChargeWithReference(ServicePaymentReference.of("rorytest"));
+        insertTestCharge();
+        SearchParams searchParams = new SearchParams()
+                .withReferenceLike(ServicePaymentReference.of("reference"));
+
+        List<ChargeEntity> charges = chargeDao.findAllBy(searchParams);
+
+        assertThat(charges.size(), is(1));
+        assertThat(charges.get(0).getReference(), is(defaultTestCharge.getReference()));
+    }
+
+    @Test
+    public void searchChargeByPartialCaseInsensitiveReference_ShouldReturnCharge() {
+        insertTestChargeWithReference(ServicePaymentReference.of("rorytest"));
+        insertTestCharge();
+        SearchParams searchParams = new SearchParams()
+                .withReferenceLike(ServicePaymentReference.of("rEfErEnCe"));
+
+        List<ChargeEntity> charges = chargeDao.findAllBy(searchParams);
+
+        assertThat(charges.size(), is(1));
+        assertThat(charges.get(0).getReference(), is(defaultTestCharge.getReference()));
+    }
+
+    @Test
+    public void searchChargeByReference_ShouldReturnCharge() {
+        insertTestChargeWithReference(ServicePaymentReference.of("rorytest"));
+        insertTestCharge();
+        SearchParams searchParams = new SearchParams()
+                .withReference(ServicePaymentReference.of("Test reference"));
+
+        List<ChargeEntity> charges = chargeDao.findAllBy(searchParams);
+
+        assertThat(charges.size(), is(1));
+        assertThat(charges.get(0).getReference(), is(defaultTestCharge.getReference()));
+    }
+
+    @Test
+    public void searchChargeByReference_ShouldNotReturnChargeWithPartialMatch() {
+        insertTestChargeWithReference(ServicePaymentReference.of("rorytest"));
+        insertTestCharge();
+        SearchParams searchParams = new SearchParams()
+                .withReference(ServicePaymentReference.of("reference"));
+
+        List<ChargeEntity> charges = chargeDao.findAllBy(searchParams);
+
+        assertThat(charges.size(), is(0));
+    }
+
     private void assertDateMatch(String createdDateString) {
         assertDateMatch(DateTimeUtils.toUTCZonedDateTime(createdDateString).get());
     }
@@ -1550,6 +1601,18 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
+                .insert();
+        defaultTestCardDetails
+                .withChargeId(defaultTestCharge.chargeId)
+                .update();
+    }
+
+    private void insertTestChargeWithReference(ServicePaymentReference reference) {
+        this.defaultTestCharge = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withReference(reference)
                 .insert();
         defaultTestCardDetails
                 .withChargeId(defaultTestCharge.chargeId)
