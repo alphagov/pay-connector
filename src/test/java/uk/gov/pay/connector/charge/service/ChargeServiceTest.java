@@ -183,14 +183,13 @@ public class ChargeServiceTest {
         
         ExternalMetadata externalMetadata = new ExternalMetadata(
                 Map.of(
-                "created_date", "2018-02-21T16:04:25Z",
-                "authorised_date", "2018-02-21T16:05:33Z",
-                "processor_id", "1PROC",
-                "auth_code", "666",
-                "telephone_number", "+447700900796",
-                "payment_outcome", Map.of(
+                        "created_date", "2018-02-21T16:04:25Z", 
+                        "authorised_date", "2018-02-21T16:05:33Z", 
+                        "processor_id", "1PROC", 
+                        "auth_code", "666", 
+                        "telephone_number", "+447700900796", 
                         "status", "success"
-                ))
+                )
         );
 
         CardDetailsEntity cardDetails = new CardDetailsEntity(
@@ -510,9 +509,7 @@ public class ChargeServiceTest {
                 "processor_id", "1PROC",
                 "auth_code", "666",
                 "telephone_number", "+447700900796",
-                "payment_outcome", Map.of(
-                        "status", "success"
-                ));
+                "status", "success");
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withPaymentOutcome(paymentOutcome)
@@ -557,14 +554,11 @@ public class ChargeServiceTest {
                 "processor_id", "1PROC",
                 "auth_code", "666",
                 "telephone_number", "+447700900796",
-                "payment_outcome", Map.of(
-                        "status", "failed",
-                        "code", "P0010",
-                        "supplemental", Map.of(
-                                "error_code", "ECKOH01234",
-                                "error_message", "textual message describing error code"
-                        )
-                ));
+                "status", "failed",
+                "code", "P0010",
+                "error_code", "ECKOH01234",
+                "error_message", "textual message describing error code"
+        );
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withPaymentOutcome(paymentOutcome)
@@ -609,14 +603,11 @@ public class ChargeServiceTest {
                 "processor_id", "1PROC",
                 "auth_code", "666",
                 "telephone_number", "+447700900796",
-                "payment_outcome", Map.of(
-                        "status", "failed",
-                        "code", "P0050",
-                        "supplemental", Map.of(
-                                "error_code", "ECKOH01234",
-                                "error_message", "textual message describing error code"
-                        )
-                ));
+                "status", "failed",
+                "code", "P0050",
+                "error_code", "ECKOH01234",
+                "error_message", "textual message describing error code"
+        );
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withPaymentOutcome(paymentOutcome)
