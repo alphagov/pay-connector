@@ -291,8 +291,6 @@ public class ChargeService {
                     externalMetadata.getMetadata().get("status").toString()
             );
             
-            final Supplemental supplemental = new Supplemental();
-            
             ExternalTransactionState state;
             
             if (externalMetadata.getMetadata().get("status").toString().equals("success")) {
