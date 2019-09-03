@@ -14,7 +14,6 @@ import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
 import javax.inject.Inject;
 import java.time.ZonedDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -92,16 +91,6 @@ public class HistoricalEventEmitterWorker {
         }
     }
 
-    @Transactional
-    public void processRefundEvents(ChargeEntity charge) {
-        List<RefundHistory> refundHistories = refundDao.searchAllHistoryByChargeId(charge.getId());
-
-        refundHistories
-                .stream()
-                .sorted(Comparator.comparing(RefundHistory::getHistoryStartDate))
-                .forEach(historicalEventEmitter::emitAndPersistEventForRefundHistoryEntry);
-    }
-
     private void processRefundEvents(ZonedDateTime startDate, ZonedDateTime endDate) {
         int page = 1;
 
@@ -156,7 +145,7 @@ public class HistoricalEventEmitterWorker {
 
             if (maybeCharge.isPresent()) {
                 final ChargeEntity charge = maybeCharge.get();
-                processRefundEvents(charge);
+                historicalEventEmitter.processRefundEvents(charge);
             }
         } finally {
             MDC.remove("chargeId");
