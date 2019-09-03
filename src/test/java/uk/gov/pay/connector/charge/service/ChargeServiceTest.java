@@ -604,7 +604,7 @@ public class ChargeServiceTest {
                 "auth_code", "666",
                 "telephone_number", "+447700900796",
                 "status", "failed",
-                "code", "P0010",
+                "code", "P0050",
                 "error_code", "ECKOH01234",
                 "error_message", "textual message describing error code"
         );
