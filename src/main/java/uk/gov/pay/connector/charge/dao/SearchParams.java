@@ -28,10 +28,11 @@ public class SearchParams {
     private TransactionSearchStrategyTransactionType transactionSearchStrategyTransactionType;
     private LastDigitsCardNumber lastDigitsCardNumber;
     private FirstDigitsCardNumber firstDigitsCardNumber;
-    private CardHolderName cardHolderName;
+    private CardHolderName likeCardHolderName;
     private Long gatewayAccountId;
     private ServicePaymentReference reference;
-    private String email;
+    private ServicePaymentReference likeReference;
+    private String likeEmail;
     private ZonedDateTime fromDate;
     private ZonedDateTime toDate;
     private Long page;
@@ -58,7 +59,7 @@ public class SearchParams {
     }
 
     public SearchParams withEmailLike(String email) {
-        this.email = email;
+        this.likeEmail = email;
         return this;
     }
 
@@ -73,7 +74,7 @@ public class SearchParams {
     }
 
     public SearchParams withCardHolderNameLike(CardHolderName cardHolderName) {
-        this.cardHolderName = cardHolderName;
+        this.likeCardHolderName = cardHolderName;
         return this;
     }
 
@@ -103,8 +104,8 @@ public class SearchParams {
         return firstDigitsCardNumber;
     }
 
-    public CardHolderName getCardHolderName() {
-        return cardHolderName;
+    public CardHolderName getLikeCardHolderName() {
+        return likeCardHolderName;
     }
 
     public Set<ChargeStatus> getInternalChargeStatuses() {
@@ -188,13 +189,22 @@ public class SearchParams {
         return reference;
     }
 
-    public String getEmail() {
-        return email;
+    public String getLikeEmail() {
+        return likeEmail;
     }
 
-    public SearchParams withReferenceLike(ServicePaymentReference reference) {
+    public SearchParams withReference(ServicePaymentReference reference) {
         this.reference = reference;
         return this;
+    }
+    
+    public SearchParams withReferenceLike(ServicePaymentReference reference) {
+        this.likeReference = reference;
+        return this;
+    }
+
+    public ServicePaymentReference getLikeReference() {
+        return this.likeReference;
     }
 
     public ZonedDateTime getFromDate() {
@@ -256,11 +266,14 @@ public class SearchParams {
         }
         if (reference != null && isNotBlank(reference.toString()))
             builder.append("&reference=").append(reference);
-        if (email != null) {
+        else if (likeReference != null && isNotBlank(likeReference.toString())) {
+            builder.append("&reference=").append(likeReference);
+        }
+        if (likeEmail != null) {
             if (redactPii) {
                 builder.append("&email=*****");
             } else {
-                builder.append("&email=").append(email);
+                builder.append("&email=").append(likeEmail);
             }
         }
         if (fromDate != null)
@@ -290,8 +303,8 @@ public class SearchParams {
             builder.append("&first_digits_card_number=").append(firstDigitsCardNumber);
         if (lastDigitsCardNumber != null)
             builder.append("&last_digits_card_number=").append(lastDigitsCardNumber);
-        if (cardHolderName != null)
-            builder.append("&cardholder_name=").append(cardHolderName);
+        if (likeCardHolderName != null)
+            builder.append("&cardholder_name=").append(likeCardHolderName);
         if (!cardBrands.isEmpty()) {
             cardBrands.forEach(cardBrand -> builder.append("&card_brand=").append(cardBrand));
         }

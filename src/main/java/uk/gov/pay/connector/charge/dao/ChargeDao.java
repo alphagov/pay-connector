@@ -164,8 +164,8 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
     private List<Predicate> buildParamPredicates(SearchParams params, CriteriaBuilder cb, Root<ChargeEntity> charge) {
         List<Predicate> predicates = new ArrayList<>();
-        if (params.getCardHolderName() != null && StringUtils.isNotBlank(params.getCardHolderName().toString()))
-            predicates.add(likePredicate(cb, charge.get(CARD_DETAILS).get("cardHolderName"), params.getCardHolderName().toString()));
+        if (params.getLikeCardHolderName() != null && StringUtils.isNotBlank(params.getLikeCardHolderName().toString()))
+            predicates.add(likePredicate(cb, charge.get(CARD_DETAILS).get("cardHolderName"), params.getLikeCardHolderName().toString()));
         if (params.getLastDigitsCardNumber() != null)
             predicates.add(cb.equal(charge.get(CARD_DETAILS).get("lastDigitsCardNumber"), params.getLastDigitsCardNumber()));
         if (params.getFirstDigitsCardNumber() != null)
@@ -173,9 +173,11 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         if (params.getGatewayAccountId() != null)
             predicates.add(cb.equal(charge.get(GATEWAY_ACCOUNT).get("id"), params.getGatewayAccountId()));
         if (params.getReference() != null && StringUtils.isNotBlank(params.getReference().toString()))
-            predicates.add(likePredicate(cb, charge.get(REFERENCE), params.getReference().toString()));
-        if (StringUtils.isNotBlank(params.getEmail()))
-            predicates.add(likePredicate(cb, charge.get(EMAIL), params.getEmail()));
+            predicates.add(cb.equal(cb.lower(charge.get(REFERENCE)), params.getReference().toString().toLowerCase()));
+        if (params.getLikeReference() != null && StringUtils.isNotBlank(params.getLikeReference().toString()))
+            predicates.add(likePredicate(cb, charge.get(REFERENCE), params.getLikeReference().toString()));
+        if (StringUtils.isNotBlank(params.getLikeEmail()))
+            predicates.add(likePredicate(cb, charge.get(EMAIL), params.getLikeEmail()));
         if (params.getInternalStates() != null && !params.getInternalStates().isEmpty())
             predicates.add(charge.get(STATUS).in(params.getInternalStates()));
         if (!params.getCardBrands().isEmpty()) {

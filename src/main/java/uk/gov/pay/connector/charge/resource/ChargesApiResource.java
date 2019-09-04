@@ -145,7 +145,7 @@ public class ChargesApiResource {
                             .withCardHolderNameLike(cardHolderName != null ? CardHolderName.of(cardHolderName) : null)
                             .withLastDigitsCardNumber(LastDigitsCardNumber.ofNullable(lastDigitsCardNumber))
                             .withFirstDigitsCardNumber(FirstDigitsCardNumber.ofNullable(firstDigitsCardNumber))
-                            .withReferenceLike(reference != null ? ServicePaymentReference.of(reference) : null)
+                            .withReference(reference != null ? ServicePaymentReference.of(reference) : null)
                             .withCardBrands(removeBlanks(cardBrands))
                             .withFromDate(parseDate(fromDate))
                             .withToDate(parseDate(toDate))

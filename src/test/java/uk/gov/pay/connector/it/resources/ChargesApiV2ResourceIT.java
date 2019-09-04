@@ -88,7 +88,7 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
 
         String transactionIdCharge1 = "transaction-id-ref-3-que";
         String transactionIdCharge2 = "transaction-id-ref-3";
-        String externalChargeId1 = addChargeAndCardDetails(nextLong(), EXPIRED, ServicePaymentReference.of("ref-3-que"), transactionIdCharge1, now(),
+        String externalChargeId1 = addChargeAndCardDetails(nextLong(), EXPIRED, ServicePaymentReference.of("ref-3"), transactionIdCharge1, now(),
                 "", returnUrl, email);
         addChargeAndCardDetails(nextLong(), CAPTURED, ServicePaymentReference.of("ref-7"), "transaction-id-ref-7", now(),
                 "master-card", returnUrl, email);
@@ -124,7 +124,7 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
                 .body("results[0].charge_id", is(externalChargeId1))
                 .body("results[0].amount", is(6234))
                 .body("results[0].description", is("Test description"))
-                .body("results[0].reference", is("ref-3-que"))
+                .body("results[0].reference", is("ref-3"))
                 .body("results[0].state.finished", is(true))
                 .body("results[0].state.status", is("timedout"))
                 .body("results[0].state.code", is("P0020"))
@@ -165,7 +165,7 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
 
         String transactionIdCharge2 = "transaction-id-ref-3";
         String transactionIdCharge1 = "transaction-id-ref-3-que";
-        ServicePaymentReference referenceCharge1 = ServicePaymentReference.of("ref-3-que");
+        ServicePaymentReference referenceCharge1 = ServicePaymentReference.of("ref-3");
         ServicePaymentReference referenceCharge2 = ServicePaymentReference.of("ref-3");
         String externalChargeId1 = addChargeAndCardDetails(nextLong(), CREATED, referenceCharge1, transactionIdCharge1, now(), "", returnUrl, email);
         addChargeAndCardDetails(nextLong(), CAPTURED, ServicePaymentReference.of("ref-7"), "transaction-id-ref-7", now(), "master-card",
@@ -392,6 +392,53 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
                 .body("results[0].metadata", is(nullValue()));
     }
 
+    @Test
+    public void shouldReturnChargesWhen_PartialCaseInsensitiveReferenceSearchIsPerformed() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(100)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .withReturnUrl(RETURN_URL)
+                .withDescription("Test description")
+                .withReference(ServicePaymentReference.of("partial-reference"))
+                .withLanguage(SupportedLanguage.ENGLISH)
+                .withDelayedCapture(false)
+                .withCorporateSurcharge(100L)
+                .build());
+
+        chargeId = nextInt();
+        externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(100)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .withReturnUrl(RETURN_URL)
+                .withDescription("Test description")
+                .withReference(ServicePaymentReference.of("not-a-ref"))
+                .withLanguage(SupportedLanguage.ENGLISH)
+                .withDelayedCapture(false)
+                .withCorporateSurcharge(100L)
+                .build());
+
+        connectorRestApiClient
+                .withQueryParam(
+                        "reference"
+                , "pArTiAl")
+                .getChargesV2()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("results.size()", is(1))
+                .body("results[0].reference", is("partial-reference"));
+    }
+    
     private String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, String transactionId, ZonedDateTime fromDate,
                                            String cardBrand, String returnUrl, String email) {
         String externalChargeId = "charge" + chargeId;

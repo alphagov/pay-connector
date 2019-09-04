@@ -121,9 +121,9 @@ public class TransactionDao {
     private SelectOrderByStep buildQueryFor(Long gatewayAccountId, QueryType queryType, SearchParams params) {
         Condition queryFilters = field("c.gateway_account_id").eq(gatewayAccountId);
 
-        if (params.getCardHolderName() != null && isNotBlank(params.getCardHolderName().toString())) {
+        if (params.getLikeCardHolderName() != null && isNotBlank(params.getLikeCardHolderName().toString())) {
             queryFilters = queryFilters.and(
-                    field("c.cardholder_name").lower().like(buildLikeClauseContaining(params.getCardHolderName().toString().toLowerCase())));
+                    field("c.cardholder_name").lower().like(buildLikeClauseContaining(params.getLikeCardHolderName().toString().toLowerCase())));
         }
 
         if (params.getLastDigitsCardNumber() != null) {
@@ -136,9 +136,9 @@ public class TransactionDao {
                     field("c.first_digits_card_number").eq(params.getFirstDigitsCardNumber().toString()));
         }
 
-        if (isNotBlank(params.getEmail())) {
+        if (isNotBlank(params.getLikeEmail())) {
             queryFilters = queryFilters.and(
-                    field("c.email").lower().like(buildLikeClauseContaining(params.getEmail().toLowerCase())));
+                    field("c.email").lower().like(buildLikeClauseContaining(params.getLikeEmail().toLowerCase())));
         }
 
         if (!params.getCardBrands().isEmpty()) {
@@ -148,7 +148,13 @@ public class TransactionDao {
 
         if (params.getReference() != null && isNotBlank(params.getReference().toString())) {
             queryFilters = queryFilters.and(
-                    field("c.reference").lower().like(buildLikeClauseContaining(params.getReference().toString().toLowerCase())));
+                    field("c.reference").lower().eq(params.getReference().toString().toLowerCase()));
+        }
+
+        if (params.getLikeReference() != null && isNotBlank(params.getLikeReference().toString())) {
+            queryFilters = queryFilters.and(
+                    field("c.reference").lower()
+                            .like(buildLikeClauseContaining(params.getLikeReference().toString().toLowerCase())));
         }
 
         Condition queryFiltersForCharges = queryFilters;
