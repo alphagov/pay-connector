@@ -53,6 +53,7 @@ import uk.gov.pay.connector.refund.resource.ChargeRefundsResource;
 import uk.gov.pay.connector.refund.resource.SearchRefundsResource;
 import uk.gov.pay.connector.report.resource.PerformanceReportResource;
 import uk.gov.pay.connector.report.resource.TransactionsSummaryResource;
+import uk.gov.pay.connector.tasks.HistoricalEventEmitterByDateRangeTask;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitterTask;
 import uk.gov.pay.connector.token.resource.SecurityTokensResource;
 import uk.gov.pay.connector.usernotification.resource.EmailNotificationResource;
@@ -147,6 +148,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.healthChecks().register("sqsQueue", injector.getInstance(SQSHealthCheck.class));
 
         environment.admin().addTask(injector.getInstance(HistoricalEventEmitterTask.class));
+        environment.admin().addTask(injector.getInstance(HistoricalEventEmitterByDateRangeTask.class));
 
         if (configuration.isXrayEnabled())
             Xray.init(environment, "pay-connector", Optional.empty(), "/v1/*");
