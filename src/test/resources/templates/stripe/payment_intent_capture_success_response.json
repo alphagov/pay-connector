@@ -1,0 +1,18 @@
+{
+  "id": "pi_1FEy5AEZsufgnuO0f99RWRRn",
+  "object": "payment_intent",
+  "capture_method": "manual",
+  "charges": {
+    "object": "list",
+    "data": [
+      {
+        "id": "ch_123456",
+        "object": "charge",
+        "captured": true,
+        "balance_transaction": {
+          "fee": 50
+        }
+      }
+    ]
+  }
+}

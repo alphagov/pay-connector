@@ -56,7 +56,7 @@ public class StripeCaptureRequestTest {
         when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
 
-        stripeCaptureRequest = StripeCaptureRequest.of(captureGatewayRequest, stripeGatewayConfig);
+        stripeCaptureRequest = StripeChargeCaptureRequest.of(captureGatewayRequest, stripeGatewayConfig);
     }
 
     @Test
