@@ -88,7 +88,7 @@ public class ConnectorModule extends AbstractModule {
 
     @Provides
     public ObjectMapper provideObjectMapper() {
-        return environment.getObjectMapper().registerModule(new Jdk8Module());
+        return environment.getObjectMapper();
     }
 
     @Provides
