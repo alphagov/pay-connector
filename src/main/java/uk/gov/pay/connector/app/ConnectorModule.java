@@ -6,6 +6,7 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -87,7 +88,7 @@ public class ConnectorModule extends AbstractModule {
 
     @Provides
     public ObjectMapper provideObjectMapper() {
-        return environment.getObjectMapper();
+        return environment.getObjectMapper().registerModule(new Jdk8Module());
     }
 
     @Provides

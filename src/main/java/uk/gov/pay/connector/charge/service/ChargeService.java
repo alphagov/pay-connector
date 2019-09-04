@@ -751,8 +751,13 @@ public class ChargeService {
         ofNullable(telephoneChargeRequest.getAuthCode()).ifPresent(authCode -> telephoneJSON.put("auth_code", authCode));
         ofNullable(telephoneChargeRequest.getTelephoneNumber()).ifPresent(telephoneNumber -> telephoneJSON.put("telephone_number", telephoneNumber));
         ofNullable(telephoneChargeRequest.getPaymentOutcome().getCode()).ifPresent(code -> telephoneJSON.put("code", code));
-        ofNullable(telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorCode()).ifPresent(errorCode -> telephoneJSON.put("error_code", errorCode));
-        ofNullable(telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorMessage()).ifPresent(errorMessage -> telephoneJSON.put("error_message", errorMessage));
+
+        telephoneChargeRequest.getPaymentOutcome().getSupplemental().ifPresent(
+                supplemental -> {
+                    supplemental.getErrorCode().ifPresent(errorCode -> telephoneJSON.put("error_code", errorCode));
+                    supplemental.getErrorMessage().ifPresent(errorMessage -> telephoneJSON.put("error_message", errorMessage));
+                }
+        );
         
         return new ExternalMetadata(telephoneJSON);
     }
