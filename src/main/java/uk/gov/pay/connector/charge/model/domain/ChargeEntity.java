@@ -141,6 +141,14 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     @Convert(converter = ExternalMetadataConverter.class)
     private ExternalMetadata externalMetadata;
 
+    @Column(name = "parity_check_status")
+    @Enumerated(EnumType.STRING)
+    private ParityCheckStatus parityCheckStatus;
+
+    @Column(name = "parity_check_date")
+    @Convert(converter = UTCDateTimeConverter.class)
+    private ZonedDateTime parityCheckDate;
+
     public ChargeEntity() {
         //for jpa
     }
@@ -150,16 +158,16 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                         boolean delayedCapture, ExternalMetadata externalMetadata) {
         this(amount, UNDEFINED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture, externalMetadata);
     }
-    
+
     public ChargeEntity(Long amount,
                         ServicePaymentReference reference,
                         String description,
                         ChargeStatus status,
-                        String email, 
-                        CardDetailsEntity cardDetails, 
+                        String email,
+                        CardDetailsEntity cardDetails,
                         ExternalMetadata externalMetadata,
                         GatewayAccountEntity gatewayAccount,
-                        String providerSessionId, 
+                        String providerSessionId,
                         SupportedLanguage language) {
         this.amount = amount;
         this.reference = reference;
@@ -260,11 +268,11 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     public void setExternalId(String externalId) {
         this.externalId = externalId;
     }
-    
+
     public void setStatus(ChargeStatus targetStatus) {
         setStatus(targetStatus, new UnspecifiedEvent());
     }
-    
+
     public void setStatus(ChargeStatus targetStatus, Event event) {
         if (isValidTransition(fromString(this.status), targetStatus, event)) {
             logger.info("Changing charge status for externalId [{}] [{}]->[{}] [event={}]",
@@ -327,7 +335,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                 .map(e -> e.getGatewayEventDate().orElse(e.getUpdated()))
                 .orElse(null);
     }
-    
+
     public CardDetailsEntity getCardDetails() {
         return cardDetails;
     }
@@ -371,7 +379,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     public void setCorporateSurcharge(Long corporateSurcharge) {
         this.corporateSurcharge = corporateSurcharge;
     }
-    
+
     public void setFee(FeeEntity fee) {
         this.fee = fee;
     }
@@ -380,4 +388,16 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         return Optional.ofNullable(fee).map(FeeEntity::getAmountCollected);
     }
 
+    public ParityCheckStatus getParityCheckStatus() {
+        return parityCheckStatus;
+    }
+
+    public ZonedDateTime getParityCheckDate() {
+        return parityCheckDate;
+    }
+
+    public void updateParityCheck(ParityCheckStatus parityCheckStatus) {
+        this.parityCheckStatus = parityCheckStatus;
+        this.parityCheckDate = ZonedDateTime.now(ZoneId.of("UTC"));
+    }
 }

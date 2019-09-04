@@ -16,6 +16,7 @@ import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -984,6 +985,24 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
+    public void shouldCreateNewChargeWithParityCheckStatus() {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
+        gatewayAccount.setId(defaultTestAccount.getAccountId());
+
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withParityStatus(ParityCheckStatus.EXISTS_IN_LEDGER)
+                .build();
+
+        chargeDao.persist(chargeEntity);
+        chargeDao.forceRefresh(chargeEntity);
+        Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
+
+        assertThat(charge.get().getParityCheckStatus(), equalTo(ParityCheckStatus.EXISTS_IN_LEDGER));
+        assertThat(charge.get().getParityCheckDate(), is(notNullValue()));
+    }
+
+    @Test
     public void shouldReturnNullFindingByIdWhenChargeDoesNotExist() {
 
         Optional<ChargeEntity> charge = chargeDao.findById(5686541L);
@@ -1592,9 +1611,9 @@ public class ChargeDaoIT extends DaoITestBase {
                 .insert();
 
         assertThat(chargeDao
-                .findById(defaultTestCharge.getChargeId())
-                .flatMap(ChargeEntity::getFeeAmount)
-                .get(),
+                        .findById(defaultTestCharge.getChargeId())
+                        .flatMap(ChargeEntity::getFeeAmount)
+                        .get(),
                 is(10L)
         );
     }
@@ -1605,14 +1624,14 @@ public class ChargeDaoIT extends DaoITestBase {
 
         assertThat(chargeDao.findMaxId(), is(defaultTestCharge.getChargeId()));
     }
-    
+
     @Test
     public void findChargeByProviderId() {
-        
+
         insertTestCharge();
         Optional<ChargeEntity> chargeEntity = chargeDao.findByProviderSessionId("providerId");
         assertThat(chargeEntity.isPresent(), is(true));
-        
+
     }
 
     private void insertTestAccount() {
