@@ -2,6 +2,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import uk.gov.pay.connector.charge.ChargesAwaitingCaptureMetricEmitter;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
@@ -36,19 +37,20 @@ public class CardCaptureProcess {
         List<ChargeCaptureMessage> captureMessages = captureQueue.retrieveChargesForCapture();
         for (ChargeCaptureMessage message : captureMessages) {
             try {
-                LOGGER.info("Charge capture message received - [externalChargeId={}] [queueMessageId={}] [queueMessageReceiptHandle={}]",
-                        message.getChargeId(),
+                MDC.put("chargeId", message.getChargeId());
+                LOGGER.info("Charge capture message received - [queueMessageId={}] [queueMessageReceiptHandle={}]",
                         message.getQueueMessageId(),
                         message.getQueueMessageReceiptHandle()
                 );
 
                 runCapture(message);
             } catch (Exception e) {
-                LOGGER.warn("Error capturing charge from SQS message [externalChargeId={}] [queueMessageId={}] [errorMessage={}]",
-                        message.getChargeId(),
+                LOGGER.warn("Error capturing charge from SQS message [queueMessageId={}] [errorMessage={}]",
                         message.getQueueMessageId(),
                         e.getMessage()
                 );
+            } finally {
+                MDC.remove("chargeId");
             }
         }
     }
