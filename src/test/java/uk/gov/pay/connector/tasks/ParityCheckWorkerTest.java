@@ -11,7 +11,7 @@ import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
-import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
@@ -40,26 +40,26 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class ParityCheckWorkerTest {
     @Mock
-    ChargeDao chargeDao;
+    private ChargeDao chargeDao;
     @Mock
-    ChargeEventDao chargeEventDao;
+    private ChargeService chargeService;
     @Mock
-    EmittedEventDao emittedEventDao;
+    private EmittedEventDao emittedEventDao;
     @Mock
-    StateTransitionQueue stateTransitionQueue;
+    private StateTransitionQueue stateTransitionQueue;
     @Mock
-    EventQueue eventQueue;
+    private EventQueue eventQueue;
     @Mock
-    RefundDao refundDao;
+    private RefundDao refundDao;
     @Mock
-    LedgerService ledgerService;
+    private LedgerService ledgerService;
 
-    ParityCheckWorker worker;
+    private ParityCheckWorker worker;
     private ChargeEntity chargeEntity;
 
     @Before
     public void setUp() {
-        worker = new ParityCheckWorker(chargeDao, ledgerService, emittedEventDao, stateTransitionQueue, eventQueue, refundDao);
+        worker = new ParityCheckWorker(chargeDao, chargeService, ledgerService, emittedEventDao, stateTransitionQueue, eventQueue, refundDao);
         CardDetailsEntity cardDetails = mock(CardDetailsEntity.class);
         chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
@@ -81,7 +81,7 @@ public class ParityCheckWorkerTest {
 
         worker.execute(1L, OptionalLong.empty());
 
-        assertThat(chargeEntity.getParityCheckStatus(), is(ParityCheckStatus.EXISTS_IN_LEDGER));
+        verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.EXISTS_IN_LEDGER);
         verify(stateTransitionQueue, never()).offer(any());
         verify(emittedEventDao, never()).recordEmission(any());
         verify(chargeDao, never()).findById(2L);
@@ -95,7 +95,7 @@ public class ParityCheckWorkerTest {
 
         worker.execute(1L, OptionalLong.empty());
 
-        assertThat(chargeEntity.getParityCheckStatus(), is(ParityCheckStatus.MISSING_IN_LEDGER));
+        verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.MISSING_IN_LEDGER);
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionQueue, times(1)).offer(argument.capture());
 
@@ -111,12 +111,11 @@ public class ParityCheckWorkerTest {
     @Test
     public void executeShouldEmitEventIfEmittedPreviously() {
         when(chargeDao.findById((any()))).thenReturn(Optional.of(chargeEntity));
-        when(emittedEventDao.hasBeenEmittedBefore(any())).thenReturn(true);
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.empty());
 
         worker.execute(1L, OptionalLong.of(1L));
 
-        assertThat(chargeEntity.getParityCheckStatus(), is(ParityCheckStatus.MISSING_IN_LEDGER));
+        verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.MISSING_IN_LEDGER);
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionQueue, times(1)).offer(argument.capture());
 

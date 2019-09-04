@@ -8,6 +8,7 @@ import org.slf4j.MDC;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.paritycheck.LedgerService;
@@ -24,6 +25,7 @@ import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUES
 public class ParityCheckWorker {
     private static final Logger logger = LoggerFactory.getLogger(ParityCheckWorker.class);
     private final ChargeDao chargeDao;
+    private ChargeService chargeService;
     private LedgerService ledgerService;
     private HistoricalEventEmitter historicalEventEmitter;
     private static final boolean shouldForceEmission = true;
@@ -31,9 +33,10 @@ public class ParityCheckWorker {
     private long maxId;
 
     @Inject
-    public ParityCheckWorker(ChargeDao chargeDao, LedgerService ledgerService, EmittedEventDao emittedEventDao,
+    public ParityCheckWorker(ChargeDao chargeDao, ChargeService chargeService, LedgerService ledgerService, EmittedEventDao emittedEventDao,
                              StateTransitionQueue stateTransitionQueue, EventQueue eventQueue, RefundDao refundDao) {
         this.chargeDao = chargeDao;
+        this.chargeService = chargeService;
         this.ledgerService = ledgerService;
         this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, stateTransitionQueue, eventQueue,
                 refundDao, shouldForceEmission);
@@ -74,12 +77,12 @@ public class ParityCheckWorker {
                 final ChargeEntity charge = maybeCharge.get();
                 Optional<LedgerTransaction> transaction = ledgerService.getTransaction(charge.getExternalId());
 
-                if (existsInLedger(charge, transaction)) {
+                if (existsInLedger(transaction)) {
                     logger.info("transaction exists in ledger [id={}]", currentId);
-                    charge.updateParityCheck(ParityCheckStatus.EXISTS_IN_LEDGER);
+                    chargeService.updateChargeParityStatus(charge.getExternalId(), ParityCheckStatus.EXISTS_IN_LEDGER);
                 } else {
                     logger.info("transaction does not exist in ledger [id={}] -", currentId);
-                    charge.updateParityCheck(ParityCheckStatus.MISSING_IN_LEDGER);
+                    chargeService.updateChargeParityStatus(charge.getExternalId(), ParityCheckStatus.MISSING_IN_LEDGER);
                     emitHistoricalEvents(charge);
                 }
 
@@ -91,7 +94,7 @@ public class ParityCheckWorker {
         }
     }
 
-    private boolean existsInLedger(ChargeEntity charge, Optional<LedgerTransaction> transaction) {
+    private boolean existsInLedger(Optional<LedgerTransaction> transaction) {
         return transaction.isPresent();
     }
 

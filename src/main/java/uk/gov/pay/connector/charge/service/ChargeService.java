@@ -26,6 +26,7 @@ import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.Supplemental;
@@ -125,13 +126,13 @@ public class ChargeService {
         this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
         this.eventQueue = eventQueue;
     }
-    
+
     @Transactional
     public Optional<ChargeResponse> findCharge(TelephoneChargeCreateRequest telephoneChargeRequest) {
         return chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId())
                 .map(charge -> populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
-    
+
     public Optional<ChargeResponse> create(TelephoneChargeCreateRequest telephoneChargeCreateRequest, Long accountId) {
 
         return createCharge(telephoneChargeCreateRequest, accountId)
@@ -172,7 +173,7 @@ public class ChargeService {
     }
 
     private ChargeStatus internalChargeStatus(String code) {
-        if(code == null) {
+        if (code == null) {
             return AUTHORISATION_SUCCESS;
         } else if ("P0010".equals(code)) {
             return AUTHORISATION_REJECTED;
@@ -184,7 +185,7 @@ public class ChargeService {
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return createCharge(chargeRequest, accountId, uriInfo)
                 .map(charge ->
-                    populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge, false).build()
+                        populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge, false).build()
                 );
     }
 
@@ -246,6 +247,16 @@ public class ChargeService {
     }
 
     @Transactional
+    public Optional<ChargeEntity> updateChargeParityStatus(String chargeId, ParityCheckStatus parityCheckStatus) {
+        return chargeDao.findByExternalId(chargeId)
+                .map(chargeEntity -> {
+                    chargeEntity.updateParityCheck(parityCheckStatus);
+                    return Optional.of(chargeEntity);
+                })
+                .orElseGet(Optional::empty);
+    }
+
+    @Transactional
     public Optional<ChargeEntity> updateCharge(String chargeId, PatchRequestBuilder.PatchRequest chargePatchRequest) {
         return chargeDao.findByExternalId(chargeId)
                 .map(chargeEntity -> {
@@ -269,14 +280,14 @@ public class ChargeService {
                     return null;
                 });
     }
-    
+
     private <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, ChargeEntity chargeEntity) {
-        
+
         PersistedCard persistedCard = null;
         if (chargeEntity.getCardDetails() != null) {
             persistedCard = chargeEntity.getCardDetails().toCard();
         }
-        
+
         T builderOfResponse = responseBuilder
                 .withAmount(chargeEntity.getAmount())
                 .withReference(chargeEntity.getReference())
@@ -285,19 +296,19 @@ public class ChargeService {
                 .withCardDetails(persistedCard)
                 .withEmail(chargeEntity.getEmail())
                 .withChargeId("dummypaymentid123notpersisted");
-                
+
         chargeEntity.getExternalMetadata().ifPresent(externalMetadata -> {
-            
+
             final PaymentOutcome paymentOutcome = new PaymentOutcome(
                     externalMetadata.getMetadata().get("status").toString()
             );
-            
+
             ExternalTransactionState state;
-            
+
             if (externalMetadata.getMetadata().get("status").toString().equals("success")) {
                 state = new ExternalTransactionState(
                         externalMetadata.getMetadata().get("status").toString(),
-                        true  
+                        true
                 );
             } else {
                 state = new ExternalTransactionState(
@@ -315,7 +326,7 @@ public class ChargeService {
                         (String) externalMetadata.getMetadata().get("error_message")
                 ));
             }
-            
+
             if (externalMetadata.getMetadata().get("authorised_date") != null) {
                 builderOfResponse.withAuthorisedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("authorised_date"))));
             }
@@ -323,7 +334,7 @@ public class ChargeService {
             if (externalMetadata.getMetadata().get("created_date") != null) {
                 builderOfResponse.withCreatedDate(ZonedDateTime.parse(((String) externalMetadata.getMetadata().get("created_date"))));
             }
-            
+
             builderOfResponse
                     .withProcessorId((String) externalMetadata.getMetadata().get("processor_id"))
                     .withAuthCode((String) externalMetadata.getMetadata().get("auth_code"))
@@ -331,7 +342,7 @@ public class ChargeService {
                     .withState(state)
                     .withPaymentOutcome(paymentOutcome);
         });
-        
+
         return builderOfResponse;
     }
 
@@ -740,7 +751,7 @@ public class ChargeService {
     private boolean chargeIsInLockedStatus(OperationType operationType, ChargeEntity chargeEntity) {
         return operationType.getLockingStatus().equals(ChargeStatus.fromString(chargeEntity.getStatus()));
     }
-    
+
     private ExternalMetadata storeExtraFieldsInMetaData(TelephoneChargeCreateRequest telephoneChargeRequest) {
         HashMap<String, Object> telephoneJSON = new HashMap<>();
         telephoneJSON.put("processor_id", telephoneChargeRequest.getProcessorId());
