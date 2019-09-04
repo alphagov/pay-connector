@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.apache.commons.lang.StringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,6 +27,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
     private static final String PROVIDER_NAME = "sandbox";
     private static final HashMap<String, Object> postBody = new HashMap<>();
+    private static final String stringOf51Characters = StringUtils.repeat("*", 51);
+    private static final String stringOf50Characters = StringUtils.repeat("*", 50);
 
     public ChargesApiTelephonePaymentResourceIT() {
         super(PROVIDER_NAME);
@@ -160,6 +163,12 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                         )
                 )
         );
+        postBody.put("auth_code", "666");
+        postBody.put("created_date", "2018-02-21T16:04:25Z");
+        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
+        postBody.put("name_on_card", "Jane Doe");
+        postBody.put("email_address", "jane_doe@example.com");
+        postBody.put("telephone_number", "+447700900796");
         
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
@@ -220,6 +229,53 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("state.code", is("P0030"))
                 .body("state.finished", is(true))
                 .body("state.message", is("Payment was cancelled by the user"));
+    }
+
+    @Test
+    public void createTelephoneChargeWithTruncatedMetaData() {
+        postBody.replace("payment_outcome",
+                Map.of(
+                        "status", "failed",
+                        "code", "P0030",
+                        "supplemental", Map.of(
+                                "error_code", stringOf51Characters,
+                                "error_message", stringOf51Characters
+                        )
+                )
+        );
+        postBody.replace("processor_id", stringOf51Characters);
+        postBody.put("auth_code", stringOf51Characters);
+        postBody.put("created_date", "2018-02-21T16:04:25Z");
+        postBody.put("authorised_date", "2018-02-21T16:05:33Z");
+        postBody.put("telephone_number", stringOf51Characters);
+
+        connectorRestApiClient
+                .postCreateTelephoneCharge(toJson(postBody))
+                .statusCode(201)
+                .contentType(JSON)
+                .body("amount", isNumber(12000))
+                .body("reference", is("MRPC12345"))
+                .body("description", is("New passport application"))
+                .body("created_date", is("2018-02-21T16:04:25.000Z"))
+                .body("authorised_date", is("2018-02-21T16:05:33.000Z"))
+                .body("processor_id", is(stringOf50Characters))
+                .body("provider_id", is("17498-8412u9-1273891239"))
+                .body("auth_code", is(stringOf50Characters))
+                .body("payment_outcome.status", is("failed"))
+                .body("payment_outcome.code", is("P0030"))
+                .body("payment_outcome.supplemental.error_code", is(stringOf50Characters))
+                .body("payment_outcome.supplemental.error_message", is(stringOf50Characters))
+                .body("card_details.card_brand", is("master-card"))
+                .body("card_details.expiry_date", is("02/19"))
+                .body("card_details.last_digits_card_number", is("1234"))
+                .body("card_details.first_digits_card_number", is("123456"))
+                .body("telephone_number", is(stringOf50Characters))
+                .body("charge_id", is("dummypaymentid123notpersisted"))
+                .body("state.status", is("failed"))
+                .body("state.code", is("P0030"))
+                .body("state.finished", is(true))
+                .body("state.message", is("Payment was cancelled by the user"));
+        
     }
 
     @Test
