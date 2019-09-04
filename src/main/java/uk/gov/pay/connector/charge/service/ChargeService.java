@@ -72,6 +72,7 @@ import java.util.Optional;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
+import static java.util.Optional.ofNullable;
 import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
@@ -147,7 +148,7 @@ public class ChargeService {
             CardDetailsEntity cardDetails = new CardDetailsEntity(
                     LastDigitsCardNumber.of(telephoneChargeRequest.getLastFourDigits()),
                     FirstDigitsCardNumber.of(telephoneChargeRequest.getFirstSixDigits()),
-                    telephoneChargeRequest.getNameOnCard(),
+                    telephoneChargeRequest.getNameOnCard().orElse(null),
                     telephoneChargeRequest.getCardExpiry(),
                     telephoneChargeRequest.getCardType()
             );
@@ -156,8 +157,8 @@ public class ChargeService {
                     telephoneChargeRequest.getAmount(),
                     ServicePaymentReference.of(telephoneChargeRequest.getReference()),
                     telephoneChargeRequest.getDescription(),
-                    internalChargeStatus(telephoneChargeRequest.getPaymentOutcome().getCode()),
-                    telephoneChargeRequest.getEmailAddress(),
+                    internalChargeStatus(telephoneChargeRequest.getPaymentOutcome().getCode().orElse(null)),
+                    telephoneChargeRequest.getEmailAddress().orElse(null),
                     cardDetails,
                     storeExtraFieldsInMetaData(telephoneChargeRequest),
                     gatewayAccount,
@@ -422,7 +423,7 @@ public class ChargeService {
                                                             WalletType walletType,
                                                             String emailAddress) {
         return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, Optional.empty(), sessionIdentifier,
-                Optional.ofNullable(walletType), Optional.ofNullable(emailAddress));
+                ofNullable(walletType), ofNullable(emailAddress));
     }
 
     public ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
@@ -742,21 +743,20 @@ public class ChargeService {
     
     private ExternalMetadata storeExtraFieldsInMetaData(TelephoneChargeCreateRequest telephoneChargeRequest) {
         HashMap<String, Object> telephoneJSON = new HashMap<>();
-        telephoneJSON.put("created_date", telephoneChargeRequest.getCreatedDate());
-        telephoneJSON.put("authorised_date", telephoneChargeRequest.getAuthorisedDate());
         telephoneJSON.put("processor_id", telephoneChargeRequest.getProcessorId());
-        telephoneJSON.put("auth_code", telephoneChargeRequest.getAuthCode());
         telephoneJSON.put("status", telephoneChargeRequest.getPaymentOutcome().getStatus());
-        telephoneJSON.put("telephone_number", telephoneChargeRequest.getTelephoneNumber());
         
-        if(telephoneChargeRequest.getPaymentOutcome().getCode() != null) {
-            telephoneJSON.put("code", telephoneChargeRequest.getPaymentOutcome().getCode());
-        }
-        
-        if(telephoneChargeRequest.getPaymentOutcome().getSupplemental() != null) {
-            telephoneJSON.put("error_code", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorCode());
-            telephoneJSON.put("error_message", telephoneChargeRequest.getPaymentOutcome().getSupplemental().getErrorMessage());
-        }
+        telephoneChargeRequest.getCreatedDate().ifPresent(createdDate -> telephoneJSON.put("created_date", createdDate));
+        telephoneChargeRequest.getAuthorisedDate().ifPresent(authorisedDate -> telephoneJSON.put("authorised_date", authorisedDate));
+        telephoneChargeRequest.getAuthCode().ifPresent(authCode -> telephoneJSON.put("auth_code", authCode));
+        telephoneChargeRequest.getTelephoneNumber().ifPresent(telephoneNumber -> telephoneJSON.put("telephone_number", telephoneNumber));
+        telephoneChargeRequest.getPaymentOutcome().getCode().ifPresent(code -> telephoneJSON.put("code", code));
+        telephoneChargeRequest.getPaymentOutcome().getSupplemental().ifPresent(
+                supplemental -> {
+                    supplemental.getErrorCode().ifPresent(errorCode -> telephoneJSON.put("error_code", errorCode));
+                    supplemental.getErrorMessage().ifPresent(errorMessage -> telephoneJSON.put("error_message", errorMessage));
+                }
+        );
         
         return new ExternalMetadata(telephoneJSON);
     }
