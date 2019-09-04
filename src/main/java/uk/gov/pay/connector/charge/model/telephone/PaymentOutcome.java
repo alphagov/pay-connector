@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.charge.model.telephone;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.connector.charge.validation.telephone.ValidPaymentOutcome;
 
 import java.util.Optional;
@@ -12,7 +14,8 @@ public class PaymentOutcome {
     private String status;
     
     private String code;
-    
+
+    @JsonProperty
     private Supplemental supplemental;
 
     public PaymentOutcome() {
@@ -22,7 +25,6 @@ public class PaymentOutcome {
         this.status = status;
     }
     
-
     public PaymentOutcome(String status, String code, Supplemental supplemental) {
         // For testing deserialization
         this.status = status;
@@ -42,6 +44,7 @@ public class PaymentOutcome {
         this.code = code;
     }
 
+    @JsonIgnore
     public Optional<Supplemental> getSupplemental() {
         return Optional.ofNullable(supplemental);
     }
