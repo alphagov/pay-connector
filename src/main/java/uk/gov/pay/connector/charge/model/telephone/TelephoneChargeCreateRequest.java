@@ -9,6 +9,7 @@ import uk.gov.pay.connector.charge.validation.telephone.ValidCardType;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.Optional;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class TelephoneChargeCreateRequest {
@@ -95,12 +96,12 @@ public class TelephoneChargeCreateRequest {
         return description;
     }
 
-    public String getCreatedDate() {
-        return createdDate;
+    public Optional<String> getCreatedDate() {
+        return Optional.ofNullable(createdDate);
     }
 
-    public String getAuthorisedDate() {
-        return authorisedDate;
+    public Optional<String> getAuthorisedDate() {
+        return Optional.ofNullable(authorisedDate);
     }
 
     public String getProcessorId() {
@@ -111,8 +112,8 @@ public class TelephoneChargeCreateRequest {
         return providerId;
     }
 
-    public String getAuthCode() {
-        return authCode;
+    public Optional<String> getAuthCode() {
+        return Optional.ofNullable(authCode);
     }
 
     public PaymentOutcome getPaymentOutcome() {
@@ -123,12 +124,12 @@ public class TelephoneChargeCreateRequest {
         return cardType;
     }
 
-    public String getNameOnCard() {
-        return nameOnCard;
+    public Optional<String> getNameOnCard() {
+        return Optional.ofNullable(nameOnCard);
     }
 
-    public String getEmailAddress() {
-        return emailAddress;
+    public Optional<String> getEmailAddress() {
+        return Optional.ofNullable(emailAddress);
     }
 
     public String getCardExpiry() {
@@ -143,8 +144,8 @@ public class TelephoneChargeCreateRequest {
         return firstSixDigits;
     }
 
-    public String getTelephoneNumber() {
-        return telephoneNumber;
+    public Optional<String> getTelephoneNumber() {
+        return Optional.ofNullable(telephoneNumber);
     }
     
     public static class Builder {

@@ -128,7 +128,6 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
                 .contentType(JSON)
-                .log().all()
                 .body("amount", isNumber(12000))
                 .body("reference", is("MRPC12345"))
                 .body("description", is("New passport application"))

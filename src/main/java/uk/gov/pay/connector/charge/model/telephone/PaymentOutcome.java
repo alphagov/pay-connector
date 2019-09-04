@@ -13,6 +13,7 @@ public class PaymentOutcome {
     
     private String status;
     
+    @JsonProperty
     private String code;
 
     @JsonProperty
@@ -36,8 +37,9 @@ public class PaymentOutcome {
         return status;
     }
 
-    public String getCode() {
-        return code;
+    @JsonIgnore
+    public Optional<String> getCode() {
+        return Optional.ofNullable(code);
     }
 
     public void setCode(String code) {

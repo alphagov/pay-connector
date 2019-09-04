@@ -14,8 +14,7 @@ public class Supplemental {
     private String errorCode;
 
     @JsonProperty
-    private String
-            errorMessage;
+    private String errorMessage;
 
     public Supplemental() {
     }

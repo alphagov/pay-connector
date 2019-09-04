@@ -148,7 +148,7 @@ public class ChargeService {
             CardDetailsEntity cardDetails = new CardDetailsEntity(
                     LastDigitsCardNumber.of(telephoneChargeRequest.getLastFourDigits()),
                     FirstDigitsCardNumber.of(telephoneChargeRequest.getFirstSixDigits()),
-                    telephoneChargeRequest.getNameOnCard(),
+                    telephoneChargeRequest.getNameOnCard().orElse(null),
                     telephoneChargeRequest.getCardExpiry(),
                     telephoneChargeRequest.getCardType()
             );
@@ -157,8 +157,8 @@ public class ChargeService {
                     telephoneChargeRequest.getAmount(),
                     ServicePaymentReference.of(telephoneChargeRequest.getReference()),
                     telephoneChargeRequest.getDescription(),
-                    internalChargeStatus(telephoneChargeRequest.getPaymentOutcome().getCode()),
-                    telephoneChargeRequest.getEmailAddress(),
+                    internalChargeStatus(telephoneChargeRequest.getPaymentOutcome().getCode().orElse(null)),
+                    telephoneChargeRequest.getEmailAddress().orElse(null),
                     cardDetails,
                     storeExtraFieldsInMetaData(telephoneChargeRequest),
                     gatewayAccount,
@@ -746,11 +746,11 @@ public class ChargeService {
         telephoneJSON.put("processor_id", telephoneChargeRequest.getProcessorId());
         telephoneJSON.put("status", telephoneChargeRequest.getPaymentOutcome().getStatus());
         
-        ofNullable(telephoneChargeRequest.getCreatedDate()).ifPresent(createdDate -> telephoneJSON.put("created_date", createdDate));
-        ofNullable(telephoneChargeRequest.getAuthorisedDate()).ifPresent(authorisedDate -> telephoneJSON.put("authorised_date", authorisedDate));
-        ofNullable(telephoneChargeRequest.getAuthCode()).ifPresent(authCode -> telephoneJSON.put("auth_code", authCode));
-        ofNullable(telephoneChargeRequest.getTelephoneNumber()).ifPresent(telephoneNumber -> telephoneJSON.put("telephone_number", telephoneNumber));
-        ofNullable(telephoneChargeRequest.getPaymentOutcome().getCode()).ifPresent(code -> telephoneJSON.put("code", code));
+        telephoneChargeRequest.getCreatedDate().ifPresent(createdDate -> telephoneJSON.put("created_date", createdDate));
+        telephoneChargeRequest.getAuthorisedDate().ifPresent(authorisedDate -> telephoneJSON.put("authorised_date", authorisedDate));
+        telephoneChargeRequest.getAuthCode().ifPresent(authCode -> telephoneJSON.put("auth_code", authCode));
+        telephoneChargeRequest.getTelephoneNumber().ifPresent(telephoneNumber -> telephoneJSON.put("telephone_number", telephoneNumber));
+        telephoneChargeRequest.getPaymentOutcome().getCode().ifPresent(code -> telephoneJSON.put("code", code));
 
         telephoneChargeRequest.getPaymentOutcome().getSupplemental().ifPresent(
                 supplemental -> {
