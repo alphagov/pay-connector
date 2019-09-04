@@ -136,9 +136,9 @@ public class TransactionDao {
                     field("c.first_digits_card_number").eq(params.getFirstDigitsCardNumber().toString()));
         }
 
-        if (isNotBlank(params.getEmail())) {
+        if (isNotBlank(params.getLikeEmail())) {
             queryFilters = queryFilters.and(
-                    field("c.email").lower().like(buildLikeClauseContaining(params.getEmail().toLowerCase())));
+                    field("c.email").lower().like(buildLikeClauseContaining(params.getLikeEmail().toLowerCase())));
         }
 
         if (!params.getCardBrands().isEmpty()) {

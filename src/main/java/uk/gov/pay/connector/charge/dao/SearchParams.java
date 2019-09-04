@@ -189,7 +189,7 @@ public class SearchParams {
         return reference;
     }
 
-    public String getEmail() {
+    public String getLikeEmail() {
         return likeEmail;
     }
 

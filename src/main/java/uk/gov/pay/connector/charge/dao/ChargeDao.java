@@ -176,8 +176,8 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
             predicates.add(cb.equal(cb.lower(charge.get(REFERENCE)), params.getReference().toString().toLowerCase()));
         if (params.getLikeReference() != null && StringUtils.isNotBlank(params.getLikeReference().toString()))
             predicates.add(likePredicate(cb, charge.get(REFERENCE), params.getLikeReference().toString()));
-        if (StringUtils.isNotBlank(params.getEmail()))
-            predicates.add(likePredicate(cb, charge.get(EMAIL), params.getEmail()));
+        if (StringUtils.isNotBlank(params.getLikeEmail()))
+            predicates.add(likePredicate(cb, charge.get(EMAIL), params.getLikeEmail()));
         if (params.getInternalStates() != null && !params.getInternalStates().isEmpty())
             predicates.add(charge.get(STATUS).in(params.getInternalStates()));
         if (!params.getCardBrands().isEmpty()) {

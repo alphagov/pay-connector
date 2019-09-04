@@ -783,8 +783,8 @@ public class ChargeDaoIT extends DaoITestBase {
 
     @Test
     public void searchChargeByPartialReference_ShouldReturnCharge() {
-        insertTestChargeWithReference(ServicePaymentReference.of("rorytest"));
-        insertTestCharge();
+        insertTestChargeWithReference(ServicePaymentReference.of("willnotreturn"));
+        insertTestChargeWithReference(ServicePaymentReference.of("Test reference"));
         SearchParams searchParams = new SearchParams()
                 .withReferenceLike(ServicePaymentReference.of("reference"));
 
@@ -796,8 +796,8 @@ public class ChargeDaoIT extends DaoITestBase {
 
     @Test
     public void searchChargeByPartialCaseInsensitiveReference_ShouldReturnCharge() {
-        insertTestChargeWithReference(ServicePaymentReference.of("rorytest"));
-        insertTestCharge();
+        insertTestChargeWithReference(ServicePaymentReference.of("willnotreturn"));
+        insertTestChargeWithReference(ServicePaymentReference.of("Test reference"));
         SearchParams searchParams = new SearchParams()
                 .withReferenceLike(ServicePaymentReference.of("rEfErEnCe"));
 
@@ -809,8 +809,8 @@ public class ChargeDaoIT extends DaoITestBase {
 
     @Test
     public void searchChargeByReference_ShouldReturnCharge() {
-        insertTestChargeWithReference(ServicePaymentReference.of("rorytest"));
-        insertTestCharge();
+        insertTestChargeWithReference(ServicePaymentReference.of("willnotreturn"));
+        insertTestChargeWithReference(ServicePaymentReference.of("Test reference"));
         SearchParams searchParams = new SearchParams()
                 .withReference(ServicePaymentReference.of("Test reference"));
 
@@ -822,8 +822,8 @@ public class ChargeDaoIT extends DaoITestBase {
 
     @Test
     public void searchChargeByReference_ShouldNotReturnChargeWithPartialMatch() {
-        insertTestChargeWithReference(ServicePaymentReference.of("rorytest"));
-        insertTestCharge();
+        insertTestChargeWithReference(ServicePaymentReference.of("willnotreturn"));
+        insertTestChargeWithReference(ServicePaymentReference.of("Test reference"));
         SearchParams searchParams = new SearchParams()
                 .withReference(ServicePaymentReference.of("reference"));
 
