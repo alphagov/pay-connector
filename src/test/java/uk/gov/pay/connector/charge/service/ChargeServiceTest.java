@@ -752,7 +752,7 @@ public class ChargeServiceTest {
         assertThat(chargeResponse.getAuthorisedDate().toString(), is("2018-02-21T16:05:33Z"));
         assertThat(chargeResponse.getAuthCode(), is("666"));
         assertThat(chargeResponse.getPaymentOutcome().getStatus(), is("failed"));
-        assertThat(chargeResponse.getPaymentOutcome().getCode(), is("P0010"));
+        assertThat(chargeResponse.getPaymentOutcome().getCode().get(), is("P0010"));
         assertThat(chargeResponse.getPaymentOutcome().getSupplemental().get().getErrorCode().get(), is("ECKOH01234"));
         assertThat(chargeResponse.getPaymentOutcome().getSupplemental().get().getErrorMessage().get(), is("textual message describing error code"));
         assertThat(chargeResponse.getCardDetails().getCardBrand(), is("visa"));
