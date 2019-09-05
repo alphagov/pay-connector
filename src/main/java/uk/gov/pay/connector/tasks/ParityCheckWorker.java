@@ -12,13 +12,15 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.paritycheck.LedgerService;
-import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import uk.gov.pay.connector.queue.StateTransitionQueue;
 import uk.gov.pay.connector.refund.dao.RefundDao;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUEST_ID;
 
@@ -75,13 +77,15 @@ public class ParityCheckWorker {
 
             if (maybeCharge.isPresent()) {
                 final ChargeEntity charge = maybeCharge.get();
-                Optional<LedgerTransaction> transaction = ledgerService.getTransaction(charge.getExternalId());
 
-                if (existsInLedger(transaction)) {
-                    logger.info("transaction exists in ledger [id={}]", currentId);
+                List<String> ids = charge.getRefunds().stream().map(RefundEntity::getExternalId).collect(Collectors.toList());
+                ids.add(charge.getExternalId());
+
+                if (existInLedger(ids)) {
+                    logger.info("transaction (and its refunds) exists in ledger [id={}]", currentId);
                     chargeService.updateChargeParityStatus(charge.getExternalId(), ParityCheckStatus.EXISTS_IN_LEDGER);
                 } else {
-                    logger.info("transaction does not exist in ledger [id={}] -", currentId);
+                    logger.info("transaction (or its refunds) does not exist in ledger [id={}] -", currentId);
                     chargeService.updateChargeParityStatus(charge.getExternalId(), ParityCheckStatus.MISSING_IN_LEDGER);
                     emitHistoricalEvents(charge);
                 }
@@ -94,8 +98,8 @@ public class ParityCheckWorker {
         }
     }
 
-    private boolean existsInLedger(Optional<LedgerTransaction> transaction) {
-        return transaction.isPresent();
+    private boolean existInLedger(List<String> transactions) {
+        return transactions.stream().allMatch(p -> ledgerService.getTransaction(p).isPresent());
     }
 
     private void emitHistoricalEvents(ChargeEntity charge) {

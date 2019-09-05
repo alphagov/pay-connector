@@ -36,6 +36,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ParityCheckWorkerTest {
@@ -84,6 +85,49 @@ public class ParityCheckWorkerTest {
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.EXISTS_IN_LEDGER);
         verify(stateTransitionQueue, never()).offer(any());
         verify(emittedEventDao, never()).recordEmission(any());
+        verify(chargeDao, never()).findById(2L);
+    }
+
+    @Test
+    public void executeRecordsParityStatusForChargeAndRefundsExistingInLedger() {
+        chargeEntity.getRefunds().add(aValidRefundEntity().build());
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(new LedgerTransaction()));
+        when(ledgerService.getTransaction(chargeEntity.getRefunds().get(0).getExternalId())).thenReturn(Optional.of(new LedgerTransaction()));
+
+        worker.execute(1L, OptionalLong.empty());
+
+        verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.EXISTS_IN_LEDGER);
+        verify(ledgerService, times(2)).getTransaction(any());
+        verify(ledgerService, times(1)).getTransaction(chargeEntity.getExternalId());
+        verify(ledgerService, times(1)).getTransaction(chargeEntity.getRefunds().get(0).getExternalId());
+        verify(stateTransitionQueue, never()).offer(any());
+        verify(emittedEventDao, never()).recordEmission(any());
+        verify(chargeDao, never()).findById(2L);
+    }
+
+    @Test
+    public void executeEmitsEventAndRecordsEmissionWhenRefundDoesNotExist() {
+        chargeEntity.getRefunds().add(aValidRefundEntity().build());
+        chargeEntity.getRefunds().add(aValidRefundEntity().build());
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+        when(ledgerService.getTransaction(any())).thenReturn(Optional.empty());
+
+        worker.execute(1L, OptionalLong.empty());
+
+        verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.MISSING_IN_LEDGER);
+        verify(ledgerService, times(1)).getTransaction(any());
+
+        ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
+        verify(stateTransitionQueue, times(1)).offer(argument.capture());
+
+        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(PaymentCreated.class));
+
+        ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(emittedEventDao, times(1)).recordEmission(daoArgumentCaptor.capture());
+
         verify(chargeDao, never()).findById(2L);
     }
 
