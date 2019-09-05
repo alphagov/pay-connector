@@ -55,7 +55,7 @@ public abstract class StripeRequest implements GatewayClientRequest {
 
     public final Map<String, String> getHeaders() {
         Map<String, String> result = new HashMap<>(Map.copyOf(headers()));
-        Optional.ofNullable(idempotencyKey).ifPresent(idempotencyKey -> result.put("Idempotency-Key", getIdempotencyKeyType() + idempotencyKey));
+        Optional.ofNullable(idempotencyKey).ifPresent(idempotencyKey -> result.put("Idempotency-Key", idempotencyKeyType() + idempotencyKey));
         result.putAll(AuthUtil.getStripeAuthHeader(stripeGatewayConfig, gatewayAccount.isLive()));
 
         return result;
@@ -89,7 +89,7 @@ public abstract class StripeRequest implements GatewayClientRequest {
         return Collections.emptyList();
     }
     
-    protected  String getIdempotencyKeyType() {
+    protected  String idempotencyKeyType() {
         return orderRequestType().toString();
     }
 

@@ -4,7 +4,7 @@
   "created": 1543339552,
   "data": {
     "object": {
-      "id": "{{sourceId}}",
+      "id": "{{id}}",
       "object": "source",
       "amount": 1000,
       "client_secret": "src_client_secret_E3GrK9qEhos6IcVNoQ2iaHt6",

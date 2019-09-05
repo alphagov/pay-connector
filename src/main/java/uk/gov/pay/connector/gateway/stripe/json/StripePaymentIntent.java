@@ -12,9 +12,20 @@ public class StripePaymentIntent {
     
     @JsonProperty("charges")
     private ChargesCollection chargesCollection;
+    
+    @JsonProperty("amount_capturable")
+    private Long amountCapturable;
 
     public ChargesCollection getChargesCollection() {
         return chargesCollection;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public Long getAmountCapturable() {
+        return amountCapturable;
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

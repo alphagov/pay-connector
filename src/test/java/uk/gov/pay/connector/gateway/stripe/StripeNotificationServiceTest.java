@@ -12,7 +12,6 @@ import uk.gov.pay.connector.app.StripeWebhookSigningSecrets;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -29,11 +28,14 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_PAYMENT_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.UNKNOWN;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_3DS_SOURCE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StripeNotificationServiceTest {
@@ -45,8 +47,6 @@ public class StripeNotificationServiceTest {
     private ChargeService mockChargeService;
     @Mock
     private ChargeEntity mockCharge;
-    @Mock
-    private GatewayAccountEntity mockGatewayAccountEntity;
     @Mock
     private StripeGatewayConfig stripeGatewayConfig;
 
@@ -113,6 +113,41 @@ public class StripeNotificationServiceTest {
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
         verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.CANCELED));
+    } 
+    
+    @Test
+    public void shouldUpdateCharge_WhenNotificationIsForPaymentIntentAmountCapturableUpdated() {
+        final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
+                "pi_123", PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED);
+        when(mockCharge.getAmount()).thenReturn(1000L);
+        when(mockChargeService.findByProviderAndTransactionId(STRIPE.getName(), "pi_123")).thenReturn(Optional.of(mockCharge));
+        
+        notificationService.handleNotificationFor(payload, signPayload(payload));
+        
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.AUTHORISED));
+    }
+    
+    @Test
+    public void shouldNotUpdateCharge_WhenNotificationIsForPaymentIntentAmountCapturableUpdatedButAmountsDontMatch() {
+        final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
+                "pi_123", PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED);
+        when(mockCharge.getAmount()).thenReturn(500L);
+        when(mockChargeService.findByProviderAndTransactionId(STRIPE.getName(), "pi_123")).thenReturn(Optional.of(mockCharge));
+        
+        notificationService.handleNotificationFor(payload, signPayload(payload));
+
+        verify(mockCard3dsResponseAuthService, never()).process3DSecureAuthorisationWithoutLocking(any(), any());
+    }
+
+    @Test
+    public void shouldUpdateCharge_WhenNotificationIsForPaymentIntentPaymentFailed() {
+        final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
+                "pi_123", PAYMENT_INTENT_PAYMENT_FAILED);
+
+        when(mockChargeService.findByProviderAndTransactionId(STRIPE.getName(), "pi_123")).thenReturn(Optional.of(mockCharge));
+        notificationService.handleNotificationFor(payload, signPayload(payload));
+
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.DECLINED));
     }
 
     @Test
@@ -178,7 +213,7 @@ public class StripeNotificationServiceTest {
                                                    String sourceId,
                                                    StripeNotificationType stripeNotificationType) {
         return TestTemplateResourceLoader.load(location)
-                .replace("{{sourceId}}", sourceId)
+                .replace("{{id}}", sourceId)
                 .replace("{{type}}", stripeNotificationType.getType());
     }
 

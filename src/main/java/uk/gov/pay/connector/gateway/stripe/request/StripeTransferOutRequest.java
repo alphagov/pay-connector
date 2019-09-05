@@ -44,7 +44,7 @@ public class StripeTransferOutRequest extends StripeTransferRequest {
     }
 
     @Override
-    protected String getIdempotencyKeyType() {
+    protected String idempotencyKeyType() {
         return "transfer_out";
     }
     

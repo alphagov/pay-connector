@@ -1,0 +1,31 @@
+{
+  "id": "evt_1FF3RvEZsufgnuO0tnyTrqsL",
+  "type": "{{type}}",
+  "object": "event",
+  "api_version": "2019-02-19",
+  "created": 1567622603,
+  "data": {
+    "object": {
+      "id": "{{id}}",
+      "object": "payment_intent",
+      "amount": 1000,
+      "amount_capturable": 1000,
+      "amount_received": 0,
+      "application": null,
+      "application_fee_amount": null,
+      "canceled_at": null,
+      "cancellation_reason": null,
+      "capture_method": "manual",
+      "charges": {
+        "object": "list",
+        "data": [
+          {
+            "id": "ch_1FF3RuEZsufgnuO0IPT8CY3o",
+            "object": "charge",
+            "amount": 1000
+          }
+        ]
+      }
+    }
+  }
+}
