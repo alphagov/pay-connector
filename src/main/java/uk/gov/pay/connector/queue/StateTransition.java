@@ -12,7 +12,7 @@ public abstract class StateTransition implements Delayed {
 
     private static final int MAXIMUM_NUMBER_OF_ATTEMPTS = 10;
     private static final int BASE_ATTEMPTS = 1;
-    private static final long DEFAULT_DELAY_DURATION_IN_MILLISECONDS = 100L;
+    private static final long DEFAULT_DELAY_DURATION_IN_MILLISECONDS = 200L;
 
     public StateTransition(Class stateTransitionEventClass) {
         this(stateTransitionEventClass, BASE_ATTEMPTS, DEFAULT_DELAY_DURATION_IN_MILLISECONDS);
