@@ -12,12 +12,15 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTransferResponse;
-import uk.gov.pay.connector.gateway.stripe.request.StripeCaptureRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripeChargeCaptureRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentCaptureRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferOutRequest;
 import uk.gov.pay.connector.gateway.stripe.response.StripeCaptureResponse;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
+import java.util.List;
 import java.util.Optional;
 
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
@@ -47,22 +50,23 @@ public class StripeCaptureHandler implements CaptureHandler {
         String transactionId = request.getTransactionId();
 
         try {
-            StripeCharge stripeCaptureResponse = captureWithPlatform(request);
-            Optional<Long> maybeFee = Optional.empty();
-
-            if (stripeCaptureResponse.isPlatformCharge()) {
-                maybeFee = calculateProcessingFee(request.getAmount(), stripeCaptureResponse);
-                Long netTransferAmount = maybeFee
-                        .map(fee -> calculateNetTransferAmount(request.getAmount(), fee))
-                        .orElse(request.getAmount());
-                transferToConnectAccount(request, netTransferAmount);
+            StripeCharge capturedCharge;
+            if (usePaymentIntent(transactionId)) {
+                capturedCharge = captureWithPaymentIntentAPI(request);
+            } else {
+                capturedCharge = captureWithChargeAPI(request);
             }
+            
+            Optional<Long> processingFee = capturedCharge.getFee()
+                    .flatMap(fee -> calculateProcessingFee(request.getAmount(), fee));
+                    
+            Long netTransferAmount = processingFee
+                    .map(fee -> request.getAmount() - fee)
+                    .orElse(request.getAmount());
+            
+            transferToConnectAccount(request, netTransferAmount);
 
-            return new CaptureResponse(
-                    stripeCaptureResponse.getId(),
-                    COMPLETE,
-                    maybeFee.orElse(null)
-            );
+            return new CaptureResponse(transactionId, COMPLETE, processingFee.orElse(null));
         } catch (GatewayErrorException e) {
 
             if (e.getFamily() == CLIENT_ERROR) {
@@ -91,8 +95,32 @@ public class StripeCaptureHandler implements CaptureHandler {
         }
     }
 
-    private StripeCharge captureWithPlatform(CaptureGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
-        String captureResponse = client.postRequestFor(StripeCaptureRequest.of(request, stripeGatewayConfig)).getEntity();
+    private StripeCharge captureWithPaymentIntentAPI(CaptureGatewayRequest request) throws GatewayException {
+        String captureResponse = client.postRequestFor(StripePaymentIntentCaptureRequest.of(request, stripeGatewayConfig)).getEntity();
+        StripePaymentIntent stripeCaptureResponse = jsonObjectMapper.getObject(captureResponse, StripePaymentIntent.class);
+        List<StripeCharge> stripeCharges = stripeCaptureResponse.getChargesCollection().getCharges();
+        
+        if (stripeCharges.size() != 1) {
+            throw new GatewayErrorException(
+                    String.format("Expected exactly one charge associated with payment intent %s, got %s", request.getTransactionId(), stripeCharges.size()));
+        }
+        
+        StripeCharge stripeCharge = stripeCharges.get(0);
+        
+        logger.info("Captured charge id {} with platform account - stripe capture id {}",
+                request.getExternalId(),
+                stripeCharge.getId()
+        );
+
+        return stripeCharge;
+    }
+
+    private boolean usePaymentIntent(String transactionId) {
+        return transactionId.startsWith("pi_");
+    }
+
+    private StripeCharge captureWithChargeAPI(CaptureGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
+        String captureResponse = client.postRequestFor(StripeChargeCaptureRequest.of(request, stripeGatewayConfig)).getEntity();
         StripeCharge stripeCaptureResponse = jsonObjectMapper.getObject(captureResponse, StripeCharge.class);
         logger.info("Captured charge id {} with platform account - stripe capture id {}",
                 request.getExternalId(),
@@ -114,16 +142,12 @@ public class StripeCaptureHandler implements CaptureHandler {
         );
     }
 
-    private Optional<Long> calculateProcessingFee(Long grossChargeAmount, StripeCharge stripeCaptureResponse) {
+    private Optional<Long> calculateProcessingFee(Long grossChargeAmount, Long stripeFee) {
         if (stripeGatewayConfig.isCollectFee()) {
-            Double platformFee = Math.ceil((stripeGatewayConfig.getFeePercentage()/100) * grossChargeAmount);
-            return stripeCaptureResponse.getFee().map(stripeFee -> stripeFee + platformFee.longValue());
+            Double platformFee = Math.ceil((stripeGatewayConfig.getFeePercentage() / 100) * grossChargeAmount);
+            return Optional.of(stripeFee + platformFee.longValue());
         }
-        
+
         return Optional.empty();
-    }
-    
-    private Long calculateNetTransferAmount(Long captureAmount, Long fee) {
-        return captureAmount - fee;
     }
 }

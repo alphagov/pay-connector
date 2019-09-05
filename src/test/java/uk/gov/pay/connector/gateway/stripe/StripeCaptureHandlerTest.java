@@ -16,6 +16,7 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCaptureHandler;
 import uk.gov.pay.connector.gateway.stripe.request.StripeCaptureRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentCaptureRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferOutRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -38,6 +39,7 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CAPTURE_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CAPTURE_SUCCESS_RESPONSE_DESTINATION_CHARGE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSFER_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
@@ -166,21 +168,6 @@ public class StripeCaptureHandlerTest {
     }
 
     @Test
-    public void shouldNotDoPostCaptureTransfer_IfChargeIsADestinationCharge() throws Exception {
-        GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
-        when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE_DESTINATION_CHARGE));
-
-        when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
-        verify(gatewayClient, never()).postRequestFor(any(StripeTransferOutRequest.class));
-
-        CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
-
-        assertTrue(captureResponse.isSuccessful());
-    }
-
-
-
-    @Test
     public void shouldNotCaptureIfPaymentProviderReturns4xxHttpStatusCode() throws Exception {
         GatewayErrorException exception = new GatewayErrorException("Unexpected HTTP status code 402 from gateway", load(STRIPE_ERROR_RESPONSE), SC_UNAUTHORIZED);
         when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenThrow(exception);
@@ -221,6 +208,27 @@ public class StripeCaptureHandlerTest {
         assertThat(response.toString(), containsString("error code: resource_missing"));
     }
 
+    @Test
+    public void shouldCorrectlyCaptureUsingPaymentIntentsApi() throws Exception {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withTransactionId("pi_123")
+                .withAmount(10000L)
+                .build();
+        
+        GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
+        when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE));
+        when(gatewayClient.postRequestFor(any(StripePaymentIntentCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
+
+        GatewayClient.Response gatewayTransferResponse = mock(GatewayClient.Response.class);
+        when(gatewayTransferResponse.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
+        when(gatewayClient.postRequestFor(any(StripeTransferOutRequest.class))).thenReturn(gatewayTransferResponse);
+
+        CaptureResponse response = stripeCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.state(), is(CaptureResponse.ChargeState.COMPLETE));
+        assertThat(response.getTransactionId().get(), is("pi_123"));
+    }
 
     @Test
     public void shouldNotCaptureIfPaymentProviderReturns5XXOnTransfer() throws Exception {
