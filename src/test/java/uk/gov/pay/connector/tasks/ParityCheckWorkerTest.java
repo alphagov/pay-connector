@@ -20,7 +20,6 @@ import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.paritycheck.LedgerService;
-import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import uk.gov.pay.connector.queue.StateTransition;
 import uk.gov.pay.connector.queue.StateTransitionQueue;
 import uk.gov.pay.connector.refund.dao.RefundDao;
@@ -36,6 +35,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -78,7 +78,7 @@ public class ParityCheckWorkerTest {
     public void executeRecordsParityStatusForChargesExistingInLedger() {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
-        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(new LedgerTransaction()));
+        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().build()));
 
         worker.execute(1L, OptionalLong.empty());
 
@@ -93,8 +93,8 @@ public class ParityCheckWorkerTest {
         chargeEntity.getRefunds().add(aValidRefundEntity().build());
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
-        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(new LedgerTransaction()));
-        when(ledgerService.getTransaction(chargeEntity.getRefunds().get(0).getExternalId())).thenReturn(Optional.of(new LedgerTransaction()));
+        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().build()));
+        when(ledgerService.getTransaction(chargeEntity.getRefunds().get(0).getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().build()));
 
         worker.execute(1L, OptionalLong.empty());
 
