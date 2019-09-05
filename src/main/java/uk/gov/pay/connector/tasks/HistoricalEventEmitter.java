@@ -48,6 +48,7 @@ public class HistoricalEventEmitter {
     private StateTransitionQueue stateTransitionQueue;
     private final EventQueue eventQueue;
     private final RefundDao refundDao;
+    private boolean shouldForceEmission;
 
     private final List<ChargeStatus> TERMINAL_AUTHENTICATION_STATES = List.of(
             AUTHORISATION_3DS_REQUIRED,
@@ -73,11 +74,18 @@ public class HistoricalEventEmitter {
     public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
                                   StateTransitionQueue stateTransitionQueue, EventQueue eventQueue,
                                   RefundDao refundDao) {
+        this(emittedEventDao, stateTransitionQueue, eventQueue, refundDao, false);
+    }
+
+    public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
+                                  StateTransitionQueue stateTransitionQueue, EventQueue eventQueue,
+                                  RefundDao refundDao, boolean shouldForceEmission) {
         this.emittedEventDao = emittedEventDao;
         this.stateTransitionQueue = stateTransitionQueue;
         this.eventQueue = eventQueue;
         this.refundDao = refundDao;
         this.paymentGatewayStateTransitions = PaymentGatewayStateTransitions.getInstance();
+        this.shouldForceEmission = shouldForceEmission;
     }
 
     public void processPaymentEvents(ChargeEntity charge) {
@@ -101,21 +109,29 @@ public class HistoricalEventEmitter {
         Class refundEventClass = RefundStateEventMap.calculateRefundEventClass(refundHistory.getUserExternalId(), refundHistory.getStatus());
         Event event = EventFactory.createRefundEvent(refundHistory, refundEventClass);
 
-        Boolean emittedBefore = emittedEventDao.hasBeenEmittedBefore(event);
-
-        if (emittedBefore) {
-            logger.info("Refund history event emitted before [refundExternalId={}] [refundHistoryId={}]", refundHistory.getExternalId(), refundHistory.getId());
+        if (shouldForceEmission) {
+            emitRefundEvent(refundHistory, refundEventClass, event);
         } else {
-            RefundStateTransition stateTransition = new RefundStateTransition(
-                    refundHistory.getExternalId(),
-                    refundHistory.getStatus(),
-                    refundEventClass);
+            boolean emittedBefore = emittedEventDao.hasBeenEmittedBefore(event);
 
-            logger.info("Processing new refund history event: [refundExternalId={}] [refundHistoryId={}]", refundHistory.getExternalId(), refundHistory.getId());
-
-            stateTransitionQueue.offer(stateTransition);
-            persistEventEmittedRecord(event);
+            if (emittedBefore) {
+                logger.info("Refund history event emitted before [refundExternalId={}] [refundHistoryId={}]", refundHistory.getExternalId(), refundHistory.getId());
+            } else {
+                emitRefundEvent(refundHistory, refundEventClass, event);
+            }
         }
+    }
+
+    private void emitRefundEvent(RefundHistory refundHistory, Class refundEventClass, Event event) {
+        RefundStateTransition stateTransition = new RefundStateTransition(
+                refundHistory.getExternalId(),
+                refundHistory.getStatus(),
+                refundEventClass);
+
+        logger.info("Processing new refund history event: [refundExternalId={}] [refundHistoryId={}]", refundHistory.getExternalId(), refundHistory.getId());
+
+        stateTransitionQueue.offer(stateTransition);
+        persistEventEmittedRecord(event);
     }
 
     private List<ChargeEventEntity> getSortedChargeEvents(ChargeEntity charge) {
@@ -189,15 +205,23 @@ public class HistoricalEventEmitter {
     private void offerPaymentStateTransitionEvents(long currentId, ChargeEventEntity chargeEventEntity, PaymentStateTransition transition) {
         Event event = EventFactory.createPaymentEvent(chargeEventEntity, transition.getStateTransitionEventClass());
 
-        final boolean emittedBefore = emittedEventDao.hasBeenEmittedBefore(event);
-
-        if (emittedBefore) {
-            logger.info("[{}] - found - charge event [{}] emitted before", currentId, chargeEventEntity.getId());
+        if (shouldForceEmission) {
+            offerStateTransitionEvent(currentId, chargeEventEntity, transition, event);
         } else {
-            logger.info("[{}] - found - emitting {} for charge event [{}] ", currentId, event, chargeEventEntity.getId());
-            stateTransitionQueue.offer(transition);
-            persistEventEmittedRecord(event);
+            final boolean emittedBefore = emittedEventDao.hasBeenEmittedBefore(event);
+
+            if (emittedBefore) {
+                logger.info("[{}] - found - charge event [{}] emitted before", currentId, chargeEventEntity.getId());
+            } else {
+                offerStateTransitionEvent(currentId, chargeEventEntity, transition, event);
+            }
         }
+    }
+
+    private void offerStateTransitionEvent(long currentId, ChargeEventEntity chargeEventEntity, PaymentStateTransition transition, Event event) {
+        logger.info("[{}] - found - emitting {} for charge event [{}] ", currentId, event, chargeEventEntity.getId());
+        stateTransitionQueue.offer(transition);
+        persistEventEmittedRecord(event);
     }
 
     private void processPaymentDetailEnteredEvent(List<ChargeEventEntity> chargeEventEntities) {
@@ -207,7 +231,7 @@ public class HistoricalEventEmitter {
                 .stream()
                 .filter(event -> isValidPaymentDetailsEnteredTransition(chargeEventEntities, event))
                 .map(PaymentDetailsEntered::from)
-                .filter(event -> !emittedEventDao.hasBeenEmittedBefore(event))
+                .filter(event -> shouldForceEmission || !emittedEventDao.hasBeenEmittedBefore(event))
                 .forEach(this::emitAndPersistEvent);
     }
 

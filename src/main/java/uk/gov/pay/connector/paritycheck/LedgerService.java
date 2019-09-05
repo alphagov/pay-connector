@@ -24,7 +24,10 @@ public class LedgerService {
     }
 
     public Optional<LedgerTransaction> getTransaction(String id) {
-        var uri = UriBuilder.fromPath(ledgerUrl).path(format("/v1/transaction/%s", id));
+        var uri = UriBuilder
+                .fromPath(ledgerUrl)
+                .path(format("/v1/transaction/%s", id))
+                .queryParam("override_account_id_restriction", "true");
 
         Response response = client
                 .target(uri)
