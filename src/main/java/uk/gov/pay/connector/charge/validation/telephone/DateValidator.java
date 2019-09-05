@@ -11,6 +11,15 @@ public class DateValidator implements ConstraintValidator<ValidDate, String> {
     @Override
     public boolean isValid(String date, ConstraintValidatorContext context) {
         
-        return true;
+        if (date == null) {
+            return true;
+        }
+        
+        try {
+            ZonedDateTime.parse(date);
+            return true;
+        } catch (DateTimeParseException e) {
+            return false;
+        }
     }
 }

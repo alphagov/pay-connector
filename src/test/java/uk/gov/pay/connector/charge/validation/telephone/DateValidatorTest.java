@@ -42,13 +42,13 @@ public class DateValidatorTest {
     public void failsValidationForInvalidCreatedDate() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .withCreatedDate("2018-02-21T16:04:25Z")
+                .withCreatedDate("invalid date")
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
 
         assertThat(constraintViolations.size(), isNumber(1));
-        assertThat(constraintViolations.iterator().next().getMessage(), is("Field [created_date] must be in a valid format"));
+        assertThat(constraintViolations.iterator().next().getMessage(), is("Field [created_date] must be in ISO-8601 format"));
     }
 
     @Test
@@ -67,7 +67,7 @@ public class DateValidatorTest {
     public void passesValidationForValidCreatedDate() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .withCreatedDate("null")
+                .withCreatedDate("2018-02-21T16:04:25Z")
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
