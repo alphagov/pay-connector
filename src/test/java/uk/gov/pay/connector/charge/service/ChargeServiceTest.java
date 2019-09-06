@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.service;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -244,7 +245,12 @@ public class ChargeServiceTest {
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, mockedStateTransitionQueue, mockedEventQueue);
     }
-
+    
+    @After
+    public void tearDown() {
+        telephoneRequestBuilder = null;
+    }
+    
     @Test
     public void shouldCreateAChargeWithDefaultLanguageAndDefaultDelayedCapture() {
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
@@ -640,7 +646,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
     }
-
+    
     @Test
     public void shouldNotFindCharge() {
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
