@@ -2,7 +2,6 @@ package uk.gov.pay.connector.charge.service;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.apache.commons.lang.StringUtils;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.After;
 import org.junit.Before;
