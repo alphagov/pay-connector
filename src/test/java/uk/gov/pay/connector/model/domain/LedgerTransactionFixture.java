@@ -15,4 +15,9 @@ public class LedgerTransactionFixture {
         ledgerTransaction.setState(new TransactionState(status));
         return ledgerTransaction;
     }
+
+    public LedgerTransactionFixture withStatus(String status) {
+        this.status = status;
+        return this;
+    }
 }

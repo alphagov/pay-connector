@@ -3,7 +3,6 @@ package uk.gov.pay.connector.tasks;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -15,20 +14,15 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
-import uk.gov.pay.connector.events.model.Event;
-import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.paritycheck.LedgerService;
-import uk.gov.pay.connector.queue.StateTransition;
 import uk.gov.pay.connector.queue.StateTransitionQueue;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 
 import java.util.Optional;
 import java.util.OptionalLong;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -94,7 +88,8 @@ public class ParityCheckWorkerTest {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().build()));
-        when(ledgerService.getTransaction(chargeEntity.getRefunds().get(0).getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().build()));
+        when(ledgerService.getTransaction(chargeEntity.getRefunds().get(0).getExternalId()))
+                .thenReturn(Optional.of(aValidLedgerTransaction().withStatus("submitted").build()));
 
         worker.execute(1L, OptionalLong.empty());
 
@@ -108,27 +103,56 @@ public class ParityCheckWorkerTest {
     }
 
     @Test
+    public void executeRecordsParityStatusForChargeWithDifferentStatusInLedger() {
+        chargeEntity.getRefunds().add(aValidRefundEntity().build());
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().withStatus("started").build()));
+
+        worker.execute(1L, OptionalLong.empty());
+
+        verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.DATA_MISMATCH);
+        verify(ledgerService, times(1)).getTransaction(any());
+        verify(ledgerService, times(1)).getTransaction(chargeEntity.getExternalId());
+        verify(ledgerService, never()).getTransaction(chargeEntity.getRefunds().get(0).getExternalId());
+        verify(stateTransitionQueue, times(1)).offer(any());
+        verify(emittedEventDao, times(1)).recordEmission(any());
+    }
+
+    @Test
     public void executeEmitsEventAndRecordsEmissionWhenRefundDoesNotExist() {
         chargeEntity.getRefunds().add(aValidRefundEntity().build());
         chargeEntity.getRefunds().add(aValidRefundEntity().build());
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(any())).thenReturn(Optional.empty());
+        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().build()));
 
         worker.execute(1L, OptionalLong.empty());
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.MISSING_IN_LEDGER);
-        verify(ledgerService, times(1)).getTransaction(any());
+        verify(ledgerService, times(2)).getTransaction(any());
+        verify(stateTransitionQueue, times(1)).offer(any());
+        verify(emittedEventDao, times(1)).recordEmission(any());
+    }
 
-        ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
-        verify(stateTransitionQueue, times(1)).offer(argument.capture());
+    @Test
+    public void executeEmitsEventAndRecordsEmissionWhenRefundWithDifferentStatusInLedger() {
+        chargeEntity.getRefunds().add(aValidRefundEntity().build());
+        chargeEntity.getRefunds().add(aValidRefundEntity().build());
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+        when(ledgerService.getTransaction(any())).thenReturn(Optional.empty());
+        when(ledgerService.getTransaction(any())).thenReturn(Optional.of(
+                aValidLedgerTransaction().withStatus("success").build()));
+        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().build()));
 
-        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(PaymentCreated.class));
+        worker.execute(1L, OptionalLong.empty());
 
-        ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(emittedEventDao, times(1)).recordEmission(daoArgumentCaptor.capture());
-
-        verify(chargeDao, never()).findById(2L);
+        verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.DATA_MISMATCH);
+        verify(ledgerService, times(2)).getTransaction(any());
+        verify(stateTransitionQueue, times(1)).offer(any());
+        verify(emittedEventDao, times(1)).recordEmission(any());
     }
 
     @Test
@@ -140,16 +164,9 @@ public class ParityCheckWorkerTest {
         worker.execute(1L, OptionalLong.empty());
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.MISSING_IN_LEDGER);
-        ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
-        verify(stateTransitionQueue, times(1)).offer(argument.capture());
-
-        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(PaymentCreated.class));
-
-        ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(emittedEventDao, times(1)).recordEmission(daoArgumentCaptor.capture());
-        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_CREATED"));
-
-        verify(chargeDao, never()).findById(2L);
+        verify(ledgerService, times(1)).getTransaction(any());
+        verify(stateTransitionQueue, times(1)).offer(any());
+        verify(emittedEventDao, times(1)).recordEmission(any());
     }
 
     @Test
@@ -160,13 +177,8 @@ public class ParityCheckWorkerTest {
         worker.execute(1L, OptionalLong.of(1L));
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.MISSING_IN_LEDGER);
-        ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
-        verify(stateTransitionQueue, times(1)).offer(argument.capture());
-
-        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(PaymentCreated.class));
-
-        ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(emittedEventDao, times(1)).recordEmission(daoArgumentCaptor.capture());
-        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_CREATED"));
+        verify(ledgerService, times(1)).getTransaction(any());
+        verify(stateTransitionQueue, times(1)).offer(any());
+        verify(emittedEventDao, times(1)).recordEmission(any());
     }
 }
