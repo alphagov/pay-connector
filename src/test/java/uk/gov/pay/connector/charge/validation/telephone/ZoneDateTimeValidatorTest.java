@@ -48,7 +48,7 @@ public class ZoneDateTimeValidatorTest {
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
 
         assertThat(constraintViolations.size(), isNumber(1));
-        assertThat(constraintViolations.iterator().next().getMessage(), is("Field [created_date] must be in ISO-8601 format"));
+        assertThat(constraintViolations.iterator().next().getMessage(), is("Field [created_date] must be a valid ISO-8601 time and date format"));
     }
 
     @Test
