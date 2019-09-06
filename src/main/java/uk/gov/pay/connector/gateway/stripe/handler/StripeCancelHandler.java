@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
@@ -9,22 +7,13 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
-import uk.gov.pay.connector.gateway.GatewayOrder;
-import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.util.JsonObjectMapper;
+import uk.gov.pay.connector.gateway.stripe.request.StripeChargeCancelRequest;
 
-import java.net.URI;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
-import static uk.gov.pay.connector.gateway.util.AuthUtil.getStripeAuthHeader;
 
 public class StripeCancelHandler {
 
@@ -39,16 +28,10 @@ public class StripeCancelHandler {
     }
 
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
-        String url = stripeGatewayConfig.getUrl() + "/v1/refunds";
-        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
-
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
 
-        String payload = URLEncodedUtils.format(singletonList(new BasicNameValuePair("charge", request.getTransactionId())), UTF_8);
-        
         try {
-            client.postRequestFor(URI.create(url), gatewayAccount, new GatewayOrder(OrderRequestType.CANCEL, payload,
-                    APPLICATION_FORM_URLENCODED_TYPE), getStripeAuthHeader(stripeGatewayConfig, gatewayAccount.isLive()));
+            client.postRequestFor(StripeChargeCancelRequest.of(request, stripeGatewayConfig));
             return responseBuilder.withResponse(new BaseCancelResponse() {
 
                 private final String transactionId = randomUUID().toString();
@@ -79,6 +62,6 @@ public class StripeCancelHandler {
             return responseBuilder.withGatewayError(e.toGatewayError()).build();
         } catch (GenericGatewayException | GatewayConnectionTimeoutException e) {
             return responseBuilder.withGatewayError(e.toGatewayError()).build();
-        } 
+        }
     }
 }
