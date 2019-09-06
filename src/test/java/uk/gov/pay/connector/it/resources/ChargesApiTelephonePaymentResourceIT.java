@@ -308,7 +308,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .contentType(JSON)
-                .body("message[0]", is("Field [created_date] must be in ISO-8601 format"));
+                .body("message[0]", is("Field [created_date] must be a valid ISO-8601 time and date format"));
     }
 
     @Test
@@ -319,7 +319,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .contentType(JSON)
-                .body("message[0]", is("Field [authorised_date] must be in ISO-8601 format"));
+                .body("message[0]", is("Field [authorised_date] must be a valid ISO-8601 time and date format"));
     }
 
     @Test
