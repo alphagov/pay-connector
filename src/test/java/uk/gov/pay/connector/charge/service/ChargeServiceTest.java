@@ -247,6 +247,11 @@ public class ChargeServiceTest {
                 mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, mockedStateTransitionQueue, mockedEventQueue);
     }
     
+    @After
+    public void tearDown() {
+        telephoneRequestBuilder = null;
+    }
+    
     @Test
     public void shouldCreateAChargeWithDefaultLanguageAndDefaultDelayedCapture() {
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
