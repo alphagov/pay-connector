@@ -70,6 +70,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
@@ -238,7 +240,7 @@ public class ChargeService {
                 .findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity, false).build());
     }
-
+    
     @Transactional
     public Optional<ChargeResponse> findChargeByGatewayTransactionId(String gatewayTransactionId, UriInfo uriInfo) {
         return chargeDao
@@ -311,11 +313,16 @@ public class ChargeService {
                         true
                 );
             } else {
+                String message = Stream.of(ExternalChargeState.values())
+                        .filter(chargeState -> chargeState.getCode() != null)
+                        .collect(Collectors.toMap(e -> e.getCode(), e -> e.getMessage()))
+                        .get(externalMetadata.getMetadata().get("code").toString());
+                
                 state = new ExternalTransactionState(
                         externalMetadata.getMetadata().get("status").toString(),
                         true,
                         externalMetadata.getMetadata().get("code").toString(),
-                        "error message"
+                        message
                 );
                 paymentOutcome.setCode(externalMetadata.getMetadata().get("code").toString());
             }

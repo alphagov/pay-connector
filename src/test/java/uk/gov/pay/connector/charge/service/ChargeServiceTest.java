@@ -771,7 +771,7 @@ public class ChargeServiceTest {
         assertThat(chargeResponse.getChargeId(), is("dummypaymentid123notpersisted"));
         assertThat(chargeResponse.getState().getStatus(), is("failed"));
         assertThat(chargeResponse.getState().isFinished(), is(true));
-        assertThat(chargeResponse.getState().getMessage(), is("error message"));
+        assertThat(chargeResponse.getState().getMessage(), is("Payment method rejected"));
         assertThat(chargeResponse.getState().getCode(), is("P0010"));
     }
 

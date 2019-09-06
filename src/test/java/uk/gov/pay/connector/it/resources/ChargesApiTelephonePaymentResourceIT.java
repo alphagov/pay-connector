@@ -145,7 +145,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("state.status", is("failed"))
                 .body("state.code", is("P0010"))
                 .body("state.finished", is(true))
-                .body("state.message", is("error message"));
+                .body("state.message", is("Payment method rejected"));
     }
 
     @Test
@@ -182,7 +182,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("state.status", is("failed"))
                 .body("state.code", is("P0050"))
                 .body("state.finished", is(true))
-                .body("state.message", is("error message"));
+                .body("state.message", is("Payment provider returned an error"));
     }
 
     @Test
