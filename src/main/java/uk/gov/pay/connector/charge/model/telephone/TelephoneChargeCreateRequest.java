@@ -6,7 +6,7 @@ import uk.gov.pay.connector.charge.validation.telephone.ValidCardExpiryDate;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardFirstSixDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardLastFourDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardType;
-import uk.gov.pay.connector.charge.validation.telephone.ValidDate;
+import uk.gov.pay.connector.charge.validation.telephone.ValidDateTime;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -24,10 +24,10 @@ public class TelephoneChargeCreateRequest {
     @NotNull(message = "Field [description] cannot be null")
     private String description;
     
-    @ValidDate(message = "Field [created_date] must be in ISO-8601 format")
+    @ValidDateTime(message = "Field [created_date] must be a valid ISO-8601 time and date format")
     private String createdDate;
 
-    @ValidDate(message = "Field [authorised_date] must be in ISO-8601 format")
+    @ValidDateTime(message = "Field [authorised_date] must be a valid ISO-8601 time and date format")
     private String authorisedDate;
     
     @NotNull(message = "Field [processor_id] cannot be null")

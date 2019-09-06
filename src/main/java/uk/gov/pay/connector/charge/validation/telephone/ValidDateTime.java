@@ -11,9 +11,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target({FIELD})
 @Retention(RUNTIME)
-@Constraint(validatedBy = DateValidator.class)
+@Constraint(validatedBy = ZoneDateTimeValidator.class)
 @Documented
-public @interface ValidDate {
+public @interface ValidDateTime {
 
     String message() default "Must be a valid date format";
 
