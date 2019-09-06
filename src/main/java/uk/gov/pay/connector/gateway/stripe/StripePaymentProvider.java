@@ -109,6 +109,9 @@ public class StripePaymentProvider implements PaymentProvider {
                 case DECLINED:
                     return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.REJECTED);
                 case AUTHORISED:
+                    if (request.getTransactionId().get().startsWith("pi_")) {
+                        return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED);
+                    }
                     return authorise3DSSource(request);
             }
         }

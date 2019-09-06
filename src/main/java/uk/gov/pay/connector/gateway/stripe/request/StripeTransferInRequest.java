@@ -58,7 +58,7 @@ public class StripeTransferInRequest extends StripeTransferRequest {
     }
 
     @Override
-    protected String getIdempotencyKeyType() {
+    protected String idempotencyKeyType() {
         return "transfer_in";
     }
 

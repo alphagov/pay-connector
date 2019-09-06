@@ -32,6 +32,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED;
+import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT_INTENT_PAYMENT_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
@@ -39,6 +41,7 @@ import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_3DS_SOURCE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -132,6 +135,42 @@ public class StripeNotificationResourceIT {
     }
 
     @Test
+    public void shouldHandleAPaymentIntentAmountCapturableUpdatedNotification() {
+        String transactionId = "pi_123" + nextInt();
+        String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
+
+        String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
+                transactionId, PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED);
+        String response = notifyConnector(payload)
+                .then()
+                .statusCode(200)
+                .extract().body()
+                .asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_STRIPE));
+
+        assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_SUCCESS.getValue());
+    }
+
+    @Test
+    public void shouldHandleAPaymentIntentPaymentFailedNotification() {
+        String transactionId = "pi_123" + nextInt();
+        String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
+
+        String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
+                transactionId, PAYMENT_INTENT_PAYMENT_FAILED);
+        String response = notifyConnector(payload)
+                .then()
+                .statusCode(200)
+                .extract().body()
+                .asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_STRIPE));
+
+        assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_REJECTED.getValue());
+    }
+
+    @Test
     public void shouldFailAStripeNotificationWithAnUnexpectedContentType() {
         String transactionId = randomId();
         createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
@@ -179,7 +218,7 @@ public class StripeNotificationResourceIT {
                                                    String sourceId,
                                                    StripeNotificationType stripeNotificationType) {
         return TestTemplateResourceLoader.load(location)
-                .replace("{{sourceId}}", sourceId)
+                .replace("{{id}}", sourceId)
                 .replace("{{type}}", stripeNotificationType.getType());
     }
 
@@ -190,7 +229,7 @@ public class StripeNotificationResourceIT {
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
                 .withGatewayAccountId(accountId)
-                .withAmount(6234L)
+                .withAmount(1000L)
                 .withStatus(status)
                 .withTransactionId(gatewayTransactionId)
                 .build());

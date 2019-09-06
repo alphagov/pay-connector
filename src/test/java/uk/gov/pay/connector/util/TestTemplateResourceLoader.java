@@ -139,6 +139,7 @@ public class TestTemplateResourceLoader {
     public static final String STRIPE_TRANSFER_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/transfer_success_response.json";
 
     public static final String STRIPE_NOTIFICATION_3DS_SOURCE = TEMPLATE_BASE_NAME + "/stripe/notification_3ds_source.json";
+    public static final String STRIPE_NOTIFICATION_PAYMENT_INTENT = TEMPLATE_BASE_NAME + "/stripe/notification_payment_intent.json";
 
     public static final String SQS_SEND_MESSAGE_RESPONSE = TEMPLATE_BASE_NAME + "/sqs/send-message-response.xml";
     public static final String SQS_ERROR_RESPONSE = TEMPLATE_BASE_NAME + "/sqs/error-response.xml";

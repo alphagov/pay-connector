@@ -7,6 +7,8 @@ public enum StripeNotificationType {
     SOURCE_CANCELED("source.canceled"),
     SOURCE_CHARGEABLE("source.chargeable"),
     SOURCE_FAILED("source.failed"),
+    PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED("payment_intent.amount_capturable_updated"),
+    PAYMENT_INTENT_PAYMENT_FAILED("payment_intent.payment_failed"),
     UNKNOWN("");
 
     private final String type;
