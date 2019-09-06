@@ -301,6 +301,17 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
     }
 
     @Test
+    public void shouldReturn422ForInvalidCreatedDate() {
+        postBody.put("created_date", "invalid");
+
+        connectorRestApiClient
+                .postCreateTelephoneCharge(toJson(postBody))
+                .statusCode(422)
+                .contentType(JSON)
+                .body("message[0]", is("Field [created_date] must be in ISO-8601 format"));
+    }
+
+    @Test
     public void shouldReturn422ForMissingAmount() {
         postBody.remove("amount");
         
