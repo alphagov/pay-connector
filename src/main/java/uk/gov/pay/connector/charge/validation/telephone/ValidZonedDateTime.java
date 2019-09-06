@@ -13,9 +13,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Constraint(validatedBy = ZoneDateTimeValidator.class)
 @Documented
-public @interface ValidDateTime {
+public @interface ValidZonedDateTime {
 
-    String message() default "Must be a valid date format";
+    String message() default "must be a valid ISO-8601 time and date format";
 
     Class<?>[] groups() default{};
 

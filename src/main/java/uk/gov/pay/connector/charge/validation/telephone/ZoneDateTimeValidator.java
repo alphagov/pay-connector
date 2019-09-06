@@ -5,7 +5,7 @@ import javax.validation.ConstraintValidatorContext;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 
-public class ZoneDateTimeValidator implements ConstraintValidator<ValidDateTime, String> {
+public class ZoneDateTimeValidator implements ConstraintValidator<ValidZonedDateTime, String> {
     
     @Override
     public boolean isValid(String date, ConstraintValidatorContext context) {
