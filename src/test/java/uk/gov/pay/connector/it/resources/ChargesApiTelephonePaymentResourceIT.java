@@ -186,6 +186,43 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
     }
 
     @Test
+    public void createTelephoneChargeForFailedStatusP0030() {
+        postBody.replace("payment_outcome",
+                Map.of(
+                        "status", "failed",
+                        "code", "P0030",
+                        "supplemental", Map.of(
+                                "error_code", "ECKOH01234",
+                                "error_message", "textual message describing error code"
+                        )
+                )
+        );
+
+        connectorRestApiClient
+                .postCreateTelephoneCharge(toJson(postBody))
+                .statusCode(201)
+                .contentType(JSON)
+                .body("amount", isNumber(12000))
+                .body("reference", is("MRPC12345"))
+                .body("description", is("New passport application"))
+                .body("processor_id", is("183f2j8923j8"))
+                .body("provider_id", is("17498-8412u9-1273891239"))
+                .body("payment_outcome.status", is("failed"))
+                .body("payment_outcome.code", is("P0030"))
+                .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
+                .body("payment_outcome.supplemental.error_message", is("textual message describing error code"))
+                .body("card_details.card_brand", is("master-card"))
+                .body("card_details.expiry_date", is("02/19"))
+                .body("card_details.last_digits_card_number", is("1234"))
+                .body("card_details.first_digits_card_number", is("123456"))
+                .body("charge_id", is("dummypaymentid123notpersisted"))
+                .body("state.status", is("failed"))
+                .body("state.code", is("P0030"))
+                .body("state.finished", is(true))
+                .body("state.message", is("Payment was cancelled by the user"));
+    }
+
+    @Test
     public void shouldReturnResponseForAlreadyExistingTelephoneCharge() {
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
