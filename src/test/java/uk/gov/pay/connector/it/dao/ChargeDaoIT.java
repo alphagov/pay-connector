@@ -1304,7 +1304,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void testFindChargeByTokenId() {
+    public void testFindChargeByUnusedTokenId() {
         TestCharge charge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -1323,6 +1323,20 @@ public class ChargeDaoIT extends DaoITestBase {
 
         assertThat(chargeOpt.get().getGatewayAccount(), is(notNullValue()));
         assertThat(chargeOpt.get().getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
+    }
+
+    @Test
+    public void testFindChargeByUsedTokenId() {
+        TestCharge charge = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .insert();
+
+        databaseTestHelper.addToken(charge.getChargeId(), "used-token-id", true);
+
+        Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId("used-token-id");
+        assertTrue(chargeOpt.isEmpty());
     }
 
     @Test

@@ -66,7 +66,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     }
 
     public Optional<ChargeEntity> findByTokenId(String tokenId) {
-        String query = "SELECT te.chargeEntity FROM TokenEntity te WHERE te.token=:tokenId";
+        String query = "SELECT te.chargeEntity FROM TokenEntity te WHERE te.token=:tokenId AND te.used=false";
 
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)
