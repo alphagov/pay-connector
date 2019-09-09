@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.junit.After;
 import org.junit.Before;
@@ -62,6 +61,7 @@ public class SecurityTokensResourceIT {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestToken()
                 .withCharge(defaultTestCharge)
+                .withUsed(false)
                 .insert();
 
         givenSetup()
@@ -85,11 +85,62 @@ public class SecurityTokensResourceIT {
     }
 
     @Test
+    public void shouldSuccessfullyGetUnusedToken() {
+        TestToken token = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestToken()
+                .withCharge(defaultTestCharge)
+                .withUsed(false)
+                .insert();
+
+        givenSetup()
+                .get("/v1/frontend/tokens/" + token.getSecureRedirectToken())
+                .then()
+                .statusCode(200)
+                .contentType(JSON)
+                .body("used", is(false))
+                .body("charge.externalId", is(defaultTestCharge.getExternalChargeId()))
+                .body("charge.status", is(defaultTestCharge.getChargeStatus().toString()))
+                .body("charge.gatewayAccount.service_name", is(defaultTestAccount.getServiceName()));
+    }
+
+    @Test
+    public void shouldSuccessfullyGetUsedToken() {
+        TestToken token = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestToken()
+                .withCharge(defaultTestCharge)
+                .withUsed(true)
+                .insert();
+
+        givenSetup()
+                .get("/v1/frontend/tokens/" + token.getSecureRedirectToken())
+                .then()
+                .statusCode(200)
+                .contentType(JSON)
+                .body("used", is(true))
+                .body("charge.externalId", is(defaultTestCharge.getExternalChargeId()))
+                .body("charge.status", is(defaultTestCharge.getChargeStatus().toString()))
+                .body("charge.gatewayAccount.service_name", is(defaultTestAccount.getServiceName()));
+    }
+
+    @Test
+    public void shouldReturn404ForTokenNotFound() {
+        givenSetup()
+                .get("/v1/frontend/tokens/non-existent-secure-redirect-token")
+                .then()
+                .statusCode(404)
+                .body("message", contains("Token invalid!"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+
+    @Test
     public void shouldSuccessfullyDeleteToken() {
         TestToken token = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestToken()
                 .withCharge(defaultTestCharge)
+                .withUsed(false)
                 .insert();
 
         givenSetup()

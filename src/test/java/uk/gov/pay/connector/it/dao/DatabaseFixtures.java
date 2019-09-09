@@ -657,16 +657,22 @@ public class  DatabaseFixtures {
     public class TestToken {
         TestCharge testCharge;
         String secureRedirectToken = "3c9fee80-977a-4da5-a003-4872a8cf95b6";
+        boolean used = false;
 
         public TestToken withCharge(TestCharge testCharge) {
             this.testCharge = testCharge;
             return this;
         }
 
+        public TestToken withUsed(boolean used) {
+            this.used = used;
+            return this;
+        }
+
         public TestToken insert() {
             if (testCharge == null)
                 throw new IllegalStateException("Test Charge must be provided.");
-            databaseTestHelper.addToken(testCharge.getChargeId(), secureRedirectToken);
+            databaseTestHelper.addToken(testCharge.getChargeId(), secureRedirectToken, used);
             return this;
         }
 
