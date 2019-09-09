@@ -400,11 +400,16 @@ public class DatabaseTestHelper {
     }
 
     public void addToken(Long chargeId, String tokenId) {
+        addToken(chargeId, tokenId, false);
+    }
+
+    public void addToken(Long chargeId, String tokenId, boolean used) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO tokens(charge_id, secure_redirect_token) VALUES (:charge_id, :secure_redirect_token)")
+                        .createStatement("INSERT INTO tokens(charge_id, secure_redirect_token, used) VALUES (:charge_id, :secure_redirect_token, :used)")
                         .bind("charge_id", chargeId)
                         .bind("secure_redirect_token", tokenId)
+                        .bind("used", used)
                         .execute()
         );
     }

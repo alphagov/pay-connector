@@ -70,6 +70,7 @@ public class TokenDaoJpaIT extends DaoITestBase {
         tokenEntity.setId(nextLong());
         tokenEntity.setToken(tokenId);
         tokenEntity.setChargeEntity(chargeEntity);
+        tokenEntity.setUsed(false);
         tokenDao.persist(tokenEntity);
 
         Optional<TokenEntity> tokenOptional = tokenDao.findByChargeId(defaultTestCharge.getChargeId());
@@ -81,6 +82,7 @@ public class TokenDaoJpaIT extends DaoITestBase {
         assertThat(token.getId(), is(notNullValue()));
         assertThat(token.getToken(), is(tokenId));
         assertThat(token.getChargeEntity().getId(), is(defaultTestCharge.getChargeId()));
+        assertThat(token.isUsed(), is(false));
     }
 
     @Test
@@ -90,7 +92,7 @@ public class TokenDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findByTokenId_shouldFindToken() {
+    public void findByTokenId_shouldFindUnusedToken() {
 
         String tokenId = "qwerty";
         databaseTestHelper.addToken(defaultTestCharge.getChargeId(), tokenId);
@@ -100,6 +102,21 @@ public class TokenDaoJpaIT extends DaoITestBase {
         assertThat(entity.getId(), is(notNullValue()));
         assertThat(entity.getChargeEntity().getId(), is(defaultTestCharge.getChargeId()));
         assertThat(entity.getToken(), is(tokenId));
+        assertThat(entity.isUsed(), is(false));
+    }
+
+    @Test
+    public void findByTokenId_shouldFindUsedToken() {
+
+        String tokenId = "qwerty";
+        databaseTestHelper.addToken(defaultTestCharge.getChargeId(), tokenId, true);
+
+        TokenEntity entity = tokenDao.findByTokenId(tokenId).get();
+
+        assertThat(entity.getId(), is(notNullValue()));
+        assertThat(entity.getChargeEntity().getId(), is(defaultTestCharge.getChargeId()));
+        assertThat(entity.getToken(), is(tokenId));
+        assertThat(entity.isUsed(), is(true));
     }
 
     @Test

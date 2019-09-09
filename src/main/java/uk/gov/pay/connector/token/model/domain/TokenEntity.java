@@ -40,6 +40,9 @@ public class TokenEntity extends AbstractVersionedEntity {
     @JoinColumn(name = "charge_id", nullable = false)
     private ChargeEntity chargeEntity;
 
+    @Column(name = "used")
+    private boolean used;
+
     public TokenEntity() {
         // for JPA
     }
@@ -49,7 +52,8 @@ public class TokenEntity extends AbstractVersionedEntity {
         tokenEntity.setChargeEntity(chargeEntity);
         tokenEntity.setCreatedDate(chargeEntity.getCreatedDate());
         tokenEntity.setToken(UUID.randomUUID().toString());
-        
+        tokenEntity.setUsed(false);
+
         return tokenEntity;
     }
 
@@ -83,5 +87,13 @@ public class TokenEntity extends AbstractVersionedEntity {
 
     public void setChargeEntity(ChargeEntity chargeEntity) {
         this.chargeEntity = chargeEntity;
+    }
+
+    public boolean isUsed() {
+        return used;
+    }
+
+    public void setUsed(boolean used) {
+        this.used = used;
     }
 }
