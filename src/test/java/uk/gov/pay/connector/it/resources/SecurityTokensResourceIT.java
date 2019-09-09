@@ -9,6 +9,7 @@ import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestToken;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
@@ -28,7 +29,6 @@ public class SecurityTokensResourceIT {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
-    private DatabaseFixtures.TestToken defaultTestToken;
 
     @DropwizardTestContext
     private TestContext testContext;
@@ -49,12 +49,6 @@ public class SecurityTokensResourceIT {
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .insert();
-
-        defaultTestToken = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestToken()
-                .withTestToken(defaultTestCharge)
-                .insert();
     }
 
     @After
@@ -62,48 +56,59 @@ public class SecurityTokensResourceIT {
         databaseTestHelper.truncateAllData();
     }
 
-    private String tokensUrlFor(String id) {
-        return "/v1/frontend/tokens/{chargeTokenId}".replace("{chargeTokenId}", id);//format("/v1/frontend/tokens/%s", id);
-    }
-
     @Test
     public void shouldSuccessfullyGetChargeForToken() {
-        ValidatableResponse tokenGetsStatusCode = findTokenGetsStatusCode(defaultTestToken.getSecureRedirectToken(), 200);
-        tokenGetsStatusCode
+        TestToken token = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestToken()
+                .withCharge(defaultTestCharge)
+                .insert();
+
+        givenSetup()
+                .get("/v1/frontend/tokens/" + token.getSecureRedirectToken() + "/charge")
+                .then()
+                .statusCode(200)
+                .contentType(JSON)
                 .body("externalId", is(defaultTestCharge.getExternalChargeId()))
                 .body("status", is(CREATED.getValue()))
                 .body("gatewayAccount.service_name", is(defaultTestAccount.getServiceName()));
     }
 
     @Test
-    public void shouldReturn404WhenTokenNotFound() {
-        findTokenGetsStatusCode("non-existant-secure-redirect-token", 404)
+    public void shouldReturn404ForChargeWhenTokenNotFound() {
+        givenSetup()
+                .get("/v1/frontend/tokens/non-existent-secure-redirect-token/charge")
+                .then()
+                .statusCode(404)
                 .body("message", contains("Token invalid!"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test
     public void shouldSuccessfullyDeleteToken() {
+        TestToken token = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestToken()
+                .withCharge(defaultTestCharge)
+                .insert();
+
         givenSetup()
-                .delete(tokensUrlFor(defaultTestToken.getSecureRedirectToken()))
+                .delete("/v1/frontend/tokens/" + token.getSecureRedirectToken())
                 .then()
                 .statusCode(204)
                 .body(emptyOrNullString());
-        findTokenGetsStatusCode(defaultTestToken.getSecureRedirectToken(), 404)
+
+        givenSetup()
+                .get("/v1/frontend/tokens/" + token.getSecureRedirectToken() + "/charge")
+                .then()
+                .statusCode(404)
                 .body("message", contains("Token invalid!"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-    }
-
-    private ValidatableResponse findTokenGetsStatusCode(String secureRedirectToken, int expectedStatusCode) {
-        return givenSetup()
-                .get(tokensUrlFor(secureRedirectToken) + "/charge")
-                .then()
-                .statusCode(expectedStatusCode)
-                .contentType(JSON);
     }
 
     private RequestSpecification givenSetup() {
         return given().port(testContext.getPort())
                 .contentType(JSON);
     }
+
 }

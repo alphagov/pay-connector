@@ -658,7 +658,7 @@ public class  DatabaseFixtures {
         TestCharge testCharge;
         String secureRedirectToken = "3c9fee80-977a-4da5-a003-4872a8cf95b6";
 
-        public TestToken withTestToken(TestCharge testCharge) {
+        public TestToken withCharge(TestCharge testCharge) {
             this.testCharge = testCharge;
             return this;
         }
