@@ -26,14 +26,6 @@ public class TokenDao extends JpaDao<TokenEntity> {
                 .findFirst();
     }
 
-    public Optional<TokenEntity> findByChargeId(Long chargeId) {
-        return entityManager.get()
-                .createQuery("SELECT t FROM TokenEntity t WHERE t.chargeEntity.id = :chargeId", TokenEntity.class)
-                .setParameter("chargeId", chargeId)
-                .getResultList().stream()
-                .findFirst();
-    }
-    
     public int deleteTokensOlderThanSpecifiedDate(ZonedDateTime cutOffDate) {
         return entityManager.get()
                 .createQuery("DELETE FROM TokenEntity t WHERE t.createdDate < :cutOffDate", TokenEntity.class)

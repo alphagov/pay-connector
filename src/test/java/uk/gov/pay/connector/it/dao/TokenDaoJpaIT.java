@@ -15,7 +15,6 @@ import java.util.Optional;
 
 import static com.github.npathai.hamcrestopt.OptionalMatchers.isEmpty;
 import static com.github.npathai.hamcrestopt.OptionalMatchers.isPresent;
-import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -56,39 +55,6 @@ public class TokenDaoJpaIT extends DaoITestBase {
         tokenDao.persist(tokenEntity);
 
         assertThat(databaseTestHelper.getChargeTokenId(defaultChargeTestEntity.getId()), is(tokenEntity.getToken()));
-    }
-
-    @Test
-    public void findByChargeId_shouldFindToken() {
-
-        String tokenId = "tokenBB2";
-        final Optional<ChargeEntity> maybeCharge = chargeDao.findByExternalId(defaultTestCharge.externalChargeId);
-        assertThat(maybeCharge.isPresent(), is(true));
-        ChargeEntity chargeEntity = maybeCharge.get();
-        
-        TokenEntity tokenEntity = new TokenEntity();
-        tokenEntity.setId(nextLong());
-        tokenEntity.setToken(tokenId);
-        tokenEntity.setChargeEntity(chargeEntity);
-        tokenEntity.setUsed(false);
-        tokenDao.persist(tokenEntity);
-
-        Optional<TokenEntity> tokenOptional = tokenDao.findByChargeId(defaultTestCharge.getChargeId());
-
-        assertThat(tokenOptional.isPresent(), is(true));
-
-        TokenEntity token = tokenOptional.get();
-
-        assertThat(token.getId(), is(notNullValue()));
-        assertThat(token.getToken(), is(tokenId));
-        assertThat(token.getChargeEntity().getId(), is(defaultTestCharge.getChargeId()));
-        assertThat(token.isUsed(), is(false));
-    }
-
-    @Test
-    public void findByChargeId_shouldNotFindToken() {
-        Long noExistingChargeId = 9876512L;
-        assertThat(tokenDao.findByChargeId(noExistingChargeId).isPresent(), is(false));
     }
 
     @Test
