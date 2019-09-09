@@ -503,6 +503,7 @@ public class ChargeServiceTest {
         TokenEntity tokenEntity = tokenEntityArgumentCaptor.getValue();
         assertThat(tokenEntity.getChargeEntity().getId(), is(CHARGE_ENTITY_ID));
         assertThat(tokenEntity.getToken(), is(notNullValue()));
+        assertThat(tokenEntity.isUsed(), is(false));
     }
 
     @Test
