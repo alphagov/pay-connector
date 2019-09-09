@@ -1239,4 +1239,11 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="update existing tokens to have a used value of false" author="">
+        <update tableName="tokens">
+            <column name="used" value="false"/>
+            <where>used IS NULL</where>
+        </update>
+    </changeSet>
+
 </databaseChangeLog>
