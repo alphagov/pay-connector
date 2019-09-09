@@ -22,7 +22,6 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
@@ -49,6 +48,11 @@ public class FrontendContractTest {
     @Before
     public void refreshDatabase() {
         dbHelper.truncateAllData();
+    }
+    
+    @State(("an unused token testToken exists with charge id 1000 associated with it"))
+    public void anUnusedTokenExists() {
+        dbHelper.addToken(1000L, "testToken", false);
     }
 
     @State("a sandbox account exists with a charge with id testChargeId that is in state ENTERING_CARD_DETAILS.")
