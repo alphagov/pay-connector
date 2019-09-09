@@ -1232,4 +1232,11 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="add used column to tokens table" author="">
+        <addColumn tableName="tokens">
+            <column name="used" type="boolean">
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
