@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.token.dao.TokenDao;
+import uk.gov.pay.connector.token.model.domain.TokenResponse;
 import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
@@ -34,6 +35,18 @@ public class SecurityTokensResource {
     public SecurityTokensResource(TokenDao tokenDao, ChargeDao chargeDao) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
+    }
+
+    @GET
+    @Path("/v1/frontend/tokens/{chargeTokenId}")
+    @Produces(APPLICATION_JSON)
+    @JsonView(GatewayAccountEntity.Views.FrontendView.class)
+    public Response getToken(@PathParam("chargeTokenId") String chargeTokenId) {
+        logger.debug("get token {}", chargeTokenId);
+        return tokenDao.findByTokenId(chargeTokenId)
+                .map(tokenEntity -> new TokenResponse(tokenEntity.isUsed(), tokenEntity.getChargeEntity()))
+                .map(ResponseUtil::successResponseWithEntity)
+                .orElseGet(() -> notFoundResponse("Token invalid!"));
     }
 
     @GET
