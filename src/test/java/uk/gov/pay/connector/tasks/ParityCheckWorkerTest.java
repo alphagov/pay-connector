@@ -85,9 +85,10 @@ public class ParityCheckWorkerTest {
     @Test
     public void executeRecordsParityStatusForChargeAndRefundsExistingInLedger() {
         chargeEntity.getRefunds().add(aValidRefundEntity().build());
+        chargeEntity.setStatus(ChargeStatus.EXPIRED);
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
-        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().build()));
+        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().withStatus("timedout").build()));
         when(ledgerService.getTransaction(chargeEntity.getRefunds().get(0).getExternalId()))
                 .thenReturn(Optional.of(aValidLedgerTransaction().withStatus("submitted").build()));
 
