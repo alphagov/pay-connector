@@ -17,12 +17,17 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.util.AddChargeParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Map;
 
+import static java.time.ZonedDateTime.now;
+import static org.apache.commons.lang.math.RandomUtils.nextLong;
+import static uk.gov.pay.connector.pact.util.GatewayAccountUtil.setUpGatewayAccount;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 @RunWith(PactRunner.class)
@@ -50,15 +55,24 @@ public class FrontendContractTest {
         dbHelper.truncateAllData();
     }
     
-    @State(("an unused token testToken exists with charge id 1000 associated with it"))
+    @State(("an unused token testToken exists with external charge id chargeExternalId associated with it"))
     public void anUnusedTokenExists() {
-        dbHelper.addToken(1000L, "testToken", false);
+        long gatewayAccountId = 666L;
+        setUpGatewayAccount(dbHelper, gatewayAccountId);
+
+        var params = anAddChargeParams()
+                .withExternalChargeId("chargeExternalId")
+                .withGatewayAccountId(String.valueOf(gatewayAccountId))
+                .build();
+        dbHelper.addCharge(params);
+        
+        dbHelper.addToken(params.getChargeId(), "testToken", false);
     }
 
     @State("a sandbox account exists with a charge with id testChargeId that is in state ENTERING_CARD_DETAILS.")
     public void aChargeExistsAwaitingAuthorisation() {
         long gatewayAccountId = 666L;
-        GatewayAccountUtil.setUpGatewayAccount(dbHelper, gatewayAccountId);
+        setUpGatewayAccount(dbHelper, gatewayAccountId);
         
         String chargeExternalId = "testChargeId";
 
