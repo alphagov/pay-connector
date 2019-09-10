@@ -3,8 +3,8 @@ package uk.gov.pay.connector.events.dao;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.events.EmittedEventEntity;
-import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
+import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 
 import java.sql.Timestamp;
@@ -15,6 +15,7 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 public class EmittedEventDaoIT extends DaoITestBase {
     private EmittedEventDao emittedEventDao;
@@ -80,6 +81,57 @@ public class EmittedEventDaoIT extends DaoITestBase {
         emittedEventDao.recordEmission(paymentCreatedEvent);
 
         assertThat(emittedEventDao.hasBeenEmittedBefore(paymentCreatedEvent), is(true));
+    }
+
+    @Test
+    public void recordEmissionWithParameters_shouldRecordEmission() {
+        final PaymentCreated eventToRecord = aPaymentCreatedEvent();
+
+        emittedEventDao.recordEmission(eventToRecord.getResourceType(), eventToRecord.getResourceExternalId(),
+                eventToRecord.getEventType(), eventToRecord.getTimestamp());
+
+        final List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
+
+        assertThat(events.size(), is(1));
+        final Map<String, Object> event = events.get(0);
+        assertThat(event.get("resource_external_id"), is(eventToRecord.getResourceExternalId()));
+        assertThat(event.get("resource_type"), is(eventToRecord.getResourceType().getLowercase()));
+        assertThat(event.get("event_type"), is(eventToRecord.getEventType()));
+        assertThat(event.get("emitted_date"), is(nullValue()));
+    }
+
+    @Test
+    public void markEventAsEmitted_shouldRecordEmittedDate() {
+        final PaymentCreated eventToRecord = aPaymentCreatedEvent();
+
+        emittedEventDao.recordEmission(eventToRecord.getResourceType(), eventToRecord.getResourceExternalId(),
+                eventToRecord.getEventType(), eventToRecord.getTimestamp());
+
+        List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
+        Map<String, Object> event = events.get(0);
+        assertThat(event.get("emitted_date"), is(nullValue()));
+
+        emittedEventDao.markEventAsEmitted(eventToRecord);
+        events = databaseTestHelper.readEmittedEvents();
+        event = events.get(0);
+        assertThat(event.get("emitted_date"), is(notNullValue()));
+    }
+
+    @Test
+    public void markEventAsEmitted_shouldNotUpdateIfNoRecordIsFoundWithNullEmittedDate() {
+        final PaymentCreated eventToRecord = aPaymentCreatedEvent();
+        emittedEventDao.recordEmission(eventToRecord);
+
+        List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
+
+        Map<String, Object> event = events.get(0);
+        assertThat(event.get("emitted_date"), is(notNullValue()));
+        String emittedDateBeforeUpdate = event.get("emitted_date").toString();
+
+        emittedEventDao.markEventAsEmitted(eventToRecord);
+        events = databaseTestHelper.readEmittedEvents();
+        event = events.get(0);
+        assertThat(event.get("emitted_date").toString(), is(emittedDateBeforeUpdate));
     }
 
     private PaymentCreated aPaymentCreatedEvent() {

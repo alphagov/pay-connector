@@ -6,10 +6,15 @@ import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.events.EmittedEventEntity;
 import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.ResourceType;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+
+import static java.time.ZonedDateTime.now;
 
 @Transactional
 public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
@@ -40,9 +45,38 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
                 event.getResourceExternalId(),
                 event.getEventType(),
                 event.getTimestamp(),
-                ZonedDateTime.now()
+                now()
         );
 
         persist(emittedEvent);
+    }
+
+    public void recordEmission(ResourceType resourceType, String externalId, String eventType, ZonedDateTime eventDate) {
+        final EmittedEventEntity emittedEvent = new EmittedEventEntity(
+                resourceType.getLowercase(),
+                externalId,
+                eventType,
+                eventDate,
+                null
+        );
+        persist(emittedEvent);
+    }
+
+    @Transactional
+    public void markEventAsEmitted(Event event) {
+        Query query = entityManager.get()
+                .createQuery("UPDATE EmittedEventEntity e" +
+                        " SET e.emittedDate = :emittedDate " + 
+                        " WHERE e.resourceType = :resource_type" +
+                        " AND e.resourceExternalId = :resource_external_id" +
+                        " AND e.eventType = :event_type" +
+                        " AND e.emittedDate is null"
+                );
+        query.setParameter("resource_type", event.getResourceType().getLowercase())
+                .setParameter("resource_external_id", event.getResourceExternalId())
+                .setParameter("event_type", event.getEventType())
+                .setParameter("emittedDate", ZonedDateTime.now(ZoneId.of("UTC")));
+        
+        query.executeUpdate();
     }
 }
