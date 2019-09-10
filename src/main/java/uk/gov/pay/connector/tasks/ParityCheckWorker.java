@@ -45,14 +45,14 @@ public class ParityCheckWorker {
                 refundDao, shouldForceEmission);
     }
 
-    public void execute(Long startId, OptionalLong maybeMaxId) {
+    public void execute(Long startId, OptionalLong maybeMaxId, boolean doNotReprocessValidRecords) {
         try {
             MDC.put(HEADER_REQUEST_ID, "ParityCheckWorker-" + RandomUtils.nextLong(0, 10000));
 
             maxId = maybeMaxId.orElseGet(() -> chargeDao.findMaxId());
             logger.info("Starting from {} up to {}", startId, maxId);
             for (long i = startId; i <= maxId; i++) {
-                checkParityFor(i);
+                checkParityFor(i, doNotReprocessValidRecords);
             }
         } catch (NullPointerException e) {
             for (StackTraceElement s : e.getStackTrace()) {
@@ -70,13 +70,18 @@ public class ParityCheckWorker {
 
     // needs to be public for transactional annotation
     @Transactional
-    public void checkParityFor(long currentId) {
+    public void checkParityFor(long currentId, boolean doNotReprocessValidRecords) {
         final Optional<ChargeEntity> maybeCharge = chargeDao.findById(currentId);
 
         try {
             if (maybeCharge.isPresent()) {
                 final ChargeEntity charge = maybeCharge.get();
                 MDC.put("chargeId", charge.getExternalId());
+
+                if (doNotReprocessValidRecords && ParityCheckStatus.EXISTS_IN_LEDGER.equals(charge.getParityCheckStatus())) {
+                    logger.info("transaction parity check skipped [id={},status={}]", currentId, charge.getParityCheckStatus());
+                    return;
+                }
 
                 ParityCheckStatus parityCheckStatus = getChargeAndRefundsParityCheckStatus(charge);
                 chargeService.updateChargeParityStatus(charge.getExternalId(), parityCheckStatus);
