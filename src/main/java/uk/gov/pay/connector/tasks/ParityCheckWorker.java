@@ -104,7 +104,7 @@ public class ParityCheckWorker {
 
     private ParityCheckStatus getChargeParityCheckStatus(ChargeEntity charge) {
         var transaction = ledgerService.getTransaction(charge.getExternalId());
-        var externalChargeState = ChargeStatus.fromString(charge.getStatus()).toExternal().getStatus();
+        var externalChargeState = ChargeStatus.fromString(charge.getStatus()).toExternal().getStatusV2();
 
         return getParityCheckStatus(transaction, externalChargeState);
     }
