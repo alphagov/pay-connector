@@ -18,6 +18,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeCancelHandler;
 import uk.gov.pay.connector.gateway.stripe.request.StripeChargeCancelRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentCancelRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -25,6 +26,7 @@ import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
@@ -52,7 +54,6 @@ public class StripeCancelHandlerTest {
                 .withTransactionId(transactionId)
                 .withAmount(10000L)
                 .build();
-
     }
 
     @Test
@@ -60,6 +61,19 @@ public class StripeCancelHandlerTest {
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(chargeEntity);
         final GatewayResponse<BaseCancelResponse> response = stripeCancelHandler.cancel(request);
         assertThat(response.isSuccessful(), is(true));
+        verify(client).postRequestFor(any(StripeChargeCancelRequest.class));
+    } 
+    
+    @Test
+    public void shouldCancelPaymentSuccessfullyUsingPaymentIntents() throws Exception {
+        CancelGatewayRequest request = CancelGatewayRequest.valueOf(aValidChargeEntity()
+                .withGatewayAccountEntity(buildGatewayAccountEntity())
+                .withTransactionId("pi_123")
+                .withAmount(10000L)
+                .build());
+        final GatewayResponse<BaseCancelResponse> response = stripeCancelHandler.cancel(request);
+        assertThat(response.isSuccessful(), is(true));
+        verify(client).postRequestFor(any(StripePaymentIntentCancelRequest.class));
     }
 
     @Test
