@@ -6,6 +6,7 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.Map;
+import java.util.Optional;
 
 public class StripeRefundRequest extends StripeRequest {
     private final String stripeChargeId;
@@ -23,12 +24,15 @@ public class StripeRefundRequest extends StripeRequest {
         this.amount = amount;
     }
     
-    public static StripeRefundRequest of(RefundGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
+    public static StripeRefundRequest of(RefundGatewayRequest request, String stripeChargeId, StripeGatewayConfig stripeGatewayConfig) {
+        String chargeId = Optional.ofNullable(stripeChargeId)
+                .orElse(request.getTransactionId());
+        
         return new StripeRefundRequest(              
                 request.getAmount(),
                 request.getGatewayAccount(),
                 request.getRefundExternalId(),
-                request.getTransactionId(),
+                chargeId,
                 stripeGatewayConfig
         );
     }

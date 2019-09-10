@@ -26,6 +26,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_SOURCES_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_REFUND_FULL_CHARGE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSFER_RESPONSE;
 
@@ -126,5 +127,10 @@ public class StripeMockClient {
     public void mockTransferFailure() {
         String payload = TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_FAILED_RESPONSE);
         setupResponse(payload, "/v1/transfers", 400);
+    }
+
+    public void mockGetPaymentIntent(String paymentIntentId) {
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE);
+        setupResponse(payload, "/v1/payment_intents/" + paymentIntentId, 200);
     }
 }

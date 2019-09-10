@@ -7,6 +7,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /***
  * Represents a request to transfer an amount from a Stripe Connect account to 
@@ -27,11 +28,14 @@ public class StripeTransferInRequest extends StripeTransferRequest {
         this.transferGroup = transferGroup;
     }
 
-    public static StripeTransferInRequest of(RefundGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
+    public static StripeTransferInRequest of(RefundGatewayRequest request, String stripeChargeId, StripeGatewayConfig stripeGatewayConfig) {
+        String chargeId = Optional.ofNullable(stripeChargeId)
+                .orElse(request.getTransactionId());
+        
         return new StripeTransferInRequest(
                 request.getAmount(),
                 request.getGatewayAccount(),
-                request.getTransactionId(),
+                chargeId,
                 request.getRefundExternalId(),
                 request.getChargeExternalId(),
                 stripeGatewayConfig

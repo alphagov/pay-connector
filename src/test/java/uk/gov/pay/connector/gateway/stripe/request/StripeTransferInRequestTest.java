@@ -62,7 +62,7 @@ public class StripeTransferInRequestTest {
 
         final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(refund);
 
-        stripeTransferInRequest = StripeTransferInRequest.of(refundGatewayRequest, stripeGatewayConfig);
+        stripeTransferInRequest = StripeTransferInRequest.of(refundGatewayRequest, null, stripeGatewayConfig);
     }
 
     @Test
