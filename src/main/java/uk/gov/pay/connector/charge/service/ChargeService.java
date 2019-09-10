@@ -42,20 +42,16 @@ import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
-import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
-import uk.gov.pay.connector.events.EventQueue;
-import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
-import uk.gov.pay.connector.queue.PaymentStateTransition;
-import uk.gov.pay.connector.queue.QueueException;
-import uk.gov.pay.connector.queue.StateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -107,15 +103,15 @@ public class ChargeService {
     private final CaptureProcessConfig captureProcessConfig;
     private final PaymentProviders providers;
 
-    private final StateTransitionQueue stateTransitionQueue;
+    private final StateTransitionService stateTransitionService;
     private final Boolean shouldEmitPaymentStateTransitionEvents;
-    private EventQueue eventQueue;
+    private EventService eventService;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
                          ConnectorConfiguration config, PaymentProviders providers,
-                         StateTransitionQueue stateTransitionQueue, EventQueue eventQueue) {
+                         StateTransitionService stateTransitionService, EventService eventService) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -124,9 +120,9 @@ public class ChargeService {
         this.linksConfig = config.getLinks();
         this.providers = providers;
         this.captureProcessConfig = config.getCaptureProcessConfig();
-        this.stateTransitionQueue = stateTransitionQueue;
+        this.stateTransitionService = stateTransitionService;
         this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
-        this.eventQueue = eventQueue;
+        this.eventService = eventService;
     }
 
     @Transactional
@@ -240,7 +236,7 @@ public class ChargeService {
                 .findByExternalIdAndGatewayAccount(chargeId, accountId)
                 .map(chargeEntity -> populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity, false).build());
     }
-    
+
     @Transactional
     public Optional<ChargeResponse> findChargeByGatewayTransactionId(String gatewayTransactionId, UriInfo uriInfo) {
         return chargeDao
@@ -317,7 +313,7 @@ public class ChargeService {
                         .filter(chargeState -> chargeState.getCode() != null)
                         .collect(Collectors.toMap(e -> e.getCode(), e -> e.getMessage()))
                         .get(externalMetadata.getMetadata().get("code").toString());
-                
+
                 state = new ExternalTransactionState(
                         externalMetadata.getMetadata().get("status").toString(),
                         true,
@@ -456,17 +452,9 @@ public class ChargeService {
                 auth3dsDetails, sessionIdentifier, walletType, emailAddress);
         ChargeEntity chargeEntity = findChargeById(chargeExternalId);
 
-        emitEvent(PaymentDetailsEntered.from(chargeEntity));
+        eventService.emitAndRecordEvent(PaymentDetailsEntered.from(chargeEntity));
 
         return chargeEntity;
-    }
-
-    private void emitEvent(Event event) {
-        try {
-            eventQueue.emitEvent(event);
-        } catch (QueueException e) {
-            logger.error("Error emitting {} event: {}", event.getEventType(), e.getMessage());
-        }
     }
 
     // cannot be private: Guice requires @Transactional methods to be public
@@ -591,15 +579,10 @@ public class ChargeService {
         charge.setStatus(targetChargeState);
         ChargeEventEntity chargeEventEntity = chargeEventDao.persistChargeEventOf(charge, gatewayEventTime);
 
-        PaymentGatewayStateTransitions.getInstance()
-                .getEventForTransition(fromChargeState, targetChargeState)
-                .ifPresent(eventType -> {
-                    if (shouldEmitPaymentStateTransitionEvents) {
-                        PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventType);
-                        stateTransitionQueue.offer(transition);
-                        logger.info("Offered payment state transition to emitter queue [from={}] [to={}] [chargeEventId={}] [chargeId={}]", fromChargeState, targetChargeState, chargeEventEntity.getId(), charge.getExternalId());
-                    }
-                });
+        if (shouldEmitPaymentStateTransitionEvents) {
+            stateTransitionService.offerPaymentStateTransition(charge.getExternalId(), fromChargeState, targetChargeState, chargeEventEntity);
+        }
+
         return charge;
     }
 
@@ -763,7 +746,7 @@ public class ChargeService {
         HashMap<String, Object> telephoneJSON = new HashMap<>();
         telephoneJSON.put("processor_id", telephoneChargeRequest.getProcessorId());
         telephoneJSON.put("status", telephoneChargeRequest.getPaymentOutcome().getStatus());
-        
+
         telephoneChargeRequest.getCreatedDate().ifPresent(createdDate -> telephoneJSON.put("created_date", createdDate));
         telephoneChargeRequest.getAuthorisedDate().ifPresent(authorisedDate -> telephoneJSON.put("authorised_date", authorisedDate));
         telephoneChargeRequest.getAuthCode().ifPresent(authCode -> telephoneJSON.put("auth_code", authCode));
@@ -775,7 +758,7 @@ public class ChargeService {
                     supplemental.getErrorMessage().ifPresent(errorMessage -> telephoneJSON.put("error_message", errorMessage));
                 }
         );
-        
+
         return new ExternalMetadata(telephoneJSON);
     }
 

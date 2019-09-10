@@ -57,7 +57,7 @@ public abstract class Event {
         return eventTypeForClass(this.getClass());
     }
 
-    static String eventTypeForClass(Class clazz) {
+    public static String eventTypeForClass(Class clazz) {
         return clazz.getSimpleName().replaceAll("([^A-Z0-9]+)([A-Z0-9])", "$1_$2").toUpperCase();
     }
 

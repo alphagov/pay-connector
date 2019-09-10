@@ -21,6 +21,7 @@ import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeEx
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.events.EventQueue;
+import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
@@ -36,7 +37,7 @@ import uk.gov.pay.connector.model.domain.AddressFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
-import uk.gov.pay.connector.queue.StateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionService;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -96,10 +97,12 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private Counter mockCounter;
 
     @Mock
-    private StateTransitionQueue stateTransitionQueue;
+    private StateTransitionService stateTransitionService;
 
     @Mock
     private EventQueue eventQueue;
+    @Mock
+    private EventService mockEventService;
 
     private CardAuthoriseService cardAuthorisationService;
 
@@ -110,7 +113,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null, stateTransitionQueue, eventQueue);
+                null, null, mockConfiguration, null, stateTransitionService, mockEventService);
 
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         cardAuthorisationService = new CardAuthoriseService(
@@ -162,7 +165,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
+        verify(mockEventService, times(1)).emitAndRecordEvent(eventCaptor.capture());
         assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
         assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
     }
@@ -585,7 +588,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
             cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
             fail("Exception not thrown.");
         } catch (OperationAlreadyInProgressRuntimeException e) {
-            ErrorResponse response = (ErrorResponse)e.getResponse().getEntity();
+            ErrorResponse response = (ErrorResponse) e.getResponse().getEntity();
             assertThat(response.getMessages(), contains(format("Authorisation for charge already in progress, %s", charge.getExternalId())));
         }
     }
