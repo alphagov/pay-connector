@@ -28,7 +28,7 @@ public class EventService {
             emittedEventDao.recordEmission(event);
         } catch (QueueException e) {
             emittedEventDao.recordEmission(event.getResourceType(), event.getResourceExternalId(), event.getEventType(), event.getTimestamp());
-            logger.error("Error emitting {} event: {}", event.getEventType(), e.getMessage());
+            logger.error("Failed to emit event {} due to {} [externalId={}]", event.getEventType(), e.getMessage(), event.getResourceExternalId());
         }
     }
 

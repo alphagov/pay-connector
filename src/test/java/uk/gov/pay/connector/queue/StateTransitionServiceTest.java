@@ -12,6 +12,7 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
 import static java.time.ZonedDateTime.now;
 import static org.hamcrest.core.Is.is;
@@ -25,6 +26,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.events.model.ResourceType.PAYMENT;
 import static uk.gov.pay.connector.events.model.ResourceType.REFUND;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
+import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -73,9 +75,9 @@ public class StateTransitionServiceTest {
                 .withExternalId("external-id")
                 .withStatus(CREATED)
                 .build();
-        
+
         stateTransitionService.offerRefundStateTransition(refundEntity, CREATED);
-        
+
         ArgumentCaptor<RefundStateTransition> refundStateTransitionArgumentCaptor = ArgumentCaptor.forClass(RefundStateTransition.class);
         verify(mockStateTransitionQueue).offer(refundStateTransitionArgumentCaptor.capture());
 
@@ -83,5 +85,25 @@ public class StateTransitionServiceTest {
         assertThat(refundStateTransitionArgumentCaptor.getValue().getStateTransitionEventClass(), is(RefundCreatedByUser.class));
 
         verify(mockEventService).recordOfferedEvent(REFUND, "external-id", "REFUND_CREATED_BY_USER", null);
+    }
+
+    @Test
+    public void offerStateTransition_shouldOfferAndRecordEvent() {
+        RefundStateTransition refundStateTransition = new RefundStateTransition("external-id", CREATED, RefundCreatedByUser.class);
+        RefundHistory refundHistory = aValidRefundHistoryEntity()
+                .withExternalId("external-id")
+                .build();
+        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory);
+
+        stateTransitionService.offerStateTransition(refundStateTransition, refundCreatedByUser);
+
+        ArgumentCaptor<RefundStateTransition> refundStateTransitionArgumentCaptor = ArgumentCaptor.forClass(RefundStateTransition.class);
+        verify(mockStateTransitionQueue).offer(refundStateTransitionArgumentCaptor.capture());
+
+        assertThat(refundStateTransitionArgumentCaptor.getValue().getRefundExternalId(), is(refundHistory.getExternalId()));
+        assertThat(refundStateTransitionArgumentCaptor.getValue().getStateTransitionEventClass(), is(RefundCreatedByUser.class));
+
+        verify(mockEventService).recordOfferedEvent(REFUND, refundHistory.getExternalId(),
+                "REFUND_CREATED_BY_USER", refundHistory.getHistoryStartDate());
     }
 }
