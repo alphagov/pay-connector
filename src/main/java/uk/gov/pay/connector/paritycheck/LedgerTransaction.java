@@ -21,6 +21,7 @@ public class LedgerTransaction {
     private Long fee;
     private Long netAmount;
     private String createdDate;
+    private TransactionState state;
 
     public Long getAmount() {
         return amount;
@@ -64,5 +65,13 @@ public class LedgerTransaction {
 
     public String getTransactionId() {
         return transactionId;
+    }
+
+    public TransactionState getState() {
+        return state;
+    }
+
+    public void setState(TransactionState transactionState) {
+        this.state = transactionState;
     }
 }

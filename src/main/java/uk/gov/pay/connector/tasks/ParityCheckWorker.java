@@ -7,11 +7,13 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.paritycheck.LedgerService;
+import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import uk.gov.pay.connector.queue.StateTransitionQueue;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -20,7 +22,6 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.stream.Collectors;
 
 import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUEST_ID;
 
@@ -73,23 +74,17 @@ public class ParityCheckWorker {
         final Optional<ChargeEntity> maybeCharge = chargeDao.findById(currentId);
 
         try {
-            maybeCharge.ifPresent(c -> MDC.put("chargeId", c.getExternalId()));
-
             if (maybeCharge.isPresent()) {
                 final ChargeEntity charge = maybeCharge.get();
+                MDC.put("chargeId", charge.getExternalId());
 
-                List<String> ids = charge.getRefunds().stream().map(RefundEntity::getExternalId).collect(Collectors.toList());
-                ids.add(charge.getExternalId());
+                ParityCheckStatus parityCheckStatus = getChargeAndRefundsParityCheckStatus(charge);
+                chargeService.updateChargeParityStatus(charge.getExternalId(), parityCheckStatus);
+                logger.info("transaction parity check finished [id={},status={}]", currentId, parityCheckStatus);
 
-                if (existInLedger(ids)) {
-                    logger.info("transaction (and its refunds) exists in ledger [id={}]", currentId);
-                    chargeService.updateChargeParityStatus(charge.getExternalId(), ParityCheckStatus.EXISTS_IN_LEDGER);
-                } else {
-                    logger.info("transaction (or its refunds) does not exist in ledger [id={}] -", currentId);
-                    chargeService.updateChargeParityStatus(charge.getExternalId(), ParityCheckStatus.MISSING_IN_LEDGER);
+                if (!parityCheckStatus.equals(ParityCheckStatus.EXISTS_IN_LEDGER)) {
                     emitHistoricalEvents(charge);
                 }
-
             } else {
                 logger.info("[{}/{}] - not found", currentId, maxId);
             }
@@ -98,8 +93,46 @@ public class ParityCheckWorker {
         }
     }
 
-    private boolean existInLedger(List<String> transactions) {
-        return transactions.stream().allMatch(p -> ledgerService.getTransaction(p).isPresent());
+    private ParityCheckStatus getChargeAndRefundsParityCheckStatus(ChargeEntity charge) {
+        var parityCheckStatus = getChargeParityCheckStatus(charge);
+        if (parityCheckStatus.equals(ParityCheckStatus.EXISTS_IN_LEDGER)) {
+            return getRefundsParityCheckStatus(charge.getRefunds());
+        }
+
+        return parityCheckStatus;
+    }
+
+    private ParityCheckStatus getChargeParityCheckStatus(ChargeEntity charge) {
+        var transaction = ledgerService.getTransaction(charge.getExternalId());
+        var externalChargeState = ChargeStatus.fromString(charge.getStatus()).toExternal().getStatus();
+
+        return getParityCheckStatus(transaction, externalChargeState);
+    }
+
+    private ParityCheckStatus getParityCheckStatus(Optional<LedgerTransaction> transaction, String externalChargeState) {
+        if (transaction.isEmpty()) {
+            return ParityCheckStatus.MISSING_IN_LEDGER;
+        }
+
+        if (externalChargeState.equalsIgnoreCase(transaction.get().getState().getStatus())) {
+            return ParityCheckStatus.EXISTS_IN_LEDGER;
+        }
+
+        return ParityCheckStatus.DATA_MISMATCH;
+    }
+
+    private ParityCheckStatus getRefundsParityCheckStatus(List<RefundEntity> refunds) {
+        for (var refund : refunds) {
+            var transaction = ledgerService.getTransaction(refund.getExternalId());
+            ParityCheckStatus parityCheckStatus = getParityCheckStatus(transaction, refund.getStatus().toExternal().getStatus());
+            if (!parityCheckStatus.equals(ParityCheckStatus.EXISTS_IN_LEDGER)) {
+                logger.info("refund transaction does not exist in ledger or is in a different state [externalId={},status={}] -",
+                        refund.getExternalId(), parityCheckStatus);
+                return parityCheckStatus;
+            }
+        }
+
+        return ParityCheckStatus.EXISTS_IN_LEDGER;
     }
 
     private void emitHistoricalEvents(ChargeEntity charge) {
