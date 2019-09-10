@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StripePaymentIntent {
@@ -26,6 +27,11 @@ public class StripePaymentIntent {
 
     public Long getAmountCapturable() {
         return amountCapturable;
+    }
+    
+    public Optional<StripeCharge> getCharge() {
+        return chargesCollection.getCharges().stream()
+                .findFirst();
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

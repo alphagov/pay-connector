@@ -56,7 +56,7 @@ public class StripeRefundRequestTest {
 
         final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(refund);
 
-        stripeRefundRequest = StripeRefundRequest.of(refundGatewayRequest, stripeGatewayConfig);
+        stripeRefundRequest = StripeRefundRequest.of(refundGatewayRequest, null, stripeGatewayConfig);
     }
     @Test
     public void createsCorrectRefundUrl() {
