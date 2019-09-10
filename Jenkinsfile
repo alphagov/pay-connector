@@ -96,7 +96,7 @@ pipeline {
     }
     stage('Smoke Tests') {
       when { branch 'master' }
-      steps { runCardSmokeTest() }
+      steps {retry(3){ runCardSmokeTest() }}
     }
     stage('Pact Tag') {
       when {
