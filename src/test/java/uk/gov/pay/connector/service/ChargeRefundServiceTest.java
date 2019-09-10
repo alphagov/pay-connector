@@ -21,7 +21,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.smartpay.SmartpayRefundResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.queue.StateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
 import uk.gov.pay.connector.refund.model.RefundRequest;
@@ -58,6 +58,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Typ
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ChargeRefundServiceTest {
@@ -79,7 +80,7 @@ public class ChargeRefundServiceTest {
     @Mock
     private UserNotificationService mockUserNotificationService;
     @Mock
-    private StateTransitionQueue mockStateTransitionQueue;
+    private StateTransitionService mockStateTransitionService;
 
     @Before
     public void setUp() {
@@ -87,7 +88,7 @@ public class ChargeRefundServiceTest {
         when(mockProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockProvider);
         when(mockProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
         chargeRefundService = new ChargeRefundService(
-                mockChargeDao, mockRefundDao, mockProviders, mockUserNotificationService, mockStateTransitionQueue
+                mockChargeDao, mockRefundDao, mockProviders, mockUserNotificationService, mockStateTransitionService
         );
     }
 
@@ -163,7 +164,7 @@ public class ChargeRefundServiceTest {
         RefundEntity refundEntity = chargeRefundService.createRefundEntity(new RefundRequest(refundAmount, charge.getAmount(), userExternalId), charge);
 
         assertThat(refundEntity.getAmount(), is(refundAmount));
-        assertThat(refundEntity.getStatus(), is(RefundStatus.CREATED));
+        assertThat(refundEntity.getStatus(), is(CREATED));
     }
 
     @Test
@@ -528,6 +529,15 @@ public class ChargeRefundServiceTest {
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_ERROR);
 
         verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
+    }
+    @Test
+    public void shouldOfferRefundStateTransition() {
+        ChargeEntity charge = aValidChargeEntity()
+                .build();
+        RefundEntity refundEntity = aValidRefundEntity().withCharge(charge).withAmount(100L).build();
+        
+        chargeRefundService.transitionRefundState(refundEntity, CREATED);
+        verify(mockStateTransitionService).offerRefundStateTransition(refundEntity, CREATED);
     }
 
     private ArgumentMatcher<RefundEntity> aRefundEntity(long amount, ChargeEntity chargeEntity) {

@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,8 @@ import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.events.EventQueue;
+import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
@@ -37,8 +40,7 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
-import uk.gov.pay.connector.queue.PaymentStateTransition;
-import uk.gov.pay.connector.queue.StateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
@@ -68,6 +70,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
@@ -97,10 +100,12 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     private Counter mockCounter;
 
     @Mock
-    private StateTransitionQueue stateTransitionQueue;
+    private StateTransitionService mockStateTransitionService;
 
     @Mock
     private EventQueue eventQueue;
+    @Mock
+    private EmittedEventDao emittedEventDao;
 
     private WalletAuthoriseService walletAuthoriseService;
 
@@ -111,6 +116,8 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
                     .build();
 
     private Appender<ILoggingEvent> mockAppender;
+    @InjectMocks
+    private EventService mockEventService;
 
     @Before
     public void setUp() {
@@ -124,11 +131,10 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         when(mockConfiguration.getEmitPaymentStateTransitionEvents()).thenReturn(true);
 
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
-        when(chargeEventEntity.getId()).thenReturn(123L);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null, stateTransitionQueue, eventQueue));
+                null, null, mockConfiguration, null, mockStateTransitionService, mockEventService));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,
@@ -162,7 +168,6 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     public void doAuthoriseCard_ApplePay_shouldRespondAuthorisationSuccess() throws Exception {
         providerWillAuthorise();
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
-        when(chargeEventEntity.getId()).thenReturn(1L);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
 
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
@@ -181,7 +186,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(validApplePayDetails.getPaymentInfo().getEmail()));
 
-        verify(stateTransitionQueue).offer(any(PaymentStateTransition.class));
+        verify(mockStateTransitionService).offerPaymentStateTransition(charge.getExternalId(), AUTHORISATION_READY, AUTHORISATION_SUCCESS, chargeEventEntity);
 
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
         verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
@@ -193,7 +198,6 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     public void doAuthoriseCard_GooglePay_shouldRespondAuthorisationSuccess() throws Exception {
         providerWillAuthorise();
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
-        when(chargeEventEntity.getId()).thenReturn(1L);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
 
         WalletAuthorisationData authorisationData =
@@ -215,7 +219,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(authorisationData.getPaymentInfo().getEmail()));
 
-        verify(stateTransitionQueue).offer(any(PaymentStateTransition.class));
+        verify(mockStateTransitionService).offerPaymentStateTransition(charge.getExternalId(), AUTHORISATION_READY, AUTHORISATION_SUCCESS, chargeEventEntity);
 
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
         verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());

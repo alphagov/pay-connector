@@ -12,8 +12,7 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.queue.RefundStateTransition;
-import uk.gov.pay.connector.queue.StateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
 import uk.gov.pay.connector.refund.model.RefundRequest;
@@ -58,17 +57,17 @@ public class ChargeRefundService {
     private final RefundDao refundDao;
     private final PaymentProviders providers;
     private final UserNotificationService userNotificationService;
-    private final StateTransitionQueue stateTransitionQueue;
+    private StateTransitionService stateTransitionService;
 
     @Inject
     public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders providers,
-                               UserNotificationService userNotificationService, StateTransitionQueue stateTransitionQueue
+                               UserNotificationService userNotificationService, StateTransitionService stateTransitionService
     ) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.providers = providers;
         this.userNotificationService = userNotificationService;
-        this.stateTransitionQueue = stateTransitionQueue;
+        this.stateTransitionService = stateTransitionService;
     }
 
     public Response doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
@@ -180,8 +179,7 @@ public class ChargeRefundService {
 
     public void transitionRefundState(RefundEntity refundEntity, RefundStatus refundStatus) {
         refundEntity.setStatus(refundStatus);
-        Class refundEventClass = RefundStateEventMap.calculateRefundEventClass(refundEntity.getUserExternalId(), refundStatus);
-        stateTransitionQueue.offer(new RefundStateTransition(refundEntity.getExternalId(), refundStatus, refundEventClass));
+        stateTransitionService.offerRefundStateTransition(refundEntity, refundStatus);
     }
 
     private void checkIfRefundRequestIsInConflictOrTerminate(RefundRequest refundRequest, ChargeEntity reloadedCharge, long totalAmountToBeRefunded) {

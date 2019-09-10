@@ -17,19 +17,19 @@ public class StateTransitionEmitterProcess {
 
     private final long STATE_TRANSITION_PROCESS_DELAY_IN_MILLISECONDS = 1000;
     private final StateTransitionQueue stateTransitionQueue;
-    private final EventQueue eventQueue;
     private final EventFactory eventFactory;
+    private EventService eventService;
 
     @Inject
     public StateTransitionEmitterProcess(
             StateTransitionQueue stateTransitionQueue,
-            EventQueue eventQueue,
             EventFactory eventFactory,
-            StateTransitionQueueMetricEmitter stateTransitionQueueMetricEmitter
+            StateTransitionQueueMetricEmitter stateTransitionQueueMetricEmitter,
+            EventService eventService
     ) {
         this.stateTransitionQueue = stateTransitionQueue;
-        this.eventQueue = eventQueue;
         this.eventFactory = eventFactory;
+        this.eventService = eventService;
 
         stateTransitionQueueMetricEmitter.register();
     }
@@ -53,7 +53,7 @@ public class StateTransitionEmitterProcess {
                 eventFactory.createEvents(stateTransition)
                         .forEach(event -> {
                             try {
-                                eventQueue.emitEvent(event);
+                                eventService.emitAndMarkEventAsEmitted(event);
                             } catch (QueueException e) {
                                 handleException(e, stateTransition);
                             }

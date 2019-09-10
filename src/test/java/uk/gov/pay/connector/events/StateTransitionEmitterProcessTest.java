@@ -39,10 +39,10 @@ public class StateTransitionEmitterProcessTest {
     StateTransitionQueueMetricEmitter stateTransitionQueueMetricEmitter;
 
     @Mock
-    EventQueue eventQueue;
-
-    @Mock
     private EventFactory eventFactory;
+    
+    @Mock
+    EventService mockEventService;
 
     @InjectMocks
     StateTransitionEmitterProcess stateTransitionEmitterProcess;
@@ -60,7 +60,7 @@ public class StateTransitionEmitterProcessTest {
 
         stateTransitionEmitterProcess.handleStateTransitionMessages();
 
-        verify(eventQueue).emitEvent(any(PaymentCreated.class));
+        verify(mockEventService).emitAndMarkEventAsEmitted(any(PaymentCreated.class));
     }
 
     @Test
@@ -71,7 +71,7 @@ public class StateTransitionEmitterProcessTest {
 
         stateTransitionEmitterProcess.handleStateTransitionMessages();
 
-        verifyNoMoreInteractions(eventQueue);
+        verifyNoMoreInteractions(mockEventService);
         verify(stateTransitionQueue).offer(any(PaymentStateTransition.class));
     }
 
@@ -86,7 +86,7 @@ public class StateTransitionEmitterProcessTest {
                         mock(PaymentCreatedEventDetails.class),
                         ZonedDateTime.now()
                 )));
-        doThrow(QueueException.class).when(eventQueue).emitEvent(any());
+        doThrow(QueueException.class).when(mockEventService).emitAndMarkEventAsEmitted(any());
 
         stateTransitionEmitterProcess.handleStateTransitionMessages();
 
@@ -97,7 +97,7 @@ public class StateTransitionEmitterProcessTest {
     @Test
     public void shouldNotPutPaymentTransitionBackOnQueueIfItHasExceededMaxAttempts() throws Exception {
         StateTransitionQueue spyQueue = spy(new StateTransitionQueue());
-        StateTransitionEmitterProcess stateTransitionEmitterProcess = new StateTransitionEmitterProcess(spyQueue, eventQueue, eventFactory, stateTransitionQueueMetricEmitter);
+        StateTransitionEmitterProcess stateTransitionEmitterProcess = new StateTransitionEmitterProcess(spyQueue, eventFactory, stateTransitionQueueMetricEmitter, mockEventService);
         PaymentStateTransition paymentStateTransition = new PaymentStateTransition(100L, PaymentEvent.class, 0);
 
         when(eventFactory.createEvents(any(PaymentStateTransition.class))).thenThrow(EventCreationException.class);

@@ -30,14 +30,14 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
-import uk.gov.pay.connector.events.EventQueue;
+import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.fee.dao.FeeDao;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 import uk.gov.pay.connector.queue.CaptureQueue;
-import uk.gov.pay.connector.queue.StateTransitionQueue;
 import uk.gov.pay.connector.queue.QueueException;
+import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.persistence.OptimisticLockException;
@@ -99,15 +99,12 @@ public class CardCaptureServiceTest extends CardServiceTest {
     private ConnectorConfiguration mockConfiguration;
     @Mock
     private Environment mockEnvironment;
-
-    @Mock
-    private StateTransitionQueue stateTransitionQueue;
-
-    @Mock
-    private EventQueue eventQueue;
-
     @Captor
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
+    @Mock
+    private StateTransitionService mockStateTransitionService;
+    @Mock
+    private EventService mockEventService;
 
     @Before
     public void beforeTest() {
@@ -116,7 +113,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null, stateTransitionQueue, eventQueue);
+                null, null, mockConfiguration, null, mockStateTransitionService, mockEventService);
 
         cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService, mockEnvironment,
                 mockCaptureQueue);
@@ -514,7 +511,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test(expected = WebApplicationException.class)
-    public void markChargeAsCaptureApproved_shouldThrowException_WithFeatureFlagEnabledAndUnableToAddChargeToQueue() throws QueueException {
+    public void markChargeAsCaptureApproved_shouldThrowException_WithFeatureFlagEnabledAndUnableToAddChargeToQueue() {
         ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId"));
         when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 

@@ -41,16 +41,16 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
-import uk.gov.pay.connector.events.EventQueue;
-import uk.gov.pay.connector.events.model.charge.PaymentStarted;
+import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
-import uk.gov.pay.connector.queue.PaymentStateTransition;
-import uk.gov.pay.connector.queue.StateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -58,12 +58,13 @@ import uk.gov.pay.connector.wallets.WalletType;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.time.ZonedDateTime.now;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static javax.ws.rs.HttpMethod.GET;
@@ -84,7 +85,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
@@ -139,15 +139,12 @@ public class ChargeServiceTest {
     @Mock
     private PaymentProvider mockedPaymentProvider;
     @Mock
-    private EventQueue mockedEventQueue;
-
+    private EventService mockEventService;
     @Mock
-    private StateTransitionQueue mockedStateTransitionQueue;
+    private StateTransitionService mockStateTransitionService;
 
     private ChargeService service;
-
     private GatewayAccountEntity gatewayAccount;
-    
     private ChargeEntity returnedChargeEntity;
 
     @Before
@@ -181,14 +178,14 @@ public class ChargeServiceTest {
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(mockChargeEvent);
-        
+
         ExternalMetadata externalMetadata = new ExternalMetadata(
                 Map.of(
-                        "created_date", "2018-02-21T16:04:25Z", 
-                        "authorised_date", "2018-02-21T16:05:33Z", 
-                        "processor_id", "1PROC", 
-                        "auth_code", "666", 
-                        "telephone_number", "+447700900796", 
+                        "created_date", "2018-02-21T16:04:25Z",
+                        "authorised_date", "2018-02-21T16:05:33Z",
+                        "processor_id", "1PROC",
+                        "auth_code", "666",
+                        "telephone_number", "+447700900796",
                         "status", "success"
                 )
         );
@@ -200,7 +197,7 @@ public class ChargeServiceTest {
                 "01/19",
                 "visa"
         );
-        
+
         returnedChargeEntity = new ChargeEntity(
                 100L,
                 ServicePaymentReference.of("Some reference"),
@@ -213,7 +210,7 @@ public class ChargeServiceTest {
                 "1PROV",
                 SupportedLanguage.ENGLISH
         );
-        
+
         when(mockedChargeDao.findByProviderSessionId("1PROV")).thenReturn(Optional.of(returnedChargeEntity));
         when(mockedChargeDao.findByProviderSessionId("new")).thenReturn(Optional.empty());
 
@@ -243,14 +240,15 @@ public class ChargeServiceTest {
         when(mockedConfig.getEmitPaymentStateTransitionEvents()).thenReturn(true);
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
-                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders, mockedStateTransitionQueue, mockedEventQueue);
+                mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
+                mockStateTransitionService, mockEventService);
     }
-    
+
     @After
     public void tearDown() {
         telephoneRequestBuilder = null;
     }
-    
+
     @Test
     public void shouldCreateAChargeWithDefaultLanguageAndDefaultDelayedCapture() {
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
@@ -269,7 +267,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getDescription(), is("This is a description"));
         assertThat(createdChargeEntity.getAmount(), is(100L));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is(nullValue()));
-        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
+        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneId.of("UTC")))));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
         assertThat(createdChargeEntity.isDelayedCapture(), is(false));
         assertThat(createdChargeEntity.getCorporateSurcharge().isPresent(), is(false));
@@ -539,7 +537,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getDescription(), is("Some description"));
         assertThat(createdChargeEntity.getStatus(), is("AUTHORISATION SUCCESS"));
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
-        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
+        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneId.of("UTC")))));
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
@@ -588,7 +586,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getDescription(), is("Some description"));
         assertThat(createdChargeEntity.getStatus(), is("AUTHORISATION REJECTED"));
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
-        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
+        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneId.of("UTC")))));
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
@@ -637,7 +635,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getDescription(), is("Some description"));
         assertThat(createdChargeEntity.getStatus(), is("AUTHORISATION ERROR"));
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
-        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneId.of("UTC")))));
+        assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneId.of("UTC")))));
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(createdChargeEntity.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
@@ -647,11 +645,11 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
     }
-    
+
     @Test
     public void shouldNotFindCharge() {
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
-        
+
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withProviderId("new")
                 .withPaymentOutcome(paymentOutcome)
@@ -674,7 +672,7 @@ public class ChargeServiceTest {
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withPaymentOutcome(paymentOutcome)
                 .build();
-        
+
         service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
 
         Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(telephoneChargeCreateRequest);
@@ -1059,37 +1057,35 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldOfferStateTransitionMessageForAValidStateTransitionIntoNonLockingState() {
+    public void shouldOfferPaymentStateTransition() {
         ChargeEntity chargeSpy = spy(ChargeEntityFixture.aValidChargeEntity().build());
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
 
-        when(chargeEvent.getId()).thenReturn(100L);
         when(mockedChargeEventDao.persistChargeEventOf(chargeSpy, null)).thenReturn(chargeEvent);
 
         service.transitionChargeState(chargeSpy, ENTERING_CARD_DETAILS);
 
-        ArgumentCaptor<PaymentStateTransition> paymentStateTransitionArgumentCaptor = ArgumentCaptor.forClass(PaymentStateTransition.class);
-        verify(mockedStateTransitionQueue).offer(paymentStateTransitionArgumentCaptor.capture());
-
-        assertThat(paymentStateTransitionArgumentCaptor.getValue().getChargeEventId(), is(100L));
-        assertThat(paymentStateTransitionArgumentCaptor.getValue().getStateTransitionEventClass(), is(PaymentStarted.class));
+        verify(mockStateTransitionService).offerPaymentStateTransition(chargeSpy.getExternalId(), CREATED,
+                ENTERING_CARD_DETAILS, chargeEvent);
     }
 
     @Test
-    public void shouldNotOfferStateTransitionMessageForAValidStateTransitionIntoLockingState() {
-        ChargeEntity chargeSpy = spy(
-                ChargeEntityFixture
-                        .aValidChargeEntity()
-                        .withStatus(ENTERING_CARD_DETAILS)
-                        .build()
-        );
+    public void updateChargeAndEmitEventPostAuthorisation_shouldEmitEvent() {
+        ChargeEntity chargeSpy = spy(ChargeEntityFixture.aValidChargeEntity().build());
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
-
+        
+        when(chargeEvent.getStatus()).thenReturn(ENTERING_CARD_DETAILS);
+        when(chargeEvent.getUpdated()).thenReturn(now());
         when(mockedChargeEventDao.persistChargeEventOf(chargeSpy, null)).thenReturn(chargeEvent);
+        when(mockedChargeDao.findByExternalId(chargeSpy.getExternalId())).thenReturn(Optional.of(chargeSpy));
+        when(chargeSpy.getEvents()).thenReturn(List.of(chargeEvent));
+        
+        AuthCardDetails authCardDetails = new AuthCardDetails();
+        authCardDetails.setCardNo("1234567890");
+        service.updateChargeAndEmitEventPostAuthorisation(chargeSpy.getExternalId(), ENTERING_CARD_DETAILS,
+                authCardDetails, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
 
-        service.transitionChargeState(chargeSpy, AUTHORISATION_READY);
-
-        verifyNoMoreInteractions(mockedStateTransitionQueue);
+        verify(mockEventService).emitAndRecordEvent(PaymentDetailsEntered.from(chargeSpy));
     }
 
     @Test
