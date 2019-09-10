@@ -45,12 +45,13 @@ public class ParityCheckTask extends Task {
     public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) throws Exception {
         Long startId = getParam(parameters, "start_id").orElse(0);
         final OptionalLong maybeMaxId = getParam(parameters, "max_id");
+        boolean doNotReprocessValidRecords = getFlagParam(parameters, "do_not_reprocess_valid_records");
 
         logger.info("Execute called start_id={} max_id={} - processing", startId, maybeMaxId);
         
         try {
             logger.info("Request accepted");
-            executor.execute(() -> worker.execute(startId, maybeMaxId));
+            executor.execute(() -> worker.execute(startId, maybeMaxId, doNotReprocessValidRecords));
             output.println("Accepted");
         }
         catch (java.util.concurrent.RejectedExecutionException e) {
@@ -66,6 +67,16 @@ public class ParityCheckTask extends Task {
             return OptionalLong.empty();
         } else {
             return OptionalLong.of(Long.valueOf(strings.asList().get(0)));
+        }
+    }
+
+    private boolean getFlagParam(ImmutableMultimap<String, String> parameters, String paramName) {
+        final ImmutableCollection<String> strings = parameters.get(paramName);
+
+        if (strings.isEmpty()) {
+            return false;
+        } else {
+            return Boolean.valueOf(strings.asList().get(0));
         }
     }
 }
