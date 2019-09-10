@@ -6,6 +6,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class TransactionState {
     private String status;
 
+    public TransactionState() {
+    }
+
     public TransactionState(String status) {
         this.status = status;
     }
