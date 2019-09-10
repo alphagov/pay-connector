@@ -20,6 +20,7 @@ import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -56,7 +57,7 @@ public class SecurityTokensResourceIT {
     }
 
     @Test
-    public void shouldSuccessfullyGetChargeForToken() {
+    public void shouldGetChargeForToken() {
         TestToken token = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestToken()
@@ -85,7 +86,7 @@ public class SecurityTokensResourceIT {
     }
 
     @Test
-    public void shouldSuccessfullyGetUnusedToken() {
+    public void shouldGetUnusedToken() {
         TestToken token = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestToken()
@@ -105,7 +106,7 @@ public class SecurityTokensResourceIT {
     }
 
     @Test
-    public void shouldSuccessfullyGetUsedToken() {
+    public void shouldGetUsedToken() {
         TestToken token = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestToken()
@@ -135,7 +136,7 @@ public class SecurityTokensResourceIT {
     }
 
     @Test
-    public void shouldSuccessfullyDeleteToken() {
+    public void shouldDeleteToken() {
         TestToken token = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestToken()
@@ -151,6 +152,34 @@ public class SecurityTokensResourceIT {
 
         givenSetup()
                 .get("/v1/frontend/tokens/" + token.getSecureRedirectToken() + "/charge")
+                .then()
+                .statusCode(404)
+                .body("message", contains("Token invalid!"))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+
+    @Test
+    public void shouldMarkTokenAsUsed() {
+        TestToken token = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestToken()
+                .withCharge(defaultTestCharge)
+                .withUsed(false)
+                .insert();
+
+        givenSetup()
+                .post("/v1/frontend/tokens/" + token.getSecureRedirectToken() + "/used")
+                .then()
+                .statusCode(204)
+                .body(emptyOrNullString());
+
+        assertTrue(databaseTestHelper.isChargeTokenUsed(token.getSecureRedirectToken()));
+    }
+
+    @Test
+    public void shouldReturn404WhenTryingToMarkNotFoundTokenUsed() {
+        givenSetup()
+                .post("/v1/frontend/tokens/" + "not_found" + "/used")
                 .then()
                 .statusCode(404)
                 .body("message", contains("Token invalid!"))

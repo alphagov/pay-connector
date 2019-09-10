@@ -14,6 +14,7 @@ import uk.gov.pay.connector.util.ResponseUtil;
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -58,6 +59,20 @@ public class SecurityTokensResource {
         Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId(chargeTokenId);
         return chargeOpt
                 .map(ResponseUtil::successResponseWithEntity)
+                .orElseGet(() -> notFoundResponse("Token invalid!"));
+    }
+
+    @POST
+    @Path("/v1/frontend/tokens/{chargeTokenId}/used")
+    @Produces(APPLICATION_JSON)
+    @Transactional
+    public Response markTokenUsed(@PathParam("chargeTokenId") String chargeTokenId) {
+        logger.debug("mark token used for token {}", chargeTokenId);
+        return tokenDao.findByTokenId(chargeTokenId)
+                .map(tokenEntity -> {
+                    tokenEntity.setUsed(true);
+                    return noContentResponse();
+                })
                 .orElseGet(() -> notFoundResponse("Token invalid!"));
     }
 

@@ -5,6 +5,7 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.postgresql.util.PGobject;
 import org.skife.jdbi.v2.DBI;
+import org.skife.jdbi.v2.util.BooleanColumnMapper;
 import org.skife.jdbi.v2.util.StringColumnMapper;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
@@ -256,6 +257,15 @@ public class DatabaseTestHelper {
                 h.createQuery("SELECT secure_redirect_token from tokens WHERE charge_id = :charge_id ORDER BY id DESC")
                         .bind("charge_id", chargeId)
                         .map(StringColumnMapper.INSTANCE)
+                        .first()
+        );
+    }
+
+    public boolean isChargeTokenUsed(String tokenId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("SELECT used FROM tokens WHERE secure_redirect_token = :token_id")
+                        .bind("token_id", tokenId)
+                        .map(BooleanColumnMapper.PRIMITIVE)
                         .first()
         );
     }
@@ -653,6 +663,7 @@ public class DatabaseTestHelper {
     public void truncateAllData() {
         jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE gateway_accounts CASCADE").execute());
         jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE emitted_events CASCADE").execute());
+        jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE tokens").execute());
     }
 
     public Long getChargeIdByExternalId(String externalChargeId) {
