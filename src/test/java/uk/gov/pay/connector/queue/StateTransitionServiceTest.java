@@ -9,14 +9,19 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.model.ResourceType;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
+import java.time.ZonedDateTime;
+
 import static java.time.ZonedDateTime.now;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -84,7 +89,18 @@ public class StateTransitionServiceTest {
         assertThat(refundStateTransitionArgumentCaptor.getValue().getRefundExternalId(), is(refundEntity.getExternalId()));
         assertThat(refundStateTransitionArgumentCaptor.getValue().getStateTransitionEventClass(), is(RefundCreatedByUser.class));
 
-        verify(mockEventService).recordOfferedEvent(REFUND, "external-id", "REFUND_CREATED_BY_USER", null);
+        ArgumentCaptor<ZonedDateTime> eventDateArgumentCaptor = forClass(ZonedDateTime.class);
+        ArgumentCaptor<ResourceType> resourceTypeCaptor = forClass(ResourceType.class);
+        ArgumentCaptor<String> externalIdCaptor = forClass(String.class);
+        ArgumentCaptor<String> eventTypeCaptor = forClass(String.class);
+
+        verify(mockEventService).recordOfferedEvent(resourceTypeCaptor.capture(), externalIdCaptor.capture(),
+                eventTypeCaptor.capture(), eventDateArgumentCaptor.capture());
+
+        assertThat(resourceTypeCaptor.getValue(), is(REFUND));
+        assertThat(externalIdCaptor.getValue(), is("external-id"));
+        assertThat(eventTypeCaptor.getValue(), is("REFUND_CREATED_BY_USER"));
+        assertThat(eventDateArgumentCaptor.getValue(), is(notNullValue()));
     }
 
     @Test

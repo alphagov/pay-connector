@@ -5,6 +5,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.events.EmittedEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
+import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 
 import java.sql.Timestamp;
@@ -101,8 +102,8 @@ public class EmittedEventDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void markEventAsEmitted_shouldRecordEmittedDate() {
-        final PaymentCreated eventToRecord = aPaymentCreatedEvent();
+    public void markEventAsEmitted_shouldRecordEventAndEmittedDate() {
+        final RefundSubmitted eventToRecord = aRefundSubmittedEvent(null);
 
         emittedEventDao.recordEmission(eventToRecord.getResourceType(), eventToRecord.getResourceExternalId(),
                 eventToRecord.getEventType(), eventToRecord.getTimestamp());
@@ -110,11 +111,14 @@ public class EmittedEventDaoIT extends DaoITestBase {
         List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
         Map<String, Object> event = events.get(0);
         assertThat(event.get("emitted_date"), is(nullValue()));
+        assertThat(event.get("event_date"), is(nullValue()));
 
-        emittedEventDao.markEventAsEmitted(eventToRecord);
+        final RefundSubmitted eventToUpdate = aRefundSubmittedEvent(ZonedDateTime.parse("2019-01-01T14:00:00Z"));
+        emittedEventDao.markEventAsEmitted(eventToUpdate);
         events = databaseTestHelper.readEmittedEvents();
         event = events.get(0);
         assertThat(event.get("emitted_date"), is(notNullValue()));
+        assertThat(event.get("event_date").toString(), is("2019-01-01 14:00:00.0"));
     }
 
     @Test
@@ -139,5 +143,11 @@ public class EmittedEventDaoIT extends DaoITestBase {
                 1L, "desc", "ref", "return_url",
                 100L, "someProvider", "en", false, null);
         return new PaymentCreated("my-resource-external-id", eventDetails, ZonedDateTime.parse("2019-01-01T14:00:00Z"));
+    }
+
+    private RefundSubmitted aRefundSubmittedEvent(ZonedDateTime eventTimestamp) {
+        return new RefundSubmitted("my-resource-external-id",
+                "parent-external-id",
+                null, eventTimestamp);
     }
 }

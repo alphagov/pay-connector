@@ -66,7 +66,7 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
     public void markEventAsEmitted(Event event) {
         Query query = entityManager.get()
                 .createQuery("UPDATE EmittedEventEntity e" +
-                        " SET e.emittedDate = :emittedDate " + 
+                        " SET e.emittedDate = :emittedDate , e.eventDate = :eventDate " + 
                         " WHERE e.resourceType = :resource_type" +
                         " AND e.resourceExternalId = :resource_external_id" +
                         " AND e.eventType = :event_type" +
@@ -75,7 +75,8 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
         query.setParameter("resource_type", event.getResourceType().getLowercase())
                 .setParameter("resource_external_id", event.getResourceExternalId())
                 .setParameter("event_type", event.getEventType())
-                .setParameter("emittedDate", ZonedDateTime.now(ZoneId.of("UTC")));
+                .setParameter("emittedDate", ZonedDateTime.now(ZoneId.of("UTC")))
+                .setParameter("eventDate", event.getTimestamp());
         
         query.executeUpdate();
     }
