@@ -19,11 +19,11 @@ public class StripeTransferOutRequest extends StripeTransferRequest {
         super(amount, gatewayAccount, sourceTransactionId, idempotencyKey, stripeGatewayConfig);
     }
 
-    public static StripeTransferOutRequest of(String amount, CaptureGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
+    public static StripeTransferOutRequest of(String amount, String stripeChargeId, CaptureGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
         return new StripeTransferOutRequest(
                 amount,
                 request.getGatewayAccount(),
-                request.getTransactionId(),
+                stripeChargeId,
                 request.getExternalId(),
                 stripeGatewayConfig
         );
