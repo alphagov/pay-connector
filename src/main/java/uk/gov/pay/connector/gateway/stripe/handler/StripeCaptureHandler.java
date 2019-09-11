@@ -64,7 +64,7 @@ public class StripeCaptureHandler implements CaptureHandler {
                     .map(fee -> request.getAmount() - fee)
                     .orElse(request.getAmount());
             
-            transferToConnectAccount(request, netTransferAmount);
+            transferToConnectAccount(request, netTransferAmount, capturedCharge.getId());
 
             return new CaptureResponse(transactionId, COMPLETE, processingFee.orElse(null));
         } catch (GatewayErrorException e) {
@@ -130,8 +130,8 @@ public class StripeCaptureHandler implements CaptureHandler {
         return stripeCaptureResponse;
     }
 
-    private void transferToConnectAccount(CaptureGatewayRequest request, Long netTransferAmount) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
-        String transferResponse = client.postRequestFor(StripeTransferOutRequest.of(netTransferAmount.toString(), request, stripeGatewayConfig)).getEntity();
+    private void transferToConnectAccount(CaptureGatewayRequest request, Long netTransferAmount, String stripeChargeId) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
+        String transferResponse = client.postRequestFor(StripeTransferOutRequest.of(netTransferAmount.toString(), stripeChargeId, request, stripeGatewayConfig)).getEntity();
         StripeTransferResponse stripeTransferResponse = jsonObjectMapper.getObject(transferResponse, StripeTransferResponse.class);
         logger.info("In capturing charge id {}, transferred net amount {} - transfer id {} -  to Stripe Connect account id {} in transfer group {}",
                 request.getExternalId(),
