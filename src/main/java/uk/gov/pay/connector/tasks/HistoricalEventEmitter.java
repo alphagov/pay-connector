@@ -8,15 +8,14 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
-import uk.gov.pay.connector.events.EventQueue;
+import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
-import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.RefundStateTransition;
-import uk.gov.pay.connector.queue.StateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.service.RefundStateEventMap;
@@ -45,8 +44,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_
 public class HistoricalEventEmitter {
     private static final Logger logger = LoggerFactory.getLogger(HistoricalEventEmitter.class);
     private final EmittedEventDao emittedEventDao;
-    private StateTransitionQueue stateTransitionQueue;
-    private final EventQueue eventQueue;
     private final RefundDao refundDao;
     private boolean shouldForceEmission;
 
@@ -69,23 +66,26 @@ public class HistoricalEventEmitter {
             USER_CANCEL_READY);
 
     private PaymentGatewayStateTransitions paymentGatewayStateTransitions;
+    private EventService eventService;
+    private StateTransitionService stateTransitionService;
 
     @Inject
     public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
-                                  StateTransitionQueue stateTransitionQueue, EventQueue eventQueue,
-                                  RefundDao refundDao) {
-        this(emittedEventDao, stateTransitionQueue, eventQueue, refundDao, false);
+                                  RefundDao refundDao,
+                                  EventService eventService,
+                                  StateTransitionService stateTransitionService) {
+        this(emittedEventDao, refundDao, false, eventService, stateTransitionService);
     }
 
     public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
-                                  StateTransitionQueue stateTransitionQueue, EventQueue eventQueue,
-                                  RefundDao refundDao, boolean shouldForceEmission) {
+                                  RefundDao refundDao, boolean shouldForceEmission, EventService eventService,
+                                  StateTransitionService stateTransitionService) {
         this.emittedEventDao = emittedEventDao;
-        this.stateTransitionQueue = stateTransitionQueue;
-        this.eventQueue = eventQueue;
         this.refundDao = refundDao;
         this.paymentGatewayStateTransitions = PaymentGatewayStateTransitions.getInstance();
         this.shouldForceEmission = shouldForceEmission;
+        this.eventService = eventService;
+        this.stateTransitionService = stateTransitionService;
     }
 
     public void processPaymentEvents(ChargeEntity charge) {
@@ -130,8 +130,7 @@ public class HistoricalEventEmitter {
 
         logger.info("Processing new refund history event: [refundExternalId={}] [refundHistoryId={}]", refundHistory.getExternalId(), refundHistory.getId());
 
-        stateTransitionQueue.offer(stateTransition);
-        persistEventEmittedRecord(event);
+        stateTransitionService.offerStateTransition(stateTransition, event);
     }
 
     private List<ChargeEventEntity> getSortedChargeEvents(ChargeEntity charge) {
@@ -220,8 +219,7 @@ public class HistoricalEventEmitter {
 
     private void offerStateTransitionEvent(long currentId, ChargeEventEntity chargeEventEntity, PaymentStateTransition transition, Event event) {
         logger.info("[{}] - found - emitting {} for charge event [{}] ", currentId, event, chargeEventEntity.getId());
-        stateTransitionQueue.offer(transition);
-        persistEventEmittedRecord(event);
+        stateTransitionService.offerStateTransition(transition, event);
     }
 
     private void processPaymentDetailEnteredEvent(List<ChargeEventEntity> chargeEventEntities) {
@@ -232,7 +230,7 @@ public class HistoricalEventEmitter {
                 .filter(event -> isValidPaymentDetailsEnteredTransition(chargeEventEntities, event))
                 .map(PaymentDetailsEntered::from)
                 .filter(event -> shouldForceEmission || !emittedEventDao.hasBeenEmittedBefore(event))
-                .forEach(this::emitAndPersistEvent);
+                .forEach(event -> eventService.emitAndRecordEvent(event));
     }
 
     private boolean isValidPaymentDetailsEnteredTransition(List<ChargeEventEntity> chargeEventEntities, ChargeEventEntity event) {
@@ -247,18 +245,5 @@ public class HistoricalEventEmitter {
                 .stream()
                 .map(ChargeEventEntity::getStatus)
                 .collect(Collectors.toList()).contains(AUTHORISATION_3DS_REQUIRED);
-    }
-
-    private void emitAndPersistEvent(PaymentDetailsEntered event) {
-        try {
-            eventQueue.emitEvent(event);
-            persistEventEmittedRecord(event);
-        } catch (QueueException e) {
-            logger.error("Failed to emit event {} due to {} [chargeId={}]", event, e.getMessage(), event.getResourceExternalId());
-        }
-    }
-
-    private void persistEventEmittedRecord(Event event) {
-        emittedEventDao.recordEmission(event);
     }
 }

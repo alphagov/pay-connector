@@ -36,6 +36,11 @@ public class RefundHistoryEntityFixture {
                 userExternalId, gatewayTransactionId, chargeExternalId, gatewayAccountId);
     }
 
+    public RefundHistoryEntityFixture withExternalId(String externalId) {
+        this.externalId = externalId;
+        return this;
+    }
+    
     public RefundHistoryEntityFixture withStatus(String status) {
         this.status = status;
         return this;

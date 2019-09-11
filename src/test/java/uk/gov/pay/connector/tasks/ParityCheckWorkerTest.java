@@ -12,12 +12,12 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.events.EventQueue;
+import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.paritycheck.LedgerService;
-import uk.gov.pay.connector.queue.StateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 
 import java.util.Optional;
@@ -41,9 +41,9 @@ public class ParityCheckWorkerTest {
     @Mock
     private EmittedEventDao emittedEventDao;
     @Mock
-    private StateTransitionQueue stateTransitionQueue;
+    private StateTransitionService stateTransitionService;
     @Mock
-    private EventQueue eventQueue;
+    private EventService eventService;
     @Mock
     private RefundDao refundDao;
     @Mock
@@ -55,7 +55,8 @@ public class ParityCheckWorkerTest {
 
     @Before
     public void setUp() {
-        worker = new ParityCheckWorker(chargeDao, chargeService, ledgerService, emittedEventDao, stateTransitionQueue, eventQueue, refundDao);
+        worker = new ParityCheckWorker(chargeDao, chargeService, ledgerService, emittedEventDao,
+                 stateTransitionService, eventService, refundDao);
         CardDetailsEntity cardDetails = mock(CardDetailsEntity.class);
         chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
@@ -78,11 +79,10 @@ public class ParityCheckWorkerTest {
         worker.execute(1L, OptionalLong.empty(), true);
 
         verify(chargeService, never()).updateChargeParityStatus(any(), any());
-        verify(stateTransitionQueue, never()).offer(any());
+        verify(stateTransitionService, never()).offerStateTransition(any(), any());
         verify(emittedEventDao, never()).recordEmission(any());
         verify(chargeDao, never()).findById(2L);
     }
-
 
     @Test
     public void executeRecordsParityStatusForChargesExistingInLedger() {
@@ -93,7 +93,7 @@ public class ParityCheckWorkerTest {
         worker.execute(1L, OptionalLong.empty(), doNotReprocessValidRecords);
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.EXISTS_IN_LEDGER);
-        verify(stateTransitionQueue, never()).offer(any());
+        verify(stateTransitionService, never()).offerStateTransition(any(), any());
         verify(emittedEventDao, never()).recordEmission(any());
         verify(chargeDao, never()).findById(2L);
     }
@@ -114,7 +114,7 @@ public class ParityCheckWorkerTest {
         verify(ledgerService, times(2)).getTransaction(any());
         verify(ledgerService, times(1)).getTransaction(chargeEntity.getExternalId());
         verify(ledgerService, times(1)).getTransaction(chargeEntity.getRefunds().get(0).getExternalId());
-        verify(stateTransitionQueue, never()).offer(any());
+        verify(stateTransitionService, never()).offerStateTransition(any(), any());
         verify(emittedEventDao, never()).recordEmission(any());
         verify(chargeDao, never()).findById(2L);
     }
@@ -132,8 +132,7 @@ public class ParityCheckWorkerTest {
         verify(ledgerService, times(1)).getTransaction(any());
         verify(ledgerService, times(1)).getTransaction(chargeEntity.getExternalId());
         verify(ledgerService, never()).getTransaction(chargeEntity.getRefunds().get(0).getExternalId());
-        verify(stateTransitionQueue, times(1)).offer(any());
-        verify(emittedEventDao, times(1)).recordEmission(any());
+        verify(stateTransitionService, times(1)).offerStateTransition(any(), any());
     }
 
     @Test
@@ -149,8 +148,7 @@ public class ParityCheckWorkerTest {
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.MISSING_IN_LEDGER);
         verify(ledgerService, times(2)).getTransaction(any());
-        verify(stateTransitionQueue, times(1)).offer(any());
-        verify(emittedEventDao, times(1)).recordEmission(any());
+        verify(stateTransitionService, times(1)).offerStateTransition(any(), any());
     }
 
     @Test
@@ -168,8 +166,7 @@ public class ParityCheckWorkerTest {
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.DATA_MISMATCH);
         verify(ledgerService, times(2)).getTransaction(any());
-        verify(stateTransitionQueue, times(1)).offer(any());
-        verify(emittedEventDao, times(1)).recordEmission(any());
+        verify(stateTransitionService, times(1)).offerStateTransition(any(), any());
     }
 
     @Test
@@ -182,8 +179,7 @@ public class ParityCheckWorkerTest {
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.MISSING_IN_LEDGER);
         verify(ledgerService, times(1)).getTransaction(any());
-        verify(stateTransitionQueue, times(1)).offer(any());
-        verify(emittedEventDao, times(1)).recordEmission(any());
+        verify(stateTransitionService, times(1)).offerStateTransition(any(), any());
     }
 
     @Test
@@ -195,7 +191,6 @@ public class ParityCheckWorkerTest {
 
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.MISSING_IN_LEDGER);
         verify(ledgerService, times(1)).getTransaction(any());
-        verify(stateTransitionQueue, times(1)).offer(any());
-        verify(emittedEventDao, times(1)).recordEmission(any());
+        verify(stateTransitionService, times(1)).offerStateTransition(any(), any());
     }
 }

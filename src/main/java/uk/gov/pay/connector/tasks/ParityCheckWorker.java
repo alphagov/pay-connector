@@ -10,11 +10,11 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.events.EventQueue;
+import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.paritycheck.LedgerTransaction;
-import uk.gov.pay.connector.queue.StateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
@@ -37,12 +37,12 @@ public class ParityCheckWorker {
 
     @Inject
     public ParityCheckWorker(ChargeDao chargeDao, ChargeService chargeService, LedgerService ledgerService, EmittedEventDao emittedEventDao,
-                             StateTransitionQueue stateTransitionQueue, EventQueue eventQueue, RefundDao refundDao) {
+                             StateTransitionService stateTransitionService, EventService eventService, RefundDao refundDao) {
         this.chargeDao = chargeDao;
         this.chargeService = chargeService;
         this.ledgerService = ledgerService;
-        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, stateTransitionQueue, eventQueue,
-                refundDao, shouldForceEmission);
+        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, shouldForceEmission,
+                eventService, stateTransitionService);
     }
 
     public void execute(Long startId, OptionalLong maybeMaxId, boolean doNotReprocessValidRecords) {

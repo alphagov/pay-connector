@@ -57,4 +57,11 @@ public class StateTransitionService {
                     );
                 });
     }
+
+    @Transactional
+    public void offerStateTransition(StateTransition stateTransition, Event event) {
+        stateTransitionQueue.offer(stateTransition);
+        eventService.recordOfferedEvent(event.getResourceType(), event.getResourceExternalId(),
+                event.getEventType(), event.getTimestamp());
+    }
 }

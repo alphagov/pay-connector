@@ -13,7 +13,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.events.EventQueue;
+import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.AuthorisationSucceeded;
@@ -30,7 +30,7 @@ import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.pact.RefundHistoryEntityFixture;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.StateTransition;
-import uk.gov.pay.connector.queue.StateTransitionQueue;
+import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
@@ -64,9 +64,9 @@ public class HistoricalEventEmitterWorkerTest {
     @Mock
     EmittedEventDao emittedEventDao;
     @Mock
-    StateTransitionQueue stateTransitionQueue;
+    StateTransitionService stateTransitionService;
     @Mock
-    EventQueue eventQueue;
+    EventService eventService;
     @Mock
     RefundDao refundDao;
 
@@ -76,7 +76,7 @@ public class HistoricalEventEmitterWorkerTest {
 
     @Before
     public void setUp() {
-        historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, stateTransitionQueue, eventQueue, refundDao);
+        historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, eventService, stateTransitionService);
         worker = new HistoricalEventEmitterWorker(chargeDao, refundDao, chargeEventDao, historicalEventEmitter);
         CardDetailsEntity cardDetails = mock(CardDetailsEntity.class);
         when(cardDetails.getLastDigitsCardNumber()).thenReturn(LastDigitsCardNumber.of("1234"));
@@ -100,13 +100,9 @@ public class HistoricalEventEmitterWorkerTest {
         worker.execute(1L, OptionalLong.empty());
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
-        verify(stateTransitionQueue, times(1)).offer(argument.capture());
+        verify(stateTransitionService, times(1)).offerStateTransition(argument.capture(), any());
 
         assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(PaymentCreated.class));
-
-        ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(emittedEventDao, times(1)).recordEmission(daoArgumentCaptor.capture());
-        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_CREATED"));
 
         verify(chargeDao, never()).findById(2L);
     }
@@ -120,8 +116,7 @@ public class HistoricalEventEmitterWorkerTest {
 
         worker.execute(1L, OptionalLong.empty());
 
-        verify(stateTransitionQueue, never()).offer(any());
-        verify(emittedEventDao, never()).recordEmission(any());
+        verify(stateTransitionService, never()).offerStateTransition(any(), any());
     }
 
     @Test
@@ -131,8 +126,7 @@ public class HistoricalEventEmitterWorkerTest {
         worker.execute(1L, OptionalLong.of(100L));
 
         verify(chargeDao, times(100)).findById(and(geq(1L), leq(100L)));
-        verify(stateTransitionQueue, times(100)).offer(any());
-        verify(emittedEventDao, times(100)).recordEmission(any());
+        verify(stateTransitionService, times(100)).offerStateTransition(any(), any());
     }
 
     @Test
@@ -143,8 +137,7 @@ public class HistoricalEventEmitterWorkerTest {
         worker.execute(1L, OptionalLong.of(1L));
 
         verify(chargeDao, times(1)).findById(1L);
-        verify(stateTransitionQueue, never()).offer(any());
-        verify(emittedEventDao, never()).recordEmission(any());
+        verify(stateTransitionService, never()).offerStateTransition(any(), any());
     }
 
     @Test
@@ -163,13 +156,9 @@ public class HistoricalEventEmitterWorkerTest {
         worker.execute(1L, OptionalLong.empty());
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
-        verify(stateTransitionQueue, times(1)).offer(argument.capture());
+        verify(stateTransitionService, times(1)).offerStateTransition(argument.capture(), any());
 
         assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(PaymentCreated.class));
-
-        ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(emittedEventDao, times(1)).recordEmission(daoArgumentCaptor.capture());
-        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_CREATED"));
     }
 
     @Test
@@ -194,7 +183,7 @@ public class HistoricalEventEmitterWorkerTest {
 
         worker.execute(1L, OptionalLong.empty());
 
-        verify(eventQueue).emitEvent(any(PaymentDetailsEntered.class));
+        verify(eventService, times(1)).emitAndRecordEvent(any(PaymentDetailsEntered.class));
     }
 
     @Test
@@ -212,7 +201,7 @@ public class HistoricalEventEmitterWorkerTest {
 
         worker.execute(1L, OptionalLong.empty());
 
-        verifyZeroInteractions(eventQueue);
+        verifyZeroInteractions(eventService);
     }
 
     @Test
@@ -248,16 +237,10 @@ public class HistoricalEventEmitterWorkerTest {
         worker.execute(1L, OptionalLong.empty());
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
-        verify(stateTransitionQueue, times(2)).offer(argument.capture());
+        verify(stateTransitionService, times(2)).offerStateTransition(argument.capture(), any());
 
         assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(CaptureSubmitted.class));
         assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(CaptureConfirmed.class));
-
-        ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(emittedEventDao, times(3)).recordEmission(daoArgumentCaptor.capture());
-        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("CAPTURE_SUBMITTED"));
-        assertThat(daoArgumentCaptor.getAllValues().get(1).getEventType(), is("CAPTURE_CONFIRMED"));
-        assertThat(daoArgumentCaptor.getAllValues().get(2).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
     }
 
     @Test
@@ -284,13 +267,13 @@ public class HistoricalEventEmitterWorkerTest {
         worker.execute(1L, OptionalLong.empty());
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
-        verify(stateTransitionQueue, times(1)).offer(argument.capture());
+        verify(stateTransitionService, times(1)).offerStateTransition(argument.capture(), any(AuthorisationSucceeded.class));
 
         assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(AuthorisationSucceeded.class));
 
         ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(emittedEventDao, times(2)).recordEmission(daoArgumentCaptor.capture()); // 2 times due to paymentDetailsEnteredEvent
-        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("AUTHORISATION_SUCCEEDED"));
+        verify(eventService, times(1)).emitAndRecordEvent(daoArgumentCaptor.capture()); // additional event - paymentDetailsEnteredEvent
+        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
     }
 
     @Test
@@ -310,7 +293,7 @@ public class HistoricalEventEmitterWorkerTest {
         worker.execute(1L, OptionalLong.empty());
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
-        verify(stateTransitionQueue).offer(argument.capture());
+        verify(stateTransitionService).offerStateTransition(argument.capture(), any(RefundCreatedByService.class));
 
         assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(RefundCreatedByService.class));
 
@@ -348,16 +331,14 @@ public class HistoricalEventEmitterWorkerTest {
         worker.execute(1L, OptionalLong.empty());
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
-        verify(stateTransitionQueue, times(2)).offer(argument.capture());
+        verify(stateTransitionService, times(2)).offerStateTransition(argument.capture(), any());
 
         assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(GatewayRequires3dsAuthorisation.class));
         assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(AuthorisationSucceeded.class));
 
         ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(emittedEventDao, times(3)).recordEmission(daoArgumentCaptor.capture());
-        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("GATEWAY_REQUIRES_3DS_AUTHORISATION"));
-        assertThat(daoArgumentCaptor.getAllValues().get(1).getEventType(), is("AUTHORISATION_SUCCEEDED"));
-        assertThat(daoArgumentCaptor.getAllValues().get(2).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+        verify(eventService, times(1)).emitAndRecordEvent(daoArgumentCaptor.capture());
+        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
     }
 
     @Test
@@ -378,15 +359,10 @@ public class HistoricalEventEmitterWorkerTest {
         worker.executeForDateRange(eventDate, eventDate);
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
-        verify(stateTransitionQueue, times(2)).offer(argument.capture());
+        verify(stateTransitionService, times(2)).offerStateTransition(argument.capture(), any());
 
         assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(PaymentCreated.class));
         assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(PaymentStarted.class));
-
-        ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(emittedEventDao, times(2)).recordEmission(daoArgumentCaptor.capture());
-        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_CREATED"));
-        assertThat(daoArgumentCaptor.getAllValues().get(1).getEventType(), is("PAYMENT_STARTED"));
     }
 
     @Test
@@ -404,15 +380,10 @@ public class HistoricalEventEmitterWorkerTest {
         worker.executeForDateRange(eventDate, eventDate);
 
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
-        verify(stateTransitionQueue, times(2)).offer(argument.capture());
+        verify(stateTransitionService, times(2)).offerStateTransition(argument.capture(), any());
 
         assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(RefundCreatedByService.class));
         assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(RefundSucceeded.class));
-
-        ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(emittedEventDao, times(2)).recordEmission(daoArgumentCaptor.capture());
-        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("REFUND_CREATED_BY_SERVICE"));
-        assertThat(daoArgumentCaptor.getAllValues().get(1).getEventType(), is("REFUND_SUCCEEDED"));
     }
 
     private RefundHistory getRefundHistoryEntity(ChargeEntity chargeEntity, RefundStatus refundStatus) {
