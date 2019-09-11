@@ -189,8 +189,12 @@ $ java -jar target/pay-connector-0.1-SNAPSHOT-allinone.jar
 |[```/v1/frontend/charges/{chargeId}/cards```](docs/api_specification.md#post-v1frontendchargeschargeidcards)                      | POST |  Authorise the charge with the card details            |
 |[```/v1/frontend/charges/{chargeId}/capture```](docs/api_specification.md#post-v1frontendchargeschargeidcapture)                      | POST |  Confirm a card charge that was previously authorised successfully.            |
 |[```/v1/frontend/charges?gatewayAccountId={gatewayAccountId}```](docs/api_specification.md#get-v1frontendchargesgatewayAccountIdgatewayAccountId)    | GET |  List all transactions for a gateway account     |
-|[```/v1/frontend/tokens/{chargeTokenId}/charge```](docs/api_specification.md#get-v1frontendtokenschargetokenid)                                  | GET |  Retrieve information about a secure redirect token.            |
-|[```/v1/frontend/tokens/{chargeTokenId}```](docs/api_specification.md#delete-v1frontendtokenschargetokenid)                                  | DELETE |  Delete the secure redirect token.            |
+|[```/v1/frontend/tokens/{chargeTokenId}```](docs/api_specification.md#get-v1frontendtokenschargetokenid) | GET |  Retrieve the status of and charge associated with a secure redirect token.|
+|[```/v1/frontend/tokens/{chargeTokenId}/charge```](docs/api_specification.md#get-v1frontendtokenschargetokenidcharge) | GET |  Retrieve the charge associated with a secure redirect token.|
+|[```/v1/frontend/tokens/{chargeTokenId}/used```](docs/api_specification.md#post-v1frontendtokenschargetokenidused) | POST |  Mark a secure redirect token as used.|
+|[```/v1/frontend/tokens/{chargeTokenId}```](docs/api_specification.md#delete-v1frontendtokenschargetokenid) | DELETE |  Delete a secure redirect token.|
+|
+
 
 ## Licence
 
