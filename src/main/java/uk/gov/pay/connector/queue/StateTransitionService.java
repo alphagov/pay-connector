@@ -14,6 +14,9 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.RefundStateEventMap;
 
 import javax.inject.Inject;
+import java.time.ZoneId;
+
+import static java.time.ZonedDateTime.now;
 
 public class StateTransitionService {
 
@@ -38,7 +41,7 @@ public class StateTransitionService {
         eventService.recordOfferedEvent(ResourceType.REFUND,
                 refundEntity.getExternalId(),
                 Event.eventTypeForClass(refundEventClass),
-                null);
+                now(ZoneId.of("UTC")));
     }
 
     @Transactional
