@@ -61,6 +61,7 @@ import java.net.URI;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +110,7 @@ public class ChargeServiceTest {
     private static final String[] EXTERNAL_CHARGE_ID = new String[1];
     private static final int RETRIABLE_NUMBER_OF_CAPTURE_ATTEMPTS = 1;
     private static final int MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS = 10;
+    private static final List<Map<String, Object>> EMPTY_LINKS = new ArrayList<>();
 
     private ChargeCreateRequestBuilder requestBuilder;
     private TelephoneChargeCreateRequest.Builder telephoneRequestBuilder;
@@ -808,9 +810,12 @@ public class ChargeServiceTest {
         assertThat(telephoneChargeResponse.get().getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(telephoneChargeResponse.get().getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(telephoneChargeResponse.get().getTelephoneNumber(), is("+447700900796"));
-        assertThat(telephoneChargeResponse.get().getChargeId(), is("dummypaymentid123notpersisted"));
+        assertThat(telephoneChargeResponse.get().getDataLinks(), is(EMPTY_LINKS));
+        assertThat(telephoneChargeResponse.get().getDelayedCapture(), is(false));
+        assertThat(telephoneChargeResponse.get().getChargeId().length(), is(26));
         assertThat(telephoneChargeResponse.get().getState().getStatus(), is("success"));
         assertThat(telephoneChargeResponse.get().getState().isFinished(), is(true));
+        
     }
 
     @Test
@@ -841,7 +846,9 @@ public class ChargeServiceTest {
         assertThat(chargeResponse.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(chargeResponse.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(chargeResponse.getTelephoneNumber(), is("+447700900796"));
-        assertThat(chargeResponse.getChargeId(), is("dummypaymentid123notpersisted"));
+        assertThat(chargeResponse.getDataLinks(), is(EMPTY_LINKS));
+        assertThat(chargeResponse.getDelayedCapture(), is(false));
+        assertThat(chargeResponse.getChargeId().length(), is(26));
         assertThat(chargeResponse.getState().getStatus(), is("success"));
         assertThat(chargeResponse.getState().isFinished(), is(true));
     }
@@ -878,7 +885,9 @@ public class ChargeServiceTest {
         assertThat(chargeResponse.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(chargeResponse.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(chargeResponse.getTelephoneNumber(), is("+447700900796"));
-        assertThat(chargeResponse.getChargeId(), is("dummypaymentid123notpersisted"));
+        assertThat(chargeResponse.getDataLinks(), is(EMPTY_LINKS));
+        assertThat(chargeResponse.getDelayedCapture(), is(false));
+        assertThat(chargeResponse.getChargeId().length(), is(26));
         assertThat(chargeResponse.getState().getStatus(), is("failed"));
         assertThat(chargeResponse.getState().isFinished(), is(true));
         assertThat(chargeResponse.getState().getMessage(), is("Payment method rejected"));

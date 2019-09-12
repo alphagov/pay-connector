@@ -293,7 +293,7 @@ public class ChargeService {
                 .withProviderId(chargeEntity.getProviderSessionId())
                 .withCardDetails(persistedCard)
                 .withEmail(chargeEntity.getEmail())
-                .withChargeId("dummypaymentid123notpersisted");
+                .withChargeId(chargeEntity.getExternalId());
 
         chargeEntity.getExternalMetadata().ifPresent(externalMetadata -> {
 
