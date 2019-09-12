@@ -808,7 +808,7 @@ public class ChargeServiceTest {
         assertThat(telephoneChargeResponse.get().getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(telephoneChargeResponse.get().getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(telephoneChargeResponse.get().getTelephoneNumber(), is("+447700900796"));
-        assertThat(telephoneChargeResponse.get().getChargeId(), is("dummypaymentid123notpersisted"));
+        assertThat(telephoneChargeResponse.get().getChargeId().length(), is(26));
         assertThat(telephoneChargeResponse.get().getState().getStatus(), is("success"));
         assertThat(telephoneChargeResponse.get().getState().isFinished(), is(true));
     }
@@ -841,7 +841,7 @@ public class ChargeServiceTest {
         assertThat(chargeResponse.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(chargeResponse.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(chargeResponse.getTelephoneNumber(), is("+447700900796"));
-        assertThat(chargeResponse.getChargeId(), is("dummypaymentid123notpersisted"));
+        assertThat(chargeResponse.getChargeId().length(), is(26));
         assertThat(chargeResponse.getState().getStatus(), is("success"));
         assertThat(chargeResponse.getState().isFinished(), is(true));
     }
@@ -878,7 +878,7 @@ public class ChargeServiceTest {
         assertThat(chargeResponse.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(chargeResponse.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(chargeResponse.getTelephoneNumber(), is("+447700900796"));
-        assertThat(chargeResponse.getChargeId(), is("dummypaymentid123notpersisted"));
+        assertThat(chargeResponse.getChargeId().length(), is(26));
         assertThat(chargeResponse.getState().getStatus(), is("failed"));
         assertThat(chargeResponse.getState().isFinished(), is(true));
         assertThat(chargeResponse.getState().getMessage(), is("Payment method rejected"));
