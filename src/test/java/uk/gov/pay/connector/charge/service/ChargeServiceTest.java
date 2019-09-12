@@ -110,6 +110,7 @@ public class ChargeServiceTest {
     private static final String[] EXTERNAL_CHARGE_ID = new String[1];
     private static final int RETRIABLE_NUMBER_OF_CAPTURE_ATTEMPTS = 1;
     private static final int MAXIMUM_NUMBER_OF_CAPTURE_ATTEMPTS = 10;
+    private static final List<Map<String, Object>> EMPTY_LINKS = new ArrayList<>();
 
     private ChargeCreateRequestBuilder requestBuilder;
     private TelephoneChargeCreateRequest.Builder telephoneRequestBuilder;
@@ -809,7 +810,7 @@ public class ChargeServiceTest {
         assertThat(telephoneChargeResponse.get().getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(telephoneChargeResponse.get().getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(telephoneChargeResponse.get().getTelephoneNumber(), is("+447700900796"));
-        assertThat(telephoneChargeResponse.get().getDataLinks(), is(new ArrayList<Map<String, Object>>()));
+        assertThat(telephoneChargeResponse.get().getDataLinks(), is(EMPTY_LINKS));
         assertThat(telephoneChargeResponse.get().getDelayedCapture(), is(false));
         assertThat(telephoneChargeResponse.get().getChargeId().length(), is(26));
         assertThat(telephoneChargeResponse.get().getState().getStatus(), is("success"));
@@ -845,7 +846,7 @@ public class ChargeServiceTest {
         assertThat(chargeResponse.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(chargeResponse.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(chargeResponse.getTelephoneNumber(), is("+447700900796"));
-        assertThat(chargeResponse.getDataLinks(), is(new ArrayList<Map<String, Object>>()));
+        assertThat(chargeResponse.getDataLinks(), is(EMPTY_LINKS));
         assertThat(chargeResponse.getDelayedCapture(), is(false));
         assertThat(chargeResponse.getChargeId().length(), is(26));
         assertThat(chargeResponse.getState().getStatus(), is("success"));
@@ -884,7 +885,7 @@ public class ChargeServiceTest {
         assertThat(chargeResponse.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
         assertThat(chargeResponse.getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
         assertThat(chargeResponse.getTelephoneNumber(), is("+447700900796"));
-        assertThat(chargeResponse.getDataLinks(), is(new ArrayList<Map<String, Object>>()));
+        assertThat(chargeResponse.getDataLinks(), is(EMPTY_LINKS));
         assertThat(chargeResponse.getDelayedCapture(), is(false));
         assertThat(chargeResponse.getChargeId().length(), is(26));
         assertThat(chargeResponse.getState().getStatus(), is("failed"));
