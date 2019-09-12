@@ -77,7 +77,9 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
                 .body("payment_outcome.status", is("success"))
-                .body("charge_id.length()", is(26));
+                .body("charge_id.length()", is(26))
+                .body("state.status", is("success"))
+                .body("state.finished", is(true));
     }
     
     @Test
