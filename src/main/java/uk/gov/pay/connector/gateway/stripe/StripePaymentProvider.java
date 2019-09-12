@@ -156,7 +156,7 @@ public class StripePaymentProvider implements PaymentProvider {
             throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
         String jsonResponse = client.postRequestFor(StripeAuthoriseRequest.of(sourceId, request, stripeGatewayConfig)).getEntity();
         final StripeCharge createChargeResponse = jsonObjectMapper.getObject(jsonResponse, StripeCharge.class);
-        return new StripeAuthorisationResponse(createChargeResponse);
+        return StripeAuthorisationResponse.of(createChargeResponse);
     }
 
     @Override

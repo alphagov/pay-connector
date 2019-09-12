@@ -11,34 +11,40 @@ public class StripePaymentIntentRequest extends StripeRequest {
 
     private final String amount;
     private final String paymentMethodId;
+    private final String transferGroup;
+    private String frontendUrl;
+    private String chargeExternalId;
 
-    private StripePaymentIntentRequest(
-            GatewayAccountEntity gatewayAccount,
-            String idempotencyKey,
-            StripeGatewayConfig stripeGatewayConfig,
-            String amount,
-            String paymentMethodId
-    ) {
+
+    public StripePaymentIntentRequest(
+            GatewayAccountEntity gatewayAccount, String idempotencyKey, StripeGatewayConfig stripeGatewayConfig, 
+            String amount, String paymentMethodId, String transferGroup, String frontendUrl, String chargeExternalId) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig);
         this.amount = amount;
         this.paymentMethodId = paymentMethodId;
+        this.transferGroup = transferGroup;
+        this.frontendUrl = frontendUrl;
+        this.chargeExternalId = chargeExternalId;
     }
 
     public static StripePaymentIntentRequest of(
             CardAuthorisationGatewayRequest request,
             String paymentMethodId,
-            StripeGatewayConfig stripeGatewayConfig
+            StripeGatewayConfig stripeGatewayConfig,
+            String frontendUrl
     ) {
         return new StripePaymentIntentRequest(
                 request.getGatewayAccount(),
                 request.getChargeExternalId(),
                 stripeGatewayConfig,
                 request.getAmount(),
-                paymentMethodId
+                paymentMethodId,
+                request.getChargeExternalId(),
+                frontendUrl,
+                request.getChargeExternalId()
         );
     }
-
-
+    
     @Override
     protected String urlPath() {
         return "/v1/payment_intents";
@@ -56,7 +62,12 @@ public class StripePaymentIntentRequest extends StripeRequest {
                 "amount", amount,
                 "confirmation_method", "automatic",
                 "capture_method", "manual",
-                "currency", "GBP");
+                "currency", "GBP",
+                "transfer_group", transferGroup,
+                "on_behalf_of", stripeConnectAccountId,
+                "confirm", "true",
+                "return_url", String.format("%s/card_details/%s/3ds_required_in", frontendUrl, chargeExternalId)
+        );
     }
 
     @Override

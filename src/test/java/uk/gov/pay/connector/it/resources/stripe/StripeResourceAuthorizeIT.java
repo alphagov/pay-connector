@@ -338,6 +338,7 @@ public class StripeResourceAuthorizeIT {
                 .withAccountId(accountId)
                 .withPaymentGateway(paymentProvider)
                 .withCredentials(credentials)
+                .withIntegrationVersion3ds(1)
                 .build());
     }
 

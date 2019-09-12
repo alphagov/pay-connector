@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
 import java.util.Optional;
 
@@ -34,9 +35,13 @@ public class StripeCharge {
         }
 
     }
-    
-    
-    
+
+    public Optional<BaseAuthoriseResponse.AuthoriseStatus> getAuthorisationStatus() {
+        return Optional.ofNullable(status)
+                .filter("succeeded"::equals)
+                .map(s -> BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED);
+    }
+
     public String getId() {
         return id;
     }
