@@ -164,7 +164,7 @@ public class ChargeService {
                     telephoneChargeRequest.getProviderId(),
                     SupportedLanguage.ENGLISH
             );
-
+            
             chargeDao.persist(chargeEntity);
             return chargeEntity;
         });
@@ -744,22 +744,30 @@ public class ChargeService {
 
     private ExternalMetadata storeExtraFieldsInMetaData(TelephoneChargeCreateRequest telephoneChargeRequest) {
         HashMap<String, Object> telephoneJSON = new HashMap<>();
-        telephoneJSON.put("processor_id", telephoneChargeRequest.getProcessorId());
+        String processorId = telephoneChargeRequest.getProcessorId();
+        telephoneJSON.put("processor_id", checkAndGetTruncatedValue(processorId, "processor_id", processorId));
         telephoneJSON.put("status", telephoneChargeRequest.getPaymentOutcome().getStatus());
-
         telephoneChargeRequest.getCreatedDate().ifPresent(createdDate -> telephoneJSON.put("created_date", createdDate));
         telephoneChargeRequest.getAuthorisedDate().ifPresent(authorisedDate -> telephoneJSON.put("authorised_date", authorisedDate));
-        telephoneChargeRequest.getAuthCode().ifPresent(authCode -> telephoneJSON.put("auth_code", authCode));
-        telephoneChargeRequest.getTelephoneNumber().ifPresent(telephoneNumber -> telephoneJSON.put("telephone_number", telephoneNumber));
+        telephoneChargeRequest.getAuthCode().ifPresent(authCode -> telephoneJSON.put("auth_code", checkAndGetTruncatedValue(processorId, "auth_code", authCode)));
+        telephoneChargeRequest.getTelephoneNumber().ifPresent(telephoneNumber -> telephoneJSON.put("telephone_number", checkAndGetTruncatedValue(processorId, "telephone_number", telephoneNumber)));
         telephoneChargeRequest.getPaymentOutcome().getCode().ifPresent(code -> telephoneJSON.put("code", code));
         telephoneChargeRequest.getPaymentOutcome().getSupplemental().ifPresent(
                 supplemental -> {
-                    supplemental.getErrorCode().ifPresent(errorCode -> telephoneJSON.put("error_code", errorCode));
-                    supplemental.getErrorMessage().ifPresent(errorMessage -> telephoneJSON.put("error_message", errorMessage));
+                    supplemental.getErrorCode().ifPresent(errorCode -> telephoneJSON.put("error_code", checkAndGetTruncatedValue(processorId, "error_code", errorCode)));
+                    supplemental.getErrorMessage().ifPresent(errorMessage -> telephoneJSON.put("error_message", checkAndGetTruncatedValue(processorId, "error_message", errorMessage)));
                 }
         );
 
         return new ExternalMetadata(telephoneJSON);
+    }
+    
+    private String checkAndGetTruncatedValue(String processorId, String field, String value) {
+        if (value.length() > 50) {
+            logger.info("Telephone payment {} - {} field is longer than 50 characters and has been truncated and stored. Actual value is {}", processorId, field, value);
+            return value.substring(0, 50);
+        }
+        return value;
     }
 
     private void checkIfZeroAmountAllowed(Long amount, GatewayAccountEntity gatewayAccount) {
