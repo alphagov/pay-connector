@@ -1,5 +1,5 @@
 {
-  "id": "pi_123",
+  "id": "pi_requires_3ds",
   "object": "payment_intent",
   "amount": 1000,
   "amount_capturable": 0,

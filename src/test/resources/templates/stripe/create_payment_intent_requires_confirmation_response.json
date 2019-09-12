@@ -1,5 +1,5 @@
 {
-  "id": "pi_success",
+  "id": "pi_requires_confirm",
   "object": "payment_intent",
   "amount": 1000,
   "amount_capturable": 0,
@@ -46,7 +46,7 @@
   "source": null,
   "statement_descriptor": null,
   "statement_descriptor_suffix": null,
-  "status": "requires_capture",
+  "status": "requires_confirmation",
   "transfer_data": null,
   "transfer_group": "bc3rl3m7po6do0mt7r11kbt588"
 }

@@ -4,18 +4,22 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 
+import static uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentResponse.ProcessableStatus.REQUIRES_ACTION;
+import static uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentResponse.ProcessableStatus.REQUIRES_CAPTURE;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StripePaymentIntentResponse {
+    
     private static Map<String, BaseAuthoriseResponse.AuthoriseStatus> statusMap = Map.of(
-            "requires_capture", BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED,
-            "requires_action", BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS
+            REQUIRES_CAPTURE.getStatus(), BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED,
+            REQUIRES_ACTION.getStatus(), BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS
             
     );
     
-    @JsonProperty("id")
     private String id;
     
     @JsonProperty("next_action")
@@ -37,6 +41,11 @@ public class StripePaymentIntentResponse {
                 .map(m -> m.get("url"));
                 
     }
+    
+
+    public Optional<ProcessableStatus> getProcessableStatus() {
+        return ProcessableStatus.fromString(status);
+    } 
 
     public NextAction getNextAction() {
         return nextAction;
@@ -70,5 +79,26 @@ public class StripePaymentIntentResponse {
                 "id='" + id + '\'' +
                 ", nextAction=" + nextAction +
                 '}';
+    }
+    
+    public enum ProcessableStatus {
+        REQUIRES_ACTION("requires_action"),
+        REQUIRES_CONFIRMATION("requires_confirmation"),
+        REQUIRES_CAPTURE("requires_capture");
+        
+        private final String status;
+        ProcessableStatus(String status) {
+            this.status = status;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        static Optional<ProcessableStatus> fromString(String name) {
+            return Arrays.stream(ProcessableStatus.values())
+                    .filter(v -> v.status.equals(name))
+                    .findFirst();
+        }
     }
 }

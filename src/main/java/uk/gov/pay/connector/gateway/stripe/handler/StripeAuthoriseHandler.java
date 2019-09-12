@@ -25,6 +25,7 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSourcesResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTokenResponse;
 import uk.gov.pay.connector.gateway.stripe.request.StripeAuthoriseRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentConfirmRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentMethodRequest;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsSourceResponse;
@@ -46,6 +47,8 @@ import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
+import static uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentResponse.ProcessableStatus.REQUIRES_ACTION;
+import static uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentResponse.ProcessableStatus.REQUIRES_CONFIRMATION;
 
 public class StripeAuthoriseHandler implements AuthoriseHandler {
 
@@ -237,6 +240,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
             throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
         StripePaymentMethodResponse stripePaymentMethodResponse = createPaymentMethod(request);
         StripePaymentIntentResponse stripePaymentIntentResponse = createPaymentIntent(request, stripePaymentMethodResponse.getId());
+        stripePaymentIntentResponse = processPaymentIntentConfirmationResponse(request, stripePaymentIntentResponse);
 
         return GatewayResponse
                 .GatewayResponseBuilder
@@ -244,9 +248,51 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 .withResponse(StripeAuthorisationResponse.of(stripePaymentIntentResponse)).build();
     }
 
+    private StripePaymentIntentResponse processPaymentIntentConfirmationResponse(CardAuthorisationGatewayRequest request, StripePaymentIntentResponse stripePaymentIntentResponse) throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
+        Optional<StripePaymentIntentResponse.ProcessableStatus> maybeProcessableStatus = stripePaymentIntentResponse.getProcessableStatus();
+
+        if (maybeProcessableStatus.isEmpty()) {
+            logger.error("Could not process stripe payment intent {} response with status {}",
+                    stripePaymentIntentResponse.getId(),
+                    stripePaymentIntentResponse.getStatus()
+            );
+            throw new GatewayException.GenericGatewayException(
+                    String.format("Could not process stripe payment intent response with status %s")
+            );
+        }
+
+        StripePaymentIntentResponse.ProcessableStatus processableStatus = maybeProcessableStatus.get();
+
+        if (REQUIRES_ACTION.equals(processableStatus)) {
+            if (stripePaymentIntentResponse.getRedirectUrl().isEmpty()) {
+                logger.error("Could not process stripe payment intent {} response with status {} - could not understand next action {}",
+                        stripePaymentIntentResponse.getId(),
+                        stripePaymentIntentResponse.getStatus(),
+                        stripePaymentIntentResponse.getNextAction()
+                );
+                throw new GatewayException.GenericGatewayException(
+                        String.format("Could not process stripe payment intent response with status %s", stripePaymentIntentResponse.getStatus() )
+                );
+            }
+        }
+
+        if (processableStatus.equals(REQUIRES_CONFIRMATION)) {
+            stripePaymentIntentResponse = confirmPaymentIntent(request, stripePaymentIntentResponse.getId());
+            return processPaymentIntentConfirmationResponse(request, stripePaymentIntentResponse);
+        }
+        
+        return stripePaymentIntentResponse;
+    }
+
     private StripePaymentIntentResponse createPaymentIntent(CardAuthorisationGatewayRequest request, String paymentMethodId)
             throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
         String jsonResponse = client.postRequestFor(StripePaymentIntentRequest.of(request, paymentMethodId, stripeGatewayConfig, frontendUrl)).getEntity();
+        return jsonObjectMapper.getObject(jsonResponse, StripePaymentIntentResponse.class);
+    }
+    
+    private StripePaymentIntentResponse confirmPaymentIntent(CardAuthorisationGatewayRequest request, String paymentIntentId)
+            throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
+        String jsonResponse = client.postRequestFor(StripePaymentIntentConfirmRequest.of(request, paymentIntentId, frontendUrl, stripeGatewayConfig)).getEntity();
         return jsonObjectMapper.getObject(jsonResponse, StripePaymentIntentResponse.class);
     }
 
