@@ -77,7 +77,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
                 .body("payment_outcome.status", is("success"))
-                .body("charge_id", is("dummypaymentid123notpersisted"));
+                .body("charge_id.length()", is(26));
     }
     
     @Test
@@ -109,7 +109,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
                 .body("telephone_number", is("+447700900796"))
-                .body("charge_id", is("dummypaymentid123notpersisted"))
+                .body("charge_id.length()", is(26))
                 .body("state.status", is("success"))
                 .body("state.finished", is(true));
     }
@@ -144,7 +144,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("card_details.expiry_date", is("02/19"))
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
-                .body("charge_id", is("dummypaymentid123notpersisted"))
+                .body("charge_id.length()", is(26))
                 .body("state.status", is("failed"))
                 .body("state.code", is("P0010"))
                 .body("state.finished", is(true))
@@ -187,7 +187,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("card_details.expiry_date", is("02/19"))
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
-                .body("charge_id", is("dummypaymentid123notpersisted"))
+                .body("charge_id.length()", is(26))
                 .body("state.status", is("failed"))
                 .body("state.code", is("P0050"))
                 .body("state.finished", is(true))
@@ -224,7 +224,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("card_details.expiry_date", is("02/19"))
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
-                .body("charge_id", is("dummypaymentid123notpersisted"))
+                .body("charge_id.length()", is(26))
                 .body("state.status", is("failed"))
                 .body("state.code", is("P0030"))
                 .body("state.finished", is(true))
@@ -270,7 +270,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
                 .body("telephone_number", is(stringOf50Characters))
-                .body("charge_id", is("dummypaymentid123notpersisted"))
+                .body("charge_id.length()", is(26))
                 .body("state.status", is("failed"))
                 .body("state.code", is("P0030"))
                 .body("state.finished", is(true))
@@ -298,7 +298,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("card_details.expiry_date", is("02/19"))
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
-                .body("charge_id", is("dummypaymentid123notpersisted"))
+                .body("charge_id.length()", is(26))
                 .body("state.status", is("success"))
                 .body("state.finished", is(true));
     }
