@@ -87,14 +87,14 @@ public class StripePaymentMethodRequestTest {
         String payload = stripePaymentMethodRequest.getGatewayOrder().getPayload();
         assertThat(payload, containsString("card%5Bcvc%5D=" + cvc));
         assertThat(payload, containsString("card%5Bnumber%5D=" + cardNo));
-        assertThat(payload, containsString("card%5Bname%5D=" + cardHolder));
+        assertThat(payload, containsString("billing_details%5Bname%5D=" + cardHolder));
         assertThat(payload, containsString("card%5Bexp_year%5D=" + endYear));
         assertThat(payload, containsString("card%5Bexp_month%5D=" + endMonth));
-        assertThat(payload, containsString("card%5Baddress_line1%5D=" + line1));
-        assertThat(payload, containsString("card%5Baddress_line2%5D=" + line2));
-        assertThat(payload, containsString("card%5Baddress_city%5D=" + city));
-        assertThat(payload, containsString("card%5Baddress_country%5D=" + country));
-        assertThat(payload, containsString("card%5Baddress_zip%5D=" + postcode));
+        assertThat(payload, containsString("billing_details%5Baddress%5Bline1%5D%5D=" + line1));
+        assertThat(payload, containsString("billing_details%5Baddress%5Bline2%5D%5D=" + line2));
+        assertThat(payload, containsString("billing_details%5Baddress%5Bcity%5D%5D=" + city));
+        assertThat(payload, containsString("billing_details%5Baddress%5Bcountry%5D%5D=" + country));
+        assertThat(payload, containsString("billing_details%5Baddress%5Bpostal_code%5D%5D=" + postcode));
     }
 
     @Test
@@ -105,14 +105,9 @@ public class StripePaymentMethodRequestTest {
         String payload = stripePaymentMethodRequest.getGatewayOrder().getPayload();
         assertThat(payload, containsString("card%5Bcvc%5D=" + cvc));
         assertThat(payload, containsString("card%5Bnumber%5D=" + cardNo));
-        assertThat(payload, containsString("card%5Bname%5D=" + cardHolder));
+        assertThat(payload, containsString("billing_details%5Bname%5D=" + cardHolder));
         assertThat(payload, containsString("card%5Bexp_year%5D=" + endYear));
         assertThat(payload, containsString("card%5Bexp_month%5D=" + endMonth));
-        assertThat(payload, not(containsString("card%5Baddress_line1%5D=" + line1)));
-        assertThat(payload, not(containsString("card%5Baddress_line2%5D=" + line2)));
-        assertThat(payload, not(containsString("card%5Baddress_city%5D=" + city)));
-        assertThat(payload, not(containsString("card%5Baddress_country%5D=" + country)));
-        assertThat(payload, not(containsString("card%5Baddress_zip%5D=" + postcode)));
     }
 
     @Test
