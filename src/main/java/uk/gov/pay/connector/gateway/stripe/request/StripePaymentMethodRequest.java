@@ -40,17 +40,17 @@ public class StripePaymentMethodRequest extends StripeRequest {
         localParams.put("card[exp_year]", authCardDetails.expiryYear());
         localParams.put("card[number]", authCardDetails.getCardNo());
         localParams.put("card[cvc]", authCardDetails.getCvc());
-        localParams.put("card[name]", authCardDetails.getCardHolder());
+        localParams.put("billing_details[name]", authCardDetails.getCardHolder());
         localParams.put("type", "card");
 
         authCardDetails.getAddress().ifPresent(address -> {
-            localParams.put("card[address_line1]", address.getLine1());
+            localParams.put("billing_details[address[line1]]", address.getLine1());
             if (StringUtils.isNotBlank(address.getLine2())) {
-                localParams.put("card[address_line2]", address.getLine2());
+                localParams.put("billing_details[address[line2]]", address.getLine2());
             }
-            localParams.put("card[address_city]", address.getCity());
-            localParams.put("card[address_country]", address.getCountry());
-            localParams.put("card[address_zip]", address.getPostcode());
+            localParams.put("billing_details[address[city]]", address.getCity());
+            localParams.put("billing_details[address[country]]", address.getCountry());
+            localParams.put("billing_details[address[postal_code]]", address.getPostcode());
         });
         
         return Map.copyOf(localParams);
