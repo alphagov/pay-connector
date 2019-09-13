@@ -420,7 +420,7 @@ public class ChargeDaoIT extends DaoITestBase {
 
         assertDateMatch(charge.getCreatedDate().toString());
     }
-    
+
     @Test
     public void searchChargesByReferenceAndEmail_with_under_score() {
         // since '_' have special meaning in like queries of postgres this was resulting in undesired results
@@ -451,7 +451,7 @@ public class ChargeDaoIT extends DaoITestBase {
         ChargeEntity charge = charges.get(0);
         assertThat(charge.getEmail(), is("under_score@mail.com"));
     }
-    
+
     @Test
     public void searchChargesByReferenceWithBackslash() {
         // since '\' is an escape character in postgres (and java) this was resulting in undesired results
@@ -1619,6 +1619,21 @@ public class ChargeDaoIT extends DaoITestBase {
         Optional<ChargeEntity> chargeEntity = chargeDao.findByProviderSessionId("providerId");
         assertThat(chargeEntity.isPresent(), is(true));
 
+    }
+
+    @Test
+    public void findChargesByParityCheckStatus() {
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER)
+                .insert();
+
+        var charges = chargeDao.findByParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER);
+
+        assertThat(charges.size(), is(1));
+        assertThat(charges.get(0).getParityCheckStatus(), is(ParityCheckStatus.MISSING_IN_LEDGER));
     }
 
     private void insertTestAccount() {
