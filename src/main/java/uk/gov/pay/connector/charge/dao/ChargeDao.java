@@ -4,6 +4,7 @@ import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
@@ -54,11 +55,11 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter("externalId", externalId)
                 .getResultList().stream().findFirst();
     }
-    
+
     public Optional<ChargeEntity> findByProviderSessionId(String providerSessionId) {
-        String query = "SELECT c FROM ChargeEntity c " + 
+        String query = "SELECT c FROM ChargeEntity c " +
                 "WHERE c.providerSessionId = :providerSessionId";
-        
+
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)
                 .setParameter("providerSessionId", providerSessionId)
@@ -263,5 +264,16 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .createQuery(query, Long.class)
                 .setMaxResults(1)
                 .getSingleResult();
+    }
+
+    public List<ChargeEntity> findByParityCheckStatus(ParityCheckStatus parityCheckStatus, int page, int size) {
+        int firstResult = (page - 1) * size;
+
+        return entityManager.get()
+                .createQuery("SELECT c FROM ChargeEntity c WHERE c.parityCheckStatus = :parityCheckStatus ORDER BY c.id", ChargeEntity.class)
+                .setParameter("parityCheckStatus", parityCheckStatus)
+                .setFirstResult(firstResult)
+                .setMaxResults(size)
+                .getResultList();
     }
 }

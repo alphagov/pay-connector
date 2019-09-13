@@ -9,6 +9,7 @@ import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
@@ -65,7 +66,7 @@ public class DatabaseFixtures {
     public TestRefund aTestRefund() {
         return new TestRefund();
     }
-    
+
     public TestFee aTestFee() {
         return new TestFee();
     }
@@ -278,17 +279,17 @@ public class DatabaseFixtures {
 
         public TestCardDetails update() {
             databaseTestHelper.updateChargeCardDetails(
-                    chargeId, 
-                    cardBrand, 
-                    lastDigitsCardNumber == null ? null : lastDigitsCardNumber.toString(), 
-                    firstDigitsCardNumber == null ? null : firstDigitsCardNumber.toString(), 
-                    cardHolderName, 
-                    expiryDate, 
-                    billingAddress.getLine1(), 
-                    billingAddress.getLine2(), 
-                    billingAddress.getPostcode(), 
-                    billingAddress.getCity(), 
-                    billingAddress.getCounty(), 
+                    chargeId,
+                    cardBrand,
+                    lastDigitsCardNumber == null ? null : lastDigitsCardNumber.toString(),
+                    firstDigitsCardNumber == null ? null : firstDigitsCardNumber.toString(),
+                    cardHolderName,
+                    expiryDate,
+                    billingAddress.getLine1(),
+                    billingAddress.getLine2(),
+                    billingAddress.getPostcode(),
+                    billingAddress.getCity(),
+                    billingAddress.getCounty(),
                     billingAddress.getCountry());
             return this;
         }
@@ -427,22 +428,22 @@ public class DatabaseFixtures {
             return this;
         }
 
-        
+
         public TestAccount withCorporatePrepaidCreditCardSurchargeAmount(long corporatePrepaidCreditCardSurchargeAmount) {
             this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
             return this;
         }
-        
+
         public TestAccount withCorporatePrepaidDebitCardSurchargeAmount(long corporatePrepaidDebitCardSurchargeAmount) {
             this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
             return this;
         }
-        
+
         public TestAccount withIntegrationVersion3ds(int integrationVersion3ds) {
             this.integrationVersion3ds = integrationVersion3ds;
             return this;
         }
-        
+
         public TestAccount insert() {
             databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                     .withAccountId(String.valueOf(accountId))
@@ -488,6 +489,7 @@ public class DatabaseFixtures {
         TestAccount testAccount;
         TestCardDetails cardDetails;
         WalletType walletType;
+        ParityCheckStatus parityCheckStatus;
 
         public TestCardDetails getCardDetails() {
             return cardDetails;
@@ -563,6 +565,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestCharge withParityCheckStatus(ParityCheckStatus parityCheckStatus) {
+            this.parityCheckStatus = parityCheckStatus;
+            return this;
+        }
+
         public TestCharge insert() {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
@@ -584,8 +591,9 @@ public class DatabaseFixtures {
                     .withEmail(email)
                     .withProviderId(providerId)
                     .withCorporateSurcharge(corporateCardSurcharge)
+                    .withParityCheckStatus(parityCheckStatus)
                     .build());
-            
+
             if (cardDetails != null) {
                 cardDetails.update();
             }
@@ -731,8 +739,8 @@ public class DatabaseFixtures {
             this.externalRefundId = externalRefundId;
             return this;
         }
-        
-        public TestRefund withGatewayTransactionId(String gatewayTransactionId) { 
+
+        public TestRefund withGatewayTransactionId(String gatewayTransactionId) {
             this.gatewayTransactionId = gatewayTransactionId;
             return this;
         }
@@ -772,7 +780,7 @@ public class DatabaseFixtures {
         public TestCharge getTestCharge() {
             return testCharge;
         }
-        
+
         public String getGatewayTransactionId() {
             return gatewayTransactionId;
         }
@@ -794,7 +802,7 @@ public class DatabaseFixtures {
             this.testCharge = charge;
             return this;
         }
-        
+
         public TestFee withFeeDue(long feeDue) {
             this.feeDue = feeDue;
             return this;
@@ -809,7 +817,7 @@ public class DatabaseFixtures {
             this.gatewayTransactionId = gatewayTransactionId;
             return this;
         }
-        
+
         public TestFee insert() {
             if (testCharge == null)
                 throw new IllegalStateException("Test charge must be provided.");

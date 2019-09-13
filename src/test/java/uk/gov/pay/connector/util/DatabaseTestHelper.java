@@ -118,9 +118,10 @@ public class DatabaseTestHelper {
                                 "        language,\n" +
                                 "        delayed_capture,\n" +
                                 "        corporate_surcharge,\n" +
+                                "        parity_check_status,\n" +
                                 "        external_metadata\n" +
                                 "    )\n" +
-                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
+                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
                         addChargeParams.getChargeId(),
                         addChargeParams.getExternalChargeId(),
                         addChargeParams.getAmount(),
@@ -137,6 +138,7 @@ public class DatabaseTestHelper {
                         addChargeParams.getLanguage().toString(),
                         addChargeParams.isDelayedCapture(),
                         addChargeParams.getCorporateSurcharge(),
+                        addChargeParams.getParityCheckStatus(),
                         jsonMetadata
                 )
         );

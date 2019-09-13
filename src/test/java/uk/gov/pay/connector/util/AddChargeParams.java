@@ -4,6 +4,7 @@ import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -30,6 +31,7 @@ public class AddChargeParams {
     private final boolean delayedCapture;
     private final Long corporateSurcharge;
     private final ExternalMetadata externalMetadata;
+    private final ParityCheckStatus parityCheckStatus;
 
     private AddChargeParams(AddChargeParamsBuilder builder) {
         chargeId = builder.chargeId;
@@ -49,6 +51,7 @@ public class AddChargeParams {
         delayedCapture = builder.delayedCapture;
         corporateSurcharge = builder.corporateSurcharge;
         externalMetadata = builder.externalMetadata;
+        parityCheckStatus = builder.parityCheckStatus;
     }
 
     public Long getChargeId() {
@@ -119,6 +122,10 @@ public class AddChargeParams {
         return externalMetadata;
     }
 
+    public ParityCheckStatus getParityCheckStatus() {
+        return parityCheckStatus;
+    }
+
     public static final class AddChargeParamsBuilder {
         private Long chargeId = new Random().nextLong();
         private String externalChargeId = "anExternalChargeId";
@@ -137,6 +144,7 @@ public class AddChargeParams {
         private boolean delayedCapture = false;
         private Long corporateSurcharge;
         private ExternalMetadata externalMetadata;
+        private ParityCheckStatus parityCheckStatus;
 
         private AddChargeParamsBuilder() {
         }
@@ -209,7 +217,7 @@ public class AddChargeParams {
         public AddChargeParamsBuilder withProviderId(String providerId) {
             this.providerId = providerId;
             return this;
-        }        
+        }
 
         public AddChargeParamsBuilder withLanguage(SupportedLanguage language) {
             this.language = language;
@@ -228,6 +236,11 @@ public class AddChargeParams {
 
         public AddChargeParamsBuilder withExternalMetadata(ExternalMetadata externalMetadata) {
             this.externalMetadata = externalMetadata;
+            return this;
+        }
+
+        public AddChargeParamsBuilder withParityCheckStatus(ParityCheckStatus parityCheckStatus) {
+            this.parityCheckStatus = parityCheckStatus;
             return this;
         }
 
