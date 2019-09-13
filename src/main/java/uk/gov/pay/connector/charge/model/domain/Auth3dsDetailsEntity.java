@@ -17,6 +17,18 @@ public class Auth3dsDetailsEntity {
 
     @Column(name = "md_3ds")
     private String md;
+    
+    @Column(name = "worldpay_challenge_acs_url_3ds")
+    private String worldpayChallengeAcsUrl;
+    
+    @Column(name = "worldpay_challenge_transaction_id_3ds")
+    private String worldpayChallengeTransactionId;
+    
+    @Column(name = "worldpay_challenge_payload_3ds")
+    private String worldpayChallengePayload;
+    
+    @Column(name = "version_3ds")
+    private String threeDsVersion;
 
     public String getPaRequest() {
         return paRequest;
@@ -49,4 +61,38 @@ public class Auth3dsDetailsEntity {
     public String getMd() {
         return md;
     }
+
+    public String getWorldpayChallengeAcsUrl() {
+        return worldpayChallengeAcsUrl;
+    }
+
+    public void setWorldpayChallengeAcsUrl(String worldpayChallengeAcsUrl) {
+        this.worldpayChallengeAcsUrl = worldpayChallengeAcsUrl;
+    }
+
+    public String getWorldpayChallengeTransactionId() {
+        return worldpayChallengeTransactionId;
+    }
+
+    public void setWorldpayChallengeTransactionId(String worldpayChallengeTransactionId) {
+        this.worldpayChallengeTransactionId = worldpayChallengeTransactionId;
+    }
+
+    public String getWorldpayChallengePayload() {
+        return worldpayChallengePayload;
+    }
+
+    public void setWorldpayChallengePayload(String worldpayChallengePayload) {
+        this.worldpayChallengePayload = worldpayChallengePayload;
+    }
+
+    public String getThreeDsVersion() {
+        return threeDsVersion;
+    }
+
+    public void setThreeDsVersion(String threeDsVersion) {
+        this.threeDsVersion = threeDsVersion;
+    }
+    
+    
 }

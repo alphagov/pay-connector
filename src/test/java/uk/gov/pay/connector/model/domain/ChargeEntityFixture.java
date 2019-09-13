@@ -42,8 +42,7 @@ public class ChargeEntityFixture {
     private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
     private List<ChargeEventEntity> events = new ArrayList<>();
     private List<RefundEntity> refunds = new ArrayList<>();
-    private String paRequest;
-    private String issuerUrl;
+    private Auth3dsDetailsEntity auth3dsDetailsEntity;
     private String providerSessionId;
     private SupportedLanguage language = SupportedLanguage.ENGLISH;
     private boolean delayedCapture = false;
@@ -68,13 +67,8 @@ public class ChargeEntityFixture {
         chargeEntity.getEvents().addAll(events);
         chargeEntity.getRefunds().addAll(refunds);
         chargeEntity.setProviderSessionId(providerSessionId);
-        if (paRequest != null && issuerUrl != null) {
-            Auth3dsDetailsEntity auth3dsDetailsEntity = new Auth3dsDetailsEntity();
-            auth3dsDetailsEntity.setIssuerUrl(issuerUrl);
-            auth3dsDetailsEntity.setPaRequest(paRequest);
+        chargeEntity.set3dsDetails(auth3dsDetailsEntity);
 
-            chargeEntity.set3dsDetails(auth3dsDetailsEntity);
-        }
         if (this.fee != null) {
             FeeEntity fee = new FeeEntity(chargeEntity, this.fee);
             chargeEntity.setFee(fee);
@@ -152,13 +146,8 @@ public class ChargeEntityFixture {
         return this;
     }
 
-    public ChargeEntityFixture withPaRequest(String paRequest) {
-        this.paRequest = paRequest;
-        return this;
-    }
-
-    public ChargeEntityFixture withIssuerUrl(String issuerUrl) {
-        this.issuerUrl = issuerUrl;
+    public ChargeEntityFixture withAuth3dsDetailsEntity(Auth3dsDetailsEntity auth3dsDetailsEntity) {
+        this.auth3dsDetailsEntity = auth3dsDetailsEntity;
         return this;
     }
 

@@ -62,6 +62,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_STARTED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
+import static uk.gov.pay.connector.model.domain.Auth3dsDetailsEntityFixture.anAuth3dsDetailsEntity;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 public class ChargeDaoIT extends DaoITestBase {
@@ -897,11 +898,27 @@ public class ChargeDaoIT extends DaoITestBase {
 
         String paRequest = "3dsPaRequest";
         String issuerUrl = "https://issuer.example.com/3ds";
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withId(null)
-                .withGatewayAccountEntity(gatewayAccount)
+        String htmlOut = "<body><div>Some HTML</div></body>";
+        String md = "some-md";
+        String worldpayChallengeAcsUrl = "http://example.com/some-challenge";
+        String worldpayChallengeTransactionId = "a-transaction-id";
+        String worldpayChallengePayload = "{\"payload\": {\"key1\":\"value\"}}";
+        String threeDsVersion = "2.0";
+
+        var auth3dsDetailsEntity = anAuth3dsDetailsEntity()
                 .withPaRequest(paRequest)
                 .withIssuerUrl(issuerUrl)
+                .withHtmlOut(htmlOut)
+                .withMd(md)
+                .withWorldpayChallengeAcsUrl(worldpayChallengeAcsUrl)
+                .withWorldpayChallengeTransactionId(worldpayChallengeTransactionId)
+                .withWorldpayChallengePayload(worldpayChallengePayload)
+                .withThreeDsVersion(threeDsVersion)
+                .build();
+        var chargeEntity = aValidChargeEntity()
+                .withId(null)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withAuth3dsDetailsEntity(auth3dsDetailsEntity)
                 .build();
 
         assertThat(chargeEntity.getId(), is(nullValue()));
@@ -912,6 +929,12 @@ public class ChargeDaoIT extends DaoITestBase {
 
         assertThat(charge.get().get3dsDetails().getPaRequest(), is(paRequest));
         assertThat(charge.get().get3dsDetails().getIssuerUrl(), is(issuerUrl));
+        assertThat(charge.get().get3dsDetails().getHtmlOut(), is(htmlOut));
+        assertThat(charge.get().get3dsDetails().getMd(), is(md));
+        assertThat(charge.get().get3dsDetails().getWorldpayChallengeAcsUrl(), is(worldpayChallengeAcsUrl));
+        assertThat(charge.get().get3dsDetails().getWorldpayChallengeTransactionId(), is(worldpayChallengeTransactionId));
+        assertThat(charge.get().get3dsDetails().getWorldpayChallengePayload(), is(worldpayChallengePayload));
+        assertThat(charge.get().get3dsDetails().getThreeDsVersion(), is(threeDsVersion));
     }
 
     @Test
