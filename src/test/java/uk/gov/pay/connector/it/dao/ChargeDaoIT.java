@@ -1630,7 +1630,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER)
                 .insert();
 
-        var charges = chargeDao.findByParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER);
+        var charges = chargeDao.findByParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER, 1, 1);
 
         assertThat(charges.size(), is(1));
         assertThat(charges.get(0).getParityCheckStatus(), is(ParityCheckStatus.MISSING_IN_LEDGER));

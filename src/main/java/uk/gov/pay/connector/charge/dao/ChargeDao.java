@@ -266,10 +266,14 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .getSingleResult();
     }
 
-    public List<ChargeEntity> findByParityCheckStatus(ParityCheckStatus parityCheckStatus) {
+    public List<ChargeEntity> findByParityCheckStatus(ParityCheckStatus parityCheckStatus, int page, int size) {
+        int firstResult = (page - 1) * size;
+
         return entityManager.get()
                 .createQuery("SELECT c FROM ChargeEntity c WHERE c.parityCheckStatus = :parityCheckStatus ORDER BY c.id", ChargeEntity.class)
                 .setParameter("parityCheckStatus", parityCheckStatus)
+                .setFirstResult(firstResult)
+                .setMaxResults(size)
                 .getResultList();
     }
 }
