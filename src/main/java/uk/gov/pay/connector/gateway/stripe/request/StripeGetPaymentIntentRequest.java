@@ -39,4 +39,9 @@ public class StripeGetPaymentIntentRequest extends StripeRequest {
     protected OrderRequestType orderRequestType() {
         return OrderRequestType.REFUND;
     }
+
+    @Override
+    protected String idempotencyKeyType() {
+        return "get_payment_intent";
+    }
 }
