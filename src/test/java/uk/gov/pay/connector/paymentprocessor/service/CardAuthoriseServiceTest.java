@@ -26,12 +26,15 @@ import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayParamsFor3ds;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayParamsFor3dsFlex;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AddressFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -79,9 +82,7 @@ import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardAuthoriseServiceTest extends CardServiceTest {
-
-    private static final String PA_REQ_VALUE_FROM_PROVIDER = "pa-req-value-from-provider";
-    private static final String ISSUER_URL_FROM_PROVIDER = "issuer-url-from-provider";
+    
     private static final String SESSION_IDENTIFIER = "session-identifier";
     private static final String TRANSACTION_ID = "transaction-id";
 
@@ -333,8 +334,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void doAuthorise_shouldRespondWith3dsResponseFor3dsOrders() throws Exception {
-
-        worldpayProviderWillRequire3ds(null);
+        String issuerUrl = "an-issuer-url";
+        String paRequest = "a-pa-request";
+        WorldpayParamsFor3ds worldpayParamsFor3ds = new WorldpayParamsFor3ds(issuerUrl, paRequest);
+        worldpayProviderWillRequire3ds(null, worldpayParamsFor3ds);
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
@@ -344,8 +347,31 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
-        assertThat(charge.get3dsDetails().getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
-        assertThat(charge.get3dsDetails().getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
+        assertThat(charge.get3dsDetails().getIssuerUrl(), is(issuerUrl));
+        assertThat(charge.get3dsDetails().getPaRequest(), is(paRequest));
+    }
+
+    @Test
+    public void doAuthorise_shouldRespondWith3dsResponseFor3dsFlexOrders() throws Exception {
+        String challengeAcsUrl = "a-challenge-url";
+        String challengeTransactionId = "a-transaction-id";
+        String challengePayload = "a-payload";
+        String threeDsVersion = "a-version";
+        WorldpayParamsFor3dsFlex worldpayParamsFor3dsFlex = new WorldpayParamsFor3dsFlex(challengeAcsUrl, challengeTransactionId, challengePayload, threeDsVersion);
+        worldpayProviderWillRequire3ds(null, worldpayParamsFor3dsFlex);
+
+        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+        AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
+
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.REQUIRES_3DS));
+
+        assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
+        assertThat(charge.get3dsDetails().getWorldpayChallengeAcsUrl(), is(challengeAcsUrl));
+        assertThat(charge.get3dsDetails().getWorldpayChallengeTransactionId(), is(challengeTransactionId));
+        assertThat(charge.get3dsDetails().getWorldpayChallengePayload(), is(challengePayload));
+        assertThat(charge.get3dsDetails().getThreeDsVersion(), is(threeDsVersion));
     }
 
     @Test
@@ -366,8 +392,10 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     public void doAuthorise_shouldRespondWith3dsResponseFor3dsOrdersWithWorldpayMachineCookie() throws Exception {
-
-        worldpayProviderWillRequire3ds(SESSION_IDENTIFIER);
+        String issuerUrl = "an-issuer-url";
+        String paRequest = "a-pa-request";
+        WorldpayParamsFor3ds worldpayParamsFor3ds = new WorldpayParamsFor3ds(issuerUrl, paRequest);
+        worldpayProviderWillRequire3ds(SESSION_IDENTIFIER, worldpayParamsFor3ds);
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         AuthorisationResponse response = cardAuthorisationService.doAuthorise(charge.getExternalId(), authCardDetails);
@@ -377,8 +405,8 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
 
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
-        assertThat(charge.get3dsDetails().getIssuerUrl(), is(ISSUER_URL_FROM_PROVIDER));
-        assertThat(charge.get3dsDetails().getPaRequest(), is(PA_REQ_VALUE_FROM_PROVIDER));
+        assertThat(charge.get3dsDetails().getIssuerUrl(), is(issuerUrl));
+        assertThat(charge.get3dsDetails().getPaRequest(), is(paRequest));
     }
 
     @Test
@@ -673,15 +701,17 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillRespondToAuthoriseWith(authResponse);
     }
 
-    private void worldpayProviderWillRequire3ds(String sessionIdentifier) throws Exception {
+    private void worldpayProviderWillRequire3ds(String sessionIdentifier, GatewayParamsFor3ds worldpayParamsFor3ds) throws GatewayException {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-        WorldpayOrderStatusResponse worldpayResponse = new WorldpayOrderStatusResponse();
-        worldpayResponse.set3dsPaRequest(PA_REQ_VALUE_FROM_PROVIDER);
-        worldpayResponse.set3dsIssuerUrl(ISSUER_URL_FROM_PROVIDER);
+        
+        var mockWorldpayResponse = mock(WorldpayOrderStatusResponse.class);
+        when(mockWorldpayResponse.getGatewayParamsFor3ds()).thenReturn(Optional.of(worldpayParamsFor3ds));
+        when(mockWorldpayResponse.authoriseStatus()).thenReturn(AuthoriseStatus.REQUIRES_3DS);
+
         GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse worldpay3dsResponse = gatewayResponseBuilder
                 .withSessionIdentifier(sessionIdentifier)
-                .withResponse(worldpayResponse)
+                .withResponse(mockWorldpayResponse)
                 .build();
         when(mockedPaymentProvider.authorise(any())).thenReturn(worldpay3dsResponse);
 

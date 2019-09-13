@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
+import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
@@ -35,8 +36,21 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
 
     private String errorMessage;
 
+    @XmlPath("/reply/orderStatus/requestInfo/request3DSecure/paRequest/text()")
     private String paRequest;
+
     private String issuerUrl;
+    
+    private String challengeAcsUrl;
+
+    @XmlPath("/reply/orderStatus/challengeRequired/threeDSChallengeDetails/transactionId3DS/text()")
+    private String challengeTransactionId;
+
+    @XmlPath("/reply/orderStatus/challengeRequired/threeDSChallengeDetails/payload/text()")
+    private String challengePayload;
+
+    @XmlPath("/reply/orderStatus/challengeRequired/threeDSChallengeDetails/threeDSVersion/text()")
+    private String threeDsVersion;
 
     @XmlPath("reply/error/@code")
     public void setErrorCode(String errorCode) {
@@ -58,14 +72,14 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         this.errorMessage = errorMessage;
     }
 
-    @XmlPath("/reply/orderStatus/requestInfo/request3DSecure/paRequest/text()")
-    public void set3dsPaRequest(String paRequest) {
-        this.paRequest = paRequest;
-    }
-
     @XmlPath("/reply/orderStatus/requestInfo/request3DSecure/issuerURL/text()")
     public void set3dsIssuerUrl(String issuerUrl) {
         this.issuerUrl = issuerUrl != null ? issuerUrl.trim() : null;
+    }
+
+    @XmlPath("/reply/orderStatus/challengeRequired/threeDSChallengeDetails/acsURL/text()")
+    public void setChallengeAcsUrl(String challengeAcsUrl) {
+        this.challengeAcsUrl = challengeAcsUrl != null ? challengeAcsUrl.trim() : null;
     }
 
     public String getLastEvent() {
@@ -82,7 +96,8 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
 
     @Override
     public AuthoriseStatus authoriseStatus() {
-        if (paRequest != null && issuerUrl != null) {
+        if ((paRequest != null && issuerUrl != null) ||
+                challengeAcsUrl != null) {
             return AuthoriseStatus.REQUIRES_3DS;
         }
 
@@ -90,11 +105,11 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
             return AuthoriseStatus.AUTHORISED;
         }
 
-        if(WORLDPAY_REFUSED_EVENT.equals(lastEvent)) {
+        if (WORLDPAY_REFUSED_EVENT.equals(lastEvent)) {
             return AuthoriseStatus.REJECTED;
         }
 
-        if(WORLDPAY_CANCELLED_EVENT.equals(lastEvent)) {
+        if (WORLDPAY_CANCELLED_EVENT.equals(lastEvent)) {
             return AuthoriseStatus.CANCELLED;
         }
 
@@ -121,9 +136,16 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         return trim(errorMessage);
     }
 
-    public Optional<WorldpayParamsFor3ds> getGatewayParamsFor3ds() {
+    public Optional<GatewayParamsFor3ds> getGatewayParamsFor3ds() {
         if (issuerUrl != null && paRequest != null) {
             return Optional.of(new WorldpayParamsFor3ds(issuerUrl, paRequest));
+        }
+        if (challengeAcsUrl != null) {
+            return Optional.of(new WorldpayParamsFor3dsFlex(
+                    challengeAcsUrl,
+                    challengeTransactionId,
+                    challengePayload,
+                    threeDsVersion));
         }
         return Optional.empty();
     }
@@ -135,7 +157,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
             joiner.add("orderCode: " + getTransactionId());
         }
         if (StringUtils.isNotBlank(getLastEvent())) {
-            joiner.add("lastEvent: "+ getLastEvent());
+            joiner.add("lastEvent: " + getLastEvent());
         }
         if (StringUtils.isNotBlank(getRefusedReturnCode())) {
             joiner.add("ISO8583ReturnCode code: " + getRefusedReturnCode());

@@ -17,6 +17,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_FLEX_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_CANCELLED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_ERROR_RESPONSE;
@@ -118,6 +119,26 @@ public class WorldpayXMLUnmarshallerTest {
         assertThat(response.getGatewayParamsFor3ds().isPresent(), is(true));
         assertThat(response.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getPaRequest(), is("eJxVUsFuwjAM/ZWK80aSUgpFJogNpHEo2hjTzl"));
         assertThat(response.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getIssuerUrl(), is("https://secure-test.worldpay.com/jsp/test/shopper/ThreeDResponseSimulator.jsp"));
+
+        assertThat(response.authoriseStatus(), is(AuthoriseStatus.REQUIRES_3DS));
+    }
+
+    @Test
+    public void shouldUnmarshall3dsFlexResponse() throws Exception {
+        String successPayload = TestTemplateResourceLoader.load(WORLDPAY_3DS_FLEX_RESPONSE);
+        WorldpayOrderStatusResponse response = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
+
+        assertNull(response.getLastEvent());
+        assertNull(response.getRefusedReturnCode());
+        assertNull(response.getRefusedReturnCodeDescription());
+        assertNull(response.getErrorCode());
+        assertNull(response.getErrorMessage());
+
+        assertThat(response.getGatewayParamsFor3ds().isPresent(), is(true));
+        assertThat(response.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getWorldpayChallengeAcsUrl(), is("https://worldpay.com"));
+        assertThat(response.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getWorldpayChallengeTransactionId(), is("rUT8fLKDviHXr8aUn3l1"));
+        assertThat(response.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getWorldpayChallengePayload(), is("P.25de9db33221a55eedc6ac352b927a8c3a08d747643c592dd8f8ab7d3..."));
+        assertThat(response.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getThreeDsVersion(), is("2.1.0"));
 
         assertThat(response.authoriseStatus(), is(AuthoriseStatus.REQUIRES_3DS));
     }
