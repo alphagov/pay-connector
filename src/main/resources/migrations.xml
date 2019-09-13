@@ -1246,4 +1246,13 @@
         </update>
     </changeSet>
 
+    <changeSet id="add worldpay 3ds flex challenge data columns" author="">
+        <addColumn tableName="charges">
+            <column name="worldpay_challenge_acs_url_3ds" type="text"/>
+            <column name="worldpay_challenge_transaction_id_3ds" type="text"/>
+            <column name="worldpay_challenge_payload_3ds" type="text"/>
+            <column name="version_3ds" type="varchar(10)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
