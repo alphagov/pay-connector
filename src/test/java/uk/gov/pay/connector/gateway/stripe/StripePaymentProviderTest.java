@@ -30,6 +30,8 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.request.StripeAuthoriseRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripePaymentMethodRequest;
 import uk.gov.pay.connector.gateway.stripe.response.StripeParamsFor3ds;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -60,6 +62,9 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_SOURCES_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_METHOD_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @RunWith(JUnitParamsRunner.class)
@@ -79,6 +84,8 @@ public class StripePaymentProviderTest {
     private GatewayClient.Response tokenResponse = mock(GatewayClient.Response.class);
     private GatewayClient.Response chargeResponse = mock(GatewayClient.Response.class);
     private GatewayClient.Response sourceResponse = mock(GatewayClient.Response.class);
+    private GatewayClient.Response paymentMethodResponse = mock(GatewayClient.Response.class);
+    private GatewayClient.Response paymentIntentsResponse = mock(GatewayClient.Response.class);
 
     @Before
     public void before() {
@@ -100,6 +107,8 @@ public class StripePaymentProviderTest {
         when(tokenResponse.getEntity()).thenReturn(successTokenResponse());
         when(chargeResponse.getEntity()).thenReturn(successChargeResponse());
         when(sourceResponse.getEntity()).thenReturn(successSourceResponse());
+        when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
+        when(paymentIntentsResponse.getEntity()).thenReturn(successCreatePaymentIntentsResponse());
     }
 
     @Test
@@ -182,6 +191,46 @@ public class StripePaymentProviderTest {
         assertTrue(response.isSuccessful());
         assertThat(response.getBaseResponse().get().getTransactionId(), is("ch_1DRQ842eZvKYlo2CPbf7NNDv_test")); 
     }
+
+    @Test
+    public void shouldAuthoriseImmediately_whenPaymentIntentReturnsAsRequiresCapture() throws Exception {
+
+        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+
+        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+
+        
+        GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
+        gatewayAccount.setIntegrationVersion3ds(2);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(gatewayAccount));
+
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
+    }
+
+
+    @Test
+    public void shouldSetAs3DSRequired_whenPaymentIntentReturnsWithRequiresAction() throws Exception {
+        when(paymentIntentsResponse.getEntity()).thenReturn(requires3DSCreatePaymentIntentsResponse());
+        when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+
+        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+
+
+        GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
+        gatewayAccount.setIntegrationVersion3ds(2);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(gatewayAccount));
+
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_123")); // id from templates/stripe/create_3ds_sources_response.json
+
+        Optional<StripeParamsFor3ds> stripeParamsFor3ds = (Optional<StripeParamsFor3ds>) response.getBaseResponse().get().getGatewayParamsFor3ds();
+        assertThat(stripeParamsFor3ds.isPresent(), is(true));
+        assertThat(stripeParamsFor3ds.get().toAuth3dsDetailsEntity().getIssuerUrl(), containsString("https://hooks.stripe.com"));
+    }
+
 
     @Test
     public void shouldNotAuthorise_whenProcessingExceptionIsThrown() throws Exception {
@@ -334,6 +383,18 @@ public class StripePaymentProviderTest {
         return load(STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE);
     }
 
+    private String successCreatePaymentMethodResponse() {
+        return load(STRIPE_PAYMENT_METHOD_SUCCESS_RESPONSE);
+    }
+
+    private String successCreatePaymentIntentsResponse() {
+        return load(STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE);
+    }
+
+    private String requires3DSCreatePaymentIntentsResponse() {
+        return load(STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE);
+    }
+
     private String successSourceResponseWith3dsRequired(String threeDSecureOption) {
         return load(STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE).replace("{{three_d_secure_option}}", threeDSecureOption);
     }
@@ -362,6 +423,7 @@ public class StripePaymentProviderTest {
     private CardAuthorisationGatewayRequest buildTestAuthorisationRequest() {
         return buildTestAuthorisationRequest(buildTestGatewayAccountEntity());
     }
+
 
     private CardAuthorisationGatewayRequest buildTestAuthorisationRequest(GatewayAccountEntity accountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
