@@ -9,9 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.PrintWriter;
-import java.util.OptionalLong;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
+import java.util.function.Function;
 
 public class ParityCheckTask extends Task {
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -43,40 +44,43 @@ public class ParityCheckTask extends Task {
 
     @Override
     public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) throws Exception {
-        Long startId = getParam(parameters, "start_id").orElse(0);
-        final OptionalLong maybeMaxId = getParam(parameters, "max_id");
-        boolean doNotReprocessValidRecords = getFlagParam(parameters, "do_not_reprocess_valid_records");
+        Long startId = getLongParam(parameters, "start_id").orElse(0L);
+        final Optional<Long> maybeMaxId = getLongParam(parameters, "max_id");
+        boolean doNotReprocessValidRecords = getFlagParam(parameters, "do_not_reprocess_valid_records").orElse(false);
+        Optional<String> parityCheckStatus = getStringParam(parameters, "parity_check_status");
 
         logger.info("Execute called start_id={} max_id={} - processing", startId, maybeMaxId);
-        
+
         try {
             logger.info("Request accepted");
-            executor.execute(() -> worker.execute(startId, maybeMaxId, doNotReprocessValidRecords));
+            executor.execute(() -> worker.execute(startId, maybeMaxId, doNotReprocessValidRecords, parityCheckStatus));
             output.println("Accepted");
-        }
-        catch (java.util.concurrent.RejectedExecutionException e) {
+        } catch (java.util.concurrent.RejectedExecutionException e) {
             logger.info("Rejected request, worker already running");
             output.println("Rejected request, worker already running");
         }
     }
 
-    private OptionalLong getParam(ImmutableMultimap<String, String> parameters, String paramName) {
+    private Optional getParam(ImmutableMultimap<String, String> parameters, String paramName,
+                              Function<String, Object> convertFunction) {
         final ImmutableCollection<String> strings = parameters.get(paramName);
-        
+
         if (strings.isEmpty()) {
-            return OptionalLong.empty();
+            return Optional.empty();
         } else {
-            return OptionalLong.of(Long.valueOf(strings.asList().get(0)));
+            return Optional.of(convertFunction.apply(strings.asList().get(0)));
         }
     }
 
-    private boolean getFlagParam(ImmutableMultimap<String, String> parameters, String paramName) {
-        final ImmutableCollection<String> strings = parameters.get(paramName);
+    private Optional<Long> getLongParam(ImmutableMultimap<String, String> parameters, String paramName) {
+        return getParam(parameters, paramName, v -> Long.valueOf(v));
+    }
 
-        if (strings.isEmpty()) {
-            return false;
-        } else {
-            return Boolean.valueOf(strings.asList().get(0));
-        }
+    private Optional<Boolean> getFlagParam(ImmutableMultimap<String, String> parameters, String paramName) {
+        return getParam(parameters, paramName, v -> Boolean.valueOf(v));
+    }
+
+    private Optional<String> getStringParam(ImmutableMultimap<String, String> parameters, String paramName) {
+        return getParam(parameters, paramName, v -> v);
     }
 }

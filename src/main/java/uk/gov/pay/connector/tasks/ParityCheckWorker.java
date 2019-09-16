@@ -21,11 +21,11 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUEST_ID;
 
 public class ParityCheckWorker {
+    private static final int PAGE_SIZE = 100;
     private static final Logger logger = LoggerFactory.getLogger(ParityCheckWorker.class);
     private final ChargeDao chargeDao;
     private ChargeService chargeService;
@@ -45,14 +45,15 @@ public class ParityCheckWorker {
                 eventService, stateTransitionService);
     }
 
-    public void execute(Long startId, OptionalLong maybeMaxId, boolean doNotReprocessValidRecords) {
+    public void execute(Long startId, Optional<Long> maybeMaxId, boolean doNotReprocessValidRecords, Optional<String> parityCheckStatus) {
         try {
             MDC.put(HEADER_REQUEST_ID, "ParityCheckWorker-" + RandomUtils.nextLong(0, 10000));
 
-            maxId = maybeMaxId.orElseGet(() -> chargeDao.findMaxId());
-            logger.info("Starting from {} up to {}", startId, maxId);
-            for (long i = startId; i <= maxId; i++) {
-                checkParityFor(i, doNotReprocessValidRecords);
+            if (parityCheckStatus.isPresent()) {
+                checkParityForParityCheckStatus(parityCheckStatus);
+            } else {
+                maxId = maybeMaxId.orElseGet(() -> chargeDao.findMaxId());
+                checkParityForIdRange(startId, maxId, doNotReprocessValidRecords);
             }
         } catch (NullPointerException e) {
             for (StackTraceElement s : e.getStackTrace()) {
@@ -68,30 +69,54 @@ public class ParityCheckWorker {
         logger.info("Terminating");
     }
 
+    private void checkParityForParityCheckStatus(Optional<String> parityCheckStatus) {
+        ParityCheckStatus parityStatus = ParityCheckStatus.valueOf(parityCheckStatus.get());
+        int page = 1;
+
+        logger.info("Starting for status {}", parityCheckStatus.get());
+        while (true) {
+            List<ChargeEntity> charges = chargeDao.findByParityCheckStatus(parityStatus, page, PAGE_SIZE);
+
+            if (!charges.isEmpty()) {
+                logger.info("Processing charges [page {}, no.of.charges {}] by parity check status", page, charges.size());
+                charges.forEach(c -> checkParityFor(c, false));
+                page++;
+            } else {
+                break;
+            }
+        }
+    }
+
+    public void checkParityForIdRange(long startId, long maxId, boolean doNotReprocessValidRecords) {
+        logger.info("Starting from {} up to {}", startId, this.maxId);
+        for (long i = startId; i <= this.maxId; i++) {
+            final Optional<ChargeEntity> maybeCharge = chargeDao.findById(i);
+
+            if (maybeCharge.isPresent()) {
+                checkParityFor(maybeCharge.get(), doNotReprocessValidRecords);
+            } else {
+                logger.info("[{}/{}] - not found", i, this.maxId);
+            }
+        }
+    }
+
     // needs to be public for transactional annotation
     @Transactional
-    public void checkParityFor(long currentId, boolean doNotReprocessValidRecords) {
-        final Optional<ChargeEntity> maybeCharge = chargeDao.findById(currentId);
-
+    public void checkParityFor(ChargeEntity charge, boolean doNotReprocessValidRecords) {
         try {
-            if (maybeCharge.isPresent()) {
-                final ChargeEntity charge = maybeCharge.get();
-                MDC.put("chargeId", charge.getExternalId());
+            MDC.put("chargeId", charge.getExternalId());
 
-                if (doNotReprocessValidRecords && ParityCheckStatus.EXISTS_IN_LEDGER.equals(charge.getParityCheckStatus())) {
-                    logger.info("transaction parity check skipped [id={},status={}]", currentId, charge.getParityCheckStatus());
-                    return;
-                }
+            if (doNotReprocessValidRecords && ParityCheckStatus.EXISTS_IN_LEDGER.equals(charge.getParityCheckStatus())) {
+                logger.info("transaction parity check skipped [id={},status={}]", charge.getId(), charge.getParityCheckStatus());
+                return;
+            }
 
-                ParityCheckStatus parityCheckStatus = getChargeAndRefundsParityCheckStatus(charge);
-                chargeService.updateChargeParityStatus(charge.getExternalId(), parityCheckStatus);
-                logger.info("transaction parity check finished [id={},status={}]", currentId, parityCheckStatus);
+            ParityCheckStatus parityCheckStatus = getChargeAndRefundsParityCheckStatus(charge);
+            chargeService.updateChargeParityStatus(charge.getExternalId(), parityCheckStatus);
+            logger.info("transaction parity check finished [id={},status={}]", charge.getId(), parityCheckStatus);
 
-                if (!parityCheckStatus.equals(ParityCheckStatus.EXISTS_IN_LEDGER)) {
-                    emitHistoricalEvents(charge);
-                }
-            } else {
-                logger.info("[{}/{}] - not found", currentId, maxId);
+            if (!parityCheckStatus.equals(ParityCheckStatus.EXISTS_IN_LEDGER)) {
+                emitHistoricalEvents(charge);
             }
         } finally {
             MDC.remove("chargeId");
