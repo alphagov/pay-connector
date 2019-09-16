@@ -58,6 +58,7 @@ import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 public class WorldpayPaymentProviderTest {
 
     private static final String MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS = "3D";
+    private static final String MAGIC_CARDHOLDER_NAME_FOR_3DS_FLEX_CHALLENGE_REQUIRED_RESPONSE = "3DS_V2_CHALLENGE_IDENTIFIED";
 
     private GatewayAccountEntity validGatewayAccount;
     private GatewayAccountEntity validGatewayAccountFor3ds;
@@ -113,7 +114,7 @@ public class WorldpayPaymentProviderTest {
                 .withGatewayAccountEntity(validGatewayAccount)
                 .build();
     }
-    
+
     @Test
     public void submit3DS2FlexAuthRequest() throws Exception {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
@@ -121,6 +122,25 @@ public class WorldpayPaymentProviderTest {
         CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
         GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
         assertTrue(response.getBaseResponse().isPresent());
+    }
+
+    @Test
+    public void submit3DS2FlexAuthRequest_requiresChallenge() throws Exception {
+        WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
+        AuthCardDetails authCardDetails = anAuthCardDetails()
+                .withCardHolder(MAGIC_CARDHOLDER_NAME_FOR_3DS_FLEX_CHALLENGE_REQUIRED_RESPONSE)
+                .withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString())
+                .build();
+        CardAuthorisationGatewayRequest request = getCardAuthorisationRequest(authCardDetails);
+        GatewayResponse<BaseAuthoriseResponse> response = paymentProvider.authorise(request);
+        assertTrue(response.getBaseResponse().isPresent());
+        response.getBaseResponse().ifPresent(res -> {
+            assertThat(res.getGatewayParamsFor3ds().isPresent(), is(true));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getWorldpayChallengeAcsUrl(), is(notNullValue()));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getWorldpayChallengeTransactionId(), is(notNullValue()));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getWorldpayChallengePayload(), is(notNullValue()));
+            assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsDetailsEntity().getThreeDsVersion(), is(notNullValue()));
+        });
     }
 
     @Test
