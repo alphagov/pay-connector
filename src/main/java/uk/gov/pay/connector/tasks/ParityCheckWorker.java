@@ -71,16 +71,16 @@ public class ParityCheckWorker {
 
     private void checkParityForParityCheckStatus(Optional<String> parityCheckStatus) {
         ParityCheckStatus parityStatus = ParityCheckStatus.valueOf(parityCheckStatus.get());
-        int page = 1;
+        Long lastProcessedId = 0L;
 
         logger.info("Starting for status {}", parityCheckStatus.get());
         while (true) {
-            List<ChargeEntity> charges = chargeDao.findByParityCheckStatus(parityStatus, page, PAGE_SIZE);
+            List<ChargeEntity> charges = chargeDao.findByParityCheckStatus(parityStatus, PAGE_SIZE, lastProcessedId);
 
             if (!charges.isEmpty()) {
-                logger.info("Processing charges [page {}, no.of.charges {}] by parity check status", page, charges.size());
+                logger.info("Processing charges [last processed id {}, no.of.charges {}] by parity check status", lastProcessedId, charges.size());
                 charges.forEach(c -> checkParityFor(c, false));
-                page++;
+                lastProcessedId = charges.get(charges.size() - 1).getId();
             } else {
                 break;
             }
