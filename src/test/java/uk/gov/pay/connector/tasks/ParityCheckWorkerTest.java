@@ -199,13 +199,13 @@ public class ParityCheckWorkerTest {
 
     @Test
     public void executeForParityCheckStatusShouldEmitEventsOnlyForStatus() {
-        when(chargeDao.findByParityCheckStatus(ParityCheckStatus.DATA_MISMATCH, 2, 100)).thenReturn(List.of());
-        when(chargeDao.findByParityCheckStatus(ParityCheckStatus.DATA_MISMATCH, 1, 100)).thenReturn(List.of(chargeEntity));
+        when(chargeDao.findByParityCheckStatus(ParityCheckStatus.DATA_MISMATCH, 100, chargeEntity.getId())).thenReturn(List.of());
+        when(chargeDao.findByParityCheckStatus(ParityCheckStatus.DATA_MISMATCH, 100, 0L)).thenReturn(List.of(chargeEntity));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.empty());
 
         worker.execute(0L, Optional.empty(), doNotReprocessValidRecords, Optional.of("DATA_MISMATCH"));
 
-        verify(chargeDao, times(2)).findByParityCheckStatus(eq(ParityCheckStatus.DATA_MISMATCH), anyInt(), anyInt());
+        verify(chargeDao, times(2)).findByParityCheckStatus(eq(ParityCheckStatus.DATA_MISMATCH), anyInt(), any());
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.MISSING_IN_LEDGER);
         verify(ledgerService, times(1)).getTransaction(any());
         verify(stateTransitionService, times(1)).offerStateTransition(any(), any());
