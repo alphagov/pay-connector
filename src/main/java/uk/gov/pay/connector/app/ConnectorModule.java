@@ -108,7 +108,7 @@ public class ConnectorModule extends AbstractModule {
 
     @Provides
     public Worldpay3dsFlexJwtService worldpay3dsFlexJwtServiceGenerator() {
-        return new Worldpay3dsFlexJwtService(new JwtGenerator(), configuration.getChargeSweepConfig().getDefaultChargeExpiryThreshold());
+        return new Worldpay3dsFlexJwtService(new JwtGenerator(), configuration);
     }
 
     @Provides
