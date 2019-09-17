@@ -140,6 +140,27 @@ public class StripeResourceAuthorizeIT {
     }
 
     @Test
+    public void cardAuthorisationWithPaymentIntentsFailureShouldReturnBadRequest() {
+        stripeMockClient.mockAuthorisationFailedWithPaymentIntents();
+
+        addGatewayAccountWith3DS2Enabled(ImmutableMap.of("stripe_account_id", stripeAccountId));
+
+        String externalChargeId = addCharge();
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(externalChargeId))
+                .then()
+                .statusCode(BAD_REQUEST_400)
+                .body("message", contains("This transaction was declined."))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+
+        assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_REJECTED.toString());
+    }
+
+
+    @Test
     public void authoriseCharge() {
         addGatewayAccount(ImmutableMap.of("stripe_account_id", stripeAccountId));
 
@@ -168,6 +189,31 @@ public class StripeResourceAuthorizeIT {
         assertThat(requests).hasSize(1);
         assertExpectedAuthoriseRequestBody(requests.get(0), externalChargeId);
     }
+
+    @Test
+    public void authoriseChargeWithPaymentIntents() {
+        stripeMockClient.mockCreatePaymentMethod();
+        stripeMockClient.mockCreatePaymentIntent();
+        addGatewayAccountWith3DS2Enabled(ImmutableMap.of("stripe_account_id", stripeAccountId));
+
+        String externalChargeId = addCharge();
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(externalChargeId))
+                .then()
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
+                .statusCode(OK_200);
+
+        verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
+
+        verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
+
+    }
+
 
     @Test
     public void shouldAuthoriseChargeWithoutBillingAddress() {
@@ -339,6 +385,15 @@ public class StripeResourceAuthorizeIT {
                 .withPaymentGateway(paymentProvider)
                 .withCredentials(credentials)
                 .withIntegrationVersion3ds(1)
+                .build());
+    }
+
+    private void addGatewayAccountWith3DS2Enabled(Map credentials) {
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(accountId)
+                .withPaymentGateway(paymentProvider)
+                .withCredentials(credentials)
+                .withIntegrationVersion3ds(2)
                 .build());
     }
 

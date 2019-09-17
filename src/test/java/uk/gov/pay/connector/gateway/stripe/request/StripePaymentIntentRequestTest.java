@@ -39,6 +39,7 @@ public class StripePaymentIntentRequestTest {
     private String paymentMethodId = "123abc";
     private String frontendUrl = "frontendUrl";
     private Long amount = 100L;
+    private String description = "description";
 
     @Before
     public void setUp() {
@@ -46,6 +47,7 @@ public class StripePaymentIntentRequestTest {
         when(charge.getGatewayAccount()).thenReturn(gatewayAccount);
         when(charge.getExternalId()).thenReturn(chargeExternalId);
         when(charge.getAmount()).thenReturn(amount);
+        when(charge.getDescription()).thenReturn(description);
         when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
@@ -67,6 +69,7 @@ public class StripePaymentIntentRequestTest {
         assertThat(payload, containsString("transfer_group=" + chargeExternalId));
         assertThat(payload, containsString("on_behalf_of=" + stripeConnectAccountId));
         assertThat(payload, containsString("confirm=true"));
+        assertThat(payload, containsString("description=" + description));
         assertThat(payload, containsString("return_url=" + frontendUrl + "%2Fcard_details%2F" + chargeExternalId + "%2F3ds_required_in"));
     }
 

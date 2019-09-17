@@ -1,0 +1,52 @@
+{
+  "id": "pi_1FHESeEZsufgnuO08A2FUSPy",
+  "object": "payment_intent",
+  "amount": 1000,
+  "amount_capturable": 0,
+  "amount_received": 0,
+  "application": null,
+  "application_fee_amount": null,
+  "canceled_at": null,
+  "cancellation_reason": null,
+  "capture_method": "manual",
+  "charges": {
+    "object": "list",
+    "data": [
+    ],
+    "has_more": false,
+    "total_count": 0,
+    "url": "/v1/charges?payment_intent=pi_1FHESeEZsufgnuO08A2FUSPy"
+  },
+  "client_secret": "secret",
+  "confirmation_method": "automatic",
+  "created": 1568141588,
+  "currency": "gbp",
+  "customer": null,
+  "description": null,
+  "invoice": null,
+  "last_payment_error": null,
+  "livemode": false,
+  "metadata": {
+  },
+  "next_action": null,
+  "on_behalf_of": "acct_1EVFduJTPZ7tq2xO",
+  "payment_method": "pm_1FHESdEZsufgnuO0bzghQoZ2",
+  "payment_method_options": {
+    "card": {
+      "request_three_d_secure": "automatic"
+    }
+  },
+  "payment_method_types": [
+    "card"
+  ],
+  "receipt_email": null,
+  "review": null,
+  "setup_future_usage": null,
+  "shipping": null,
+  "source": null,
+  "statement_descriptor": null,
+  "statement_descriptor_suffix": null,
+  "status": "requires_capture",
+  "transfer_data": null,
+  "transfer_group": "bc3rl3m7po6do0mt7r11kbt588"
+}

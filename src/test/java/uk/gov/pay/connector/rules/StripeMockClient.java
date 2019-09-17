@@ -27,6 +27,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CREATE_TOKEN_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_METHOD_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_REFUND_FULL_CHARGE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSFER_RESPONSE;
 
@@ -84,6 +86,11 @@ public class StripeMockClient {
         String payload = TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_FAILED_RESPONSE);
         setupResponse(payload, "/v1/charges", 400);
     }
+    
+    public void mockAuthorisationFailedWithPaymentIntents() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_FAILED_RESPONSE);
+        setupResponse(payload, "/v1/payment_methods", 400);
+    }
 
     public void mockCreateSourceWithThreeDSecureRequired() {
         String payload = TestTemplateResourceLoader.load(STRIPE_CREATE_SOURCES_3DS_REQUIRED_RESPONSE)
@@ -132,5 +139,15 @@ public class StripeMockClient {
     public void mockGetPaymentIntent(String paymentIntentId) {
         String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE);
         setupResponse(payload, "/v1/payment_intents/" + paymentIntentId, 200);
+    }
+
+    public void mockCreatePaymentIntent() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE);
+        setupResponse(payload, "/v1/payment_intents", 200);
+    }
+    
+    public void mockCreatePaymentMethod() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_METHOD_SUCCESS_RESPONSE);
+        setupResponse(payload, "/v1/payment_methods", 200);
     }
 }
