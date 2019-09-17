@@ -52,7 +52,7 @@ public class DatabaseTestHelper {
                                     "                              description,\n" +
                                     "                              analytics_id,\n" +
                                     "                              email_collection_mode,\n" +
-                                    "                              integration_version_3ds,\n" +            
+                                    "                              integration_version_3ds,\n" +
                                     "                              corporate_credit_card_surcharge_amount,\n" +
                                     "                              corporate_debit_card_surcharge_amount,\n" +
                                     "                              corporate_prepaid_credit_card_surcharge_amount,\n" +
@@ -249,6 +249,24 @@ public class DatabaseTestHelper {
                         .bind("pa_request_3ds", paRequest)
                         .bind("issuer_url_3ds", issuerUrl)
                         .bind("html_out_3ds", htmlOut)
+                        .execute()
+        );
+    }
+
+    public void updateCharge3dsFlexChallengeDetails(Long chargeId, String acsUrl, String transactionId, String payload, String version) {
+        jdbi.withHandle(handle ->
+                handle
+                        .createStatement("UPDATE charges " +
+                                " SET worldpay_challenge_acs_url_3ds = :acsUrl, " +
+                                " worldpay_challenge_transaction_id_3ds = :transactionId, " +
+                                " worldpay_challenge_payload_3ds = :payload, " +
+                                " version_3ds = :version " +
+                                " WHERE id = :id")
+                        .bind("id", chargeId)
+                        .bind("acsUrl", acsUrl)
+                        .bind("transactionId", transactionId)
+                        .bind("payload", payload)
+                        .bind("version", version)
                         .execute()
         );
     }

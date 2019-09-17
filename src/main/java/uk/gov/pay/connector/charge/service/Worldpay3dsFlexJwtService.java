@@ -5,6 +5,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.charge.exception.Worldpay3dsFlexJwtCredentialsException;
 import uk.gov.pay.connector.charge.exception.Worldpay3dsFlexJwtPaymentProviderException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.util.JwtGenerator;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
@@ -47,7 +48,22 @@ public class Worldpay3dsFlexJwtService {
         return createJwt(gatewayAccount, claims);
     }
 
-    public String generateChallengeToken(ChargeEntity chargeEntity) {
+    public Optional<String> generateChallengeTokenIfAppropriate(ChargeEntity chargeEntity) {
+        if (shouldGenerateChallengeToken(chargeEntity)) {
+            return Optional.of(generateChallengeToken(chargeEntity));
+        }
+        return Optional.empty();
+    }
+    
+    private boolean shouldGenerateChallengeToken(ChargeEntity chargeEntity) {
+        return chargeEntity.getStatus().equals(ChargeStatus.AUTHORISATION_3DS_REQUIRED.toString()) &&
+                chargeEntity.get3dsDetails() != null &&
+                chargeEntity.get3dsDetails().getWorldpayChallengeAcsUrl() != null &&
+                chargeEntity.get3dsDetails().getWorldpayChallengePayload() != null &&
+                chargeEntity.get3dsDetails().getWorldpayChallengeTransactionId() != null;
+    }
+
+    private String generateChallengeToken(ChargeEntity chargeEntity) {
         GatewayAccount gatewayAccount = GatewayAccount.valueOf(chargeEntity.getGatewayAccount());
         validateGatewayIsWorldpay(gatewayAccount);
 
