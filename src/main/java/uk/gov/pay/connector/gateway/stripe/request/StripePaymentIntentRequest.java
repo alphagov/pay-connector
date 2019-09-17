@@ -12,19 +12,22 @@ public class StripePaymentIntentRequest extends StripeRequest {
     private final String amount;
     private final String paymentMethodId;
     private final String transferGroup;
-    private String frontendUrl;
-    private String chargeExternalId;
+    private final String frontendUrl;
+    private final String chargeExternalId;
+    private final String description;
 
 
     public StripePaymentIntentRequest(
             GatewayAccountEntity gatewayAccount, String idempotencyKey, StripeGatewayConfig stripeGatewayConfig, 
-            String amount, String paymentMethodId, String transferGroup, String frontendUrl, String chargeExternalId) {
+            String amount, String paymentMethodId, String transferGroup, String frontendUrl, String chargeExternalId,
+            String description) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig);
         this.amount = amount;
         this.paymentMethodId = paymentMethodId;
         this.transferGroup = transferGroup;
         this.frontendUrl = frontendUrl;
         this.chargeExternalId = chargeExternalId;
+        this.description = description;
     }
 
     public static StripePaymentIntentRequest of(
@@ -41,7 +44,8 @@ public class StripePaymentIntentRequest extends StripeRequest {
                 paymentMethodId,
                 request.getChargeExternalId(),
                 frontendUrl,
-                request.getChargeExternalId()
+                request.getChargeExternalId(),
+                request.getDescription()
         );
     }
     
@@ -63,6 +67,7 @@ public class StripePaymentIntentRequest extends StripeRequest {
                 "confirmation_method", "automatic",
                 "capture_method", "manual",
                 "currency", "GBP",
+                "description", description,
                 "transfer_group", transferGroup,
                 "on_behalf_of", stripeConnectAccountId,
                 "confirm", "true",
