@@ -72,7 +72,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
                 .withChargeId(chargeId)
                 .getWorldpay3dsFlexDdcJwt()
                 .statusCode(HttpStatus.SC_CONFLICT)
-                .body("message", is(List.of("Cannot generate Worldpay 3ds Flex DDC JWT for account 202 because the following credentials are unavailable: [issuer]")));
+                .body("message", is(List.of("Cannot generate Worldpay 3ds Flex JWT for account 202 because the following credential is unavailable: issuer")));
     }
 
     @Test
@@ -90,7 +90,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
                 .withChargeId(chargeId)
                 .getWorldpay3dsFlexDdcJwt()
                 .statusCode(HttpStatus.SC_CONFLICT)
-                .body("message", is(List.of("Cannot provide a Worldpay 3ds flex DDC JWT for account 303 because the Payment Provider is not Worldpay.")));
+                .body("message", is(List.of("Cannot provide a Worldpay 3ds flex JWT for account 303 because the Payment Provider is not Worldpay.")));
     }
     
     private void setUpChargeAndAccount(String gatewayAccountId, PaymentGatewayName paymentProvider, Map<String, String> credentials, String chargeId) {
