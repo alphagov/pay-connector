@@ -3,6 +3,8 @@ package uk.gov.pay.connector.gateway.worldpay;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.gateway.model.GatewayParamsFor3ds;
 
+import java.util.Objects;
+
 public class WorldpayParamsFor3dsFlex implements GatewayParamsFor3ds {
     
     private final String challengeAcsUrl;
@@ -14,10 +16,10 @@ public class WorldpayParamsFor3dsFlex implements GatewayParamsFor3ds {
                                     String challengeTransactionId,
                                     String challengePayload,
                                     String threeDsVersion) {
-        this.challengeAcsUrl = challengeAcsUrl;
-        this.challengeTransactionId = challengeTransactionId;
-        this.challengePayload = challengePayload;
-        this.threeDsVersion = threeDsVersion;
+        this.challengeAcsUrl = Objects.requireNonNull(challengeAcsUrl);
+        this.challengeTransactionId = Objects.requireNonNull(challengeTransactionId);
+        this.challengePayload = Objects.requireNonNull(challengePayload);
+        this.threeDsVersion = Objects.requireNonNull(threeDsVersion);
     }
 
     @Override

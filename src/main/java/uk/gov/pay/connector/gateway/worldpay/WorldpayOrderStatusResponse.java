@@ -40,7 +40,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     private String paRequest;
 
     private String issuerUrl;
-    
+
     private String challengeAcsUrl;
 
     @XmlPath("/reply/orderStatus/challengeRequired/threeDSChallengeDetails/transactionId3DS/text()")
@@ -96,8 +96,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
 
     @Override
     public AuthoriseStatus authoriseStatus() {
-        if ((paRequest != null && issuerUrl != null) ||
-                challengeAcsUrl != null) {
+        if ((is3dsVersionOneRequired()) || is3dsFlexChallengeRequired()) {
             return AuthoriseStatus.REQUIRES_3DS;
         }
 
@@ -137,10 +136,10 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     }
 
     public Optional<GatewayParamsFor3ds> getGatewayParamsFor3ds() {
-        if (issuerUrl != null && paRequest != null) {
+        if (is3dsVersionOneRequired()) {
             return Optional.of(new WorldpayParamsFor3ds(issuerUrl, paRequest));
         }
-        if (challengeAcsUrl != null) {
+        if (is3dsFlexChallengeRequired()) {
             return Optional.of(new WorldpayParamsFor3dsFlex(
                     challengeAcsUrl,
                     challengeTransactionId,
@@ -148,6 +147,17 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
                     threeDsVersion));
         }
         return Optional.empty();
+    }
+
+    private boolean is3dsVersionOneRequired() {
+        return issuerUrl != null && paRequest != null;
+    }
+
+    private boolean is3dsFlexChallengeRequired() {
+        return challengeAcsUrl != null &&
+                challengeTransactionId != null &&
+                challengePayload != null &&
+                threeDsVersion != null;
     }
 
     @Override
