@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -21,6 +22,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
@@ -554,8 +556,9 @@ public class ChargeResponse {
             return md;
         }
 
-        public String getWorldpayChallengeJwt() {
-            return worldpayChallengeJwt;
+        @JsonIgnore
+        public Optional<String> getWorldpayChallengeJwt() {
+            return Optional.ofNullable(worldpayChallengeJwt);
         }
 
         public void setWorldpayChallengeJwt(String worldpayChallengeJwt) {
@@ -582,9 +585,11 @@ public class ChargeResponse {
         @Override
         public String toString() {
             return "Auth3dsData{" +
-                    "issuerUrl='" + issuerUrl + '\'' +
+                    "paRequest='" + paRequest + '\'' +
+                    ", issuerUrl='" + issuerUrl + '\'' +
                     ", htmlOut='" + htmlOut + '\'' +
                     ", md='" + md + '\'' +
+                    ", worldpayChallengeJwt='" + worldpayChallengeJwt + '\'' +
                     '}';
         }
     }

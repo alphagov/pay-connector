@@ -44,6 +44,7 @@ import static uk.gov.pay.connector.charge.model.FrontendChargeResponse.aFrontend
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.EMAIL_KEY;
 import static uk.gov.pay.connector.common.service.PatchRequestBuilder.aPatchRequestBuilder;
 import static uk.gov.pay.connector.common.validator.ApiValidators.validateChargePatchParams;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
@@ -186,8 +187,10 @@ public class ChargesFrontendResource {
             auth3dsData.setHtmlOut(charge.get3dsDetails().getHtmlOut());
             auth3dsData.setMd(charge.get3dsDetails().getMd());
 
-            worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(charge).ifPresent(
-                    auth3dsData::setWorldpayChallengeJwt);
+            if (charge.getGatewayAccount().getGatewayName().equals(WORLDPAY.getName())) {
+                worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(charge).ifPresent(
+                        auth3dsData::setWorldpayChallengeJwt);
+            }
             
             responseBuilder.withAuth3dsData(auth3dsData);
         }
