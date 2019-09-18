@@ -148,7 +148,7 @@ public class ChargeService {
                     LastDigitsCardNumber.of(telephoneChargeRequest.getLastFourDigits()),
                     FirstDigitsCardNumber.of(telephoneChargeRequest.getFirstSixDigits()),
                     telephoneChargeRequest.getNameOnCard().orElse(null),
-                    telephoneChargeRequest.getCardExpiry(),
+                    telephoneChargeRequest.getCardExpiry().orElse(null),
                     telephoneChargeRequest.getCardType()
             );
 

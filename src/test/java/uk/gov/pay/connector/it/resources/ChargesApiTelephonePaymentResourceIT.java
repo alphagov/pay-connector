@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang.StringUtils;
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
@@ -49,7 +51,6 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 )
         );
         postBody.put("card_type", "master-card");
-        postBody.put("card_expiry", "02/19");
         postBody.put("last_four_digits", "1234");
         postBody.put("first_six_digits", "123456");
     }
@@ -73,7 +74,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("processor_id", is("183f2j8923j8"))
                 .body("provider_id", is("17498-8412u9-1273891239"))
                 .body("card_details.card_brand", is("master-card"))
-                .body("card_details.expiry_date", is("02/19"))
+                .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
                 .body("payment_outcome.status", is("success"))
@@ -90,6 +91,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         postBody.put("name_on_card", "Jane Doe");
         postBody.put("email_address", "jane_doe@example.com");
         postBody.put("telephone_number", "+447700900796");
+        postBody.put("card_expiry", "02/19");
         
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
@@ -128,7 +130,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                         )
                 )
         );
-        
+
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
@@ -143,7 +145,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
                 .body("payment_outcome.supplemental.error_message", is("textual message describing error code"))
                 .body("card_details.card_brand", is("master-card"))
-                .body("card_details.expiry_date", is("02/19"))
+                .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
                 .body("charge_id.length()", is(26))
@@ -171,6 +173,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         postBody.put("name_on_card", "Jane Doe");
         postBody.put("email_address", "jane_doe@example.com");
         postBody.put("telephone_number", "+447700900796");
+        postBody.put("card_expiry", null);
         
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
@@ -186,7 +189,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
                 .body("payment_outcome.supplemental.error_message", is("textual message describing error code"))
                 .body("card_details.card_brand", is("master-card"))
-                .body("card_details.expiry_date", is("02/19"))
+                .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
                 .body("charge_id.length()", is(26))
@@ -208,6 +211,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                         )
                 )
         );
+        postBody.put("card_expiry", null);
 
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
@@ -223,7 +227,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
                 .body("payment_outcome.supplemental.error_message", is("textual message describing error code"))
                 .body("card_details.card_brand", is("master-card"))
-                .body("card_details.expiry_date", is("02/19"))
+                .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
                 .body("charge_id.length()", is(26))
@@ -268,7 +272,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("payment_outcome.supplemental.error_code", is(stringOf50Characters))
                 .body("payment_outcome.supplemental.error_message", is(stringOf50Characters))
                 .body("card_details.card_brand", is("master-card"))
-                .body("card_details.expiry_date", is("02/19"))
+                .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
                 .body("telephone_number", is(stringOf50Characters))
@@ -282,6 +286,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldReturnResponseForAlreadyExistingTelephoneCharge() {
+        postBody.put("card_expiry", "02/19");
+
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201);
@@ -318,7 +324,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422ForInvalidCardExpiryDate() {
-        postBody.replace("card_expiry", "99/99");
+        postBody.put("card_expiry", "99/99");
         
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
@@ -475,16 +481,6 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Field [payment_outcome] cannot be null"));
-    }
-
-    @Test
-    public void shouldReturn422ForMissingCardExpiryDate() {
-        postBody.remove("card_expiry");
-
-        connectorRestApiClient
-                .postCreateTelephoneCharge(toJson(postBody))
-                .statusCode(422)
-                .body("message[0]", is("Field [card_expiry] cannot be null"));
     }
 
     @Test
