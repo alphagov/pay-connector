@@ -178,6 +178,15 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         if (StringUtils.isNotBlank(issuerUrl)) {
             joiner.add("issuerURL: " + issuerUrl);
         }
+        if (StringUtils.isNotBlank(challengeAcsUrl)) {
+            joiner.add("threeDSChallengeDetails acsUrl: " + challengeAcsUrl);
+        }
+        if (StringUtils.isNotBlank(challengeTransactionId)) {
+            joiner.add("threeDSChallengeDetails transactionId3DS: " + challengeTransactionId);
+        }
+        if (StringUtils.isNotBlank(threeDsVersion)) {
+            joiner.add("threeDSChallengeDetails threeDSVersion: " + threeDsVersion);
+        }
         if (StringUtils.isNotBlank(getErrorCode())) {
             joiner.add("error code: " + getErrorCode());
         }
