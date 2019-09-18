@@ -18,6 +18,7 @@ import uk.gov.pay.connector.charge.exception.Worldpay3dsFlexJwtCredentialsExcept
 import uk.gov.pay.connector.charge.exception.Worldpay3dsFlexJwtPaymentProviderException;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.util.JwtGenerator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -27,6 +28,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
@@ -105,6 +107,38 @@ public class Worldpay3dsFlexJwtServiceTest {
     }
 
     @Test
+    public void shouldNotReturnChallengeTokenIfChargeInWrongState() {
+        Auth3dsDetailsEntity auth3dsDetailsEntity = anAuth3dsDetailsEntity()
+                .withWorldpayChallengeAcsUrl("http://www.example.com")
+                .withWorldpayChallengePayload("a-payload")
+                .withWorldpayChallengeTransactionId("a-transaction-id")
+                .build();
+
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                .withAuth3dsDetailsEntity(auth3dsDetailsEntity)
+                .build();
+
+        Optional<String> maybeToken = worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(chargeEntity);
+
+        assertThat(maybeToken, is(Optional.empty()));
+    }
+
+    @Test
+    public void shouldNotReturnChallengeTokenIfChallengeDataNotPresent() {
+        Auth3dsDetailsEntity auth3dsDetailsEntity = anAuth3dsDetailsEntity().build();
+
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(ChargeStatus.AUTHORISATION_3DS_REQUIRED)
+                .withAuth3dsDetailsEntity(auth3dsDetailsEntity)
+                .build();
+
+        Optional<String> maybeToken = worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(chargeEntity);
+
+        assertThat(maybeToken, is(Optional.empty()));
+    }
+
+    @Test
     public void shouldCreateCorrectChallengeToken() {
 
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
@@ -113,11 +147,13 @@ public class Worldpay3dsFlexJwtServiceTest {
                 .build();
         ChargeEntity chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
 
-        String token = worldpay3dsFlexJwtService.generateChallengeToken(chargeEntity);
+        Optional<String> maybeToken = worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(chargeEntity);
+        
+        assertThat(maybeToken.isPresent(), is(true));
 
         Jws<Claims> jws = Jwts.parser()
                 .setSigningKey(new SecretKeySpec(VALID_CREDENTIALS.get("jwt_mac_id").getBytes(), "HmacSHA256"))
-                .parseClaimsJws(token);
+                .parseClaimsJws(maybeToken.get());
 
         assertThat(jws.getHeader().getAlgorithm(), is("HS256"));
         assertThat((Map<String, Object>)jws.getHeader(), hasEntry("typ", "JWT"));
@@ -208,7 +244,7 @@ public class Worldpay3dsFlexJwtServiceTest {
         expectedException.expectMessage("Cannot generate Worldpay 3ds Flex JWT for account 1 because the " +
                 "following credential is unavailable: issuer");
 
-        worldpay3dsFlexJwtService.generateChallengeToken(chargeEntity);
+        worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(chargeEntity);
     }
 
     @Test
@@ -229,7 +265,7 @@ public class Worldpay3dsFlexJwtServiceTest {
                 "Cannot generate Worldpay 3ds Flex JWT for account 1 because the following credential is " +
                         "unavailable: organisational_unit_id");
 
-        worldpay3dsFlexJwtService.generateChallengeToken(chargeEntity);
+        worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(chargeEntity);
     }
 
     @Test
@@ -249,7 +285,7 @@ public class Worldpay3dsFlexJwtServiceTest {
         expectedException.expectMessage("Cannot generate Worldpay 3ds Flex JWT for account 1 because the " +
                 "following credential is unavailable: jwt_mac_id");
 
-        worldpay3dsFlexJwtService.generateChallengeToken(chargeEntity);
+        worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(chargeEntity);
     }
 
     @Test
@@ -265,7 +301,7 @@ public class Worldpay3dsFlexJwtServiceTest {
         expectedException.expectMessage("Cannot provide a Worldpay 3ds flex JWT for account 1 because the " +
                 "Payment Provider is not Worldpay.");
 
-        worldpay3dsFlexJwtService.generateChallengeToken(chargeEntity);
+        worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(chargeEntity);
     }
 
     private ChargeEntity createValidChargeEntityForChallengeToken(GatewayAccountEntity gatewayAccountEntity) {
@@ -277,6 +313,7 @@ public class Worldpay3dsFlexJwtServiceTest {
 
         return ChargeEntityFixture.aValidChargeEntity()
                 .withExternalId(CHARGE_EXTERNAL_ID)
+                .withStatus(ChargeStatus.AUTHORISATION_3DS_REQUIRED)
                 .withAuth3dsDetailsEntity(auth3dsDetailsEntity)
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();

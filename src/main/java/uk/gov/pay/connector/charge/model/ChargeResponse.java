@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -21,6 +22,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
@@ -71,7 +73,7 @@ public class ChargeResponse {
 
     @JsonProperty("provider_id")
     private String providerId;
-    
+
     @JsonProperty("created_date")
     @JsonSerialize(using = ApiResponseDateTimeSerializer.class)
     private ZonedDateTime createdDate;
@@ -79,16 +81,16 @@ public class ChargeResponse {
     @JsonProperty("authorised_date")
     @JsonSerialize(using = ApiResponseDateTimeSerializer.class)
     private ZonedDateTime authorisedDate;
-    
+
     @JsonProperty("payment_outcome")
     private PaymentOutcome paymentOutcome;
-    
+
     @JsonProperty("refund_summary")
     private RefundSummary refundSummary;
 
     @JsonProperty("settlement_summary")
     private SettlementSummary settlementSummary;
-    
+
     @JsonProperty("auth_code")
     private String authCode;
 
@@ -119,7 +121,7 @@ public class ChargeResponse {
 
     @JsonProperty("wallet_type")
     private WalletType walletType;
-    
+
     @JsonProperty("metadata")
     @JsonSerialize(using = ExternalMetadataSerialiser.class)
     private ExternalMetadata externalMetadata;
@@ -228,6 +230,7 @@ public class ChargeResponse {
     public Long getCorporateCardSurcharge() {
         return corporateCardSurcharge;
     }
+
     public Long getFee() {
         return fee;
     }
@@ -359,7 +362,6 @@ public class ChargeResponse {
     public static ChargeResponseBuilder aChargeResponseBuilder() {
         return new ChargeResponseBuilder();
     }
-
 
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
@@ -519,6 +521,9 @@ public class ChargeResponse {
         @JsonProperty("md")
         private String md;
 
+        @JsonProperty("worldpayChallengeJwt")
+        private String worldpayChallengeJwt;
+
         public String getPaRequest() {
             return paRequest;
         }
@@ -551,6 +556,15 @@ public class ChargeResponse {
             return md;
         }
 
+        @JsonIgnore
+        public Optional<String> getWorldpayChallengeJwt() {
+            return Optional.ofNullable(worldpayChallengeJwt);
+        }
+
+        public void setWorldpayChallengeJwt(String worldpayChallengeJwt) {
+            this.worldpayChallengeJwt = worldpayChallengeJwt;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -559,20 +573,23 @@ public class ChargeResponse {
             return Objects.equals(paRequest, that.paRequest) &&
                     Objects.equals(issuerUrl, that.issuerUrl) &&
                     Objects.equals(htmlOut, that.htmlOut) &&
-                    Objects.equals(md, that.md);
+                    Objects.equals(md, that.md) &&
+                    Objects.equals(worldpayChallengeJwt, that.worldpayChallengeJwt);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(paRequest, issuerUrl, htmlOut, md);
+            return Objects.hash(paRequest, issuerUrl, htmlOut, md, worldpayChallengeJwt);
         }
 
         @Override
         public String toString() {
             return "Auth3dsData{" +
-                    "issuerUrl='" + issuerUrl + '\'' +
+                    "paRequest='" + paRequest + '\'' +
+                    ", issuerUrl='" + issuerUrl + '\'' +
                     ", htmlOut='" + htmlOut + '\'' +
                     ", md='" + md + '\'' +
+                    ", worldpayChallengeJwt='" + worldpayChallengeJwt + '\'' +
                     '}';
         }
     }

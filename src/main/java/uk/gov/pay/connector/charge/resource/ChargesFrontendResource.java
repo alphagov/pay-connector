@@ -44,6 +44,7 @@ import static uk.gov.pay.connector.charge.model.FrontendChargeResponse.aFrontend
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.EMAIL_KEY;
 import static uk.gov.pay.connector.common.service.PatchRequestBuilder.aPatchRequestBuilder;
 import static uk.gov.pay.connector.common.validator.ApiValidators.validateChargePatchParams;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 
@@ -153,20 +154,6 @@ public class ChargesFrontendResource {
 
     private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
-        PersistedCard persistedCard = null;
-        if (charge.getCardDetails() != null) {
-            persistedCard = charge.getCardDetails().toCard();
-            persistedCard.setCardBrand(findCardBrandLabel(charge.getCardDetails().getCardBrand()).orElse(""));
-        }
-
-        ChargeResponse.Auth3dsData auth3dsData = null;
-        if (charge.get3dsDetails() != null) {
-            auth3dsData = new ChargeResponse.Auth3dsData();
-            auth3dsData.setPaRequest(charge.get3dsDetails().getPaRequest());
-            auth3dsData.setIssuerUrl(charge.get3dsDetails().getIssuerUrl());
-            auth3dsData.setHtmlOut(charge.get3dsDetails().getHtmlOut());
-            auth3dsData.setMd(charge.get3dsDetails().getMd());
-        }
 
         FrontendChargeResponse.FrontendChargeResponseBuilder responseBuilder = aFrontendChargeResponse()
                 .withStatus(charge.getStatus())
@@ -177,8 +164,6 @@ public class ChargesFrontendResource {
                 .withCreatedDate(charge.getCreatedDate())
                 .withReturnUrl(charge.getReturnUrl())
                 .withEmail(charge.getEmail())
-                .withCardDetails(persistedCard)
-                .withAuth3dsData(auth3dsData)
                 .withFee(charge.getFeeAmount().orElse(null))
                 .withNetAmount(charge.getNetAmount().orElse(null))
                 .withGatewayAccount(charge.getGatewayAccount())
@@ -188,6 +173,28 @@ public class ChargesFrontendResource {
                 .withLink("cardAuth", POST, locationUriFor("/v1/frontend/charges/{chargeId}/cards", uriInfo, chargeId))
                 .withLink("cardCapture", POST, locationUriFor("/v1/frontend/charges/{chargeId}/capture", uriInfo, chargeId))
                 .withWalletType(charge.getWalletType());
+
+        if (charge.getCardDetails() != null) {
+            var persistedCard = charge.getCardDetails().toCard();
+            persistedCard.setCardBrand(findCardBrandLabel(charge.getCardDetails().getCardBrand()).orElse(""));
+            responseBuilder.withCardDetails(persistedCard);
+        }
+        
+        if (charge.get3dsDetails() != null) {
+            var auth3dsData = new ChargeResponse.Auth3dsData();
+            auth3dsData.setPaRequest(charge.get3dsDetails().getPaRequest());
+            auth3dsData.setIssuerUrl(charge.get3dsDetails().getIssuerUrl());
+            auth3dsData.setHtmlOut(charge.get3dsDetails().getHtmlOut());
+            auth3dsData.setMd(charge.get3dsDetails().getMd());
+
+            if (charge.getGatewayAccount().getGatewayName().equals(WORLDPAY.getName())) {
+                worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(charge).ifPresent(
+                        auth3dsData::setWorldpayChallengeJwt);
+            }
+            
+            responseBuilder.withAuth3dsData(auth3dsData);
+        }
+        
         charge.getCorporateSurcharge().ifPresent(surcharge -> {
             if (surcharge > 0) {
                 responseBuilder
