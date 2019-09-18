@@ -9,10 +9,15 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.UnspecifiedEvent;
 import uk.gov.pay.connector.events.eventdetails.EmptyEventDetails;
+import uk.gov.pay.connector.events.model.charge.AuthorisationCancelled;
+import uk.gov.pay.connector.events.model.charge.AuthorisationRejected;
+import uk.gov.pay.connector.events.model.charge.AuthorisationSucceeded;
 import uk.gov.pay.connector.events.model.charge.CaptureAbandonedAfterTooManyRetries;
 import uk.gov.pay.connector.events.model.charge.CaptureErrored;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
+import uk.gov.pay.connector.events.model.charge.GatewayErrorDuringAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentExpired;
+import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -45,10 +50,12 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_READY;
@@ -148,5 +155,26 @@ public class PaymentGatewayStateTransitionsTest {
                                                                        ChargeStatus toStatus) {
         Optional<ChargeStatus> actualStatus = transitions.getIntermediateChargeStatus(fromStatus, toStatus);
         assertThat(actualStatus.get(), is(expectedIntermediateStatus));
+    }
+
+    @Test
+    public void getEventTransitionForUndefinedToPaymentNotificationCreated_returnsEventForModelledTypedEvent() {
+        Optional<Class<Event>> eventClassType = transitions.getEventForTransition(UNDEFINED, PAYMENT_NOTIFICATION_CREATED);
+        assertThat(eventClassType.get(), is(PaymentNotificationCreated.class));
+    }
+
+    @Test
+    public void getEventTransitionForPaymentNotificationCreated_returnsEventForModelledTypedEvent() {
+        Optional<Class<Event>> eventClassType = transitions.getEventForTransition(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_SUCCESS);
+        assertThat(eventClassType.get(), is(AuthorisationSucceeded.class));
+
+        eventClassType = transitions.getEventForTransition(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_REJECTED);
+        assertThat(eventClassType.get(), is(AuthorisationRejected.class));
+
+        eventClassType = transitions.getEventForTransition(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_ERROR);
+        assertThat(eventClassType.get(), is(GatewayErrorDuringAuthorisation.class));
+
+        eventClassType = transitions.getEventForTransition(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_CANCELLED);
+        assertThat(eventClassType.get(), is(AuthorisationCancelled.class));
     }
 }

@@ -28,6 +28,7 @@ import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.GatewayTimeoutDuringAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentExpired;
+import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
 import uk.gov.pay.connector.events.model.charge.ServiceApprovedForCapture;
 import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuthorisation;
@@ -63,6 +64,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
@@ -95,6 +97,7 @@ public class PaymentGatewayStateTransitions {
                 .build();
 
         graph.putEdgeValue(UNDEFINED, CREATED, ModelledEvent.of(PaymentCreated.class));
+        graph.putEdgeValue(UNDEFINED, PAYMENT_NOTIFICATION_CREATED, ModelledEvent.of(PaymentNotificationCreated.class));
         graph.putEdgeValue(CREATED, EXPIRED, ModelledEvent.of(PaymentExpired.class));
         graph.putEdgeValue(ENTERING_CARD_DETAILS, EXPIRED, ModelledEvent.of(PaymentExpired.class));
         graph.putEdgeValue(AUTHORISATION_3DS_REQUIRED, EXPIRED, ModelledEvent.of(PaymentExpired.class));
@@ -129,6 +132,10 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
         graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_ERROR, ModelledEvent.of(GatewayErrorDuringAuthorisation.class));
         graph.putEdgeValue(AUTHORISATION_3DS_READY, EXPIRE_CANCEL_READY, ModelledEvent.none());
+        graph.putEdgeValue(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_SUCCESS, ModelledEvent.of(AuthorisationSucceeded.class));
+        graph.putEdgeValue(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
+        graph.putEdgeValue(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_ERROR, ModelledEvent.of(GatewayErrorDuringAuthorisation.class));
+        graph.putEdgeValue(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_CANCELLED, ModelledEvent.of(AuthorisationCancelled.class));
         graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_CANCELLED, ModelledEvent.of(AuthorisationCancelled.class));
         graph.putEdgeValue(AUTHORISATION_SUCCESS, CAPTURE_APPROVED, ModelledEvent.of(UserApprovedForCapture.class));
         graph.putEdgeValue(AUTHORISATION_SUCCESS, CAPTURE_READY, ModelledEvent.none());
