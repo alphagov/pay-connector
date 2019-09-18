@@ -50,7 +50,6 @@ public class TelephoneChargeCreateRequest {
     
     private String emailAddress;
     
-    @NotNull(message = "Field [card_expiry] cannot be null")
     @ValidCardExpiryDate(message = "Field [card_expiry] must have valid MM/YY")
     private String cardExpiry;
 
@@ -135,8 +134,8 @@ public class TelephoneChargeCreateRequest {
         return Optional.ofNullable(emailAddress);
     }
 
-    public String getCardExpiry() {
-        return cardExpiry;
+    public Optional<String> getCardExpiry() {
+        return Optional.ofNullable(cardExpiry);
     }
 
     public String getLastFourDigits() {
