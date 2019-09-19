@@ -290,7 +290,7 @@ public class ChargeService {
                 .withAmount(chargeEntity.getAmount())
                 .withReference(chargeEntity.getReference())
                 .withDescription(chargeEntity.getDescription())
-                .withProviderId(chargeEntity.getProviderSessionId())
+                .withProviderId(chargeEntity.getGatewayTransactionId())
                 .withCardDetails(persistedCard)
                 .withEmail(chargeEntity.getEmail())
                 .withChargeId(chargeEntity.getExternalId());
