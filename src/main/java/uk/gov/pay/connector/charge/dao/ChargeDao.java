@@ -55,17 +55,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter("externalId", externalId)
                 .getResultList().stream().findFirst();
     }
-
-    public Optional<ChargeEntity> findByProviderSessionId(String providerSessionId) {
-        String query = "SELECT c FROM ChargeEntity c " +
-                "WHERE c.providerSessionId = :providerSessionId";
-
-        return entityManager.get()
-                .createQuery(query, ChargeEntity.class)
-                .setParameter("providerSessionId", providerSessionId)
-                .getResultList().stream().findFirst();
-    }
-
+    
     public Optional<ChargeEntity> findByTokenId(String tokenId) {
         String query = "SELECT te.chargeEntity FROM TokenEntity te WHERE te.token=:tokenId AND te.used=false";
 

@@ -127,7 +127,7 @@ public class ChargeService {
 
     @Transactional
     public Optional<ChargeResponse> findCharge(TelephoneChargeCreateRequest telephoneChargeRequest) {
-        return chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId())
+        return chargeDao.findByGatewayTransactionId(telephoneChargeRequest.getProviderId())
                 .map(charge -> populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
 
