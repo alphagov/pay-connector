@@ -215,8 +215,8 @@ public class ChargeServiceTest {
                 SupportedLanguage.ENGLISH
         );
 
-        when(mockedChargeDao.findByProviderSessionId("1PROV")).thenReturn(Optional.of(returnedChargeEntity));
-        when(mockedChargeDao.findByProviderSessionId("new")).thenReturn(Optional.empty());
+        when(mockedChargeDao.findByGatewayTransactionId("1PROV")).thenReturn(Optional.of(returnedChargeEntity));
+        when(mockedChargeDao.findByGatewayTransactionId("new")).thenReturn(Optional.empty());
 
         // Populate ChargeEntity with ID when persisting
         doAnswer(invocation -> {
@@ -547,7 +547,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
         assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is("01/19"));
         assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
-        assertThat(createdChargeEntity.getProviderSessionId(), is("1PROV"));
+        assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
     }
@@ -597,7 +597,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
         assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is(nullValue()));
         assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
-        assertThat(createdChargeEntity.getProviderSessionId(), is("1PROV"));
+        assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
     }
@@ -647,7 +647,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
         assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is(nullValue()));
         assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
-        assertThat(createdChargeEntity.getProviderSessionId(), is("1PROV"));
+        assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
     }
@@ -702,7 +702,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
         assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is("01/19"));
         assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
-        assertThat(createdChargeEntity.getProviderSessionId(), is("1PROV"));
+        assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
     }
@@ -756,7 +756,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
         assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is("01/19"));
         assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
-        assertThat(createdChargeEntity.getProviderSessionId(), is("1PROV"));
+        assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
     }
@@ -773,7 +773,7 @@ public class ChargeServiceTest {
         Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(telephoneChargeCreateRequest);
 
         ArgumentCaptor<String> chargeEntityArgumentCaptor = forClass(String.class);
-        verify(mockedChargeDao).findByProviderSessionId(chargeEntityArgumentCaptor.capture());
+        verify(mockedChargeDao).findByGatewayTransactionId(chargeEntityArgumentCaptor.capture());
 
         String providerId = chargeEntityArgumentCaptor.getValue();
         assertThat(providerId, is("new"));
@@ -793,7 +793,7 @@ public class ChargeServiceTest {
         Optional<ChargeResponse> telephoneChargeResponse = service.findCharge(telephoneChargeCreateRequest);
 
         ArgumentCaptor<String> chargeEntityArgumentCaptor = forClass(String.class);
-        verify(mockedChargeDao).findByProviderSessionId(chargeEntityArgumentCaptor.capture());
+        verify(mockedChargeDao).findByGatewayTransactionId(chargeEntityArgumentCaptor.capture());
 
         String providerId = chargeEntityArgumentCaptor.getValue();
         assertThat(providerId, is("1PROV"));

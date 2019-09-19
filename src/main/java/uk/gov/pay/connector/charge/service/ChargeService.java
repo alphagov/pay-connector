@@ -127,7 +127,7 @@ public class ChargeService {
 
     @Transactional
     public Optional<ChargeResponse> findCharge(TelephoneChargeCreateRequest telephoneChargeRequest) {
-        return chargeDao.findByProviderSessionId(telephoneChargeRequest.getProviderId())
+        return chargeDao.findByGatewayTransactionId(telephoneChargeRequest.getProviderId())
                 .map(charge -> populateResponseBuilderWith(aChargeResponseBuilder(), charge).build());
     }
 
@@ -290,7 +290,7 @@ public class ChargeService {
                 .withAmount(chargeEntity.getAmount())
                 .withReference(chargeEntity.getReference())
                 .withDescription(chargeEntity.getDescription())
-                .withProviderId(chargeEntity.getProviderSessionId())
+                .withProviderId(chargeEntity.getGatewayTransactionId())
                 .withCardDetails(persistedCard)
                 .withEmail(chargeEntity.getEmail())
                 .withChargeId(chargeEntity.getExternalId());
