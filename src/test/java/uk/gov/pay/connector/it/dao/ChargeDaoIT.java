@@ -23,7 +23,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
-import java.io.IOException;
+import javax.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -47,6 +47,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -959,7 +960,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldCreateANewChargeWithExternalMetadata() throws IOException {
+    public void shouldCreateANewChargeWithExternalMetadata() {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
         gatewayAccount.setId(defaultTestAccount.getAccountId());
 
@@ -978,6 +979,23 @@ public class ChargeDaoIT extends DaoITestBase {
         Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
 
         assertThat(charge.get().getExternalMetadata().get().getMetadata(), equalTo(expectedExternalMetadata.getMetadata()));
+    }
+
+    @Test
+    public void shouldNotSaveChargeWithInvalidExternalMetadata() {
+        var metaDataWithAnObject = new ExternalMetadata(
+                Map.of("key_1", Map.of("key_1_a", "some value")));
+
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalMetadata(metaDataWithAnObject)
+                .build();
+        try {
+            chargeDao.persist(chargeEntity);
+            fail("Persist should throw a ConstraintViolationException");
+        } catch (ConstraintViolationException ex) {
+            assertThat(ex.getConstraintViolations().size(), is(1));
+            assertThat(ex.getConstraintViolations().iterator().next().getMessage(), is("Field [metadata] values must be of type String, Boolean or Number"));
+        }
     }
 
     @Test
