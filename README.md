@@ -14,8 +14,6 @@ The GOV.UK Pay Connector in Java (Dropwizard)
 | `NOTIFY_API_KEY` | - | API Key for the account created at GOV.UK Notify |
 | `NOTIFY_BASE_URL` | `https://api.notifications.service.gov.uk` | Base URL of GOV.UK Notify API to be used|
 | `LEDGER_URL` | - | Base URL of Ledger |
-| `GDS_CONNECTOR_WORLDPAY_3DS_FLEX_CHALLENGE_TEST_URL` | `https://secure-test.worldpay.com/shopper/3ds/challenge.html` | Pointing to Worldpay's TEST 3ds flex challenge URL. |
-| `GDS_CONNECTOR_WORLDPAY_3DS_FLEX_CHALLENGE_LIVE_URL` | - | Pointing to Worldpay's LIVE 3ds flex challenge URL. |
 | `GDS_CONNECTOR_WORLDPAY_TEST_URL` | - | Pointing to the TEST gateway URL of Worldpay payment provider. |
 | `GDS_CONNECTOR_WORLDPAY_LIVE_URL` | - | Pointing to the LIVE gateway URL of Worldpay payment provider. |
 | `GDS_CONNECTOR_SMARTPAY_TEST_URL` | - | Pointing to the TEST gateway URL of Smartpay payment provider. |
