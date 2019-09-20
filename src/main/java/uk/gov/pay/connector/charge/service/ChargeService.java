@@ -145,11 +145,11 @@ public class ChargeService {
             checkIfZeroAmountAllowed(telephoneChargeRequest.getAmount(), gatewayAccount);
 
             CardDetailsEntity cardDetails = new CardDetailsEntity(
-                    LastDigitsCardNumber.of(telephoneChargeRequest.getLastFourDigits()),
-                    FirstDigitsCardNumber.of(telephoneChargeRequest.getFirstSixDigits()),
+                    LastDigitsCardNumber.ofNullable(telephoneChargeRequest.getLastFourDigits().orElse(null)),
+                    FirstDigitsCardNumber.ofNullable(telephoneChargeRequest.getFirstSixDigits().orElse(null)),
                     telephoneChargeRequest.getNameOnCard().orElse(null),
                     telephoneChargeRequest.getCardExpiry().orElse(null),
-                    telephoneChargeRequest.getCardType()
+                    telephoneChargeRequest.getCardType().orElse(null)
             );
 
             ChargeEntity chargeEntity = new ChargeEntity(
