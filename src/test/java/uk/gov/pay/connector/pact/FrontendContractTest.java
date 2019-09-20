@@ -15,18 +15,14 @@ import org.junit.runner.RunWith;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
-import uk.gov.pay.connector.util.AddChargeParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
-import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Map;
 
-import static java.time.ZonedDateTime.now;
-import static org.apache.commons.lang.math.RandomUtils.nextLong;
+import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static uk.gov.pay.connector.pact.util.GatewayAccountUtil.setUpGatewayAccount;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
@@ -113,5 +109,38 @@ public class FrontendContractTest {
                 .withExternalChargeId(chargeExternalId)
                 .withGatewayAccountId(String.valueOf(gatewayAccountId))
                 .build());
+    }
+
+    @State("a Worldpay account exists with 3DS flex credentials and a charge with id testChargeId that is in state AUTHORISATION_3DS_REQUIRED")
+    public void aWorldpayChargeExistsWith3dsCredentialsInStateAuthorisation3dsRequired() {
+        long gatewayAccountId = 666L;
+        DatabaseFixtures
+                .withDatabaseTestHelper(dbHelper)
+                .aTestAccount()
+                .withAccountId(gatewayAccountId)
+                .withPaymentProvider("worldpay")
+                .withCardTypeEntities(Collections.singletonList(dbHelper.getVisaDebitCard()))
+                .withCredentials(Map.of(
+                        "jwt_mac_id", "1A4rIZWXzXxqH7hZQUJ5aIUlFgPJFKLfrOGKxASaaV3YWMrcS616L7H86UhnTg5u",
+                        "organisational_unit_id", "a-org-unit-id",
+                        "issuer", "an-issuer"
+                ))
+                .insert();
+
+        Long chargeId = nextLong();
+        String chargeExternalId = "testChargeId";
+
+        dbHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(chargeExternalId)
+                .withGatewayAccountId(String.valueOf(gatewayAccountId))
+                .withStatus(ChargeStatus.AUTHORISATION_3DS_REQUIRED)
+                .build());
+
+        dbHelper.updateCharge3dsFlexChallengeDetails(chargeId,
+                "http://example.com",
+                "a-transaction-id",
+                "a-payload",
+                "2.1.0");
     }
 }
