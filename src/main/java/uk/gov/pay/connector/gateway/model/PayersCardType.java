@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.model;
 
-import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.cardtype.model.domain.SupportedType;
 
 /**
  * The enum type that should be used to map from and to JSON when
@@ -8,7 +8,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
  * used to make a payment. This is also used to calculate corporate
  * surcharges, based on other rules.
  * <p>
- * This should not be confused with {@link CardTypeEntity.SupportedType}
+ * This should not be confused with {@link SupportedType}
  * which is used to map values from the database to frontend
  * labels. This is used to drive the frontend UI
  */

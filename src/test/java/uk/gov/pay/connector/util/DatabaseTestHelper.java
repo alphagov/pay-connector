@@ -9,6 +9,7 @@ import org.skife.jdbi.v2.util.BooleanColumnMapper;
 import org.skife.jdbi.v2.util.StringColumnMapper;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.cardtype.model.domain.SupportedType;
 import uk.gov.pay.connector.charge.exception.ExternalMetadataConverterException;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -626,28 +627,28 @@ public class DatabaseTestHelper {
         );
     }
 
-    public CardTypeEntity getCardTypeByBrandAndType(String brand, CardTypeEntity.SupportedType type) {
+    public CardTypeEntity getCardTypeByBrandAndType(String brand, SupportedType type) {
         return getCardTypeByBrandAndType(brand, type.toString());
     }
 
     public CardTypeEntity getMastercardCreditCard() {
-        return getCardTypeByBrandAndType("master-card", CardTypeEntity.SupportedType.CREDIT);
+        return getCardTypeByBrandAndType("master-card", SupportedType.CREDIT);
     }
 
     public CardTypeEntity getMastercardDebitCard() {
-        return getCardTypeByBrandAndType("master-card", CardTypeEntity.SupportedType.DEBIT);
+        return getCardTypeByBrandAndType("master-card", SupportedType.DEBIT);
     }
 
     public CardTypeEntity getVisaCreditCard() {
-        return getCardTypeByBrandAndType("visa", CardTypeEntity.SupportedType.CREDIT);
+        return getCardTypeByBrandAndType("visa", SupportedType.CREDIT);
     }
 
     public CardTypeEntity getVisaDebitCard() {
-        return getCardTypeByBrandAndType("visa", CardTypeEntity.SupportedType.DEBIT);
+        return getCardTypeByBrandAndType("visa", SupportedType.DEBIT);
     }
 
     public CardTypeEntity getMaestroCard() {
-        return getCardTypeByBrandAndType("maestro", CardTypeEntity.SupportedType.DEBIT);
+        return getCardTypeByBrandAndType("maestro", SupportedType.DEBIT);
     }
 
     public CardTypeEntity getCardTypeByBrandAndType(String brand, String type) {

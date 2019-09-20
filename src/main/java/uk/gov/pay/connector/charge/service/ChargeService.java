@@ -149,7 +149,8 @@ public class ChargeService {
                     FirstDigitsCardNumber.ofNullable(telephoneChargeRequest.getFirstSixDigits().orElse(null)),
                     telephoneChargeRequest.getNameOnCard().orElse(null),
                     telephoneChargeRequest.getCardExpiry().orElse(null),
-                    telephoneChargeRequest.getCardType().orElse(null)
+                    telephoneChargeRequest.getCardBrand().orElse(null),
+                    null
             );
 
             ChargeEntity chargeEntity = new ChargeEntity(

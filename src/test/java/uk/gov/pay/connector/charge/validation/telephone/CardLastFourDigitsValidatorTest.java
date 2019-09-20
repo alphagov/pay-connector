@@ -34,7 +34,7 @@ public class CardLastFourDigitsValidatorTest {
                 .withProviderId("1PROV")
                 .withCardExpiry("01/99")
                 .withFirstSixDigits("123456")
-                .withCardType("visa")
+                .withCardBrand("visa")
                 .withPaymentOutcome(new PaymentOutcome("success"));
     }
 

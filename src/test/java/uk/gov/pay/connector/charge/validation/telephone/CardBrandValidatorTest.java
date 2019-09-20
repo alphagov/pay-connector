@@ -15,7 +15,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-public class CardTypeValidatorTest {
+public class CardBrandValidatorTest {
     
     private static TelephoneChargeCreateRequest.Builder telephoneRequestBuilder = new TelephoneChargeCreateRequest.Builder();
     
@@ -38,23 +38,23 @@ public class CardTypeValidatorTest {
     }
     
     @Test
-    public void failsValidationForInvalidCardType() {
+    public void failsValidationForInvalidCardBrand() {
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .withCardType("bad-card")
+                .withCardBrand("bad-card")
                 .build();
         
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
 
         assertThat(constraintViolations.size(), isNumber(1));
-        assertThat(constraintViolations.iterator().next().getMessage(), is("Field [card_type] must be either master-card, visa, maestro, diners-club or american-express"));
+        assertThat(constraintViolations.iterator().next().getMessage(), is("Field [card_brand] must be either master-card, visa, maestro, diners-club or american-express"));
     }
 
     @Test
-    public void passesValidationForValidCardType() {
+    public void passesValidationForValidCardBrand() {
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .withCardType("visa")
+                .withCardBrand("visa")
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
@@ -63,10 +63,10 @@ public class CardTypeValidatorTest {
     }
 
     @Test
-    public void passesValidationForNullCardType() {
+    public void passesValidationForNullCardBrand() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .withCardType(null)
+                .withCardBrand(null)
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);

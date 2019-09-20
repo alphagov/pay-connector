@@ -50,6 +50,9 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                         "status", "success"
                 )
         );
+        postBody.put("card_brand", "master-card");
+        postBody.put("last_four_digits", "1234");
+        postBody.put("first_six_digits", "123456");
     }
     
     @After
@@ -316,12 +319,12 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
     @Test
     public void shouldReturn422ForInvalidCardType() {
         
-        postBody.put("card_type", "invalid-card");
+        postBody.put("card_brand", "invalid-card");
         
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("Field [card_type] must be either master-card, visa, maestro, diners-club or american-express"));
+                .body("message[0]", is("Field [card_brand] must be either master-card, visa, maestro, diners-club or american-express"));
     }
 
     @Test

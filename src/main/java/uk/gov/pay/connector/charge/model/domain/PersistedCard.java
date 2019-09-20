@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import uk.gov.pay.connector.cardtype.model.domain.SupportedType;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.common.model.domain.Address;
@@ -32,6 +33,9 @@ public class PersistedCard {
 
     @JsonProperty("card_brand")
     private String cardBrand;
+    
+    @JsonProperty("card_type")
+    private SupportedType cardType;
 
     public LastDigitsCardNumber getLastDigitsCardNumber() {
         return lastDigitsCardNumber;
@@ -47,6 +51,15 @@ public class PersistedCard {
 
     public void setFirstDigitsCardNumber(FirstDigitsCardNumber firstDigitsCardNumber) {
         this.firstDigitsCardNumber = firstDigitsCardNumber;
+    }
+
+    public SupportedType getCardType() {
+        return cardType;
+    }
+
+    public PersistedCard setCardType(SupportedType cardType) {
+        this.cardType = cardType;
+        return this;
     }
 
     public String getCardHolderName() {

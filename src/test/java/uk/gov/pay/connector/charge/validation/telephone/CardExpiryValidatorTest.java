@@ -34,7 +34,7 @@ public class CardExpiryValidatorTest {
                 .withProviderId("1PROV")
                 .withLastFourDigits("1234")
                 .withFirstSixDigits("123456")
-                .withCardType("visa")
+                .withCardBrand("visa")
                 .withPaymentOutcome(new PaymentOutcome("success"));
     }
 

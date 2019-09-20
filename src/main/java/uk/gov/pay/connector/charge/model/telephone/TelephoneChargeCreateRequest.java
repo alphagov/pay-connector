@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardExpiryDate;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardFirstSixDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardLastFourDigits;
-import uk.gov.pay.connector.charge.validation.telephone.ValidCardType;
+import uk.gov.pay.connector.charge.validation.telephone.ValidCardBrand;
 import uk.gov.pay.connector.charge.validation.telephone.ValidZonedDateTime;
 
 import javax.validation.Valid;
@@ -42,8 +42,8 @@ public class TelephoneChargeCreateRequest {
     @Valid
     private PaymentOutcome paymentOutcome;
     
-    @ValidCardType(message = "Field [card_type] must be either master-card, visa, maestro, diners-club or american-express")
-    private String cardType;
+    @ValidCardBrand(message = "Field [card_brand] must be either master-card, visa, maestro, diners-club or american-express")
+    private String cardBrand;
     
     private String nameOnCard;
     
@@ -74,7 +74,7 @@ public class TelephoneChargeCreateRequest {
         this.providerId = builder.providerId;
         this.authCode = builder.authCode;
         this.paymentOutcome = builder.paymentOutcome;
-        this.cardType = builder.cardType;
+        this.cardBrand = builder.cardBrand;
         this.nameOnCard = builder.nameOnCard;
         this.emailAddress = builder.emailAddress;
         this.cardExpiry = builder.cardExpiry;
@@ -119,8 +119,8 @@ public class TelephoneChargeCreateRequest {
         return paymentOutcome;
     }
 
-    public Optional<String> getCardType() {
-        return Optional.ofNullable(cardType);
+    public Optional<String> getCardBrand() {
+        return Optional.ofNullable(cardBrand);
     }
 
     public Optional<String> getNameOnCard() {
@@ -166,7 +166,7 @@ public class TelephoneChargeCreateRequest {
 
         private PaymentOutcome paymentOutcome;
 
-        private String cardType;
+        private String cardBrand;
 
         private String nameOnCard;
 
@@ -225,8 +225,8 @@ public class TelephoneChargeCreateRequest {
             return this;
         }
         
-        public Builder withCardType(String cardType) {
-            this.cardType = cardType;
+        public Builder withCardBrand(String cardBrand) {
+            this.cardBrand = cardBrand;
             return this;
         }
         
