@@ -85,7 +85,6 @@ public class CardLastFourDigitsValidatorTest {
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
 
-        assertThat(constraintViolations.size(), isNumber(1));
-        assertThat(constraintViolations.iterator().next().getMessage(), is("Field [last_four_digits] cannot be null"));
+        assertThat(constraintViolations.isEmpty(), is(true));
     }
 }

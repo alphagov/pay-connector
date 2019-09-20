@@ -42,7 +42,6 @@ public class TelephoneChargeCreateRequest {
     @Valid
     private PaymentOutcome paymentOutcome;
     
-    @NotNull(message = "Field [card_type] cannot be null")
     @ValidCardType(message = "Field [card_type] must be either master-card, visa, maestro, diners-club or american-express")
     private String cardType;
     
@@ -53,11 +52,9 @@ public class TelephoneChargeCreateRequest {
     @ValidCardExpiryDate(message = "Field [card_expiry] must have valid MM/YY")
     private String cardExpiry;
 
-    @NotNull(message = "Field [last_four_digits] cannot be null")
     @ValidCardLastFourDigits(message = "Field [last_four_digits] must be exactly 4 digits")
     private String lastFourDigits;
 
-    @NotNull(message = "Field [first_six_digits] cannot be null")
     @ValidCardFirstSixDigits(message = "Field [first_six_digits] must be exactly 6 digits")
     private String firstSixDigits;
     
@@ -122,8 +119,8 @@ public class TelephoneChargeCreateRequest {
         return paymentOutcome;
     }
 
-    public String getCardType() {
-        return cardType;
+    public Optional<String> getCardType() {
+        return Optional.ofNullable(cardType);
     }
 
     public Optional<String> getNameOnCard() {
@@ -138,12 +135,12 @@ public class TelephoneChargeCreateRequest {
         return Optional.ofNullable(cardExpiry);
     }
 
-    public String getLastFourDigits() {
-        return lastFourDigits;
+    public Optional<String> getLastFourDigits() {
+        return Optional.ofNullable(lastFourDigits);
     }
 
-    public String getFirstSixDigits() {
-        return firstSixDigits;
+    public Optional<String> getFirstSixDigits() {
+        return Optional.ofNullable(firstSixDigits);
     }
 
     public Optional<String> getTelephoneNumber() {
