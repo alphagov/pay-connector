@@ -5,7 +5,11 @@
     <submit>
         <order orderCode="${transactionId?xml}">
             <info3DSecure>
-                <paResponse>${paResponse3ds?xml}</paResponse>
+                <#if paResponse3ds.isPresent()>
+                <paResponse>${paResponse3ds.get()?xml}</paResponse>
+                <#else>
+                <completedAuthentication/>
+                </#if>
             </info3DSecure>
             <session id="${sessionId?xml}"/>
         </order>

@@ -60,6 +60,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS;
@@ -195,6 +196,34 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
                 anyMap());
 
         assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST), 
+                gatewayOrderArgumentCaptor.getValue().getPayload());
+    }
+
+    @Test
+    public void shouldIncludeCompletedAuthenticationInSecondOrderWhenPaRequestNotInFrontendRequest() throws Exception {
+        ChargeEntity chargeEntity = chargeEntityFixture
+                .withExternalId("uniqueSessionId")
+                .withTransactionId("MyUniqueTransactionId!")
+                .build();
+
+        when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyList(), anyMap()))
+                .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 401 from gateway"));
+
+        var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
+
+        Auth3dsResponseGatewayRequest request = new Auth3dsResponseGatewayRequest(chargeEntity, new Auth3dsDetails());
+        worldpayPaymentProvider.authorise3dsResponse(request);
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+
+        verify(mockGatewayClient).postRequestFor(
+                eq(WORLDPAY_URL),
+                eq(gatewayAccountEntity),
+                gatewayOrderArgumentCaptor.capture(),
+                anyList(),
+                anyMap());
+
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST),
                 gatewayOrderArgumentCaptor.getValue().getPayload());
     }
     

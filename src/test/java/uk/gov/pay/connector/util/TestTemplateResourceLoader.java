@@ -28,6 +28,7 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_3DS_RESPONSE = WORLDPAY_BASE_NAME + "/3ds-response.xml";
     public static final String WORLDPAY_3DS_FLEX_RESPONSE = WORLDPAY_BASE_NAME + "/3ds-flex-response.xml";
     public static final String WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST = WORLDPAY_BASE_NAME + "/valid-3ds-response-auth-worldpay-request.xml";
+    public static final String WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST = WORLDPAY_BASE_NAME + "/valid-3ds-flex-response-auth-worldpay-request.xml";
 
     public static final String WORLDPAY_CAPTURE_SUCCESS_RESPONSE = WORLDPAY_BASE_NAME + "/capture-success-response.xml";
     public static final String WORLDPAY_CAPTURE_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/capture-error-response.xml";

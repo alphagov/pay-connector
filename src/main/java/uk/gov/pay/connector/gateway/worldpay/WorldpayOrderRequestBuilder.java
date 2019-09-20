@@ -10,6 +10,7 @@ import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
 import javax.ws.rs.core.MediaType;
+import java.util.Optional;
 
 public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     
@@ -83,8 +84,8 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
             this.requires3ds = requires3ds;
         }
 
-        public String getPaResponse3ds() {
-            return paResponse3ds;
+        public Optional<String> getPaResponse3ds() {
+            return Optional.ofNullable(paResponse3ds);
         }
 
         public void setPaResponse3ds(String paResponse3ds) {
