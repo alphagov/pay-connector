@@ -90,6 +90,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.cardtype.model.domain.SupportedType.DEBIT;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
@@ -549,6 +550,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
         assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is("01/19"));
         assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
+        assertThat(createdChargeEntity.getCardDetails().getCardType(), is(nullValue()));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));

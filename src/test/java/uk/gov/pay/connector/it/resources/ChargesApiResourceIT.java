@@ -7,6 +7,7 @@ import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.cardtype.model.domain.SupportedType;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
@@ -44,6 +45,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static uk.gov.pay.connector.cardtype.model.domain.SupportedType.DEBIT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
@@ -122,6 +124,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
 
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
+                .withCardType(DEBIT)
                 .withExternalChargeId(externalChargeId)
                 .withGatewayAccountId(accountId)
                 .withAmount(AMOUNT)
@@ -138,6 +141,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("card_details", is(notNullValue()))
+                .body("card_details.card_type", is(DEBIT.toString()))
                 .body("card_details.last_digits_card_number", is("5678"))
                 .body("card_details.first_digits_card_number", is("123456"));
     }

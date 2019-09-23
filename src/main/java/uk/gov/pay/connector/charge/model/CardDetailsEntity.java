@@ -41,6 +41,7 @@ public class CardDetailsEntity {
     
     @Convert(converter = SupportedTypeConverter.class)
     @JsonSerialize(using = ToStringSerializer.class)
+    @JsonProperty("card_type")
     @Column(name = "card_type")
     private SupportedType cardType;
 
