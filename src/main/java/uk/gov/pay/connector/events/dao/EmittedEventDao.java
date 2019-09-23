@@ -66,7 +66,7 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
     public void markEventAsEmitted(Event event) {
         Query query = entityManager.get()
                 .createQuery("UPDATE EmittedEventEntity e" +
-                        " SET e.emittedDate = :emittedDate , e.eventDate = :eventDate " + 
+                        " SET e.emittedDate = :emittedDate , e.eventDate = :eventDate " +
                         " WHERE e.resourceType = :resource_type" +
                         " AND e.resourceExternalId = :resource_external_id" +
                         " AND e.eventType = :event_type" +
@@ -77,7 +77,18 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
                 .setParameter("event_type", event.getEventType())
                 .setParameter("emittedDate", ZonedDateTime.now(ZoneId.of("UTC")))
                 .setParameter("eventDate", event.getTimestamp());
-        
+
         query.executeUpdate();
+    }
+
+    public List<EmittedEventEntity> findNotEmittedEventsOlderThan(ZonedDateTime cutOffDate) {
+        String query = "SELECT e from EmittedEventEntity e " +
+                "WHERE e.eventDate < :cutOffDate " +
+                "AND e.emittedDate is null";
+
+        return entityManager.get()
+                .createQuery(query, EmittedEventEntity.class)
+                .setParameter("cutOffDate", cutOffDate)
+                .getResultList();
     }
 }
