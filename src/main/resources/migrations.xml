@@ -1255,4 +1255,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add card type column" author="">
+        <addColumn tableName="charges">
+            <column name="card_type" type="varchar(20)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
