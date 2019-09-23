@@ -138,6 +138,21 @@ public class EmittedEventDaoIT extends DaoITestBase {
         assertThat(event.get("emitted_date").toString(), is(emittedDateBeforeUpdate));
     }
 
+    @Test
+    public void findNotEmittedEventsOlderThan_shouldReturnEventsWithEmptyEmittedDate() {
+        final PaymentCreated paymentCreatedEvent = aPaymentCreatedEvent();
+        emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
+                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp());
+
+        List<EmittedEventEntity> notEmittedEvents = emittedEventDao.findNotEmittedEventsOlderThan(ZonedDateTime.parse("2019-01-01T14:00:01Z"));
+
+        assertThat(notEmittedEvents.size(), is(1));
+        assertThat(notEmittedEvents.get(0).getEmittedDate(), nullValue());
+        assertThat(notEmittedEvents.get(0).getEventType(), is(paymentCreatedEvent.getEventType()));
+        assertThat(notEmittedEvents.get(0).getResourceExternalId(), is(paymentCreatedEvent.getResourceExternalId()));
+        assertThat(notEmittedEvents.get(0).getResourceType(), is(paymentCreatedEvent.getResourceType().getLowercase()));
+    }
+
     private PaymentCreated aPaymentCreatedEvent() {
         PaymentCreatedEventDetails eventDetails = new PaymentCreatedEventDetails(
                 1L, "desc", "ref", "return_url",
