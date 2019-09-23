@@ -2,6 +2,7 @@ package uk.gov.pay.connector.util;
 
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
@@ -32,6 +33,7 @@ public class AddChargeParams {
     private final Long corporateSurcharge;
     private final ExternalMetadata externalMetadata;
     private final ParityCheckStatus parityCheckStatus;
+    private final CardType cardType;
 
     private AddChargeParams(AddChargeParamsBuilder builder) {
         chargeId = builder.chargeId;
@@ -52,6 +54,7 @@ public class AddChargeParams {
         corporateSurcharge = builder.corporateSurcharge;
         externalMetadata = builder.externalMetadata;
         parityCheckStatus = builder.parityCheckStatus;
+        cardType = builder.cardType;
     }
 
     public Long getChargeId() {
@@ -125,6 +128,10 @@ public class AddChargeParams {
     public ParityCheckStatus getParityCheckStatus() {
         return parityCheckStatus;
     }
+    
+    public CardType getCardType() {
+        return cardType;
+    }
 
     public static final class AddChargeParamsBuilder {
         private Long chargeId = new Random().nextLong();
@@ -145,6 +152,7 @@ public class AddChargeParams {
         private Long corporateSurcharge;
         private ExternalMetadata externalMetadata;
         private ParityCheckStatus parityCheckStatus;
+        private CardType cardType;
 
         private AddChargeParamsBuilder() {
         }
@@ -241,6 +249,11 @@ public class AddChargeParams {
 
         public AddChargeParamsBuilder withParityCheckStatus(ParityCheckStatus parityCheckStatus) {
             this.parityCheckStatus = parityCheckStatus;
+            return this;
+        }
+        
+        public AddChargeParamsBuilder withCardType(CardType chargeType) {
+            this.cardType = chargeType;
             return this;
         }
 

@@ -15,7 +15,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-public class CardTypeValidatorTest {
+public class CardBrandValidatorTest {
     
     private static TelephoneChargeCreateRequest.Builder telephoneRequestBuilder = new TelephoneChargeCreateRequest.Builder();
     
@@ -38,7 +38,7 @@ public class CardTypeValidatorTest {
     }
     
     @Test
-    public void failsValidationForInvalidCardType() {
+    public void failsValidationForInvalidCardBrand() {
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withCardType("bad-card")
@@ -51,7 +51,7 @@ public class CardTypeValidatorTest {
     }
 
     @Test
-    public void passesValidationForValidCardType() {
+    public void passesValidationForValidCardBrand() {
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withCardType("visa")
@@ -63,7 +63,7 @@ public class CardTypeValidatorTest {
     }
 
     @Test
-    public void passesValidationForNullCardType() {
+    public void passesValidationForNullCardBrand() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
                 .withCardType(null)

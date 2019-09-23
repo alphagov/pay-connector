@@ -15,19 +15,6 @@ import java.util.Objects;
 @Table(name = "card_types")
 public class CardTypeEntity extends UuidAbstractEntity {
 
-    /**
-     * Internal entity used to drive the frontend UI based on the
-     * strings stored in the table {@code card_types}. This represents
-     * which card types are supported by the service, not what card types
-     * are used for payment by the paying user
-     * <p>
-     * This should be used only for driving the UI
-     */
-    public enum SupportedType {
-        CREDIT,
-        DEBIT
-    }
-
     @Column
     @JsonProperty
     private String brand;
@@ -38,7 +25,7 @@ public class CardTypeEntity extends UuidAbstractEntity {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private SupportedType type;
+    private CardType type;
 
     @Column(name = "requires_3ds")
     @JsonProperty
@@ -66,12 +53,12 @@ public class CardTypeEntity extends UuidAbstractEntity {
         this.label = label;
     }
 
-    public SupportedType getType() {
+    public CardType getType() {
         return type;
     }
 
-    public void setType(SupportedType supportedType) {
-        this.type = supportedType;
+    public void setType(CardType cardType) {
+        this.type = cardType;
     }
 
     public boolean isRequires3ds() {

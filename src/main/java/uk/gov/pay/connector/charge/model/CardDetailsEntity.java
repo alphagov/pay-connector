@@ -3,12 +3,16 @@ package uk.gov.pay.connector.charge.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Embeddable;
 import javax.persistence.Embedded;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import java.util.Objects;
 import java.util.Optional;
 
 @Embeddable
@@ -37,6 +41,11 @@ public class CardDetailsEntity {
     @Column(name = "card_brand")
     private String cardBrand;
 
+    @Enumerated(EnumType.STRING)
+    @JsonProperty("card_type")
+    @Column(name = "card_type")
+    private CardType cardType;
+
     @Embedded
     @JsonProperty("billing_address")
     private AddressEntity billingAddress;
@@ -44,20 +53,22 @@ public class CardDetailsEntity {
     public CardDetailsEntity() {
     }
     
-    public CardDetailsEntity(LastDigitsCardNumber lastDigitsCardNumber, FirstDigitsCardNumber firstDigitsCardNumber, String cardHolderName, String expiryDate, String cardBrand) {
+    public CardDetailsEntity(LastDigitsCardNumber lastDigitsCardNumber, FirstDigitsCardNumber firstDigitsCardNumber, String cardHolderName, String expiryDate, String cardBrand, CardType cardType) {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
         this.firstDigitsCardNumber = firstDigitsCardNumber;
         this.cardHolderName = cardHolderName;
         this.expiryDate = expiryDate;
         this.cardBrand = cardBrand;
+        this.cardType = cardType;
     }
 
-    public CardDetailsEntity(FirstDigitsCardNumber firstDigitsCardNumber, LastDigitsCardNumber lastDigitsCardNumber, String cardHolderName, String expiryDate, String cardBrand, AddressEntity billingAddress) {
+    public CardDetailsEntity(FirstDigitsCardNumber firstDigitsCardNumber, LastDigitsCardNumber lastDigitsCardNumber, String cardHolderName, String expiryDate, String cardBrand, CardType cardType, AddressEntity billingAddress) {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
         this.firstDigitsCardNumber = firstDigitsCardNumber;
         this.cardHolderName = cardHolderName;
         this.expiryDate = expiryDate;
         this.cardBrand = cardBrand;
+        this.cardType = cardType;
         this.billingAddress = billingAddress;
     }
 
@@ -69,6 +80,7 @@ public class CardDetailsEntity {
         card.setBillingAddress(billingAddress != null ? billingAddress.toAddress() : null);
         card.setExpiryDate(expiryDate);
         card.setCardHolderName(cardHolderName);
+        card.setCardType(cardType);
         return card;
     }
 
@@ -120,33 +132,31 @@ public class CardDetailsEntity {
         this.cardBrand = cardBrand;
     }
 
+    public CardType getCardType() {
+        return cardType;
+    }
+
+    public CardDetailsEntity setCardType(CardType cardType) {
+        this.cardType = cardType;
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         CardDetailsEntity that = (CardDetailsEntity) o;
-
-        if (lastDigitsCardNumber != null ? !lastDigitsCardNumber.equals(that.lastDigitsCardNumber) : that.lastDigitsCardNumber != null)
-            return false;
-        if (firstDigitsCardNumber != null ? !firstDigitsCardNumber.equals(that.firstDigitsCardNumber) : that.firstDigitsCardNumber != null)
-            return false;
-        if (cardHolderName != null ? !cardHolderName.equals(that.cardHolderName) : that.cardHolderName != null)
-            return false;
-        if (expiryDate != null ? !expiryDate.equals(that.expiryDate) : that.expiryDate != null) return false;
-        if (cardBrand != null ? !cardBrand.equals(that.cardBrand) : that.cardBrand != null) return false;
-        return billingAddress != null ? billingAddress.equals(that.billingAddress) : that.billingAddress == null;
-
+        return Objects.equals(firstDigitsCardNumber, that.firstDigitsCardNumber) &&
+                Objects.equals(lastDigitsCardNumber, that.lastDigitsCardNumber) &&
+                Objects.equals(cardHolderName, that.cardHolderName) &&
+                Objects.equals(expiryDate, that.expiryDate) &&
+                Objects.equals(cardBrand, that.cardBrand) &&
+                cardType == that.cardType &&
+                Objects.equals(billingAddress, that.billingAddress);
     }
 
     @Override
     public int hashCode() {
-        int result = lastDigitsCardNumber != null ? lastDigitsCardNumber.hashCode() : 0;
-        result = 31 * result + (firstDigitsCardNumber != null ? firstDigitsCardNumber.hashCode() : 0);
-        result = 31 * result + (cardHolderName != null ? cardHolderName.hashCode() : 0);
-        result = 31 * result + (expiryDate != null ? expiryDate.hashCode() : 0);
-        result = 31 * result + (cardBrand != null ? cardBrand.hashCode() : 0);
-        result = 31 * result + (billingAddress != null ? billingAddress.hashCode() : 0);
-        return result;
+        return Objects.hash(firstDigitsCardNumber, lastDigitsCardNumber, cardHolderName, expiryDate, cardBrand, cardType, billingAddress);
     }
 }

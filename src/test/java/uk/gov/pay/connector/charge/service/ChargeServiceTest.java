@@ -19,6 +19,7 @@ import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
@@ -199,7 +200,8 @@ public class ChargeServiceTest {
                 FirstDigitsCardNumber.of("123456"),
                 "Jane Doe",
                 "01/19",
-                "visa"
+                "visa",
+                CardType.valueOf("DEBIT")
         );
 
         returnedChargeEntity = new ChargeEntity(
@@ -547,6 +549,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Jane Doe"));
         assertThat(createdChargeEntity.getCardDetails().getExpiryDate(), is("01/19"));
         assertThat(createdChargeEntity.getCardDetails().getCardBrand(), is("visa"));
+        assertThat(createdChargeEntity.getCardDetails().getCardType(), is(nullValue()));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));

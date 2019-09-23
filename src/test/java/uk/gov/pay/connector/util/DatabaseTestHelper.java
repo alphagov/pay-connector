@@ -9,6 +9,7 @@ import org.skife.jdbi.v2.util.BooleanColumnMapper;
 import org.skife.jdbi.v2.util.StringColumnMapper;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.exception.ExternalMetadataConverterException;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -118,9 +119,10 @@ public class DatabaseTestHelper {
                                 "        delayed_capture,\n" +
                                 "        corporate_surcharge,\n" +
                                 "        parity_check_status,\n" +
-                                "        external_metadata\n" +
+                                "        external_metadata,\n" +
+                                "        card_type\n" +
                                 "    )\n" +
-                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
+                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
                         addChargeParams.getChargeId(),
                         addChargeParams.getExternalChargeId(),
                         addChargeParams.getAmount(),
@@ -137,7 +139,8 @@ public class DatabaseTestHelper {
                         addChargeParams.isDelayedCapture(),
                         addChargeParams.getCorporateSurcharge(),
                         addChargeParams.getParityCheckStatus(),
-                        jsonMetadata
+                        jsonMetadata,
+                        addChargeParams.getCardType()
                 )
         );
     }
@@ -348,7 +351,7 @@ public class DatabaseTestHelper {
 
     public Map<String, Object> getChargeCardDetails(long chargeId) {
         Map<String, Object> ret = jdbi.withHandle(h ->
-                h.createQuery("SELECT id, last_digits_card_number, first_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country " +
+                h.createQuery("SELECT id, last_digits_card_number, first_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country, card_type " +
                         "FROM charges " +
                         "WHERE id = :charge_id")
                         .bind("charge_id", chargeId)
@@ -626,28 +629,28 @@ public class DatabaseTestHelper {
         );
     }
 
-    public CardTypeEntity getCardTypeByBrandAndType(String brand, CardTypeEntity.SupportedType type) {
+    public CardTypeEntity getCardTypeByBrandAndType(String brand, CardType type) {
         return getCardTypeByBrandAndType(brand, type.toString());
     }
 
     public CardTypeEntity getMastercardCreditCard() {
-        return getCardTypeByBrandAndType("master-card", CardTypeEntity.SupportedType.CREDIT);
+        return getCardTypeByBrandAndType("master-card", CardType.CREDIT);
     }
 
     public CardTypeEntity getMastercardDebitCard() {
-        return getCardTypeByBrandAndType("master-card", CardTypeEntity.SupportedType.DEBIT);
+        return getCardTypeByBrandAndType("master-card", CardType.DEBIT);
     }
 
     public CardTypeEntity getVisaCreditCard() {
-        return getCardTypeByBrandAndType("visa", CardTypeEntity.SupportedType.CREDIT);
+        return getCardTypeByBrandAndType("visa", CardType.CREDIT);
     }
 
     public CardTypeEntity getVisaDebitCard() {
-        return getCardTypeByBrandAndType("visa", CardTypeEntity.SupportedType.DEBIT);
+        return getCardTypeByBrandAndType("visa", CardType.DEBIT);
     }
 
     public CardTypeEntity getMaestroCard() {
-        return getCardTypeByBrandAndType("maestro", CardTypeEntity.SupportedType.DEBIT);
+        return getCardTypeByBrandAndType("maestro", CardType.DEBIT);
     }
 
     public CardTypeEntity getCardTypeByBrandAndType(String brand, String type) {

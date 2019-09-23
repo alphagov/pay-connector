@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.cardtype.dao;
 
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 
 import java.util.UUID;
 
@@ -8,7 +9,7 @@ public final class CardTypeEntityBuilder {
     private UUID id = UUID.randomUUID();
     private String brand = "Visa";
     private String label = "visa";
-    private CardTypeEntity.SupportedType type = CardTypeEntity.SupportedType.DEBIT;
+    private CardType type = CardType.DEBIT;
     private boolean requires3ds = false;
 
     private CardTypeEntityBuilder() {
@@ -28,7 +29,7 @@ public final class CardTypeEntityBuilder {
         return this;
     }
 
-    public CardTypeEntityBuilder withType(CardTypeEntity.SupportedType type) {
+    public CardTypeEntityBuilder withType(CardType type) {
         this.type = type;
         return this;
     }

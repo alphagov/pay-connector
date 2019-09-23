@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang.StringUtils;
-import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,7 +49,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                         "status", "success"
                 )
         );
-    }
+     }
     
     @After
     @Override
@@ -70,7 +69,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("description", is("New passport application"))
                 .body("processor_id", is("183f2j8923j8"))
                 .body("provider_id", is("17498-8412u9-1273891239"))
-                .body("card_details.card_brand", is(nullValue()))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is(nullValue()))
                 .body("card_details.first_digits_card_number", is(nullValue()))
@@ -106,7 +105,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("provider_id", is("17498-8412u9-1273891239"))
                 .body("auth_code", is("666"))
                 .body("payment_outcome.status", is("success"))
-                .body("card_details.card_brand", is("master-card"))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.cardholder_name", is("Jane Doe"))
                 .body("email", is("jane_doe@example.com"))
                 .body("card_details.expiry_date", is("02/19"))
@@ -144,7 +143,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("payment_outcome.code", is("P0010"))
                 .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
                 .body("payment_outcome.supplemental.error_message", is("textual message describing error code"))
-                .body("card_details.card_brand", is(nullValue()))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is(nullValue()))
                 .body("card_details.first_digits_card_number", is(nullValue()))
@@ -188,7 +187,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("payment_outcome.code", is("P0050"))
                 .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
                 .body("payment_outcome.supplemental.error_message", is("textual message describing error code"))
-                .body("card_details.card_brand", is(nullValue()))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is(nullValue()))
                 .body("card_details.first_digits_card_number", is(nullValue()))
@@ -225,7 +224,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("payment_outcome.code", is("P0030"))
                 .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
                 .body("payment_outcome.supplemental.error_message", is("textual message describing error code"))
-                .body("card_details.card_brand", is(nullValue()))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is(nullValue()))
                 .body("card_details.first_digits_card_number", is(nullValue()))
@@ -270,7 +269,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("payment_outcome.code", is("P0030"))
                 .body("payment_outcome.supplemental.error_code", is(stringOf50Characters))
                 .body("payment_outcome.supplemental.error_message", is(stringOf50Characters))
-                .body("card_details.card_brand", is(nullValue()))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is(nullValue()))
                 .body("card_details.first_digits_card_number", is(nullValue()))
@@ -304,7 +303,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("processor_id", is("183f2j8923j8"))
                 .body("provider_id", is("17498-8412u9-1273891239"))
                 .body("payment_outcome.status", is("success"))
-                .body("card_details.card_brand", is("master-card"))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.expiry_date", is("02/19"))
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))

@@ -17,11 +17,12 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
-import static uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity.SupportedType.DEBIT;
+import static uk.gov.pay.connector.cardtype.model.domain.CardType.CREDIT;
+import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class SupportedTypeDaoJpaIT {
+public class CardTypeDaoJpaIT {
 
     private CardTypeDao cardTypeDao;
 
@@ -40,23 +41,23 @@ public class SupportedTypeDaoJpaIT {
         assertThat(cardTypes.size(), is(2));
 
         Optional<CardTypeEntity> maybeCreditCard =
-                cardTypes.stream().filter(card -> card.getType().equals(CardTypeEntity.SupportedType.CREDIT)).findFirst();
+                cardTypes.stream().filter(card -> card.getType().equals(CREDIT)).findFirst();
         assertThat(maybeCreditCard.isPresent(), is(true));
         CardTypeEntity creditCard = maybeCreditCard.get();
         assertNotNull(creditCard.getId());
         assertThat(creditCard.getBrand(), is("master-card"));
-        assertThat(creditCard.getType().toString(), is(CardTypeEntity.SupportedType.CREDIT.toString()));
+        assertThat(creditCard.getType().toString(), is(CREDIT.toString()));
         assertThat(creditCard.getLabel(), is("Mastercard"));
         assertNotNull(creditCard.getVersion());
 
         Optional<CardTypeEntity> maybeDebitCard =
-                cardTypes.stream().filter(card -> card.getType().equals(CardTypeEntity.SupportedType.DEBIT)).findFirst();
+                cardTypes.stream().filter(card -> card.getType().equals(DEBIT)).findFirst();
         assertThat(maybeDebitCard.isPresent(), is(true));
         CardTypeEntity debitCard = maybeDebitCard.get();
         assertNotNull(debitCard.getId());
         assertNotNull(debitCard.getId());
         assertThat(debitCard.getBrand(), is("master-card"));
-        assertThat(debitCard.getType().toString(), is(CardTypeEntity.SupportedType.DEBIT.toString()));
+        assertThat(debitCard.getType().toString(), is(DEBIT.toString()));
         assertThat(debitCard.getLabel(), is("Mastercard"));
         assertNotNull(debitCard.getVersion());
     }

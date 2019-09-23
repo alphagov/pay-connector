@@ -2,10 +2,11 @@ package uk.gov.pay.connector.charge.model.telephone;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardExpiryDate;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardFirstSixDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardLastFourDigits;
-import uk.gov.pay.connector.charge.validation.telephone.ValidCardType;
+import uk.gov.pay.connector.charge.validation.telephone.ValidCardBrand;
 import uk.gov.pay.connector.charge.validation.telephone.ValidZonedDateTime;
 
 import javax.validation.Valid;
@@ -42,7 +43,7 @@ public class TelephoneChargeCreateRequest {
     @Valid
     private PaymentOutcome paymentOutcome;
     
-    @ValidCardType(message = "Field [card_type] must be either master-card, visa, maestro, diners-club or american-express")
+    @ValidCardBrand(message = "Field [card_type] must be either master-card, visa, maestro, diners-club or american-express")
     private String cardType;
     
     private String nameOnCard;
@@ -78,6 +79,7 @@ public class TelephoneChargeCreateRequest {
         this.nameOnCard = builder.nameOnCard;
         this.emailAddress = builder.emailAddress;
         this.cardExpiry = builder.cardExpiry;
+        this.cardType = builder.cardType;
         this.lastFourDigits = builder.lastFourDigits;
         this.firstSixDigits = builder.firstSixDigits;
         this.telephoneNumber = builder.telephoneNumber;
@@ -179,7 +181,7 @@ public class TelephoneChargeCreateRequest {
         private String firstSixDigits;
 
         private String telephoneNumber;
-        
+
         public Builder withAmount(Long amount) {
             this.amount = amount;
             return this;
