@@ -32,7 +32,7 @@ public class ZoneDateTimeValidatorTest {
                 .withProcessorId("1PROC")
                 .withProviderId("1PROV")
                 .withCardExpiry("01/99")
-                .withCardBrand("visa")
+                .withCardType("visa")
                 .withLastFourDigits("1234")
                 .withFirstSixDigits("123456")
                 .withPaymentOutcome(new PaymentOutcome("success"));

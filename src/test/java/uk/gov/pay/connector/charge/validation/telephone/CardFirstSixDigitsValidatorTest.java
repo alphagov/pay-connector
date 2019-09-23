@@ -33,7 +33,7 @@ public class CardFirstSixDigitsValidatorTest {
                 .withProviderId("1PROV")
                 .withCardExpiry("01/99")
                 .withLastFourDigits("1234")
-                .withCardBrand("visa")
+                .withCardType("visa")
                 .withPaymentOutcome(new PaymentOutcome("success"));
     }
 

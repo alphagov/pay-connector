@@ -5,7 +5,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.cardtype.model.domain.SupportedType;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
@@ -46,7 +46,7 @@ public class CardTypeDaoIT {
         List<CardTypeEntity> allCardTypes = cardTypeDao.findAll();
         assertThat(allCardTypes, hasSize(10));
         Optional<CardTypeEntity> maybeCard = allCardTypes.stream()
-                .filter(c -> c.getLabel().equals("Mastercard") && c.getType().equals(SupportedType.DEBIT))
+                .filter(c -> c.getLabel().equals("Mastercard") && c.getType().equals(CardType.DEBIT))
                 .findFirst();
         assertThat(maybeCard.isPresent(), is(true));
         CardTypeEntity mastercardDebit = maybeCard.get();

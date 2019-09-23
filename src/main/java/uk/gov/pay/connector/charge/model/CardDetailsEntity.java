@@ -3,13 +3,15 @@ package uk.gov.pay.connector.charge.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import uk.gov.pay.connector.cardtype.model.domain.SupportedType;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Embeddable;
 import javax.persistence.Embedded;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -38,12 +40,11 @@ public class CardDetailsEntity {
 
     @Column(name = "card_brand")
     private String cardBrand;
-    
-    @Convert(converter = SupportedTypeConverter.class)
-    @JsonSerialize(using = ToStringSerializer.class)
+
+    @Enumerated(EnumType.STRING)
     @JsonProperty("card_type")
     @Column(name = "card_type")
-    private SupportedType cardType;
+    private CardType cardType;
 
     @Embedded
     @JsonProperty("billing_address")
@@ -52,7 +53,7 @@ public class CardDetailsEntity {
     public CardDetailsEntity() {
     }
     
-    public CardDetailsEntity(LastDigitsCardNumber lastDigitsCardNumber, FirstDigitsCardNumber firstDigitsCardNumber, String cardHolderName, String expiryDate, String cardBrand, SupportedType cardType) {
+    public CardDetailsEntity(LastDigitsCardNumber lastDigitsCardNumber, FirstDigitsCardNumber firstDigitsCardNumber, String cardHolderName, String expiryDate, String cardBrand, CardType cardType) {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
         this.firstDigitsCardNumber = firstDigitsCardNumber;
         this.cardHolderName = cardHolderName;
@@ -61,7 +62,7 @@ public class CardDetailsEntity {
         this.cardType = cardType;
     }
 
-    public CardDetailsEntity(FirstDigitsCardNumber firstDigitsCardNumber, LastDigitsCardNumber lastDigitsCardNumber, String cardHolderName, String expiryDate, String cardBrand, SupportedType cardType, AddressEntity billingAddress) {
+    public CardDetailsEntity(FirstDigitsCardNumber firstDigitsCardNumber, LastDigitsCardNumber lastDigitsCardNumber, String cardHolderName, String expiryDate, String cardBrand, CardType cardType, AddressEntity billingAddress) {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
         this.firstDigitsCardNumber = firstDigitsCardNumber;
         this.cardHolderName = cardHolderName;
@@ -131,11 +132,11 @@ public class CardDetailsEntity {
         this.cardBrand = cardBrand;
     }
 
-    public SupportedType getCardType() {
+    public CardType getCardType() {
         return cardType;
     }
 
-    public CardDetailsEntity setCardType(SupportedType cardType) {
+    public CardDetailsEntity setCardType(CardType cardType) {
         this.cardType = cardType;
         return this;
     }

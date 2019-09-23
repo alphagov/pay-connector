@@ -19,7 +19,7 @@ import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
-import uk.gov.pay.connector.cardtype.model.domain.SupportedType;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
@@ -173,7 +173,7 @@ public class ChargeServiceTest {
                 .withNameOnCard("Jane Doe")
                 .withEmailAddress("jane.doe@example.com")
                 .withTelephoneNumber("+447700900796")
-                .withCardBrand("visa")
+                .withCardType("visa")
                 .withCardExpiry("01/19")
                 .withLastFourDigits("1234")
                 .withFirstSixDigits("123456");
@@ -201,7 +201,7 @@ public class ChargeServiceTest {
                 "Jane Doe",
                 "01/19",
                 "visa",
-                SupportedType.valueOf("DEBIT")
+                CardType.valueOf("DEBIT")
         );
 
         returnedChargeEntity = new ChargeEntity(

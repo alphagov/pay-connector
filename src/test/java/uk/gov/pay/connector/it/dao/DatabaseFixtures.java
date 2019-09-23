@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.cardtype.model.domain.SupportedType;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -854,7 +854,7 @@ public class DatabaseFixtures {
     public class TestCardType {
         UUID id = UUID.randomUUID();
         String label = "Mastercard";
-        SupportedType type = SupportedType.CREDIT;
+        CardType type = CardType.CREDIT;
         String brand = "mastercard-c";
         boolean requires3DS;
 
@@ -868,7 +868,7 @@ public class DatabaseFixtures {
             return this;
         }
 
-        public TestCardType withType(SupportedType type) {
+        public TestCardType withType(CardType type) {
             this.type = type;
             return this;
         }
@@ -895,12 +895,12 @@ public class DatabaseFixtures {
             return label;
         }
 
-        public SupportedType getType() {
+        public CardType getType() {
             return type;
         }
 
-        public void setAcceptedType(SupportedType supportedType) {
-            this.type = supportedType;
+        public void setAcceptedType(CardType cardType) {
+            this.type = cardType;
         }
 
         public String getBrand() {

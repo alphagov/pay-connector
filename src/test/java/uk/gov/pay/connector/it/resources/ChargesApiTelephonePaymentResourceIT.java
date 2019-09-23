@@ -69,7 +69,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("description", is("New passport application"))
                 .body("processor_id", is("183f2j8923j8"))
                 .body("provider_id", is("17498-8412u9-1273891239"))
-                .body("card_details.card_brand", is(nullValue()))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is(nullValue()))
                 .body("card_details.first_digits_card_number", is(nullValue()))
@@ -88,7 +88,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         postBody.put("email_address", "jane_doe@example.com");
         postBody.put("telephone_number", "+447700900796");
         postBody.put("card_expiry", "02/19");
-        postBody.put("card_brand", "master-card");
+        postBody.put("card_type", "master-card");
         postBody.put("last_four_digits", "1234");
         postBody.put("first_six_digits", "123456");
         
@@ -105,7 +105,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("provider_id", is("17498-8412u9-1273891239"))
                 .body("auth_code", is("666"))
                 .body("payment_outcome.status", is("success"))
-                .body("card_details.card_brand", is("master-card"))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.cardholder_name", is("Jane Doe"))
                 .body("email", is("jane_doe@example.com"))
                 .body("card_details.expiry_date", is("02/19"))
@@ -143,7 +143,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("payment_outcome.code", is("P0010"))
                 .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
                 .body("payment_outcome.supplemental.error_message", is("textual message describing error code"))
-                .body("card_details.card_brand", is(nullValue()))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is(nullValue()))
                 .body("card_details.first_digits_card_number", is(nullValue()))
@@ -187,7 +187,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("payment_outcome.code", is("P0050"))
                 .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
                 .body("payment_outcome.supplemental.error_message", is("textual message describing error code"))
-                .body("card_details.card_brand", is(nullValue()))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is(nullValue()))
                 .body("card_details.first_digits_card_number", is(nullValue()))
@@ -224,7 +224,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("payment_outcome.code", is("P0030"))
                 .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
                 .body("payment_outcome.supplemental.error_message", is("textual message describing error code"))
-                .body("card_details.card_brand", is(nullValue()))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is(nullValue()))
                 .body("card_details.first_digits_card_number", is(nullValue()))
@@ -269,7 +269,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("payment_outcome.code", is("P0030"))
                 .body("payment_outcome.supplemental.error_code", is(stringOf50Characters))
                 .body("payment_outcome.supplemental.error_message", is(stringOf50Characters))
-                .body("card_details.card_brand", is(nullValue()))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is(nullValue()))
                 .body("card_details.first_digits_card_number", is(nullValue()))
@@ -285,7 +285,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
     @Test
     public void shouldReturnResponseForAlreadyExistingTelephoneCharge() {
         postBody.put("card_expiry", "02/19");
-        postBody.put("card_brand", "master-card");
+        postBody.put("card_type", "master-card");
         postBody.put("last_four_digits", "1234");
         postBody.put("first_six_digits", "123456");
 
@@ -303,7 +303,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("processor_id", is("183f2j8923j8"))
                 .body("provider_id", is("17498-8412u9-1273891239"))
                 .body("payment_outcome.status", is("success"))
-                .body("card_details.card_brand", is("master-card"))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.expiry_date", is("02/19"))
                 .body("card_details.last_digits_card_number", is("1234"))
                 .body("card_details.first_digits_card_number", is("123456"))
@@ -315,12 +315,12 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
     @Test
     public void shouldReturn422ForInvalidCardType() {
         
-        postBody.put("card_brand", "invalid-card");
+        postBody.put("card_type", "invalid-card");
         
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("Field [card_brand] must be either master-card, visa, maestro, diners-club or american-express"));
+                .body("message[0]", is("Field [card_type] must be either master-card, visa, maestro, diners-club or american-express"));
     }
 
     @Test

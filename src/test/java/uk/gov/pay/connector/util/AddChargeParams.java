@@ -2,7 +2,7 @@ package uk.gov.pay.connector.util;
 
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
-import uk.gov.pay.connector.cardtype.model.domain.SupportedType;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
@@ -33,7 +33,7 @@ public class AddChargeParams {
     private final Long corporateSurcharge;
     private final ExternalMetadata externalMetadata;
     private final ParityCheckStatus parityCheckStatus;
-    private final SupportedType cardType;
+    private final CardType cardType;
 
     private AddChargeParams(AddChargeParamsBuilder builder) {
         chargeId = builder.chargeId;
@@ -129,7 +129,7 @@ public class AddChargeParams {
         return parityCheckStatus;
     }
     
-    public SupportedType getCardType() {
+    public CardType getCardType() {
         return cardType;
     }
 
@@ -152,7 +152,7 @@ public class AddChargeParams {
         private Long corporateSurcharge;
         private ExternalMetadata externalMetadata;
         private ParityCheckStatus parityCheckStatus;
-        private SupportedType cardType;
+        private CardType cardType;
 
         private AddChargeParamsBuilder() {
         }
@@ -252,7 +252,7 @@ public class AddChargeParams {
             return this;
         }
         
-        public AddChargeParamsBuilder withCardType(SupportedType chargeType) {
+        public AddChargeParamsBuilder withCardType(CardType chargeType) {
             this.cardType = chargeType;
             return this;
         }

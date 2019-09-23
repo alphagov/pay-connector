@@ -2,7 +2,7 @@ package uk.gov.pay.connector.it.dao;
 
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.cardtype.model.domain.SupportedType;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -121,7 +121,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
 
         Address billingAddress = AddressFixture.anAddress().build();
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
-        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"), "Mr. Pay Mc Payment", "03/09", "VISA", SupportedType.DEBIT, new AddressEntity(billingAddress));
+        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"), "Mr. Pay Mc Payment", "03/09", "VISA", CardType.DEBIT, new AddressEntity(billingAddress));
         chargeEntity.setCardDetails(cardDetailsEntity);
         chargeDao.persist(chargeEntity);
 
@@ -136,5 +136,6 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
         assertThat(cardDetailsSaved, hasEntry("address_city", cardDetailsEntity.getBillingAddress().get().getCity()));
         assertThat(cardDetailsSaved, hasEntry("address_county", cardDetailsEntity.getBillingAddress().get().getCounty()));
         assertThat(cardDetailsSaved, hasEntry("address_country", cardDetailsEntity.getBillingAddress().get().getCountry()));
+        assertThat(cardDetailsSaved, hasEntry("card_type", "DEBIT"));
     }
 }

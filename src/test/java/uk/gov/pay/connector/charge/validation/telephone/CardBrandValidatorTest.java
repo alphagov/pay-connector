@@ -41,20 +41,20 @@ public class CardBrandValidatorTest {
     public void failsValidationForInvalidCardBrand() {
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .withCardBrand("bad-card")
+                .withCardType("bad-card")
                 .build();
         
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
 
         assertThat(constraintViolations.size(), isNumber(1));
-        assertThat(constraintViolations.iterator().next().getMessage(), is("Field [card_brand] must be either master-card, visa, maestro, diners-club or american-express"));
+        assertThat(constraintViolations.iterator().next().getMessage(), is("Field [card_type] must be either master-card, visa, maestro, diners-club or american-express"));
     }
 
     @Test
     public void passesValidationForValidCardBrand() {
         
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .withCardBrand("visa")
+                .withCardType("visa")
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);
@@ -66,7 +66,7 @@ public class CardBrandValidatorTest {
     public void passesValidationForNullCardBrand() {
 
         TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
-                .withCardBrand(null)
+                .withCardType(null)
                 .build();
 
         Set<ConstraintViolation<TelephoneChargeCreateRequest>> constraintViolations = validator.validate(telephoneChargeCreateRequest);

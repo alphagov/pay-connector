@@ -17,12 +17,12 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
-import static uk.gov.pay.connector.cardtype.model.domain.SupportedType.CREDIT;
-import static uk.gov.pay.connector.cardtype.model.domain.SupportedType.DEBIT;
+import static uk.gov.pay.connector.cardtype.model.domain.CardType.CREDIT;
+import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class SupportedTypeDaoJpaIT {
+public class CardTypeDaoJpaIT {
 
     private CardTypeDao cardTypeDao;
 

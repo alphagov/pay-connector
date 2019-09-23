@@ -2,7 +2,7 @@ package uk.gov.pay.connector.charge.model.telephone;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import uk.gov.pay.connector.cardtype.model.domain.SupportedType;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardExpiryDate;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardFirstSixDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardLastFourDigits;
@@ -43,14 +43,12 @@ public class TelephoneChargeCreateRequest {
     @Valid
     private PaymentOutcome paymentOutcome;
     
-    @ValidCardBrand(message = "Field [card_brand] must be either master-card, visa, maestro, diners-club or american-express")
-    private String cardBrand;
+    @ValidCardBrand(message = "Field [card_type] must be either master-card, visa, maestro, diners-club or american-express")
+    private String cardType;
     
     private String nameOnCard;
     
     private String emailAddress;
-    
-    private SupportedType cardType;
     
     @ValidCardExpiryDate(message = "Field [card_expiry] must have valid MM/YY")
     private String cardExpiry;
@@ -77,7 +75,7 @@ public class TelephoneChargeCreateRequest {
         this.providerId = builder.providerId;
         this.authCode = builder.authCode;
         this.paymentOutcome = builder.paymentOutcome;
-        this.cardBrand = builder.cardBrand;
+        this.cardType = builder.cardType;
         this.nameOnCard = builder.nameOnCard;
         this.emailAddress = builder.emailAddress;
         this.cardExpiry = builder.cardExpiry;
@@ -123,8 +121,8 @@ public class TelephoneChargeCreateRequest {
         return paymentOutcome;
     }
 
-    public Optional<String> getCardBrand() {
-        return Optional.ofNullable(cardBrand);
+    public Optional<String> getCardType() {
+        return Optional.ofNullable(cardType);
     }
 
     public Optional<String> getNameOnCard() {
@@ -170,7 +168,7 @@ public class TelephoneChargeCreateRequest {
 
         private PaymentOutcome paymentOutcome;
 
-        private String cardBrand;
+        private String cardType;
 
         private String nameOnCard;
 
@@ -183,9 +181,7 @@ public class TelephoneChargeCreateRequest {
         private String firstSixDigits;
 
         private String telephoneNumber;
-        
-        private SupportedType cardType;
-        
+
         public Builder withAmount(Long amount) {
             this.amount = amount;
             return this;
@@ -231,8 +227,8 @@ public class TelephoneChargeCreateRequest {
             return this;
         }
         
-        public Builder withCardBrand(String cardBrand) {
-            this.cardBrand = cardBrand;
+        public Builder withCardType(String cardType) {
+            this.cardType = cardType;
             return this;
         }
         
@@ -263,11 +259,6 @@ public class TelephoneChargeCreateRequest {
         
         public Builder withTelephoneNumber(String telephoneNumber) {
             this.telephoneNumber = telephoneNumber;
-            return this;
-        }
-        
-        public Builder withCardType(SupportedType cardType) {
-            this.cardType = cardType;
             return this;
         }
         
