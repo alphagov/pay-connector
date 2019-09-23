@@ -2,6 +2,7 @@ package uk.gov.pay.connector.charge.model.telephone;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import uk.gov.pay.connector.cardtype.model.domain.SupportedType;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardExpiryDate;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardFirstSixDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardLastFourDigits;
@@ -49,6 +50,8 @@ public class TelephoneChargeCreateRequest {
     
     private String emailAddress;
     
+    private SupportedType cardType;
+    
     @ValidCardExpiryDate(message = "Field [card_expiry] must have valid MM/YY")
     private String cardExpiry;
 
@@ -78,6 +81,7 @@ public class TelephoneChargeCreateRequest {
         this.nameOnCard = builder.nameOnCard;
         this.emailAddress = builder.emailAddress;
         this.cardExpiry = builder.cardExpiry;
+        this.cardType = builder.cardType;
         this.lastFourDigits = builder.lastFourDigits;
         this.firstSixDigits = builder.firstSixDigits;
         this.telephoneNumber = builder.telephoneNumber;
@@ -180,6 +184,8 @@ public class TelephoneChargeCreateRequest {
 
         private String telephoneNumber;
         
+        private SupportedType cardType;
+        
         public Builder withAmount(Long amount) {
             this.amount = amount;
             return this;
@@ -257,6 +263,11 @@ public class TelephoneChargeCreateRequest {
         
         public Builder withTelephoneNumber(String telephoneNumber) {
             this.telephoneNumber = telephoneNumber;
+            return this;
+        }
+        
+        public Builder withCardType(SupportedType cardType) {
+            this.cardType = cardType;
             return this;
         }
         

@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang.StringUtils;
-import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,10 +49,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                         "status", "success"
                 )
         );
-        postBody.put("card_brand", "master-card");
-        postBody.put("last_four_digits", "1234");
-        postBody.put("first_six_digits", "123456");
-    }
+     }
     
     @After
     @Override
@@ -92,7 +88,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         postBody.put("email_address", "jane_doe@example.com");
         postBody.put("telephone_number", "+447700900796");
         postBody.put("card_expiry", "02/19");
-        postBody.put("card_type", "master-card");
+        postBody.put("card_brand", "master-card");
         postBody.put("last_four_digits", "1234");
         postBody.put("first_six_digits", "123456");
         
@@ -289,7 +285,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
     @Test
     public void shouldReturnResponseForAlreadyExistingTelephoneCharge() {
         postBody.put("card_expiry", "02/19");
-        postBody.put("card_type", "master-card");
+        postBody.put("card_brand", "master-card");
         postBody.put("last_four_digits", "1234");
         postBody.put("first_six_digits", "123456");
 
