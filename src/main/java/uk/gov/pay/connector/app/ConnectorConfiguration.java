@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.db.DataSourceFactory;
+import uk.gov.pay.connector.app.config.EmittedEventSweepConfig;
 import uk.gov.pay.connector.app.config.RestClientConfig;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
@@ -72,6 +73,9 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     @JsonProperty("chargesSweepConfig")
     private ChargeSweepConfig chargeSweepConfig;
+
+    @NotNull
+    private EmittedEventSweepConfig emittedEventSweepConfig;
 
     @NotNull
     private String graphiteHost;
@@ -208,5 +212,9 @@ public class ConnectorConfiguration extends Configuration {
 
     public RestClientConfig getRestClientConfig() {
         return restClientConfig;
+    }
+
+    public EmittedEventSweepConfig getEmittedEventSweepConfig() {
+        return emittedEventSweepConfig;
     }
 }
