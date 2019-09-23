@@ -30,6 +30,7 @@ public class ConnectorConfigurationIT {
         assertThat(captureProcessConfig.getMaximumRetries(), is(48));
         assertThat(RULE.getConfiguration().getLedgerBaseUrl(), is(not(emptyString())));
         assertThat(RULE.getConfiguration().getRestClientConfig().isDisabledSecureConnection(), is(true));
+        assertThat(RULE.getConfiguration().getEmittedEventSweepConfig().getNotEmittedEventMaxAgeInSeconds(), is(1800));
     }
 
 }
