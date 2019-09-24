@@ -52,6 +52,7 @@ public class ChargeEntityFixture {
     private ExternalMetadata externalMetadata = null;
     private CardDetailsEntity cardDetails = null;
     private ParityCheckStatus parityCheckStatus = null;
+    private String gatewayTransactionId = null;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -68,6 +69,10 @@ public class ChargeEntityFixture {
         chargeEntity.getRefunds().addAll(refunds);
         chargeEntity.setProviderSessionId(providerSessionId);
         chargeEntity.set3dsDetails(auth3dsDetailsEntity);
+
+        if (gatewayTransactionId != null) {
+            chargeEntity.setGatewayTransactionId(gatewayTransactionId);
+        }
 
         if (this.fee != null) {
             FeeEntity fee = new FeeEntity(chargeEntity, this.fee);
@@ -199,6 +204,16 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withParityStatus(ParityCheckStatus parityCheckStatus) {
         this.parityCheckStatus = parityCheckStatus;
+        return this;
+    }
+
+    public ChargeEntityFixture withGatewayTransactionId(String gatewayTransactionId) {
+        this.gatewayTransactionId = gatewayTransactionId;
+        return this;
+    }
+
+    public ChargeEntityFixture withEmail(String email) {
+        this.email = email;
         return this;
     }
 }
