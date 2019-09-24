@@ -3,7 +3,9 @@ package uk.gov.pay.connector.charge.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 
 import javax.persistence.Column;
@@ -13,6 +15,9 @@ import javax.persistence.Embedded;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import java.util.Objects;
+import javax.persistence.OneToOne;
+import javax.persistence.JoinColumn;
+
 import java.util.Optional;
 
 @Embeddable
@@ -37,6 +42,10 @@ public class CardDetailsEntity {
     @Column(name = "expiry_date")
     @JsonProperty("expiry_date")
     private String expiryDate;
+
+    @OneToOne
+    @JoinColumn(name = "card_brand", referencedColumnName = "brand", updatable = false, insertable = false)
+    private CardTypeEntity cardTypeDetails;
 
     @Column(name = "card_brand")
     private String cardBrand;
@@ -140,7 +149,7 @@ public class CardDetailsEntity {
         this.cardType = cardType;
         return this;
     }
-
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -158,5 +167,9 @@ public class CardDetailsEntity {
     @Override
     public int hashCode() {
         return Objects.hash(firstDigitsCardNumber, lastDigitsCardNumber, cardHolderName, expiryDate, cardBrand, cardType, billingAddress);
+    }
+
+    public CardTypeEntity getCardTypeDetails() {
+        return cardTypeDetails;
     }
 }
