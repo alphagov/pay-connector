@@ -17,6 +17,7 @@ public class SandboxCardNumbers {
     private static final String GOOD_CORPORATE_PREPAID_UNKNOWN_CREDIT_CARD = "5101180000000007";
     private static final String GOOD_CORPORATE_PREPAID_UNKNOWN_DEBIT_CARD = "5200828282828210";
     private static final String GOOD_NON_CORPORATE_NON_PREPAID = "4000020000000000";
+    private static final String GOOD_MASTERCARD_CREDIT_CARD = "5101110000000004";
     private static final String DECLINED_WALLET_LAST_DIGITS_CARD_NUMBER = "0002";
     private static final String DECLINED_CARD_NUMBER = "4000000000000002";
     private static final String CVC_ERROR_WALLET_LAST_DIGITS_CARD_NUMBER = "0127";
@@ -36,6 +37,7 @@ public class SandboxCardNumbers {
             "3566002020360505",
             "6011000990139424",
             "36148900647913",
+            GOOD_MASTERCARD_CREDIT_CARD,
             GOOD_WALLET_LAST_DIGITS_CARD_NUMBER,
             GOOD_CARD_PREPAID_NON_CORPORATE,
             GOOD_NON_CORPORATE_NON_PREPAID);
