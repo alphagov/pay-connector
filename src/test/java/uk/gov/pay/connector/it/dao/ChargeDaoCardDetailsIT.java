@@ -126,16 +126,21 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
         chargeDao.persist(chargeEntity);
 
         Map<String, Object> cardDetailsSaved = databaseTestHelper.getChargeCardDetails(chargeEntity.getId());
-        assertThat(cardDetailsSaved, hasEntry("last_digits_card_number", "1258"));
-        assertThat(cardDetailsSaved, hasEntry("first_digits_card_number", "123456"));
-        assertThat(cardDetailsSaved, hasEntry("cardholder_name", cardDetailsEntity.getCardHolderName()));
-        assertThat(cardDetailsSaved, hasEntry("expiry_date", cardDetailsEntity.getExpiryDate()));
-        assertThat(cardDetailsSaved, hasEntry("address_line1", cardDetailsEntity.getBillingAddress().get().getLine1()));
-        assertThat(cardDetailsSaved, hasEntry("address_line2", cardDetailsEntity.getBillingAddress().get().getLine2()));
-        assertThat(cardDetailsSaved, hasEntry("address_postcode", cardDetailsEntity.getBillingAddress().get().getPostcode()));
-        assertThat(cardDetailsSaved, hasEntry("address_city", cardDetailsEntity.getBillingAddress().get().getCity()));
-        assertThat(cardDetailsSaved, hasEntry("address_county", cardDetailsEntity.getBillingAddress().get().getCounty()));
-        assertThat(cardDetailsSaved, hasEntry("address_country", cardDetailsEntity.getBillingAddress().get().getCountry()));
         assertThat(cardDetailsSaved, hasEntry("card_type", "DEBIT"));
+    }
+
+    @Test
+    public void persist_shouldStoreNullCardTypeDetails() {
+        GatewayAccountEntity testAccount = new GatewayAccountEntity("sandbox", new HashMap<>(), GatewayAccountEntity.Type.TEST);
+        gatewayAccountDao.persist(testAccount);
+
+        Address billingAddress = AddressFixture.anAddress().build();
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"), "Mr. Pay Mc Payment", "03/09", "VISA", null, new AddressEntity(billingAddress));
+        chargeEntity.setCardDetails(cardDetailsEntity);
+        chargeDao.persist(chargeEntity);
+
+        Map<String, Object> cardDetailsSaved = databaseTestHelper.getChargeCardDetails(chargeEntity.getId());
+        assertThat(cardDetailsSaved, hasEntry("card_type",null));
     }
 }

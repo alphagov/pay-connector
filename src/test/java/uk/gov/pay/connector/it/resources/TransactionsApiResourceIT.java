@@ -254,7 +254,7 @@ public class TransactionsApiResourceIT extends ChargingITestBase {
         firstDigitsCardNumber = "123456";
         cardHolderName = "Mr. McPayment";
         expiryDate = "03/18";
-        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, expiryDate, "line1", null,
+        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, expiryDate, null, "line1", null,
                 "postcode", "city", null, "country");
         return externalChargeId;
     }

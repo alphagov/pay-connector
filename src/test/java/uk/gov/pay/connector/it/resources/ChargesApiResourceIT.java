@@ -44,6 +44,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static uk.gov.pay.connector.cardtype.model.domain.CardType.CREDIT;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
@@ -140,7 +141,6 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("card_details", is(notNullValue()))
-                .body("card_details.card_type", is(DEBIT.toString()))
                 .body("card_details.last_digits_card_number", is("5678"))
                 .body("card_details.first_digits_card_number", is("123456"));
     }
@@ -209,7 +209,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, mastercardCredit.getBrand(), "1234", "123456", "Mr. McPayment",
-                "03/18", "line1", null, "postcode", "city", null, "country");
+                "03/18", null, "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
@@ -234,7 +234,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
-                "03/18", "line1", null, "postcode", "city", null, "country");
+                "03/18", null, "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
@@ -259,7 +259,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "Visa", "1234", "123456", "Mr. McPayment",
-                "03/18", null, null, null, null, null, null);
+                "03/18", null, null, null, null, null, null, null);
         databaseTestHelper.addToken(chargeId, "tokenId");
 
         connectorRestApiClient
@@ -453,7 +453,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withCreatedDate(createdDate)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "VISA", "1234", "123456", "Mr. McPayment",
-                "03/18", "line1", null, "postcode", "city", null, "country");
+                "03/18", null, "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
 
@@ -495,7 +495,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withCreatedDate(createdDate)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "visa", null, null, null, null,
-                null, null, null, null, null, null);
+                DEBIT.toString(), null, null, null, null, null, null);
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
 
@@ -679,6 +679,58 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
+    @Test
+    public void shouldReturnDebitCardType_whenCardTypeIsDebit() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withCardType(DEBIT)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build());
+        databaseTestHelper.updateChargeCardDetails(chargeId, "Visa", "1234", "123456", "Mr. McPayment",
+                "03/18", DEBIT.toString(), null, null, null, null, null, null);
+        databaseTestHelper.addToken(chargeId, "tokenId");
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("card_details.card_type", is(DEBIT.toString()));
+    }
+
+    @Test
+    public void shouldReturnNullCardType_whenCardTypeIsNull() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withCardType(null)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build());
+        databaseTestHelper.updateChargeCardDetails(chargeId, "Visa", "1234", "123456", "Mr. McPayment",
+                "03/18", null, null, null, null, null, null, null);
+        databaseTestHelper.addToken(chargeId, "tokenId");
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("card_details.card_type", is(nullValue()));
+    }
+
     private void createCharge(String externalChargeId, long chargeId) {
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
@@ -689,7 +741,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withReturnUrl(RETURN_URL)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
-                "03/18", "line1", null, "postcode", "city", null, "country");
+                "03/18", null, "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.updateCorporateSurcharge(chargeId, 150L);
         databaseTestHelper.addToken(chargeId, "tokenId");
     }
