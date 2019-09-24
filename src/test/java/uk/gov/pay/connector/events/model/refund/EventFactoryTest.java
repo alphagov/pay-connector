@@ -8,12 +8,14 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.EmptyEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.PaymentNotificationCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundCreatedByUserEventDetails;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithReferenceDetails;
@@ -25,6 +27,7 @@ import uk.gov.pay.connector.events.model.charge.CaptureAbandonedAfterTooManyRetr
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
+import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -329,5 +332,34 @@ public class EventFactoryTest {
         RefundAvailabilityUpdated event2 = (RefundAvailabilityUpdated) events.get(1);
         Assert.assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
         Assert.assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
+    }
+
+    @Test
+    public void shouldCreatedCorrectEventForPaymentNotificationCreated() throws Exception {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(ChargeStatus.PAYMENT_NOTIFICATION_CREATED)
+                .build();
+        Long chargeEventEntityId = 100L;
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withCharge(charge)
+                .withId(chargeEventEntityId)
+                .build();
+        when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
+                Optional.of(chargeEventEntity)
+        );
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, PaymentNotificationCreated.class);
+        List<Event> events = eventFactory.createEvents(paymentStateTransition);
+
+        assertThat(events.size(), is(1));
+
+        PaymentNotificationCreated event = (PaymentNotificationCreated) events.get(0);
+        assertThat(event, is(instanceOf(PaymentNotificationCreated.class)));
+
+        assertThat(event.getEventDetails(), instanceOf(PaymentNotificationCreatedEventDetails.class));
+        assertThat(event.getResourceExternalId(), is(chargeEventEntity.getChargeEntity().getExternalId()));
+
+        PaymentNotificationCreatedEventDetails eventDetails = (PaymentNotificationCreatedEventDetails) event.getEventDetails();
+        assertThat(eventDetails.getGatewayTransactionId(), is(charge.getGatewayTransactionId()));
     }
 }

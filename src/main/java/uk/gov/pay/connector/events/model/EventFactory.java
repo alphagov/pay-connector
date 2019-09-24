@@ -12,6 +12,7 @@ import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentEvent;
+import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
@@ -113,6 +114,8 @@ public class EventFactory {
                 return CaptureSubmitted.from(chargeEvent);
             } else if (eventClass == CaptureConfirmed.class) {
                 return CaptureConfirmed.from(chargeEvent);
+            } else if (eventClass == PaymentNotificationCreated.class) {
+                return PaymentNotificationCreated.from(chargeEvent);
             } else {
                 return eventClass.getConstructor(String.class, ZonedDateTime.class).newInstance(
                         chargeEvent.getChargeEntity().getExternalId(),

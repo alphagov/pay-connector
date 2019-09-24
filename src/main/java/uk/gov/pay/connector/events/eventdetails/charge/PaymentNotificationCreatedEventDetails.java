@@ -43,11 +43,35 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     }
 
     public static PaymentNotificationCreatedEventDetails from(ChargeEntity charge) {
-        return new PaymentNotificationCreatedEventDetails(charge.getGatewayAccount().getId(), charge.getAmount(),
-                charge.getReference().toString(), charge.getDescription(), charge.getGatewayTransactionId(),
-                charge.getCardDetails().getFirstDigitsCardNumber().toString(), charge.getCardDetails().getLastDigitsCardNumber().toString(),
-                charge.getCardDetails().getCardHolderName(), charge.getEmail(), charge.getCardDetails().getExpiryDate(), charge.getCardDetails().getCardBrand(),
-                charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null));
+            String firstDigitsCardNumber = null;
+            String lastDigitsCardNumber = null;
+            String cardHolderName = null;
+            String expiryDate = null;
+            String cardBrand = null;
+
+            if (charge.getCardDetails() != null) {
+                if (charge.getCardDetails().getLastDigitsCardNumber() != null) {
+                    lastDigitsCardNumber = charge.getCardDetails().getLastDigitsCardNumber().toString();
+                }
+                if (charge.getCardDetails().getFirstDigitsCardNumber() != null) {
+                    firstDigitsCardNumber = charge.getCardDetails().getFirstDigitsCardNumber().toString();
+                }
+                cardHolderName = charge.getCardDetails().getCardHolderName();
+                expiryDate = charge.getCardDetails().getExpiryDate();
+                cardBrand = charge.getCardDetails().getCardBrand();
+            }
+            return new PaymentNotificationCreatedEventDetails(charge.getGatewayAccount().getId(),
+                    charge.getAmount(),
+                    charge.getReference().toString(),
+                    charge.getDescription(),
+                    charge.getGatewayTransactionId(),
+                    firstDigitsCardNumber,
+                    lastDigitsCardNumber,
+                    cardHolderName,
+                    charge.getEmail(),
+                    expiryDate,
+                    cardBrand,
+                    charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null));
     }
 
     @Override
@@ -74,5 +98,53 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
         return Objects.hash(gatewayAccountId, amount, reference, description, gatewayTransactionId,
                 firstDigitsCardNumber, lastDigitsCardNumber, cardholderName, email, cardExpiryDate,
                 cardBrand, externalMetadata);
+    }
+
+    public Long getGatewayAccountId() {
+        return gatewayAccountId;
+    }
+
+    public Long getAmount() {
+        return amount;
+    }
+
+    public String getReference() {
+        return reference;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getGatewayTransactionId() {
+        return gatewayTransactionId;
+    }
+
+    public String getFirstDigitsCardNumber() {
+        return firstDigitsCardNumber;
+    }
+
+    public String getLastDigitsCardNumber() {
+        return lastDigitsCardNumber;
+    }
+
+    public String getCardholderName() {
+        return cardholderName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getCardExpiryDate() {
+        return cardExpiryDate;
+    }
+
+    public String getCardBrand() {
+        return cardBrand;
+    }
+
+    public Map<String, Object> getExternalMetadata() {
+        return externalMetadata;
     }
 }
