@@ -36,6 +36,7 @@ import uk.gov.pay.connector.command.RenderStateTransitionGraphCommand;
 import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
 import uk.gov.pay.connector.common.exception.UnsupportedOperationExceptionMapper;
 import uk.gov.pay.connector.common.exception.ValidationExceptionMapper;
+import uk.gov.pay.connector.events.resource.EmittedEventResource;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
 import uk.gov.pay.connector.gateway.smartpay.auth.BasicAuthUser;
 import uk.gov.pay.connector.gateway.smartpay.auth.SmartpayAccountSpecificAuthenticator;
@@ -131,6 +132,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(PerformanceReportResource.class));
         environment.jersey().register(injector.getInstance(SearchRefundsResource.class));
         environment.jersey().register(injector.getInstance(DiscrepancyResource.class));
+        environment.jersey().register(injector.getInstance(EmittedEventResource.class));
 
         environment.jersey().register(ChargeIdMDCLoggingFeature.class);
         
