@@ -7,6 +7,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 
+import javax.persistence.FetchType;
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Embeddable;
@@ -41,7 +42,7 @@ public class CardDetailsEntity {
     @JsonProperty("expiry_date")
     private String expiryDate;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "card_brand", referencedColumnName = "brand", updatable = false, insertable = false)
     private CardTypeEntity cardTypeDetails;
 
