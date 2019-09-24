@@ -86,6 +86,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 
@@ -157,7 +159,7 @@ public class ChargeService {
                     telephoneChargeRequest.getAmount(),
                     ServicePaymentReference.of(telephoneChargeRequest.getReference()),
                     telephoneChargeRequest.getDescription(),
-                    internalChargeStatus(telephoneChargeRequest.getPaymentOutcome().getCode().orElse(null)),
+                    UNDEFINED,
                     telephoneChargeRequest.getEmailAddress().orElse(null),
                     cardDetails,
                     storeExtraFieldsInMetaData(telephoneChargeRequest),
@@ -167,6 +169,9 @@ public class ChargeService {
             );
             
             chargeDao.persist(chargeEntity);
+            transitionChargeState(chargeEntity, PAYMENT_NOTIFICATION_CREATED);
+            transitionChargeState(chargeEntity, internalChargeStatus(telephoneChargeRequest.getPaymentOutcome().getCode().orElse(null)));
+            chargeDao.merge(chargeEntity);
             return chargeEntity;
         });
     }
