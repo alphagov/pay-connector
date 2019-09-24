@@ -69,6 +69,12 @@ public class Card3dsResponseAuthService {
     ) {
         Optional<String> transactionId = operationResponse.getTransactionId();
 
+        LOGGER.info("3DS response authorisation for {} - {} .'. about to attempt charge update from {} -> {}",
+                chargeExternalId,
+                operationResponse,
+                oldChargeStatus,
+                operationResponse.getMappedChargeStatus());
+
         ChargeEntity updatedCharge = chargeService.updateChargePost3dsAuthorisation(
                 chargeExternalId,
                 operationResponse.getMappedChargeStatus(),
