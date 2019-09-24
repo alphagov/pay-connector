@@ -366,6 +366,13 @@ public class DatabaseTestHelper {
                         .first());
     }
 
+    public Map<String, Object> getChargeByGatewayTransactionId(String gatewayTransactionId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("SELECT * FROM charges WHERE gateway_transaction_id = :gatewayTransactionId")
+                        .bind("gatewayTransactionId", gatewayTransactionId)
+                        .first());
+    }
+
     public Map<String, Object> getEmailForAccountAndType(Long accountId, EmailNotificationType type) {
 
         return jdbi.withHandle(h ->

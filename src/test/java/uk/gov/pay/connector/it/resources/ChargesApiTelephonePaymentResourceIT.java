@@ -9,13 +9,18 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
@@ -31,6 +36,8 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
     private static final String stringOf51Characters = StringUtils.repeat("*", 51);
     private static final String stringOf50Characters = StringUtils.repeat("*", 50);
 
+    private final String providerId = "17498-8412u9-1273891239";
+
     public ChargesApiTelephonePaymentResourceIT() {
         super(PROVIDER_NAME);
     }
@@ -43,7 +50,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         postBody.put("reference", "MRPC12345");
         postBody.put("description", "New passport application");
         postBody.put("processor_id", "183f2j8923j8");
-        postBody.put("provider_id", "17498-8412u9-1273891239");
+        postBody.put("provider_id", providerId);
         postBody.put("payment_outcome",
                 Map.of(
                         "status", "success"
@@ -68,7 +75,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("reference", is("MRPC12345"))
                 .body("description", is("New passport application"))
                 .body("processor_id", is("183f2j8923j8"))
-                .body("provider_id", is("17498-8412u9-1273891239"))
+                .body("provider_id", is(providerId))
                 .body("card_details.card_type", is(nullValue()))
                 .body("card_details.expiry_date", is(nullValue()))
                 .body("card_details.last_digits_card_number", is(nullValue()))
@@ -102,7 +109,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("created_date", is("2018-02-21T16:04:25.000Z"))
                 .body("authorised_date", is("2018-02-21T16:05:33.000Z"))
                 .body("processor_id", is("183f2j8923j8"))
-                .body("provider_id", is("17498-8412u9-1273891239"))
+                .body("provider_id", is(providerId))
                 .body("auth_code", is("666"))
                 .body("payment_outcome.status", is("success"))
                 .body("card_details.card_type", is(nullValue()))
@@ -115,6 +122,14 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("charge_id.length()", is(26))
                 .body("state.status", is("success"))
                 .body("state.finished", is(true));
+
+        DatabaseTestHelper testHelper = testContext.getDatabaseTestHelper();
+        Map<String, Object> chargeDetails = testHelper.getChargeByGatewayTransactionId(providerId);
+        Long chargeId = Long.parseLong(chargeDetails.get("id").toString());
+        List<Map<String, Object>> chargeEvents = testHelper.getChargeEvents(chargeId);
+
+        assertThat(chargeEvents, hasEvent(PAYMENT_NOTIFICATION_CREATED));
+        assertThat(chargeEvents, hasEvent(AUTHORISATION_SUCCESS));
     }
 
     @Test
@@ -138,7 +153,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("reference", is("MRPC12345"))
                 .body("description", is("New passport application"))
                 .body("processor_id", is("183f2j8923j8"))
-                .body("provider_id", is("17498-8412u9-1273891239"))
+                .body("provider_id", is(providerId))
                 .body("payment_outcome.status", is("failed"))
                 .body("payment_outcome.code", is("P0010"))
                 .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
@@ -182,7 +197,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("reference", is("MRPC12345"))
                 .body("description", is("New passport application"))
                 .body("processor_id", is("183f2j8923j8"))
-                .body("provider_id", is("17498-8412u9-1273891239"))
+                .body("provider_id", is(providerId))
                 .body("payment_outcome.status", is("failed"))
                 .body("payment_outcome.code", is("P0050"))
                 .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
@@ -219,7 +234,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("reference", is("MRPC12345"))
                 .body("description", is("New passport application"))
                 .body("processor_id", is("183f2j8923j8"))
-                .body("provider_id", is("17498-8412u9-1273891239"))
+                .body("provider_id", is(providerId))
                 .body("payment_outcome.status", is("failed"))
                 .body("payment_outcome.code", is("P0030"))
                 .body("payment_outcome.supplemental.error_code", is("ECKOH01234"))
@@ -263,7 +278,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("created_date", is("2018-02-21T16:04:25.000Z"))
                 .body("authorised_date", is("2018-02-21T16:05:33.000Z"))
                 .body("processor_id", is(stringOf50Characters))
-                .body("provider_id", is("17498-8412u9-1273891239"))
+                .body("provider_id", is(providerId))
                 .body("auth_code", is(stringOf50Characters))
                 .body("payment_outcome.status", is("failed"))
                 .body("payment_outcome.code", is("P0030"))
@@ -301,7 +316,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("reference", is("MRPC12345"))
                 .body("description", is("New passport application"))
                 .body("processor_id", is("183f2j8923j8"))
-                .body("provider_id", is("17498-8412u9-1273891239"))
+                .body("provider_id", is(providerId))
                 .body("payment_outcome.status", is("success"))
                 .body("card_details.card_type", is(nullValue()))
                 .body("card_details.expiry_date", is("02/19"))
