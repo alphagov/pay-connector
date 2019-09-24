@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
-import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
@@ -68,7 +68,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
         Optional.ofNullable(charge.getCardDetails()).ifPresent(
                 cardDetails -> 
                     builder.withCardBrand(cardDetails.getCardBrand())
-                            .withCardBrandLabel(cardDetails.getCardTypeDetails().map(CardTypeEntity::getLabel).orElse(null))
+                            .withCardBrandLabel(cardDetails.getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null))
                             .withFirstDigitsCardNumber(Optional.ofNullable(cardDetails.getFirstDigitsCardNumber())
                                     .map(FirstDigitsCardNumber::toString)
                                     .orElse(null)

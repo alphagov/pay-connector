@@ -3,8 +3,8 @@ package uk.gov.pay.connector.charge.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
-import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 
 import javax.persistence.FetchType;
@@ -44,7 +44,7 @@ public class CardDetailsEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "card_brand", referencedColumnName = "brand", updatable = false, insertable = false)
-    private CardTypeEntity cardTypeDetails;
+    private CardBrandLabelEntity cardTypeDetails;
 
     @Column(name = "card_brand")
     private String cardBrand;
@@ -168,11 +168,11 @@ public class CardDetailsEntity {
         return Objects.hash(firstDigitsCardNumber, lastDigitsCardNumber, cardHolderName, expiryDate, cardBrand, cardType, billingAddress);
     }
     
-    public Optional<CardTypeEntity> getCardTypeDetails() {
+    public Optional<CardBrandLabelEntity> getCardTypeDetails() {
         return Optional.ofNullable(cardTypeDetails);
     }
 
-    public void setCardTypeDetails(CardTypeEntity cardTypeDetails) {
+    public void setCardTypeDetails(CardBrandLabelEntity cardTypeDetails) {
         this.cardTypeDetails = cardTypeDetails;
     }
 }
