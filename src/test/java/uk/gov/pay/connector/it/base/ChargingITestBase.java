@@ -361,7 +361,7 @@ public class ChargingITestBase {
         addCharge(chargeId, externalChargeId, chargeStatus, reference, fromDate, null);
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
-        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment", "03/18", "line1", null, "postcode", "city", null, "country");
+        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment", "03/18", null, "line1", null, "postcode", "city", null, "country");
 
         return externalChargeId;
     }

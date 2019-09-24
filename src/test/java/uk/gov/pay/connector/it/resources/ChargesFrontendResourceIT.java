@@ -212,7 +212,7 @@ public class ChargesFrontendResourceIT {
                 .withEmail(email)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, mastercardCredit.getBrand(), "1234", "123456", "Mr. McPayment",
-                "03/18", "line1", null, "postcode", "city", null, "country");
+                "03/18", null, "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, false);
     }
 
@@ -232,7 +232,7 @@ public class ChargesFrontendResourceIT {
                 .withEmail(email)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown", "1234", "123456", "Mr. McPayment",
-                "03/18", "line1", null, "postcode", "city", null, "country");
+                "03/18", null, "line1", null, "postcode", "city", null, "country");
         validateGetCharge(expectedAmount, externalChargeId, AUTHORISATION_SUCCESS, false);
     }
 
@@ -251,7 +251,7 @@ public class ChargesFrontendResourceIT {
                 .withStatus(AUTHORISATION_3DS_REQUIRED)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown", "1234", "123456", "Mr. McPayment",
-                "03/18", "line1", null, "postcode", "city", null, "country");
+                "03/18", null, "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.updateCharge3dsDetails(chargeId, issuerUrl, paRequest, null);
 
         connectorRestApi
@@ -276,7 +276,7 @@ public class ChargesFrontendResourceIT {
                 .withStatus(AUTHORISATION_SUCCESS)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown", "1234", "123456", "Mr. McPayment",
-                "03/18", null, null, null, null, null, null);
+                "03/18", null, null, null, null, null, null, null);
 
         connectorRestApi
                 .withChargeId(externalChargeId)

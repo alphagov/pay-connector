@@ -212,11 +212,11 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void updateChargeCardDetails(Long chargeId, String cardBrand, String lastDigitsCardNumber, String firstDigitsCardNumber, String cardHolderName, String expiryDate,
+    public void updateChargeCardDetails(Long chargeId, String cardBrand, String lastDigitsCardNumber, String firstDigitsCardNumber, String cardHolderName, String expiryDate, String cardType,
                                         String line1, String line2, String postcode, String city, String county, String country) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("UPDATE charges SET card_brand=:card_brand, last_digits_card_number=:last_digits_card_number, first_digits_card_number=:first_digits_card_number, cardholder_name=:cardholder_name, expiry_date=:expiry_date, address_line1=:address_line1, address_line2=:address_line2, address_postcode=:address_postcode, address_city=:address_city, address_county=:address_county, address_country=:address_country WHERE id=:id")
+                        .createStatement("UPDATE charges SET card_brand=:card_brand, last_digits_card_number=:last_digits_card_number, first_digits_card_number=:first_digits_card_number, cardholder_name=:cardholder_name, expiry_date=:expiry_date, address_line1=:address_line1, address_line2=:address_line2, address_postcode=:address_postcode, address_city=:address_city, address_county=:address_county, address_country=:address_country, card_type=:card_type WHERE id=:id")
                         .bind("id", chargeId)
                         .bind("card_brand", cardBrand)
                         .bind("last_digits_card_number", lastDigitsCardNumber)
@@ -229,6 +229,7 @@ public class DatabaseTestHelper {
                         .bind("address_city", city)
                         .bind("address_county", county)
                         .bind("address_country", country)
+                        .bind("card_type", cardType)
                         .execute()
         );
     }
@@ -341,6 +342,7 @@ public class DatabaseTestHelper {
                 StringUtils.left(authCardDetails.getCardNo(), 6),
                 authCardDetails.getCardHolder(),
                 authCardDetails.getEndDate(),
+                null,
                 authCardDetails.getAddress().map(Address::getLine1).orElse(null),
                 authCardDetails.getAddress().map(Address::getLine2).orElse(null),
                 authCardDetails.getAddress().map(Address::getPostcode).orElse(null),

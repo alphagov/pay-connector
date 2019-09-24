@@ -17,6 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -38,6 +39,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static io.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.rules.AppWithPostgresRule.WIREMOCK_PORT;
@@ -141,10 +143,11 @@ public class TransactionsApiContractTest {
                 .withDescription("Test description")
                 .withReference(ServicePaymentReference.of("aReference"))
                 .withCreatedDate(createdDate)
+                .withCardType(DEBIT)
                 .withEmail("test@test.com")
                 .withDelayedCapture(delayedCapture)
                 .build());
-        dbHelper.updateChargeCardDetails(chargeId, "visa", lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, "08/23",
+        dbHelper.updateChargeCardDetails(chargeId, "visa", lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, "08/23", String.valueOf(DEBIT),
                 "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
     }
 

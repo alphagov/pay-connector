@@ -221,6 +221,7 @@ public class DatabaseFixtures {
         private TestAddress billingAddress = new TestAddress();
         private Long chargeId;
         private String cardBrand = "visa";
+        private CardType cardType = null;
 
         public TestCardDetails withLastDigitsOfCardNumber(String lastDigitsCardNumber) {
             this.lastDigitsCardNumber = LastDigitsCardNumber.ofNullable(lastDigitsCardNumber);
@@ -256,6 +257,11 @@ public class DatabaseFixtures {
             this.chargeId = chargeId;
             return this;
         }
+        
+        public TestCardDetails withCardType(CardType cardType) {
+            this.cardType = cardType;
+            return this;
+        }
 
         public LastDigitsCardNumber getLastDigitsCardNumber() {
             return lastDigitsCardNumber;
@@ -276,6 +282,10 @@ public class DatabaseFixtures {
         public TestAddress getBillingAddress() {
             return billingAddress;
         }
+        
+        public CardType getCardType() { 
+            return cardType;
+        }
 
         public TestCardDetails update() {
             databaseTestHelper.updateChargeCardDetails(
@@ -285,6 +295,7 @@ public class DatabaseFixtures {
                     firstDigitsCardNumber == null ? null : firstDigitsCardNumber.toString(),
                     cardHolderName,
                     expiryDate,
+                    cardType == null ? null : cardType.toString(),
                     billingAddress.getLine1(),
                     billingAddress.getLine2(),
                     billingAddress.getPostcode(),

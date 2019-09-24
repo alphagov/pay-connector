@@ -462,7 +462,7 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
         expiryDate = "03/18";
-        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, expiryDate, "line1", null, "postcode", "city", null, "country");
+        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, expiryDate, null, "line1", null, "postcode", "city", null, "country");
         return externalChargeId;
     }
 
@@ -490,7 +490,7 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
         expiryDate = "03/18";
-        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, expiryDate, "line1", null, "postcode", "city", null, "country");
+        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, expiryDate, null, "line1", null, "postcode", "city", null, "country");
         return externalChargeId;
     }
 
@@ -515,7 +515,7 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
                 .withDelayedCapture(false)
                 .build());
         databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
-                "03/18", "line1", null, "postcode", "city", null, "country");
+                "03/18", null, "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.updateCorporateSurcharge(chargeId, 150L);
         databaseTestHelper.addToken(chargeId, "tokenId");
     }
