@@ -73,4 +73,8 @@ public class EmittedEventEntity {
     public ZonedDateTime getEmittedDate() {
         return emittedDate;
     }
+
+    public void setEmittedDate(ZonedDateTime emittedDate) {
+        this.emittedDate = emittedDate;
+    }
 }
