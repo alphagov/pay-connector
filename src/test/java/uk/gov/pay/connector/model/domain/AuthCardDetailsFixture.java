@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
 import org.apache.commons.lang3.StringUtils;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
@@ -105,6 +106,11 @@ public final class AuthCardDetailsFixture {
         if(address != null) {
             cardDetailsEntity.setBillingAddress(new AddressEntity(address));
         }
+
+        CardTypeEntity cardType = new CardTypeEntity();
+        cardType.setBrand("visa");
+        cardType.setLabel("Visa");
+        cardDetailsEntity.setCardTypeDetails(cardType);
 
         return cardDetailsEntity;
     }
