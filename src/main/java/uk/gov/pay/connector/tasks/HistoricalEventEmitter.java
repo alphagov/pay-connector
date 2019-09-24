@@ -88,6 +88,11 @@ public class HistoricalEventEmitter {
         this.stateTransitionService = stateTransitionService;
     }
 
+    public void processPaymentAndRefundEvents(ChargeEntity charge) {
+        processPaymentEvents(charge);
+        processRefundEvents(charge);
+    }
+
     public void processPaymentEvents(ChargeEntity charge) {
         List<ChargeEventEntity> chargeEventEntities = getSortedChargeEvents(charge);
 
