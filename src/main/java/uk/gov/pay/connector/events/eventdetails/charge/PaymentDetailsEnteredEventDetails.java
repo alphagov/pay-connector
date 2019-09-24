@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
+import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
@@ -15,6 +16,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
     private final Long corporateSurcharge;
     private final String email;
     private final String cardBrand;
+    private final String cardBrandLabel;
     private final String firstDigitsCardNumber;
     private final String lastDigitsCardNumber;
     private final String gatewayTransactionId;
@@ -30,15 +32,16 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
     private final Long totalAmount;
 
     private PaymentDetailsEnteredEventDetails(Long corporateSurcharge, String email, String cardBrand,
-                                             String gatewayTransactionId, String firstDigitsCardNumber,
-                                             String lastDigitsCardNumber, String cardholderName, String expiryDate,
-                                             String addressLine1, String addressLine2, String addressPostcode,
-                                             String addressCity, String addressCounty, String addressCountry,
-                                             String wallet, Long totalAmount) {
+                                              String cardBrandLabel, String gatewayTransactionId, String firstDigitsCardNumber,
+                                              String lastDigitsCardNumber, String cardholderName, String expiryDate,
+                                              String addressLine1, String addressLine2, String addressPostcode,
+                                              String addressCity, String addressCounty, String addressCountry,
+                                              String wallet, Long totalAmount) {
 
         this.corporateSurcharge = corporateSurcharge;
         this.email = email;
         this.cardBrand = cardBrand;
+        this.cardBrandLabel = cardBrandLabel;
         this.gatewayTransactionId = gatewayTransactionId;
         this.firstDigitsCardNumber = firstDigitsCardNumber;
         this.lastDigitsCardNumber = lastDigitsCardNumber;
@@ -65,6 +68,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
         Optional.ofNullable(charge.getCardDetails()).ifPresent(
                 cardDetails -> 
                     builder.withCardBrand(cardDetails.getCardBrand())
+                            .withCardBrandLabel(cardDetails.getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null))
                             .withFirstDigitsCardNumber(Optional.ofNullable(cardDetails.getFirstDigitsCardNumber())
                                     .map(FirstDigitsCardNumber::toString)
                                     .orElse(null)
@@ -95,6 +99,10 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
 
     public String getCardBrand() {
         return cardBrand;
+    }
+    
+    public String getCardBrandLabel() { 
+        return cardBrandLabel; 
     }
 
     public String getFirstDigitsCardNumber() {
@@ -183,6 +191,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
         private Long corporateSurcharge;
         private String email;
         private String cardBrand;
+        private String cardBrandLabel;
         private String gatewayTransactionId;
         private String firstDigitsCardNumber;
         private String lastDigitsCardNumber;
@@ -209,6 +218,11 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
 
         Builder withCardBrand(String cardBrand) {
             this.cardBrand = cardBrand;
+            return this;
+        }
+        
+        Builder withCardBrandLabel(String cardBrandLabel) { 
+            this.cardBrandLabel = cardBrandLabel;
             return this;
         }
 
@@ -278,7 +292,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
         }
 
         PaymentDetailsEnteredEventDetails build() {
-            return new PaymentDetailsEnteredEventDetails(corporateSurcharge, email, cardBrand, gatewayTransactionId, firstDigitsCardNumber, lastDigitsCardNumber, cardholderName, expiryDate, addressLine1, addressLine2, addressPostcode, addressCity, addressCounty, addressCountry, wallet, totalAmount);
+            return new PaymentDetailsEnteredEventDetails(corporateSurcharge, email, cardBrand, cardBrandLabel, gatewayTransactionId, firstDigitsCardNumber, lastDigitsCardNumber, cardholderName, expiryDate, addressLine1, addressLine2, addressPostcode, addressCity, addressCounty, addressCountry, wallet, totalAmount);
         }
     }
 }
