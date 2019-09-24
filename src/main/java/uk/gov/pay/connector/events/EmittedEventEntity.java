@@ -77,4 +77,8 @@ public class EmittedEventEntity {
     public void setEmittedDate(ZonedDateTime emittedDate) {
         this.emittedDate = emittedDate;
     }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 }

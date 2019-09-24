@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -144,7 +145,11 @@ public class EmittedEventDaoIT extends DaoITestBase {
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
                 paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp());
 
-        List<EmittedEventEntity> notEmittedEvents = emittedEventDao.findNotEmittedEventsOlderThan(ZonedDateTime.parse("2019-01-01T14:00:01Z"));
+        Optional<Long> maxId = emittedEventDao.findNotEmittedEventMaxIdOlderThan(ZonedDateTime.parse("2019-01-01T14:00:01Z"));
+        assertThat(maxId.isPresent(), is(true));
+
+        List<EmittedEventEntity> notEmittedEvents = emittedEventDao.findNotEmittedEventsOlderThan(
+                ZonedDateTime.parse("2019-01-01T14:00:01Z"), 1, 0L, Long.MAX_VALUE);
 
         assertThat(notEmittedEvents.size(), is(1));
         assertThat(notEmittedEvents.get(0).getEmittedDate(), nullValue());
