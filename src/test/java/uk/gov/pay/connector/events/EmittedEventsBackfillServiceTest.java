@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.events;
 
-
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -34,7 +33,11 @@ import java.util.Optional;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -62,6 +65,7 @@ public class EmittedEventsBackfillServiceTest {
     private EmittedEventsBackfillService emittedEventsBackfillService;
     private ChargeEntity chargeEntity;
     private RefundEntity refundEntity;
+    private Long maxId = 2L;
 
     @Before
     public void setUp() {
@@ -85,68 +89,72 @@ public class EmittedEventsBackfillServiceTest {
         chargeEntity.getEvents().add(chargeEventEntity);
         refundEntity = mock(RefundEntity.class);
         when(refundEntity.getChargeEntity()).thenReturn(chargeEntity);
+        when(emittedEventDao.findNotEmittedEventMaxIdOlderThan(any(ZonedDateTime.class))).thenReturn(Optional.of(maxId));
     }
     
     @Test
     public void logsMessageWhenNoEmittedEventsSatisfyingCriteria() {
-        when(emittedEventDao.findNotEmittedEventsOlderThan(any())).thenReturn(List.of());
+        when(emittedEventDao.findNotEmittedEventMaxIdOlderThan(any(ZonedDateTime.class))).thenReturn(Optional.empty());
         
         emittedEventsBackfillService.backfillNotEmittedEvents();
         
-        verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any());
+        verify(emittedEventDao, never()).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), anyLong(), eq(maxId));
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.get(0).getFormattedMessage(), is("Number of not emitted events to process: [0]; oldestDate=none"));
+        assertThat(loggingEvents.get(0).getFormattedMessage(), is("Finished processing not emitted events [lastProcessedId=0, maxId=none]"));
     }
 
     @Test
     public void backfillsEventsWhenEmittedPaymentEventSatisfyingCriteria() {
         var emittedEvent = anEmittedEventEntity().withResourceExternalId(chargeEntity.getExternalId()).build();
-        when(emittedEventDao.findNotEmittedEventsOlderThan(any())).thenReturn(List.of(emittedEvent));
+        when(emittedEventDao.findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId))).thenReturn(List.of(emittedEvent));
         when(chargeService.findChargeById(chargeEntity.getExternalId())).thenReturn(chargeEntity);
 
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
-        verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any());
+        verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId));
         verify(stateTransitionService, times(1)).offerStateTransition(any(), any());
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.get(0).getFormattedMessage(), is("Number of not emitted events to process: [1]; oldestDate=2019-09-20T10:00Z"));
+        assertThat(loggingEvents.get(0).getFormattedMessage(), is("Processing not emitted events [lastProcessedId=0, no.of.events=1, oldestDate=2019-09-20T10:00Z]"));
+        assertThat(loggingEvents.get(1).getFormattedMessage(), is("Finished processing not emitted events [lastProcessedId=1, maxId=2]"));
     }
 
     @Test
     public void backfillsEventsWhenEmittedRefundEventSatisfyingCriteria() {
         var emittedEvent = anEmittedEventEntity().withResourceType("refund")
                 .withResourceExternalId(chargeEntity.getExternalId()).build();
-        when(emittedEventDao.findNotEmittedEventsOlderThan(any())).thenReturn(List.of(emittedEvent));
+        when(emittedEventDao.findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId))).thenReturn(List.of(emittedEvent));
         when(refundDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(refundEntity));
 
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
-        verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any());
+        verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId));
         verify(stateTransitionService, times(1)).offerStateTransition(any(), any());
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.get(0).getFormattedMessage(), is("Number of not emitted events to process: [1]; oldestDate=2019-09-20T10:00Z"));
+        assertThat(loggingEvents.get(0).getFormattedMessage(), is("Processing not emitted events [lastProcessedId=0, no.of.events=1, oldestDate=2019-09-20T10:00Z]"));
+        assertThat(loggingEvents.get(1).getFormattedMessage(), is("Finished processing not emitted events [lastProcessedId=1, maxId=2]"));
     }
 
     @Test
     public void backfillsEventsWhenEmittedEventsSatisfyingCriteria() {
         var emittedPaymentEvent = anEmittedEventEntity().withResourceExternalId(chargeEntity.getExternalId()).build();
-        var emittedRefundEvent = anEmittedEventEntity().withResourceType("refund")
+        var emittedRefundEvent = anEmittedEventEntity().withResourceType("refund").withId(2L)
                 .withEventDate(ZonedDateTime.parse("2019-09-20T09:00Z"))
                 .withResourceExternalId(chargeEntity.getExternalId())
                 .build();
-        when(emittedEventDao.findNotEmittedEventsOlderThan(any())).thenReturn(List.of(emittedPaymentEvent, emittedRefundEvent));
+        when(emittedEventDao.findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId))).thenReturn(List.of(emittedPaymentEvent, emittedRefundEvent));
         when(refundDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(refundEntity));
         when(chargeService.findChargeById(chargeEntity.getExternalId())).thenReturn(chargeEntity);
 
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
-        verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any());
+        verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId));
         verify(stateTransitionService, times(2)).offerStateTransition(any(), any());
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.get(0).getFormattedMessage(), is("Number of not emitted events to process: [2]; oldestDate=2019-09-20T09:00Z"));
+        assertThat(loggingEvents.get(0).getFormattedMessage(), is("Processing not emitted events [lastProcessedId=0, no.of.events=2, oldestDate=2019-09-20T09:00Z]"));
+        assertThat(loggingEvents.get(1).getFormattedMessage(), is("Finished processing not emitted events [lastProcessedId=2, maxId=2]"));
     }
 }

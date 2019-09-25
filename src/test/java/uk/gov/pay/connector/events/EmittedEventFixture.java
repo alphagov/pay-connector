@@ -3,9 +3,10 @@ package uk.gov.pay.connector.events;
 import java.time.ZonedDateTime;
 
 public class EmittedEventFixture {
+    private Long id = 1L;
     private String resourceType = "payment";
     private String resourceExternalId = "some-external-id";
-    private String eventType = "PaymentCreated";
+    private String eventType = "PAYMENT_CREATED";
     private ZonedDateTime eventDate = ZonedDateTime.parse("2019-09-20T10:00Z");
     private ZonedDateTime emittedDate;
 
@@ -14,8 +15,11 @@ public class EmittedEventFixture {
     }
 
     public EmittedEventEntity build() {
-        return new EmittedEventEntity(resourceType, resourceExternalId, eventType,
+        var event = new EmittedEventEntity(resourceType, resourceExternalId, eventType,
                 eventDate, emittedDate);
+        event.setId(id);
+
+        return event;
     }
 
     public EmittedEventFixture withEmittedDate(ZonedDateTime emittedDate) {
@@ -40,6 +44,11 @@ public class EmittedEventFixture {
 
     public EmittedEventFixture withResourceType(String resourceType) {
         this.resourceType = resourceType;
+        return this;
+    }
+
+    public EmittedEventFixture withId(Long id) {
+        this.id = id;
         return this;
     }
 }

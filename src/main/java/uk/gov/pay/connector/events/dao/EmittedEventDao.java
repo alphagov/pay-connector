@@ -13,6 +13,7 @@ import javax.persistence.Query;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static java.time.ZonedDateTime.now;
 
@@ -81,14 +82,30 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
         query.executeUpdate();
     }
 
-    public List<EmittedEventEntity> findNotEmittedEventsOlderThan(ZonedDateTime cutOffDate) {
-        String query = "SELECT e from EmittedEventEntity e " +
+    public Optional<Long> findNotEmittedEventMaxIdOlderThan(ZonedDateTime cutOffDate) {
+        String query = "SELECT MAX(e.id) from EmittedEventEntity e " +
                 "WHERE e.eventDate < :cutOffDate " +
                 "AND e.emittedDate is null";
+
+        return Optional.ofNullable(entityManager.get()
+                .createQuery(query, Long.class)
+                .setParameter("cutOffDate", cutOffDate)
+                .getSingleResult());
+    }
+
+    public List<EmittedEventEntity> findNotEmittedEventsOlderThan(ZonedDateTime cutOffDate, int size,
+                                                                  Long lastProcessedId, Long maxId) {
+        String query = "SELECT e from EmittedEventEntity e " +
+                "WHERE e.id > :lastProcessedId AND e.id <= :maxId AND e.eventDate < :cutOffDate " +
+                "AND e.emittedDate is null " +
+                "ORDER BY e.id";
 
         return entityManager.get()
                 .createQuery(query, EmittedEventEntity.class)
                 .setParameter("cutOffDate", cutOffDate)
+                .setParameter("lastProcessedId", lastProcessedId)
+                .setParameter("maxId", maxId)
+                .setMaxResults(size)
                 .getResultList();
     }
 }

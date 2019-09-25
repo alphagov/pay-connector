@@ -9,6 +9,7 @@ import uk.gov.pay.connector.events.EmittedEventsBackfillService;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -30,6 +31,6 @@ public class EmittedEventResourceTest {
                 .request()
                 .post(Entity.json(""));
 
-        assertThat(response.getStatus(), is(200));
+        assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
     }
 }

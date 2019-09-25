@@ -24,7 +24,7 @@ import java.util.Optional;
 import static java.time.ZonedDateTime.now;
 
 public class EmittedEventsBackfillService {
-
+    private static final int PAGE_SIZE = 100;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final EmittedEventDao emittedEventDao;
@@ -47,16 +47,32 @@ public class EmittedEventsBackfillService {
     }
 
     public void backfillNotEmittedEvents() {
-        List<EmittedEventEntity> notEmittedEventsToProcess =
-                emittedEventDao.findNotEmittedEventsOlderThan(getCutoffDateForProcessingNotEmittedEvents());
-        String oldestEventDate = notEmittedEventsToProcess.stream()
-                .map(EmittedEventEntity::getEventDate).min(ZonedDateTime::compareTo)
-                .map(ZonedDateTime::toString).orElse("none");
+        Long lastProcessedId = 0L;
+        ZonedDateTime cutoffDate = getCutoffDateForProcessingNotEmittedEvents();
+        Optional<Long> maxId = emittedEventDao.findNotEmittedEventMaxIdOlderThan(cutoffDate);
 
-        logger.info("Number of not emitted events to process: [{}]; oldestDate={}",
-                notEmittedEventsToProcess.size(), oldestEventDate);
+        while (maxId.isPresent()) {
+            List<EmittedEventEntity> notEmittedEventsToProcess =
+                    emittedEventDao.findNotEmittedEventsOlderThan(cutoffDate,
+                            PAGE_SIZE, lastProcessedId, maxId.get());
 
-        notEmittedEventsToProcess.forEach(this::backfillEvent);
+            if (!notEmittedEventsToProcess.isEmpty()) {
+                String oldestEventDate = notEmittedEventsToProcess.stream()
+                        .map(EmittedEventEntity::getEventDate).min(ZonedDateTime::compareTo)
+                        .map(ZonedDateTime::toString).orElse("none");
+
+                logger.info("Processing not emitted events [lastProcessedId={}, no.of.events={}, oldestDate={}]",
+                        lastProcessedId, notEmittedEventsToProcess.size(), oldestEventDate);
+
+                notEmittedEventsToProcess.forEach(this::backfillEvent);
+
+                lastProcessedId = notEmittedEventsToProcess.get(notEmittedEventsToProcess.size() - 1).getId();
+            } else {
+                break;
+            }
+        }
+        logger.info("Finished processing not emitted events [lastProcessedId={}, maxId={}]",
+                lastProcessedId, maxId.map(Object::toString).orElse("none"));
     }
 
     @Transactional
@@ -72,7 +88,7 @@ public class EmittedEventsBackfillService {
 
             charge.ifPresent(c -> MDC.put("chargeId", c.getExternalId()));
             charge.ifPresent(historicalEventEmitter::processPaymentAndRefundEvents);
-            event.setEmittedDate(ZonedDateTime.now(ZoneId.of("UTC")));
+            event.setEmittedDate(now(ZoneId.of("UTC")));
         } finally {
             MDC.remove("chargeId");
         }
