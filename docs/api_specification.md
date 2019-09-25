@@ -22,6 +22,43 @@ Content-Type: application/json
 ```
 -----------------------------------------------------------------------------------------------------------
 
+## POST /v1/tasks/emitted-events-sweep
+
+During the state transition event connector puts an event in an in-memory queue (and database) which is then picked up by
+the background process to emit the event to SQS.
+If the process is interrupted there is a database record which indicates that the event has been
+put in an in-memory queue, but not yet emitted to the SQS.
+
+This task retrieves all the records that haven't been fully processed, for each event it invokes the backfill process and
+marks the event as processed.
+
+The default age of the non-emitted event is at least 30 minutes. This value can be controlled with
+`NOT_EMITTED_EVENT_MAX_AGE_IN_SECONDS` environment variable. 
+
+### Request example
+
+POST `/v1/tasks/emitted-events-sweep`
+```
+curl -v -XPOST '127.0.0.1:9300/v1/tasks/emitted-events-sweep'
+```
+
+### Response example
+
+```
+*   Trying 127.0.0.1...
+* TCP_NODELAY set
+* Connected to 127.0.0.1 (127.0.0.1) port 9300 (#0)
+> POST /v1/tasks/emitted-events-sweep HTTP/1.1
+> Host: 127.0.0.1:9300
+> User-Agent: curl/7.54.0
+> Accept: */*
+> 
+< HTTP/1.1 200 OK
+< Date: Wed, 25 Sep 2019 08:15:48 GMT
+< Content-Length: 0
+```
+-----------------------------------------------------------------------------------------------------------
+
 ## POST /v1/api/accounts
 
 This endpoint creates a new account in this connector.
