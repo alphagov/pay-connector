@@ -6,17 +6,18 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.common.model.api.ToLowerCaseStringSerializer;
 
-import javax.persistence.FetchType;
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Embeddable;
 import javax.persistence.Embedded;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import java.util.Objects;
-import javax.persistence.OneToOne;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
+import java.util.Objects;
 import java.util.Optional;
 
 @Embeddable
@@ -49,9 +50,10 @@ public class CardDetailsEntity {
     @Column(name = "card_brand")
     private String cardBrand;
 
+    @Column(name = "card_type")
     @Enumerated(EnumType.STRING)
     @JsonProperty("card_type")
-    @Column(name = "card_type")
+    @JsonSerialize(using = ToLowerCaseStringSerializer.class)
     private CardType cardType;
 
     @Embedded

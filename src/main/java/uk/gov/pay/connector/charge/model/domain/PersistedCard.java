@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.common.model.api.ToLowerCaseStringSerializer;
 import uk.gov.pay.connector.common.model.domain.Address;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -33,7 +34,8 @@ public class PersistedCard {
 
     @JsonProperty("card_brand")
     private String cardBrand;
-    
+
+    @JsonSerialize(using = ToLowerCaseStringSerializer.class)
     @JsonProperty("card_type")
     private CardType cardType;
 
