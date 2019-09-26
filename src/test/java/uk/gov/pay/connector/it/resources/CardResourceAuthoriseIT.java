@@ -381,7 +381,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body("card_details.last_digits_card_number", is("4242"))
                 .body("card_details.first_digits_card_number", is("424242"))
-                .body("card_details.card_type", is("CREDIT"))
+                .body("card_details.card_type", is("credit"))
                 .body("card_details.cardholder_name", is("Charge1 Name"))
                 .body("card_details.expiry_date", is("10/99"))
                 .body("card_details.billing_address.line1.", is("Charge1 Line1"))
