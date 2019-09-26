@@ -10,6 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -536,6 +537,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
                 .withCardHolder(cardholderName)
                 .withCardNo(cardNumber)
                 .withCvc(cvc)
+                .withCardType(PayersCardType.CREDIT)
                 .withEndDate(expiryDate)
                 .withCardBrand(cardBrand)
                 .withAddress(address)
@@ -549,6 +551,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(cardDetails.getCardHolderName(), is(cardholderName));
         assertThat(cardDetails.getCardBrand(), is(cardBrand));
         assertThat(cardDetails.getExpiryDate(), is(expiryDate));
+        assertThat(cardDetails.getCardType(), is(CardType.CREDIT));
         assertThat(cardDetails.getLastDigitsCardNumber().toString(), is("4242"));
         assertThat(cardDetails.getFirstDigitsCardNumber().toString(), is("424242"));
         assertThat(cardDetails.getBillingAddress().isPresent(), is(true));

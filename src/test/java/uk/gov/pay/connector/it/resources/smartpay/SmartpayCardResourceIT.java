@@ -13,6 +13,7 @@ import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -233,6 +234,7 @@ public class SmartpayCardResourceIT extends ChargingITestBase {
                 cvc,
                 "08/18",
                 "visa",
+                "CREDIT",
                 "The Money Pool", "line 2",
                 "London",
                 null, "DO11 4RS", "GB");

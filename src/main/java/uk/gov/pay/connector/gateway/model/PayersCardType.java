@@ -7,13 +7,20 @@ import uk.gov.pay.connector.cardtype.model.domain.CardType;
  * dealing with what type (CREDIT, DEBIT, CREDIT_OR_DEBIT) card is
  * used to make a payment. This is also used to calculate corporate
  * surcharges, based on other rules.
- * <p>
- * This should not be confused with {@link CardType}
- * which is used to map values from the database to frontend
- * labels. This is used to drive the frontend UI
  */
 public enum PayersCardType {
     DEBIT,
     CREDIT,
-    CREDIT_OR_DEBIT
+    CREDIT_OR_DEBIT;
+    
+    public static CardType toCardType(PayersCardType payersCardType) {
+        switch (payersCardType) {
+            case DEBIT:
+                return CardType.DEBIT;
+            case CREDIT:
+                return CardType.CREDIT;
+            default: 
+                return null;
+        }
+    }
 }

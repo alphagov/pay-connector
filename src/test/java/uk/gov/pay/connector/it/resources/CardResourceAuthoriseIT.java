@@ -28,6 +28,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.fail;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
@@ -96,7 +97,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
 
         String externalChargeId = shouldAuthoriseChargeFor(buildDetailedJsonAuthorisationDetailsFor(
                 "4444333322221111", "123", "11/30",
-                valueWithMoreThan10CharactersAsNumbers, valueWithMoreThan10CharactersAsNumbers,
+                valueWithMoreThan10CharactersAsNumbers, "CREDIT", valueWithMoreThan10CharactersAsNumbers,
                 valueWithMoreThan10CharactersAsNumbers, valueWithMoreThan10CharactersAsNumbers,
                 valueWithMoreThan10CharactersAsNumbers, valueWithMoreThan10CharactersAsNumbers,
                 valueWithMoreThan10CharactersAsNumbers, valueWithMoreThan10CharactersAsNumbers));
@@ -122,7 +123,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
 
         String externalChargeId = shouldAuthoriseChargeFor(buildDetailedJsonAuthorisationDetailsFor(
                 "4444333322221111", "123", "11/30",
-                valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers,
+                valueWith10CharactersAsNumbers, "CREDIT", valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers,
                 valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers,
                 valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers));
 
@@ -160,7 +161,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
 
     @Test
     public void shouldAuthoriseCharge_WithMinimalAddress() {
-        String cardDetails = authorisationDetailsWithMinimalAddress(VALID_SANDBOX_CARD_LIST[0], "visa");
+        String cardDetails = authorisationDetailsWithMinimalAddress(VALID_SANDBOX_CARD_LIST[0], "visa", "CREDIT");
         shouldAuthoriseChargeFor(cardDetails);
     }
 
@@ -338,6 +339,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                         "123",
                         "10/99",
                         "visa",
+                        "CREDIT",
                         "Charge1 Line1",
                         "Charge1 Line2",
                         "Charge1 City",
@@ -353,6 +355,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                         "456",
                         "11/99",
                         "visa",
+                        null,
                         "Charge2 Line1",
                         "Charge2 Line2",
                         "Charge2 City",
@@ -378,6 +381,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body("card_details.last_digits_card_number", is("4242"))
                 .body("card_details.first_digits_card_number", is("424242"))
+                .body("card_details.card_type", is("CREDIT"))
                 .body("card_details.cardholder_name", is("Charge1 Name"))
                 .body("card_details.expiry_date", is("10/99"))
                 .body("card_details.billing_address.line1.", is("Charge1 Line1"))
@@ -394,6 +398,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body("card_details.last_digits_card_number", is("1111"))
                 .body("card_details.first_digits_card_number", is("444433"))
+                .body("card_details.card_type", is(nullValue()))
                 .body("card_details.cardholder_name", is("Charge2 Name"))
                 .body("card_details.expiry_date", is("11/99"))
                 .body("card_details.billing_address.line1.", is("Charge2 Line1"))

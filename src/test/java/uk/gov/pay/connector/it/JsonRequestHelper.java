@@ -16,6 +16,7 @@ public class JsonRequestHelper {
     private static final String ADDRESS_POSTCODE = "DO11 4RS";
     private static final String ADDRESS_COUNTRY_GB = "GB";
     private static final String CARD_NUMBER = "4242424242424242";
+    private static final String CARD_TYPE = "CREDIT";
     private static final String CARD_BRAND = "cardBrand";
     private static final String ADDRESS_LINE_2 = "Moneybags Avenue";
     private static final String ADDRESS_COUNTY = "Greater London";
@@ -26,12 +27,12 @@ public class JsonRequestHelper {
     }
 
     public static String buildJsonAuthorisationDetailsFor(String cardHolderName, String cardNumber, String cardBrand) {
-        return buildJsonAuthorisationDetailsFor(cardHolderName, cardNumber, CVC, EXPIRY_DATE, cardBrand, ADDRESS_LINE_1,
+        return buildJsonAuthorisationDetailsFor(cardHolderName, cardNumber, CVC, EXPIRY_DATE, cardBrand, CARD_TYPE, ADDRESS_LINE_1,
                 null, ADDRESS_CITY, null, ADDRESS_POSTCODE, ADDRESS_COUNTRY_GB);
     }
 
     public static String buildJsonAuthorisationDetailsFor(String cardNumber, String cvc, String expiryDate, String cardBrand) {
-        return buildJsonAuthorisationDetailsFor(CARD_HOLDER_NAME, cardNumber, cvc, expiryDate, cardBrand, ADDRESS_LINE_1,
+        return buildJsonAuthorisationDetailsFor(CARD_HOLDER_NAME, cardNumber, cvc, expiryDate, cardBrand, CARD_TYPE, ADDRESS_LINE_1,
                 null, ADDRESS_CITY, null, ADDRESS_POSTCODE, ADDRESS_COUNTRY_GB);
     }
 
@@ -39,6 +40,7 @@ public class JsonRequestHelper {
                                                                   String cvc,
                                                                   String expiryDate,
                                                                   String cardBrand,
+                                                                  String cardType,
                                                                   String cardHolderName,
                                                                   String addressLine1,
                                                                   String addressLine2,
@@ -46,7 +48,7 @@ public class JsonRequestHelper {
                                                                   String county,
                                                                   String postcode,
                                                                   String country) {
-        return buildJsonAuthorisationDetailsFor(cardHolderName, cardNumber, cvc, expiryDate, cardBrand, addressLine1, addressLine2, city, county, postcode, country);
+        return buildJsonAuthorisationDetailsFor(cardHolderName, cardNumber, cvc, expiryDate, cardBrand, cardType, addressLine1, addressLine2, city, county, postcode, country);
     }
 
     public static String buildJsonAuthorisationDetailsFor(String cardHolderName,
@@ -54,6 +56,7 @@ public class JsonRequestHelper {
                                                           String cvc,
                                                           String expiryDate,
                                                           String cardBrand,
+                                                          String cardType,
                                                           String line1,
                                                           String line2,
                                                           String city,
@@ -61,7 +64,7 @@ public class JsonRequestHelper {
                                                           String postCode,
                                                           String countryCode) {
         return buildCorporateJsonAuthorisationDetailsFor(cardHolderName, cardNumber, cvc, expiryDate, cardBrand, line1,
-                line2, city, county, postCode, countryCode, null, null, PREPAID_STATUS);
+                line2, city, county, postCode, countryCode, null, cardType, PREPAID_STATUS);
     }
 
     public static String buildCorporateJsonAuthorisationDetailsFor(PayersCardType payersCardType) {
@@ -78,7 +81,7 @@ public class JsonRequestHelper {
                 ADDRESS_POSTCODE,
                 ADDRESS_COUNTRY_GB,
                 Boolean.TRUE,
-                payersCardType,
+                payersCardType.toString(),
                 PREPAID_STATUS);
     }
 
@@ -89,6 +92,7 @@ public class JsonRequestHelper {
                 CVC,
                 EXPIRY_DATE,
                 CARD_BRAND,
+                CARD_TYPE,
                 ADDRESS_LINE_1,
                 ADDRESS_LINE_2,
                 ADDRESS_CITY,
@@ -106,7 +110,7 @@ public class JsonRequestHelper {
                 EXPIRY_DATE,
                 CARD_BRAND,
                 Boolean.TRUE,
-                PayersCardType.CREDIT,
+                PayersCardType.CREDIT.toString(),
                 PREPAID_STATUS);
 
         return toJson(authorisationDetails);
@@ -124,7 +128,7 @@ public class JsonRequestHelper {
                                                                     String postCode,
                                                                     String countryCode,
                                                                     Boolean isCorporateCard,
-                                                                    PayersCardType payersCardType,
+                                                                    String payersCardType,
                                                                     PayersCardPrepaidStatus prepaidStatus) {
 
         JsonObject addressObject = buildAddressObject(line1, line2, city, county, postCode, countryCode);
@@ -169,7 +173,7 @@ public class JsonRequestHelper {
                                                                           String expiryDate,
                                                                           String cardBrand,
                                                                           Boolean isCorporateCard,
-                                                                          PayersCardType payersCardType,
+                                                                          String payersCardType,
                                                                           PayersCardPrepaidStatus prepaidStatus) {
 
         JsonObject authorisationDetails = new JsonObject();
@@ -186,7 +190,7 @@ public class JsonRequestHelper {
             authorisationDetails.addProperty("corporate_card", isCorporateCard);
         }
         if (payersCardType != null) {
-            authorisationDetails.addProperty("card_type", payersCardType.toString());
+            authorisationDetails.addProperty("card_type", payersCardType);
         }
         return authorisationDetails;
     }
