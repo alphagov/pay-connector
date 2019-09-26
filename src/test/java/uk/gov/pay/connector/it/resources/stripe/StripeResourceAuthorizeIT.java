@@ -18,6 +18,7 @@ import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
@@ -77,6 +78,7 @@ public class StripeResourceAuthorizeIT {
     private static final String CARD_NUMBER = "4242424242424242";
     private static final String AMOUNT = "6234";
     private static final String DESCRIPTION = "Test description";
+    private static final String CARD_TYPE = "CREDIT"; 
 
     private static final String ADDRESS_LINE_1 = "The Money Pool";
     private static final String ADDRESS_LINE_2 = "Moneybags Avenue";
@@ -88,7 +90,7 @@ public class StripeResourceAuthorizeIT {
 
     private String stripeAccountId;
     private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor(CARD_HOLDER_NAME, CARD_NUMBER, CVC,
-            EXP_MONTH + "/" + EXP_YEAR, CARD_BRAND, ADDRESS_LINE_1, ADDRESS_LINE_2, ADDRESS_CITY,
+            EXP_MONTH + "/" + EXP_YEAR, CARD_BRAND, CARD_TYPE, ADDRESS_LINE_1, ADDRESS_LINE_2, ADDRESS_CITY,
             "London", ADDRESS_POSTCODE, ADDRESS_COUNTRY_GB);
     private String validAuthorisationDetailsWithoutBillingAddress = buildJsonAuthorisationDetailsWithoutAddress();
     private String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");

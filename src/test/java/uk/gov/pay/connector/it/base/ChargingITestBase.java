@@ -116,7 +116,7 @@ public class ChargingITestBase {
         return credentials;
     }
 
-    protected static String authorisationDetailsWithMinimalAddress(String cardNumber, String cardBrand) {
+    protected static String authorisationDetailsWithMinimalAddress(String cardNumber, String cardBrand, String cardType) {
         JsonObject addressObject = new JsonObject();
 
         addressObject.addProperty("line1", ADDRESS_LINE_1);
@@ -130,6 +130,7 @@ public class ChargingITestBase {
         authorisationDetails.addProperty("expiry_date", "12/21");
         authorisationDetails.addProperty("cardholder_name", "Mr. Payment");
         authorisationDetails.addProperty("card_brand", cardBrand);
+        authorisationDetails.addProperty("card_type", cardType);
         authorisationDetails.add("address", addressObject);
         authorisationDetails.addProperty("accept_header", "text/html");
         authorisationDetails.addProperty("user_agent_header", "Mozilla/5.0");
