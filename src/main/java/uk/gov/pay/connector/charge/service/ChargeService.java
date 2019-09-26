@@ -48,6 +48,7 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
@@ -671,6 +672,8 @@ public class ChargeService {
 
         if (authCardDetails.getAddress().isPresent())
             detailsEntity.setBillingAddress(new AddressEntity(authCardDetails.getAddress().get()));
+
+        detailsEntity.setCardType(PayersCardType.toCardType(authCardDetails.getPayersCardType()));
 
         return detailsEntity;
     }
