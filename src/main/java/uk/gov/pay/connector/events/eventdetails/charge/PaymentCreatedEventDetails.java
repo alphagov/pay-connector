@@ -16,11 +16,13 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private final String paymentProvider;
     private final String language;
     private final boolean delayedCapture;
+    private final boolean live;
     private final Map<String, Object> externalMetadata;
 
     public PaymentCreatedEventDetails(Long amount, String description, String reference, String returnUrl,
                                       Long gatewayAccountId, String paymentProvider, String language,
-                                      boolean delayedCapture, Map<String, Object> externalMetadata) {
+                                      boolean delayedCapture, boolean live,
+                                      Map<String, Object> externalMetadata) {
         this.amount = amount;
         this.description = description;
         this.reference = reference;
@@ -29,6 +31,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         this.paymentProvider = paymentProvider;
         this.language = language;
         this.delayedCapture = delayedCapture;
+        this.live = live;
         this.externalMetadata = externalMetadata;
     }
 
@@ -42,6 +45,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 charge.getGatewayAccount().getGatewayName(),
                 charge.getLanguage().toString(),
                 charge.isDelayedCapture(),
+                charge.getGatewayAccount().isLive(),
                 charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null));
     }
 
@@ -76,6 +80,10 @@ public class PaymentCreatedEventDetails extends EventDetails {
     public boolean isDelayedCapture() {
         return delayedCapture;
     }
+    
+    public boolean isLive() { 
+        return live;
+    }
 
     public Map<String, Object> getExternalMetadata() {
         return externalMetadata;
@@ -94,12 +102,13 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 Objects.equals(paymentProvider, that.paymentProvider) &&
                 Objects.equals(language, that.language) &&
                 Objects.equals(delayedCapture, that.delayedCapture) &&
+                Objects.equals(live, that.live) &&
                 Objects.equals(externalMetadata, that.externalMetadata);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(amount, description, reference, returnUrl, gatewayAccountId, paymentProvider, language,
-                delayedCapture, externalMetadata);
+                delayedCapture, live, externalMetadata);
     }
 }
