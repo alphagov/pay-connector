@@ -15,6 +15,7 @@ import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDetails;
@@ -24,6 +25,7 @@ import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
 import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
 import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
@@ -32,6 +34,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.time.ZonedDateTime;
+import java.util.Map;
 
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
@@ -142,5 +145,31 @@ public class QueueMessageContractTest {
         RefundSucceeded refundSucceeded = RefundSucceeded.from(refundHistory);
 
         return refundSucceeded.toJsonString();
+    }
+
+    @PactVerifyProvider("a payment notification created message")
+    public String verifyPaymentNotificationCreatedEvent() throws JsonProcessingException {
+        ExternalMetadata externalMetadata = new ExternalMetadata(Map.of(
+                "processor_id", "processorId",
+                "auth_code", "012345",
+                "telephone_number", "+447700900796",
+                "status", "success",
+                "authorised_date", "2018-02-21T16:05:33Z",
+                "created_date", "2018-02-21T15:05:13Z"));
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(ChargeStatus.PAYMENT_NOTIFICATION_CREATED)
+                .withGatewayTransactionId("providerId")
+                .withEmail("j.doe@example.org")
+                .withCardDetails(anAuthCardDetails().withAddress(null).getCardDetailsEntity())
+                .withExternalMetadata(externalMetadata)
+                .build();
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withCharge(charge)
+                .build();
+
+        PaymentNotificationCreated paymentNotificationCreated = PaymentNotificationCreated.from(chargeEventEntity);
+
+        return paymentNotificationCreated.toJsonString();
     }
 }
