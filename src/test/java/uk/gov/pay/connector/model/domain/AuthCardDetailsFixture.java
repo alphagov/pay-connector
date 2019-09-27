@@ -8,8 +8,8 @@ import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
+import uk.gov.pay.connector.gateway.model.PayersCardType;
 
 public final class AuthCardDetailsFixture {
     private String cardNo = "4242424242424242";
@@ -107,10 +107,12 @@ public final class AuthCardDetailsFixture {
             cardDetailsEntity.setBillingAddress(new AddressEntity(address));
         }
 
-        CardBrandLabelEntity cardType = new CardBrandLabelEntity();
-        cardType.setBrand("visa");
-        cardType.setLabel("Visa");
-        cardDetailsEntity.setCardTypeDetails(cardType);
+        cardDetailsEntity.setCardType(PayersCardType.toCardType(payersCardType));
+
+        CardBrandLabelEntity cardTypeDetails = new CardBrandLabelEntity();
+        cardTypeDetails.setBrand("visa");
+        cardTypeDetails.setLabel("Visa");
+        cardDetailsEntity.setCardTypeDetails(cardTypeDetails);
 
         return cardDetailsEntity;
     }
