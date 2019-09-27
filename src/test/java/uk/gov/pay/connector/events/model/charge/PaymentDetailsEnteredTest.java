@@ -6,6 +6,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.wallets.WalletType;
 
@@ -64,6 +65,7 @@ public class PaymentDetailsEnteredTest {
         assertThat(actual, hasJsonPath("$.event_details.corporate_surcharge", equalTo(10)));
         assertThat(actual, hasJsonPath("$.event_details.total_amount", equalTo(110)));
         assertThat(actual, hasJsonPath("$.event_details.email", equalTo("test@email.invalid")));
+        assertThat(actual, hasJsonPath("$.event_details.card_type", equalTo("DEBIT")));
         assertThat(actual, hasJsonPath("$.event_details.card_brand", equalTo("visa")));
         assertThat(actual, hasJsonPath("$.event_details.card_brand_label", equalTo("Visa")));
         assertThat(actual, hasJsonPath("$.event_details.gateway_transaction_id", equalTo(validTransactionId)));
@@ -83,7 +85,7 @@ public class PaymentDetailsEnteredTest {
     @Test
     public void whenNotAllTheDataIsAvailable() throws JsonProcessingException {
         ChargeEntity chargeEntity = chargeEntityFixture
-                .withCardDetails(anAuthCardDetails().withAddress(null).withCardNo("4242").getCardDetailsEntity())
+                .withCardDetails(anAuthCardDetails().withAddress(null).withCardNo("4242").withCardType(PayersCardType.CREDIT_OR_DEBIT).getCardDetailsEntity())
                 .withWalletType(null)
                 .withCorporateSurcharge(null)
                 .build();
@@ -100,6 +102,7 @@ public class PaymentDetailsEnteredTest {
         assertThat(actual, hasNoJsonPath("$.event_details.corporate_surcharge"));
         assertThat(actual, hasJsonPath("$.event_details.total_amount", equalTo(100)));
         assertThat(actual, hasJsonPath("$.event_details.email", equalTo("test@email.invalid")));
+        assertThat(actual, hasNoJsonPath("$.event_details.card_type"));
         assertThat(actual, hasJsonPath("$.event_details.card_brand", equalTo("visa")));
         assertThat(actual, hasJsonPath("$.event_details.gateway_transaction_id", equalTo(validTransactionId)));
         assertThat(actual, hasNoJsonPath("$.event_details.first_digits_card_number"));

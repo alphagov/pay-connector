@@ -15,6 +15,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
 
     private final Long corporateSurcharge;
     private final String email;
+    private final String cardType;
     private final String cardBrand;
     private final String cardBrandLabel;
     private final String firstDigitsCardNumber;
@@ -31,7 +32,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
     private final String wallet;
     private final Long totalAmount;
 
-    private PaymentDetailsEnteredEventDetails(Long corporateSurcharge, String email, String cardBrand,
+    private PaymentDetailsEnteredEventDetails(Long corporateSurcharge, String email, String cardType, String cardBrand,
                                               String cardBrandLabel, String gatewayTransactionId, String firstDigitsCardNumber,
                                               String lastDigitsCardNumber, String cardholderName, String expiryDate,
                                               String addressLine1, String addressLine2, String addressPostcode,
@@ -40,6 +41,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
 
         this.corporateSurcharge = corporateSurcharge;
         this.email = email;
+        this.cardType = cardType;
         this.cardBrand = cardBrand;
         this.cardBrandLabel = cardBrandLabel;
         this.gatewayTransactionId = gatewayTransactionId;
@@ -67,7 +69,8 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
         
         Optional.ofNullable(charge.getCardDetails()).ifPresent(
                 cardDetails -> 
-                    builder.withCardBrand(cardDetails.getCardBrand())
+                    builder.withCardType(Optional.ofNullable(cardDetails.getCardType()).map(Enum::toString).orElse(null))
+                            .withCardBrand(cardDetails.getCardBrand())
                             .withCardBrandLabel(cardDetails.getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null))
                             .withFirstDigitsCardNumber(Optional.ofNullable(cardDetails.getFirstDigitsCardNumber())
                                     .map(FirstDigitsCardNumber::toString)
@@ -95,6 +98,10 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getCardType() {
+        return cardType;
     }
 
     public String getCardBrand() {
@@ -164,6 +171,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
         PaymentDetailsEnteredEventDetails that = (PaymentDetailsEnteredEventDetails) o;
         return Objects.equals(corporateSurcharge, that.corporateSurcharge) &&
                 Objects.equals(email, that.email) &&
+                Objects.equals(cardType, that.cardType) &&
                 Objects.equals(cardBrand, that.cardBrand) &&
                 Objects.equals(firstDigitsCardNumber, that.firstDigitsCardNumber) &&
                 Objects.equals(lastDigitsCardNumber, that.lastDigitsCardNumber) &&
@@ -182,7 +190,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
 
     @Override
     public int hashCode() {
-        return Objects.hash(corporateSurcharge, email, cardBrand, firstDigitsCardNumber, lastDigitsCardNumber,
+        return Objects.hash(corporateSurcharge, email, cardType, cardBrand, firstDigitsCardNumber, lastDigitsCardNumber,
                 gatewayTransactionId, cardholderName, expiryDate, addressLine1, addressLine2, addressPostcode,
                 addressCounty, addressCountry, wallet, totalAmount);
     }
@@ -190,6 +198,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
     private static class Builder {
         private Long corporateSurcharge;
         private String email;
+        private String cardType;
         private String cardBrand;
         private String cardBrandLabel;
         private String gatewayTransactionId;
@@ -216,11 +225,16 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
             return this;
         }
 
+        Builder withCardType(String cardType) {
+            this.cardType = cardType;
+            return this;
+        }
+
         Builder withCardBrand(String cardBrand) {
             this.cardBrand = cardBrand;
             return this;
         }
-        
+
         Builder withCardBrandLabel(String cardBrandLabel) { 
             this.cardBrandLabel = cardBrandLabel;
             return this;
@@ -292,7 +306,9 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
         }
 
         PaymentDetailsEnteredEventDetails build() {
-            return new PaymentDetailsEnteredEventDetails(corporateSurcharge, email, cardBrand, cardBrandLabel, gatewayTransactionId, firstDigitsCardNumber, lastDigitsCardNumber, cardholderName, expiryDate, addressLine1, addressLine2, addressPostcode, addressCity, addressCounty, addressCountry, wallet, totalAmount);
+            return new PaymentDetailsEnteredEventDetails(corporateSurcharge, email, cardType, cardBrand, cardBrandLabel, gatewayTransactionId,
+                    firstDigitsCardNumber, lastDigitsCardNumber, cardholderName, expiryDate, addressLine1, addressLine2, addressPostcode, addressCity,
+                    addressCounty, addressCountry, wallet, totalAmount);
         }
     }
 }
