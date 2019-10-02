@@ -1,10 +1,6 @@
 package uk.gov.pay.connector.pact;
 
-import au.com.dius.pact.provider.junit.PactRunner;
-import au.com.dius.pact.provider.junit.Provider;
 import au.com.dius.pact.provider.junit.State;
-import au.com.dius.pact.provider.junit.loader.PactBroker;
-import au.com.dius.pact.provider.junit.loader.PactBrokerAuth;
 import au.com.dius.pact.provider.junit.target.HttpTarget;
 import au.com.dius.pact.provider.junit.target.Target;
 import au.com.dius.pact.provider.junit.target.TestTarget;
@@ -15,7 +11,6 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -46,12 +41,7 @@ import static uk.gov.pay.connector.rules.AppWithPostgresRule.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
-@RunWith(PactRunner.class)
-@Provider("connector")
-@PactBroker(scheme = "https", host = "pact-broker-test.cloudapps.digital", tags = {"${PACT_CONSUMER_TAG}", "test"},
-        authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"),
-        consumers = {"selfservice", "publicapi"})
-public class TransactionsApiContractTest {
+public class ContractTest {
 
     @ClassRule
     public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(ConfigOverride.config("captureProcessConfig.backgroundProcessingEnabled", "false"));
