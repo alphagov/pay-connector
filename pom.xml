@@ -298,7 +298,7 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-util</artifactId>
-            <version>9.4.20.v20190813</version>
+            <version>9.4.21.v20190926</version>
         </dependency>
         <dependency>
             <groupId>black.door</groupId>
