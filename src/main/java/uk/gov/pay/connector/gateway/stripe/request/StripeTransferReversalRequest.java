@@ -5,6 +5,8 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import java.util.Map;
+
 public class StripeTransferReversalRequest extends StripeRequest {
     private String transferId;
 
@@ -39,5 +41,10 @@ public class StripeTransferReversalRequest extends StripeRequest {
     @Override
     protected String idempotencyKeyType() {
         return "reverse_transfer";
+    }
+
+    @Override
+    public Map<String, String> headers() {
+        return Map.of("Stripe-Account", stripeConnectAccountId);
     }
 }
