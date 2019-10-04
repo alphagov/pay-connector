@@ -12,7 +12,7 @@
         <eclipselink.version>2.7.4</eclipselink.version>
         <guice.version>4.2.2</guice.version>
         <jackson.version>2.10.0</jackson.version>
-        <pay-java-commons.version>1.0.20191002153026</pay-java-commons.version>
+        <pay-java-commons.version>1.0.20191003132942</pay-java-commons.version>
         <surefire.version>3.0.0-M3</surefire.version>
         <javax.persistence.version>2.2.1</javax.persistence.version>
         <jooq.version>3.12.1</jooq.version>
