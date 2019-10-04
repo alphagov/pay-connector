@@ -64,20 +64,21 @@ public class StripeRefundIT extends ChargingITestBase {
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
                 .insert();
-    }
 
+        stripeMockClient.mockGetPaymentIntent(defaultTestCharge.getTransactionId());
+    }
+    
     @Test
-    public void stripeRefund() {
+    public void shouldSuccessfullyRefund() {
         String platformAccountId = "stripe_platform_account_id";
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         long amount = 10L;
-        
-        stripeMockClient.mockRefund();
+        stripeMockClient.mockGetPaymentIntent(defaultTestCharge.getTransactionId());
         stripeMockClient.mockTransferSuccess(null);
+        stripeMockClient.mockRefund();
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());
         String refundPayload = new Gson().toJson(refundData);
-
         ValidatableResponse response = given().port(testContext.getPort())
                 .body(refundPayload)
                 .accept(ContentType.JSON)
@@ -91,14 +92,12 @@ public class StripeRefundIT extends ChargingITestBase {
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
         assertThat(refundsFoundByChargeId.get(0).get("status"), is("REFUNDED"));
-
         String refundId = response.extract().path("refund_id");
-
+        verify(postRequestedFor(urlEqualTo("/v1/payment_intents/" + defaultTestCharge.getTransactionId())));
         verify(postRequestedFor(urlEqualTo("/v1/refunds"))
                 .withHeader("Idempotency-Key", equalTo("refund" + refundId))
-                .withRequestBody(containing("charge=" + defaultTestCharge.getTransactionId()))
+                .withRequestBody(containing("charge=ch_123456"))
                 .withRequestBody(containing("amount=" + amount)));
-
         verify(postRequestedFor(urlEqualTo("/v1/transfers"))
                 .withHeader("Idempotency-Key", equalTo("transfer_in" + refundId))
                 .withHeader("Stripe-Account", equalTo(stripeAccountId))
@@ -107,66 +106,15 @@ public class StripeRefundIT extends ChargingITestBase {
     }
     
     @Test
-    public void stripeRefundOfPaymentIntent() {
-        var paymentIntentCharge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withAmount(100L)
-                .withTransactionId("pi_charge_transaction_id")
-                .withTestAccount(defaultTestAccount)
-                .withChargeStatus(CAPTURED)
-                .insert();
-        String platformAccountId = "stripe_platform_account_id";
-        String externalChargeId = paymentIntentCharge.getExternalChargeId();
-        long amount = 10L;
-        
-        stripeMockClient.mockGetPaymentIntent(paymentIntentCharge.getTransactionId());
-        stripeMockClient.mockRefund();
-        stripeMockClient.mockTransferSuccess(null);
-
-        ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", paymentIntentCharge.getAmount());
-        String refundPayload = new Gson().toJson(refundData);
-
-        ValidatableResponse response = given().port(testContext.getPort())
-                .body(refundPayload)
-                .accept(ContentType.JSON)
-                .contentType(ContentType.JSON)
-                .post("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds"
-                        .replace("{accountId}", accountId)
-                        .replace("{chargeId}", externalChargeId))
-                .then()
-                .statusCode(ACCEPTED_202);
-
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(paymentIntentCharge.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId.get(0).get("status"), is("REFUNDED"));
-
-        String refundId = response.extract().path("refund_id");
-
-        verify(postRequestedFor(urlEqualTo("/v1/payment_intents/" + paymentIntentCharge.getTransactionId())));
-        
-        verify(postRequestedFor(urlEqualTo("/v1/refunds"))
-                .withHeader("Idempotency-Key", equalTo("refund" + refundId))
-                .withRequestBody(containing("charge=ch_123456"))
-                .withRequestBody(containing("amount=" + amount)));
-
-        verify(postRequestedFor(urlEqualTo("/v1/transfers"))
-                .withHeader("Idempotency-Key", equalTo("transfer_in" + refundId))
-                .withHeader("Stripe-Account", equalTo(stripeAccountId))
-                .withRequestBody(containing("transfer_group=" + paymentIntentCharge.getExternalChargeId()))
-                .withRequestBody(containing("destination=" + platformAccountId)));
-    }
-    
-    @Test
     public void stripeRefund_shouldResultInRefundErrorIfRefundFails() {
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         long amount = 10L;
-        
+        stripeMockClient.mockTransferSuccess(null);
         stripeMockClient.mockRefundError();
+        stripeMockClient.mockTransferReversal("transfer_id");
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());
         String refundPayload = new Gson().toJson(refundData);
-
         given().port(testContext.getPort())
                 .body(refundPayload)
                 .accept(ContentType.JSON)
@@ -187,7 +135,6 @@ public class StripeRefundIT extends ChargingITestBase {
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         long amount = 10L;
         
-        stripeMockClient.mockRefund();
         stripeMockClient.mockTransferFailure();
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());

@@ -108,4 +108,9 @@ public class StripeMockClient {
         String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_METHOD_SUCCESS_RESPONSE);
         setupResponse(payload, "/v1/payment_methods", 200);
     }
+
+    public void mockTransferReversal(String transferid) {
+        String payload = TestTemplateResourceLoader.load(STRIPE_TRANSFER_RESPONSE);
+        setupResponse(payload, "/v1/transfers/" + transferid + "/reversals", 200);
+    }
 }
