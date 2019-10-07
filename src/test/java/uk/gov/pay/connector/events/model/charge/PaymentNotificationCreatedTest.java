@@ -58,6 +58,7 @@ public class PaymentNotificationCreatedTest {
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
 
         assertThat(actual, hasJsonPath("$.event_details.amount", equalTo(100)));
+        assertThat(actual, hasJsonPath("$.event_details.live", equalTo(false)));
         assertThat(actual, hasJsonPath("$.event_details.description", equalTo("This is a description")));
         assertThat(actual, hasJsonPath("$.event_details.email", equalTo("test@email.invalid")));
         assertThat(actual, hasJsonPath("$.event_details.card_brand", equalTo("visa")));
@@ -85,6 +86,7 @@ public class PaymentNotificationCreatedTest {
         assertThat(actual, hasJsonPath("$.event_type", equalTo("PAYMENT_NOTIFICATION_CREATED")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
+        assertThat(actual, hasJsonPath("$.event_details.live", equalTo(false)));
 
         assertThat(actual, hasJsonPath("$.event_details.amount", equalTo(100)));
         assertThat(actual, hasJsonPath("$.event_details.description", equalTo("This is a description")));
