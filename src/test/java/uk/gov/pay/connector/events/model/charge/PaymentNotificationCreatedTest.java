@@ -65,7 +65,7 @@ public class PaymentNotificationCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.first_digits_card_number", equalTo("424242")));
         assertThat(actual, hasJsonPath("$.event_details.last_digits_card_number", equalTo("4242")));
         assertThat(actual, hasJsonPath("$.event_details.cardholder_name", equalTo("Mr Test")));
-        assertThat(actual, hasJsonPath("$.event_details.card_expiry_date", equalTo("12/99")));
+        assertThat(actual, hasJsonPath("$.event_details.expiry_date", equalTo("12/99")));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.processor_id", equalTo("processorID")));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.auth_code", equalTo("012345")));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.telephone_number", equalTo("+447700900796")));
@@ -95,7 +95,7 @@ public class PaymentNotificationCreatedTest {
         assertThat(actual, hasNoJsonPath("$.event_details.first_digits_card_number"));
         assertThat(actual, hasNoJsonPath("$.event_details.last_digits_card_number"));
         assertThat(actual, hasNoJsonPath("$.event_details.cardholder_name"));
-        assertThat(actual, hasNoJsonPath("$.event_details.card_expiry_date"));
+        assertThat(actual, hasNoJsonPath("$.event_details.expiry_date"));
         assertThat(actual, hasNoJsonPath("$.event_details.external_metadata.processor_id"));
         assertThat(actual, hasNoJsonPath("$.event_details.external_metadata.auth_code"));
         assertThat(actual, hasNoJsonPath("$.event_details.external_metadata.telephone_number"));
