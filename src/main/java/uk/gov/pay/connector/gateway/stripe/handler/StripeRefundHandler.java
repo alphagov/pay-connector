@@ -43,15 +43,20 @@ public class StripeRefundHandler {
     }
 
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
-        StripeRefund refundResponse;
+        String stripeChargeId;
         try {
-            StripePaymentIntent stripePaymentIntent = getPaymentIntent(request);
-            StripeCharge stripeCharge = stripePaymentIntent.getCharge()
-                    .orElseThrow(() -> new GatewayException.GenericGatewayException(
-                            String.format("Stripe charge not found for payment intent id %s", request.getTransactionId()))
-                    );
-            StripeTransferResponse stripeTransferResponse = transferFromConnectAccount(request, stripeCharge.getId());
-            refundResponse = refundOrElseReverseTransfer(request, stripeCharge, stripeTransferResponse.getId());
+            if (usePaymentIntent(request)) {
+                StripePaymentIntent stripePaymentIntent = getPaymentIntent(request);
+                stripeChargeId = stripePaymentIntent.getCharge()
+                        .map(StripeCharge::getId)
+                        .orElseThrow(() -> new GatewayException.GenericGatewayException(
+                                String.format("Stripe charge not found for payment intent id %s", request.getTransactionId()))
+                        );
+            } else {
+                stripeChargeId = request.getTransactionId();
+            }
+            StripeTransferResponse stripeTransferResponse = transferFromConnectAccount(request, stripeChargeId);
+            StripeRefund refundResponse = refundOrElseReverseTransfer(request, stripeChargeId, stripeTransferResponse.getId());
 
             return fromBaseRefundResponse(StripeRefundResponse.of(refundResponse.getId()), GatewayRefundResponse.RefundState.COMPLETE);
         } catch (GatewayErrorException e) {
@@ -75,10 +80,14 @@ public class StripeRefundHandler {
         }
     }
 
-    private StripeRefund refundOrElseReverseTransfer(RefundGatewayRequest request, StripeCharge stripeCharge, String stripeTransferId) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
+    private boolean usePaymentIntent(RefundGatewayRequest request) {
+        return request.getTransactionId().startsWith("pi_");
+    }
+
+    private StripeRefund refundOrElseReverseTransfer(RefundGatewayRequest request, String stripeChargeId, String stripeTransferId) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
         StripeRefund refundResponse;
         try {
-            refundResponse = refundCharge(request, stripeCharge.getId());
+            refundResponse = refundCharge(request, stripeChargeId);
         } catch (GatewayException e) {
             logger.warn("Stripe refund [pay refund id = {}] failed. Reversing related transfer [stripe transfer id = {}]",
                     request.getRefundExternalId(), stripeTransferId);
@@ -88,12 +97,12 @@ public class StripeRefundHandler {
         return refundResponse;
     }
 
-    private void reverseTransfer(RefundGatewayRequest request, String transferId) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException{
+    private void reverseTransfer(RefundGatewayRequest request, String transferId) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
         try {
             StripeTransferReversalRequest stripeRefundRequest = StripeTransferReversalRequest.of(transferId, request, stripeGatewayConfig);
             client.postRequestFor(stripeRefundRequest);
         } catch (GatewayException e) {
-            logger.error("Refund failed for refund gateway request {}. Reason: {}", 
+            logger.error("Refund failed for refund gateway request {}. Reason: {}",
                     request, e);
             throw e;
         }
@@ -129,7 +138,7 @@ public class StripeRefundHandler {
                 stripeTransferResponse.getDestinationStripeAccountId(),
                 stripeTransferResponse.getStripeTransferGroup()
         );
-        
+
         return stripeTransferResponse;
     }
 }

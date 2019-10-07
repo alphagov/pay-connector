@@ -5,6 +5,7 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -29,13 +30,10 @@ public class StripeTransferInRequest extends StripeTransferRequest {
     }
 
     public static StripeTransferInRequest of(RefundGatewayRequest request, String stripeChargeId, StripeGatewayConfig stripeGatewayConfig) {
-        String chargeId = Optional.ofNullable(stripeChargeId)
-                .orElse(request.getTransactionId());
-        
         return new StripeTransferInRequest(
                 request.getAmount(),
                 request.getGatewayAccount(),
-                chargeId,
+                stripeChargeId,
                 request.getRefundExternalId(),
                 request.getChargeExternalId(),
                 stripeGatewayConfig

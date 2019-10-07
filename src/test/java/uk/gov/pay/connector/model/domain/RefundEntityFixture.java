@@ -21,6 +21,7 @@ public class RefundEntityFixture {
     private String reference = "reference";
     public static String userExternalId = "AA213FD51B3801043FBC";
     private String externalId = "someExternalId";
+    private String transactionId = "123456";
     private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
 
     public static RefundEntityFixture aValidRefundEntity() {
@@ -74,7 +75,9 @@ public class RefundEntityFixture {
     }
 
     private ChargeEntity buildChargeEntity() {
-        return aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withTransactionId("1234abc").build();
+        return aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withTransactionId(transactionId).build();
     }
 
     public RefundEntityFixture withCharge(ChargeEntity charge) {
@@ -84,6 +87,11 @@ public class RefundEntityFixture {
 
     public RefundEntityFixture withExternalId(String externalId) {
         this.externalId = externalId;
+        return this;
+    }
+    
+    public RefundEntityFixture withChargeTransactionId(String transactionId) {
+        this.transactionId = transactionId;
         return this;
     }
 }

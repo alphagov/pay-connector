@@ -76,7 +76,26 @@ public class StripeRefundHandlerTest {
     }
 
     @Test
-    public void shouldRefundSuccessfully() throws Exception {
+    public void shouldRefundSuccessfully_usingPaymentIntentId() throws Exception {
+        RefundEntity refundEntity = RefundEntityFixture
+                .aValidRefundEntity()
+                .withAmount(100L)
+                .withChargeTransactionId("pi_123")
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+        refundRequest = RefundGatewayRequest.valueOf(refundEntity);
+        mockTransferSuccess();
+        mockRefundSuccess();
+
+        final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
+
+        assertNotNull(refund);
+        assertTrue(refund.isSuccessful());
+        assertThat(refund.state(), is(GatewayRefundResponse.RefundState.COMPLETE));
+        assertThat(refund.getReference().get(), is("re_1DRiccHj08j21DRiccHj08j2_test"));
+    }
+@Test
+    public void shouldRefundSuccessfully_usingChargeId() throws Exception {
         mockTransferSuccess();
         mockRefundSuccess();
 

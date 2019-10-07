@@ -25,14 +25,11 @@ public class StripeRefundRequest extends StripeRequest {
     }
     
     public static StripeRefundRequest of(RefundGatewayRequest request, String stripeChargeId, StripeGatewayConfig stripeGatewayConfig) {
-        String chargeId = Optional.ofNullable(stripeChargeId)
-                .orElse(request.getTransactionId());
-        
         return new StripeRefundRequest(              
                 request.getAmount(),
                 request.getGatewayAccount(),
                 request.getRefundExternalId(),
-                chargeId,
+                stripeChargeId,
                 stripeGatewayConfig
         );
     }
