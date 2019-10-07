@@ -18,7 +18,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     private final String lastDigitsCardNumber;
     private final String cardholderName;
     private final String email;
-    private final String cardExpiryDate;
+    private final String expiryDate;
     private final String cardBrand;
     private final Map<String, Object> externalMetadata;
 
@@ -26,7 +26,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     private PaymentNotificationCreatedEventDetails(Long gatewayAccountId, Long amount, String reference,
                                                    String description, String gatewayTransactionId,
                                                    String firstDigitsCardNumber, String lastDigitsCardNumber,
-                                                   String cardholderName, String email, String cardExpiryDate,
+                                                   String cardholderName, String email, String expiryDate,
                                                    String cardBrand, Map<String, Object> externalMetadata) {
         this.gatewayAccountId = gatewayAccountId;
         this.amount = amount;
@@ -37,7 +37,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
         this.cardholderName = cardholderName;
         this.email = email;
-        this.cardExpiryDate = cardExpiryDate;
+        this.expiryDate = expiryDate;
         this.cardBrand = cardBrand;
         this.externalMetadata = externalMetadata;
     }
@@ -88,7 +88,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                 Objects.equals(lastDigitsCardNumber, that.lastDigitsCardNumber) &&
                 Objects.equals(cardholderName, that.cardholderName) &&
                 Objects.equals(email, that.email) &&
-                Objects.equals(cardExpiryDate, that.cardExpiryDate) &&
+                Objects.equals(expiryDate, that.expiryDate) &&
                 Objects.equals(cardBrand, that.cardBrand) &&
                 Objects.equals(externalMetadata, that.externalMetadata);
     }
@@ -96,7 +96,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     @Override
     public int hashCode() {
         return Objects.hash(gatewayAccountId, amount, reference, description, gatewayTransactionId,
-                firstDigitsCardNumber, lastDigitsCardNumber, cardholderName, email, cardExpiryDate,
+                firstDigitsCardNumber, lastDigitsCardNumber, cardholderName, email, expiryDate,
                 cardBrand, externalMetadata);
     }
 
@@ -136,8 +136,8 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
         return email;
     }
 
-    public String getCardExpiryDate() {
-        return cardExpiryDate;
+    public String getExpiryDate() {
+        return expiryDate;
     }
 
     public String getCardBrand() {
