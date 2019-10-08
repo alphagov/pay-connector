@@ -67,6 +67,7 @@ public class PaymentNotificationCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.last_digits_card_number", equalTo("4242")));
         assertThat(actual, hasJsonPath("$.event_details.cardholder_name", equalTo("Mr Test")));
         assertThat(actual, hasJsonPath("$.event_details.expiry_date", equalTo("12/99")));
+        assertThat(actual, hasJsonPath("$.event_details.payment_provider", equalTo("sandbox")));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.processor_id", equalTo("processorID")));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.auth_code", equalTo("012345")));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.telephone_number", equalTo("+447700900796")));
@@ -92,6 +93,7 @@ public class PaymentNotificationCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.description", equalTo("This is a description")));
         assertThat(actual, hasJsonPath("$.event_details.email", equalTo("test@email.invalid")));
         assertThat(actual, hasJsonPath("$.event_details.gateway_transaction_id", equalTo(providerId)));
+        assertThat(actual, hasJsonPath("$.event_details.payment_provider", equalTo("sandbox")));
 
         assertThat(actual, hasNoJsonPath("$.event_details.card_brand"));
         assertThat(actual, hasNoJsonPath("$.event_details.first_digits_card_number"));

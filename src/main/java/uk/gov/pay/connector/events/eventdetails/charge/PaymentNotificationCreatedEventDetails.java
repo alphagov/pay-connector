@@ -21,6 +21,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     private final String expiryDate;
     private final String cardBrand;
     private final boolean live;
+    private final String paymentProvider;
     private final Map<String, Object> externalMetadata;
 
 
@@ -28,7 +29,8 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                                                    String description, String gatewayTransactionId,
                                                    String firstDigitsCardNumber, String lastDigitsCardNumber,
                                                    String cardholderName, String email, String expiryDate,
-                                                   String cardBrand, boolean live, Map<String, Object> externalMetadata) {
+                                                   String cardBrand, boolean live, String paymentProvider,
+                                                   Map<String, Object> externalMetadata) {
         this.gatewayAccountId = gatewayAccountId;
         this.amount = amount;
         this.reference = reference;
@@ -42,6 +44,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
         this.cardBrand = cardBrand;
         this.live = live;
         this.externalMetadata = externalMetadata;
+        this.paymentProvider = paymentProvider;
     }
 
     public static PaymentNotificationCreatedEventDetails from(ChargeEntity charge) {
@@ -73,7 +76,8 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                     charge.getEmail(),
                     expiryDate,
                     cardBrand,
-                    charge.getGatewayAccount().isLive(), 
+                    charge.getGatewayAccount().isLive(),
+                    charge.getGatewayAccount().getGatewayName(),
                     charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null));
     }
 
@@ -150,6 +154,10 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     
     public boolean isLive() { 
         return live;
+    }
+
+    public String getPaymentProvider() {
+        return paymentProvider;
     }
 
     public Map<String, Object> getExternalMetadata() {
