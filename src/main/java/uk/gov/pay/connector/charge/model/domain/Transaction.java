@@ -40,6 +40,7 @@ import java.util.Optional;
                         @ColumnResult(name = "date_created", type = Timestamp.class),
                         @ColumnResult(name = "card_brand", type = String.class),
                         @ColumnResult(name = "card_brand_label", type = String.class),
+                        @ColumnResult(name = "card_type", type = String.class),
                         @ColumnResult(name = "cardholder_name", type = String.class),
                         @ColumnResult(name = "expiry_date", type = String.class),
                         @ColumnResult(name = "last_digits_card_number", type = String.class),
@@ -78,6 +79,7 @@ public class Transaction implements Nettable {
     private TransactionType transactionType;
     private String cardBrand;
     private String cardBrandLabel;
+    private String cardType;
     private String cardHolderName;
     private String expiryDate;
     @Convert(converter = LastDigitsCardNumberConverter.class)
@@ -113,6 +115,7 @@ public class Transaction implements Nettable {
                        Timestamp createdDate,
                        String cardBrand,
                        String cardBrandLabel,
+                       String cardType,
                        String cardHolderName,
                        String expiryDate,
                        String lastDigitsCardNumber,
@@ -144,6 +147,7 @@ public class Transaction implements Nettable {
         this.cardBrand = cardBrand;
         this.userExternalId = userExternalId;
         this.cardBrandLabel = cardBrandLabel;
+        this.cardType = cardType;
         this.cardHolderName = cardHolderName;
         this.expiryDate = expiryDate;
         this.lastDigitsCardNumber = new LastDigitsCardNumberConverter().convertToEntityAttribute(lastDigitsCardNumber);
@@ -209,6 +213,10 @@ public class Transaction implements Nettable {
 
     public String getCardBrandLabel() {
         return cardBrandLabel;
+    }
+    
+    public String getCardType() {
+        return cardType;
     }
 
     public String getCardHolderName() {
