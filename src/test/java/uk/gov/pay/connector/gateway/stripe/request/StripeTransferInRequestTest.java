@@ -50,7 +50,6 @@ public class StripeTransferInRequestTest {
 
         when(charge.getGatewayAccount()).thenReturn(gatewayAccount);
         when(charge.getExternalId()).thenReturn(chargeExternalId);
-        when(charge.getGatewayTransactionId()).thenReturn(stripeChargeId);
 
         when(refund.getAmount()).thenReturn(refundAmount);
         when(refund.getExternalId()).thenReturn(refundExternalId);
@@ -62,7 +61,7 @@ public class StripeTransferInRequestTest {
 
         final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(refund);
 
-        stripeTransferInRequest = StripeTransferInRequest.of(refundGatewayRequest, null, stripeGatewayConfig);
+        stripeTransferInRequest = StripeTransferInRequest.of(refundGatewayRequest, stripeChargeId, stripeGatewayConfig);
     }
 
     @Test

@@ -44,7 +44,6 @@ public class StripeRefundRequestTest {
     public void setUp() {
         when(gatewayAccount.getCredentials()).thenReturn(ImmutableMap.of("stripe_account_id", "stripe_account_id"));
 
-        when(charge.getGatewayTransactionId()).thenReturn(stripeChargeId);
         when(charge.getGatewayAccount()).thenReturn(gatewayAccount);
 
         when(refund.getAmount()).thenReturn(refundAmount);
@@ -56,7 +55,7 @@ public class StripeRefundRequestTest {
 
         final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(refund);
 
-        stripeRefundRequest = StripeRefundRequest.of(refundGatewayRequest, null, stripeGatewayConfig);
+        stripeRefundRequest = StripeRefundRequest.of(refundGatewayRequest, stripeChargeId, stripeGatewayConfig);
     }
     @Test
     public void createsCorrectRefundUrl() {

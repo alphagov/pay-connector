@@ -60,7 +60,7 @@ public class StripeRefundIT extends ChargingITestBase {
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withAmount(100L)
-                .withTransactionId("charge_transaction_id")
+                .withTransactionId("pi_123")
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
                 .insert();
@@ -69,7 +69,51 @@ public class StripeRefundIT extends ChargingITestBase {
     }
     
     @Test
-    public void shouldSuccessfullyRefund() {
+    public void shouldSuccessfullyRefund_usingChargeId() {
+        var testChargeCreatedWithStripeChargeAPI = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withAmount(100L)
+                .withTransactionId("ch_123")
+                .withTestAccount(defaultTestAccount)
+                .withChargeStatus(CAPTURED)
+                .insert();
+        String platformAccountId = "stripe_platform_account_id";
+        String externalChargeId = testChargeCreatedWithStripeChargeAPI.getExternalChargeId();
+        long amount = 10L;
+        stripeMockClient.mockTransferSuccess(null);
+        stripeMockClient.mockRefund();
+
+        ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", testChargeCreatedWithStripeChargeAPI.getAmount());
+        String refundPayload = new Gson().toJson(refundData);
+        ValidatableResponse response = given().port(testContext.getPort())
+                .body(refundPayload)
+                .accept(ContentType.JSON)
+                .contentType(ContentType.JSON)
+                .post("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds"
+                        .replace("{accountId}", accountId)
+                        .replace("{chargeId}", externalChargeId))
+                .then()
+                .statusCode(ACCEPTED_202);
+
+        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(testChargeCreatedWithStripeChargeAPI.getChargeId());
+        assertThat(refundsFoundByChargeId.size(), is(1));
+        assertThat(refundsFoundByChargeId.get(0).get("status"), is("REFUNDED"));
+        String refundId = response.extract().path("refund_id");
+        
+        verify(postRequestedFor(urlEqualTo("/v1/refunds"))
+                .withHeader("Idempotency-Key", equalTo("refund" + refundId))
+                .withRequestBody(containing("charge=ch_123"))
+                .withRequestBody(containing("amount=" + amount)));
+        verify(postRequestedFor(urlEqualTo("/v1/transfers"))
+                .withHeader("Idempotency-Key", equalTo("transfer_in" + refundId))
+                .withHeader("Stripe-Account", equalTo(stripeAccountId))
+                .withRequestBody(containing("transfer_group=" + testChargeCreatedWithStripeChargeAPI.getExternalChargeId()))
+                .withRequestBody(containing("destination=" + platformAccountId)));
+    }
+
+    @Test
+    public void shouldSuccessfullyRefund_usingPaymentIntentId() {
         String platformAccountId = "stripe_platform_account_id";
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         long amount = 10L;
