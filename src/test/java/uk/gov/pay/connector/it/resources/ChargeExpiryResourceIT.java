@@ -217,9 +217,9 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotExpireChargesWhenAwaitingCaptureDelayIsLessThan48Hours() {
+    public void shouldNotExpireChargesWhenAwaitingCaptureDelayIsLessThan120Hours() {
         String chargeToBeExpiredCreatedStatus = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        String chargeToBeExpiredAwaitingCaptureRequest = addCharge(AWAITING_CAPTURE_REQUEST, "ref", ZonedDateTime.now().minusHours(48L).plusMinutes(1L), RandomIdGenerator.newId());
+        String chargeToBeExpiredAwaitingCaptureRequest = addCharge(AWAITING_CAPTURE_REQUEST, "ref", ZonedDateTime.now().minusHours(120L).plusMinutes(1L), RandomIdGenerator.newId());
 
         worldpayMockClient.mockCancelSuccess();
 
@@ -256,9 +256,9 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldExpireChargesWhenAwaitingCaptureDelayIsMoreThan48Hours() {
+    public void shouldExpireChargesWhenAwaitingCaptureDelayIsMoreThan120Hours() {
         String chargeToBeExpiredCreatedStatus = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        String chargeToBeExpiredAwaitingCaptureRequest = addCharge(AWAITING_CAPTURE_REQUEST, "ref", ZonedDateTime.now().minusHours(48L).minusMinutes(1L), RandomIdGenerator.newId());
+        String chargeToBeExpiredAwaitingCaptureRequest = addCharge(AWAITING_CAPTURE_REQUEST, "ref", ZonedDateTime.now().minusHours(120L).minusMinutes(1L), RandomIdGenerator.newId());
 
         worldpayMockClient.mockCancelSuccess();
 

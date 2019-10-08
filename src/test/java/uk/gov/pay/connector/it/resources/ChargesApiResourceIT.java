@@ -579,7 +579,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     public void shouldGetSuccessForExpiryChargeTask_withStatus_awaitingCaptureRequest() {
         //create charge
         String extChargeId = addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
-                ServicePaymentReference.of("ref"), ZonedDateTime.now().minusHours(48L));
+                ServicePaymentReference.of("ref"), ZonedDateTime.now().minusHours(120L));
 
         // run expiry task
         connectorRestApiClient
