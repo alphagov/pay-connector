@@ -20,6 +20,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     private final String email;
     private final String expiryDate;
     private final String cardBrand;
+    private final boolean live;
     private final Map<String, Object> externalMetadata;
 
 
@@ -27,7 +28,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                                                    String description, String gatewayTransactionId,
                                                    String firstDigitsCardNumber, String lastDigitsCardNumber,
                                                    String cardholderName, String email, String expiryDate,
-                                                   String cardBrand, Map<String, Object> externalMetadata) {
+                                                   String cardBrand, boolean live, Map<String, Object> externalMetadata) {
         this.gatewayAccountId = gatewayAccountId;
         this.amount = amount;
         this.reference = reference;
@@ -39,6 +40,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
         this.email = email;
         this.expiryDate = expiryDate;
         this.cardBrand = cardBrand;
+        this.live = live;
         this.externalMetadata = externalMetadata;
     }
 
@@ -71,6 +73,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                     charge.getEmail(),
                     expiryDate,
                     cardBrand,
+                    charge.getGatewayAccount().isLive(), 
                     charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null));
     }
 
@@ -90,6 +93,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                 Objects.equals(email, that.email) &&
                 Objects.equals(expiryDate, that.expiryDate) &&
                 Objects.equals(cardBrand, that.cardBrand) &&
+                Objects.equals(live, that.live) &&
                 Objects.equals(externalMetadata, that.externalMetadata);
     }
 
@@ -97,7 +101,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     public int hashCode() {
         return Objects.hash(gatewayAccountId, amount, reference, description, gatewayTransactionId,
                 firstDigitsCardNumber, lastDigitsCardNumber, cardholderName, email, expiryDate,
-                cardBrand, externalMetadata);
+                cardBrand, live, externalMetadata);
     }
 
     public Long getGatewayAccountId() {
@@ -142,6 +146,10 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
 
     public String getCardBrand() {
         return cardBrand;
+    }
+    
+    public boolean isLive() { 
+        return live;
     }
 
     public Map<String, Object> getExternalMetadata() {

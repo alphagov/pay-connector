@@ -64,6 +64,7 @@ public class PaymentCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.amount", equalTo(100)));
         assertThat(actual, hasJsonPath("$.event_details.description", equalTo("new passport")));
         assertThat(actual, hasJsonPath("$.event_details.reference", equalTo("myref")));
+        assertThat(actual, hasJsonPath("$.event_details.live", equalTo(false)));
         assertThat(actual, hasJsonPath("$.event_details.return_url", equalTo("http://example.com")));
         assertThat(actual, hasJsonPath("$.event_details.gateway_account_id", equalTo(chargeEntity.getGatewayAccount().getId().toString())));
         assertThat(actual, hasJsonPath("$.event_details.payment_provider", equalTo(chargeEntity.getGatewayAccount().getGatewayName())));
