@@ -129,6 +129,7 @@ The [API Specification](docs/api_specification.md) provides more detail on the p
 | Path                          | Supported Methods | Description                        |
 | ----------------------------- | ----------------- | ---------------------------------- |
 |[```/v1/tasks/expired-charges-sweep```](docs/api_specification.md#post-v1tasksexpired-charges-sweep)  | POST    |  Spawns a task to expire charges with a default window of 90 minutes|
+|[```/v1/tasks/emitted-events-sweep```](docs/api_specification.md#post-v1tasksemitted-events-sweep)  | POST    |  Spawns a task to verify whether all the events from the state transition in-memory queue have been processed|
 
 ### Command line tasks
 
@@ -191,7 +192,6 @@ $ java -jar target/pay-connector-0.1-SNAPSHOT-allinone.jar
 |[```/v1/frontend/tokens/{chargeTokenId}/charge```](docs/api_specification.md#get-v1frontendtokenschargetokenidcharge) | GET |  Retrieve the charge associated with a secure redirect token.|
 |[```/v1/frontend/tokens/{chargeTokenId}/used```](docs/api_specification.md#post-v1frontendtokenschargetokenidused) | POST |  Mark a secure redirect token as used.|
 |[```/v1/frontend/tokens/{chargeTokenId}```](docs/api_specification.md#delete-v1frontendtokenschargetokenid) | DELETE |  Delete a secure redirect token.|
-|
 
 
 ## Licence
