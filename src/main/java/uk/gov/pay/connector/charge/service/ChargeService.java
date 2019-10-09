@@ -362,7 +362,6 @@ public class ChargeService {
         if (chargeEntity.getCardDetails() != null) {
             persistedCard = chargeEntity.getCardDetails().toCard();
             persistedCard.setCardBrand(findCardBrandLabel(chargeEntity.getCardDetails().getCardBrand()).orElse(""));
-            persistedCard.setCardType(chargeEntity.getCardDetails().getCardType());
         }
 
         ChargeResponse.Auth3dsData auth3dsData = null;

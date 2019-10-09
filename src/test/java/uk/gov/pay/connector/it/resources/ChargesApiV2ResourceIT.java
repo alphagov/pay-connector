@@ -205,7 +205,7 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
     public void shouldFilterTransactionsByCardHolderName() {
         String cardHolderName = "Mr. PayMcPayment";
         addChargeAndCardDetails(nextLong(), CREATED, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, "1234", "CREDIT");
-        addChargeAndCardDetails(nextLong(), AUTHORISATION_SUCCESS, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, "1234", "CREDIT");
+        addChargeAndCardDetails(nextLong(), AUTHORISATION_SUCCESS, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, "1234", "DEBIT");
         connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("cardholder_name", "PayMc")
@@ -215,7 +215,11 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body("results.size()", is(2))
                 .body("results[0].card_details.cardholder_name", is(cardHolderName))
-                .body("results[0].card_details.last_digits_card_number", is("1234"));
+                .body("results[0].card_details.card_type", is("debit"))
+                .body("results[0].card_details.last_digits_card_number", is("1234"))
+                .body("results[1].card_details.cardholder_name", is(cardHolderName))
+                .body("results[1].card_details.card_type", is("credit"))
+                .body("results[1].card_details.last_digits_card_number", is("1234"));
     }
 
     @Test

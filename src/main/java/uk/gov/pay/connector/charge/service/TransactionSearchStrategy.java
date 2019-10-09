@@ -61,9 +61,7 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
         PersistedCard cardDetails = new PersistedCard();
         cardDetails.setCardBrand(transaction.getCardBrandLabel());
         cardDetails.setCardHolderName(transaction.getCardHolderName());
-        if(transaction.getCardType() != null) {
-            cardDetails.setCardType(CardType.valueOf(transaction.getCardType()));
-        }
+        transaction.getCardType().map(CardType::valueOf).ifPresent(cardDetails::setCardType);
         cardDetails.setExpiryDate(transaction.getExpiryDate());
         cardDetails.setLastDigitsCardNumber(transaction.getLastDigitsCardNumber());
         cardDetails.setFirstDigitsCardNumber(transaction.getFirstDigitsCardNumber());

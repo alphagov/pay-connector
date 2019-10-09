@@ -215,8 +215,8 @@ public class Transaction implements Nettable {
         return cardBrandLabel;
     }
     
-    public String getCardType() {
-        return cardType;
+    public Optional<String> getCardType() {
+        return Optional.ofNullable(cardType);
     }
 
     public String getCardHolderName() {
