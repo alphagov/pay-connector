@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.charge.dao.TransactionDao;
 import uk.gov.pay.connector.charge.model.CardHolderName;
@@ -33,6 +34,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.cardtype.model.domain.CardType.CREDIT;
+import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;
@@ -273,11 +276,11 @@ public class TransactionDaoIT extends DaoITestBase {
         String visa = "visa";
         String masterCard = "master-card";
         DatabaseFixtures.TestCharge testCharge1 = insertNewChargeWithId(1L, now().plusHours(1));
-        updateCardDetailsForCharge(testCharge1, visa);
+        updateCardDetailsForCharge(testCharge1, visa, CREDIT);
         DatabaseFixtures.TestRefund testRefund1 = insertNewRefundForCharge(testCharge1, REFUND_USER_EXTERNAL_ID, 2L, now().plusHours(2));
 
         DatabaseFixtures.TestCharge testCharge2 = insertNewChargeWithId(3L, now().plusHours(3));
-        updateCardDetailsForCharge(testCharge2, visa);
+        updateCardDetailsForCharge(testCharge2, visa, DEBIT);
         DatabaseFixtures.TestRefund testRefund2 = insertNewRefundForCharge(testCharge2, REFUND_USER_EXTERNAL_ID, 4L, now().plusHours(4));
 
         SearchParams params = new SearchParams()
@@ -292,15 +295,18 @@ public class TransactionDaoIT extends DaoITestBase {
         assertThat(transactions.get(0).getAmount(), is(testRefund2.getAmount()));
         assertThat(transactions.get(0).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(0).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
+        assertThat(transactions.get(0).getCardType().get(), is(DEBIT.toString()));
         assertThat(transactions.get(1).getAmount(), is(testCharge2.getAmount()));
         assertThat(transactions.get(1).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(1).getUserExternalId(), is(nullValue()));
+        assertThat(transactions.get(1).getCardType().get(), is(DEBIT.toString()));
         assertThat(transactions.get(2).getAmount(), is(testRefund1.getAmount()));
         assertThat(transactions.get(2).getTransactionType(), is(TransactionType.REFUND));
         assertThat(transactions.get(2).getUserExternalId(), is(REFUND_USER_EXTERNAL_ID));
         assertThat(transactions.get(3).getAmount(), is(testCharge1.getAmount()));
         assertThat(transactions.get(3).getTransactionType(), is(TransactionType.CHARGE));
         assertThat(transactions.get(3).getUserExternalId(), is(nullValue()));
+        assertThat(transactions.get(3).getCardType().get(), is(CREDIT.toString()));
     }
 
     @Test
@@ -1449,14 +1455,15 @@ public class TransactionDaoIT extends DaoITestBase {
 
 
     private DatabaseFixtures.TestCardDetails updateCardDetailsForCharge(DatabaseFixtures.TestCharge charge) {
-        return updateCardDetailsForCharge(charge, "visa");
+        return updateCardDetailsForCharge(charge, "visa", CREDIT);
     }
 
-    private DatabaseFixtures.TestCardDetails updateCardDetailsForCharge(DatabaseFixtures.TestCharge charge, String cardBrand) {
+    private DatabaseFixtures.TestCardDetails updateCardDetailsForCharge(DatabaseFixtures.TestCharge charge, String cardBrand, CardType cardType) {
         return new DatabaseFixtures(databaseTestHelper)
                 .validTestCardDetails()
                 .withChargeId(charge.chargeId)
                 .withCardBrand(cardBrand)
+                .withCardType(cardType)
                 .update();
     }
 
