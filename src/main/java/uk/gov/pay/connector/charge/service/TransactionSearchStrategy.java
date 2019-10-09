@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.service;
 
 import com.google.inject.Inject;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.charge.dao.TransactionDao;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
@@ -60,6 +61,7 @@ public class TransactionSearchStrategy extends AbstractSearchStrategy<Transactio
         PersistedCard cardDetails = new PersistedCard();
         cardDetails.setCardBrand(transaction.getCardBrandLabel());
         cardDetails.setCardHolderName(transaction.getCardHolderName());
+        transaction.getCardType().map(CardType::valueOf).ifPresent(cardDetails::setCardType);
         cardDetails.setExpiryDate(transaction.getExpiryDate());
         cardDetails.setLastDigitsCardNumber(transaction.getLastDigitsCardNumber());
         cardDetails.setFirstDigitsCardNumber(transaction.getFirstDigitsCardNumber());

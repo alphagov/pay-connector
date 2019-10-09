@@ -5,6 +5,7 @@ import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
@@ -203,8 +204,8 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
     @Test
     public void shouldFilterTransactionsByCardHolderName() {
         String cardHolderName = "Mr. PayMcPayment";
-        addChargeAndCardDetails(nextLong(), CREATED, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, "1234");
-        addChargeAndCardDetails(nextLong(), AUTHORISATION_SUCCESS, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, "1234");
+        addChargeAndCardDetails(nextLong(), CREATED, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, "1234", "CREDIT");
+        addChargeAndCardDetails(nextLong(), AUTHORISATION_SUCCESS, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, "1234", "DEBIT");
         connectorRestApiClient
                 .withAccountId(accountId)
                 .withQueryParam("cardholder_name", "PayMc")
@@ -214,14 +215,18 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body("results.size()", is(2))
                 .body("results[0].card_details.cardholder_name", is(cardHolderName))
-                .body("results[0].card_details.last_digits_card_number", is("1234"));
+                .body("results[0].card_details.card_type", is("debit"))
+                .body("results[0].card_details.last_digits_card_number", is("1234"))
+                .body("results[1].card_details.cardholder_name", is(cardHolderName))
+                .body("results[1].card_details.card_type", is("credit"))
+                .body("results[1].card_details.last_digits_card_number", is("1234"));
     }
 
     @Test
     public void searchChargesByFullLastFourDigits() {
         String lastFourDigits = "3943";
-        addChargeAndCardDetails(nextLong(), CREATED, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, lastFourDigits);
-        addChargeAndCardDetails(nextLong(), AUTHORISATION_SUCCESS, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, lastFourDigits);
+        addChargeAndCardDetails(nextLong(), CREATED, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, lastFourDigits, "CREDIT");
+        addChargeAndCardDetails(nextLong(), AUTHORISATION_SUCCESS, ServicePaymentReference.of("ref-1"), "ref", now(), "", "http://service.url/success-page/", "aaa@bbb.test", cardHolderName, lastFourDigits, "CREDIT");
 
         connectorRestApiClient
                 .withAccountId(accountId)
@@ -232,6 +237,7 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body("results.size()", is(2))
                 .body("results[0].card_details.cardholder_name", is("Mr. McPayment"))
+                .body("results[0].card_details.card_type", is("credit"))
                 .body("results[0].card_details.last_digits_card_number", is("3943"));
     }
 
@@ -454,6 +460,7 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
                 .withDescription("Test description")
                 .withReference(reference)
                 .withCreatedDate(fromDate)
+                .withCardType(CardType.CREDIT)
                 .withEmail(email)
                 .withVersion(1)
                 .withLanguage(SupportedLanguage.ENGLISH)
@@ -468,7 +475,8 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
 
     private String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, String transactionId, ZonedDateTime fromDate,
                                            String cardBrand, String returnUrl, String email,
-                                           String cardHolderName, String lastDigitsCardNumber) {
+                                           String cardHolderName, String lastDigitsCardNumber,
+                                           String cardType) {
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
         databaseTestHelper.addCharge(anAddChargeParams()
@@ -484,13 +492,14 @@ public class ChargesApiV2ResourceIT extends ChargingITestBase {
                 .withCreatedDate(fromDate)
                 .withEmail(email)
                 .withVersion(1)
+                .withCardType(CardType.valueOf(cardType))
                 .withLanguage(SupportedLanguage.ENGLISH)
                 .withDelayedCapture(false)
                 .build());
         databaseTestHelper.addToken(chargeId, "tokenId");
         databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
         expiryDate = "03/18";
-        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, expiryDate, null, "line1", null, "postcode", "city", null, "country");
+        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName, expiryDate, cardType, "line1", null, "postcode", "city", null, "country");
         return externalChargeId;
     }
 
