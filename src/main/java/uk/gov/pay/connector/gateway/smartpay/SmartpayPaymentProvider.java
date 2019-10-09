@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
 import io.dropwizard.setup.Environment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
@@ -9,8 +11,8 @@ import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayException;
-import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -43,6 +45,8 @@ import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCreden
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 
 public class SmartpayPaymentProvider implements PaymentProvider {
+
+    private final Logger logger = LoggerFactory.getLogger(SmartpayPaymentProvider.class);
 
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final GatewayClient client;
@@ -101,6 +105,9 @@ public class SmartpayPaymentProvider implements PaymentProvider {
             
             if (!gatewayResponse.getBaseResponse().isPresent())
                 gatewayResponse.throwGatewayError();
+            
+            // TODO added temporarily for debugging as 3D secure is broken for Smartpay - @stephencdaly
+            logger.info("Smartpay 3DS response: " + response.getEntity());
             
             transactionId = Optional.ofNullable(gatewayResponse.getBaseResponse().get().getTransactionId());
             stringifiedResponse = gatewayResponse.toString();
