@@ -3,6 +3,7 @@ package uk.gov.pay.connector.model.domain;
 import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
+import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
@@ -188,6 +189,17 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withCardDetails(CardDetailsEntity cardDetailsEntity) {
         this.cardDetails = cardDetailsEntity;
+        return this;
+    }
+
+    public ChargeEntityFixture withCardLabelEntity(String label, String brand) {
+        CardBrandLabelEntity cardBrandLabelEntity = new CardBrandLabelEntity();
+        cardBrandLabelEntity.setBrand(brand);
+        cardBrandLabelEntity.setLabel(label);
+        if (cardDetails == null) {
+            cardDetails = new CardDetailsEntity();
+        }
+        cardDetails.setCardTypeDetails(cardBrandLabelEntity);
         return this;
     }
 

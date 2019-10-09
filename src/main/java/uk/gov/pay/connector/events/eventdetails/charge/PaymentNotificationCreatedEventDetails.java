@@ -20,6 +20,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     private final String email;
     private final String expiryDate;
     private final String cardBrand;
+    private final String cardBrandLabel;
     private final boolean live;
     private final String paymentProvider;
     private final Map<String, Object> externalMetadata;
@@ -29,8 +30,8 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                                                    String description, String gatewayTransactionId,
                                                    String firstDigitsCardNumber, String lastDigitsCardNumber,
                                                    String cardholderName, String email, String expiryDate,
-                                                   String cardBrand, boolean live, String paymentProvider,
-                                                   Map<String, Object> externalMetadata) {
+                                                   String cardBrand, String cardBrandLabel, boolean live,
+                                                   String paymentProvider, Map<String, Object> externalMetadata) {
         this.gatewayAccountId = gatewayAccountId;
         this.amount = amount;
         this.reference = reference;
@@ -42,6 +43,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
         this.email = email;
         this.expiryDate = expiryDate;
         this.cardBrand = cardBrand;
+        this.cardBrandLabel = cardBrandLabel;
         this.live = live;
         this.externalMetadata = externalMetadata;
         this.paymentProvider = paymentProvider;
@@ -53,6 +55,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
             String cardHolderName = null;
             String expiryDate = null;
             String cardBrand = null;
+            String cardBrandLabel = null;
 
             if (charge.getCardDetails() != null) {
                 if (charge.getCardDetails().getLastDigitsCardNumber() != null) {
@@ -64,6 +67,9 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                 cardHolderName = charge.getCardDetails().getCardHolderName();
                 expiryDate = charge.getCardDetails().getExpiryDate();
                 cardBrand = charge.getCardDetails().getCardBrand();
+                if (charge.getCardDetails().getCardTypeDetails().isPresent()) {
+                    cardBrandLabel = charge.getCardDetails().getCardTypeDetails().get().getLabel();
+                }
             }
             return new PaymentNotificationCreatedEventDetails(charge.getGatewayAccount().getId(),
                     charge.getAmount(),
@@ -76,6 +82,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                     charge.getEmail(),
                     expiryDate,
                     cardBrand,
+                    cardBrandLabel,
                     charge.getGatewayAccount().isLive(),
                     charge.getGatewayAccount().getGatewayName(),
                     charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null));
@@ -97,6 +104,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
                 Objects.equals(email, that.email) &&
                 Objects.equals(expiryDate, that.expiryDate) &&
                 Objects.equals(cardBrand, that.cardBrand) &&
+                Objects.equals(cardBrandLabel, that.cardBrandLabel) &&
                 Objects.equals(live, that.live) &&
                 Objects.equals(externalMetadata, that.externalMetadata);
     }
@@ -105,7 +113,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     public int hashCode() {
         return Objects.hash(gatewayAccountId, amount, reference, description, gatewayTransactionId,
                 firstDigitsCardNumber, lastDigitsCardNumber, cardholderName, email, expiryDate,
-                cardBrand, live, externalMetadata);
+                cardBrand, cardBrandLabel, live, externalMetadata);
     }
 
     public Long getGatewayAccountId() {
@@ -151,8 +159,12 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     public String getCardBrand() {
         return cardBrand;
     }
-    
-    public boolean isLive() { 
+
+    public String getCardBrandLabel() {
+        return cardBrandLabel;
+    }
+
+    public boolean isLive() {
         return live;
     }
 
