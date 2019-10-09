@@ -1271,4 +1271,10 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add partial index to emitted_events emitted_date column" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_emitted_events_null_emitted_date ON emitted_events (emitted_date) where emitted_date is null;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
