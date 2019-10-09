@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.stripe.request;
 
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
+import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
@@ -34,6 +35,17 @@ public class StripeTransferInRequest extends StripeTransferRequest {
                 stripeChargeId,
                 request.getRefundExternalId(),
                 request.getChargeExternalId(),
+                stripeGatewayConfig
+        );
+    }
+
+    public static StripeTransferInRequest of(Long amount, CaptureGatewayRequest request, String stripeChargeId, StripeGatewayConfig stripeGatewayConfig) {
+        return new StripeTransferInRequest(
+                amount.toString(),
+                request.getGatewayAccount(),
+                stripeChargeId,
+                request.getExternalId(),
+                request.getExternalId(),
                 stripeGatewayConfig
         );
     }
