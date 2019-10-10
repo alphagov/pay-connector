@@ -122,6 +122,29 @@ public class StripeCaptureHandlerTest {
         assertTrue(captureResponse.isSuccessful());
         assertThat(captureResponse.getFee().get(), is(59L));
     }
+    
+    @Test public void shouldCaptureWithFeeAndNoTransfer_feeCalculationShouldBeLimitedToChargeAmount() throws Exception {
+        final String transactionId = "ch_1231231123123";
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withTransactionId(transactionId)
+                .withAmount(20L)
+                .build();
+
+        captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
+        GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
+        when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));
+        GatewayClient.Response gatewayTransferResponse = mock(GatewayClient.Response.class);
+        when(gatewayTransferResponse.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
+
+        when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
+
+        CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
+        
+        verify(gatewayClient, never()).postRequestFor(any(StripeTransferOutRequest.class));
+        assertTrue(captureResponse.isSuccessful());
+        assertThat(captureResponse.getFee().get(), is(20L));
+    }
 
     @Test
     public void shouldCaptureWithFee_feeCalculationShouldRoundUpTo1() throws Exception {
@@ -146,7 +169,7 @@ public class StripeCaptureHandlerTest {
         assertTrue(captureResponse.isSuccessful());
         assertThat(captureResponse.getFee().get(), is(51L));
     }
-    
+
     public void shouldCaptureWithoutFee_ifCollectFeeSetToFalse() throws Exception {
         GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
         when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));

@@ -64,7 +64,13 @@ public class StripeCaptureHandler implements CaptureHandler {
                     .map(fee -> request.getAmount() - fee)
                     .orElse(request.getAmount());
             
-            transferToConnectAccount(request, netTransferAmount, capturedCharge.getId());
+            
+            if (netTransferAmount > 0) {
+                transferToConnectAccount(request, netTransferAmount, capturedCharge.getId());
+            } else {
+                logger.warn("Stripe payment for negative amount processed. [amount={}] [fee={}] [net={}] [chargeId={}]", 
+                        request.getAmount(), processingFee, netTransferAmount, transactionId);
+            }
 
             return new CaptureResponse(transactionId, COMPLETE, processingFee.orElse(null));
         } catch (GatewayErrorException e) {
@@ -145,7 +151,10 @@ public class StripeCaptureHandler implements CaptureHandler {
     private Optional<Long> calculateProcessingFee(Long grossChargeAmount, Long stripeFee) {
         if (stripeGatewayConfig.isCollectFee()) {
             Double platformFee = Math.ceil((stripeGatewayConfig.getFeePercentage() / 100) * grossChargeAmount);
-            return Optional.of(stripeFee + platformFee.longValue());
+            Long combinedFee = stripeFee + platformFee.longValue();
+            
+            // limit fee requirement to the total value of the charge
+            return Optional.of(combinedFee >= grossChargeAmount ? grossChargeAmount : combinedFee);
         }
 
         return Optional.empty();
