@@ -38,7 +38,6 @@ import uk.gov.pay.connector.util.TestClientFactory;
 import javax.ws.rs.client.Client;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collections;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.not;
@@ -249,7 +248,7 @@ public class SmartpayPaymentProviderTest {
         when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(MetricRegistry.class))).thenReturn(gatewayClient);
 
         GatewayConfig gatewayConfig = mock(GatewayConfig.class);
-        when(gatewayConfig.getUrls()).thenReturn(Collections.EMPTY_MAP);
+        when(gatewayConfig.getUrls()).thenReturn(Map.of(TEST.toString(), url));
 
         ConnectorConfiguration configuration = mock(ConnectorConfiguration.class);
         when(configuration.getGatewayConfigFor(PaymentGatewayName.SMARTPAY)).thenReturn(gatewayConfig);
