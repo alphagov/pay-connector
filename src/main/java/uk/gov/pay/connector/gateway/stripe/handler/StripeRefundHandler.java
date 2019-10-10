@@ -17,7 +17,6 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeTransferResponse;
 import uk.gov.pay.connector.gateway.stripe.request.StripeGetPaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeRefundRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
-import uk.gov.pay.connector.gateway.stripe.request.StripeTransferReversalRequest;
 import uk.gov.pay.connector.gateway.stripe.response.StripeRefundResponse;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
@@ -55,19 +54,24 @@ public class StripeRefundHandler {
             } else {
                 stripeChargeId = request.getTransactionId();
             }
-            StripeTransferResponse stripeTransferResponse = transferFromConnectAccount(request, stripeChargeId);
-            StripeRefund refundResponse = refundOrElseReverseTransfer(request, stripeChargeId, stripeTransferResponse.getId());
+            StripeRefund refundResponse = refundCharge(request, stripeChargeId);
+            transferFromConnectAccount(request, stripeChargeId);
 
             return fromBaseRefundResponse(StripeRefundResponse.of(refundResponse.getId()), GatewayRefundResponse.RefundState.COMPLETE);
         } catch (GatewayErrorException e) {
+
             if (e.getFamily() == CLIENT_ERROR) {
                 StripeErrorResponse.Error error = jsonObjectMapper.getObject(e.getResponseFromGateway(), StripeErrorResponse.class).getError();
+                logger.error("Refund failed for refund gateway request {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
+                        request, error.getCode(), error.getMessage(), e.getStatus());
+
                 return fromBaseRefundResponse(
                         StripeRefundResponse.of(error.getCode(), error.getMessage()),
                         GatewayRefundResponse.RefundState.ERROR);
             }
 
             if (e.getFamily() == SERVER_ERROR) {
+                logger.error("Refund failed for refund gateway request {}. Reason: {}. Status code from Stripe: {}.", request, e.getMessage(), e.getStatus());
                 GatewayError gatewayError = gatewayConnectionError("An internal server error occurred while refunding Transaction id: " + request.getTransactionId());
                 return GatewayRefundResponse.fromGatewayError(gatewayError);
             }
@@ -76,6 +80,7 @@ public class StripeRefundHandler {
                     request.getRefundExternalId(), e.getStatus(), e.getResponseFromGateway());
             throw new RuntimeException("Unrecognised response status when refunding.");
         } catch (GatewayException e) {
+            logger.error("Refund failed for refund gateway request {}. GatewayException: {}.", request, e);
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());
         }
     }
@@ -83,31 +88,7 @@ public class StripeRefundHandler {
     private boolean usePaymentIntent(RefundGatewayRequest request) {
         return request.getTransactionId().startsWith("pi_");
     }
-
-    private StripeRefund refundOrElseReverseTransfer(RefundGatewayRequest request, String stripeChargeId, String stripeTransferId) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
-        StripeRefund refundResponse;
-        try {
-            refundResponse = refundCharge(request, stripeChargeId);
-        } catch (GatewayException e) {
-            logger.warn("Stripe refund [pay refund id = {}] failed. Reversing related transfer [stripe transfer id = {}]",
-                    request.getRefundExternalId(), stripeTransferId);
-            reverseTransfer(request, stripeTransferId);
-            throw e;
-        }
-        return refundResponse;
-    }
-
-    private void reverseTransfer(RefundGatewayRequest request, String transferId) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
-        try {
-            StripeTransferReversalRequest stripeRefundRequest = StripeTransferReversalRequest.of(transferId, request, stripeGatewayConfig);
-            client.postRequestFor(stripeRefundRequest);
-        } catch (GatewayException e) {
-            logger.error("Refund failed for refund gateway request {}. Reason: {}",
-                    request, e);
-            throw e;
-        }
-    }
-
+    
     private StripePaymentIntent getPaymentIntent(RefundGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
         final String refundResponse = client.postRequestFor(StripeGetPaymentIntentRequest.of(request, stripeGatewayConfig)).getEntity();
         return jsonObjectMapper.getObject(refundResponse, StripePaymentIntent.class);
