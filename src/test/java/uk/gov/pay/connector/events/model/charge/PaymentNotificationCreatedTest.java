@@ -45,7 +45,9 @@ public class PaymentNotificationCreatedTest {
                 "processor_id", "processorID",
                 "auth_code", "012345",
                 "telephone_number", "+447700900796"));
-        chargeEntityFixture.withExternalMetadata(externalMetadata);
+        chargeEntityFixture
+                .withExternalMetadata(externalMetadata)
+        .withCardLabelEntity("Visa", "visa");
 
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
@@ -62,6 +64,7 @@ public class PaymentNotificationCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.description", equalTo("This is a description")));
         assertThat(actual, hasJsonPath("$.event_details.email", equalTo("test@email.invalid")));
         assertThat(actual, hasJsonPath("$.event_details.card_brand", equalTo("visa")));
+        assertThat(actual, hasJsonPath("$.event_details.card_brand_label", equalTo("Visa")));
         assertThat(actual, hasJsonPath("$.event_details.gateway_transaction_id", equalTo(providerId)));
         assertThat(actual, hasJsonPath("$.event_details.first_digits_card_number", equalTo("424242")));
         assertThat(actual, hasJsonPath("$.event_details.last_digits_card_number", equalTo("4242")));
