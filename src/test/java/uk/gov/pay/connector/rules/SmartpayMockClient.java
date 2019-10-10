@@ -3,11 +3,23 @@ package uk.gov.pay.connector.rules;
 import com.github.tomakehurst.wiremock.http.Fault;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.*;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_3DS_AUTHORISATION_FAILED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_3DS_AUTHORISATION_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_FAILED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_CANCEL_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_CAPTURE_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_CAPTURE_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_REFUND_ERROR_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_REFUND_SUCCESS_RESPONSE;
 
 public class SmartpayMockClient {
 
@@ -21,6 +33,16 @@ public class SmartpayMockClient {
         mockAuthorisationWithTransactionId(randomUUID().toString());
     }
 
+    public void mock3dsAuthorisationSuccess() {
+        mock3dsAuthorisationWithTransactionId(randomUUID().toString());
+    }
+
+    private void mock3dsAuthorisationWithTransactionId(String transactionId) {
+        String authoriseResponse = TestTemplateResourceLoader.load(SMARTPAY_3DS_AUTHORISATION_SUCCESS_RESPONSE)
+                .replace("{{pspReference}}", transactionId);
+        paymentServiceResponse(authoriseResponse);
+    }
+
     public void mockAuthorisation3dsRequired() {
         String authoriseResponse = TestTemplateResourceLoader.load(SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE)
                 .replace("{{pspReference}}", randomUUID().toString());
@@ -30,6 +52,11 @@ public class SmartpayMockClient {
     public void mockAuthorisationFailure() {
         String authoriseResponse = TestTemplateResourceLoader.load(SMARTPAY_AUTHORISATION_FAILED_RESPONSE);
         paymentServiceResponse(authoriseResponse);
+    }
+    
+    public void mock3dsAuthorisationFailure() {
+        String authorise3dsResponse = TestTemplateResourceLoader.load(SMARTPAY_3DS_AUTHORISATION_FAILED_RESPONSE);
+        paymentServiceResponse(authorise3dsResponse);
     }
 
     public void mockCaptureSuccess() {

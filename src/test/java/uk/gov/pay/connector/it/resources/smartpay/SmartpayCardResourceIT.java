@@ -13,7 +13,6 @@ import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -98,7 +97,7 @@ public class SmartpayCardResourceIT extends ChargingITestBase {
     public void shouldSuccessWhenAuth3dsRequiredAndAuthorisationSuccess() throws JsonProcessingException {
         databaseTestHelper.enable3dsForGatewayAccount(Long.parseLong(accountId));
         String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_3DS_REQUIRED);
-        smartpayMockClient.mockAuthorisationSuccess();
+        smartpayMockClient.mock3dsAuthorisationSuccess();
 
         givenSetup()
                 .body(new ObjectMapper().writeValueAsString(get3dsPayload()))
@@ -113,7 +112,7 @@ public class SmartpayCardResourceIT extends ChargingITestBase {
     public void shouldFailWhenAuth3dsRequiredAndAuthorisationFailure() throws JsonProcessingException {
         databaseTestHelper.enable3dsForGatewayAccount(Long.parseLong(accountId));
         String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_3DS_REQUIRED);
-        smartpayMockClient.mockAuthorisationFailure();
+        smartpayMockClient.mock3dsAuthorisationFailure();
 
         givenSetup()
                 .body(new ObjectMapper().writeValueAsString(get3dsPayload()))

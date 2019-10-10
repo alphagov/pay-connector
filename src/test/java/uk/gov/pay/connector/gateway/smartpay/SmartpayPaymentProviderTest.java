@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -24,18 +23,13 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_3DS_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_CAPTURE_SUCCESS_RESPONSE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest {
-
-    @Before
-    public void setup() {
-        super.setup();
-        mockSmartpaySuccessfulOrderSubmitResponse();
-    }
 
     @Test
     public void shouldGetPaymentProviderName() {
@@ -49,7 +43,8 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
 
     @Test
     public void shouldSendSuccessfullyAOrderForMerchant() throws Exception {
-
+        mockSmartpaySuccessfulOrderSubmitResponse();
+        
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
 
         ChargeEntity chargeEntity = aValidChargeEntity()
@@ -93,6 +88,8 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
 
     @Test
     public void shouldSuccess3DSAuthorisation() {
+        mockSmartpay3dsAuthorisationSuccessfulOrderSubmitResponse();
+        
         GatewayAccountEntity gatewayAccountEntity = aServiceAccount();
         gatewayAccountEntity.setRequires3ds(true);
         ChargeEntity chargeEntity = aValidChargeEntity()
@@ -114,6 +111,10 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
         mockSmartpayResponse(200, successAuthorise3dsrequiredResponse());
     }
 
+    private void mockSmartpay3dsAuthorisationSuccessfulOrderSubmitResponse() {
+        mockSmartpayResponse(200, success3dsAuthoriseResponse());
+    }
+
     private String successAuthorise3dsrequiredResponse() {
         return TestTemplateResourceLoader.load(SMARTPAY_AUTHORISATION_3DS_REQUIRED_RESPONSE).replace("{{pspReference}}", "12345678");
     }
@@ -124,6 +125,10 @@ public class SmartpayPaymentProviderTest extends BaseSmartpayPaymentProviderTest
 
     private String successAuthoriseResponse() {
         return TestTemplateResourceLoader.load(SMARTPAY_AUTHORISATION_SUCCESS_RESPONSE).replace("{{pspReference}}", "12345678");
+    }
+
+    private String success3dsAuthoriseResponse() {
+        return TestTemplateResourceLoader.load(SMARTPAY_3DS_AUTHORISATION_SUCCESS_RESPONSE).replace("{{pspReference}}", "12345678");
     }
 
     private String successCaptureResponse() {
