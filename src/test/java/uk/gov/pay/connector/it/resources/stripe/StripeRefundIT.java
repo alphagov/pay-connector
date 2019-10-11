@@ -153,9 +153,7 @@ public class StripeRefundIT extends ChargingITestBase {
     public void stripeRefund_shouldResultInRefundErrorIfRefundFails() {
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         long amount = 10L;
-        stripeMockClient.mockTransferSuccess(null);
         stripeMockClient.mockRefundError();
-        stripeMockClient.mockTransferReversal("transfer_id");
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());
         String refundPayload = new Gson().toJson(refundData);
@@ -179,6 +177,7 @@ public class StripeRefundIT extends ChargingITestBase {
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         long amount = 10L;
         
+        stripeMockClient.mockRefund();
         stripeMockClient.mockTransferFailure();
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());

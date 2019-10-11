@@ -135,6 +135,7 @@ public class StripeRefundHandlerTest {
 
     @Test
     public void shouldNotRefund_whenStatusCode4xxOnTransfer() throws Exception {
+        mockRefundSuccess();
         mockTransfer4xxResponse();
 
         final GatewayRefundResponse refund = refundHandler.refund(refundRequest);
@@ -148,20 +149,7 @@ public class StripeRefundHandlerTest {
 
     @Test
     public void shouldNotRefund_whenStatusCode5xxOnTransfer() throws Exception {
-        mockTransferResponse5xx();
-
-        GatewayRefundResponse refund = refundHandler.refund(refundRequest);
-
-        assertThat(refund.getError().isPresent(), Is.is(true));
-        assertThat(refund.getError().get().getMessage(), containsString("An internal server error occurred while refunding Transaction id:"));
-        assertThat(refund.getError().get().getErrorType(), Is.is(GATEWAY_ERROR));
-    }
-
-    @Test
-    public void shouldReverseTransfer_ifRefundStepFails() throws Exception {
-        mockTransferSuccess();
         mockRefund5xxResponse();
-        mockTransferReversalSuccess();
 
         GatewayRefundResponse refund = refundHandler.refund(refundRequest);
 
@@ -169,20 +157,7 @@ public class StripeRefundHandlerTest {
         assertThat(refund.getError().get().getMessage(), containsString("An internal server error occurred while refunding Transaction id:"));
         assertThat(refund.getError().get().getErrorType(), Is.is(GATEWAY_ERROR));
     }
-
-    @Test
-    public void shouldNotRefund_ifTransferReversalFails() throws Exception {
-        mockTransferSuccess();
-        mockRefund4xxResponse();
-        mockTransferReversalFailure();
-
-        GatewayRefundResponse refund = refundHandler.refund(refundRequest);
-
-        assertThat(refund.getError().isPresent(), Is.is(true));
-        assertThat(refund.getError().get().getMessage(), containsString("An internal server error occurred while refunding Transaction id:"));
-        assertThat(refund.getError().get().getErrorType(), Is.is(GATEWAY_ERROR));
-    }
-
+    
     private void mockRefundSuccess() throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
         GatewayClient.Response response = mock(GatewayClient.Response.class);
         when(response.getEntity()).thenReturn(load(STRIPE_REFUND_FULL_CHARGE_RESPONSE));
