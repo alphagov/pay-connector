@@ -47,8 +47,8 @@ worldpay:
       # Refund median time is 500ms and done synchronously. Leave a bit of headroom since we don't have retries on this.
       readTimeout: 2000ms
     capture:
-      # Capture median time is 200ms. We can be quite agressive in the timeout since we have a retry mechanism.
-      readTimeout: 1000ms
+      # Capture median time is 200ms. Retry mechanism is in place, some headroom to reduce gateway status mismatch.
+      readTimeout: 5000ms
 
 smartpay:
   urls:
