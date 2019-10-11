@@ -19,7 +19,7 @@ import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
@@ -129,7 +129,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         List<Map<String, Object>> chargeEvents = testHelper.getChargeEvents(chargeId);
 
         assertThat(chargeEvents, hasEvent(PAYMENT_NOTIFICATION_CREATED));
-        assertThat(chargeEvents, hasEvent(AUTHORISATION_SUCCESS));
+        assertThat(chargeEvents, hasEvent(CAPTURE_SUBMITTED));
     }
 
     @Test
