@@ -27,7 +27,7 @@ public class ChargeEventDao extends JpaDao<ChargeEventEntity> {
 
     public ChargeEventEntity persistChargeEventOf(ChargeEntity chargeEntity, ZonedDateTime gatewayEventDate) {
         ChargeEventEntity chargeEventEntity = ChargeEventEntity.from(chargeEntity, ChargeStatus.fromString(chargeEntity.getStatus()),
-                ZonedDateTime.now(), Optional.ofNullable(gatewayEventDate));
+                Optional.ofNullable(gatewayEventDate));
         this.persist(chargeEventEntity);
         return chargeEventEntity;
     }

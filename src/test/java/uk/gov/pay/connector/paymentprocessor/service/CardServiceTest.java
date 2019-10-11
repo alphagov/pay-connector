@@ -38,15 +38,15 @@ public abstract class CardServiceTest {
                 .withId(chargeId)
                 .withStatus(status)
                 .withEvents(List.of(
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.CREATED, ZonedDateTime.now().minusHours(3), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_SUCCESS, ZonedDateTime.now(), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.ENTERING_CARD_DETAILS, ZonedDateTime.now().minusHours(2), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_TIMEOUT, ZonedDateTime.now().minusHours(1), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_ERROR, ZonedDateTime.now().minusHours(1), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_3DS_REQUIRED, ZonedDateTime.now().minusHours(1), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_CANCELLED, ZonedDateTime.now().minusHours(1), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_REJECTED, ZonedDateTime.now().minusHours(1), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR, ZonedDateTime.now().minusHours(1), Optional.empty())
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.CREATED, Optional.of(ZonedDateTime.now().minusHours(3)), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_SUCCESS, Optional.of(ZonedDateTime.now()), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.ENTERING_CARD_DETAILS, Optional.of(ZonedDateTime.now().minusHours(2)), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_TIMEOUT, Optional.of(ZonedDateTime.now().minusHours(1)), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_ERROR, Optional.of(ZonedDateTime.now().minusHours(1)), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_3DS_REQUIRED, Optional.of(ZonedDateTime.now().minusHours(1)), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_CANCELLED, Optional.of(ZonedDateTime.now().minusHours(1)), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_REJECTED, Optional.of(ZonedDateTime.now().minusHours(1)), Optional.empty()),
+                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR, Optional.of(ZonedDateTime.now().minusHours(1)), Optional.empty())
                 ))
                 .build();
         entity.setCardDetails(new CardDetailsEntity());

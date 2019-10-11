@@ -40,6 +40,12 @@ abstract public class DaoITestBase {
         properties.put("javax.persistence.jdbc.user", postgres.getUsername());
         properties.put("javax.persistence.jdbc.password", postgres.getPassword());
 
+        properties.put("eclipselink.logging.level", "WARNING");
+        properties.put("eclipselink.logging.level.sql", "WARNING");
+        properties.put("eclipselink.query-results-cache", "false");
+        properties.put("eclipselink.cache.shared.default", "false");
+        properties.put("eclipselink.ddl-generation.output-mode", "database");
+
         JpaPersistModule jpaModule = new JpaPersistModule("ConnectorUnit");
         jpaModule.properties(properties);
 

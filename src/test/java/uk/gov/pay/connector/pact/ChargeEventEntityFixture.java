@@ -12,7 +12,7 @@ import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidCharge
 
 public class ChargeEventEntityFixture {
     private ChargeStatus chargeStatus = ChargeStatus.CAPTURED;
-    private ZonedDateTime updated = ZonedDateTime.now();
+    private Optional<ZonedDateTime> updated = Optional.of(ZonedDateTime.now());
     private ZonedDateTime gatewayEventDate;
     private Long id = RandomUtils.nextLong();
     private ChargeEntity charge = aValidChargeEntity()
@@ -46,7 +46,7 @@ public class ChargeEventEntityFixture {
     }
 
     public ChargeEventEntityFixture withTimestamp(ZonedDateTime updated) {
-        this.updated = updated;
+        this.updated = Optional.of(updated);
         return this;
     }
 
