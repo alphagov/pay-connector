@@ -4,9 +4,9 @@ import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.common.dao.JpaDao;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -17,6 +17,7 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +56,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter("externalId", externalId)
                 .getResultList().stream().findFirst();
     }
-    
+
     public Optional<ChargeEntity> findByTokenId(String tokenId) {
         String query = "SELECT te.chargeEntity FROM TokenEntity te WHERE te.token=:tokenId AND te.used=false";
 
@@ -203,12 +204,16 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     public int countChargesForImmediateCapture(Duration notAttemptedWithin) {
         String query = "SELECT count(c) FROM ChargeEntity c " + FIND_CAPTURE_CHARGES_WHERE_CLAUSE;
 
-        Number count = (Number) entityManager.get()
+        ZonedDateTime utcCutoffThreshold = ZonedDateTime.now()
+                .minus(notAttemptedWithin)
+                .withZoneSameInstant(ZoneId.of("UTC"));
+
+        var count = (Number) entityManager.get()
                 .createQuery(query)
                 .setParameter("captureApprovedStatus", CAPTURE_APPROVED.getValue())
                 .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY.getValue())
                 .setParameter("eventStatus", CAPTURE_APPROVED_RETRY)
-                .setParameter("cutoffDate", ZonedDateTime.now().minus(notAttemptedWithin))
+                .setParameter("cutoffDate", utcCutoffThreshold)
                 .getSingleResult();
         return count.intValue();
     }

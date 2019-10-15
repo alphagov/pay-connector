@@ -33,9 +33,9 @@ public class PaymentDetailsEnteredTest {
         ZonedDateTime latestDateTime = ZonedDateTime.parse(time);
 
         List<ChargeEventEntity> list = List.of(
-                new ChargeEventEntity(new ChargeEntity(), ChargeStatus.CREATED, latestDateTime.minusHours(3), Optional.empty()),
-                new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_SUCCESS, latestDateTime, Optional.empty()),
-                new ChargeEventEntity(new ChargeEntity(), ChargeStatus.ENTERING_CARD_DETAILS, latestDateTime.minusHours(1), Optional.empty())
+                new ChargeEventEntity(new ChargeEntity(), ChargeStatus.CREATED, Optional.of(latestDateTime.minusHours(3)), Optional.empty()),
+                new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_SUCCESS, Optional.of(latestDateTime), Optional.empty()),
+                new ChargeEventEntity(new ChargeEntity(), ChargeStatus.ENTERING_CARD_DETAILS, Optional.of(latestDateTime.minusHours(1)), Optional.empty())
         );
 
         chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()

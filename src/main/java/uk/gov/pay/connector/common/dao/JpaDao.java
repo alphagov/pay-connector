@@ -19,6 +19,10 @@ public abstract class JpaDao<T> {
         entityManager.get().persist(object);
     }
 
+    public void flush() {
+        entityManager.get().flush();
+    }
+
     public void remove(final T object) {
         entityManager.get().remove(object);
     }

@@ -8,8 +8,8 @@ import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.util.BooleanColumnMapper;
 import org.skife.jdbi.v2.util.StringColumnMapper;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
-import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ExternalMetadataConverterException;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -20,6 +20,7 @@ import uk.gov.pay.connector.wallets.WalletType;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -614,8 +615,11 @@ public class DatabaseTestHelper {
 
     public void addEvent(Long chargeId, String chargeStatus, ZonedDateTime updated) {
         jdbi.withHandle(
-                h -> h.update("INSERT INTO charge_events(charge_id,status,updated) values(?,?,?)",
-                        chargeId, chargeStatus, Timestamp.from(updated.toInstant()))
+                h -> {
+                    ZonedDateTime utcValue = updated.withZoneSameInstant(ZoneId.of("UTC"));
+                    return h.update("INSERT INTO charge_events(charge_id,status,updated) values(?,?,?)",
+                            chargeId, chargeStatus, Timestamp.valueOf(utcValue.toLocalDateTime()));
+                }
         );
     }
 
