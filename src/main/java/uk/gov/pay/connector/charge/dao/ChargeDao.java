@@ -213,19 +213,6 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return count.intValue();
     }
 
-    public List<ChargeEntity> findChargesForCapture(int maxNumberOfCharges, Duration notAttemptedWithin) {
-        String query = "SELECT c FROM ChargeEntity c " + FIND_CAPTURE_CHARGES_WHERE_CLAUSE + "ORDER BY c.createdDate ASC";
-
-        return entityManager.get()
-                .createQuery(query, ChargeEntity.class)
-                .setMaxResults(maxNumberOfCharges)
-                .setParameter("captureApprovedStatus", CAPTURE_APPROVED.getValue())
-                .setParameter("captureApprovedRetryStatus", CAPTURE_APPROVED_RETRY.getValue())
-                .setParameter("eventStatus", CAPTURE_APPROVED_RETRY)
-                .setParameter("cutoffDate", ZonedDateTime.now().minus(notAttemptedWithin))
-                .getResultList();
-    }
-
     public int countCaptureRetriesForChargeExternalId(String externalId) {
         String query = "SELECT count(ce) FROM ChargeEventEntity ce WHERE " +
                 "    ce.chargeEntity.externalId = :externalId AND " +
