@@ -6,12 +6,11 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.events.eventdetails.EmptyEventDetails;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.UnspecifiedEvent;
-import uk.gov.pay.connector.events.eventdetails.EmptyEventDetails;
 import uk.gov.pay.connector.events.model.charge.AuthorisationCancelled;
 import uk.gov.pay.connector.events.model.charge.AuthorisationRejected;
-import uk.gov.pay.connector.events.model.charge.AuthorisationSucceeded;
 import uk.gov.pay.connector.events.model.charge.CaptureAbandonedAfterTooManyRetries;
 import uk.gov.pay.connector.events.model.charge.CaptureErrored;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
@@ -165,8 +164,8 @@ public class PaymentGatewayStateTransitionsTest {
 
     @Test
     public void getEventTransitionForPaymentNotificationCreated_returnsEventForModelledTypedEvent() {
-        Optional<Class<Event>> eventClassType = transitions.getEventForTransition(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_SUCCESS);
-        assertThat(eventClassType.get(), is(AuthorisationSucceeded.class));
+        Optional<Class<Event>> eventClassType = transitions.getEventForTransition(PAYMENT_NOTIFICATION_CREATED, CAPTURE_SUBMITTED);
+        assertThat(eventClassType.get(), is(CaptureSubmitted.class));
 
         eventClassType = transitions.getEventForTransition(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_REJECTED);
         assertThat(eventClassType.get(), is(AuthorisationRejected.class));

@@ -541,7 +541,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getAmount(), is(100L));
         assertThat(createdChargeEntity.getReference(), is(ServicePaymentReference.of("Some reference")));
         assertThat(createdChargeEntity.getDescription(), is("Some description"));
-        assertThat(createdChargeEntity.getStatus(), is("AUTHORISATION SUCCESS"));
+        assertThat(createdChargeEntity.getStatus(), is("CAPTURE SUBMITTED"));
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
         assertThat(createdChargeEntity.getCreatedDate(), is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneId.of("UTC")))));
         assertThat(createdChargeEntity.getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));

@@ -132,7 +132,7 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
         graph.putEdgeValue(AUTHORISATION_3DS_READY, AUTHORISATION_ERROR, ModelledEvent.of(GatewayErrorDuringAuthorisation.class));
         graph.putEdgeValue(AUTHORISATION_3DS_READY, EXPIRE_CANCEL_READY, ModelledEvent.none());
-        graph.putEdgeValue(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_SUCCESS, ModelledEvent.of(AuthorisationSucceeded.class));
+        graph.putEdgeValue(PAYMENT_NOTIFICATION_CREATED, CAPTURE_SUBMITTED, ModelledEvent.of(CaptureSubmitted.class));
         graph.putEdgeValue(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_REJECTED, ModelledEvent.of(AuthorisationRejected.class));
         graph.putEdgeValue(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_ERROR, ModelledEvent.of(GatewayErrorDuringAuthorisation.class));
         graph.putEdgeValue(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_CANCELLED, ModelledEvent.of(AuthorisationCancelled.class));
