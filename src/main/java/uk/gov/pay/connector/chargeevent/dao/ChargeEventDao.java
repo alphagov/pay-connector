@@ -29,6 +29,8 @@ public class ChargeEventDao extends JpaDao<ChargeEventEntity> {
         ChargeEventEntity chargeEventEntity = ChargeEventEntity.from(chargeEntity, ChargeStatus.fromString(chargeEntity.getStatus()),
                 Optional.ofNullable(gatewayEventDate));
         this.persist(chargeEventEntity);
+        this.flush();
+        this.forceRefresh(chargeEventEntity);
         return chargeEventEntity;
     }
 
