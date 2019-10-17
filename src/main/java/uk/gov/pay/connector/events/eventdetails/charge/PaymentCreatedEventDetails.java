@@ -19,34 +19,32 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private final boolean live;
     private final Map<String, Object> externalMetadata;
 
-    public PaymentCreatedEventDetails(Long amount, String description, String reference, String returnUrl,
-                                      Long gatewayAccountId, String paymentProvider, String language,
-                                      boolean delayedCapture, boolean live,
-                                      Map<String, Object> externalMetadata) {
-        this.amount = amount;
-        this.description = description;
-        this.reference = reference;
-        this.returnUrl = returnUrl;
-        this.gatewayAccountId = gatewayAccountId;
-        this.paymentProvider = paymentProvider;
-        this.language = language;
-        this.delayedCapture = delayedCapture;
-        this.live = live;
-        this.externalMetadata = externalMetadata;
+    public PaymentCreatedEventDetails(Builder builder) {
+        this.amount = builder.amount;
+        this.description = builder.description;
+        this.reference = builder.reference;
+        this.returnUrl = builder.returnUrl;
+        this.gatewayAccountId = builder.gatewayAccountId;
+        this.paymentProvider = builder.paymentProvider;
+        this.language = builder.language;
+        this.delayedCapture = builder.delayedCapture;
+        this.live = builder.live;
+        this.externalMetadata = builder.externalMetadata;
     }
 
     public static PaymentCreatedEventDetails from(ChargeEntity charge) {
-        return new PaymentCreatedEventDetails(
-                charge.getAmount(),
-                charge.getDescription(),
-                charge.getReference().toString(),
-                charge.getReturnUrl(),
-                charge.getGatewayAccount().getId(),
-                charge.getGatewayAccount().getGatewayName(),
-                charge.getLanguage().toString(),
-                charge.isDelayedCapture(),
-                charge.getGatewayAccount().isLive(),
-                charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null));
+        return new Builder()
+                .withAmount(charge.getAmount())
+                .withDescription(charge.getDescription())
+                .withReference(charge.getReference().toString())
+                .withReturnUrl(charge.getReturnUrl())
+                .withGatewayAccountId(charge.getGatewayAccount().getId())
+                .withPaymentProvider(charge.getGatewayAccount().getGatewayName())
+                .withLanguage(charge.getLanguage().toString())
+                .withDelayedCapture(charge.isDelayedCapture())
+                .withLive(charge.getGatewayAccount().isLive())
+                .withExternalMetadata(charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null))
+                .build();
     }
 
     public Long getAmount() {
@@ -80,8 +78,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
     public boolean isDelayedCapture() {
         return delayedCapture;
     }
-    
-    public boolean isLive() { 
+
+    public boolean isLive() {
         return live;
     }
 
@@ -110,5 +108,72 @@ public class PaymentCreatedEventDetails extends EventDetails {
     public int hashCode() {
         return Objects.hash(amount, description, reference, returnUrl, gatewayAccountId, paymentProvider, language,
                 delayedCapture, live, externalMetadata);
+    }
+
+    public static class Builder {
+        private Long amount;
+        private String description;
+        private String reference;
+        private String returnUrl;
+        private Long gatewayAccountId;
+        private String paymentProvider;
+        private String language;
+        private boolean delayedCapture;
+        private boolean live;
+        private Map<String, Object> externalMetadata;
+
+        public PaymentCreatedEventDetails build() {
+            return new PaymentCreatedEventDetails(this);
+        }
+
+        public Builder withAmount(Long amount) {
+            this.amount = amount;
+            return this;
+        }
+
+        public Builder withDescription(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder withReference(String reference) {
+            this.reference = reference;
+            return this;
+        }
+
+        public Builder withReturnUrl(String returnUrl) {
+            this.returnUrl = returnUrl;
+            return this;
+        }
+
+        public Builder withGatewayAccountId(Long gatewayAccountId) {
+            this.gatewayAccountId = gatewayAccountId;
+            return this;
+        }
+
+        public Builder withPaymentProvider(String paymentProvider) {
+            this.paymentProvider = paymentProvider;
+            return this;
+        }
+
+        public Builder withLanguage(String language) {
+            this.language = language;
+            return this;
+        }
+
+        public Builder withDelayedCapture(boolean delayedCapture) {
+            this.delayedCapture = delayedCapture;
+            return this;
+        }
+
+        public Builder withLive(boolean live) {
+            this.live = live;
+            return this;
+        }
+
+        public Builder withExternalMetadata(Map<String, Object> externalMetadata) {
+            this.externalMetadata = externalMetadata;
+            return this;
+        }
     }
 }

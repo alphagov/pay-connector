@@ -159,9 +159,17 @@ public class EmittedEventDaoIT extends DaoITestBase {
     }
 
     private PaymentCreated aPaymentCreatedEvent() {
-        PaymentCreatedEventDetails eventDetails = new PaymentCreatedEventDetails(
-                1L, "desc", "ref", "return_url",
-                100L, "someProvider", "en", false, false, null);
+        PaymentCreatedEventDetails eventDetails = new PaymentCreatedEventDetails.Builder()
+                .withAmount(1L)
+                .withDescription("desc")
+                .withReference("ref")
+                .withReturnUrl("return_url")
+                .withGatewayAccountId(100L)
+                .withPaymentProvider("someProvider")
+                .withLanguage("en")
+                .withDelayedCapture(false)
+                .withLive(false)
+                .build();
         return new PaymentCreated("my-resource-external-id", eventDetails, ZonedDateTime.parse("2019-01-01T14:00:00Z"));
     }
 
