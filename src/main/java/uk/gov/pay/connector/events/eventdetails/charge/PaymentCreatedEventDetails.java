@@ -1,13 +1,36 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
+import com.google.common.collect.ImmutableList;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
+import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 
 public class PaymentCreatedEventDetails extends EventDetails {
+
+    private static List<ChargeStatus> postAuthorisationReadyStates = ImmutableList.of(
+            AUTHORISATION_ABORTED, AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR,
+            AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR, AUTHORISATION_3DS_REQUIRED, AUTHORISATION_CANCELLED,
+            AUTHORISATION_SUBMITTED
+    );
+
     private final Long amount;
     private final String description;
     private final String reference;
@@ -18,6 +41,14 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private final boolean delayedCapture;
     private final boolean live;
     private final Map<String, Object> externalMetadata;
+    private final String email;
+    private final String cardholderName;
+    private final String addressLine1;
+    private final String addressLine2;
+    private final String addressPostcode;
+    private final String addressCity;
+    private final String addressCounty;
+    private final String addressCountry;
 
     public PaymentCreatedEventDetails(Builder builder) {
         this.amount = builder.amount;
@@ -30,10 +61,18 @@ public class PaymentCreatedEventDetails extends EventDetails {
         this.delayedCapture = builder.delayedCapture;
         this.live = builder.live;
         this.externalMetadata = builder.externalMetadata;
+        this.email = builder.email;
+        this.cardholderName = builder.cardholderName;
+        this.addressLine1 = builder.addressLine1;
+        this.addressLine2 = builder.addressLine2;
+        this.addressPostcode = builder.addressPostcode;
+        this.addressCity = builder.addressCity;
+        this.addressCounty = builder.addressCounty;
+        this.addressCountry = builder.addressCountry;
     }
 
     public static PaymentCreatedEventDetails from(ChargeEntity charge) {
-        return new Builder()
+        var builder = new Builder()
                 .withAmount(charge.getAmount())
                 .withDescription(charge.getDescription())
                 .withReference(charge.getReference().toString())
@@ -44,7 +83,35 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 .withDelayedCapture(charge.isDelayedCapture())
                 .withLive(charge.getGatewayAccount().isLive())
                 .withExternalMetadata(charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null))
-                .build();
+                .withEmail(charge.getEmail());
+
+        if (isInCreatedState(charge) || hasNotGoneThroughAuthorisation(charge)) {
+            addCardDetailsIfExist(charge, builder);
+        }
+
+        return builder.build();
+    }
+
+    private static boolean isInCreatedState(ChargeEntity charge) {
+        return ChargeStatus.CREATED.equals(ChargeStatus.fromString(charge.getStatus()));
+    }
+
+    private static boolean hasNotGoneThroughAuthorisation(ChargeEntity charge) {
+        return charge.getEvents().stream()
+                .map(ChargeEventEntity::getStatus)
+                .noneMatch(status -> postAuthorisationReadyStates.contains(status));
+    }
+
+    private static void addCardDetailsIfExist(ChargeEntity charge, Builder builder) {
+        Optional.ofNullable(charge.getCardDetails()).ifPresent(
+                cardDetails ->
+                        builder.withCardholderName(cardDetails.getCardHolderName())
+                                .withAddressLine1(cardDetails.getBillingAddress().map(AddressEntity::getLine1).orElse(null))
+                                .withAddressLine2(cardDetails.getBillingAddress().map(AddressEntity::getLine2).orElse(null))
+                                .withAddressCity(cardDetails.getBillingAddress().map(AddressEntity::getCity).orElse(null))
+                                .withAddressCountry(cardDetails.getBillingAddress().map(AddressEntity::getCountry).orElse(null))
+                                .withAddressCounty(cardDetails.getBillingAddress().map(AddressEntity::getCounty).orElse(null))
+                                .withAddressPostcode(cardDetails.getBillingAddress().map(AddressEntity::getPostcode).orElse(null)));
     }
 
     public Long getAmount() {
@@ -87,6 +154,38 @@ public class PaymentCreatedEventDetails extends EventDetails {
         return externalMetadata;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public String getCardholderName() {
+        return cardholderName;
+    }
+
+    public String getAddressLine1() {
+        return addressLine1;
+    }
+
+    public String getAddressLine2() {
+        return addressLine2;
+    }
+
+    public String getAddressPostcode() {
+        return addressPostcode;
+    }
+
+    public String getAddressCity() {
+        return addressCity;
+    }
+
+    public String getAddressCounty() {
+        return addressCounty;
+    }
+
+    public String getAddressCountry() {
+        return addressCountry;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -101,7 +200,15 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 Objects.equals(language, that.language) &&
                 Objects.equals(delayedCapture, that.delayedCapture) &&
                 Objects.equals(live, that.live) &&
-                Objects.equals(externalMetadata, that.externalMetadata);
+                Objects.equals(externalMetadata, that.externalMetadata) &&
+                Objects.equals(email, that.email) &&
+                Objects.equals(cardholderName, that.cardholderName) &&
+                Objects.equals(addressLine1, that.addressLine1) &&
+                Objects.equals(addressLine2, that.addressLine2) &&
+                Objects.equals(addressPostcode, that.addressPostcode) &&
+                Objects.equals(addressCity, that.addressCity) &&
+                Objects.equals(addressCounty, that.addressCounty) &&
+                Objects.equals(addressCountry, that.addressCountry);
     }
 
     @Override
@@ -121,6 +228,14 @@ public class PaymentCreatedEventDetails extends EventDetails {
         private boolean delayedCapture;
         private boolean live;
         private Map<String, Object> externalMetadata;
+        private String email;
+        private String cardholderName;
+        private String addressLine1;
+        private String addressLine2;
+        private String addressPostcode;
+        private String addressCity;
+        private String addressCounty;
+        private String addressCountry;
 
         public PaymentCreatedEventDetails build() {
             return new PaymentCreatedEventDetails(this);
@@ -173,6 +288,46 @@ public class PaymentCreatedEventDetails extends EventDetails {
 
         public Builder withExternalMetadata(Map<String, Object> externalMetadata) {
             this.externalMetadata = externalMetadata;
+            return this;
+        }
+
+        public Builder withEmail(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public Builder withCardholderName(String cardholderName) {
+            this.cardholderName = cardholderName;
+            return this;
+        }
+
+        public Builder withAddressLine1(String addressLine1) {
+            this.addressLine1 = addressLine1;
+            return this;
+        }
+
+        public Builder withAddressLine2(String addressLine2) {
+            this.addressLine2 = addressLine2;
+            return this;
+        }
+
+        public Builder withAddressPostcode(String addressPostcode) {
+            this.addressPostcode = addressPostcode;
+            return this;
+        }
+
+        public Builder withAddressCity(String addressCity) {
+            this.addressCity = addressCity;
+            return this;
+        }
+
+        public Builder withAddressCounty(String addressCounty) {
+            this.addressCounty = addressCounty;
+            return this;
+        }
+
+        public Builder withAddressCountry(String addressCountry) {
+            this.addressCountry = addressCountry;
             return this;
         }
     }
