@@ -335,7 +335,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
         connectorRestApiClient
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
-                .body("message[0]", is("Field [card_type] must be either master-card, visa, maestro, diners-club or american-express"));
+                .body("message[0]", is("Field [card_type] must be either master-card, visa, maestro, diners-club, american-express or jcb"));
     }
 
     @Test
