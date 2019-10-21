@@ -13,6 +13,7 @@ public class CardBrandValidator implements ConstraintValidator<ValidCardBrand, S
         CARD_BRANDS.add("maestro");
         CARD_BRANDS.add("diners-club");
         CARD_BRANDS.add("american-express");
+        CARD_BRANDS.add("jcb");
     }
 
     @Override

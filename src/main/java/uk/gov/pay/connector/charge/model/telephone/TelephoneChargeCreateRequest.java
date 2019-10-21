@@ -2,11 +2,10 @@ package uk.gov.pay.connector.charge.model.telephone;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import uk.gov.pay.connector.cardtype.model.domain.CardType;
+import uk.gov.pay.connector.charge.validation.telephone.ValidCardBrand;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardExpiryDate;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardFirstSixDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidCardLastFourDigits;
-import uk.gov.pay.connector.charge.validation.telephone.ValidCardBrand;
 import uk.gov.pay.connector.charge.validation.telephone.ValidZonedDateTime;
 
 import javax.validation.Valid;
@@ -43,7 +42,7 @@ public class TelephoneChargeCreateRequest {
     @Valid
     private PaymentOutcome paymentOutcome;
     
-    @ValidCardBrand(message = "Field [card_type] must be either master-card, visa, maestro, diners-club or american-express")
+    @ValidCardBrand(message = "Field [card_type] must be either master-card, visa, maestro, diners-club, american-express or jcb")
     private String cardType;
     
     private String nameOnCard;
