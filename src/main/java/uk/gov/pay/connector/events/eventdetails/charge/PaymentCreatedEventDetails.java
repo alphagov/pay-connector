@@ -1,35 +1,20 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
-import com.google.common.collect.ImmutableList;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 
 public class PaymentCreatedEventDetails extends EventDetails {
-
-    private static List<ChargeStatus> postAuthorisationReadyStates = ImmutableList.of(
-            AUTHORISATION_ABORTED, AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED, AUTHORISATION_ERROR,
-            AUTHORISATION_TIMEOUT, AUTHORISATION_UNEXPECTED_ERROR, AUTHORISATION_3DS_REQUIRED, AUTHORISATION_CANCELLED,
-            AUTHORISATION_SUBMITTED
-    );
 
     private final Long amount;
     private final String description;
@@ -99,7 +84,12 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private static boolean hasNotGoneThroughAuthorisation(ChargeEntity charge) {
         return charge.getEvents().stream()
                 .map(ChargeEventEntity::getStatus)
-                .noneMatch(status -> postAuthorisationReadyStates.contains(status));
+                .noneMatch(PaymentCreatedEventDetails::containsPostAuthorisationReadyStatus);
+    }
+
+    private static boolean containsPostAuthorisationReadyStatus(ChargeStatus status) {
+        return PaymentGatewayStateTransitions.getInstance()
+                .getNextStatus(AUTHORISATION_READY).contains(status);
     }
 
     private static void addCardDetailsIfExist(ChargeEntity charge, Builder builder) {

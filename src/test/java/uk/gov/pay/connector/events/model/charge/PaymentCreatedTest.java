@@ -23,6 +23,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
+@SuppressWarnings("PMD.UnusedPrivateMethod")
 @RunWith(JUnitParamsRunner.class)
 public class PaymentCreatedTest {
 
