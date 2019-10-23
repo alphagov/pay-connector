@@ -25,7 +25,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsCollectionContaining.hasItem;
+import static org.hamcrest.core.IsIterableContaining.hasItem;
+import static org.hamcrest.core.IsIterableContaining.hasItems;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -175,5 +176,18 @@ public class PaymentGatewayStateTransitionsTest {
 
         eventClassType = transitions.getEventForTransition(PAYMENT_NOTIFICATION_CREATED, AUTHORISATION_CANCELLED);
         assertThat(eventClassType.get(), is(AuthorisationCancelled.class));
+    }
+
+    @Test
+    public void getNextStatus_returnsAListOfFollowingStatuses() {
+        assertThat(transitions.getNextStatus(AUTHORISATION_READY), hasItems(AUTHORISATION_ABORTED,
+                AUTHORISATION_SUCCESS,
+                AUTHORISATION_REJECTED,
+                AUTHORISATION_ERROR,
+                AUTHORISATION_TIMEOUT,
+                AUTHORISATION_UNEXPECTED_ERROR,
+                AUTHORISATION_3DS_REQUIRED,
+                AUTHORISATION_CANCELLED,
+                AUTHORISATION_SUBMITTED));
     }
 }

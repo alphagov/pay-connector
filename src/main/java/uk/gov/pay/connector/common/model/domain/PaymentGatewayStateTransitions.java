@@ -35,6 +35,7 @@ import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuth
 import uk.gov.pay.connector.events.model.charge.UserApprovedForCapture;
 import uk.gov.pay.connector.events.model.charge.UserApprovedForCaptureAwaitingServiceApproval;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -207,6 +208,10 @@ public class PaymentGatewayStateTransitions {
                         return null;
                     }
                 });
+    }
+
+    public <T extends Event> List<ChargeStatus> getNextStatus(ChargeStatus fromStatus) {
+        return new ArrayList<>(graph.successors(fromStatus));
     }
     
     public static List<Class> getAllEventsResultingInTerminalState() {

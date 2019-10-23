@@ -30,3 +30,6 @@ bin
 .DS_Store
 /pacts/pacts.json
 /pacts/
+
+# state transition output
+states.dot
