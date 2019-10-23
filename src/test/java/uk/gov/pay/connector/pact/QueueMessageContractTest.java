@@ -57,6 +57,7 @@ public class QueueMessageContractTest {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withExternalMetadata(new ExternalMetadata(ImmutableMap.of("key", "value")))
                 .withCorporateSurcharge(55L)
+                .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
                 .build();
 
         PaymentCreated paymentCreatedEvent = new PaymentCreated(
