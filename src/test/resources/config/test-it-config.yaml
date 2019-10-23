@@ -6,6 +6,13 @@ server:
     - type: http
       port: 0
   registerDefaultExceptionMappers: false
+  requestLog:
+    appenders:
+      - type: logstash-console
+        threshold: ALL
+        target: stdout
+        customFields:
+          container: "connector"
 
 logging:
   level: INFO

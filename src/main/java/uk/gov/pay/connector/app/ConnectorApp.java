@@ -99,6 +99,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
     @Override
     public void run(ConnectorConfiguration configuration, Environment environment) {
+//        environment.getObjectMapper().getSubtypeResolver().registerSubtypes(LogstashConsoleAppenderFactory.class);
+        
         final Injector injector = createInjector(environment, getModule(configuration, environment));
 
         injector.getInstance(PersistenceServiceInitialiser.class);
