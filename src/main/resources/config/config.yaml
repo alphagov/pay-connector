@@ -13,6 +13,13 @@ server:
           type: access-json
           customFieldNames:
             timestamp: "@timestamp"
+            userAgent: "user_agent"
+            requestTime: "response_time"
+            uri: "url"
+            protocol: "http_version"
+            status: "status_code"
+            contentLength: "content_length"
+            remoteAddress: "remote_address"
           additionalFields:
             container: "connector"
             "@version": 1
