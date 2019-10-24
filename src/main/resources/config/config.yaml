@@ -6,6 +6,23 @@ server:
     - type: http
       port: ${ADMIN_PORT:-0}
   registerDefaultExceptionMappers: false
+  requestLog:
+    appenders:
+      - type: console
+        layout:
+          type: access-json
+          customFieldNames:
+            timestamp: "@timestamp"
+            userAgent: "user_agent"
+            requestTime: "response_time"
+            uri: "url"
+            protocol: "http_version"
+            status: "status_code"
+            contentLength: "content_length"
+            remoteAddress: "remote_address"
+          additionalFields:
+            container: "connector"
+            "@version": 1
 
 logging:
   level: INFO
