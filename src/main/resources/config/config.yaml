@@ -11,6 +11,7 @@ server:
       - type: console
         layout:
           type: access-json
+          timestampFormat: "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
           customFieldNames:
             timestamp: "@timestamp"
             userAgent: "user_agent"
