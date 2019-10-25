@@ -12,7 +12,7 @@
         <eclipselink.version>2.7.5</eclipselink.version>
         <guice.version>4.2.2</guice.version>
         <jackson.version>2.10.0</jackson.version>
-        <pay-java-commons.version>1.0.20191017105041</pay-java-commons.version>
+        <pay-java-commons.version>1.0.20191025142609</pay-java-commons.version>
         <surefire.version>3.0.0-M3</surefire.version>
         <javax.persistence.version>2.2.1</javax.persistence.version>
         <jooq.version>3.12.2</jooq.version>
@@ -39,11 +39,6 @@
         </repository>
     </repositories>
     <dependencies>
-        <dependency>
-            <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-json-logging</artifactId>
-            <version>${dropwizard.version}</version>
-        </dependency>
         <dependency>
             <groupId>uk.gov.pay</groupId>
             <artifactId>logging</artifactId>
