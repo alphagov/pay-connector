@@ -62,6 +62,7 @@ import uk.gov.pay.connector.usernotification.resource.EmailNotificationResource;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
 import uk.gov.pay.connector.util.JsonMappingExceptionMapper;
 import uk.gov.pay.connector.webhook.resource.NotificationResource;
+import uk.gov.pay.logging.GovUkPayDropwizardRequestJsonLogLayoutFactory;
 import uk.gov.pay.logging.LogstashConsoleAppenderFactory;
 
 import java.util.Optional;
@@ -95,6 +96,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         bootstrap.addCommand(new DependentResourceWaitCommand());
         bootstrap.addCommand(new RenderStateTransitionGraphCommand());
         bootstrap.getObjectMapper().getSubtypeResolver().registerSubtypes(LogstashConsoleAppenderFactory.class);
+        bootstrap.getObjectMapper().getSubtypeResolver().registerSubtypes(GovUkPayDropwizardRequestJsonLogLayoutFactory.class);
     }
 
     @Override
