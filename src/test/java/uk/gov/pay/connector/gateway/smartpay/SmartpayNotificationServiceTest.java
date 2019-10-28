@@ -70,7 +70,7 @@ public class SmartpayNotificationServiceTest {
         notificationService.handleNotificationFor(payload);
 
         verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockChargeNotificationProcessor).invoke(pspReference, mockCharge, CAPTURED,
+        verify(mockChargeNotificationProcessor).invoke(originalReference, mockCharge, CAPTURED,
                 ZonedDateTime.parse("2015-10-08T13:48:30+02:00"));  // from notification-capture.json
     }
 
