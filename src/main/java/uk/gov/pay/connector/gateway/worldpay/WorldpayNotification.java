@@ -14,7 +14,6 @@ import java.util.Optional;
 public class WorldpayNotification implements ChargeStatusRequest {
 
     public WorldpayNotification() {
-
     }
 
     public WorldpayNotification(String merchantCode, String status, int dayOfMonth, int month, int year, String transactionId, String reference) {
@@ -82,5 +81,19 @@ public class WorldpayNotification implements ChargeStatusRequest {
 
     public LocalDate getBookingDate() {
         return LocalDate.of(year, month, dayOfMonth);
+    }
+
+    @Override
+    public String toString() {
+        return "WorldpayNotification{" +
+                "merchantCode='" + merchantCode + '\'' +
+                ", status='" + status + '\'' +
+                ", dayOfMonth=" + dayOfMonth +
+                ", month=" + month +
+                ", year=" + year +
+                ", transactionId='" + transactionId + '\'' +
+                ", reference='" + reference + '\'' +
+                ", chargeStatus=" + chargeStatus +
+                '}';
     }
 }

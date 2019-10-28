@@ -82,7 +82,7 @@ public class WorldpayNotificationService {
         }
 
         if (isTransactionIdBlank(notification)) {
-            logger.error("{} notification {} failed verification because it has no transaction ID", gatewayName(), notification);
+            logger.warn("{} notification {} failed verification because it has no transaction ID", gatewayName(), notification);
             return true;
         }
 
