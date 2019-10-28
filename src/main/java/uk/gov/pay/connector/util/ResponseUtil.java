@@ -59,7 +59,7 @@ public class ResponseUtil {
     }
 
     public static Response notFoundResponse(String message) {
-        logger.error(message);
+        logger.info(message);
         return buildErrorResponse(NOT_FOUND, message);
     }
 
