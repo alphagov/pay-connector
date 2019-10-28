@@ -79,7 +79,7 @@ public class SmartpayNotificationService {
 
         if (interpretedStatus instanceof MappedChargeStatus) {
             chargeNotificationProcessor.invoke(
-                    notification.getPspReference(),
+                    notification.getOriginalReference(),
                     charge,
                     interpretedStatus.getChargeStatus(),
                     notification.getEventDate()
