@@ -86,4 +86,16 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
     public String getPspReference() {
         return pspReference;
     }
+
+    @Override
+    public String toString() {
+        return "SmartpayNotification{" +
+                "eventDate=" + eventDate +
+                ", eventCode='" + eventCode + '\'' +
+                ", originalReference='" + originalReference + '\'' +
+                ", pspReference='" + pspReference + '\'' +
+                ", success='" + success + '\'' +
+                ", chargeStatus=" + chargeStatus +
+                '}';
+    }
 }
