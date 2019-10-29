@@ -171,7 +171,6 @@ public class CardResource {
             case GATEWAY_ERROR:
                 return serviceErrorResponse(error.getMessage());
             default:
-                logger.error("Charge {}: error {}", chargeId, error.getMessage());
                 return badRequestResponse(error.getMessage());
         }
     }
