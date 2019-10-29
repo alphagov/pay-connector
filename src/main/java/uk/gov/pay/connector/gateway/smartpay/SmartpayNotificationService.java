@@ -69,7 +69,7 @@ public class SmartpayNotificationService {
                 notification.getOriginalReference());
 
         if (!maybeCharge.isPresent()) {
-            logger.error("{} notification {} could not be evaluated (associated charge entity not found)",
+            logger.warn("{} notification {} could not be evaluated (associated charge entity not found)",
                     PAYMENT_GATEWAY_NAME, notification);
             return;
         }
