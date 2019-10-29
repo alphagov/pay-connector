@@ -63,7 +63,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
             String chargeExternalId = request.getChargeExternalId();
 
             if ((e.getStatus().isPresent() && e.getStatus().get() == SC_UNAUTHORIZED) || e.getFamily() == SERVER_ERROR) {
-                logger.error("Authorisation failed for charge {}. Reason: {}. Status code from Stripe: {}.",
+                logger.error("Authorisation failed for charge {} due to an internal error. Reason: {}. Status code from Stripe: {}.",
                         chargeExternalId, e.getMessage(), e.getStatus().map(String::valueOf).orElse("no status code"));
                 GatewayError gatewayError = gatewayConnectionError("There was an internal server error authorising charge_external_id: " + chargeExternalId);
                 return responseBuilder.withGatewayError(gatewayError).build();
@@ -71,7 +71,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
 
             if (e.getFamily() == CLIENT_ERROR) {
                 StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), StripeErrorResponse.class);
-                logger.error("Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
+                logger.info("Authorisation failed for charge {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
                         chargeExternalId, stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), e.getStatus());
     
                 return responseBuilder.withResponse(StripeAuthorisationFailedResponse.of(stripeErrorResponse)).build();
