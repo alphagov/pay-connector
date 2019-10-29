@@ -94,14 +94,14 @@ public class StripeNotificationService {
             StripePaymentIntent paymentIntent = toPaymentIntent(notification.getObject());
 
             if (isBlank(paymentIntent.getId())) {
-                logger.error("{} payment intent notification [{}] failed verification because it has no transaction ID", PAYMENT_GATEWAY_NAME, notification);
+                logger.warn("{} payment intent notification [{}] failed verification because it has no transaction ID", PAYMENT_GATEWAY_NAME, notification);
                 return;
             }
             
             Optional<ChargeEntity> maybeCharge = chargeService.findByProviderAndTransactionId(PAYMENT_GATEWAY_NAME, paymentIntent.getId());
 
             if (!maybeCharge.isPresent()) {
-                logger.error("{} notification for payment intent [{}] could not be verified (associated charge entity not found)",
+                logger.info("{} notification for payment intent [{}] could not be verified (associated charge entity not found)",
                         PAYMENT_GATEWAY_NAME, paymentIntent.getId());
                 return;
             }
