@@ -81,7 +81,7 @@ epdq:
     cancel:
       readTimeout: 20000ms
     refund:
-      readTimeout: 2000ms
+      readTimeout: 20000ms
     capture:
       readTimeout: 3000ms
 
