@@ -70,7 +70,7 @@ public class GatewayClient {
             if (statusCode == OK.getStatusCode()) {
                 return gatewayResponse;
             } else {
-                logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {} with order request type {}",
+                logger.warn("Gateway returned unexpected status code: {}, for gateway url={} with type {} with order request type {}",
                         statusCode, url, account.getType(), request.getOrderRequestType().toString());
                 incrementFailureCounter(metricRegistry, metricsPrefix);
                 throw new GatewayErrorException("Unexpected HTTP status code " + statusCode + " from gateway", gatewayResponse.getEntity(), statusCode);
