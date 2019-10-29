@@ -83,7 +83,7 @@ epdq:
     refund:
       readTimeout: 2000ms
     capture:
-      readTimeout: 1000ms
+      readTimeout: 3000ms
 
 stripe:
   url: ${GDS_CONNECTOR_STRIPE_URL:-https://api.stripe.com}
