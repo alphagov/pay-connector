@@ -48,8 +48,8 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -208,7 +208,7 @@ public class UserNotificationServiceTest {
         Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(ChargeEntityFixture.aValidChargeEntity().build());
         idF.get(1000, TimeUnit.SECONDS);
 
-        verifyZeroInteractions(mockNotifyClient);
+        verifyNoInteractions(mockNotifyClient);
     }
 
     @Test
@@ -219,7 +219,7 @@ public class UserNotificationServiceTest {
         Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(RefundEntityFixture.aValidRefundEntity().build());
         idF.get(1000, TimeUnit.SECONDS);
 
-        verifyZeroInteractions(mockNotifyClient);
+        verifyNoInteractions(mockNotifyClient);
     }
 
     @Test
@@ -231,7 +231,7 @@ public class UserNotificationServiceTest {
 
         userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
         userNotificationService.sendPaymentConfirmedEmail(chargeEntity);
-        verifyZeroInteractions(mockNotifyClient);
+        verifyNoInteractions(mockNotifyClient);
     }
 
     @Test
@@ -254,7 +254,7 @@ public class UserNotificationServiceTest {
                 .setEnabled(false);
 
         userNotificationService.sendRefundIssuedEmail(refundEntity);
-        verifyZeroInteractions(mockNotifyClient);
+        verifyNoInteractions(mockNotifyClient);
     }
 
     @Test
