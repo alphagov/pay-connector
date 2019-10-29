@@ -33,11 +33,6 @@ public class Gateway3DSAuthorisationResponse {
         return new Gateway3DSAuthorisationResponse(authorisationStatus, null, "");
     }
 
-    public boolean isDeclined() {
-        return authorisationStatus == BaseAuthoriseResponse.AuthoriseStatus.REJECTED ||
-                authorisationStatus == BaseAuthoriseResponse.AuthoriseStatus.ERROR;
-    }
-
     public boolean isSuccessful() {
         return authorisationStatus == BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED
                 || authorisationStatus == BaseAuthoriseResponse.AuthoriseStatus.AUTH_3DS_READY;
