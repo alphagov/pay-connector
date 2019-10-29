@@ -84,8 +84,10 @@ public class UserNotificationServiceEmailCollectionModeTest {
     @Parameters({
             "OPTIONAL, email@example.com, true",
             "OPTIONAL, null, false",
+            "OFF, null, false",
+            "OFF, email@example.com, false",
     })
-    public void determineSendingEmailEmailCollectionModes(String emailCollectionMode, 
+    public void determineSendingEmailForEmailCollectionModes(String emailCollectionMode, 
                                                           @Nullable String emailAddress, 
                                                           boolean shouldEmailBeSent) throws Exception {
 

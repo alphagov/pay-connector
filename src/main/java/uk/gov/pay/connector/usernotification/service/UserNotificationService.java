@@ -36,6 +36,7 @@ import static java.lang.Runtime.getRuntime;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.OFF;
 import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.OPTIONAL;
 
 
@@ -76,7 +77,7 @@ public class UserNotificationService {
                 .map(EmailNotificationEntity::isEnabled)
                 .orElse(false);
         
-        if (!emailNotifyGloballyEnabled || !isEmailEnabled ||
+        if (!emailNotifyGloballyEnabled || !isEmailEnabled || gatewayAccount.getEmailCollectionMode().equals(OFF) ||
                 gatewayAccount.getEmailCollectionMode().equals(OPTIONAL) && ofNullable(chargeEntity.getEmail()).isEmpty()) {
             return CompletableFuture.completedFuture(Optional.empty());
         }
