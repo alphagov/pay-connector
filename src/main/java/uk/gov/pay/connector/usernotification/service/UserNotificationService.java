@@ -33,8 +33,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.lang.Runtime.getRuntime;
+import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.OFF;
+import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.OPTIONAL;
 
 
 public class UserNotificationService {
@@ -69,32 +72,34 @@ public class UserNotificationService {
     }
 
     private Future<Optional<String>> sendEmail(EmailNotificationType emailNotificationType, ChargeEntity chargeEntity, HashMap<String, String> personalisation) {
-        boolean isEmailEnabled = Optional.ofNullable(chargeEntity.getGatewayAccount().getEmailNotifications().get(emailNotificationType))
+        GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
+        boolean isEmailEnabled = ofNullable(gatewayAccount.getEmailNotifications().get(emailNotificationType))
                 .map(EmailNotificationEntity::isEnabled)
                 .orElse(false);
-        if (emailNotifyGloballyEnabled && isEmailEnabled) {
-            String emailAddress = chargeEntity.getEmail();
-            Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
-            return executorService.submit(() -> {
-                try {
-                    NotifyClientSettings notifyClientSettings = getNotifyClientSettings(emailNotificationType, chargeEntity);
-                    logger.info("Sending {} email, charge_external_id={}", emailNotificationType, chargeEntity.getExternalId());
-                    SendEmailResponse response = notifyClientSettings.getClient()
-                            .sendEmail(notifyClientSettings.getTemplateId(), emailAddress, personalisation, null);
-                    return Optional.of(response.getNotificationId().toString());
-                } catch (NotificationClientException e) {
-                    logger.error("Failed to send " + emailNotificationType + " email - charge_external_id=" + chargeEntity.getExternalId(), e);
-                    metricRegistry.counter("notify-operations.failures").inc();
-                    return Optional.empty();
-                } finally {
-                    responseTimeStopwatch.stop();
-                    metricRegistry.histogram("notify-operations.response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
-                }
-            });
+        
+        if (!emailNotifyGloballyEnabled || !isEmailEnabled || gatewayAccount.getEmailCollectionMode().equals(OFF) ||
+                gatewayAccount.getEmailCollectionMode().equals(OPTIONAL) && ofNullable(chargeEntity.getEmail()).isEmpty()) {
+            return CompletableFuture.completedFuture(Optional.empty());
         }
-        return CompletableFuture.completedFuture(Optional.empty());
-    }
 
+        Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
+        return executorService.submit(() -> {
+            try {
+                NotifyClientSettings notifyClientSettings = getNotifyClientSettings(emailNotificationType, chargeEntity);
+                logger.info("Sending {} email, charge_external_id={}", emailNotificationType, chargeEntity.getExternalId());
+                SendEmailResponse response = notifyClientSettings.getClient()
+                        .sendEmail(notifyClientSettings.getTemplateId(), chargeEntity.getEmail(), personalisation, null);
+                return Optional.of(response.getNotificationId().toString());
+            } catch (NotificationClientException e) {
+                logger.error("Failed to send " + emailNotificationType + " email - charge_external_id=" + chargeEntity.getExternalId(), e);
+                metricRegistry.counter("notify-operations.failures").inc();
+                return Optional.empty();
+            } finally {
+                responseTimeStopwatch.stop();
+                metricRegistry.histogram("notify-operations.response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
+            }
+        });
+    }
 
     private NotifyClientSettings getNotifyClientSettings(EmailNotificationType emailNotificationType, ChargeEntity chargeEntity) {
         // todo introduce type for notify settings instead of Map
@@ -132,6 +137,7 @@ public class UserNotificationService {
             return new NotifyClientSettings(notifyClientFactory.getInstance(), payTemplateId);
         }
     }
+    
     private static boolean hasCustomTemplateAndApiKey(Map<String, String> notifySettings, String customTemplateId) {
         return notifySettings != null  && (notifySettings.containsKey(customTemplateId) && isNotBlank(notifySettings.get("api_token")));
     }
