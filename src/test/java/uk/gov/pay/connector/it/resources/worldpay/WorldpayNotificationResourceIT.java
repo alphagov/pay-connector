@@ -21,7 +21,6 @@ import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
@@ -103,15 +102,11 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotUpdateStatusToDatabaseIfGatewayAccountIsNotFound() throws Exception {
-        String chargeId = createNewCharge(AUTHORISATION_SUCCESS);
-
+    public void shouldReturnNon2xxStatusIfChargeIsNotFoundForTransaction() throws Exception {
         notifyConnector("unknown-transation-id", "GARBAGE")
-                .statusCode(200)
+                .statusCode(403)
                 .extract().body()
                 .asString();
-
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
 
     @Test

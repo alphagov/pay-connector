@@ -123,7 +123,7 @@ public class WorldpayNotificationServiceTest {
 
 
     @Test
-    public void ifChargeNotFound_shouldNotInvokeChargeNotificationProcessor() {
+    public void ifChargeNotFound_shouldNotInvokeChargeNotificationProcessorAndReturnFalse() {
         final String payload = sampleWorldpayNotification(
                 transactionId,
                 referenceId,
@@ -135,7 +135,7 @@ public class WorldpayNotificationServiceTest {
         when(mockChargeDao.findByProviderAndTransactionId(WORLDPAY.getName(), transactionId)).thenReturn(Optional.empty());
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
-        assertTrue(result);
+        assertFalse(result);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
     }
