@@ -159,7 +159,7 @@ public class ChargeCancelService {
                 throw new ConflictRuntimeException(chargeEntity.getExternalId());
             }
 
-            logger.error("Charge is not in one of the legal states. charge_external_id={}, status={}, legal_states={}",
+            logger.info("Charge is not in one of the legal states. charge_external_id={}, status={}, legal_states={}",
                     chargeEntity.getExternalId(), chargeEntity.getStatus(), getLegalStatusNames(statusFlow.getTerminatableStatuses()));
 
             throw new IllegalStateRuntimeException(chargeEntity.getExternalId());

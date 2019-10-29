@@ -281,7 +281,7 @@ public class ChargeExpiryService {
                     throw new ConflictRuntimeException(chargeEntity.getExternalId());
                 }
 
-                logger.error("Charge is not in one of the legal states. charge_external_id={}, status={}, legal_states={}",
+                logger.warn("Charge is not in one of the legal states. charge_external_id={}, status={}, legal_states={}",
                         chargeId, chargeEntity.getStatus(), getLegalStatusNames(EXPIRE_FLOW.getTerminatableStatuses()));
 
                 throw new IllegalStateRuntimeException(chargeId);
