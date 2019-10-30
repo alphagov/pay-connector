@@ -73,8 +73,8 @@ epdq:
     live: ${GDS_CONNECTOR_EPDQ_LIVE_URL}
   credentials: ['username','password','merchant_id','sha_in_passphrase','sha_out_passphrase']
 
-  # The Jersey Client timeouts are set to the same values as for Worldpay initially until we gather more metrics
-  # to be in a position to tweak more appropriately.
+  # ePDQ can take a long time to respond to requests, often 3s or more and sometimes a lot longer, so we have quite
+  # generous timeouts for all operations.
   jerseyClientOverrides:
     auth:
       readTimeout: 20000ms
@@ -83,7 +83,7 @@ epdq:
     refund:
       readTimeout: 20000ms
     capture:
-      readTimeout: 3000ms
+      readTimeout: 20000ms
 
 stripe:
   url: ${GDS_CONNECTOR_STRIPE_URL:-https://api.stripe.com}
