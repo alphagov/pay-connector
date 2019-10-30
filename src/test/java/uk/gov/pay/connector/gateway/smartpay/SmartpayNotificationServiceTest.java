@@ -67,7 +67,7 @@ public class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE,
                 randomId(), originalReference, pspReference);
 
-        notificationService.handleNotificationFor(payload);
+        notificationService.handleNotificationFor(payload, null);
 
         verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
         verify(mockChargeNotificationProcessor).invoke(originalReference, mockCharge, CAPTURED,
@@ -79,7 +79,7 @@ public class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
                 randomId(), originalReference, pspReference);
 
-        notificationService.handleNotificationFor(payload);
+        notificationService.handleNotificationFor(payload, null);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
         verify(mockRefundNotificationProcessor).invoke(SMARTPAY,
@@ -91,7 +91,7 @@ public class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_AUTHORISATION,
                 randomId(), originalReference, pspReference);
 
-        notificationService.handleNotificationFor(payload);
+        notificationService.handleNotificationFor(payload, null);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
         verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
@@ -102,7 +102,7 @@ public class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES,
                 randomId(), originalReference, pspReference);
 
-        notificationService.handleNotificationFor(payload);
+        notificationService.handleNotificationFor(payload, null);
 
         verify(mockChargeNotificationProcessor, times(1)).invoke(any(), any(), any(), any());
         verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
@@ -113,7 +113,7 @@ public class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS,
                 randomId(), originalReference, pspReference);
 
-        notificationService.handleNotificationFor(payload);
+        notificationService.handleNotificationFor(payload, null);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
         verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
@@ -124,7 +124,7 @@ public class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
                 randomId(), originalReference, StringUtils.EMPTY);
 
-        notificationService.handleNotificationFor(payload);
+        notificationService.handleNotificationFor(payload, null);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
         verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
@@ -135,7 +135,7 @@ public class SmartpayNotificationServiceTest {
         final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
                 randomId(), "unknown-transaction-id", pspReference);
 
-        notificationService.handleNotificationFor(payload);
+        notificationService.handleNotificationFor(payload, null);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
         verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
@@ -145,7 +145,7 @@ public class SmartpayNotificationServiceTest {
     public void shouldNotUpdateChargeOrRefund_WhenPayloadIsInvalid() {
         final String payload = "invalid-payload";
 
-        notificationService.handleNotificationFor(payload);
+        notificationService.handleNotificationFor(payload, null);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
         verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());

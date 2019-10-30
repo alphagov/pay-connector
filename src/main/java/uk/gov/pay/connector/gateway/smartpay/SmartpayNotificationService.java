@@ -42,15 +42,15 @@ public class SmartpayNotificationService {
     }
 
     @Transactional
-    public boolean handleNotificationFor(String payload) {
+    public boolean handleNotificationFor(String payload, String username) {
         List<SmartpayNotification> notifications = parse(payload);
         for (SmartpayNotification notification : notifications) {
-            handle(notification);
+            handle(notification, username);
         }
         return true;
     }
 
-    private void handle(SmartpayNotification notification) {
+    private void handle(SmartpayNotification notification, String username) {
         if (shouldIgnore(notification)) {
             logger.info("{} notification {} ignored", PAYMENT_GATEWAY_NAME, notification);
             return;
@@ -69,8 +69,8 @@ public class SmartpayNotificationService {
                 notification.getOriginalReference());
 
         if (!maybeCharge.isPresent()) {
-            logger.warn("{} notification {} could not be evaluated (associated charge entity not found)",
-                    PAYMENT_GATEWAY_NAME, notification);
+            logger.warn("{} notification {} could not be evaluated (associated charge entity not found). Username associated with gateway account: {}",
+                    PAYMENT_GATEWAY_NAME, notification, username);
             return;
         }
 

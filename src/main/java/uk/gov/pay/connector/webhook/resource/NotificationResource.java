@@ -15,7 +15,9 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+import java.util.Base64;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
@@ -46,11 +48,19 @@ public class NotificationResource {
     @Consumes(APPLICATION_JSON)
     @PermitAll
     @Path("/v1/api/notifications/smartpay")
-    public Response authoriseSmartpayNotifications(String notification) {
-        smartpayNotificationService.handleNotificationFor(notification);
+    public Response authoriseSmartpayNotifications(@HeaderParam("Authorization") String auth, String notification) {
+        smartpayNotificationService.handleNotificationFor(notification, getUsername(auth));
         String response = "[accepted]";
         logger.info("Responding to notification from provider=smartpay with 200 {}", response);
         return Response.ok(response).build();
+    }
+
+    private String getUsername(String auth) {
+        try {
+            return new String(Base64.getDecoder().decode(auth.replace("Basic ", "")), UTF_8).split(":")[0];
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @POST

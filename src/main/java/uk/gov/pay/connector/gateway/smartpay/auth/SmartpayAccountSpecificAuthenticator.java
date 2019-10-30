@@ -22,7 +22,6 @@ public class SmartpayAccountSpecificAuthenticator implements Authenticator<Basic
     public SmartpayAccountSpecificAuthenticator(GatewayAccountDao gatewayAccountDao, HashUtil hashUtil) {
         this.gatewayAccountDao = gatewayAccountDao;
         this.hashUtil = hashUtil;
-
     }
 
     @Override
