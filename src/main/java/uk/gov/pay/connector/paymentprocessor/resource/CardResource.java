@@ -112,18 +112,17 @@ public class CardResource {
     @Produces(APPLICATION_JSON)
     public Response authorise3dsCharge(@PathParam("chargeId") String chargeId, Auth3dsDetails auth3DsDetails) {
         Gateway3DSAuthorisationResponse response = card3dsResponseAuthService.process3DSecureAuthorisation(chargeId, auth3DsDetails);
-        return response.isDeclined() ? badRequestResponse("This transaction was declined.") : handleGateway3DSAuthoriseResponse(response);
-    }
-
-    private Response handleGateway3DSAuthoriseResponse(Gateway3DSAuthorisationResponse response) {
+        
         if (response.isSuccessful()) {
             return ResponseUtil.successResponseWithEntity(
                     ImmutableMap.of(
                             "status", response.getMappedChargeStatus().toString()
                     ));
-        } else {
-            return serviceErrorResponse("Failed");
         }
+        if (response.isException()) {
+            return serviceErrorResponse("There was an error when attempting to authorise the transaction.");
+        }
+        return badRequestResponse("This transaction was declined.");
     }
 
     @POST

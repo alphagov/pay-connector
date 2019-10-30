@@ -47,7 +47,6 @@ public class EpdqPaymentProvider3dsTest extends BaseEpdqPaymentProviderTest {
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
         verifyPaymentProviderRequest(successAuthQueryRequest());
         assertFalse(response.isSuccessful());
-        assertThat(response.isDeclined(), is(true));
         verify(mockMetricRegistry, times(1)).counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s", request.getGatewayAccount().getGatewayName(), "AUTHORISED", REJECTED.name()));
         verify(mockMetricRegistry.counter(""), times(1)).inc();
     }

@@ -184,7 +184,7 @@ public class StripePaymentProviderTest {
 
         Gateway3DSAuthorisationResponse response = provider.authorise3dsResponse(request);
 
-        assertTrue(response.isDeclined());
+        assertThat(response.isSuccessful(), is(false));
         assertThat(response.getMappedChargeStatus(), is(ChargeStatus.AUTHORISATION_REJECTED));
     }
 

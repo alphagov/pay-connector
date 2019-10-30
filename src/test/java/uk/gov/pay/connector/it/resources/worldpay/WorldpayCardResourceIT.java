@@ -277,7 +277,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
     public void shouldReturnStatus500_WhenAuthorisationCallThrowsException() {
         String chargeId = createNewCharge(AUTHORISATION_3DS_REQUIRED);
 
-        String expectedErrorMessage = "Failed";
+        String expectedErrorMessage = "There was an error when attempting to authorise the transaction.";
         worldpayMockClient.mockServerFault();
 
         givenSetup()
@@ -296,7 +296,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
     public void shouldReturnStatus500_AWorldpayPaResParseError() {
         String chargeId = createNewCharge(AUTHORISATION_3DS_REQUIRED);
 
-        String expectedErrorMessage = "Failed";
+        String expectedErrorMessage = "There was an error when attempting to authorise the transaction.";
         worldpayMockClient.mockAuthorisationPaResParseError();
 
         givenSetup()
