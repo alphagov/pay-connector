@@ -160,6 +160,7 @@ public class PaymentGatewayStateTransitions {
         graph.putEdgeValue(CAPTURE_READY, CAPTURE_APPROVED_RETRY, ModelledEvent.none());
         graph.putEdgeValue(CAPTURE_READY, CAPTURED, ModelledEvent.of(CaptureConfirmed.class));
 
+        graph.putEdgeValue(CAPTURE_SUBMITTED, CAPTURE_ERROR, ModelledEvent.of(CaptureErrored.class));
         graph.putEdgeValue(CAPTURE_SUBMITTED, CAPTURED, ModelledEvent.of(CaptureConfirmed.class));
 
         graph.putEdgeValue(EXPIRE_CANCEL_READY, EXPIRE_CANCEL_SUBMITTED, ModelledEvent.of(CancelByExpirationSubmitted.class));
