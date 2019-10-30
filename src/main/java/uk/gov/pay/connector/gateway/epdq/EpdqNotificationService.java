@@ -65,7 +65,7 @@ public class EpdqNotificationService {
         }
 
         logger.info("Verifying {} notification {}", PAYMENT_GATEWAY_NAME, notification);
-
+        
         if (isBlank(notification.getTransactionId())) {
             logger.error("{} notification {} failed verification because it has no transaction ID", PAYMENT_GATEWAY_NAME, notification);
             return;
@@ -93,8 +93,7 @@ public class EpdqNotificationService {
         } else {
             final Optional<RefundStatus> newRefundStatus = newRefundStateForRefundNotification(notification.getStatus());
             newRefundStatus.ifPresent(refundStatus -> refundNotificationProcessor.invoke(
-                    PaymentGatewayName.EPDQ, refundStatus, notification.getReference(), notification.getTransactionId()
-            ));
+                    PaymentGatewayName.EPDQ, refundStatus, notification.getReference(), notification.getTransactionId()));
         }
     }
 
