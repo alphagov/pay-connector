@@ -55,10 +55,10 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     @Test
     public void shouldNotAuthoriseIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
         try {
-            mockPaymentProviderResponse(400, errorAuthResponse());
+            mockPaymentProviderResponse(500, errorAuthResponse());
             provider.authorise(buildTestAuthorisationRequest());
         } catch (GatewayException.GatewayErrorException e) {
-            assertEquals(e.toGatewayError(), new GatewayError("Unexpected HTTP status code 400 from gateway", ErrorType.GATEWAY_ERROR));
+            assertEquals(e.toGatewayError(), new GatewayError("Non-success HTTP status code 500 from gateway", ErrorType.GATEWAY_ERROR));
         }
     }
 
@@ -82,10 +82,10 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
     @Test
     public void shouldNotCancelIfPaymentProviderReturnsNon200HttpStatusCode() throws Exception {
         try {
-            mockPaymentProviderResponse(400, errorCancelResponse());
+            mockPaymentProviderResponse(500, errorCancelResponse());
             provider.cancel(buildTestCancelRequest());
         } catch (GatewayException.GatewayErrorException e) {
-            assertEquals(e.toGatewayError(), new GatewayError("Unexpected HTTP status code 400 from gateway", ErrorType.GATEWAY_ERROR));
+            assertEquals(e.toGatewayError(), new GatewayError("Non-success HTTP status code 500 from gateway", ErrorType.GATEWAY_ERROR));
         }
     }
 
@@ -117,10 +117,10 @@ public class EpdqPaymentProviderTest extends BaseEpdqPaymentProviderTest {
 
     @Test
     public void shouldNotRefundIfPaymentProviderReturnsNon200HttpStatusCode() {
-        mockPaymentProviderResponse(400, errorRefundResponse());
+        mockPaymentProviderResponse(500, errorRefundResponse());
         GatewayRefundResponse response = provider.refund(buildTestRefundRequest());
         assertThat(response.isSuccessful(), is(false));
         assertThat(response.getError().isPresent(), is(true));
-        assertEquals(response.getError().get(), new GatewayError("Unexpected HTTP status code 400 from gateway", ErrorType.GATEWAY_ERROR));
+        assertEquals(response.getError().get(), new GatewayError("Non-success HTTP status code 500 from gateway", ErrorType.GATEWAY_ERROR));
     }
 }

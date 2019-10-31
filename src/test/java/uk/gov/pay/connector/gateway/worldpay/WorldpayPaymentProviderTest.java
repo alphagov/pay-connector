@@ -396,12 +396,22 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     }
 
     @Test
-    public void shouldErrorIfAuthorisationIsUnsuccessful() throws Exception {
+    public void shouldErrorIfWorldpayReturns401() throws Exception {
         mockWorldpayErrorResponse(401);
         try {
             provider.authorise(getCardAuthorisationRequest());
         } catch (GatewayException.GatewayErrorException e) {
-            assertEquals(e.toGatewayError(), new GatewayError("Unexpected HTTP status code 401 from gateway", ErrorType.GATEWAY_ERROR));
+            assertEquals(e.toGatewayError(), new GatewayError("Non-success HTTP status code 401 from gateway", ErrorType.GATEWAY_ERROR));
+        }
+    }
+    
+    @Test
+    public void shouldErrorIfWorldpayReturns500() throws Exception {
+        mockWorldpayErrorResponse(500);
+        try {
+            provider.authorise(getCardAuthorisationRequest());
+        } catch (GatewayException.GatewayErrorException e) {
+            assertEquals(e.toGatewayError(), new GatewayError("Non-success HTTP status code 500 from gateway", ErrorType.GATEWAY_ERROR));
         }
     }
 

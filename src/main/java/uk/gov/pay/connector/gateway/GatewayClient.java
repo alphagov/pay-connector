@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.OK;
 
 public class GatewayClient {
@@ -70,10 +71,15 @@ public class GatewayClient {
             if (statusCode == OK.getStatusCode()) {
                 return gatewayResponse;
             } else {
-                logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {} with order request type {}",
-                        statusCode, url, account.getType(), request.getOrderRequestType().toString());
-                incrementFailureCounter(metricRegistry, metricsPrefix);
-                throw new GatewayErrorException("Unexpected HTTP status code " + statusCode + " from gateway", gatewayResponse.getEntity(), statusCode);
+                if (statusCode >= INTERNAL_SERVER_ERROR.getStatusCode()) {
+                    logger.error("Gateway returned unexpected status code: {}, for gateway url={} with type {} with order request type {}",
+                            statusCode, url, account.getType(), request.getOrderRequestType());
+                    incrementFailureCounter(metricRegistry, metricsPrefix);
+                } else {
+                    logger.info("Gateway returned non-success status code: {}, for gateway url={} with type {} with order request type {}",
+                            statusCode, url, account.getType(), request.getOrderRequestType());
+                }
+                throw new GatewayErrorException("Non-success HTTP status code " + statusCode + " from gateway", gatewayResponse.getEntity(), statusCode);
             }
         } catch (ProcessingException pe) {
             incrementFailureCounter(metricRegistry, metricsPrefix);

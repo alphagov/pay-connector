@@ -100,7 +100,7 @@ public class GatewayAuthFailuresIT {
     public void shouldFailAuthWhenUnexpectedHttpStatusCodeFromGateway() {
         gatewayStub.respondWithUnexpectedResponseCodeWhenCardAuth();
 
-        String errorMessage = "Unexpected HTTP status code 999 from gateway";
+        String errorMessage = "Non-success HTTP status code 999 from gateway";
         String cardAuthUrl = "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeTestRecord.getExternalChargeId());
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
 
