@@ -7,6 +7,12 @@ import io.dropwizard.servlets.tasks.Task;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.dao.EmittedEventDao;
+import uk.gov.pay.connector.queue.StateTransitionService;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 
 import java.io.PrintWriter;
 import java.util.OptionalLong;
@@ -26,9 +32,14 @@ public class HistoricalEventEmitterTask extends Task {
     }
 
     @Inject
-    public HistoricalEventEmitterTask(HistoricalEventEmitterWorker worker, Environment environment) {
+    public HistoricalEventEmitterTask(Environment environment, ChargeDao chargeDao, RefundDao refundDao,
+                                      ChargeEventDao chargeEventDao, EmittedEventDao emittedEventDao,
+                                      EventService eventService, StateTransitionService stateTransitionService) {
         this();
-        this.worker = worker;
+
+        HistoricalEventEmitter historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao,
+                false, eventService, stateTransitionService);
+        this.worker = new HistoricalEventEmitterWorker(chargeDao, refundDao, chargeEventDao, historicalEventEmitter);
         this.environment = environment;
 
         // Use of a synchronous work queue and a single thread pool ensures that only one job runs at a time
