@@ -38,7 +38,7 @@ public class HistoricalEventEmitterTask extends Task {
         this();
 
         HistoricalEventEmitter historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao,
-                false, eventService, stateTransitionService);
+                true, eventService, stateTransitionService);
         this.worker = new HistoricalEventEmitterWorker(chargeDao, refundDao, chargeEventDao, historicalEventEmitter);
         this.environment = environment;
 
