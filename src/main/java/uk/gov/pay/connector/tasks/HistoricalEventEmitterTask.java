@@ -15,6 +15,7 @@ import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 
 import java.io.PrintWriter;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
@@ -55,16 +56,15 @@ public class HistoricalEventEmitterTask extends Task {
 
     @Override
     public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) throws Exception {
-        Long startId = getParam(parameters, "start_id").orElse(0);
-        final OptionalLong maybeMaxId = getParam(parameters, "max_id");
-        Long patchBackfillParam = getParam(parameters, "force_patch").orElse(0);
-        boolean forcePatchBackfill = patchBackfillParam != 0;
+        Long startId = getLongParam(parameters, "start_id").orElse(0);
+        final OptionalLong maybeMaxId = getLongParam(parameters, "max_id");
+        Boolean patchBackfill = getBoolParam(parameters, "force_patch").orElse(false);
 
         logger.info("Execute called start_id={} max_id={} - processing", startId, maybeMaxId);
         
         try {
             logger.info("Request accepted");
-            if (forcePatchBackfill) {
+            if (patchBackfill) {
                 executor.execute(() -> worker.executePatchCreatedAndDetailsEntered(startId, maybeMaxId));
             } else {
                 executor.execute(() -> worker.execute(startId, maybeMaxId));
@@ -77,13 +77,23 @@ public class HistoricalEventEmitterTask extends Task {
         }
     }
 
-    private OptionalLong getParam(ImmutableMultimap<String, String> parameters, String paramName) {
+    private OptionalLong getLongParam(ImmutableMultimap<String, String> parameters, String paramName) {
         final ImmutableCollection<String> strings = parameters.get(paramName);
         
         if (strings.isEmpty()) {
             return OptionalLong.empty();
         } else {
             return OptionalLong.of(Long.valueOf(strings.asList().get(0)));
+        }
+    }
+
+    private Optional<Boolean> getBoolParam(ImmutableMultimap<String, String> parameters, String paramName) {
+        final ImmutableCollection<String> strings = parameters.get(paramName);
+
+        if (strings.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(strings.asList().get(0).equals("true"));
         }
     }
 }
