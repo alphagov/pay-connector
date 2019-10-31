@@ -110,7 +110,7 @@ captureProcessConfig:
   # values such that we will continue retrying for at least two nights after
   # the initial attempt. See PP-2627 or commit
   # e931b4dab25284acedeb6d59d4bfd3d29e454b82 for more details.
-  maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-96}
+  maximumRetries: ${CAPTURE_PROCESS_MAXIMUM_RETRIES:-48}
   failedCaptureRetryDelayInSeconds: ${CAPTURE_PROCESS_FAILED_CAPTURE_RETRY_DELAY_IN_SECONDS:-3600}
 
   queueSchedulerThreadDelayInSeconds: ${CAPTURE_PROCESS_QUEUE_SCHEDULER_THREAD_DELAY_IN_SECONDS:-1}
