@@ -57,12 +57,18 @@ public class HistoricalEventEmitterTask extends Task {
     public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) throws Exception {
         Long startId = getParam(parameters, "start_id").orElse(0);
         final OptionalLong maybeMaxId = getParam(parameters, "max_id");
+        Long patchBackfillParam = getParam(parameters, "force_patch").orElse(0);
+        boolean forcePatchBackfill = patchBackfillParam != 0;
 
         logger.info("Execute called start_id={} max_id={} - processing", startId, maybeMaxId);
         
         try {
             logger.info("Request accepted");
-            executor.execute(() -> worker.execute(startId, maybeMaxId));
+            if (forcePatchBackfill) {
+                executor.execute(() -> worker.executePatchCreatedAndDetailsEntered(startId, maybeMaxId));
+            } else {
+                executor.execute(() -> worker.execute(startId, maybeMaxId));
+            }
             output.println("Accepted");
         }
         catch (java.util.concurrent.RejectedExecutionException e) {
