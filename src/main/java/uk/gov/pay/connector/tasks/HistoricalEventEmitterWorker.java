@@ -62,6 +62,27 @@ public class HistoricalEventEmitterWorker {
         logger.info("Terminating");
     }
 
+    public void executePatchCreatedAndDetailsEntered(Long startId, OptionalLong maybeMaxId) {
+        MDC.put(HEADER_REQUEST_ID, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
+        logger.info("Patch PaymentCreated and PaymentDetailsEntered with configuration [startId={}] [maxId={}]", startId, maybeMaxId);
+
+        try {
+            maxId = maybeMaxId.orElseGet(() -> chargeDao.findMaxId());
+
+            for (long i = startId; i <= maxId; i++) {
+                chargeDao.findById(i)
+                        .map(charge -> {
+                            MDC.put("chargeId", charge.getExternalId());
+                            historicalEventEmitter.processPatchPaymentCreatedAndPaymentDetailsEnteredEvents(charge);
+                            MDC.remove("chargeId");
+                            return charge;
+                        });
+            }
+        } catch (Exception e) {
+            logger.error("Back-fill patch failed [startId={}] [maxId={}] [error={}]", startId, maxId, e);
+        }
+    }
+
     public void executeForDateRange(ZonedDateTime startDate, ZonedDateTime endDate) {
         MDC.put(HEADER_REQUEST_ID, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
         logger.info("Starting to emit events from date range {} up to {}", startDate, endDate);
