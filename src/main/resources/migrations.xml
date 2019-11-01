@@ -1277,4 +1277,24 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add worldpay_3ds_flex_credentials table" author="">
+        <createTable tableName="worldpay_3ds_flex_credentials">
+            <column name="gateway_account_id" type="BIGINT">
+                <constraints unique="true" nullable="false" foreignKeyName="fk__worldpay_3ds_flex_credentials_account_id" referencedTableName="gateway_accounts" referencedColumnNames="id"/>
+            </column>
+            <column name="issuer" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="organisational_unit_id" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="jwt_mac_key" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>
