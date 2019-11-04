@@ -75,4 +75,13 @@ public abstract class Event {
     public int hashCode() {
         return Objects.hash(resourceExternalId, eventDetails, timestamp);
     }
+
+    @Override
+    public String toString() {
+        return "Event{" +
+                "resourceExternalId='" + resourceExternalId + '\'' +
+                ", eventDetails=" + eventDetails.getClass().getCanonicalName() +
+                ", timestamp=" + timestamp +
+                '}';
+    }
 }
