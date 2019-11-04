@@ -103,8 +103,10 @@ public class HistoricalEventEmitter {
     public void processPatchPaymentCreatedAndPaymentDetailsEnteredEvents(ChargeEntity charge) { 
         List<ChargeEventEntity> chargeEventEntities = getSortedChargeEvents(charge);
 
-        processSingleChargeStateTransitionEvent(charge.getId(), ChargeStatus.UNDEFINED, chargeEventEntities.get(0));
-        processPaymentDetailEnteredEvent(chargeEventEntities);
+        if(!chargeEventEntities.isEmpty()) {
+            processSingleChargeStateTransitionEvent(charge.getId(), ChargeStatus.UNDEFINED, chargeEventEntities.get(0));
+            processPaymentDetailEnteredEvent(chargeEventEntities);
+        }
     }
 
     @Transactional
