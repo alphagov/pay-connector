@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -52,6 +53,16 @@ public class Card3dsResponseAuthService {
         Gateway3DSAuthorisationResponse gateway3DSAuthorisationResponse = providers
                 .byName(charge.getPaymentGatewayName())
                 .authorise3dsResponse(Auth3dsResponseGatewayRequest.valueOf(charge, auth3DsDetails));
+
+        if (auth3DsDetails != null && StringUtils.isNotBlank(auth3DsDetails.getPaResponse())) {
+            if (auth3DsDetails.getPaResponse().length() <= 50) {
+                LOGGER.info("3DS authorisation - PaRes '{}'", auth3DsDetails.getPaResponse());
+            } else {
+                LOGGER.info("3DS authorisation - PaRes starts with '{}' and ending '{}'",
+                        auth3DsDetails.getPaResponse().substring(0, 50),
+                        auth3DsDetails.getPaResponse().substring(auth3DsDetails.getPaResponse().length() - 50));
+            }
+        }
 
         processGateway3DSecureResponse(
                 charge.getExternalId(),
