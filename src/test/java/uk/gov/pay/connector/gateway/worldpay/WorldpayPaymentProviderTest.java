@@ -71,7 +71,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
 
     @Mock
     private GatewayClientFactory gatewayClientFactory;
-    
+
     private ChargeEntityFixture chargeEntityFixture;
 
     @Before
@@ -121,29 +121,32 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
                         "";
 
         verify(mockGatewayClient).postRequestFor(
-                eq(WORLDPAY_URL), 
-                eq(gatewayAccountEntity), 
-                argThat(argument -> argument.getPayload().equals(expectedRefundRequest) && 
-                        argument.getOrderRequestType().equals(OrderRequestType.REFUND)), 
+                eq(WORLDPAY_URL),
+                eq(gatewayAccountEntity),
+                argThat(argument -> argument.getPayload().equals(expectedRefundRequest) &&
+                        argument.getOrderRequestType().equals(OrderRequestType.REFUND)),
                 anyMap());
     }
 
     @Test
     public void shouldNotInclude3dsElementsWhen3dsToggleDisabled() throws Exception {
-        ChargeEntity chargeEntity = chargeEntityFixture.withTransactionId("transaction-id").build();
+        ChargeEntity chargeEntity = chargeEntityFixture
+                .withExternalId("uniqueSessionId")
+                .withTransactionId("transaction-id")
+                .build();
 
+        GatewayClient.Response gatewayResponse = mock(GatewayClient.Response.class);
+        when(gatewayResponse.getEntity()).thenReturn(TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
-                .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
+                .thenReturn(gatewayResponse);
 
-        try {
-            var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
-            worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity));
-        } catch (GatewayException.GatewayErrorException e) {
-            ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-            verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), anyMap());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS), 
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
-        }
+        var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
+        worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity, "127.0.0.1"));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+        verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), anyMap());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS),
+                gatewayOrderArgumentCaptor.getValue().getPayload());
     }
 
     @Test
@@ -156,22 +159,22 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
                 .build();
 
         gatewayAccountEntity.setRequires3ds(true);
-        
+
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
 
         var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
 
         try {
-            worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity));
+            worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity, "127.0.0.1"));
         } catch (GatewayException.GatewayErrorException e) {
             ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), anyMap());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS), 
+            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
         }
     }
-    
+
     @Test
     public void shouldIncludePaResponseIn3dsSecondOrder() throws Exception {
         ChargeEntity chargeEntity = chargeEntityFixture
@@ -189,13 +192,13 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
 
         verify(mockGatewayClient).postRequestFor(
-                eq(WORLDPAY_URL), 
-                eq(gatewayAccountEntity), 
-                gatewayOrderArgumentCaptor.capture(), 
+                eq(WORLDPAY_URL),
+                eq(gatewayAccountEntity),
+                gatewayOrderArgumentCaptor.capture(),
                 anyList(),
                 anyMap());
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST), 
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST),
                 gatewayOrderArgumentCaptor.getValue().getPayload());
     }
 
@@ -226,41 +229,12 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST),
                 gatewayOrderArgumentCaptor.getValue().getPayload());
     }
-    
-    @Test
-    public void shouldNotIncludeElementsWhen3DSecureNotEnabled() throws Exception {
 
-        var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
-
-        GatewayClient.Response gatewayResponse = mock(GatewayClient.Response.class);
-        when(gatewayResponse.getEntity()).thenReturn(TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
-        when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
-                .thenReturn(gatewayResponse);
-
-        worldpayPaymentProvider.authorise(new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), getValidTestCard()));
-
-        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-
-        verify(mockGatewayClient).postRequestFor(
-                eq(WORLDPAY_URL),
-                eq(gatewayAccountEntity),
-                gatewayOrderArgumentCaptor.capture(),
-                anyMap());
-
-        Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
-        assertThat(getNodeListFromExpression(document, "/paymentService/submit/order/paymentDetails/session").getLength(),
-                is(0));
-        assertThat(getNodeListFromExpression(document, "/paymentService/submit/order/shopper/browser/acceptHeader").getLength(),
-                is(0));
-        assertThat(getNodeListFromExpression(document, "/paymentService/submit/order/shopper/browser/userAgentHeader").getLength(),
-                is(0));
-    }
-    
     @Test
     public void shouldNotIncludeElementsWhenWorldpay3dsFlexDdcResultIsNotPresent() throws Exception {
 
         gatewayAccountEntity.setRequires3ds(true);
-        
+
         var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
 
         GatewayClient.Response gatewayResponse = mock(GatewayClient.Response.class);
@@ -280,7 +254,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
 
         Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
         XPath xPath = XPathFactory.newInstance().newXPath();
-        assertThat(getNodeListFromExpression(document, "/paymentService/submit/order/additional3DSData").getLength(), 
+        assertThat(getNodeListFromExpression(document, "/paymentService/submit/order/additional3DSData").getLength(),
                 is(0));
         assertThat(xPath.evaluate("/paymentService/submit/order/paymentDetails/session/@id", document),
                 not(emptyString()));
@@ -289,19 +263,19 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/userAgentHeader", document),
                 not(emptyString()));
     }
-    
+
     @Test
     public void shouldInclude3DS2FlexElementsWhenWorldpay3dsFlexDdcResultIsPresent() throws Exception {
-        
+
         var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
 
         GatewayClient.Response gatewayResponse = mock(GatewayClient.Response.class);
         when(gatewayResponse.getEntity()).thenReturn(TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
                 .thenReturn(gatewayResponse);
-        
+
         AuthCardDetails authCardDetails = getValidTestCard(UUID.randomUUID().toString());
-        
+
         worldpayPaymentProvider.authorise(new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), authCardDetails));
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
@@ -347,7 +321,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         ArgumentCaptor<List<HttpCookie>> cookies = ArgumentCaptor.forClass(List.class);
 
         verify(mockGatewayClient).postRequestFor(
-                eq(WORLDPAY_URL), 
+                eq(WORLDPAY_URL),
                 eq(gatewayAccountEntity),
                 ArgumentCaptor.forClass(GatewayOrder.class).capture(),
                 cookies.capture(),
@@ -357,7 +331,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         assertThat(cookies.getValue().get(0).getName(), is(WORLDPAY_MACHINE_COOKIE_NAME));
         assertThat(cookies.getValue().get(0).getValue(), is(providerSessionId));
     }
-    
+
     @Test
     public void assertAuthorizationHeaderIsPassedToGatewayClient() throws Exception {
         String providerSessionId = "provider-session-id";
@@ -404,7 +378,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
             assertEquals(e.toGatewayError(), new GatewayError("Non-success HTTP status code 401 from gateway", ErrorType.GATEWAY_ERROR));
         }
     }
-    
+
     @Test
     public void shouldErrorIfWorldpayReturns500() throws Exception {
         mockWorldpayErrorResponse(500);
@@ -421,7 +395,12 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     }
 
     private CardAuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
+        return getCardAuthorisationRequest(chargeEntity, null);
+    }
+
+    private CardAuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity, String ipAddress) {
         AuthCardDetails authCardDetails = getValidTestCard();
+        authCardDetails.setIpAddress(ipAddress);
         return new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
     }
 

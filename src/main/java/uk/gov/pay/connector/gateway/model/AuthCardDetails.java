@@ -24,6 +24,7 @@ public class AuthCardDetails implements AuthorisationDetails {
     private PayersCardPrepaidStatus payersCardPrepaidStatus;
     private Boolean corporateCard;
     private String worldpay3dsFlexDdcResult;
+    private String ipAddress;
 
     public static AuthCardDetails anAuthCardDetails() {
         return new AuthCardDetails();
@@ -89,6 +90,11 @@ public class AuthCardDetails implements AuthorisationDetails {
         this.worldpay3dsFlexDdcResult = worldpay3dsFlexDdcResult;
     }
 
+    @JsonProperty("ip_address")
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
     public String getCardNo() {
         return cardNo;
     }
@@ -145,5 +151,9 @@ public class AuthCardDetails implements AuthorisationDetails {
 
     public Optional<String> getWorldpay3dsFlexDdcResult() {
         return Optional.ofNullable(worldpay3dsFlexDdcResult);
+    }
+
+    public Optional<String> getIpAddress() {
+        return Optional.ofNullable(ipAddress);
     }
 }

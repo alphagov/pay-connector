@@ -25,7 +25,7 @@
                         </address>
                     </cardAddress>
                 </VISA-SSL>
-                <session id="uniqueSessionId"/>
+                <session id="uniqueSessionId" shopperIPAddress="127.0.0.1"/>
             </paymentDetails>
             <shopper>
                 <browser>
