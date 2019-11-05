@@ -77,7 +77,7 @@ epdq:
   # generous timeouts for all operations.
   jerseyClientOverrides:
     auth:
-      readTimeout: 20000ms
+      readTimeout: 50000ms
     cancel:
       readTimeout: 20000ms
     refund:
