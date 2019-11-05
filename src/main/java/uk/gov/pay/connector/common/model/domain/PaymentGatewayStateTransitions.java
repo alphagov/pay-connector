@@ -106,6 +106,7 @@ public class PaymentGatewayStateTransitions {
 
         graph.putEdgeValue(CREATED, ENTERING_CARD_DETAILS, ModelledEvent.of(PaymentStarted.class));
         graph.putEdgeValue(CREATED, SYSTEM_CANCELLED, ModelledEvent.of(CancelledByExternalService.class));
+        graph.putEdgeValue(CREATED, USER_CANCELLED, ModelledEvent.of(CancelledByUser.class));
         graph.putEdgeValue(ENTERING_CARD_DETAILS, AUTHORISATION_READY, ModelledEvent.none());
         graph.putEdgeValue(ENTERING_CARD_DETAILS, AUTHORISATION_ABORTED, ModelledEvent.of(AuthorisationRejected.class));
         graph.putEdgeValue(ENTERING_CARD_DETAILS, USER_CANCELLED, ModelledEvent.of(CancelledByUser.class));
