@@ -757,4 +757,11 @@ public class DatabaseTestHelper {
                 handle.createQuery("SELECT * from emitted_events").list()
         );
     }
+
+    public Map<String, Object> getWorldpay3dsFlexCredentials(Long accountId) {
+        return jdbi.withHandle(handle -> 
+                handle.createQuery("SELECT * FROM worldpay_3ds_flex_credentials WHERE gateway_account_id = :accountId")
+                .bind("accountId", accountId)
+                .first());
+    }
 }
