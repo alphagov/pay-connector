@@ -20,7 +20,7 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
 
     @Override
     public Response toResponse(ConstraintViolationException exception) {
-        LOGGER.error(exception.getMessage());
+        LOGGER.info(exception.getMessage());
         List<String> constraintViolationMessages = exception
                 .getConstraintViolations().stream()
                 .map(ConstraintViolation::getMessage)
