@@ -162,55 +162,6 @@ public class HistoricalEventEmitterWorkerTest {
     }
 
     @Test
-    public void executePatchCreatedAndDetailsEnteredShouldOnlyEmitPatchEvents() {
-        ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
-                .withTimestamp(ZonedDateTime.now())
-                .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.CREATED)
-                .build();
-
-        ChargeEventEntity secondEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
-                .withTimestamp(ZonedDateTime.now())
-                .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.ENTERING_CARD_DETAILS)
-                .build();
-
-        ChargeEventEntity thirdEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
-                .withTimestamp(ZonedDateTime.now().plusMinutes(3))
-                .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
-                .build();
-
-        ChargeEventEntity fourthEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
-                .withTimestamp(ZonedDateTime.now().plusMinutes(3))
-                .withCharge(chargeEntity)
-                .withChargeStatus(ChargeStatus.CAPTURE_APPROVED)
-                .build();
-
-        chargeEntity.getEvents().clear();
-        chargeEntity.getEvents().add(firstEvent);
-        chargeEntity.getEvents().add(secondEvent);
-        chargeEntity.getEvents().add(thirdEvent);
-        chargeEntity.getEvents().add(fourthEvent);
-
-        when(chargeDao.findMaxId()).thenReturn(1L);
-        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
-
-        worker.executePatchCreatedAndDetailsEntered(1L, OptionalLong.empty());
-
-        ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
-
-        // no other valid state transitions are emitted
-        verify(stateTransitionService, times(1)).offerStateTransition(argument.capture(), any());
-
-        // payment created is emitted
-        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(PaymentCreated.class));
-
-        // payment details entered is emitted
-        verify(eventService, times(1)).emitAndRecordEvent(any(PaymentDetailsEntered.class));
-    }
-
-    @Test
     public void executeShouldEmitManualEventsWithTerminalAuthenticationState() throws QueueException {
         ChargeEventEntity firstEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(1))
