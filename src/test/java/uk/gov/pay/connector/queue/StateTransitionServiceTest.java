@@ -17,7 +17,6 @@ import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
 import java.time.ZonedDateTime;
 
-import static java.time.ZonedDateTime.now;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -25,12 +24,12 @@ import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.events.model.ResourceType.PAYMENT;
 import static uk.gov.pay.connector.events.model.ResourceType.REFUND;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
+import static uk.gov.pay.connector.pact.ChargeEventEntityFixture.aValidChargeEventEntity;
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 
@@ -51,9 +50,9 @@ public class StateTransitionServiceTest {
 
     @Test
     public void shouldOfferPaymentStateTransitionMessageForAValidStateTransitionIntoNonLockingState() {
-        ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
-        when(chargeEvent.getId()).thenReturn(100L);
-        when(chargeEvent.getUpdated()).thenReturn(now());
+        ChargeEventEntity chargeEvent = aValidChargeEventEntity()
+                .withId(100L)
+                .build();
 
         stateTransitionService.offerPaymentStateTransition("external-id", ChargeStatus.CREATED, ENTERING_CARD_DETAILS, chargeEvent);
         ArgumentCaptor<PaymentStateTransition> paymentStateTransitionArgumentCaptor = ArgumentCaptor.forClass(PaymentStateTransition.class);
