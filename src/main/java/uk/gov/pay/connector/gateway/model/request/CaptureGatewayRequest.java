@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.model.request;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
@@ -13,7 +14,7 @@ public class CaptureGatewayRequest implements GatewayRequest {
     }
 
     public String getAmountAsString() {
-        return String.valueOf(charge.getAmount());
+        return String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
     }
     
     public Long getAmount() {
