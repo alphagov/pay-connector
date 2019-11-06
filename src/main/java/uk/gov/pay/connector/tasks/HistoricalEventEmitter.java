@@ -100,15 +100,6 @@ public class HistoricalEventEmitter {
         processPaymentDetailEnteredEvent(chargeEventEntities);
     }
 
-    public void processPatchPaymentCreatedAndPaymentDetailsEnteredEvents(ChargeEntity charge) { 
-        List<ChargeEventEntity> chargeEventEntities = getSortedChargeEvents(charge);
-
-        if(!chargeEventEntities.isEmpty()) {
-            processSingleChargeStateTransitionEvent(charge.getId(), ChargeStatus.UNDEFINED, chargeEventEntities.get(0));
-            processPaymentDetailEnteredEvent(chargeEventEntities);
-        }
-    }
-
     @Transactional
     public void processRefundEvents(ChargeEntity charge) {
         List<RefundHistory> refundHistories = refundDao.searchAllHistoryByChargeId(charge.getId());
