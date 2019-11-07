@@ -54,7 +54,7 @@ public class StripePaymentIntentRequestTest {
 
         CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
 
-        stripePaymentIntentRequest = StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl);
+        stripePaymentIntentRequest = StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl, false);
     }
 
     @Test

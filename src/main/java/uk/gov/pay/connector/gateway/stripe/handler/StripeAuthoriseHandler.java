@@ -89,7 +89,8 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
 
     private StripePaymentIntentResponse createPaymentIntent(CardAuthorisationGatewayRequest request, String paymentMethodId)
             throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
-        String jsonResponse = client.postRequestFor(StripePaymentIntentRequest.of(request, paymentMethodId, stripeGatewayConfig, frontendUrl)).getEntity();
+//        boolean isMoto = request.getGatewayAccount().getId() == 182;
+        String jsonResponse = client.postRequestFor(StripePaymentIntentRequest.of(request, paymentMethodId, stripeGatewayConfig, frontendUrl, true)).getEntity();
         return jsonObjectMapper.getObject(jsonResponse, StripePaymentIntentResponse.class);
     }
 
