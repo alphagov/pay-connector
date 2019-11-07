@@ -13,6 +13,7 @@ server:
           type: govuk-pay-access-json
           additionalFields:
             container: "connector"
+            environment: ${ENVIRONMENT}
 
 logging:
   level: INFO
@@ -22,6 +23,7 @@ logging:
       target: stdout
       customFields:
         container: "connector"
+        environment: ${ENVIRONMENT}
     - type: sentry
       threshold: ERROR
       dsn: ${SENTRY_DSN:-https://example.com@dummy/1}
