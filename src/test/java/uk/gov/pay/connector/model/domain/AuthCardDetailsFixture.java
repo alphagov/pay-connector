@@ -24,6 +24,7 @@ public final class AuthCardDetailsFixture {
     private PayersCardPrepaidStatus payersCardPrepaidStatus = PayersCardPrepaidStatus.UNKNOWN;
     private Boolean corporateCard = Boolean.FALSE;
     private String worldpay3dsFlexDdcResult;
+    private String ipAddress;
 
     private AuthCardDetailsFixture() {
     }
@@ -131,6 +132,12 @@ public final class AuthCardDetailsFixture {
         authCardDetails.setPayersCardPrepaidStatus(payersCardPrepaidStatus);
         authCardDetails.setCorporateCard(corporateCard);
         authCardDetails.setWorldpay3dsFlexDdcResult(worldpay3dsFlexDdcResult);
+        authCardDetails.setIpAddress(ipAddress);
         return authCardDetails;
+    }
+
+    public AuthCardDetailsFixture withIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+        return this;
     }
 }
