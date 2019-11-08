@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -34,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
@@ -111,6 +113,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @OneToOne(mappedBy = "accountEntity", cascade = CascadeType.PERSIST)
     private NotificationCredentials notificationCredentials;
+
+    @OneToOne(mappedBy = "gatewayAccountEntity", cascade = CascadeType.PERSIST)
+    private Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity;
 
     @ManyToMany
     @JoinTable(
@@ -194,6 +199,15 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @JsonView(Views.ApiView.class)
     public NotificationCredentials getNotificationCredentials() {
         return notificationCredentials;
+    }
+
+    @JsonInclude(NON_NULL)
+    @JsonProperty("worldpay_3ds_flex")
+    public Worldpay3dsFlexCredentials getWorldpay3dsFlexCredentialsEntity() {
+        if(worldpay3dsFlexCredentialsEntity != null) {
+            return Worldpay3dsFlexCredentials.fromEntity(worldpay3dsFlexCredentialsEntity);
+        }
+        return null;
     }
 
     public boolean isRequires3ds() {

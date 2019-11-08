@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -20,6 +21,9 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
     @GeneratedValue(generator = "worldpay_3ds_flex_credentials_id_seq", strategy = GenerationType.SEQUENCE)
     @Column(name = "id")
     private Long id;
+
+    @JoinColumn(name = "gateway_account_id", updatable = false, insertable = false)
+    private GatewayAccountEntity gatewayAccountEntity;
 
     @Column(name = "gateway_account_id")
     private Long gatewayAccountId;
@@ -77,6 +81,10 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
 
     public void setJwtMacKey(String jwtMacKey) {
         this.jwtMacKey = jwtMacKey;
+    }
+
+    public GatewayAccountEntity getGatewayAccountEntity() {
+        return gatewayAccountEntity;
     }
 
     public static final class Worldpay3dsFlexCredentialsEntityBuilder {
