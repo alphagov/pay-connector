@@ -13,7 +13,6 @@ import uk.gov.pay.connector.charge.model.FrontendChargeResponse;
 import uk.gov.pay.connector.charge.model.NewChargeStatusRequest;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
@@ -83,6 +82,7 @@ public class ChargesFrontendResource {
 
         ChargeEntity chargeEntity = chargeService.findChargeById(chargeId);
         GatewayAccount gatewayAccount = GatewayAccount.valueOf(chargeEntity.getGatewayAccount());
+        Worldpay3dsFlexCredentials = chargeEntity.getGatewayAccount().getWorldpay3dsFlexCredentials();
         String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, chargeEntity.getCreatedDate());
 
         return Response.ok().entity(Map.of("jwt", token)).build();

@@ -203,7 +203,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @JsonInclude(NON_NULL)
     @JsonProperty("worldpay_3ds_flex")
-    public Worldpay3dsFlexCredentials getWorldpay3dsFlexCredentialsEntity() {
+    public Worldpay3dsFlexCredentials getWorldpay3dsFlexCredentials() {
         if(worldpay3dsFlexCredentialsEntity != null) {
             return Worldpay3dsFlexCredentials.fromEntity(worldpay3dsFlexCredentialsEntity);
         }
