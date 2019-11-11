@@ -758,6 +758,18 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void insertWorldpay3dsFlexCredential(Long gatewayAccountId, String jwtMacKey, String issuer, String organisationalUnitId, Long version) {
+        jdbi.withHandle(handle ->
+                handle
+                        .createStatement("INSERT INTO worldpay_3ds_flex_credentials(gateway_account_id, jwt_mac_key, issuer, organisational_unit_id, version) VALUES (:gatewayAccountId, :jwtMacKey, :issuer, :organisationalUnitId, :version)")
+                        .bind("gatewayAccountId", gatewayAccountId)
+                        .bind("jwtMacKey", jwtMacKey)
+                        .bind("issuer", issuer)
+                        .bind("organisationalUnitId", organisationalUnitId)
+                        .bind("version", version) 
+                        .execute()
+        );
+    }
     public Map<String, Object> getWorldpay3dsFlexCredentials(Long accountId) {
         return jdbi.withHandle(handle -> 
                 handle.createQuery("SELECT * FROM worldpay_3ds_flex_credentials WHERE gateway_account_id = :accountId")

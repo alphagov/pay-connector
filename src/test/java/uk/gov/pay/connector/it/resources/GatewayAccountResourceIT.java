@@ -21,7 +21,9 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.collection.IsMapContaining.hasKey;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -348,6 +350,44 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .body("toggle_3ds", is(true));
     }
 
+    @Test
+    public void shouldNotReturn3dsFlexCredentials_whenGatewayAccountHasNoCreds() {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        givenSetup()
+                .get("/v1/frontend/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(200)
+                .body("$", not(hasKey("worldpay_3ds_flex")));
+    }
+
+    @Test
+    public void shouldReturn3dsFlexCredentials_whenGatewayAccountHasCreds() {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        databaseTestHelper.insertWorldpay3dsFlexCredential(Long.valueOf(gatewayAccountId), "macKey", "issuer", "org_unit_id", 2L);
+        givenSetup()
+                .get("/v1/frontend/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(200)
+                .body("$", hasKey("worldpay_3ds_flex"))
+                .body("worldpay_3ds_flex.issuer", is("issuer"))
+                .body("worldpay_3ds_flex.organisational_unit_id", is("org_unit_id"))
+                .body("worldpay_3ds_flex", not(hasKey("jwt_mac_key")))
+                .body("worldpay_3ds_flex", not(hasKey("version")))
+                .body("worldpay_3ds_flex", not(hasKey("gateway_account_id")));
+    }
+
+    @Test
+    public void shouldNotReturn3dsFlexCredentials_whenGatewayIsNotAWorldpayAccount() {
+        String gatewayAccountId = createAGatewayAccountFor("smartpay", "a-description", "analytics-id");
+        givenSetup()
+                .get("/v1/frontend/accounts/" + gatewayAccountId)
+                .then()
+                .log()
+                .all()
+                .statusCode(200)
+                .body("$", not(hasKey("worldpay_3ds_flex")));
+    }
+    
     @Test
     public void shouldToggle3dsToFalse() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
