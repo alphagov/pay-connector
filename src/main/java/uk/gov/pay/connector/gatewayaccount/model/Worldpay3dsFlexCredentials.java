@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
@@ -10,7 +10,7 @@ public class Worldpay3dsFlexCredentials {
     private String issuer;
     private String organisationalUnitId;
 
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonIgnore
     private String jwtMacKey;
 
     public Worldpay3dsFlexCredentials(String issuer, String organisationalUnitId, String jwtMacKey) {

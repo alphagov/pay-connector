@@ -9,6 +9,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.util.JwtGenerator;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
+import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.inject.Inject;
@@ -41,11 +42,11 @@ public class Worldpay3dsFlexJwtService {
      * @see <a href="https://beta.developer.worldpay.com/docs/wpg/directintegration/3ds2#device-data-collection-ddc-"
      * >Worldpay DDC Documentation</a>
      */
-    public String generateDdcToken(GatewayAccount gatewayAccount, ZonedDateTime chargeCreatedTime) {
+    public String generateDdcToken(GatewayAccount gatewayAccount, Worldpay3dsFlexCredentials worldpay3dsFlexCredentials, ZonedDateTime chargeCreatedTime) {
         validateGatewayIsWorldpay(gatewayAccount);
 
-        var claims = generateDdcClaims(gatewayAccount, chargeCreatedTime);
-        return createJwt(gatewayAccount, claims);
+        var claims = generateDdcClaims(gatewayAccount, worldpay3dsFlexCredentials, chargeCreatedTime);
+        return createJwt(gatewayAccount, worldpay3dsFlexCredentials, claims);
     }
 
     public Optional<String> generateChallengeTokenIfAppropriate(ChargeEntity chargeEntity) {
@@ -65,10 +66,11 @@ public class Worldpay3dsFlexJwtService {
 
     private String generateChallengeToken(ChargeEntity chargeEntity) {
         GatewayAccount gatewayAccount = GatewayAccount.valueOf(chargeEntity.getGatewayAccount());
+        Worldpay3dsFlexCredentials worldpay3dsFlexCredentials = chargeEntity.getGatewayAccount().getWorldpay3dsFlexCredentials();
         validateGatewayIsWorldpay(gatewayAccount);
 
-        var claims = generateChallengeClaims(chargeEntity, gatewayAccount);
-        return createJwt(gatewayAccount, claims);
+        var claims = generateChallengeClaims(chargeEntity, gatewayAccount, worldpay3dsFlexCredentials);
+        return createJwt(gatewayAccount, worldpay3dsFlexCredentials, claims);
     }
 
     private void validateGatewayIsWorldpay(GatewayAccount gatewayAccount) {
@@ -77,20 +79,15 @@ public class Worldpay3dsFlexJwtService {
         }
     }
 
-    private String getCredential(GatewayAccount gatewayAccount, String issuer) {
-        return Optional.ofNullable(gatewayAccount.getCredentials().get(issuer))
-                .orElseThrow(() -> new Worldpay3dsFlexJwtCredentialsException(gatewayAccount.getId(), issuer));
-    }
-
-    private Map<String, Object> generateDdcClaims(GatewayAccount gatewayAccount, ZonedDateTime chargeCreatedTime) {
-        Map<String, Object> commonClaims = generateCommonClaims(gatewayAccount);
+    private Map<String, Object> generateDdcClaims(GatewayAccount gatewayAccount, Worldpay3dsFlexCredentials worldpay3dsFlexCredentials, ZonedDateTime chargeCreatedTime) {
+        Map<String, Object> commonClaims = generateCommonClaims(gatewayAccount.getId(), worldpay3dsFlexCredentials);
         Map<String, Object> claims = new HashMap<>(commonClaims);
         claims.put("exp", chargeCreatedTime.plusSeconds(tokenExpiryDurationSeconds).toInstant().getEpochSecond());
         return claims;
     }
 
-    private Map<String, Object> generateChallengeClaims(ChargeEntity chargeEntity, GatewayAccount gatewayAccount) {
-        Map<String, Object> commonClaims = generateCommonClaims(gatewayAccount);
+    private Map<String, Object> generateChallengeClaims(ChargeEntity chargeEntity, GatewayAccount gatewayAccount, Worldpay3dsFlexCredentials worldpay3dsFlexCredentials) {
+        Map<String, Object> commonClaims = generateCommonClaims(gatewayAccount.getId(), worldpay3dsFlexCredentials);
         Map<String, Object> claims = new HashMap<>(commonClaims);
         claims.put("ReturnUrl", format("%s/card_details/%s/3ds_required_in", linksConfig.getFrontendUrl(), chargeEntity.getExternalId()));
         claims.put("ObjectifyPayload", true);
@@ -101,19 +98,23 @@ public class Worldpay3dsFlexJwtService {
         return claims;
     }
 
-    private Map<String, Object> generateCommonClaims(GatewayAccount gatewayAccount) {
-        String issuer = getCredential(gatewayAccount, "issuer");
-        String organisationId = getCredential(gatewayAccount, "organisational_unit_id");
+    private Map<String, Object> generateCommonClaims(Long gatewayAccountId, Worldpay3dsFlexCredentials worldpay3dsFlexCredentials) {
+        String issuer = Optional.ofNullable(worldpay3dsFlexCredentials.getIssuer())
+                .orElseThrow(() -> new Worldpay3dsFlexJwtCredentialsException(gatewayAccountId, "issuer"));
+
+        String organisationalUnitId = Optional.ofNullable(worldpay3dsFlexCredentials.getOrganisationalUnitId())
+                .orElseThrow(() -> new Worldpay3dsFlexJwtCredentialsException(gatewayAccountId, "organisational_unit_id"));
 
         return Map.of(
                 "jti", RandomIdGenerator.newId(),
                 "iat", Instant.now().getEpochSecond(),
                 "iss", issuer,
-                "OrgUnitId", organisationId);
+                "OrgUnitId", organisationalUnitId);
     }
 
-    private String createJwt(GatewayAccount gatewayAccount, Map<String, Object> claims) {
-        String jwtMacId = getCredential(gatewayAccount, "jwt_mac_id");
-        return jwtGenerator.createJwt(claims, jwtMacId);
+    private String createJwt(GatewayAccount gatewayAccount, Worldpay3dsFlexCredentials worldpay3dsFlexCredentials, Map<String, Object> claims) {
+        String jwtMacKey = Optional.ofNullable(worldpay3dsFlexCredentials.getJwtMacKey())
+                .orElseThrow(() -> new Worldpay3dsFlexJwtCredentialsException(gatewayAccount.getId(), "jwt_mac_key"));
+        return jwtGenerator.createJwt(claims, jwtMacKey);
     }
 }

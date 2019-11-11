@@ -363,6 +363,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         this.integrationVersion3ds = integrationVersion3ds;
     }
 
+    public void setWorldpay3dsFlexCredentialsEntity(Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity) {
+        this.worldpay3dsFlexCredentialsEntity = worldpay3dsFlexCredentialsEntity;
+    }
+
     public class Views {
         public class ApiView {
         }
