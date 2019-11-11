@@ -44,6 +44,7 @@ public class Worldpay3dsFlexJwtService {
      */
     public String generateDdcToken(GatewayAccount gatewayAccount, Worldpay3dsFlexCredentials worldpay3dsFlexCredentials, ZonedDateTime chargeCreatedTime) {
         validateGatewayIsWorldpay(gatewayAccount);
+        validateFlexCredentials(gatewayAccount, worldpay3dsFlexCredentials);
 
         var claims = generateDdcClaims(gatewayAccount, worldpay3dsFlexCredentials, chargeCreatedTime);
         return createJwt(gatewayAccount, worldpay3dsFlexCredentials, claims);
@@ -67,7 +68,9 @@ public class Worldpay3dsFlexJwtService {
     private String generateChallengeToken(ChargeEntity chargeEntity) {
         GatewayAccount gatewayAccount = GatewayAccount.valueOf(chargeEntity.getGatewayAccount());
         Worldpay3dsFlexCredentials worldpay3dsFlexCredentials = chargeEntity.getGatewayAccount().getWorldpay3dsFlexCredentials();
+
         validateGatewayIsWorldpay(gatewayAccount);
+        validateFlexCredentials(gatewayAccount, worldpay3dsFlexCredentials);
 
         var claims = generateChallengeClaims(chargeEntity, gatewayAccount, worldpay3dsFlexCredentials);
         return createJwt(gatewayAccount, worldpay3dsFlexCredentials, claims);
@@ -76,6 +79,12 @@ public class Worldpay3dsFlexJwtService {
     private void validateGatewayIsWorldpay(GatewayAccount gatewayAccount) {
         if (!gatewayAccount.getGatewayName().equals(PaymentGatewayName.WORLDPAY.getName())) {
             throw new Worldpay3dsFlexJwtPaymentProviderException(gatewayAccount.getId());
+        }
+    }
+
+    private void validateFlexCredentials(GatewayAccount gatewayAccount, Worldpay3dsFlexCredentials worldpay3dsFlexCredentials) { 
+        if (worldpay3dsFlexCredentials == null) {
+            throw new Worldpay3dsFlexJwtCredentialsException(gatewayAccount.getId());
         }
     }
 
