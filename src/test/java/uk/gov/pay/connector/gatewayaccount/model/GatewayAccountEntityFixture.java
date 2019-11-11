@@ -35,6 +35,7 @@ public final class GatewayAccountEntityFixture {
     private EmailCollectionMode emailCollectionMode = EmailCollectionMode.MANDATORY;
     private NotificationCredentials notificationCredentials;
     private List<CardTypeEntity> cardTypes = newArrayList();
+    private Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity;
 
     private GatewayAccountEntityFixture() {
     }
@@ -148,6 +149,11 @@ public final class GatewayAccountEntityFixture {
         return this;
     }
 
+    public GatewayAccountEntityFixture withWorldpay3dsFlexCredentialsEntity(Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity) {
+        this.worldpay3dsFlexCredentialsEntity = worldpay3dsFlexCredentialsEntity;
+        return this;
+    }
+
     public GatewayAccountEntity build() {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity();
         gatewayAccountEntity.setId(id);
@@ -171,6 +177,7 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setEmailCollectionMode(emailCollectionMode);
         gatewayAccountEntity.setNotificationCredentials(notificationCredentials);
         gatewayAccountEntity.setCardTypes(cardTypes);
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
         return gatewayAccountEntity;
     }
 }

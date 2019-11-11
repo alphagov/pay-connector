@@ -22,6 +22,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.util.JwtGenerator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity;
 import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -37,6 +39,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -54,6 +57,9 @@ public class Worldpay3dsFlexJwtServiceTest {
     
     @Mock 
     private LinksConfig mockLinksConfig;
+
+    @Mock
+    private Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -87,11 +93,12 @@ public class Worldpay3dsFlexJwtServiceTest {
     @Test
     public void shouldCreateCorrectTokenForWorldpay3dsFlexDdc() {
         var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), VALID_CREDENTIALS);
+        var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials("me", "myOrg", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
         int paymentCreationTimeEpochSeconds19August2029 = 1881821916;
         int expectedTokenExpirationTimeEpochSeconds = paymentCreationTimeEpochSeconds19August2029 + TOKEN_EXPIRY_DURATION_SECONDS;
         var paymentCreationZonedDateTime = ZonedDateTime.ofInstant(Instant.ofEpochSecond((long) paymentCreationTimeEpochSeconds19August2029), UTC);
 
-        String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, paymentCreationZonedDateTime);
+        String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, paymentCreationZonedDateTime);
 
         Jws<Claims> jws = Jwts.parser()
                 .setSigningKey(new SecretKeySpec(VALID_CREDENTIALS.get("jwt_mac_id").getBytes(), "HmacSHA256"))
@@ -102,8 +109,8 @@ public class Worldpay3dsFlexJwtServiceTest {
         assertThat(jws.getBody(), hasKey("jti"));
         assertThat(jws.getBody(), hasKey("iat"));
         assertThat(jws.getBody(), hasEntry("exp", expectedTokenExpirationTimeEpochSeconds));
-        assertThat(jws.getBody(), hasEntry("iss", VALID_CREDENTIALS.get("issuer")));
-        assertThat(jws.getBody(), hasEntry("OrgUnitId", VALID_CREDENTIALS.get("organisational_unit_id")));
+        assertThat(jws.getBody(), hasEntry("iss", "me"));
+        assertThat(jws.getBody(), hasEntry("OrgUnitId", "myOrg"));
     }
 
     @Test
@@ -140,10 +147,13 @@ public class Worldpay3dsFlexJwtServiceTest {
 
     @Test
     public void shouldCreateCorrectChallengeToken() {
+        when(worldpay3dsFlexCredentialsEntity.getIssuer()).thenReturn("me");
+        when(worldpay3dsFlexCredentialsEntity.getOrganisationalUnitId()).thenReturn("myOrg");
+        when(worldpay3dsFlexCredentialsEntity.getJwtMacKey()).thenReturn("fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
 
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                 .withGatewayName(WORLDPAY.getName())
-                .withCredentials(VALID_CREDENTIALS)
+                .withWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity)
                 .build();
         ChargeEntity chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
 
@@ -172,71 +182,62 @@ public class Worldpay3dsFlexJwtServiceTest {
 
     @Test
     public void generateDdcToken_shouldThrowExceptionForMissingIssuer() {
-        var credentialsMissingIssuer = Map.of(
-                "organisational_unit_id", "myOrg",
-                "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
-        );
-        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), credentialsMissingIssuer);
+        var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials(null, "myOrg", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
+        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), null);
 
         expectedException.expect(Worldpay3dsFlexJwtCredentialsException.class);
         expectedException.expectMessage("Cannot generate Worldpay 3ds Flex JWT for account 1 because the " +
                 "following credential is unavailable: issuer");
 
-        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, ZonedDateTime.now());
+        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, ZonedDateTime.now());
     }
 
     @Test
     public void generateDdcToken_shouldThrowExceptionForMissingOrgId() {
-        var credentialsMissingOrgId = Map.of(
-                "issuer", "me",
-                "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
-        );
-        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), credentialsMissingOrgId);
+        var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials("me", null, "fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
+        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), null);
 
         expectedException.expect(Worldpay3dsFlexJwtCredentialsException.class);
         expectedException.expectMessage(
                 "Cannot generate Worldpay 3ds Flex JWT for account 1 because the following credential is " +
                         "unavailable: organisational_unit_id");
 
-        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, ZonedDateTime.now());
+        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, ZonedDateTime.now());
     }
 
     @Test
     public void generateDdcToken_shouldThrowExceptionForMissingJwtMacId() {
-        var credentialsMissingJwtMacId = Map.of(
-                "issuer", "me",
-                "organisational_unit_id", "myOrg"
-        );
-        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), credentialsMissingJwtMacId);
+        var worldpay3dsFlexCredentials = new Worldpay3dsFlexCredentials("me", "myOrg", null);
+        var gatewayAccount = new GatewayAccount(1L, WORLDPAY.getName(), null);
 
         expectedException.expect(Worldpay3dsFlexJwtCredentialsException.class);
         expectedException.expectMessage("Cannot generate Worldpay 3ds Flex JWT for account 1 because the " +
-                "following credential is unavailable: jwt_mac_id");
+                "following credential is unavailable: jwt_mac_key");
 
-        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, ZonedDateTime.now());
+        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, ZonedDateTime.now());
     }
 
     @Test
     public void generateDdcToken_shouldThrowExceptionForNonWorldpayAccount() {
+        var worldpay3dsFlexCredentials = mock(Worldpay3dsFlexCredentials.class);
         var gatewayAccount = new GatewayAccount(1L, SMARTPAY.getName(), VALID_CREDENTIALS);
 
         expectedException.expect(Worldpay3dsFlexJwtPaymentProviderException.class);
         expectedException.expectMessage("Cannot provide a Worldpay 3ds flex JWT for account 1 because the " +
                 "Payment Provider is not Worldpay.");
 
-        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, ZonedDateTime.now());
+        worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, ZonedDateTime.now());
     }
 
     @Test
     public void generateChallengeToken_shouldThrowExceptionForMissingIssuer() {
-        var credentialsMissingIssuer = Map.of(
-                "organisational_unit_id", "myOrg",
-                "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
-        );
+        when(worldpay3dsFlexCredentialsEntity.getIssuer()).thenReturn(null);
+        when(worldpay3dsFlexCredentialsEntity.getOrganisationalUnitId()).thenReturn("myOrg");
+        when(worldpay3dsFlexCredentialsEntity.getJwtMacKey()).thenReturn("fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName(WORLDPAY.getName())
-                .withCredentials(credentialsMissingIssuer)
+                .withWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity)
                 .build();
         ChargeEntity chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
 
@@ -249,14 +250,13 @@ public class Worldpay3dsFlexJwtServiceTest {
 
     @Test
     public void generateChallengeToken_shouldThrowExceptionForMissingOrgId() {
-        var credentialsMissingOrgId = Map.of(
-                "issuer", "me",
-                "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
-        );
+        when(worldpay3dsFlexCredentialsEntity.getIssuer()).thenReturn("me");
+        when(worldpay3dsFlexCredentialsEntity.getOrganisationalUnitId()).thenReturn(null);
+        when(worldpay3dsFlexCredentialsEntity.getJwtMacKey()).thenReturn("fa2daee2-1fbb-45ff-4444-52805d5cd9e0");
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName(WORLDPAY.getName())
-                .withCredentials(credentialsMissingOrgId)
+                .withWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity)
                 .build();
         ChargeEntity chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
 
@@ -270,20 +270,19 @@ public class Worldpay3dsFlexJwtServiceTest {
 
     @Test
     public void generateChallengeToken_shouldThrowExceptionForMissingJwtMacId() {
-        var credentialsMissingJwtMacId = Map.of(
-                "issuer", "me",
-                "organisational_unit_id", "myOrg"
-        );
+        when(worldpay3dsFlexCredentialsEntity.getIssuer()).thenReturn("me");
+        when(worldpay3dsFlexCredentialsEntity.getOrganisationalUnitId()).thenReturn("myOrg");
+        when(worldpay3dsFlexCredentialsEntity.getJwtMacKey()).thenReturn(null);
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName(WORLDPAY.getName())
-                .withCredentials(credentialsMissingJwtMacId)
+                .withWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity)
                 .build();
         ChargeEntity chargeEntity = createValidChargeEntityForChallengeToken(gatewayAccountEntity);
 
         expectedException.expect(Worldpay3dsFlexJwtCredentialsException.class);
         expectedException.expectMessage("Cannot generate Worldpay 3ds Flex JWT for account 1 because the " +
-                "following credential is unavailable: jwt_mac_id");
+                "following credential is unavailable: jwt_mac_key");
 
         worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(chargeEntity);
     }

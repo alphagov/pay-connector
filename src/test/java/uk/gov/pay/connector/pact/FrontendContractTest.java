@@ -96,14 +96,11 @@ public class FrontendContractTest {
                 .withAccountId(gatewayAccountId)
                 .withPaymentProvider("worldpay")
                 .withCardTypeEntities(Collections.singletonList(dbHelper.getVisaDebitCard()))
-                .withCredentials(Map.of(
-                        "jwt_mac_id", "1A4rIZWXzXxqH7hZQUJ5aIUlFgPJFKLfrOGKxASaaV3YWMrcS616L7H86UhnTg5u",
-                        "organisational_unit_id", "a-org-unit-id",
-                        "issuer", "an-issuer"
-                ))
                 .insert();
 
         String chargeExternalId = "testChargeId";
+
+        dbHelper.insertWorldpay3dsFlexCredential(gatewayAccountId, "1A4rIZWXzXxqH7hZQUJ5aIUlFgPJFKLfrOGKxASaaV3YWMrcS616L7H86UhnTg5u", "an-issuer", "a-org-unit-id", 2L);
 
         dbHelper.addCharge(anAddChargeParams()
                 .withExternalChargeId(chargeExternalId)
@@ -120,15 +117,12 @@ public class FrontendContractTest {
                 .withAccountId(gatewayAccountId)
                 .withPaymentProvider("worldpay")
                 .withCardTypeEntities(Collections.singletonList(dbHelper.getVisaDebitCard()))
-                .withCredentials(Map.of(
-                        "jwt_mac_id", "1A4rIZWXzXxqH7hZQUJ5aIUlFgPJFKLfrOGKxASaaV3YWMrcS616L7H86UhnTg5u",
-                        "organisational_unit_id", "a-org-unit-id",
-                        "issuer", "an-issuer"
-                ))
                 .insert();
 
         Long chargeId = nextLong();
         String chargeExternalId = "testChargeId";
+
+        dbHelper.insertWorldpay3dsFlexCredential(gatewayAccountId, "1A4rIZWXzXxqH7hZQUJ5aIUlFgPJFKLfrOGKxASaaV3YWMrcS616L7H86UhnTg5u", "an-issuer", "a-org-unit-id", 2L);
 
         dbHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)

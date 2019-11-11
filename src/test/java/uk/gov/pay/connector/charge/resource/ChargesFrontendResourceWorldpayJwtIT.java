@@ -69,21 +69,17 @@ public class ChargesFrontendResourceWorldpayJwtIT {
     }
 
     @Test
-    public void shouldReturn409WhenCredentialsAreMissingForDdcToken() {
+    public void shouldReturn409WhenCredentialsAreMissingForGatewayAccount() {
         var chargeExternalId = "mySecondChargeId";
         var gatewayAccountId = "202";
-        var credentialsMissingIssuer = Map.of(
-                "organisational_unit_id", "My Org",
-                "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
-        );
-        setUpChargeAndAccount(gatewayAccountId, WORLDPAY, credentialsMissingIssuer, nextLong(), chargeExternalId,
+        setUpChargeAndAccount(gatewayAccountId, WORLDPAY, null, nextLong(), chargeExternalId,
                 ChargeStatus.CREATED);
 
         connectorRestApi
                 .withChargeId(chargeExternalId)
                 .getWorldpay3dsFlexDdcJwt()
                 .statusCode(HttpStatus.SC_CONFLICT)
-                .body("message", is(List.of("Cannot generate Worldpay 3ds Flex JWT for account 202 because the following credential is unavailable: issuer")));
+                .body("message", is(List.of("Cannot generate Worldpay 3ds Flex JWT for account 202 because credentials are unavailable")));
     }
 
     @Test
@@ -161,32 +157,6 @@ public class ChargesFrontendResourceWorldpayJwtIT {
                 .body("auth_3ds_data", not(hasKey("worldpayChallengeJwt")));
     }
 
-    @Test
-    public void shouldReturn409WhenCredentialsAreMissingForChallengeToken() {
-        long chargeId = nextLong();
-        var chargeExternalId = "mySecondChargeId";
-        var gatewayAccountId = "202";
-        var credentialsMissingIssuer = Map.of(
-                "organisational_unit_id", "My Org",
-                "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
-        );
-        setUpChargeAndAccount(gatewayAccountId, WORLDPAY, credentialsMissingIssuer, chargeId, chargeExternalId,
-                ChargeStatus.AUTHORISATION_3DS_REQUIRED);
-
-        databaseTestHelper.updateCharge3dsFlexChallengeDetails(chargeId,
-                "http://example.com",
-                "a-transaction-id",
-                "a-payload",
-                "2.1.0");
-
-        connectorRestApi
-                .withAccountId(gatewayAccountId)
-                .withChargeId(chargeExternalId)
-                .getFrontendCharge()
-                .statusCode(HttpStatus.SC_CONFLICT)
-                .body("message", is(List.of("Cannot generate Worldpay 3ds Flex JWT for account 202 because the following credential is unavailable: issuer")));
-    }
-
     private void setUpChargeAndAccount(String gatewayAccountId,
                                        PaymentGatewayName paymentProvider,
                                        Map<String, String> credentials,
@@ -196,8 +166,16 @@ public class ChargesFrontendResourceWorldpayJwtIT {
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(gatewayAccountId)
                 .withPaymentGateway(paymentProvider.getName())
-                .withCredentials(credentials)
                 .build());
+        
+        if (credentials != null) {
+            databaseTestHelper.insertWorldpay3dsFlexCredential(
+                    Long.valueOf(gatewayAccountId),
+                    credentials.get("jwt_mac_id"),
+                    credentials.get("issuer"),
+                    credentials.get("organisational_unit_id"),
+                    2L);
+        }
 
         databaseTestHelper.addCharge(
                 anAddChargeParams()

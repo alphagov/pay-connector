@@ -203,7 +203,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @JsonInclude(NON_NULL)
     @JsonProperty("worldpay_3ds_flex")
-    public Worldpay3dsFlexCredentials getWorldpay3dsFlexCredentialsEntity() {
+    public Worldpay3dsFlexCredentials getWorldpay3dsFlexCredentials() {
         if(worldpay3dsFlexCredentialsEntity != null) {
             return Worldpay3dsFlexCredentials.fromEntity(worldpay3dsFlexCredentialsEntity);
         }
@@ -361,6 +361,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setIntegrationVersion3ds(int integrationVersion3ds) {
         this.integrationVersion3ds = integrationVersion3ds;
+    }
+
+    public void setWorldpay3dsFlexCredentialsEntity(Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity) {
+        this.worldpay3dsFlexCredentialsEntity = worldpay3dsFlexCredentialsEntity;
     }
 
     public class Views {
