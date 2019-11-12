@@ -87,7 +87,7 @@ public class ChargeExpiryService {
         Map<Boolean, List<ChargeEntity>> chargesPartitionedByNeedForExpiryWithGateway =
                 getNullSafeList(chargesGroupedByAuthStage.get(DURING_AUTHORISATION))
                         .stream()
-                        .collect(Collectors.partitioningBy(this::isExpirableWithGateway));
+                        .collect(Collectors.partitioningBy(queryService::isTerminableWithGateway));
 
         List<ChargeEntity> toExpireWithoutGateway = new ImmutableList.Builder<ChargeEntity>()
                 .addAll(getNullSafeList(chargesGroupedByAuthStage.get(PRE_AUTHORISATION)))
@@ -115,20 +115,7 @@ public class ChargeExpiryService {
     private AuthorisationStage getAuthorisationStage(ChargeEntity chargeEntity) {
         return ExpirableChargeStatus.of(ChargeStatus.fromString(chargeEntity.getStatus())).getAuthorisationStage();
     }
-
-    private boolean isExpirableWithGateway(ChargeEntity charge) {
-        try {
-            return queryService
-                    .getChargeGatewayStatus(charge)
-                    .getMappedStatus()
-                    .map(chargeStatus -> !chargeStatus.toExternal().isFinished())
-                    .orElse(false);
-        } catch (WebApplicationException | UnsupportedOperationException | GatewayException | IllegalArgumentException e) {
-            logger.info("Unable to retrieve status for charge {}: {}", charge.getExternalId(), e.getMessage());
-            return false;
-        }
-    }
-
+    
     public Map<String, Integer> sweepAndExpireChargesAndTokens() {
         List<ChargeEntity> chargesToExpire = new ImmutableList.Builder<ChargeEntity>()
                 .addAll(getChargesToExpireWithRegularExpiryThreshold())
