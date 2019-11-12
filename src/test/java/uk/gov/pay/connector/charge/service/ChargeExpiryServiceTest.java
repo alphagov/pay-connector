@@ -264,7 +264,7 @@ public class ChargeExpiryServiceTest {
 
         when(mockChargeDao.findByExternalId(preAuthorisationCharge.getExternalId())).thenReturn(Optional.of(preAuthorisationCharge));
 
-        when(mockQueryService.getChargeGatewayStatus(preAuthorisationCharge)).thenReturn(new ChargeQueryResponse(AUTHORISATION_SUCCESS, "Raw response"));
+        when(mockQueryService.isTerminableWithGateway(preAuthorisationCharge)).thenReturn(true);
         when(mockWorldpayCancelResponse.cancelStatus()).thenReturn(CancelStatus.CANCELLED);
 
         when(mockPaymentProvider.cancel(any())).thenReturn(gatewayResponse);
