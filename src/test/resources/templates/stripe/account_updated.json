@@ -1,0 +1,143 @@
+{
+  "created": 1326853478,
+  "livemode": false,
+  "id": "evt_00000000000000",
+  "type": "account.updated",
+  "object": "event",
+  "request": null,
+  "pending_webhooks": 1,
+  "api_version": "2019-05-16",
+  "data": {
+    "object": {
+      "id": "acct_00000000000000",
+      "object": "account",
+      "business_profile": {
+        "mcc": "5734",
+        "name": "Cabinet Office",
+        "product_description": "We collect payments for broad variety of services in the public sector in the UK",
+        "support_address": null,
+        "support_email": null,
+        "support_phone": "+442072761234",
+        "support_url": null,
+        "url": "http://www.gov.uk"
+      },
+      "business_type": "company",
+      "capabilities": {
+        "card_payments": "active",
+        "transfers": "active"
+      },
+      "charges_enabled": true,
+      "company": {
+        "address": {
+          "city": "London",
+          "country": "GB",
+          "line1": "31A Chatham Place",
+          "line2": null,
+          "postal_code": "E96FJ",
+          "state": null
+        },
+        "directors_provided": false,
+        "name": "Cabinet Office",
+        "owners_provided": true,
+        "tax_id_provided": false,
+        "verification": {
+          "document": {
+            "back": null,
+            "details": null,
+            "details_code": null,
+            "front": null
+          }
+        }
+      },
+      "country": "GB",
+      "created": 1544617488,
+      "default_currency": "gbp",
+      "details_submitted": true,
+      "email": "test@stripe.com",
+      "external_accounts": {
+        "object": "list",
+        "data": [
+          {
+            "id": "ba_00000000000000",
+            "object": "bank_account",
+            "account": "acct_00000000000000",
+            "account_holder_name": null,
+            "account_holder_type": null,
+            "bank_name": "NAT WEST BANK PLC",
+            "country": "GB",
+            "currency": "gbp",
+            "default_for_currency": true,
+            "fingerprint": "7fAtx7OwlUupiNO8",
+            "last4": "0160",
+            "metadata": {
+            },
+            "routing_number": "60-70-80",
+            "status": "new"
+          }
+        ],
+        "has_more": false,
+        "url": "/v1/accounts/acct_1DgWlgDv3CZEaFO2/external_accounts"
+      },
+      "metadata": {
+      },
+      "payouts_enabled": false,
+      "requirements": {
+        "current_deadline": null,
+        "currently_due": [
+        ],
+        "disabled_reason": "listed",
+        "eventually_due": [
+        ],
+        "past_due": [
+        ],
+        "pending_verification": [
+        ]
+      },
+      "settings": {
+        "branding": {
+          "icon": null,
+          "logo": null,
+          "primary_color": null
+        },
+        "card_payments": {
+          "decline_on": {
+            "avs_failure": true,
+            "cvc_failure": true
+          },
+          "statement_descriptor_prefix": null
+        },
+        "dashboard": {
+          "display_name": "GOV.UK Pay Production",
+          "timezone": "Europe/London"
+        },
+        "payments": {
+          "statement_descriptor": "GOV.UK PAY",
+          "statement_descriptor_kana": null,
+          "statement_descriptor_kanji": null
+        },
+        "payouts": {
+          "debit_negative_balances": false,
+          "schedule": {
+            "delay_days": 2,
+            "interval": "daily"
+          },
+          "statement_descriptor": null
+        }
+      },
+      "tos_acceptance": {
+        "date": 1545343670,
+        "ip": "81.156.62.52",
+        "user_agent": null
+      },
+      "type": "standard",
+      "statement_descriptor": "TEST"
+    },
+    "previous_attributes": {
+      "verification": {
+        "fields_needed": [
+        ],
+        "due_by": null
+      }
+    }
+  }
+}
