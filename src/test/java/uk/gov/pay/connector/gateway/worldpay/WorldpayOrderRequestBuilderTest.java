@@ -93,7 +93,6 @@ public class WorldpayOrderRequestBuilderTest {
         Address fullAddress = new Address("123 My Street", "This road", "SW8URR", "London", "London county", "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(fullAddress);
-        authCardDetails.setIpAddress("127.0.0.1");
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId("uniqueSessionId")
