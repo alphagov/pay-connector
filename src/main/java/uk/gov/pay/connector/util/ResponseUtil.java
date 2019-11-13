@@ -73,7 +73,7 @@ public class ResponseUtil {
     }
 
     public static Response conflictErrorResponse(String message) {
-        logger.error(message);
+        logger.info(message);
         return buildErrorResponse(CONFLICT, message);
     }
 
