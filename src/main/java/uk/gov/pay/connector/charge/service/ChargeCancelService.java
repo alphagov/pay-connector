@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.charge.service;
 
-import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -14,37 +14,34 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
+import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.charge.service.StatusFlow.USER_CANCELLATION_FLOW;
 
 public class ChargeCancelService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
-    private static List<ChargeStatus> nonGatewayStatuses = ImmutableList.of(
-            CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_3DS_REQUIRED
-    );
-
+    
     private final ChargeDao chargeDao;
     private final PaymentProviders providers;
     private final ChargeService chargeService;
+    private final QueryService queryService;
 
     @Inject
     public ChargeCancelService(ChargeDao chargeDao,
                                PaymentProviders providers,
-                               ChargeService chargeService) {
+                               ChargeService chargeService,
+                               QueryService queryService) {
         this.chargeDao = chargeDao;
         this.providers = providers;
         this.chargeService = chargeService;
+        this.queryService = queryService;
     }
 
     public Optional<ChargeEntity> doSystemCancel(String chargeId, Long accountId) {
@@ -64,12 +61,22 @@ public class ChargeCancelService {
     }
 
     private void doCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
+        
         validateChargeStatus(statusFlow, chargeEntity);
         
-        if (gatewayIsNotAwareOfCharge(chargeEntity)) {
-            nonGatewayCancel(chargeEntity, statusFlow);
-        } else {
+        ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
+
+        ExpirableChargeStatus.AuthorisationStage authorisationStage = ExpirableChargeStatus
+                .of(chargeStatus).getAuthorisationStage();
+
+        boolean cancellableWithGateway = authorisationStage == ExpirableChargeStatus.AuthorisationStage.POST_AUTHORISATION
+                || (authorisationStage == ExpirableChargeStatus.AuthorisationStage.DURING_AUTHORISATION
+                && queryService.isTerminableWithGateway(chargeEntity));
+
+        if (cancellableWithGateway) {
             cancelChargeWithGatewayCleanup(chargeEntity, statusFlow);
+        } else {
+            nonGatewayCancel(chargeEntity, statusFlow);
         }
     }
 
@@ -125,11 +132,7 @@ public class ChargeCancelService {
 
         chargeService.transitionChargeState(chargeEntity.getExternalId(), completeStatus);
     }
-
-    private boolean gatewayIsNotAwareOfCharge(ChargeEntity chargeEntity) {
-        return nonGatewayStatuses.contains(ChargeStatus.fromString(chargeEntity.getStatus()));
-    }
-
+    
     private void prepareForTerminate(ChargeEntity chargeEntity, StatusFlow statusFlow) {
         ChargeStatus lockState = statusFlow.getLockState();
         ChargeStatus currentStatus = ChargeStatus.fromString(chargeEntity.getStatus());
