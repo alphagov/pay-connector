@@ -5,8 +5,10 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -28,8 +30,10 @@ public class StatusFlow {
 
     public static final StatusFlow USER_CANCELLATION_FLOW = new StatusFlow("User Cancellation",
             ImmutableList.of(
+                    CREATED,
                     ENTERING_CARD_DETAILS,
-                    AUTHORISATION_SUCCESS
+                    AUTHORISATION_SUCCESS,
+                    AUTHORISATION_3DS_REQUIRED
             ),
             USER_CANCEL_READY,
             USER_CANCELLED,
@@ -42,7 +46,8 @@ public class StatusFlow {
                     CREATED,
                     ENTERING_CARD_DETAILS,
                     AUTHORISATION_SUCCESS,
-                    AWAITING_CAPTURE_REQUEST
+                    AWAITING_CAPTURE_REQUEST,
+                    AUTHORISATION_3DS_REQUIRED
             ),
             SYSTEM_CANCEL_READY,
             SYSTEM_CANCELLED,
@@ -98,5 +103,9 @@ public class StatusFlow {
 
     public ChargeStatus getFailureTerminalState() {
         return failureTerminalState;
+    }
+    
+    public boolean isInProgress(ChargeStatus chargeStatus) {
+        return Set.of(lockState, submittedState).contains(chargeStatus);
     }
 }

@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -17,14 +16,11 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
 import javax.inject.Inject;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
@@ -68,6 +64,8 @@ public class ChargeCancelService {
     }
 
     private void doCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
+        validateChargeStatus(statusFlow, chargeEntity);
+        
         if (gatewayIsNotAwareOfCharge(chargeEntity)) {
             nonGatewayCancel(chargeEntity, statusFlow);
         } else {
@@ -78,14 +76,16 @@ public class ChargeCancelService {
     private void cancelChargeWithGatewayCleanup(ChargeEntity chargeEntity, StatusFlow statusFlow) {
         prepareForTerminate(chargeEntity, statusFlow);
 
-        ChargeStatus chargeStatus = null;
-        String stringifiedResponse = null;
+        ChargeStatus chargeStatus;
+        String stringifiedResponse;
 
         try {
             final GatewayResponse<BaseCancelResponse> gatewayResponse = doGatewayCancel(chargeEntity);
 
-            if (!gatewayResponse.getBaseResponse().isPresent()) gatewayResponse.throwGatewayError();
-
+            if (gatewayResponse.getBaseResponse().isEmpty()) {
+                gatewayResponse.throwGatewayError();
+            }
+            
             chargeStatus = determineTerminalState(gatewayResponse.getBaseResponse().get(), statusFlow);
             stringifiedResponse = gatewayResponse.getBaseResponse().get().toString();
         } catch (GatewayException e) {
@@ -131,11 +131,9 @@ public class ChargeCancelService {
     }
 
     private void prepareForTerminate(ChargeEntity chargeEntity, StatusFlow statusFlow) {
-        ChargeStatus newStatus = statusFlow.getLockState();
+        ChargeStatus lockState = statusFlow.getLockState();
         ChargeStatus currentStatus = ChargeStatus.fromString(chargeEntity.getStatus());
-
-        validateChargeStatus(statusFlow, chargeEntity, newStatus, currentStatus);
-
+        
         // Used by Sumo Logic saved search
         logger.info("Card cancel request sent - charge_external_id={}, charge_status={}, account_id={}, transaction_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
                 chargeEntity.getExternalId(),
@@ -146,19 +144,19 @@ public class ChargeCancelService {
                 OperationType.CANCELLATION.getValue(),
                 chargeEntity.getGatewayAccount().getGatewayName(),
                 chargeEntity.getGatewayAccount().getType(),
-                newStatus);
+                lockState);
 
-        chargeService.transitionChargeState(chargeEntity.getExternalId(), newStatus);
+        chargeService.transitionChargeState(chargeEntity.getExternalId(), lockState);
     }
 
-    private void validateChargeStatus(StatusFlow statusFlow, ChargeEntity chargeEntity, ChargeStatus newStatus, ChargeStatus oldStatus) {
-        if (!chargeIsInTerminatableStatus(statusFlow, oldStatus)) {
-            if (newStatus.equals(oldStatus)) {
-                throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), chargeEntity.getExternalId());
-            } else if (Arrays.asList(AUTHORISATION_READY, AUTHORISATION_3DS_READY).contains(oldStatus)) {
-                throw new ConflictRuntimeException(chargeEntity.getExternalId());
-            }
+    private void validateChargeStatus(StatusFlow statusFlow, ChargeEntity chargeEntity) {
+        ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
 
+        if (statusFlow.isInProgress(chargeStatus)) {
+            throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), chargeEntity.getExternalId());
+        }
+        
+        if (!chargeIsInTerminableStatus(statusFlow, chargeStatus)) {
             logger.info("Charge is not in one of the legal states. charge_external_id={}, status={}, legal_states={}",
                     chargeEntity.getExternalId(), chargeEntity.getStatus(), getLegalStatusNames(statusFlow.getTerminatableStatuses()));
 
@@ -166,7 +164,7 @@ public class ChargeCancelService {
         }
     }
 
-    private static boolean chargeIsInTerminatableStatus(StatusFlow statusFlow, ChargeStatus chargeStatus) {
+    private static boolean chargeIsInTerminableStatus(StatusFlow statusFlow, ChargeStatus chargeStatus) {
         return statusFlow.getTerminatableStatuses().contains(chargeStatus);
     }
 

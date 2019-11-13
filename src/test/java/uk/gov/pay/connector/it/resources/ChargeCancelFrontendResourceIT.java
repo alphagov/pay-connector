@@ -121,7 +121,7 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void respondWith204With3DSRequeirdState_whenCancellationBeforeAuth() {
+    public void respondWith204With3DSRequiredState_whenCancellationBeforeAuth() {
 
         String chargeId = addCharge(AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusHours(1), "irrelvant");
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
@@ -131,14 +131,14 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void respondWith409_whenCancellationDuringAuth3DSReady() {
+    public void respondWith400_whenCancellationDuringAuth3DSReady() {
         String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
         worldpayMockClient.mockCancelSuccess();
 
         connectorRestApiClient
                 .withChargeId(chargeId)
                 .postFrontendChargeCancellation()
-                .statusCode(409);
+                .statusCode(400);
 
         connectorRestApiClient
                 .withChargeId(chargeId)
@@ -180,14 +180,14 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void respondWith409_whenCancellationDuringAuthReady() {
+    public void respondWith400_whenCancellationDuringAuthReady() {
         String chargeId = addCharge(AUTHORISATION_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
         worldpayMockClient.mockCancelSuccess();
 
         connectorRestApiClient
                 .withChargeId(chargeId)
                 .postFrontendChargeCancellation()
-                .statusCode(409);
+                .statusCode(400);
 
         connectorRestApiClient
                 .withChargeId(chargeId)
