@@ -31,10 +31,12 @@
                     </cardAddress>
                     </#if>
                 </VISA-SSL>
+                <#if requires3ds>
                 <#if authCardDetails.ipAddress.isPresent()>
                 <session id="${sessionId?xml}" shopperIPAddress="${authCardDetails.ipAddress.get()}"/>
-                <#elseif requires3ds>
+                <#else>
                 <session id="${sessionId?xml}"/>
+                </#if>
                 </#if>
             </paymentDetails>
             <#if requires3ds>

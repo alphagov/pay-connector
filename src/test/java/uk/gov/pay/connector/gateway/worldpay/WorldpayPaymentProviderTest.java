@@ -141,7 +141,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
                 .thenReturn(gatewayResponse);
 
         var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
-        worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity, "127.0.0.1"));
+        worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity));
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
         verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), anyMap());
