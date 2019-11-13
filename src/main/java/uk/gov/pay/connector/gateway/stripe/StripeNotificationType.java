@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 public enum StripeNotificationType {
 
+    ACCOUNT_UPDATED("account.updated"),
     SOURCE_CANCELED("source.canceled"),
     SOURCE_CHARGEABLE("source.chargeable"),
     SOURCE_FAILED("source.failed"),

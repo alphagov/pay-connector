@@ -1,12 +1,21 @@
 package uk.gov.pay.connector.gateway.stripe;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.app.StripeWebhookSigningSecrets;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -19,10 +28,12 @@ import javax.ws.rs.WebApplicationException;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -35,6 +46,7 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.UNKNOWN;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_3DS_SOURCE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_ACCOUNT_UPDATED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -49,7 +61,13 @@ public class StripeNotificationServiceTest {
     private ChargeEntity mockCharge;
     @Mock
     private StripeGatewayConfig stripeGatewayConfig;
-
+    @Mock
+    private Appender<ILoggingEvent> mockAppender;
+    @Captor
+    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
+    
+    private StripeAccountUpdatedHandler stripeAccountUpdatedHandler = new StripeAccountUpdatedHandler(new ObjectMapper());
+    
     private final String externalId = "external-id";
     private final String sourceId = "source-id";
     private final String webhookTestSigningSecret = "whtest";
@@ -58,7 +76,7 @@ public class StripeNotificationServiceTest {
     @Before
     public void setup() {
         notificationService = new StripeNotificationService(mockCard3dsResponseAuthService,
-                mockChargeService, stripeGatewayConfig);
+                mockChargeService, stripeGatewayConfig, stripeAccountUpdatedHandler);
 
         StripeWebhookSigningSecrets stripeWebhookSigningSecrets = mock(StripeWebhookSigningSecrets.class);
         when(stripeWebhookSigningSecrets.getTest()).thenReturn(webhookTestSigningSecret);
@@ -77,6 +95,21 @@ public class StripeNotificationServiceTest {
         return StripeNotificationUtilTest.generateSigHeader(webhookTestSigningSecret, payload);
     }
 
+    @Test
+    public void should_log_the_requirements_and_payoutsDisabled_json_when_an_account_updated_event_is_received() {
+        Logger root = (Logger) LoggerFactory.getLogger(StripeAccountUpdatedHandler.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
+        
+        String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_ACCOUNT_UPDATED);
+        notificationService.handleNotificationFor(payload, signPayload(payload));
+
+        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
+        assertThat(loggingEvent.getMessage()).contains("Received an account.updated event for stripe account");
+        assertThat(loggingEvent.getArgumentArray()).hasSize(3);
+    }
+    
     @Test
     public void shouldUpdateCharge_WhenNotificationIsFor3DSSourceChargeable() {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
