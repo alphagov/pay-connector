@@ -1324,4 +1324,11 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="add send_payer_ip_address_to_gateway column to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="send_payer_ip_address_to_gateway" type="boolean" defaultValue="false">
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
