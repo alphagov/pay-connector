@@ -36,6 +36,7 @@ public final class GatewayAccountEntityFixture {
     private NotificationCredentials notificationCredentials;
     private List<CardTypeEntity> cardTypes = newArrayList();
     private Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity;
+    private boolean sendPayerIpAddressToGateway;
 
     private GatewayAccountEntityFixture() {
     }
@@ -154,6 +155,11 @@ public final class GatewayAccountEntityFixture {
         return this;
     }
 
+    public GatewayAccountEntityFixture withSendPayerIpAddressToGateway(boolean sendPayerIpAddressToGateway) {
+        this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
+        return this;
+    }
+
     public GatewayAccountEntity build() {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity();
         gatewayAccountEntity.setId(id);
@@ -178,6 +184,7 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setNotificationCredentials(notificationCredentials);
         gatewayAccountEntity.setCardTypes(cardTypes);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
+        gatewayAccountEntity.setSendPayerIpAddressToGateway(sendPayerIpAddressToGateway);
         return gatewayAccountEntity;
     }
 }
