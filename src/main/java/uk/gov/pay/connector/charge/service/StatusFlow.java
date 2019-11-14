@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.charge.service;
 
-import com.google.common.collect.ImmutableList;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus;
 
@@ -8,11 +7,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
@@ -28,13 +22,12 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_
 
 public class StatusFlow {
 
+    private static final List<ChargeStatus> TERMINABLE_STATUSES = ExpirableChargeStatus.getValuesAsStream()
+            .map(ExpirableChargeStatus::getChargeStatus)
+            .collect(Collectors.toList());
+
     public static final StatusFlow USER_CANCELLATION_FLOW = new StatusFlow("User Cancellation",
-            ImmutableList.of(
-                    CREATED,
-                    ENTERING_CARD_DETAILS,
-                    AUTHORISATION_SUCCESS,
-                    AUTHORISATION_3DS_REQUIRED
-            ),
+            TERMINABLE_STATUSES,
             USER_CANCEL_READY,
             USER_CANCELLED,
             USER_CANCEL_SUBMITTED,
@@ -42,23 +35,15 @@ public class StatusFlow {
     );
 
     public static final StatusFlow SYSTEM_CANCELLATION_FLOW = new StatusFlow("System Cancellation",
-            ImmutableList.of(
-                    CREATED,
-                    ENTERING_CARD_DETAILS,
-                    AUTHORISATION_SUCCESS,
-                    AWAITING_CAPTURE_REQUEST,
-                    AUTHORISATION_3DS_REQUIRED
-            ),
+            TERMINABLE_STATUSES,
             SYSTEM_CANCEL_READY,
             SYSTEM_CANCELLED,
             SYSTEM_CANCEL_SUBMITTED,
             SYSTEM_CANCEL_ERROR
     );
-
+    
     public static final StatusFlow EXPIRE_FLOW = new StatusFlow("Expiration",
-            ExpirableChargeStatus.getValuesAsStream()
-                    .map(ExpirableChargeStatus::getChargeStatus)
-                    .collect(Collectors.toList()), 
+            TERMINABLE_STATUSES, 
             EXPIRE_CANCEL_READY,
             EXPIRED,
             EXPIRE_CANCEL_SUBMITTED,

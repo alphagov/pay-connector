@@ -129,23 +129,7 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
         assertThat(events.size(), is(2));
         assertThat(events, hasItems(AUTHORISATION_3DS_REQUIRED.getValue(), USER_CANCELLED.getValue()));
     }
-
-    @Test
-    public void respondWith400_whenCancellationDuringAuth3DSReady() {
-        String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
-        worldpayMockClient.mockCancelSuccess();
-
-        connectorRestApiClient
-                .withChargeId(chargeId)
-                .postFrontendChargeCancellation()
-                .statusCode(400);
-
-        connectorRestApiClient
-                .withChargeId(chargeId)
-                .getCharge()
-                .body("state.status", is("started"));
-    }
-
+    
     private String userCancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int httpStatusCode) {
         connectorRestApiClient
                 .withChargeId(chargeId)
