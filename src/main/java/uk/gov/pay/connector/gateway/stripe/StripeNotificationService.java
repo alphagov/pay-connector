@@ -236,8 +236,10 @@ public class StripeNotificationService {
     }
 
     private boolean isValidNotificationSignature(String payload, String signatureHeader) {
-        if (isValidNotificationSignature(payload, signatureHeader, stripeGatewayConfig.getWebhookSigningSecrets().getTest()) || 
-                isValidNotificationSignature(payload, signatureHeader, stripeGatewayConfig.getWebhookSigningSecrets().getLive())) {
+        boolean isValid = stripeGatewayConfig.getWebhookSigningSecrets()
+                .stream()
+                .anyMatch(s -> isValidNotificationSignature(payload, signatureHeader, s));
+        if (isValid) {
             return true;
         } else {
             logger.warn("Could not verify Stripe authentication header");
