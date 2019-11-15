@@ -13,7 +13,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.Optional;
 
 public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
-    
+
     private static final Logger logger = Logger.getLogger(WorldpayOrderRequestBuilder.class);
 
     static public class WorldpayTemplateData extends TemplateData {
@@ -25,6 +25,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String userAgentHeader;
         private boolean requires3ds;
         private String paResponse3ds;
+        private String payerIpAddress;
 
         public String getReference() {
             return reference;
@@ -91,6 +92,14 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         public void setPaResponse3ds(String paResponse3ds) {
             this.paResponse3ds = paResponse3ds;
         }
+
+        public String getPayerIpAddress() {
+            return payerIpAddress;
+        }
+
+        public void setPayerIpAddress(String payerIpAddress) {
+            this.payerIpAddress = payerIpAddress;
+        }
     }
 
     public static final TemplateBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseOrderTemplate.xml");
@@ -107,6 +116,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     public static WorldpayOrderRequestBuilder aWorldpayAuthoriseOrderRequestBuilder() {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE);
     }
+
     public static WorldpayOrderRequestBuilder aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType walletType) {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), walletType.getWorldPayTemplate(), walletType.getOrderRequestType());
     }
@@ -160,7 +170,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         worldpayTemplateData.setWalletAuthorisationData(walletTemplateData);
         return this;
     }
-    
+
     public WorldpayOrderRequestBuilder withAcceptHeader(String acceptHeader) {
         worldpayTemplateData.setAcceptHeader(acceptHeader);
         return this;
@@ -172,8 +182,13 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     }
 
     public WorldpayOrderRequestBuilder with3dsRequired(boolean requires3ds) {
-        logger.info("3DS requirement is: "+ requires3ds +" for "+ worldpayTemplateData.sessionId);
+        logger.info("3DS requirement is: " + requires3ds + " for " + worldpayTemplateData.sessionId);
         worldpayTemplateData.setRequires3ds(requires3ds);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder withPayerIpAddress(String payerIpAddress) {
+        worldpayTemplateData.setPayerIpAddress(payerIpAddress);
         return this;
     }
 

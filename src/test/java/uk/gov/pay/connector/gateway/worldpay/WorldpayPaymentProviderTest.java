@@ -63,7 +63,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTH
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_IP_ADDRESS;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITHOUT_IP_ADDRESS;
 import static uk.gov.pay.connector.util.XPathUtils.getNodeListFromExpression;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -73,6 +74,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     private GatewayClientFactory gatewayClientFactory;
 
     private ChargeEntityFixture chargeEntityFixture;
+    private GatewayClient.Response gatewayResponse;
 
     @Before
     public void setup() {
@@ -81,6 +83,8 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
         when(gatewayClientFactory.createGatewayClient(any(PaymentGatewayName.class), any(GatewayOperation.class), any()))
                 .thenReturn(mockGatewayClient);
         chargeEntityFixture = aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity);
+        gatewayResponse = mock(GatewayClient.Response.class);
+        when(gatewayResponse.getEntity()).thenReturn(TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
     }
 
     @Test
@@ -135,8 +139,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
                 .withTransactionId("transaction-id")
                 .build();
 
-        GatewayClient.Response gatewayResponse = mock(GatewayClient.Response.class);
-        when(gatewayResponse.getEntity()).thenReturn(TestTemplateResourceLoader.load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
                 .thenReturn(gatewayResponse);
 
@@ -150,7 +153,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     }
 
     @Test
-    public void shouldInclude3dsElementsWhen3dsToggleEnabled() throws Exception {
+    public void shouldInclude3dsElementsWithIpAddress() throws Exception {
         ChargeEntity chargeEntity = chargeEntityFixture
                 .withExternalId("uniqueSessionId")
                 .withAmount(500L)
@@ -159,20 +162,42 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
                 .build();
 
         gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.setSendPayerIpAddressToGateway(true);
 
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
-                .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
+                .thenReturn(gatewayResponse);
 
         var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
+        worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity, "127.0.0.1"));
 
-        try {
-            worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity, "127.0.0.1"));
-        } catch (GatewayException.GatewayErrorException e) {
-            ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-            verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), anyMap());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
-        }
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+        verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), anyMap());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_IP_ADDRESS),
+                gatewayOrderArgumentCaptor.getValue().getPayload());
+    }
+
+    @Test
+    public void shouldInclude3dsElementsWithoutIpAddress() throws Exception {
+        ChargeEntity chargeEntity = chargeEntityFixture
+                .withExternalId("uniqueSessionId")
+                .withAmount(500L)
+                .withDescription("This is a description")
+                .withTransactionId("transaction-id")
+                .build();
+
+        gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.setSendPayerIpAddressToGateway(false);
+
+        when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
+                .thenReturn(gatewayResponse);
+
+        var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
+        worldpayPaymentProvider.authorise(getCardAuthorisationRequest(chargeEntity, "127.0.0.1"));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+        verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(gatewayAccountEntity), gatewayOrderArgumentCaptor.capture(), anyMap());
+        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITHOUT_IP_ADDRESS),
+                gatewayOrderArgumentCaptor.getValue().getPayload());
     }
 
     @Test

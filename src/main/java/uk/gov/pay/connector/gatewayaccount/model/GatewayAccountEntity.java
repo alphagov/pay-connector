@@ -93,7 +93,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @Column(name = "allow_zero_amount")
     private boolean allowZeroAmount;
-    
+
     @Column(name = "integration_version_3ds")
     private int integrationVersion3ds;
 
@@ -116,6 +116,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @OneToOne(mappedBy = "gatewayAccountEntity", cascade = CascadeType.PERSIST)
     private Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity;
+
+    @Column(name = "send_payer_ip_address_to_gateway")
+    private boolean sendPayerIpAddressToGateway;
 
     @ManyToMany
     @JoinTable(
@@ -204,7 +207,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @JsonInclude(NON_NULL)
     @JsonProperty("worldpay_3ds_flex")
     public Worldpay3dsFlexCredentials getWorldpay3dsFlexCredentials() {
-        if(worldpay3dsFlexCredentialsEntity != null) {
+        if (worldpay3dsFlexCredentialsEntity != null) {
             return Worldpay3dsFlexCredentials.fromEntity(worldpay3dsFlexCredentialsEntity);
         }
         return null;
@@ -365,6 +368,14 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setWorldpay3dsFlexCredentialsEntity(Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity) {
         this.worldpay3dsFlexCredentialsEntity = worldpay3dsFlexCredentialsEntity;
+    }
+
+    public boolean isSendPayerIpAddressToGateway() {
+        return sendPayerIpAddressToGateway;
+    }
+
+    public void setSendPayerIpAddressToGateway(boolean sendPayerIpAddressToGateway) {
+        this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
     }
 
     public class Views {

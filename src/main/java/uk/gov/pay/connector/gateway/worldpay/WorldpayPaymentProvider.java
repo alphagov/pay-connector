@@ -6,8 +6,14 @@ import org.joda.time.DateTimeZone;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.gateway.*;
+import uk.gov.pay.connector.gateway.CaptureResponse;
+import uk.gov.pay.connector.gateway.ChargeQueryResponse;
+import uk.gov.pay.connector.gateway.GatewayClient;
+import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -65,7 +71,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     public WorldpayPaymentProvider(ConnectorConfiguration configuration,
                                    GatewayClientFactory gatewayClientFactory,
                                    Environment environment) {
-        
+
         gatewayUrlMap = configuration.getGatewayConfigFor(WORLDPAY).getUrls().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, v -> URI.create(v.getValue())));
         authoriseClient = gatewayClientFactory.createGatewayClient(WORLDPAY, AUTHORISE, environment.metrics());
@@ -89,7 +95,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
-    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge)  throws GatewayException {
+    public ChargeQueryResponse queryPaymentStatus(ChargeEntity charge) throws GatewayException {
         GatewayClient.Response response = inquiryClient.postRequestFor(
                 gatewayUrlMap.get(charge.getGatewayAccount().getType()),
                 charge.getGatewayAccount(),
@@ -119,9 +125,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request) throws GatewayException {
         GatewayOrder gatewayOrder = buildAuthoriseOrder(request);
         GatewayClient.Response response = authoriseClient.postRequestFor(
-                gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                request.getGatewayAccount(), 
-                gatewayOrder, 
+                gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                request.getGatewayAccount(),
+                gatewayOrder,
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
         return getWorldpayGatewayResponse(response);
     }
@@ -132,20 +138,20 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
             List<HttpCookie> cookies = request.getProviderSessionId()
                     .map(providerSessionId -> singletonList(new HttpCookie(WORLDPAY_MACHINE_COOKIE_NAME, providerSessionId)))
                     .orElse(emptyList());
-            
+
             GatewayClient.Response response = authoriseClient.postRequestFor(
-                    gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                    request.getGatewayAccount(), 
-                    build3dsResponseAuthOrder(request), 
-                    cookies, 
+                    gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                    request.getGatewayAccount(),
+                    build3dsResponseAuthOrder(request),
+                    cookies,
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
-            
+
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getWorldpayGatewayResponse(response);
-            
+
             if (!gatewayResponse.getBaseResponse().isPresent()) gatewayResponse.throwGatewayError();
-            
+
             BaseAuthoriseResponse authoriseResponse = gatewayResponse.getBaseResponse().get();
-            
+
             return Gateway3DSAuthorisationResponse.of(gatewayResponse.toString(), authoriseResponse.authoriseStatus(), authoriseResponse.getTransactionId());
         } catch (GatewayException e) {
             return Gateway3DSAuthorisationResponse.of(e.getMessage(), BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION);
@@ -169,8 +175,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     @Override
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException {
-        GatewayClient.Response response = cancelClient.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
-                request.getGatewayAccount(), buildCancelOrder(request), 
+        GatewayClient.Response response = cancelClient.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                request.getGatewayAccount(), buildCancelOrder(request),
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
         return getWorldpayGatewayResponse(response);
     }
@@ -181,12 +187,20 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     private GatewayOrder buildAuthoriseOrder(CardAuthorisationGatewayRequest request) {
-        boolean is3dsRequired = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() || 
+        boolean is3dsRequired = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() ||
                 request.getGatewayAccount().isRequires3ds();
-        return aWorldpayAuthoriseOrderRequestBuilder()
+
+
+        var builder = aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId(request.getChargeExternalId())
                 .with3dsRequired(is3dsRequired)
-                .withDate(DateTime.now(DateTimeZone.UTC))
+                .withDate(DateTime.now(DateTimeZone.UTC));
+
+        if (request.getGatewayAccount().isSendPayerIpAddressToGateway()) {
+            request.getAuthCardDetails().getIpAddress().ifPresent(builder::withPayerIpAddress);
+        }
+
+        return builder
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .withDescription(request.getDescription())
