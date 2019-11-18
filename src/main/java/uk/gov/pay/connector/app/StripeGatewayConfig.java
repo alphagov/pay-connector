@@ -4,7 +4,9 @@ import io.dropwizard.Configuration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class StripeGatewayConfig extends Configuration {
 
@@ -18,7 +20,7 @@ public class StripeGatewayConfig extends Configuration {
 
     @Valid
     @NotNull
-    private StripeWebhookSigningSecrets webhookSigningSecrets;
+    private List<String> webhookSigningSecrets;
     
     @Valid
     private Double feePercentage;
@@ -38,15 +40,13 @@ public class StripeGatewayConfig extends Configuration {
         return authTokens;
     }
 
-    public StripeWebhookSigningSecrets getWebhookSigningSecrets() {
-        return webhookSigningSecrets;
+    public List<String> getWebhookSigningSecrets() {
+        return webhookSigningSecrets.stream().filter(s -> !s.isBlank()).collect(Collectors.toList());
     }
-
-
+    
     public Double getFeePercentage() {
         return Optional.ofNullable(feePercentage).orElse(0.0);
     }
-
 
     public Boolean isCollectFee() {
         return collectFee;

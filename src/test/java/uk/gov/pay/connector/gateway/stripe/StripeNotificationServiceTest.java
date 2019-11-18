@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.app.StripeWebhookSigningSecrets;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.Auth3dsDetails;
@@ -31,7 +30,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -78,10 +76,7 @@ public class StripeNotificationServiceTest {
         notificationService = new StripeNotificationService(mockCard3dsResponseAuthService,
                 mockChargeService, stripeGatewayConfig, stripeAccountUpdatedHandler);
 
-        StripeWebhookSigningSecrets stripeWebhookSigningSecrets = mock(StripeWebhookSigningSecrets.class);
-        when(stripeWebhookSigningSecrets.getTest()).thenReturn(webhookTestSigningSecret);
-        when(stripeWebhookSigningSecrets.getLive()).thenReturn(webhookLiveSigningSecret);
-        when(stripeGatewayConfig.getWebhookSigningSecrets()).thenReturn(stripeWebhookSigningSecrets);
+        when(stripeGatewayConfig.getWebhookSigningSecrets()).thenReturn(List.of(webhookLiveSigningSecret, webhookTestSigningSecret));
         when(mockCharge.getExternalId()).thenReturn(externalId);
         when(mockCharge.getStatus()).thenReturn(AUTHORISATION_3DS_REQUIRED.getValue());
         when(mockChargeService.findByProviderAndTransactionId(STRIPE.getName(), sourceId)).thenReturn(Optional.of(mockCharge));
