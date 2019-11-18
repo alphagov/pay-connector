@@ -49,6 +49,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -95,6 +96,7 @@ public class ChargeExpiryServiceTest {
     private static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ImmutableList.of(
             CREATED,
             ENTERING_CARD_DETAILS,
+            AUTHORISATION_READY,
             AUTHORISATION_3DS_REQUIRED,
             AUTHORISATION_3DS_READY,
             AUTHORISATION_SUCCESS
@@ -185,6 +187,7 @@ public class ChargeExpiryServiceTest {
     @Parameters({
             "CREATED",
             "ENTERING CARD DETAILS",
+            "AUTHORISATION READY",
             "AUTHORISATION 3DS REQUIRED",
             "AUTHORISATION 3DS READY"
     })

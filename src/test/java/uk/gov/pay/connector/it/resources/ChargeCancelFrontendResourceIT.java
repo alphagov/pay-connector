@@ -92,6 +92,16 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
     }
 
     @Test
+    public void respondWith204_whenCancellationDuringAuthReady() {
+
+        String chargeId = addCharge(AUTHORISATION_READY, "ref", ZonedDateTime.now().minusHours(1), "irrelvant");
+        userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
+        List<String> events = databaseTestHelper.getInternalEvents(chargeId);
+        assertThat(events.size(), is(2));
+        assertThat(events, hasItems(AUTHORISATION_READY.getValue(), USER_CANCELLED.getValue()));
+    }
+
+    @Test
     public void respondWith202_whenCancelAlreadyInProgress() {
         String chargeId = addCharge(USER_CANCEL_READY, "ref", ZonedDateTime.now().minusHours(1), "irrelvant");
         String expectedMessage = "User Cancellation for charge already in progress, " + chargeId;
@@ -162,23 +172,7 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
                 .body("message", contains("Charge with id [" + unknownChargeId + "] not found."))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
-
-    @Test
-    public void respondWith400_whenCancellationDuringAuthReady() {
-        String chargeId = addCharge(AUTHORISATION_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
-        worldpayMockClient.mockCancelSuccess();
-
-        connectorRestApiClient
-                .withChargeId(chargeId)
-                .postFrontendChargeCancellation()
-                .statusCode(400);
-
-        connectorRestApiClient
-                .withChargeId(chargeId)
-                .getCharge()
-                .body("state.status", is("started"));
-    }
-
+    
     @Test
     public void respondWith400_whenNotCancellableState() {
         NON_USER_CANCELLABLE_STATUSES
