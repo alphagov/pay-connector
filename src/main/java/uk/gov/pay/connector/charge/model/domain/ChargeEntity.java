@@ -20,6 +20,7 @@ import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.UnspecifiedEvent;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -201,6 +202,21 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.language = language;
         this.delayedCapture = delayedCapture;
         this.externalMetadata = externalMetadata;
+    }
+
+    public static ChargeEntity from(LedgerTransaction ledgerTransaction, GatewayAccountEntity gatewayAccountEntity) {
+        return new ChargeEntity(
+                ledgerTransaction.getAmount(),
+                ledgerTransaction.getReturnUrl(),
+                ledgerTransaction.getDescription(),
+                ServicePaymentReference.of(ledgerTransaction.getReference()),
+                gatewayAccountEntity,
+                ledgerTransaction.getEmail(),
+                SupportedLanguage.fromIso639AlphaTwoCode(ledgerTransaction.getLanguage()),
+                ledgerTransaction.getDelayedCapture(),
+                null // @TODO PARSE THE METADATA FROM LEDGER
+                // @TODO ADD ALL THE OTHER FIELDS THAT ARE NEEDED FOR A FULL PAYMENT
+        );
     }
 
     public Long getId() {

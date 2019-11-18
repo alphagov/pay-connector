@@ -11,7 +11,9 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
+import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
@@ -55,26 +57,57 @@ public class ChargeRefundService {
 
     private final ChargeDao chargeDao;
     private final RefundDao refundDao;
+    private final GatewayAccountDao gatewayAccountDao;
     private final PaymentProviders providers;
     private final UserNotificationService userNotificationService;
     private StateTransitionService stateTransitionService;
+    private LedgerService ledgerService;
 
     @Inject
-    public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, PaymentProviders providers,
-                               UserNotificationService userNotificationService, StateTransitionService stateTransitionService
+    public ChargeRefundService(ChargeDao chargeDao, RefundDao refundDao, GatewayAccountDao gatewayAccountDao, PaymentProviders providers,
+                               UserNotificationService userNotificationService, StateTransitionService stateTransitionService,
+                               LedgerService ledgerService
     ) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
+        this.gatewayAccountDao = gatewayAccountDao;
         this.providers = providers;
         this.userNotificationService = userNotificationService;
         this.stateTransitionService = stateTransitionService;
+        this.ledgerService = ledgerService;
     }
 
     public Response doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
+        makeSureTransactionExists(accountId, chargeId);
+
         RefundEntity refundEntity = createRefund(accountId, chargeId, refundRequest);
         GatewayRefundResponse gatewayRefundResponse = providers.byName(refundEntity.getChargeEntity().getPaymentGatewayName()).refund(RefundGatewayRequest.valueOf(refundEntity));
         RefundEntity refund = processRefund(gatewayRefundResponse, refundEntity.getId());
         return new Response(gatewayRefundResponse, refund);
+    }
+
+    private void makeSureTransactionExists(Long accountId, String chargeId) {
+        var isMissingInConnector = chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId).isEmpty();
+        if (isMissingInConnector) {
+            //re-create charge and refunds
+            ledgerService.getTransaction(chargeId).map(ledgerTransaction -> {
+                // @TODO DON'T JUST GET - CHECK AND THROW IF DOES NOT EXIST
+                GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(accountId).get();
+                
+                ChargeEntity chargeEntity = ChargeEntity.from(ledgerTransaction, gatewayAccountEntity);
+                chargeDao.persist(chargeEntity);
+                
+                var ledgerTransactions = ledgerService.getChildTransaction(chargeId, accountId);
+                ledgerTransactions.stream().map(lt -> {
+                    var refund = RefundEntity.from(lt);
+                    chargeEntity.getRefunds().add(refund);
+                    refundDao.persist(refund);
+                    return 0;
+                });
+
+                return 0;
+            }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+        }
     }
 
     @Transactional

@@ -22,9 +22,15 @@ public class LedgerTransaction {
     private Long netAmount;
     private String createdDate;
     private TransactionState state;
+    private String language;
+    private String returnUrl;
 
     public Long getAmount() {
         return amount;
+    }
+    
+    public String getLanguage() { 
+        return language;
     }
 
     public String getDescription() {
@@ -73,5 +79,9 @@ public class LedgerTransaction {
 
     public void setState(TransactionState transactionState) {
         this.state = transactionState;
+    }
+
+    public String getReturnUrl() {
+        return returnUrl;
     }
 }

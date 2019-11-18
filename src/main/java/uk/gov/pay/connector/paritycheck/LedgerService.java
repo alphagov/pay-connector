@@ -6,7 +6,7 @@ import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-
+import java.util.List;
 import java.util.Optional;
 
 import static java.lang.String.format;
@@ -39,5 +39,23 @@ public class LedgerService {
         }
 
         return Optional.empty();
+    }
+
+    public List<LedgerTransaction> getChildTransaction(String id, Long accountId) {
+        var uri = UriBuilder
+                .fromPath(ledgerUrl)
+                .path(format("/v1/transaction/%s/transaction", id))
+                .queryParam("gateway_account_id", accountId);
+
+        Response response = client
+                .target(uri)
+                .request()
+                .get();
+
+        if (response.getStatus() == SC_OK) {
+            return response.readEntity(LedgerTransactionResponse.class).getTransactions();  
+        }
+
+        return List.of();   //probably better way
     }
 }

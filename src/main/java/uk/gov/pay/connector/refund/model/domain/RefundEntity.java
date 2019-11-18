@@ -5,6 +5,7 @@ import org.eclipse.persistence.annotations.Customizer;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
+import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.persistence.Access;
@@ -96,6 +97,10 @@ public class RefundEntity extends AbstractVersionedEntity {
         this.amount = amount;
         this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
         this.userExternalId = userExternalId;
+    }
+
+    public static RefundEntity from(LedgerTransaction lt) {
+        return null;
     }
 
     public String getExternalId() {
