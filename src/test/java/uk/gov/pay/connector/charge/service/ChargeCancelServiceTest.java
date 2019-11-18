@@ -87,7 +87,8 @@ public class ChargeCancelServiceTest {
     @Test
     @Parameters({
             "AUTHORISATION 3DS REQUIRED",
-            "AUTHORISATION 3DS READY"
+            "AUTHORISATION 3DS READY",
+            "AUTHORISATION READY"
     })
     public void doSystemCancel_chargeStatusDuringAuthorisation_DoesNotNeedCancellationWithProvider(String chargeStatus) throws Exception {
         var status = ChargeStatus.fromString(chargeStatus);
@@ -197,7 +198,8 @@ public class ChargeCancelServiceTest {
     @Test
     @Parameters({
             "AUTHORISATION 3DS REQUIRED",
-            "AUTHORISATION 3DS READY"
+            "AUTHORISATION 3DS READY",
+            "AUTHORISATION READY"
     })
     public void doUserCancel_chargeStatusDuringAuthorisation_DoesNotNeedCancellationWithProvider(String chargeStatus) throws Exception {
         var status = ChargeStatus.fromString(chargeStatus);
