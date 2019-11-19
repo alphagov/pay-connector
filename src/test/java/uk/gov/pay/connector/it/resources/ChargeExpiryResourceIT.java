@@ -26,6 +26,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
@@ -79,41 +80,41 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldExpireChargesOnlyAfterTheExpiryWindow() {
-        String shouldExpireChargeId = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        String shouldntExpireChargeId = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(89), RandomIdGenerator.newId());
+        String shouldExpireCreatedChargeId = addCharge(CREATED, "ref1", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String shouldntExpireCreatedChargeId = addCharge(CREATED, "ref1", ZonedDateTime.now().minusMinutes(89), RandomIdGenerator.newId());
 
+        String shouldExpireAuthReadyChargeId = addCharge(AUTHORISATION_READY, "ref2", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String shouldntExpireAuthReadyChargeId = addCharge(AUTHORISATION_READY, "ref2", ZonedDateTime.now().minusMinutes(89), RandomIdGenerator.newId());
+        
         worldpayMockClient.mockCancelSuccess();
 
         connectorRestApiClient
                 .postChargeExpiryTask()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("expiry-success", is(1))
+                .body("expiry-success", is(2))
                 .body("expiry-failed", is(0));
-
-        connectorRestApiClient
-                .withAccountId(accountId)
-                .withChargeId(shouldExpireChargeId)
-                .getCharge()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body(JSON_CHARGE_KEY, is(shouldExpireChargeId))
-                .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
-
-        connectorRestApiClient
-                .withAccountId(accountId)
-                .withChargeId(shouldntExpireChargeId)
-                .getCharge()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body(JSON_CHARGE_KEY, is(shouldntExpireChargeId))
-                .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()));
-
-        List<String> events1 = databaseTestHelper.getInternalEvents(shouldExpireChargeId);
-        List<String> events2 = databaseTestHelper.getInternalEvents(shouldntExpireChargeId);
+        
+        List.of(shouldExpireAuthReadyChargeId, shouldExpireCreatedChargeId).forEach(s -> {
+            connectorRestApiClient
+                    .withAccountId(accountId)
+                    .withChargeId(s)
+                    .getCharge()
+                    .statusCode(OK.getStatusCode())
+                    .contentType(JSON)
+                    .body(JSON_CHARGE_KEY, is(s))
+                    .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
+        });
+        
+        List<String> events1 = databaseTestHelper.getInternalEvents(shouldExpireCreatedChargeId);
+        List<String> events2 = databaseTestHelper.getInternalEvents(shouldntExpireCreatedChargeId);
+        List<String> events3 = databaseTestHelper.getInternalEvents(shouldExpireAuthReadyChargeId);
+        List<String> events4 = databaseTestHelper.getInternalEvents(shouldntExpireAuthReadyChargeId);
 
         assertThat(asList(CREATED.getValue(), EXPIRED.getValue()), is(events1));
+        assertThat(asList(AUTHORISATION_READY.getValue(), EXPIRED.getValue()), is(events3));
         assertThat(Collections.singletonList(CREATED.getValue()), is(events2));
+        assertThat(Collections.singletonList(AUTHORISATION_READY.getValue()), is(events4));
     }
 
     @Test
