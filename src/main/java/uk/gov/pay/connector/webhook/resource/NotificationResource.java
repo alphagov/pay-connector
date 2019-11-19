@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.util.ResponseUtil.forbiddenErrorResponse;
 
 @Path("/")
@@ -66,7 +67,7 @@ public class NotificationResource {
     @Produces({TEXT_XML, APPLICATION_JSON})
     public Response authoriseWorldpayNotifications(String notification, @HeaderParam("X-Forwarded-For") String ipAddress) {
         if (!worldpayNotificationService.handleNotificationFor(ipAddress, notification)) {
-            logger.error("Rejected notification for ip '{}'", ipAddress);
+            logger.info(String.format("Rejected notification for ip '%s'", ipAddress), kv("notification_source", ipAddress));
             return forbiddenErrorResponse();
         }
         String response = "[OK]";
