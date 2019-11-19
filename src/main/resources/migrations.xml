@@ -1331,4 +1331,11 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add do_not_retry_emit_until to emitted_events table" author="">
+        <addColumn tableName="emitted_events">
+            <column name="do_not_retry_emit_until" type="timestamp with time zone">
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
