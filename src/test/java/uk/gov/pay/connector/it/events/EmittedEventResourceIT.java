@@ -151,7 +151,7 @@ public class EmittedEventResourceIT extends ChargingITestBase {
 
     private static class ConnectorModuleWithOverrides extends ConnectorModule {
 
-        ConnectorModuleWithOverrides(ConnectorConfiguration configuration, Environment environment) {
+        public ConnectorModuleWithOverrides(ConnectorConfiguration configuration, Environment environment) {
             super(configuration, environment);
         }
 

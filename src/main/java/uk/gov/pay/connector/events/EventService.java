@@ -27,7 +27,7 @@ public class EventService {
             eventQueue.emitEvent(event);
             emittedEventDao.recordEmission(event);
         } catch (QueueException e) {
-            emittedEventDao.recordEmission(event.getResourceType(), event.getResourceExternalId(), event.getEventType(), event.getTimestamp());
+            emittedEventDao.recordEmission(event.getResourceType(), event.getResourceExternalId(), event.getEventType(), event.getTimestamp(), null);
             logger.error("Failed to emit event {} due to {} [externalId={}]", event.getEventType(), e.getMessage(), event.getResourceExternalId());
         }
     }
@@ -38,6 +38,6 @@ public class EventService {
     }
 
     public void recordOfferedEvent(ResourceType resourceType, String externalId, String eventType, ZonedDateTime eventDate) {
-        emittedEventDao.recordEmission(resourceType, externalId, eventType, eventDate);
+        emittedEventDao.recordEmission(resourceType, externalId, eventType, eventDate, null);
     }
 }

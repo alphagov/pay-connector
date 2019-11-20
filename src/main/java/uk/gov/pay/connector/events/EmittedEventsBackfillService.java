@@ -21,6 +21,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 
 public class EmittedEventsBackfillService {
@@ -49,12 +50,13 @@ public class EmittedEventsBackfillService {
     public void backfillNotEmittedEvents() {
         Long lastProcessedId = 0L;
         ZonedDateTime cutoffDate = getCutoffDateForProcessingNotEmittedEvents();
-        Optional<Long> maxId = emittedEventDao.findNotEmittedEventMaxIdOlderThan(cutoffDate);
+        ZonedDateTime now = now(UTC);
+        Optional<Long> maxId = emittedEventDao.findNotEmittedEventMaxIdOlderThan(cutoffDate, now);
 
         while (maxId.isPresent()) {
             List<EmittedEventEntity> notEmittedEventsToProcess =
                     emittedEventDao.findNotEmittedEventsOlderThan(cutoffDate,
-                            PAGE_SIZE, lastProcessedId, maxId.get());
+                            PAGE_SIZE, lastProcessedId, maxId.get(), now);
 
             if (!notEmittedEventsToProcess.isEmpty()) {
                 String oldestEventDate = notEmittedEventsToProcess.stream()

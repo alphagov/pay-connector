@@ -53,14 +53,15 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
         persist(emittedEvent);
     }
 
-    public void recordEmission(ResourceType resourceType, String externalId, String eventType, ZonedDateTime eventDate) {
+    public void recordEmission(ResourceType resourceType, String externalId, String eventType, ZonedDateTime eventDate,
+                               ZonedDateTime doNotRetryEmitUntil) {
         final EmittedEventEntity emittedEvent = new EmittedEventEntity(
                 resourceType.getLowercase(),
                 externalId,
                 eventType,
                 eventDate,
                 null,
-                null
+                doNotRetryEmitUntil
         );
         persist(emittedEvent);
     }
@@ -84,27 +85,32 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
         query.executeUpdate();
     }
 
-    public Optional<Long> findNotEmittedEventMaxIdOlderThan(ZonedDateTime cutOffDate) {
+    public Optional<Long> findNotEmittedEventMaxIdOlderThan(ZonedDateTime cutOffDate, ZonedDateTime now) {
         String query = "SELECT MAX(e.id) from EmittedEventEntity e " +
                 "WHERE e.eventDate < :cutOffDate " +
-                "AND e.emittedDate is null";
+                "AND e.emittedDate is null " +
+                "AND (e.doNotRetryEmitUntil is null or e.doNotRetryEmitUntil < :currentDate)";
 
         return Optional.ofNullable(entityManager.get()
                 .createQuery(query, Long.class)
                 .setParameter("cutOffDate", cutOffDate)
+                .setParameter("currentDate", now)
                 .getSingleResult());
     }
 
     public List<EmittedEventEntity> findNotEmittedEventsOlderThan(ZonedDateTime cutOffDate, int size,
-                                                                  Long lastProcessedId, Long maxId) {
+                                                                  Long lastProcessedId, Long maxId,
+                                                                  ZonedDateTime now) {
         String query = "SELECT e from EmittedEventEntity e " +
                 "WHERE e.id > :lastProcessedId AND e.id <= :maxId AND e.eventDate < :cutOffDate " +
                 "AND e.emittedDate is null " +
+                "AND (e.doNotRetryEmitUntil is null or e.doNotRetryEmitUntil < :currentDate) " +
                 "ORDER BY e.id";
 
         return entityManager.get()
                 .createQuery(query, EmittedEventEntity.class)
                 .setParameter("cutOffDate", cutOffDate)
+                .setParameter("currentDate", now)
                 .setParameter("lastProcessedId", lastProcessedId)
                 .setParameter("maxId", maxId)
                 .setMaxResults(size)
