@@ -16,7 +16,7 @@ public class EmittedEventFixture {
 
     public EmittedEventEntity build() {
         var event = new EmittedEventEntity(resourceType, resourceExternalId, eventType,
-                eventDate, emittedDate);
+                eventDate, emittedDate, null);
         event.setId(id);
 
         return event;

@@ -37,7 +37,8 @@ public class EmittedEventDaoIT extends DaoITestBase {
                 "external-id",
                 "event-type",
                 eventDate,
-                ZonedDateTime.parse("2019-01-01T13:00:00Z")
+                ZonedDateTime.parse("2019-01-01T13:00:00Z"),
+                ZonedDateTime.parse("2019-01-02T13:00:00Z")
         );
 
         emittedEventDao.persist(emittedEvent);
@@ -51,6 +52,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
         final Timestamp eventDateInUTC = Timestamp.valueOf("2019-01-01 11:00:00");
         assertThat(persisted.get("event_date"), is(eventDateInUTC));
         assertThat(persisted.get("emitted_date"), is(Timestamp.valueOf("2019-01-01 13:00:00")));
+        assertThat(persisted.get("do_not_retry_emit_until"), is(Timestamp.valueOf("2019-01-02 13:00:00")));
     }
 
     @Test
