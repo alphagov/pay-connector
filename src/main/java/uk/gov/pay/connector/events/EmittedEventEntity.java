@@ -39,15 +39,22 @@ public class EmittedEventEntity {
     @Column(name = "emitted_date")
     private ZonedDateTime emittedDate;
 
+    @Convert(converter = UTCDateTimeConverter.class)
+    @Column(name = "do_not_retry_emit_until")
+    private ZonedDateTime doNotRetryEmitUntil;
+
     protected EmittedEventEntity() {
     }
 
-    public EmittedEventEntity(String resourceType, String resourceExternalId, String eventType, ZonedDateTime eventDate, ZonedDateTime emittedDate) {
+    public EmittedEventEntity(String resourceType, String resourceExternalId, String eventType, 
+                              ZonedDateTime eventDate, ZonedDateTime emittedDate,
+                              ZonedDateTime doNotRetryEmitUntil) {
         this.resourceType = resourceType;
         this.resourceExternalId = resourceExternalId;
         this.eventType = eventType;
         this.eventDate = eventDate;
         this.emittedDate = emittedDate;
+        this.doNotRetryEmitUntil = doNotRetryEmitUntil;
     }
 
     public Long getId() {
@@ -72,6 +79,10 @@ public class EmittedEventEntity {
 
     public ZonedDateTime getEmittedDate() {
         return emittedDate;
+    }
+
+    public ZonedDateTime getDoNotRetryEmitUntil() {
+        return doNotRetryEmitUntil;
     }
 
     public void setEmittedDate(ZonedDateTime emittedDate) {

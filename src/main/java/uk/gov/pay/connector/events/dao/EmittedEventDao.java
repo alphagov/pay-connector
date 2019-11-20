@@ -46,7 +46,8 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
                 event.getResourceExternalId(),
                 event.getEventType(),
                 event.getTimestamp(),
-                now()
+                now(),
+                null
         );
 
         persist(emittedEvent);
@@ -58,6 +59,7 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
                 externalId,
                 eventType,
                 eventDate,
+                null,
                 null
         );
         persist(emittedEvent);
