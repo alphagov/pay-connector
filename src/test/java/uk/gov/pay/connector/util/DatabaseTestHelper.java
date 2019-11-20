@@ -20,6 +20,7 @@ import uk.gov.pay.connector.wallets.WalletType;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -694,6 +695,10 @@ public class DatabaseTestHelper {
         return new Gson().fromJson(jsonString, Map.class);
     }
 
+    public void truncateEmittedEvents() {
+        jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE emitted_events").execute());
+    }
+    
     public void truncateAllData() {
         jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE gateway_accounts CASCADE").execute());
         jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE emitted_events CASCADE").execute());
@@ -744,6 +749,23 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void addEmittedEvent(String resourceType, String externalId, Instant eventDate, String eventType,
+                                Instant emittedDate , Instant doNotRetryEmitUntil) {
+        jdbi.withHandle(handle ->
+                handle
+                        .createStatement("INSERT INTO emitted_events(resource_type, resource_external_id, event_date, " +
+                                " event_type, emitted_date, do_not_retry_emit_until) VALUES (:resourceType, :externalId, :eventDate, " +
+                                " :eventType, :emittedDate, :doNotRetryEmitUntil)")
+                        .bind("resourceType", resourceType)
+                        .bind("externalId", externalId)
+                        .bind("eventDate", Timestamp.from(eventDate))
+                        .bind("eventType", eventType)
+                        .bind("emittedDate", emittedDate)
+                        .bind("doNotRetryEmitUntil", doNotRetryEmitUntil == null ? null : Timestamp.from(doNotRetryEmitUntil))
+                        .execute()
+        );
+    }
+    
     public Map<String, Object> readEmittedEvent(Long id) {
         return jdbi.withHandle(handle ->
                 handle.createQuery("SELECT * from emitted_events WHERE id = :id")
