@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.time.ZoneOffset.UTC;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -92,7 +93,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
         final PaymentCreated eventToRecord = aPaymentCreatedEvent();
 
         emittedEventDao.recordEmission(eventToRecord.getResourceType(), eventToRecord.getResourceExternalId(),
-                eventToRecord.getEventType(), eventToRecord.getTimestamp());
+                eventToRecord.getEventType(), eventToRecord.getTimestamp(), null);
 
         final List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
 
@@ -109,7 +110,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
         final RefundSubmitted eventToRecord = aRefundSubmittedEvent(null);
 
         emittedEventDao.recordEmission(eventToRecord.getResourceType(), eventToRecord.getResourceExternalId(),
-                eventToRecord.getEventType(), eventToRecord.getTimestamp());
+                eventToRecord.getEventType(), eventToRecord.getTimestamp(), null);
 
         List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
         Map<String, Object> event = events.get(0);
@@ -145,19 +146,49 @@ public class EmittedEventDaoIT extends DaoITestBase {
     public void findNotEmittedEventsOlderThan_shouldReturnEventsWithEmptyEmittedDate() {
         final PaymentCreated paymentCreatedEvent = aPaymentCreatedEvent();
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
-                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp());
+                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), null);
 
-        Optional<Long> maxId = emittedEventDao.findNotEmittedEventMaxIdOlderThan(ZonedDateTime.parse("2019-01-01T14:00:01Z"));
+        Optional<Long> maxId = emittedEventDao.findNotEmittedEventMaxIdOlderThan(ZonedDateTime.parse("2019-01-01T14:00:01Z"),
+                ZonedDateTime.now(UTC));
         assertThat(maxId.isPresent(), is(true));
 
         List<EmittedEventEntity> notEmittedEvents = emittedEventDao.findNotEmittedEventsOlderThan(
-                ZonedDateTime.parse("2019-01-01T14:00:01Z"), 1, 0L, Long.MAX_VALUE);
+                ZonedDateTime.parse("2019-01-01T14:00:01Z"), 1, 0L, Long.MAX_VALUE,  ZonedDateTime.now(UTC));
 
         assertThat(notEmittedEvents.size(), is(1));
         assertThat(notEmittedEvents.get(0).getEmittedDate(), nullValue());
         assertThat(notEmittedEvents.get(0).getEventType(), is(paymentCreatedEvent.getEventType()));
         assertThat(notEmittedEvents.get(0).getResourceExternalId(), is(paymentCreatedEvent.getResourceExternalId()));
         assertThat(notEmittedEvents.get(0).getResourceType(), is(paymentCreatedEvent.getResourceType().getLowercase()));
+    }
+
+    @Test
+    public void findNotEmittedEventsOlderThan_shouldNotReturnRecordsWithDoNotRetryEmitUntilValueInFuture() {
+        final PaymentCreated paymentCreatedEvent = aPaymentCreatedEvent();
+        final RefundSubmitted refundSubmittedEvent = aRefundSubmittedEvent(ZonedDateTime.parse("2019-01-01T14:00:00Z"));
+        emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
+                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), null);
+        emittedEventDao.recordEmission(refundSubmittedEvent.getResourceType(), refundSubmittedEvent.getResourceExternalId(),
+                refundSubmittedEvent.getEventType(), refundSubmittedEvent.getTimestamp(), ZonedDateTime.now(UTC).minusSeconds(120));
+        emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
+                paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), ZonedDateTime.now(UTC).plusSeconds(120));
+
+        Optional<Long> maxId = emittedEventDao.findNotEmittedEventMaxIdOlderThan(ZonedDateTime.parse("2019-01-01T14:00:01Z"), ZonedDateTime.now(UTC));
+        assertThat(maxId.isPresent(), is(true));
+
+        List<EmittedEventEntity> notEmittedEvents = emittedEventDao.findNotEmittedEventsOlderThan(
+                ZonedDateTime.parse("2019-01-01T14:00:01Z"), 2, 0L, Long.MAX_VALUE, ZonedDateTime.now(UTC));
+
+        assertThat(notEmittedEvents.size(), is(2));
+        assertThat(notEmittedEvents.get(0).getEmittedDate(), nullValue());
+        assertThat(notEmittedEvents.get(0).getEventType(), is(paymentCreatedEvent.getEventType()));
+        assertThat(notEmittedEvents.get(0).getResourceExternalId(), is(paymentCreatedEvent.getResourceExternalId()));
+        assertThat(notEmittedEvents.get(0).getResourceType(), is(paymentCreatedEvent.getResourceType().getLowercase()));
+
+        assertThat(notEmittedEvents.get(1).getEmittedDate(), nullValue());
+        assertThat(notEmittedEvents.get(1).getEventType(), is(refundSubmittedEvent.getEventType()));
+        assertThat(notEmittedEvents.get(1).getResourceExternalId(), is(refundSubmittedEvent.getResourceExternalId()));
+        assertThat(notEmittedEvents.get(1).getResourceType(), is(refundSubmittedEvent.getResourceType().getLowercase()));
     }
 
     private PaymentCreated aPaymentCreatedEvent() {

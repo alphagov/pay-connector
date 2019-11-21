@@ -3,6 +3,7 @@ package uk.gov.pay.connector.util;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 
+import javax.ws.rs.client.Entity;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,6 +107,13 @@ public class RestAssuredClient {
     public ValidatableResponse postChargeExpiryTask() {
         return given().port(port)
                 .post("/v1/tasks/expired-charges-sweep")
+                .then();
+    }
+
+    public ValidatableResponse postEmittedEventsSweepTask() {
+        return given().port(port)
+                .body(Entity.json(""))
+                .post("/v1/tasks/emitted-events-sweep")
                 .then();
     }
 

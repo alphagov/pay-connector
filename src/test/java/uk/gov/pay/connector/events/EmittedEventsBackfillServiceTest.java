@@ -89,16 +89,16 @@ public class EmittedEventsBackfillServiceTest {
         chargeEntity.getEvents().add(chargeEventEntity);
         refundEntity = mock(RefundEntity.class);
         when(refundEntity.getChargeEntity()).thenReturn(chargeEntity);
-        when(emittedEventDao.findNotEmittedEventMaxIdOlderThan(any(ZonedDateTime.class))).thenReturn(Optional.of(maxId));
+        when(emittedEventDao.findNotEmittedEventMaxIdOlderThan(any(ZonedDateTime.class), any())).thenReturn(Optional.of(maxId));
     }
     
     @Test
     public void logsMessageWhenNoEmittedEventsSatisfyingCriteria() {
-        when(emittedEventDao.findNotEmittedEventMaxIdOlderThan(any(ZonedDateTime.class))).thenReturn(Optional.empty());
+        when(emittedEventDao.findNotEmittedEventMaxIdOlderThan(any(ZonedDateTime.class), any())).thenReturn(Optional.empty());
         
         emittedEventsBackfillService.backfillNotEmittedEvents();
         
-        verify(emittedEventDao, never()).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), anyLong(), eq(maxId));
+        verify(emittedEventDao, never()).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), anyLong(), eq(maxId), any());
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(loggingEvents.get(0).getFormattedMessage(), is("Finished processing not emitted events [lastProcessedId=0, maxId=none]"));
@@ -107,12 +107,12 @@ public class EmittedEventsBackfillServiceTest {
     @Test
     public void backfillsEventsWhenEmittedPaymentEventSatisfyingCriteria() {
         var emittedEvent = anEmittedEventEntity().withResourceExternalId(chargeEntity.getExternalId()).build();
-        when(emittedEventDao.findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId))).thenReturn(List.of(emittedEvent));
+        when(emittedEventDao.findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any())).thenReturn(List.of(emittedEvent));
         when(chargeService.findChargeById(chargeEntity.getExternalId())).thenReturn(chargeEntity);
 
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
-        verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId));
+        verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any());
         verify(stateTransitionService, times(1)).offerStateTransition(any(), any());
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
@@ -124,12 +124,12 @@ public class EmittedEventsBackfillServiceTest {
     public void backfillsEventsWhenEmittedRefundEventSatisfyingCriteria() {
         var emittedEvent = anEmittedEventEntity().withResourceType("refund")
                 .withResourceExternalId(chargeEntity.getExternalId()).build();
-        when(emittedEventDao.findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId))).thenReturn(List.of(emittedEvent));
+        when(emittedEventDao.findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any())).thenReturn(List.of(emittedEvent));
         when(refundDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(refundEntity));
 
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
-        verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId));
+        verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any());
         verify(stateTransitionService, times(1)).offerStateTransition(any(), any());
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
@@ -144,13 +144,13 @@ public class EmittedEventsBackfillServiceTest {
                 .withEventDate(ZonedDateTime.parse("2019-09-20T09:00Z"))
                 .withResourceExternalId(chargeEntity.getExternalId())
                 .build();
-        when(emittedEventDao.findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId))).thenReturn(List.of(emittedPaymentEvent, emittedRefundEvent));
+        when(emittedEventDao.findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any())).thenReturn(List.of(emittedPaymentEvent, emittedRefundEvent));
         when(refundDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(refundEntity));
         when(chargeService.findChargeById(chargeEntity.getExternalId())).thenReturn(chargeEntity);
 
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
-        verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId));
+        verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any());
         verify(stateTransitionService, times(2)).offerStateTransition(any(), any());
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();

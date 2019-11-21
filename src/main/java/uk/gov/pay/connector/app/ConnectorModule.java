@@ -51,7 +51,6 @@ public class ConnectorModule extends AbstractModule {
         bind(HashUtil.class);
         bind(RequestValidator.class);
         bind(GatewayAccountRequestValidator.class).in(Singleton.class);
-        bind(StateTransitionQueue.class).in(Singleton.class);
 
         install(jpaModule(configuration));
         install(new FactoryModuleBuilder().build(GatewayAccountServicesFactory.class));
@@ -133,6 +132,16 @@ public class ConnectorModule extends AbstractModule {
         return new NotifyClientFactory(connectorConfiguration);
     }
 
+    @Provides
+    @Singleton
+    public StateTransitionQueue stateTransitionQueue() {
+        return getStateTransitionQueue();
+    }
+
+    protected StateTransitionQueue getStateTransitionQueue() {
+        return new StateTransitionQueue();
+    }
+    
     @Provides
     public AmazonSQS sqsClient(ConnectorConfiguration connectorConfiguration) {
 
