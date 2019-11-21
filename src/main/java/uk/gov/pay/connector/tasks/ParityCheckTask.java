@@ -7,6 +7,8 @@ import io.dropwizard.servlets.tasks.Task;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.config.ParityCheckerConfig;
 
 import java.io.PrintWriter;
 import java.util.Optional;
@@ -19,6 +21,7 @@ public class ParityCheckTask extends Task {
 
     private static final String TASK_NAME = "parity-checker";
     private static final String EXECUTOR_NAME_FORMAT = "ParityCheckWorker-%d";
+    private ParityCheckerConfig parityCheckerConfig;
     private ParityCheckWorker worker;
     private ExecutorService executor;
 
@@ -27,7 +30,8 @@ public class ParityCheckTask extends Task {
     }
 
     @Inject
-    public ParityCheckTask(ParityCheckWorker worker, Environment environment) {
+    public ParityCheckTask(ParityCheckWorker worker, Environment environment,
+                           ConnectorConfiguration configuration) {
         this();
         this.worker = worker;
 
@@ -40,6 +44,7 @@ public class ParityCheckTask extends Task {
                 .maxThreads(1)
                 .workQueue(new SynchronousQueue<>())
                 .build();
+        this.parityCheckerConfig = configuration.getParityCheckerConfig();
     }
 
     @Override
@@ -48,12 +53,14 @@ public class ParityCheckTask extends Task {
         final Optional<Long> maybeMaxId = getLongParam(parameters, "max_id");
         boolean doNotReprocessValidRecords = getFlagParam(parameters, "do_not_reprocess_valid_records").orElse(false);
         Optional<String> parityCheckStatus = getStringParam(parameters, "parity_check_status");
+        final Long doNotRetryEmitUntilDuration = getDoNotRetryEmitUntilDuration(parameters);
 
         logger.info("Execute called start_id={} max_id={} - processing", startId, maybeMaxId);
 
         try {
             logger.info("Request accepted");
-            executor.execute(() -> worker.execute(startId, maybeMaxId, doNotReprocessValidRecords, parityCheckStatus));
+            executor.execute(() -> worker.execute(startId, maybeMaxId, doNotReprocessValidRecords,
+                    parityCheckStatus, doNotRetryEmitUntilDuration));
             output.println("Accepted");
         } catch (java.util.concurrent.RejectedExecutionException e) {
             logger.info("Rejected request, worker already running");
@@ -82,5 +89,12 @@ public class ParityCheckTask extends Task {
 
     private Optional<String> getStringParam(ImmutableMultimap<String, String> parameters, String paramName) {
         return getParam(parameters, paramName, v -> v);
+    }
+
+    private Long getDoNotRetryEmitUntilDuration(ImmutableMultimap<String, String> parameters) {
+        Optional<Long> doNotRetryEmitUntil = getLongParam(parameters,
+                "do_not_retry_emit_until");
+        return doNotRetryEmitUntil.orElse(
+                parityCheckerConfig.getDefaultDoNotRetryEmittingEventUntilDurationInSeconds());
     }
 }

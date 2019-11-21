@@ -13,6 +13,8 @@ import uk.gov.pay.connector.queue.QueueException;
 
 import java.time.ZonedDateTime;
 
+import static java.time.ZoneOffset.UTC;
+import static java.time.ZonedDateTime.now;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -30,27 +32,37 @@ public class EventServiceTest {
 
     @Test
     public void emitAndRecordEvent_shouldRecordEmission() throws QueueException {
-        Event event = new PaymentEvent("external-id", ZonedDateTime.now());
+        Event event = new PaymentEvent("external-id", now());
         eventService.emitAndRecordEvent(event);
 
-        verify(emittedEventDao).recordEmission(event);
+        verify(emittedEventDao).recordEmission(event, null);
+        verify(eventQueue).emitEvent(event);
+    }
+
+    @Test
+    public void emitAndRecordEvent_shouldRecordEmissionWithDoNotRetryEmitUntilDate() throws QueueException {
+        Event event = new PaymentEvent("external-id", now());
+        ZonedDateTime doNotRetryEmitUntilDate = now(UTC);
+        eventService.emitAndRecordEvent(event, doNotRetryEmitUntilDate);
+
+        verify(emittedEventDao).recordEmission(event, doNotRetryEmitUntilDate);
         verify(eventQueue).emitEvent(event);
     }
 
     @Test
     public void emitAndRecordEvent_shouldRecordEmissionWithoutEmittedDateForQueueException() throws QueueException {
-        Event event = new PaymentCreated("external-id", null, ZonedDateTime.now());
+        Event event = new PaymentCreated("external-id", null, now());
         doThrow(QueueException.class).when(eventQueue).emitEvent(event);
         eventService.emitAndRecordEvent(event);
 
         verify(eventQueue).emitEvent(event);
-        verify(emittedEventDao, never()).recordEmission(event);
+        verify(emittedEventDao, never()).recordEmission(event, null);
         verify(emittedEventDao).recordEmission(event.getResourceType(), event.getResourceExternalId(), event.getEventType(), event.getTimestamp(), null);
     }
 
     @Test
     public void emitAndMarkEventAsEmitted() throws QueueException {
-        Event event = new PaymentEvent("external-id", ZonedDateTime.now());
+        Event event = new PaymentEvent("external-id", now());
         eventService.emitAndMarkEventAsEmitted(event);
 
         verify(eventQueue).emitEvent(event);

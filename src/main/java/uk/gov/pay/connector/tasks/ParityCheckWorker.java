@@ -27,12 +27,15 @@ import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUES
 public class ParityCheckWorker {
     private static final int PAGE_SIZE = 100;
     private static final Logger logger = LoggerFactory.getLogger(ParityCheckWorker.class);
+    private static final boolean shouldForceEmission = true;
     private final ChargeDao chargeDao;
     private ChargeService chargeService;
     private LedgerService ledgerService;
+    private EmittedEventDao emittedEventDao;
+    private StateTransitionService stateTransitionService;
+    private EventService eventService;
+    private RefundDao refundDao;
     private HistoricalEventEmitter historicalEventEmitter;
-    private static final boolean shouldForceEmission = true;
-
     private long maxId;
 
     @Inject
@@ -41,12 +44,17 @@ public class ParityCheckWorker {
         this.chargeDao = chargeDao;
         this.chargeService = chargeService;
         this.ledgerService = ledgerService;
-        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, shouldForceEmission,
-                eventService, stateTransitionService);
+        this.emittedEventDao = emittedEventDao;
+        this.stateTransitionService = stateTransitionService;
+        this.eventService = eventService;
+        this.refundDao = refundDao;
     }
 
-    public void execute(Long startId, Optional<Long> maybeMaxId, boolean doNotReprocessValidRecords, Optional<String> parityCheckStatus) {
+    public void execute(Long startId, Optional<Long> maybeMaxId, boolean doNotReprocessValidRecords,
+                        Optional<String> parityCheckStatus, Long doNotRetryEmitUntilDuration) {
         try {
+            initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
+
             MDC.put(HEADER_REQUEST_ID, "ParityCheckWorker-" + RandomUtils.nextLong(0, 10000));
 
             if (parityCheckStatus.isPresent()) {
@@ -67,6 +75,11 @@ public class ParityCheckWorker {
         }
 
         logger.info("Terminating");
+    }
+
+    private void initializeHistoricalEventEmitter(Long doNotRetryEmitUntilDuration) {
+        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, shouldForceEmission,
+                eventService, stateTransitionService, doNotRetryEmitUntilDuration);
     }
 
     private void checkParityForParityCheckStatus(Optional<String> parityCheckStatus) {

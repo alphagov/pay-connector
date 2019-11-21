@@ -22,14 +22,20 @@ public class EventService {
         this.emittedEventDao = emittedEventDao;
     }
 
-    public void emitAndRecordEvent(Event event) {
+    public void emitAndRecordEvent(Event event, ZonedDateTime doNotRetryEmitUntilDate) {
         try {
             eventQueue.emitEvent(event);
-            emittedEventDao.recordEmission(event);
+            emittedEventDao.recordEmission(event, doNotRetryEmitUntilDate);
         } catch (QueueException e) {
-            emittedEventDao.recordEmission(event.getResourceType(), event.getResourceExternalId(), event.getEventType(), event.getTimestamp(), null);
-            logger.error("Failed to emit event {} due to {} [externalId={}]", event.getEventType(), e.getMessage(), event.getResourceExternalId());
+            emittedEventDao.recordEmission(event.getResourceType(), event.getResourceExternalId(),
+                    event.getEventType(), event.getTimestamp(), doNotRetryEmitUntilDate);
+            logger.error("Failed to emit event {} due to {} [externalId={}]",
+                    event.getEventType(), e.getMessage(), event.getResourceExternalId());
         }
+    }
+
+    public void emitAndRecordEvent(Event event) {
+        this.emitAndRecordEvent(event, null);
     }
 
     public void emitAndMarkEventAsEmitted(Event event) throws QueueException {
@@ -38,6 +44,11 @@ public class EventService {
     }
 
     public void recordOfferedEvent(ResourceType resourceType, String externalId, String eventType, ZonedDateTime eventDate) {
-        emittedEventDao.recordEmission(resourceType, externalId, eventType, eventDate, null);
+        this.recordOfferedEvent(resourceType, externalId, eventType, eventDate, null);
+    }
+
+    public void recordOfferedEvent(ResourceType resourceType, String externalId, String eventType,
+                                   ZonedDateTime eventDate, ZonedDateTime doNotRetryEmitUntilDate) {
+        emittedEventDao.recordEmission(resourceType, externalId, eventType, eventDate, doNotRetryEmitUntilDate);
     }
 }

@@ -20,11 +20,13 @@ import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.service.RefundStateEventMap;
 
+import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static java.time.ZonedDateTime.now;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
@@ -68,24 +70,32 @@ public class HistoricalEventEmitter {
     private PaymentGatewayStateTransitions paymentGatewayStateTransitions;
     private EventService eventService;
     private StateTransitionService stateTransitionService;
+    private Long doNotRetryEmitUntilDuration;
 
     @Inject
     public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
                                   RefundDao refundDao,
                                   EventService eventService,
                                   StateTransitionService stateTransitionService) {
-        this(emittedEventDao, refundDao, false, eventService, stateTransitionService);
+        this(emittedEventDao, refundDao, false, eventService, stateTransitionService, null);
     }
 
     public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
                                   RefundDao refundDao, boolean shouldForceEmission, EventService eventService,
                                   StateTransitionService stateTransitionService) {
+        this(emittedEventDao, refundDao, shouldForceEmission, eventService, stateTransitionService, null);
+    }
+
+    public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
+                                  RefundDao refundDao, boolean shouldForceEmission, EventService eventService,
+                                  StateTransitionService stateTransitionService, Long doNotRetryEmitUntilDuration) {
         this.emittedEventDao = emittedEventDao;
         this.refundDao = refundDao;
         this.paymentGatewayStateTransitions = PaymentGatewayStateTransitions.getInstance();
         this.shouldForceEmission = shouldForceEmission;
         this.eventService = eventService;
         this.stateTransitionService = stateTransitionService;
+        this.doNotRetryEmitUntilDuration = doNotRetryEmitUntilDuration;
     }
 
     public void processPaymentAndRefundEvents(ChargeEntity charge) {
@@ -135,7 +145,7 @@ public class HistoricalEventEmitter {
 
         logger.info("Processing new refund history event: [refundExternalId={}] [refundHistoryId={}]", refundHistory.getExternalId(), refundHistory.getId());
 
-        stateTransitionService.offerStateTransition(stateTransition, event);
+        stateTransitionService.offerStateTransition(stateTransition, event, getDoNotRetryEmitUntilDate());
     }
 
     private List<ChargeEventEntity> getSortedChargeEvents(ChargeEntity charge) {
@@ -224,7 +234,7 @@ public class HistoricalEventEmitter {
 
     private void offerStateTransitionEvent(long currentId, ChargeEventEntity chargeEventEntity, PaymentStateTransition transition, Event event) {
         logger.info("[{}] - found - emitting {} for charge event [{}] ", currentId, event, chargeEventEntity.getId());
-        stateTransitionService.offerStateTransition(transition, event);
+        stateTransitionService.offerStateTransition(transition, event, getDoNotRetryEmitUntilDate());
     }
 
     private void processPaymentDetailEnteredEvent(List<ChargeEventEntity> chargeEventEntities) {
@@ -235,7 +245,7 @@ public class HistoricalEventEmitter {
                 .filter(event -> isValidPaymentDetailsEnteredTransition(chargeEventEntities, event))
                 .map(PaymentDetailsEntered::from)
                 .filter(event -> shouldForceEmission || !emittedEventDao.hasBeenEmittedBefore(event))
-                .forEach(event -> eventService.emitAndRecordEvent(event));
+                .forEach(event -> eventService.emitAndRecordEvent(event, getDoNotRetryEmitUntilDate()));
     }
 
     private boolean isValidPaymentDetailsEnteredTransition(List<ChargeEventEntity> chargeEventEntities, ChargeEventEntity event) {
@@ -250,5 +260,10 @@ public class HistoricalEventEmitter {
                 .stream()
                 .map(ChargeEventEntity::getStatus)
                 .collect(Collectors.toList()).contains(AUTHORISATION_3DS_REQUIRED);
+    }
+
+    private ZonedDateTime getDoNotRetryEmitUntilDate() {
+        return doNotRetryEmitUntilDuration == null ? null :
+                now().plusSeconds(doNotRetryEmitUntilDuration);
     }
 }

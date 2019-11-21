@@ -41,13 +41,13 @@ public class EmittedEventDao extends JpaDao<EmittedEventEntity> {
         return !singleResult.isEmpty();
     }
 
-    public void recordEmission(Event event) {
+    public void recordEmission(Event event, ZonedDateTime doNotRetryEmitUntilDate) {
         final EmittedEventEntity emittedEvent = new EmittedEventEntity(event.getResourceType().getLowercase(),
                 event.getResourceExternalId(),
                 event.getEventType(),
                 event.getTimestamp(),
                 now(),
-                null
+                doNotRetryEmitUntilDate
         );
 
         persist(emittedEvent);

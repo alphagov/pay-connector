@@ -36,6 +36,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -113,7 +114,7 @@ public class EmittedEventsBackfillServiceTest {
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
         verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any());
-        verify(stateTransitionService, times(1)).offerStateTransition(any(), any());
+        verify(stateTransitionService, times(1)).offerStateTransition(any(), any(), isNull());
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(loggingEvents.get(0).getFormattedMessage(), is("Processing not emitted events [lastProcessedId=0, no.of.events=1, oldestDate=2019-09-20T10:00Z]"));
@@ -130,7 +131,7 @@ public class EmittedEventsBackfillServiceTest {
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
         verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any());
-        verify(stateTransitionService, times(1)).offerStateTransition(any(), any());
+        verify(stateTransitionService, times(1)).offerStateTransition(any(), any(), isNull());
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(loggingEvents.get(0).getFormattedMessage(), is("Processing not emitted events [lastProcessedId=0, no.of.events=1, oldestDate=2019-09-20T10:00Z]"));
@@ -151,7 +152,7 @@ public class EmittedEventsBackfillServiceTest {
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
         verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(ZonedDateTime.class), anyInt(), eq(0L), eq(maxId), any());
-        verify(stateTransitionService, times(2)).offerStateTransition(any(), any());
+        verify(stateTransitionService, times(2)).offerStateTransition(any(), any(), isNull());
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(loggingEvents.get(0).getFormattedMessage(), is("Processing not emitted events [lastProcessedId=0, no.of.events=2, oldestDate=2019-09-20T09:00Z]"));
