@@ -17,6 +17,8 @@ import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
 import java.time.ZonedDateTime;
 
+import static java.time.ZoneOffset.UTC;
+import static java.time.ZonedDateTime.now;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -109,8 +111,9 @@ public class StateTransitionServiceTest {
                 .withExternalId("external-id")
                 .build();
         RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory);
+        ZonedDateTime doNotEmitRetryUntil = now(UTC);
 
-        stateTransitionService.offerStateTransition(refundStateTransition, refundCreatedByUser);
+        stateTransitionService.offerStateTransition(refundStateTransition, refundCreatedByUser, doNotEmitRetryUntil);
 
         ArgumentCaptor<RefundStateTransition> refundStateTransitionArgumentCaptor = ArgumentCaptor.forClass(RefundStateTransition.class);
         verify(mockStateTransitionQueue).offer(refundStateTransitionArgumentCaptor.capture());
@@ -119,6 +122,6 @@ public class StateTransitionServiceTest {
         assertThat(refundStateTransitionArgumentCaptor.getValue().getStateTransitionEventClass(), is(RefundCreatedByUser.class));
 
         verify(mockEventService).recordOfferedEvent(REFUND, refundHistory.getExternalId(),
-                "REFUND_CREATED_BY_USER", refundHistory.getHistoryStartDate());
+                "REFUND_CREATED_BY_USER", refundHistory.getHistoryStartDate(), doNotEmitRetryUntil);
     }
 }

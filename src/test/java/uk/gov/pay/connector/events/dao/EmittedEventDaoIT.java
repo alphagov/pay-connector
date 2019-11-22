@@ -59,14 +59,15 @@ public class EmittedEventDaoIT extends DaoITestBase {
     @Test
     public void recordEmission_shouldRecordEmission() {
         final PaymentCreated eventThatHasBeenEmitted = aPaymentCreatedEvent();
-
-        emittedEventDao.recordEmission(eventThatHasBeenEmitted);
+        ZonedDateTime doNotRetryEmitUntilDate = ZonedDateTime.parse("2019-01-02T13:00:00Z");
+        emittedEventDao.recordEmission(eventThatHasBeenEmitted, doNotRetryEmitUntilDate);
 
         final List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
 
         assertThat(events.size(), is(1));
         final Map<String, Object> event = events.get(0);
         assertThat(event.get("resource_external_id"), is(eventThatHasBeenEmitted.getResourceExternalId()));
+        assertThat(event.get("do_not_retry_emit_until"), is(Timestamp.from(doNotRetryEmitUntilDate.toInstant())));
     }
 
     @Test
@@ -83,7 +84,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
     public void hasBeenEmittedBefore_shouldReturnTrueIfRecordedBefore() {
         final PaymentCreated paymentCreatedEvent = aPaymentCreatedEvent();
 
-        emittedEventDao.recordEmission(paymentCreatedEvent);
+        emittedEventDao.recordEmission(paymentCreatedEvent, null);
 
         assertThat(emittedEventDao.hasBeenEmittedBefore(paymentCreatedEvent), is(true));
     }
@@ -91,9 +92,9 @@ public class EmittedEventDaoIT extends DaoITestBase {
     @Test
     public void recordEmissionWithParameters_shouldRecordEmission() {
         final PaymentCreated eventToRecord = aPaymentCreatedEvent();
-
+        ZonedDateTime doNotRetryEmitUntilDate = ZonedDateTime.parse("2019-01-02T13:00:00Z");
         emittedEventDao.recordEmission(eventToRecord.getResourceType(), eventToRecord.getResourceExternalId(),
-                eventToRecord.getEventType(), eventToRecord.getTimestamp(), null);
+                eventToRecord.getEventType(), eventToRecord.getTimestamp(), doNotRetryEmitUntilDate);
 
         final List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
 
@@ -103,6 +104,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
         assertThat(event.get("resource_type"), is(eventToRecord.getResourceType().getLowercase()));
         assertThat(event.get("event_type"), is(eventToRecord.getEventType()));
         assertThat(event.get("emitted_date"), is(nullValue()));
+        assertThat(event.get("do_not_retry_emit_until"), is(Timestamp.from(doNotRetryEmitUntilDate.toInstant())));
     }
 
     @Test
@@ -128,7 +130,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
     @Test
     public void markEventAsEmitted_shouldNotUpdateIfNoRecordIsFoundWithNullEmittedDate() {
         final PaymentCreated eventToRecord = aPaymentCreatedEvent();
-        emittedEventDao.recordEmission(eventToRecord);
+        emittedEventDao.recordEmission(eventToRecord, null);
 
         List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
 
@@ -168,8 +170,9 @@ public class EmittedEventDaoIT extends DaoITestBase {
         final RefundSubmitted refundSubmittedEvent = aRefundSubmittedEvent(ZonedDateTime.parse("2019-01-01T14:00:00Z"));
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
                 paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), null);
+        ZonedDateTime doNotRetryEmitUntil = ZonedDateTime.now(UTC).minusSeconds(120);
         emittedEventDao.recordEmission(refundSubmittedEvent.getResourceType(), refundSubmittedEvent.getResourceExternalId(),
-                refundSubmittedEvent.getEventType(), refundSubmittedEvent.getTimestamp(), ZonedDateTime.now(UTC).minusSeconds(120));
+                refundSubmittedEvent.getEventType(), refundSubmittedEvent.getTimestamp(), doNotRetryEmitUntil);
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
                 paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), ZonedDateTime.now(UTC).plusSeconds(120));
 
@@ -184,11 +187,14 @@ public class EmittedEventDaoIT extends DaoITestBase {
         assertThat(notEmittedEvents.get(0).getEventType(), is(paymentCreatedEvent.getEventType()));
         assertThat(notEmittedEvents.get(0).getResourceExternalId(), is(paymentCreatedEvent.getResourceExternalId()));
         assertThat(notEmittedEvents.get(0).getResourceType(), is(paymentCreatedEvent.getResourceType().getLowercase()));
+        assertThat(notEmittedEvents.get(0).getDoNotRetryEmitUntil(), is(nullValue()));
 
         assertThat(notEmittedEvents.get(1).getEmittedDate(), nullValue());
         assertThat(notEmittedEvents.get(1).getEventType(), is(refundSubmittedEvent.getEventType()));
         assertThat(notEmittedEvents.get(1).getResourceExternalId(), is(refundSubmittedEvent.getResourceExternalId()));
         assertThat(notEmittedEvents.get(1).getResourceType(), is(refundSubmittedEvent.getResourceType().getLowercase()));
+        assertThat(Timestamp.from(notEmittedEvents.get(1).getDoNotRetryEmitUntil().toInstant()), 
+                is(Timestamp.from(doNotRetryEmitUntil.toInstant())));
     }
 
     private PaymentCreated aPaymentCreatedEvent() {

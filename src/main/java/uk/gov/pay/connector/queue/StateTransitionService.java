@@ -15,6 +15,7 @@ import uk.gov.pay.connector.refund.service.RefundStateEventMap;
 
 import javax.inject.Inject;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import static java.time.ZonedDateTime.now;
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -68,9 +69,10 @@ public class StateTransitionService {
     }
 
     @Transactional
-    public void offerStateTransition(StateTransition stateTransition, Event event) {
+    public void offerStateTransition(StateTransition stateTransition, Event event,
+                                     ZonedDateTime doNotRetryEmitUntilDate) {
         stateTransitionQueue.offer(stateTransition);
         eventService.recordOfferedEvent(event.getResourceType(), event.getResourceExternalId(),
-                event.getEventType(), event.getTimestamp());
+                event.getEventType(), event.getTimestamp(), doNotRetryEmitUntilDate);
     }
 }
