@@ -5,7 +5,7 @@ import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.db.DataSourceFactory;
 import uk.gov.pay.connector.app.config.EmittedEventSweepConfig;
-import uk.gov.pay.connector.app.config.ParityCheckerConfig;
+import uk.gov.pay.connector.app.config.EventEmitterConfig;
 import uk.gov.pay.connector.app.config.RestClientConfig;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
@@ -79,7 +79,7 @@ public class ConnectorConfiguration extends Configuration {
     private EmittedEventSweepConfig emittedEventSweepConfig;
 
     @NotNull
-    private ParityCheckerConfig parityCheckerConfig;
+    private EventEmitterConfig eventEmitterConfig;
 
     @NotNull
     private String graphiteHost;
@@ -222,7 +222,7 @@ public class ConnectorConfiguration extends Configuration {
         return emittedEventSweepConfig;
     }
 
-    public ParityCheckerConfig getParityCheckerConfig() {
-        return parityCheckerConfig;
+    public EventEmitterConfig getEventEmitterConfig() {
+        return eventEmitterConfig;
     }
 }

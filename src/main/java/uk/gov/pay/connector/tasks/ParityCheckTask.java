@@ -8,7 +8,7 @@ import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.config.ParityCheckerConfig;
+import uk.gov.pay.connector.app.config.EventEmitterConfig;
 
 import java.io.PrintWriter;
 import java.util.Optional;
@@ -21,7 +21,7 @@ public class ParityCheckTask extends Task {
 
     private static final String TASK_NAME = "parity-checker";
     private static final String EXECUTOR_NAME_FORMAT = "ParityCheckWorker-%d";
-    private ParityCheckerConfig parityCheckerConfig;
+    private EventEmitterConfig eventEmitterConfig;
     private ParityCheckWorker worker;
     private ExecutorService executor;
 
@@ -44,7 +44,7 @@ public class ParityCheckTask extends Task {
                 .maxThreads(1)
                 .workQueue(new SynchronousQueue<>())
                 .build();
-        this.parityCheckerConfig = configuration.getParityCheckerConfig();
+        this.eventEmitterConfig = configuration.getEventEmitterConfig();
     }
 
     @Override
@@ -95,6 +95,6 @@ public class ParityCheckTask extends Task {
         Optional<Long> doNotRetryEmitUntil = getLongParam(parameters,
                 "do_not_retry_emit_until");
         return doNotRetryEmitUntil.orElse(
-                parityCheckerConfig.getDefaultDoNotRetryEmittingEventUntilDurationInSeconds());
+                eventEmitterConfig.getDefaultDoNotRetryEmittingEventUntilDurationInSeconds());
     }
 }

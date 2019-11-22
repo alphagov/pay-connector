@@ -9,6 +9,9 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.dao.EmittedEventDao;
+import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
@@ -25,6 +28,9 @@ public class HistoricalEventEmitterWorker {
     private static final int PAGE_SIZE = 100;
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
+    private final EmittedEventDao emittedEventDao;
+    private final StateTransitionService stateTransitionService;
+    private final EventService eventService;
     private HistoricalEventEmitter historicalEventEmitter;
     private final RefundDao refundDao;
 
@@ -32,17 +38,20 @@ public class HistoricalEventEmitterWorker {
 
     @Inject
     public HistoricalEventEmitterWorker(ChargeDao chargeDao, RefundDao refundDao, ChargeEventDao chargeEventDao,
-                                        HistoricalEventEmitter historicalEventEmitter) {
+                                        EmittedEventDao emittedEventDao, StateTransitionService stateTransitionService, 
+                                        EventService eventService) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.chargeEventDao = chargeEventDao;
-        this.historicalEventEmitter = historicalEventEmitter;
+        this.emittedEventDao = emittedEventDao;
+        this.stateTransitionService = stateTransitionService;
+        this.eventService = eventService;
     }
 
-    public void execute(Long startId, OptionalLong maybeMaxId) {
+    public void execute(Long startId, OptionalLong maybeMaxId, Long doNotRetryEmitUntilDuration) {
         try {
             MDC.put(HEADER_REQUEST_ID, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
-
+            initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
             maxId = maybeMaxId.orElseGet(() -> chargeDao.findMaxId());
             logger.info("Starting from {} up to {}", startId, maxId);
             for (long i = startId; i <= maxId; i++) {
@@ -62,8 +71,15 @@ public class HistoricalEventEmitterWorker {
         logger.info("Terminating");
     }
 
-    public void executeForDateRange(ZonedDateTime startDate, ZonedDateTime endDate) {
+    private void initializeHistoricalEventEmitter(Long doNotRetryEmitUntilDuration) {
+        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, false,
+                eventService, stateTransitionService, doNotRetryEmitUntilDuration);
+    }
+
+    public void executeForDateRange(ZonedDateTime startDate, ZonedDateTime endDate, Long doNotRetryEmitUntilDuration) {
         MDC.put(HEADER_REQUEST_ID, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
+
+        initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
         logger.info("Starting to emit events from date range {} up to {}", startDate, endDate);
 
         processChargeEvents(startDate, endDate);
