@@ -2,7 +2,7 @@ package uk.gov.pay.connector.app.config;
 
 import io.dropwizard.Configuration;
 
-public class ParityCheckerConfig extends Configuration {
+public class EventEmitterConfig extends Configuration {
     
     private long defaultDoNotRetryEmittingEventUntilDurationInSeconds;
 

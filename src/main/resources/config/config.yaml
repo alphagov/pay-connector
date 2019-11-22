@@ -227,7 +227,7 @@ chargesSweepConfig:
 emittedEventSweepConfig:
   notEmittedEventMaxAgeInSeconds: ${NOT_EMITTED_EVENT_MAX_AGE_IN_SECONDS:-1800}
 
-parityCheckerConfig:
+eventEmitterConfig:
   defaultDoNotRetryEmittingEventUntilDurationInSeconds: ${DEFAULT_DO_NOT_RETRY_EMITTING_EVENT_UNTIL_DURATION_IN_SECONDS:-7200}
 
 restClientConfig:
