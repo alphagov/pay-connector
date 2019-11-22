@@ -1338,4 +1338,10 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add index to emitted_events.do_not_retry_emit_until" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_emitted_events_do_not_retry_emit_until ON emitted_events (do_not_retry_emit_until);
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
