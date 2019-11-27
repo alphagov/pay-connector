@@ -12,6 +12,8 @@ import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
+import static uk.gov.pay.logging.LoggingKeys.REFUND_EXTERNAL_ID;
+import static uk.gov.pay.logging.LoggingKeys.SECURE_TOKEN;
 
 @Provider
 public class LoggingMDCResponseFilter implements ContainerResponseFilter {
@@ -21,5 +23,7 @@ public class LoggingMDCResponseFilter implements ContainerResponseFilter {
         MDC.remove(GATEWAY_ACCOUNT_ID);
         MDC.remove(PROVIDER);
         MDC.remove(GATEWAY_ACCOUNT_TYPE);
+        MDC.remove(REFUND_EXTERNAL_ID);
+        MDC.remove(SECURE_TOKEN);
     }
 }
