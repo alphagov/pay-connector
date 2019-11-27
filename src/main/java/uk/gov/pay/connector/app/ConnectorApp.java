@@ -37,6 +37,8 @@ import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
 import uk.gov.pay.connector.common.exception.UnsupportedOperationExceptionMapper;
 import uk.gov.pay.connector.common.exception.ValidationExceptionMapper;
 import uk.gov.pay.connector.events.resource.EmittedEventResource;
+import uk.gov.pay.connector.filters.LoggingMDCRequestFilter;
+import uk.gov.pay.connector.filters.LoggingMDCResponseFilter;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
 import uk.gov.pay.connector.gateway.smartpay.auth.BasicAuthUser;
 import uk.gov.pay.connector.gateway.smartpay.auth.SmartpayAccountSpecificAuthenticator;
@@ -139,9 +141,9 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(DiscrepancyResource.class));
         environment.jersey().register(injector.getInstance(EmittedEventResource.class));
         environment.jersey().register(injector.getInstance(GatewayAccount3dsFlexCredentialsResource.class));
-        
-        environment.jersey().register(ChargeIdMDCLoggingFeature.class);
-        
+        environment.jersey().register(injector.getInstance(LoggingMDCRequestFilter.class));
+        environment.jersey().register(injector.getInstance(LoggingMDCResponseFilter.class));
+
         if(configuration.getCaptureProcessConfig().getBackgroundProcessingEnabled()) {
             setupSchedulers(environment, injector);
         }
