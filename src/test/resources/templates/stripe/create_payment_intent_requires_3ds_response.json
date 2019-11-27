@@ -39,7 +39,7 @@
   "payment_method": "pm_123",
   "payment_method_options": {
     "card": {
-      "request_three_d_secure": "automatic"
+      "request_three_d_secure": "any"
     }
   },
   "payment_method_types": [

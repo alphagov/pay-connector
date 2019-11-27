@@ -33,7 +33,7 @@
   "payment_method": "pm_1FHESdEZsufgnuO0bzghQoZ2",
   "payment_method_options": {
     "card": {
-      "request_three_d_secure": "automatic"
+      "request_three_d_secure": "any"
     }
   },
   "payment_method_types": [

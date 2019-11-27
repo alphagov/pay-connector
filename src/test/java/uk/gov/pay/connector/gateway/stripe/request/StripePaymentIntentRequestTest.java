@@ -66,6 +66,7 @@ public class StripePaymentIntentRequestTest {
         assertThat(payload, containsString("confirmation_method=automatic"));
         assertThat(payload, containsString("capture_method=manual"));
         assertThat(payload, containsString("currency=GBP"));
+        assertThat(payload, containsString("payment_method_options%5Bcard%5Brequest_three_d_secure%5D%5D=any"));
         assertThat(payload, containsString("transfer_group=" + chargeExternalId));
         assertThat(payload, containsString("on_behalf_of=" + stripeConnectAccountId));
         assertThat(payload, containsString("confirm=true"));

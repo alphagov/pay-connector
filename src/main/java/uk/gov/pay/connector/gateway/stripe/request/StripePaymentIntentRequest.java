@@ -7,6 +7,8 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.Map;
 
+import static java.util.Map.entry;
+
 public class StripePaymentIntentRequest extends StripeRequest {
 
     private final String amount;
@@ -61,17 +63,19 @@ public class StripePaymentIntentRequest extends StripeRequest {
 
     @Override
     protected Map<String, String> params() {
-        return Map.of(
-                "payment_method", paymentMethodId,
-                "amount", amount,
-                "confirmation_method", "automatic",
-                "capture_method", "manual",
-                "currency", "GBP",
-                "description", description,
-                "transfer_group", transferGroup,
-                "on_behalf_of", stripeConnectAccountId,
-                "confirm", "true",
-                "return_url", String.format("%s/card_details/%s/3ds_required_in", frontendUrl, chargeExternalId)
+        return Map.ofEntries(
+                entry("payment_method", paymentMethodId),
+                entry("payment_method_options[card[request_three_d_secure]]", "any"),
+                entry("amount", amount),
+                entry("confirmation_method", "automatic"),
+                entry("capture_method", "manual"),
+                entry("currency", "GBP"),
+                entry("transfer_group", transferGroup),
+                entry("description", description),
+                entry("on_behalf_of", stripeConnectAccountId),
+                entry("confirm", "true"),
+                entry("return_url", String.format("%s/card_details/%s/3ds_required_in",
+                        frontendUrl, chargeExternalId))
         );
     }
 
