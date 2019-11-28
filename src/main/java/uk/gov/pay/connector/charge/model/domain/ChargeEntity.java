@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.model.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import net.logstash.logback.argument.StructuredArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.commons.model.SupportedLanguage;
@@ -51,11 +52,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static java.lang.String.format;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions.isValidTransition;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
 
 @Entity
 @Table(name = "charges")
@@ -277,16 +284,24 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     public void setStatus(ChargeStatus targetStatus, Event event) {
         if (isValidTransition(fromString(this.status), targetStatus, event)) {
-            logger.info("Changing charge status for externalId [{}] [{}]->[{}] [event={}]",
-                    externalId, this.status, targetStatus.getValue(),
-                    event);
-
+            var logMessage = format("Changing charge status for externalId [%s] [%s]->[%s] [event=%s]",
+                    this.externalId, this.status, targetStatus.getValue(), event);
+            logger.info(logMessage, getStructuredLoggingArgs());
             this.status = targetStatus.getValue();
         } else {
-            logger.warn("Charge with state {} cannot proceed to {} [charge_external_id={}, charge_status={}, event={}]",
+            var logMessage = format("Charge with state %s cannot proceed to %s [charge_external_id=%s, charge_status=%s, event=%s]",
                     this.status, targetStatus, this.externalId, targetStatus, event);
+            logger.warn(logMessage, getStructuredLoggingArgs());
             throw new InvalidStateTransitionException(this.status, targetStatus.getValue(), event);
         }
+    }
+
+    public List<StructuredArgument> getStructuredLoggingArgs() {
+        return List.of(
+                kv(PAYMENT_EXTERNAL_ID, externalId),
+                kv(GATEWAY_ACCOUNT_ID, getGatewayAccount().getId()),
+                kv(PROVIDER, getGatewayAccount().getGatewayName()),
+                kv(GATEWAY_ACCOUNT_TYPE, getGatewayAccount().getType()));
     }
 
     public void setAmount(Long amount) {
