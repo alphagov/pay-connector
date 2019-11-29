@@ -23,7 +23,6 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.commons.utils.healthchecks.DatabaseHealthCheck;
-import uk.gov.pay.commons.utils.logging.LoggingFilter;
 import uk.gov.pay.commons.utils.metrics.DatabaseMetricsService;
 import uk.gov.pay.commons.utils.xray.Xray;
 import uk.gov.pay.connector.cardtype.resource.CardTypesResource;
@@ -66,6 +65,7 @@ import uk.gov.pay.connector.util.DependentResourceWaitCommand;
 import uk.gov.pay.connector.util.JsonMappingExceptionMapper;
 import uk.gov.pay.connector.webhook.resource.NotificationResource;
 import uk.gov.pay.logging.GovUkPayDropwizardRequestJsonLogLayoutFactory;
+import uk.gov.pay.logging.LoggingFilter;
 import uk.gov.pay.logging.LogstashConsoleAppenderFactory;
 
 import java.util.Optional;
