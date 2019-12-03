@@ -61,7 +61,8 @@ public class StateTransitionService {
                             fromChargeState, targetChargeState, chargeEventEntity.getId(), externalId);
                     var structuredArgs = Stream.concat(
                             chargeEventEntity.getChargeEntity().getStructuredLoggingArgs().stream(),
-                            List.of(kv("from_state", fromChargeState), kv("to_state", targetChargeState)).stream());
+                            List.of(kv("from_state", fromChargeState), kv("to_state", targetChargeState)).stream())
+                            .toArray();
 
                     logger.info(logMessage, structuredArgs);
 
