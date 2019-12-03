@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.dao;
 
 import com.google.inject.persist.jpa.JpaPersistModule;
+import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import com.spotify.docker.client.exceptions.DockerException;
 import liquibase.Liquibase;
 import liquibase.database.jvm.JdbcConnection;
@@ -12,22 +13,27 @@ import org.skife.jdbi.v2.DBI;
 import uk.gov.pay.connector.rules.PostgresDockerRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.Properties;
 
 abstract public class DaoITestBase {
 
-    @ClassRule
-    public static PostgresDockerRule postgres;
+//    @ClassRule
+//    public static PostgresDockerRule postgres;
+    
+    public static EmbeddedPostgres embeddedPostgres;
 
     protected static DatabaseTestHelper databaseTestHelper;
     protected static GuicedTestEnvironment env;
 
     static {
         try {
-            postgres = new PostgresDockerRule();
-        } catch (DockerException e) {
+//            postgres = new PostgresDockerRule();
+            embeddedPostgres = EmbeddedPostgres.start();
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -35,10 +41,12 @@ abstract public class DaoITestBase {
     @BeforeClass
     public static void setup() throws Exception {
         final Properties properties = new Properties();
-        properties.put("javax.persistence.jdbc.driver", postgres.getDriverClass());
-        properties.put("javax.persistence.jdbc.url", postgres.getConnectionUrl());
-        properties.put("javax.persistence.jdbc.user", postgres.getUsername());
-        properties.put("javax.persistence.jdbc.password", postgres.getPassword());
+        
+        
+//        properties.put("javax.persistence.jdbc.driver", postgres.getDriverClass());
+        properties.put("javax.persistence.jdbc.url", embeddedPostgres.getJdbcUrl("postgres", "postgres"));
+        properties.put("javax.persistence.jdbc.user", "postgres");
+        properties.put("javax.persistence.jdbc.password", "postgres");
 
         properties.put("eclipselink.logging.level", "WARNING");
         properties.put("eclipselink.logging.level.sql", "WARNING");
@@ -49,9 +57,12 @@ abstract public class DaoITestBase {
         JpaPersistModule jpaModule = new JpaPersistModule("ConnectorUnit");
         jpaModule.properties(properties);
 
-        databaseTestHelper = new DatabaseTestHelper(new DBI(postgres.getConnectionUrl(), postgres.getUsername(), postgres.getPassword()));
+        databaseTestHelper = new DatabaseTestHelper(new DBI(embeddedPostgres.getJdbcUrl("postgres", "postgres"), "postgres", "postgres"));
 
-        try (Connection connection = DriverManager.getConnection(postgres.getConnectionUrl(), postgres.getUsername(), postgres.getPassword())) {
+        try (Connection connection = embeddedPostgres.getPostgresDatabase().getConnection()) {
+            Statement s = connection.createStatement();
+            s.execute("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"");
+            s.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA pg_catalog");
             Liquibase migrator = new Liquibase("migrations.xml", new ClassLoaderResourceAccessor(), new JdbcConnection(connection));
             migrator.update("");
         }
@@ -63,7 +74,7 @@ abstract public class DaoITestBase {
     public static void tearDown() {
 //        Connection connection;
         try {
-            Connection connection = DriverManager.getConnection(postgres.getConnectionUrl(), postgres.getUsername(), postgres.getPassword());
+            Connection connection = embeddedPostgres.getPostgresDatabase().getConnection();
             Liquibase migrator = new Liquibase("migrations.xml", new ClassLoaderResourceAccessor(), new JdbcConnection(connection));
             migrator.dropAll();
             connection.close();
