@@ -60,12 +60,12 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
         DropwizardConfig dropwizardConfigAnnotation = dropwizardConfigAnnotation();
         List<ConfigOverride> configOverride = newArrayList();
 
-        if (dropwizardConfigAnnotation.withDockerPostgres()) {
+        /*if (dropwizardConfigAnnotation.withDockerPostgres()) {
             getOrCreate();
             configOverride.add(config("database.url", getDbUri()));
             configOverride.add(config("database.user", getDbUsername()));
             configOverride.add(config("database.password", getDbPassword()));
-        }
+        }*/
 
         if (dropwizardConfigAnnotation.withDockerSQS()) {
             SqsTestDocker.initialise("capture-queue", "event-queue");
@@ -85,7 +85,7 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
 
         try {
             Optional<DropwizardTestSupport> createdApp = createIfNotRunning(dropwizardConfigAnnotation.app(), dropwizardConfigAnnotation.config(), configOverride.toArray(new ConfigOverride[0]));
-            if (dropwizardConfigAnnotation.withDockerPostgres() && createdApp.isPresent()) {
+            if (createdApp.isPresent()) {
                 createdApp.get().getApplication().run("db", "migrate", resourceFilePath(dropwizardConfigAnnotation.config()));
             }
         } catch (Exception e) {

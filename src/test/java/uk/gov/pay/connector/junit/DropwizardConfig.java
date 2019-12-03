@@ -54,7 +54,7 @@ public @interface DropwizardConfig {
      *
      * @return boolean
      */
-    boolean withDockerPostgres() default true;
+    boolean withDockerPostgres() default false;
 
     /**
      * Run a Test container with SQS image as a dependency for given Dropwizard Application

@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.rules;
 
 import com.google.inject.Injector;
-import com.spotify.docker.client.exceptions.DockerException;
+//import com.spotify.docker.client.exceptions.DockerException;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
@@ -27,7 +27,7 @@ abstract public class AppWithPostgresRule implements TestRule {
     public final static int WIREMOCK_PORT = PortFactory.findFreePort();
     
     private final String configFilePath;
-    private final PostgresDockerRule postgres;
+    //private final PostgresDockerRule postgres;
     private final AppRule<ConnectorConfiguration> appRule;
     private final RuleChain rules;
 
@@ -39,17 +39,18 @@ abstract public class AppWithPostgresRule implements TestRule {
 
     public AppWithPostgresRule(String configPath, ConfigOverride... configOverrides) {
         configFilePath = resourceFilePath(configPath);
-        try {
-            postgres = new PostgresDockerRule();
-        } catch (DockerException e) {
-            throw new RuntimeException(e);
-        }
+        //try {
+        //    postgres = new PostgresDockerRule();
+        //} catch (DockerException e) {
+        //    throw new RuntimeException(e);
+        //}
 
-        ConfigOverride[] newConfigOverrides = overrideDatabaseConfig(configOverrides, postgres);
-        newConfigOverrides = overrideSqsConfig(newConfigOverrides);
+        //ConfigOverride[] newConfigOverrides = overrideDatabaseConfig(configOverrides, postgres);
+        ConfigOverride[] newConfigOverrides = overrideSqsConfig(configOverrides);
         appRule = newApplication(configFilePath, newConfigOverrides);
         
-        rules = RuleChain.outerRule(postgres).around(appRule);
+        rules = RuleChain.outerRule(appRule);
+        //rules = RuleChain.outerRule(postgres).around(appRule);
     }
 
     private ConfigOverride[] overrideSqsConfig(ConfigOverride[] configOverrides) {
@@ -110,16 +111,16 @@ abstract public class AppWithPostgresRule implements TestRule {
     }
 
     public void stopPostgres() {
-        postgres.stop();
+        //postgres.stop();
     }
 
-    private ConfigOverride[] overrideDatabaseConfig(ConfigOverride[] configOverrides, PostgresDockerRule postgresDockerRule) {
+    /*private ConfigOverride[] overrideDatabaseConfig(ConfigOverride[] configOverrides, PostgresDockerRule postgresDockerRule) {
         List<ConfigOverride> newConfigOverride = newArrayList(configOverrides);
         newConfigOverride.add(config("database.url", postgresDockerRule.getConnectionUrl()));
         newConfigOverride.add(config("database.user", postgresDockerRule.getUsername()));
         newConfigOverride.add(config("database.password", postgresDockerRule.getPassword()));
         return newConfigOverride.toArray(new ConfigOverride[0]);
-    }
+    }*/
 
     private void restoreDropwizardsLogging() {
         appRule.getConfiguration().getLoggingFactory().configure(appRule.getEnvironment().metrics(),
