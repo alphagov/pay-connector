@@ -2,7 +2,6 @@ package uk.gov.pay.connector.refund.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
-import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
@@ -10,21 +9,14 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
 import javax.persistence.TemporalType;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.sql.Date;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import static com.google.common.collect.Lists.newArrayList;
-import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
-import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
 
 @Transactional
@@ -125,52 +117,6 @@ public class RefundDao extends JpaDao<RefundEntity> {
                 .createQuery(query, RefundEntity.class)
                 .setParameter("externalId", externalId)
                 .getResultList().stream().findFirst();
-    }
-
-    public Long getTotalFor(SearchParams params) {
-        CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
-        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
-        Root<RefundEntity> refund = cq.from(RefundEntity.class);
-        List<Predicate> predicates = buildParamPredicates(params, cb, refund);
-
-        cq.select(cb.count(refund));
-        cq.where(predicates.toArray(new Predicate[]{}));
-        return entityManager.get().createQuery(cq).getSingleResult();
-    }
-
-    private List<Predicate> buildParamPredicates(SearchParams params, CriteriaBuilder cb, Root<RefundEntity> refundEntityRoot) {
-        List<Predicate> predicates = new ArrayList<>();
-
-        if (params.getGatewayAccountId() != null)
-            predicates.add(cb.equal(refundEntityRoot.get(CHARGE_ENTITY).get(GATEWAY_ACCOUNT).get("id"), params.getGatewayAccountId()));
-        if (params.getFromDate() != null)
-            predicates.add(cb.greaterThanOrEqualTo(refundEntityRoot.get(CREATED_DATE), params.getFromDate()));
-        if (params.getToDate() != null)
-            predicates.add(cb.lessThan(refundEntityRoot.get(CREATED_DATE), params.getToDate()));
-
-        return predicates;
-    }
-
-    public List<RefundEntity> findAllBy(SearchParams params) {
-        CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
-        CriteriaQuery<RefundEntity> cq = cb.createQuery(RefundEntity.class);
-        Root<RefundEntity> refund = cq.from(RefundEntity.class);
-
-        List<Predicate> predicates = buildParamPredicates(params, cb, refund);
-        predicates.add(refund.get(STATUS).in(newArrayList(REFUND_SUBMITTED, REFUNDED)));
-        cq.select(refund)
-                .where(predicates.toArray(new Predicate[]{}))
-                .orderBy(cb.desc(refund.get(CREATED_DATE)));
-        Query query = entityManager.get().createQuery(cq);
-
-        if (params.getPage() != null && params.getDisplaySize() != null) {
-            long displaySize = params.getDisplaySize();
-            long firstResult = (params.getPage() - 1) * displaySize;
-
-            query.setFirstResult((int) firstResult);
-            query.setMaxResults((int) displaySize);
-        }
-        return query.getResultList();
     }
 
     public List<RefundHistory> getRefundHistoryByDateRange(ZonedDateTime startDate, ZonedDateTime endDate, int page, int size) {

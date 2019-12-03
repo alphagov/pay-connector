@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.dao;
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.charge.dao.SearchParams;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -126,34 +125,6 @@ public class RefundDaoJpaIT extends DaoITestBase {
     public void findByProviderAndReference_shouldNotFindRefundIfReferenceDoesNotMatch() {
         String noExistingReference = "refund_0";
         assertThat(refundDao.findByProviderAndReference(sandboxAccount.getPaymentProvider(), noExistingReference).isPresent(), is(false));
-    }
-
-    @Test
-    public void findAllBy_shouldFindAllRefundsByQueryParamsWithAccountId() {
-        SearchParams searchParams = new SearchParams().withGatewayAccountId(sandboxAccount.getAccountId());
-        addSuccessfulRefundsToAccount("refund1", now().minusMinutes(30));
-        addSuccessfulRefundsToAccount("refund2", now().minusMinutes(30));
-
-        List<RefundEntity> refunds = refundDao.findAllBy(searchParams);
-        assertThat(refunds.size(), is(2));
-    }
-
-    @Test
-    public void findAllBy_shouldFindByDateRange() {
-        ZonedDateTime fromDate = ZonedDateTime.parse("2016-01-02T01:00:00Z");
-        ZonedDateTime toDate = ZonedDateTime.parse("2016-01-03T01:00:00Z");
-        addSuccessfulRefundsToAccount("oldRefund", fromDate.minusMinutes(1L));
-        addSuccessfulRefundsToAccount("inRangeRefund1", toDate.minusMinutes(1L));
-        addSuccessfulRefundsToAccount("inRangeRefund2", fromDate.plusMinutes(1L));
-        addSuccessfulRefundsToAccount("futureRefund", toDate.plusMinutes(1L));
-        SearchParams searchParams = new SearchParams()
-                .withGatewayAccountId(sandboxAccount.getAccountId())
-                .withFromDate(fromDate)
-                .withToDate(toDate);
-        List<RefundEntity> refunds = refundDao.findAllBy(searchParams);
-        assertThat(refunds.size(), is(2));
-        assertThat(refunds.get(0).getExternalId(), is("inRangeRefund1"));
-        assertThat(refunds.get(1).getExternalId(), is("inRangeRefund2"));
     }
 
     private void addSuccessfulRefundsToAccount(String externalRefundId, ZonedDateTime zonedDateTime) {
