@@ -288,41 +288,6 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnCorporateCardSurchargeAndTotalAmountForCharges_V2() {
-        long chargeId = nextInt();
-        String externalChargeId = RandomIdGenerator.newId();
-
-        createCharge(externalChargeId, chargeId);
-
-        connectorRestApiClient
-                .withAccountId(accountId)
-                .getChargesV2()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("results[0]." + JSON_CHARGE_KEY, is(externalChargeId))
-                .body("results[0]." + JSON_CORPORATE_CARD_SURCHARGE_KEY, is(150))
-                .body("results[0]." + JSON_TOTAL_AMOUNT_KEY, is(Long.valueOf(AMOUNT).intValue() + 150));
-    }
-
-    @Test
-    public void shouldNotReturnCorporateCardSurchargeAndTotalAmountForRefunds_V2() {
-        long chargeId = nextInt();
-        String externalChargeId = RandomIdGenerator.newId();
-
-        createCharge(externalChargeId, chargeId);
-        databaseTestHelper.addRefund(randomAlphanumeric(10), "refund-2-provider-reference", AMOUNT + 150L, REFUNDED, chargeId, randomAlphanumeric(10), now().minusHours(3));
-
-        connectorRestApiClient
-                .withAccountId(accountId)
-                .getChargesV2()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("results[1]." + JSON_CHARGE_KEY, is(externalChargeId))
-                .body("results[1]", not(hasKey(JSON_CORPORATE_CARD_SURCHARGE_KEY)))
-                .body("results[1]", not(hasKey(JSON_TOTAL_AMOUNT_KEY)));
-    }
-
-    @Test
     public void shouldReturnWalletTypeWhenNotNull() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
@@ -333,23 +298,6 @@ public class ChargesApiResourceIT extends ChargingITestBase {
         connectorRestApiClient
                 .withAccountId(accountId)
                 .getChargesV1()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("results[0].charge_id", is(externalChargeId))
-                .body("results[0].wallet_type", is(WalletType.APPLE_PAY.toString()));
-    }
-
-    @Test
-    public void shouldReturnWalletTypeWhenNotNull_v2() {
-        long chargeId = nextInt();
-        String externalChargeId = RandomIdGenerator.newId();
-
-        createCharge(externalChargeId, chargeId);
-        databaseTestHelper.addWalletType(chargeId, WalletType.APPLE_PAY);
-
-        connectorRestApiClient
-                .withAccountId(accountId)
-                .getChargesV2()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("results[0].charge_id", is(externalChargeId))
