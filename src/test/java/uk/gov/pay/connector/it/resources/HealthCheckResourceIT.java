@@ -1,7 +1,11 @@
 package uk.gov.pay.connector.it.resources;
 
+import io.dropwizard.testing.ResourceHelpers;
+import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.Rule;
 import org.junit.Test;
+import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 
 import static io.restassured.RestAssured.given;
@@ -11,12 +15,13 @@ import static org.hamcrest.Matchers.is;
 public class HealthCheckResourceIT {
 
     @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
+    public final io.dropwizard.testing.junit.DropwizardAppRule<ConnectorConfiguration> RULE =
+            new DropwizardAppRule<>(ConnectorApp.class, ResourceHelpers.resourceFilePath("config/test-config.yaml"));
 
     @Test
     public void healthcheckShouldIdentifyUnhealthyDBAndQueue() {
-        app.stopPostgres();
-        given().port(app.getLocalPort())
+//        app.stopPostgres();
+        given().port(RULE.getLocalPort())
                 .contentType(JSON)
                 .get("healthcheck")
                 .then()
