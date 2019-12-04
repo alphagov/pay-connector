@@ -2600,55 +2600,6 @@ HTTP/1.1 404 Not Found
 HTTP/1.1 404 Not Found
 ```
 -----------------------------------------------------------------------------------------------------------
-## GET /v1/api/accounts/{accountId}/transactions-summary
-
-Retrieves payment summary totals for a given `accountId`
-
-### Request query param description
-
-| Field       | Always present | Description                                |
-| ------------|:--------------:| ------------------------------------------ |
-| `from_date` | X              | Beginning of date range covered by summary |
-| `to_date`   | X              | End of date range covered by summary       |
-
-### Request example
-
-```
-GET /v1/api/accounts/123/transactions-summary?from_date=2017-11-03T00:00:00Z&to_date=2017-11-10T00:00:00Z
-```
-
-### Response example
-
-```
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-    "successful_payments" : {
-        "count": 10,
-        "total_in_pence": 55000
-    },
-    "refunded_payments" : {
-        "count": 2,
-        "total_in_pence": 11000
-    },
-    "net_income" : {
-        "total_in_pence": 44000
-    }
-}
-```
-
-### Response field description
-
-| Field                 | Always present | Description                                                                        |
-| ----------------------|:--------------:| -----------------------------------------------------------------------------------|
-| `successful_payments` | X              | Count (`count`) and total value (`total_in_pence`) of successful payments          |
-| `refunded_payments`   | X              | Count (`count`) and total value (`total_in_pence`) of refunded payments            |
-| `net_income`          | X              | Total value of successful payments minus total value of refunds (`total_in_pence`) |
-| `count`               |                | Total number of successful payments or refunded payments                           |
-| `total_in_pence`      | X              | Total value of successful payments, refunds or net income (pence)                  |
-
------------------------------------------------------------------------------------------------------------
 ## GET /v1/api/reports/performance-report
 
 Retrieves performance summary

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.dao;
 
-import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -9,10 +8,8 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
-import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,7 +27,6 @@ import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
-import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
 
@@ -40,7 +36,6 @@ public class RefundDaoJpaIT extends DaoITestBase {
     private DatabaseFixtures.TestAccount sandboxAccount;
     private DatabaseFixtures.TestCharge chargeTestRecord;
     private DatabaseFixtures.TestRefund refundTestRecord;
-
 
     @Before
     public void setUp() throws Exception {
@@ -69,7 +64,6 @@ public class RefundDaoJpaIT extends DaoITestBase {
         this.chargeTestRecord = testCharge.insert();
         this.refundTestRecord = testRefund.insert();
     }
-
 
     @Test
     public void findById_shouldFindRefund() {
@@ -125,129 +119,6 @@ public class RefundDaoJpaIT extends DaoITestBase {
     public void findByProviderAndReference_shouldNotFindRefundIfReferenceDoesNotMatch() {
         String noExistingReference = "refund_0";
         assertThat(refundDao.findByProviderAndReference(sandboxAccount.getPaymentProvider(), noExistingReference).isPresent(), is(false));
-    }
-
-    private void addSuccessfulRefundsToAccount(String externalRefundId, ZonedDateTime zonedDateTime) {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withExternalRefundId(externalRefundId)
-                .withTestCharge(chargeTestRecord)
-                .withReference("reference")
-                .withRefundStatus(REFUNDED)
-                .withCreatedDate(zonedDateTime)
-                .insert();
-    }
-
-    @Test
-    public void findBetweenDatesWithStatusIn_shouldFindRefundWithMatchingStatusInsideRange() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withTestCharge(chargeTestRecord)
-                .withReference("reference")
-                .withRefundStatus(REFUNDED)
-                .withCreatedDate(now().minusMinutes(30))
-                .insert();
-
-        ArrayList<RefundStatus> statuses = Lists.newArrayList(REFUND_SUBMITTED, REFUNDED);
-
-        List<RefundEntity> refunds = refundDao.findByAccountBetweenDatesWithStatusIn(
-                sandboxAccount.getAccountId(),
-                now().minusMinutes(45),
-                now().minusMinutes(15),
-                statuses);
-
-        assertThat(refunds.size(), is(1));
-        assertThat(refunds.get(0).getReference(), is("reference"));
-    }
-
-    @Test
-    public void findBetweenDatesWithStatusIn_shouldFindNoneWithNonMatchingAccountButMatchingStatusInsideRange() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withTestCharge(chargeTestRecord)
-                .withReference("reference")
-                .withRefundStatus(REFUND_SUBMITTED)
-                .withCreatedDate(now().minusMinutes(30))
-                .insert();
-
-        ArrayList<RefundStatus> statuses = Lists.newArrayList(REFUND_SUBMITTED);
-
-        List<RefundEntity> refunds = refundDao.findByAccountBetweenDatesWithStatusIn(
-                100_000L,
-                now().minusMinutes(45),
-                now().minusMinutes(15),
-                statuses);
-
-        assertThat(refunds.size(), is(0));
-    }
-
-    @Test
-    public void findBetweenDatesWithStatusIn_shouldFindNoneWithMatchingAccountButNonMatchingStatusInsideRange() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withTestCharge(chargeTestRecord)
-                .withReference("reference")
-                .withRefundStatus(REFUNDED)
-                .withCreatedDate(now().minusMinutes(20))
-                .insert();
-
-        ArrayList<RefundStatus> statuses = Lists.newArrayList(CREATED, REFUND_SUBMITTED, REFUND_ERROR);
-
-        List<RefundEntity> refunds = refundDao.findByAccountBetweenDatesWithStatusIn(
-                sandboxAccount.getAccountId(),
-                now().minusMinutes(30),
-                now().minusMinutes(10),
-                statuses);
-
-        assertThat(refunds.size(), is(0));
-    }
-
-    @Test
-    public void findBetweenDatesWithStatusIn_shouldFindNoneWithMatchingAccountAndMatchingStatusBeforeRange() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withTestCharge(chargeTestRecord)
-                .withReference("reference")
-                .withRefundStatus(REFUND_SUBMITTED)
-                .withCreatedDate(now().minusMinutes(90))
-                .insert();
-
-        ArrayList<RefundStatus> statuses = Lists.newArrayList(REFUND_SUBMITTED, REFUNDED, REFUND_ERROR);
-
-        List<RefundEntity> refunds = refundDao.findByAccountBetweenDatesWithStatusIn(
-                sandboxAccount.getAccountId(),
-                now().minusMinutes(60),
-                now().minusMinutes(30),
-                statuses);
-
-        assertThat(refunds.size(), is(0));
-    }
-
-    @Test
-    public void findBetweenDatesWithStatusIn_shouldFindNoneWithMatchingAccountAndMatchingStatusAfterRange() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestRefund()
-                .withTestCharge(chargeTestRecord)
-                .withReference("reference")
-                .withRefundStatus(REFUNDED)
-                .withCreatedDate(now().minusMinutes(15))
-                .insert();
-
-        ArrayList<RefundStatus> statuses = Lists.newArrayList(REFUND_SUBMITTED, REFUNDED, REFUND_ERROR);
-
-        List<RefundEntity> refunds = refundDao.findByAccountBetweenDatesWithStatusIn(
-                sandboxAccount.getAccountId(),
-                now().minusMinutes(60),
-                now().minusMinutes(30),
-                statuses);
-
-        assertThat(refunds.size(), is(0));
     }
 
     @Test

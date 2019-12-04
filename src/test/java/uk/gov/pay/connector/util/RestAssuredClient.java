@@ -204,15 +204,6 @@ public class RestAssuredClient {
                 .then();
     }
 
-    public ValidatableResponse getTransactionsSummary() {
-        String requestPath = "/v1/api/accounts/{accountId}/transactions-summary"
-                .replace("{accountId}", accountId);
-
-        return addQueryParams(given().port(port))
-                .get(requestPath)
-                .then();
-    }
-
     public RestAssuredClient withRefundId(String refundId) {
         this.refundId = refundId;
         return this;

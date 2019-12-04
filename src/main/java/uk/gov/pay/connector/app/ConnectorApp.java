@@ -54,7 +54,6 @@ import uk.gov.pay.connector.paymentprocessor.resource.DiscrepancyResource;
 import uk.gov.pay.connector.queue.managed.QueueMessageReceiver;
 import uk.gov.pay.connector.refund.resource.ChargeRefundsResource;
 import uk.gov.pay.connector.report.resource.PerformanceReportResource;
-import uk.gov.pay.connector.report.resource.TransactionsSummaryResource;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitterByDateRangeTask;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitterTask;
 import uk.gov.pay.connector.tasks.ParityCheckTask;
@@ -128,7 +127,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(ChargesApiResource.class));
         environment.jersey().register(injector.getInstance(ChargesFrontendResource.class));
         environment.jersey().register(injector.getInstance(ChargeRefundsResource.class));
-        environment.jersey().register(injector.getInstance(TransactionsSummaryResource.class));
         environment.jersey().register(injector.getInstance(NotificationResource.class));
         environment.jersey().register(injector.getInstance(CardResource.class));
         environment.jersey().register(injector.getInstance(CardTypesResource.class));
