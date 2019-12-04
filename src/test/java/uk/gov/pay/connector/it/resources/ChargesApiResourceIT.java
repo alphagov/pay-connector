@@ -17,25 +17,20 @@ import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.util.RandomIdGenerator;
-import uk.gov.pay.connector.wallets.WalletType;
 
 import javax.ws.rs.core.HttpHeaders;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static java.time.ZonedDateTime.now;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.math.RandomUtils.nextInt;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
@@ -52,7 +47,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
-import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -62,8 +56,6 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
     private static final String JSON_MESSAGE_KEY = "message";
-    private static final String JSON_CORPORATE_CARD_SURCHARGE_KEY = "corporate_card_surcharge";
-    private static final String JSON_TOTAL_AMOUNT_KEY = "total_amount";
     private static final String PROVIDER_NAME = "sandbox";
 
     public ChargesApiResourceIT() {
@@ -105,15 +97,30 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturn404_whenAccountIdIsNonNumeric() {
+    public void shouldGetChargeStatusAsInProgressIfInternalStatusIsAuthorised() {
+
+        long chargeId = nextInt();
+        String externalChargeId = "charge1";
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .withEmail("email@fake.test")
+                .build());
+
+        databaseTestHelper.addToken(chargeId, "tokenId");
+
         connectorRestApiClient
-                .withAccountId("invalidAccountId")
-                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getChargesV1()
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .statusCode(NOT_FOUND.getStatusCode())
-                .body("code", is(404))
-                .body("message", is("HTTP 404 Not Found"));
+                .body(JSON_CHARGE_KEY, is(externalChargeId))
+                .body(JSON_STATE_KEY, is(EXTERNAL_SUBMITTED.getStatus()));
     }
 
     @Test
@@ -271,56 +278,6 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnCorporateCardSurchargeAndTotalAmount_V1() {
-        long chargeId = nextInt();
-        String externalChargeId = "charge1";
-
-        createCharge(externalChargeId, chargeId);
-
-        connectorRestApiClient
-                .withAccountId(accountId)
-                .getChargesV1()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("results[0]." + JSON_CHARGE_KEY, is(externalChargeId))
-                .body("results[0]." + JSON_CORPORATE_CARD_SURCHARGE_KEY, is(150))
-                .body("results[0]." + JSON_TOTAL_AMOUNT_KEY, is(Long.valueOf(AMOUNT).intValue() + 150));
-    }
-
-    @Test
-    public void shouldReturnWalletTypeWhenNotNull() {
-        long chargeId = nextInt();
-        String externalChargeId = RandomIdGenerator.newId();
-
-        createCharge(externalChargeId, chargeId);
-        databaseTestHelper.addWalletType(chargeId, WalletType.APPLE_PAY);
-
-        connectorRestApiClient
-                .withAccountId(accountId)
-                .getChargesV1()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("results[0].charge_id", is(externalChargeId))
-                .body("results[0].wallet_type", is(WalletType.APPLE_PAY.toString()));
-    }
-
-    @Test
-    public void shouldNotReturnWalletTypeWhenNull() {
-        long chargeId = nextInt();
-        String externalChargeId = RandomIdGenerator.newId();
-
-        createCharge(externalChargeId, chargeId);
-
-        connectorRestApiClient
-                .withAccountId(accountId)
-                .getChargesV1()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("results[0].charge_id", is(externalChargeId))
-                .body("results[0].wallet_type", is(nullValue()));
-    }
-
-    @Test
     public void shouldReturnFeeIfItExists() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
@@ -359,107 +316,6 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .contentType(JSON)
                 .body("fee", is(100))
                 .body("net_amount", is(Long.valueOf(defaultAmount + defaultCorporateSurchargeAmount - feeCollected).intValue()));
-    }
-
-    @Test
-    public void shouldReturnFeeInSearchResultsV1IfFeeExists() {
-        long chargeId = nextInt();
-        String externalChargeId = RandomIdGenerator.newId();
-        long feeCollected = 100;
-
-        createCharge(externalChargeId, chargeId);
-        databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id");
-
-        connectorRestApiClient
-                .withAccountId(accountId)
-                .getChargesV1()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("results[0].charge_id", is(externalChargeId))
-                .body("results[0].fee", is(100));
-    }
-
-    @Test
-    public void shouldGetChargeTransactionsForJSONAcceptHeader() {
-        long chargeId = nextInt();
-        String externalChargeId = RandomIdGenerator.newId();
-
-        ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
-        ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
-        final CardTypeEntity mastercardCreditCard = databaseTestHelper.getMastercardCreditCard();
-        databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), mastercardCreditCard.getId());
-        databaseTestHelper.addCharge(anAddChargeParams()
-                .withChargeId(chargeId)
-                .withExternalChargeId(externalChargeId)
-                .withGatewayAccountId(accountId)
-                .withAmount(AMOUNT)
-                .withStatus(chargeStatus)
-                .withReturnUrl(RETURN_URL)
-                .withDescription("Test description")
-                .withReference(ServicePaymentReference.of("My reference"))
-                .withCreatedDate(createdDate)
-                .build());
-        databaseTestHelper.updateChargeCardDetails(chargeId, "VISA", "1234", "123456", "Mr. McPayment",
-                "03/18", null, "line1", null, "postcode", "city", null, "country");
-        databaseTestHelper.addToken(chargeId, "tokenId");
-        databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
-
-        String description = "Test description";
-
-        connectorRestApiClient
-                .withAccountId(accountId)
-                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getChargesV1()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("results[0].charge_id", is(externalChargeId))
-                .body("results[0].state.status", is(EXTERNAL_SUBMITTED.getStatus()))
-                .body("results[0].amount", is(6234))
-                .body("results[0].card_details", notNullValue())
-                .body("results[0].gateway_account", nullValue())
-                .body("results[0].reference", is("My reference"))
-                .body("results[0].return_url", is(RETURN_URL))
-                .body("results[0].description", is(description))
-                .body("results[0].created_date", is("2016-01-26T13:45:32.000Z"))
-                .body("results[0].payment_provider", is(PROVIDER_NAME));
-    }
-
-    @Test
-    public void shouldGetChargeLegacyTransactions() {
-        long chargeId = nextInt();
-        String externalChargeId = RandomIdGenerator.newId();
-
-        ChargeStatus chargeStatus = AUTHORISATION_SUCCESS;
-        ZonedDateTime createdDate = ZonedDateTime.of(2016, 1, 26, 13, 45, 32, 123, ZoneId.of("UTC"));
-        final CardTypeEntity mastercardCreditCard = databaseTestHelper.getMastercardCreditCard();
-        databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), mastercardCreditCard.getId());
-        databaseTestHelper.addCharge(anAddChargeParams()
-                .withChargeId(chargeId)
-                .withExternalChargeId(externalChargeId)
-                .withGatewayAccountId(accountId)
-                .withAmount(AMOUNT)
-                .withStatus(chargeStatus)
-                .withCreatedDate(createdDate)
-                .build());
-        databaseTestHelper.updateChargeCardDetails(chargeId, "visa", null, null, null, null,
-                DEBIT.toString(), null, null, null, null, null, null);
-        databaseTestHelper.addToken(chargeId, "tokenId");
-        databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
-
-        connectorRestApiClient
-                .withAccountId(accountId)
-                .withHeader(HttpHeaders.ACCEPT, APPLICATION_JSON)
-                .getChargesV1()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("results[0].charge_id", is(externalChargeId))
-                .body("results[0].amount", is(6234))
-                .body("results[0].card_details", notNullValue())
-                .body("results[0].card_details.card_brand", is("Visa"))
-                .body("results[0].card_details.cardholder_name", nullValue())
-                .body("results[0].card_details.last_digits_card_number", nullValue())
-                .body("results[0].card_details.first_digits_card_number", nullValue())
-                .body("results[0].card_details.expiry_date", nullValue());
     }
 
     @Test

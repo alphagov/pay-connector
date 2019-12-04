@@ -741,14 +741,6 @@ public class DatabaseTestHelper {
         );
     }
 
-    public Map<String, Object> getFeeByChargeId(Long chargeId) {
-        return jdbi.withHandle(h ->
-                h.createQuery("SELECT * from fees WHERE charge_id = :charge_id")
-                        .bind("charge_id", chargeId)
-                        .first()
-        );
-    }
-
     public void addEmittedEvent(String resourceType, String externalId, Instant eventDate, String eventType,
                                 Instant emittedDate , Instant doNotRetryEmitUntil) {
         jdbi.withHandle(handle ->
