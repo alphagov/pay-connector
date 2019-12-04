@@ -111,17 +111,6 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return findAllBy(params);
     }
 
-    public List<ChargeEntity> findByAccountBetweenDatesWithStatusIn(Long gatewayAccountId,
-                                                                    ZonedDateTime from, ZonedDateTime to,
-                                                                    List<ChargeStatus> statuses) {
-        SearchParams params = new SearchParams()
-                .withGatewayAccountId(gatewayAccountId)
-                .withFromDate(from)
-                .withToDate(to)
-                .withInternalStates(statuses);
-        return findAllBy(params);
-    }
-
     public List<ChargeEntity> findAllBy(SearchParams params) {
         CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
         CriteriaQuery<ChargeEntity> cq = cb.createQuery(ChargeEntity.class);

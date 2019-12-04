@@ -48,15 +48,11 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
@@ -1229,117 +1225,6 @@ public class ChargeDaoIT extends DaoITestBase {
         ArrayList<ChargeStatus> chargeStatuses = Lists.newArrayList(CREATED, ENTERING_CARD_DETAILS, AUTHORISATION_SUCCESS);
 
         List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(now().minusHours(1), chargeStatuses);
-
-        assertThat(charges.size(), is(0));
-    }
-
-    @Test
-    public void findByAccountBetweenDatesWithStatusIn_findsChargeWithMatchingAccountAndStatusInsideRange() {
-        TestCharge charge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
-                .withChargeStatus(CAPTURE_APPROVED_RETRY)
-                .withCreatedDate(now().minusMinutes(30))
-                .insert();
-
-        ArrayList<ChargeStatus> statuses = Lists.newArrayList(CAPTURE_APPROVED, CAPTURE_APPROVED_RETRY, CAPTURE_READY);
-
-        List<ChargeEntity> charges = chargeDao.findByAccountBetweenDatesWithStatusIn(
-                defaultTestAccount.getAccountId(),
-                now().minusMinutes(45),
-                now().minusMinutes(15),
-                statuses);
-
-        assertThat(charges.size(), is(1));
-        assertThat(charges.get(0).getId(), is(charge.getChargeId()));
-    }
-
-    @Test
-    public void findByAccountBetweenDatesWithStatusIn_findsNoneWithNonMatchingAccountButMatchingStatusInsideRange() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
-                .withChargeStatus(AUTHORISATION_SUCCESS)
-                .withCreatedDate(now().minusMinutes(30))
-                .insert();
-
-        ArrayList<ChargeStatus> statuses = Lists.newArrayList(AUTHORISATION_SUCCESS, AUTHORISATION_REJECTED);
-
-        List<ChargeEntity> charges = chargeDao.findByAccountBetweenDatesWithStatusIn(
-                100_000L,
-                now().minusMinutes(45),
-                now().minusMinutes(15),
-                statuses);
-
-        assertThat(charges.size(), is(0));
-    }
-
-    @Test
-    public void findByAccountBetweenDatesWithStatusIn_findsNoneWithMatchingAccountButNonMatchingStatusInsideRange() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
-                .withChargeStatus(CAPTURED)
-                .withCreatedDate(now().minusMinutes(30))
-                .insert();
-
-        ArrayList<ChargeStatus> statuses = Lists.newArrayList(CREATED, ENTERING_CARD_DETAILS);
-
-        List<ChargeEntity> charges = chargeDao.findByAccountBetweenDatesWithStatusIn(
-                defaultTestAccount.getAccountId(),
-                now().minusMinutes(45),
-                now().minusMinutes(15),
-                statuses);
-
-        assertThat(charges.size(), is(0));
-    }
-
-    @Test
-    public void findByAccountBetweenDatesWithStatusIn_findsNoneWithMatchingAccountAndStatusBeforeRange() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
-                .withChargeStatus(CAPTURED)
-                .withCreatedDate(now().minusMinutes(40))
-                .insert();
-
-        ArrayList<ChargeStatus> statuses = Lists.newArrayList(CAPTURE_SUBMITTED, CAPTURED);
-
-        List<ChargeEntity> charges = chargeDao.findByAccountBetweenDatesWithStatusIn(
-                defaultTestAccount.getAccountId(),
-                now().minusMinutes(30),
-                now().minusMinutes(5),
-                statuses);
-
-        assertThat(charges.size(), is(0));
-    }
-
-    @Test
-    public void findByAccountBetweenDatesWithStatusIn_findsNoneWithMatchingAccountAndStatusAfterRange() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
-                .withChargeStatus(AUTHORISATION_SUCCESS)
-                .withCreatedDate(now().minusMinutes(5))
-                .insert();
-
-        ArrayList<ChargeStatus> statuses = Lists.newArrayList(AUTHORISATION_SUCCESS, AUTHORISATION_3DS_REQUIRED);
-
-        List<ChargeEntity> charges = chargeDao.findByAccountBetweenDatesWithStatusIn(
-                defaultTestAccount.getAccountId(),
-                now().minusMinutes(60),
-                now().minusMinutes(30),
-                statuses);
 
         assertThat(charges.size(), is(0));
     }
