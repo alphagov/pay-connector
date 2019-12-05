@@ -394,14 +394,6 @@ public class ChargesFrontendResourceIT {
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
-
-    private void assertTransactionEntry(ValidatableResponse response, int index, String externalChargeId, String gatewayTransactionId, int amount, String chargeStatus) {
-        response.body("results[" + index + "].charge_id", is(externalChargeId))
-                .body("results[" + index + "].gateway_transaction_id", is(gatewayTransactionId))
-                .body("results[" + index + "].amount", is(amount))
-                .body("results[" + index + "].state.status", is(chargeStatus));
-    }
-
     private String postToCreateACharge(long expectedAmount) {
         String reference = "Test reference";
         String postBody = createChargePostBody(description, expectedAmount, accountId, returnUrl, email);
