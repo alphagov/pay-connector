@@ -189,7 +189,7 @@ public class ChargeService {
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
         return createCharge(chargeRequest, accountId, uriInfo)
                 .map(charge ->
-                        populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge, false).build()
+                        populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge).build()
                 );
     }
 
@@ -240,14 +240,14 @@ public class ChargeService {
     public Optional<ChargeResponse> findChargeForAccount(String chargeId, Long accountId, UriInfo uriInfo) {
         return chargeDao
                 .findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(chargeEntity -> populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity, false).build());
+                .map(chargeEntity -> populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
     }
 
     @Transactional
     public Optional<ChargeResponse> findChargeByGatewayTransactionId(String gatewayTransactionId, UriInfo uriInfo) {
         return chargeDao
                 .findByGatewayTransactionId(gatewayTransactionId)
-                .map(chargeEntity -> populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity, false).build());
+                .map(chargeEntity -> populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
     }
 
     @Transactional
@@ -355,7 +355,7 @@ public class ChargeService {
         return builderOfResponse;
     }
 
-    public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity, boolean buildForSearchResult) {
+    public <T extends AbstractChargeResponseBuilder<T, R>, R> AbstractChargeResponseBuilder<T, R> populateResponseBuilderWith(AbstractChargeResponseBuilder<T, R> responseBuilder, UriInfo uriInfo, ChargeEntity chargeEntity) {
         String chargeId = chargeEntity.getExternalId();
         PersistedCard persistedCard = null;
         if (chargeEntity.getCardDetails() != null) {
@@ -406,7 +406,7 @@ public class ChargeService {
         // @TODO(sfount) consider if total and net columns could be calculation columns in postgres (single source of truth)
         chargeEntity.getNetAmount().ifPresent(builderOfResponse::withNetAmount);
 
-        if (needsNextUrl(chargeEntity, buildForSearchResult)) {
+        if (needsNextUrl(chargeEntity)) {
             TokenEntity token = createNewChargeEntityToken(chargeEntity);
             Map<String, Object> params = new HashMap<>();
             params.put("chargeTokenId", token.getToken());
@@ -419,9 +419,9 @@ public class ChargeService {
         }
     }
 
-    private boolean needsNextUrl(ChargeEntity chargeEntity, boolean buildForSearchResult) {
+    private boolean needsNextUrl(ChargeEntity chargeEntity) {
         ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
-        return !buildForSearchResult && !chargeStatus.toExternal().isFinished() && !chargeStatus.equals(AWAITING_CAPTURE_REQUEST);
+        return !chargeStatus.toExternal().isFinished() && !chargeStatus.equals(AWAITING_CAPTURE_REQUEST);
     }
 
     public ChargeEntity updateChargePostCardAuthorisation(String chargeExternalId,
