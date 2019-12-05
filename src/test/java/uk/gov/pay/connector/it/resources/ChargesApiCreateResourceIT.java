@@ -607,11 +607,6 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
                 .getCharge()
                 .body("$", not(hasKey("metadata")));
         
-        connectorRestApiClient
-                .withQueryParam("reference", JSON_REFERENCE_VALUE)
-                .getChargesV1()
-                .body("results[0]", not(hasKey("metadata")));
-        
         assertNull(databaseTestHelper.getChargeByExternalId(chargeExternalId).get("metadata"));
     }
 
