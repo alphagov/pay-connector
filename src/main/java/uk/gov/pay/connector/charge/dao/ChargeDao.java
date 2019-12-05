@@ -2,7 +2,6 @@ package uk.gov.pay.connector.charge.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
-import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
@@ -13,7 +12,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.time.Duration;
@@ -31,11 +29,6 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
     private static final String STATUS = "status";
     private static final String CREATED_DATE = "createdDate";
-    private static final String GATEWAY_ACCOUNT = "gatewayAccount";
-    private static final String CARD_DETAILS = "cardDetails";
-    private static final String REFERENCE = "reference";
-    private static final String EMAIL = "email";
-    private static final String SQL_ESCAPE_SEQ = "\\\\";
 
     @Inject
     public ChargeDao(final Provider<EntityManager> entityManager) {
@@ -108,10 +101,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         SearchParams params = new SearchParams()
                 .withToDate(date)
                 .withInternalStates(statuses);
-        return findAllBy(params);
-    }
 
-    public List<ChargeEntity> findAllBy(SearchParams params) {
         CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
         CriteriaQuery<ChargeEntity> cq = cb.createQuery(ChargeEntity.class);
         Root<ChargeEntity> charge = cq.from(ChargeEntity.class);
@@ -122,63 +112,17 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .orderBy(cb.desc(charge.get(CREATED_DATE)));
         Query query = entityManager.get().createQuery(cq);
 
-        if (params.getPage() != null && params.getDisplaySize() != null) {
-            long displaySize = params.getDisplaySize();
-            long firstResult = (params.getPage() - 1) * displaySize; // page coming from params is 1 based, so -1
-
-            query.setFirstResult((int) firstResult);
-            query.setMaxResults((int) displaySize);
-        }
         return query.getResultList();
-    }
-
-    public Long getTotalFor(SearchParams params) {
-        CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
-        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
-        Root<ChargeEntity> charge = cq.from(ChargeEntity.class);
-        List<Predicate> predicates = buildParamPredicates(params, cb, charge);
-
-        cq.select(cb.count(charge));
-        cq.where(predicates.toArray(new Predicate[]{}));
-        return entityManager.get().createQuery(cq).getSingleResult();
     }
 
     private List<Predicate> buildParamPredicates(SearchParams params, CriteriaBuilder cb, Root<ChargeEntity> charge) {
         List<Predicate> predicates = new ArrayList<>();
-        if (params.getLikeCardHolderName() != null && StringUtils.isNotBlank(params.getLikeCardHolderName().toString()))
-            predicates.add(likePredicate(cb, charge.get(CARD_DETAILS).get("cardHolderName"), params.getLikeCardHolderName().toString()));
-        if (params.getLastDigitsCardNumber() != null)
-            predicates.add(cb.equal(charge.get(CARD_DETAILS).get("lastDigitsCardNumber"), params.getLastDigitsCardNumber()));
-        if (params.getFirstDigitsCardNumber() != null)
-            predicates.add(cb.equal(charge.get(CARD_DETAILS).get("firstDigitsCardNumber"), params.getFirstDigitsCardNumber()));
-        if (params.getGatewayAccountId() != null)
-            predicates.add(cb.equal(charge.get(GATEWAY_ACCOUNT).get("id"), params.getGatewayAccountId()));
-        if (params.getReference() != null && StringUtils.isNotBlank(params.getReference().toString()))
-            predicates.add(cb.equal(cb.lower(charge.get(REFERENCE)), params.getReference().toString().toLowerCase()));
-        if (params.getLikeReference() != null && StringUtils.isNotBlank(params.getLikeReference().toString()))
-            predicates.add(likePredicate(cb, charge.get(REFERENCE), params.getLikeReference().toString()));
-        if (StringUtils.isNotBlank(params.getLikeEmail()))
-            predicates.add(likePredicate(cb, charge.get(EMAIL), params.getLikeEmail()));
         if (params.getInternalStates() != null && !params.getInternalStates().isEmpty())
             predicates.add(charge.get(STATUS).in(params.getInternalStates()));
-        if (!params.getCardBrands().isEmpty()) {
-            predicates.add(charge.get(CARD_DETAILS).get("cardBrand").in(params.getCardBrands()));
-        }
-        if (params.getFromDate() != null)
-            predicates.add(cb.greaterThanOrEqualTo(charge.get(CREATED_DATE), params.getFromDate()));
         if (params.getToDate() != null)
             predicates.add(cb.lessThan(charge.get(CREATED_DATE), params.getToDate()));
 
         return predicates;
-    }
-
-    private Predicate likePredicate(CriteriaBuilder cb, Path<String> expression, String element) {
-        String escapedReference = element
-                .replaceAll("\\\\", SQL_ESCAPE_SEQ + "\\\\")
-                .replaceAll("_", SQL_ESCAPE_SEQ + "_")
-                .replaceAll("%", SQL_ESCAPE_SEQ + "%");
-
-        return cb.like(cb.lower(expression), '%' + escapedReference.toLowerCase() + '%');
     }
 
     private static final String FIND_CAPTURE_CHARGES_WHERE_CLAUSE =
