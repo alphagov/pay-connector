@@ -89,8 +89,4 @@ public enum ChargeStatus implements Status {
         }
         throw new IllegalArgumentException("charge status not recognized: " + status);
     }
-
-    public static List<ChargeStatus> fromExternal(ExternalChargeState externalStatus) {
-        return stream(values()).filter(status -> status.toExternal().equals(externalStatus)).collect(Collectors.toList());
-    }
 }

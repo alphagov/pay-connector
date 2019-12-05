@@ -27,9 +27,7 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
@@ -52,7 +50,6 @@ import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccoun
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
-import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -365,16 +362,6 @@ public class ChargingITestBase {
         databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment", "03/18", null, "line1", null, "postcode", "city", null, "country");
 
         return externalChargeId;
-    }
-
-    protected List<String> collect(List<Map<String, Object>> results, String field) {
-        return results.stream().map(result -> result.get(field).toString()).collect(Collectors.toList());
-    }
-
-    protected List<ZonedDateTime> datesFrom(List<String> createdDateStrings) {
-        List<ZonedDateTime> dateTimes = newArrayList();
-        createdDateStrings.forEach(aDateString -> dateTimes.add(toUTCZonedDateTime(aDateString).get()));
-        return dateTimes;
     }
 
     protected void allowZeroAmountForGatewayAccount() {

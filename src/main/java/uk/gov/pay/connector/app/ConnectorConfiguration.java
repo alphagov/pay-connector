@@ -28,11 +28,6 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
-    @JsonProperty("transactionsPaginationServiceConfig")
-    private TransactionsPaginationServiceConfig transactionsPaginationServiceConfig;
-
-    @Valid
-    @NotNull
     @JsonProperty("notifyConfig")
     private NotifyConfiguration notifyConfig;
 
@@ -164,10 +159,6 @@ public class ConnectorConfiguration extends Configuration {
 
     public ExecutorServiceConfig getExecutorServiceConfig() {
         return executorServiceConfig;
-    }
-
-    public TransactionsPaginationServiceConfig getTransactionsPaginationConfig() {
-        return transactionsPaginationServiceConfig;
     }
 
     public NotifyConfiguration getNotifyConfiguration() {
