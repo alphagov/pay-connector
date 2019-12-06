@@ -29,6 +29,14 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
     private static final String STATUS = "status";
     private static final String CREATED_DATE = "createdDate";
+    private static final String FIND_CAPTURE_CHARGES_WHERE_CLAUSE =
+            "WHERE (c.status=:captureApprovedStatus OR c.status=:captureApprovedRetryStatus)" +
+                    "AND NOT EXISTS (" +
+                    "  SELECT ce FROM ChargeEventEntity ce WHERE " +
+                    "    ce.chargeEntity = c AND " +
+                    "    ce.status = :eventStatus AND " +
+                    "    ce.updated >= :cutoffDate " +
+                    ") ";
 
     @Inject
     public ChargeDao(final Provider<EntityManager> entityManager) {
@@ -98,15 +106,11 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     }
 
     public List<ChargeEntity> findBeforeDateWithStatusIn(ZonedDateTime date, List<ChargeStatus> statuses) {
-        SearchParams params = new SearchParams()
-                .withToDate(date)
-                .withInternalStates(statuses);
-
         CriteriaBuilder cb = entityManager.get().getCriteriaBuilder();
         CriteriaQuery<ChargeEntity> cq = cb.createQuery(ChargeEntity.class);
         Root<ChargeEntity> charge = cq.from(ChargeEntity.class);
 
-        List<Predicate> predicates = buildParamPredicates(params, cb, charge);
+        List<Predicate> predicates = buildParamPredicates(cb, charge, date, statuses);
         cq.select(charge)
                 .where(predicates.toArray(new Predicate[]{}))
                 .orderBy(cb.desc(charge.get(CREATED_DATE)));
@@ -115,24 +119,19 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
         return query.getResultList();
     }
 
-    private List<Predicate> buildParamPredicates(SearchParams params, CriteriaBuilder cb, Root<ChargeEntity> charge) {
+    private List<Predicate> buildParamPredicates(CriteriaBuilder cb, Root<ChargeEntity> charge,
+                                                 ZonedDateTime toDate, List<ChargeStatus> internalStates) {
         List<Predicate> predicates = new ArrayList<>();
-        if (params.getInternalStates() != null && !params.getInternalStates().isEmpty())
-            predicates.add(charge.get(STATUS).in(params.getInternalStates()));
-        if (params.getToDate() != null)
-            predicates.add(cb.lessThan(charge.get(CREATED_DATE), params.getToDate()));
+
+        if (internalStates != null && !internalStates.isEmpty()) {
+            predicates.add(charge.get(STATUS).in(internalStates));
+        }
+        if (toDate != null) {
+            predicates.add(cb.lessThan(charge.get(CREATED_DATE), toDate));
+        }
 
         return predicates;
     }
-
-    private static final String FIND_CAPTURE_CHARGES_WHERE_CLAUSE =
-            "WHERE (c.status=:captureApprovedStatus OR c.status=:captureApprovedRetryStatus)" +
-                    "AND NOT EXISTS (" +
-                    "  SELECT ce FROM ChargeEventEntity ce WHERE " +
-                    "    ce.chargeEntity = c AND " +
-                    "    ce.status = :eventStatus AND " +
-                    "    ce.updated >= :cutoffDate " +
-                    ") ";
 
     public int countChargesForImmediateCapture(Duration notAttemptedWithin) {
         String query = "SELECT count(c) FROM ChargeEntity c " + FIND_CAPTURE_CHARGES_WHERE_CLAUSE;
