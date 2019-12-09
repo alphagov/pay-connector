@@ -16,6 +16,7 @@ import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
+import static uk.gov.pay.logging.LoggingKeys.PROVIDER_PAYMENT_ID;
 import static uk.gov.pay.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 import static uk.gov.pay.logging.LoggingKeys.SECURE_TOKEN;
 
@@ -48,6 +49,9 @@ public class LoggingMDCRequestFilter implements ContainerRequestFilter {
 
         getPathParameterFromRequest("chargeTokenId", requestContext)
                 .ifPresent(token -> MDC.put(SECURE_TOKEN, token));
+
+        getPathParameterFromRequest("gatewayTransactionId", requestContext)
+                .ifPresent(gatewayTxId -> MDC.put(PROVIDER_PAYMENT_ID, gatewayTxId));
     }
 
     private Optional<ChargeEntity> getChargeFromRequest(ContainerRequestContext requestContext) {
