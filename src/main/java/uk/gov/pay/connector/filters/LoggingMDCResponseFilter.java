@@ -6,22 +6,20 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import java.io.IOException;
+import java.util.List;
 
 import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
+import static uk.gov.pay.logging.LoggingKeys.PROVIDER_PAYMENT_ID;
 import static uk.gov.pay.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 import static uk.gov.pay.logging.LoggingKeys.SECURE_TOKEN;
 
 public class LoggingMDCResponseFilter implements ContainerResponseFilter {
     @Override
     public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
-        MDC.remove(PAYMENT_EXTERNAL_ID);
-        MDC.remove(GATEWAY_ACCOUNT_ID);
-        MDC.remove(PROVIDER);
-        MDC.remove(GATEWAY_ACCOUNT_TYPE);
-        MDC.remove(REFUND_EXTERNAL_ID);
-        MDC.remove(SECURE_TOKEN);
+        List.of(PAYMENT_EXTERNAL_ID, GATEWAY_ACCOUNT_ID, PROVIDER, GATEWAY_ACCOUNT_TYPE, REFUND_EXTERNAL_ID, 
+                SECURE_TOKEN, PROVIDER_PAYMENT_ID).forEach(MDC::remove);
     }
 }
