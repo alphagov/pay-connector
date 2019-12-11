@@ -1360,4 +1360,16 @@
         </update>
     </changeSet>
 
+    <changeSet id="add allow MOTO column for gateway accounts" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="allow_moto" type="boolean" defaultValue="false"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add MOTO column for charges" author="">
+        <addColumn tableName="charges">
+            <column name="moto" type="boolean" defaultValue="false"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
