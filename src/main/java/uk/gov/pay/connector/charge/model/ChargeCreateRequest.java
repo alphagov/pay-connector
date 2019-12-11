@@ -45,6 +45,9 @@ public class ChargeCreateRequest {
     @JsonProperty("delayed_capture")
     private boolean delayedCapture = false;
 
+    @JsonProperty("moto")
+    private boolean moto = false;
+
     @JsonDeserialize(using = SupportedLanguageJsonDeserializer.class)
     @JsonProperty("language")
     private SupportedLanguage language = SupportedLanguage.ENGLISH;
@@ -68,6 +71,7 @@ public class ChargeCreateRequest {
                         String returnUrl,
                         String email,
                         boolean delayedCapture,
+                        boolean moto,
                         SupportedLanguage language,
                         PrefilledCardHolderDetails prefilledCardHolderDetails,
                         ExternalMetadata externalMetadata) {
@@ -77,6 +81,7 @@ public class ChargeCreateRequest {
         this.returnUrl = returnUrl;
         this.email = email;
         this.delayedCapture = delayedCapture;
+        this.moto = moto;
         this.language = language;
         this.prefilledCardHolderDetails = prefilledCardHolderDetails;
         this.externalMetadata = externalMetadata;
@@ -105,6 +110,10 @@ public class ChargeCreateRequest {
     public boolean isDelayedCapture() {
         return delayedCapture;
     }
+    
+    public boolean isMoto() {
+        return moto;
+    }
 
     public SupportedLanguage getLanguage() {
         return language;
@@ -124,6 +133,7 @@ public class ChargeCreateRequest {
                 ", reference='" + reference + '\'' +
                 ", returnUrl='" + returnUrl + '\'' +
                 ", delayed_capture=" + delayedCapture +
+                ", moto=" + moto + 
                 (language != null ? ", language=" + language.toString() : "") +
                 '}';
     }

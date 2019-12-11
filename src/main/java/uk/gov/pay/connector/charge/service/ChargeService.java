@@ -207,7 +207,6 @@ public class ChargeService {
                     ? chargeRequest.getLanguage()
                     : SupportedLanguage.ENGLISH;
 
-            boolean moto = false;
             ChargeEntity chargeEntity = new ChargeEntity(
                     chargeRequest.getAmount(),
                     chargeRequest.getReturnUrl(),
@@ -218,7 +217,7 @@ public class ChargeService {
                     language,
                     chargeRequest.isDelayedCapture(),
                     chargeRequest.getExternalMetadata().orElse(null),
-                    moto);
+                    chargeRequest.isMoto());
 
             chargeRequest.getPrefilledCardHolderDetails()
                     .map(this::createCardDetailsEntity)
