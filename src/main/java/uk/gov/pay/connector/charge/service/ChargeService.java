@@ -198,6 +198,10 @@ public class ChargeService {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
 
             checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
+            
+            if (chargeRequest.isMoto() && !gatewayAccount.isAllowMoto()) {
+
+            }
 
             if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
                 logger.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
