@@ -559,6 +559,14 @@ public class DatabaseTestHelper {
         );
     }
 
+    public void allowMotoPaymentsFor(Long accountId) {
+        jdbi.withHandle(handle ->
+                handle.createStatement("UPDATE gateway_accounts set allow_moto=true WHERE id=:gatewayAccountId")
+                        .bind("gatewayAccountId", accountId)
+                        .execute()
+        );
+    }
+
     public void addWalletType(long chargeId, WalletType walletType) {
         jdbi.withHandle(handle ->
                 handle.createStatement("UPDATE CHARGES set wallet=:walletType WHERE id=:chargeId")
