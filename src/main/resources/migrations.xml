@@ -1344,4 +1344,20 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add block prepaid cards column for gateway accounts" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="block_prepaid_cards" type="boolean" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="default block_prepaid_cards column to false" author="">
+        <addDefaultValue tableName="gateway_accounts" columnName="block_prepaid_cards" defaultValue="false" />
+    </changeSet>
+    
+    <changeSet id="update current block_prepaid_cards column to default value" author="">
+        <update tableName="gateway_accounts">
+            <column name="block_prepaid_cards" value="false" />
+        </update>
+    </changeSet>
+
 </databaseChangeLog>
