@@ -15,12 +15,13 @@ public class StripePaymentIntentRequest extends StripeRequest {
     private final String frontendUrl;
     private final String chargeExternalId;
     private final String description;
+    private final boolean moto;
 
 
     public StripePaymentIntentRequest(
             GatewayAccountEntity gatewayAccount, String idempotencyKey, StripeGatewayConfig stripeGatewayConfig, 
             String amount, String paymentMethodId, String transferGroup, String frontendUrl, String chargeExternalId,
-            String description) {
+            String description, boolean moto) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig);
         this.amount = amount;
         this.paymentMethodId = paymentMethodId;
@@ -28,6 +29,7 @@ public class StripePaymentIntentRequest extends StripeRequest {
         this.frontendUrl = frontendUrl;
         this.chargeExternalId = chargeExternalId;
         this.description = description;
+        this.moto = moto;
     }
 
     public static StripePaymentIntentRequest of(
@@ -45,7 +47,8 @@ public class StripePaymentIntentRequest extends StripeRequest {
                 request.getChargeExternalId(),
                 frontendUrl,
                 request.getChargeExternalId(),
-                request.getDescription()
+                request.getDescription(),
+                request.getCharge().isMoto()
         );
     }
     
@@ -61,7 +64,7 @@ public class StripePaymentIntentRequest extends StripeRequest {
 
     @Override
     protected Map<String, String> params() {
-        return Map.of(
+        Map<String, String> params = Map.of(
                 "payment_method", paymentMethodId,
                 "amount", amount,
                 "confirmation_method", "automatic",
@@ -73,6 +76,11 @@ public class StripePaymentIntentRequest extends StripeRequest {
                 "confirm", "true",
                 "return_url", String.format("%s/card_details/%s/3ds_required_in", frontendUrl, chargeExternalId)
         );
+
+        if (moto) {
+            params.put("payment_method_options[card[isMoto]]", "true");
+        }
+        return params;
     }
 
     @Override

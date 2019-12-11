@@ -10,6 +10,7 @@ public final class ChargeCreateRequestBuilder {
     private String returnUrl;
     private String email;
     private boolean delayedCapture;
+    private boolean moto;
     private SupportedLanguage language;
     private PrefilledCardHolderDetails prefilledCardHolderDetails;
     private ExternalMetadata externalMetadata;
@@ -51,6 +52,11 @@ public final class ChargeCreateRequestBuilder {
         return this;
     }
 
+    public ChargeCreateRequestBuilder withMoto(boolean moto) {
+        this.moto = moto;
+        return this;
+    }
+
     public ChargeCreateRequestBuilder withLanguage(SupportedLanguage language) {
         this.language = language;
         return this;
@@ -67,7 +73,7 @@ public final class ChargeCreateRequestBuilder {
     }
 
     public ChargeCreateRequest build() {
-        return new ChargeCreateRequest(amount, description, reference, returnUrl, email, delayedCapture, language,
+        return new ChargeCreateRequest(amount, description, reference, returnUrl, email, delayedCapture, moto, language,
                 prefilledCardHolderDetails, externalMetadata);
     }
 }
