@@ -232,6 +232,32 @@ public class GatewayAccountServiceTest {
     }
 
     @Test
+    public void shouldUpdateBlockPrepaidCardsTrue() {
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "replace",
+                "path", "block_prepaid_cards",
+                "value", true)));
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        verify(mockGatewayAccountEntity).setBlockPrepaidCards(true);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
+    public void shouldUpdateBlockPrepaidCardsFalse() {
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "replace",
+                "path", "block_prepaid_cards",
+                "value", false)));
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        verify(mockGatewayAccountEntity).setBlockPrepaidCards(false);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
     public void shouldUpdateIntegrationVersion3ds() {
         JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
                 "op", "replace",
