@@ -46,6 +46,9 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("allow_google_pay")
     private boolean allowGooglePay;
 
+    @JsonProperty("block_prepaid_cards")
+    private boolean blockPrepaidCards;
+
     @JsonProperty("corporate_prepaid_credit_card_surcharge_amount")
     private long corporatePrepaidCreditCardSurchargeAmount;
 
@@ -80,7 +83,7 @@ public class GatewayAccountResourceDTO {
                                      long corporateDebitCardSurchargeAmount,
                                      boolean allowApplePay,
                                      boolean allowGooglePay,
-                                     long corporatePrepaidCreditCardSurchargeAmount,
+                                     boolean blockPrepaidCards, long corporatePrepaidCreditCardSurchargeAmount,
                                      long corporatePrepaidDebitCardSurchargeAmount,
                                      Map<EmailNotificationType, EmailNotificationEntity> emailNotifications,
                                      EmailCollectionMode emailCollectionMode,
@@ -97,6 +100,7 @@ public class GatewayAccountResourceDTO {
         this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
         this.allowApplePay = allowApplePay;
         this.allowGooglePay = allowGooglePay;
+        this.blockPrepaidCards = blockPrepaidCards;
         this.corporatePrepaidCreditCardSurchargeAmount = corporatePrepaidCreditCardSurchargeAmount;
         this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
         this.emailNotifications = emailNotifications;
@@ -118,6 +122,7 @@ public class GatewayAccountResourceDTO {
                 gatewayAccountEntity.getCorporateNonPrepaidDebitCardSurchargeAmount(),
                 gatewayAccountEntity.isAllowApplePay(),
                 gatewayAccountEntity.isAllowGooglePay(),
+                gatewayAccountEntity.isBlockPrepaidCards(),
                 gatewayAccountEntity.getCorporatePrepaidCreditCardSurchargeAmount(),
                 gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount(),
                 gatewayAccountEntity.getEmailNotifications(),
@@ -182,6 +187,10 @@ public class GatewayAccountResourceDTO {
 
     public boolean isAllowGooglePay() {
         return allowGooglePay;
+    }
+    
+    public boolean isBlockPrepaidCards() {
+        return blockPrepaidCards;
     }
 
     public Map<EmailNotificationType, EmailNotificationEntity> getEmailNotifications() {

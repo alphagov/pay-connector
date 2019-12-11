@@ -94,6 +94,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "allow_zero_amount")
     private boolean allowZeroAmount;
 
+    @Column(name = "block_prepaid_cards")
+    private boolean blockPrepaidCards;
+
     @Column(name = "integration_version_3ds")
     private int integrationVersion3ds;
 
@@ -234,6 +237,12 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public boolean isAllowZeroAmount() {
         return allowZeroAmount;
     }
+    
+    @JsonProperty("block_prepaid_cards")
+    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    public boolean isBlockPrepaidCards() {
+        return blockPrepaidCards;
+    }
 
     @JsonProperty("corporate_credit_card_surcharge_amount")
     @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
@@ -360,6 +369,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setAllowZeroAmount(boolean allowZeroAmount) {
         this.allowZeroAmount = allowZeroAmount;
+    }
+
+    public void setBlockPrepaidCards(boolean blockPrepaidCards) {
+        this.blockPrepaidCards = blockPrepaidCards;
     }
 
     public void setIntegrationVersion3ds(int integrationVersion3ds) {

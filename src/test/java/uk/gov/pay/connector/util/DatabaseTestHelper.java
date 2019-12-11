@@ -550,6 +550,14 @@ public class DatabaseTestHelper {
                         .execute()
         );
     }
+    
+    public void blockPrepaidCards(Long accountId) {
+        jdbi.withHandle(handle ->
+                handle.createStatement("UPDATE gateway_accounts set block_prepaid_cards=true WHERE id=:gatewayAccountId")
+                        .bind("gatewayAccountId", accountId)
+                        .execute()
+        );
+    }
 
     public void addWalletType(long chargeId, WalletType walletType) {
         jdbi.withHandle(handle ->
