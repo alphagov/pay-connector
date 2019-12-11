@@ -158,14 +158,17 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     @Convert(converter = UTCDateTimeConverter.class)
     private ZonedDateTime parityCheckDate;
 
+    @Column(name = "moto")
+    private boolean moto;
+
     public ChargeEntity() {
         //for jpa
     }
 
     public ChargeEntity(Long amount, String returnUrl, String description, ServicePaymentReference reference,
                         GatewayAccountEntity gatewayAccount, String email, SupportedLanguage language,
-                        boolean delayedCapture, ExternalMetadata externalMetadata) {
-        this(amount, UNDEFINED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture, externalMetadata);
+                        boolean delayedCapture, ExternalMetadata externalMetadata, boolean moto) {
+        this(amount, UNDEFINED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture, externalMetadata, moto);
     }
 
     public ChargeEntity(Long amount,
@@ -195,7 +198,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     // Only the ChargeEntityFixture should directly call this constructor
     public ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, ServicePaymentReference reference,
                         GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate, SupportedLanguage language,
-                        boolean delayedCapture, ExternalMetadata externalMetadata) {
+                        boolean delayedCapture, ExternalMetadata externalMetadata, boolean moto) {
         this.amount = amount;
         this.status = status.getValue();
         this.returnUrl = returnUrl;
@@ -208,6 +211,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.language = language;
         this.delayedCapture = delayedCapture;
         this.externalMetadata = externalMetadata;
+        this.moto = moto;
     }
 
     public Long getId() {
@@ -332,6 +336,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.walletType = walletType;
     }
 
+    public void setMoto(boolean moto) {
+        this.moto = moto;
+    }
+
     public boolean hasExternalStatus(ExternalChargeState... state) {
         return Arrays.stream(state).anyMatch(s -> fromString(getStatus()).toExternal().equals(s));
     }
@@ -411,6 +419,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     public ZonedDateTime getParityCheckDate() {
         return parityCheckDate;
+    }
+
+    public boolean isMoto() {
+        return moto;
     }
 
     public void updateParityCheck(ParityCheckStatus parityCheckStatus) {

@@ -61,7 +61,7 @@ public class ChargeEntityFixture {
 
     public ChargeEntity build() {
         ChargeEntity chargeEntity = new ChargeEntity(amount, status, returnUrl, description, reference,
-                gatewayAccountEntity, email, createdDate, language, delayedCapture, externalMetadata);
+                gatewayAccountEntity, email, createdDate, language, delayedCapture, externalMetadata, false);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
         chargeEntity.setGatewayTransactionId(transactionId);
