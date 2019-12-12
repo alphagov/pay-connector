@@ -70,6 +70,9 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
         assertThat(result.get("issuer"), is("testissuer"));
         assertThat(result.get("organisational_unit_id"), is("hihihi"));
         assertThat(result.get("jwt_mac_key"), is("hihihihihi"));
+
+        result = databaseTestHelper.getGatewayAccount(accountId);
+        assertThat(result.get("integration_version_3ds"), is(2));
     }
 
     @Test
@@ -98,6 +101,9 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
         assertThat(result.get("issuer"), is("updated_issuer"));
         assertThat(result.get("organisational_unit_id"), is("updated_organisational_unit_id"));
         assertThat(result.get("jwt_mac_key"), is("updated_jwt_mac_key"));
+
+        result = databaseTestHelper.getGatewayAccount(accountId);
+        assertThat(result.get("integration_version_3ds"), is(2));
     }
 
     @Test
@@ -192,5 +198,26 @@ public class GatewayAccount3dsFlexCredentialsResourceIT {
                 .then()
                 .statusCode(404)
                 .body("message[0]", is("Not a Worldpay gateway account"));
+    }
+
+    @Test
+    public void setIntegrationVersion3DSTo1WhenCredentialsAreBlank() throws JsonProcessingException {
+        String payload = new ObjectMapper().writeValueAsString(Map.of(
+                "issuer", "",
+                "organisational_unit_id", "hihihi",
+                "jwt_mac_key", "hihihihihi"
+        ));
+        givenSetup()
+                .body(payload)
+                .post(format(ACCOUNTS_API_URL,testAccount.getAccountId()))
+                .then()
+                .statusCode(200);
+        var result = databaseTestHelper.getWorldpay3dsFlexCredentials(accountId);
+        assertThat(result.get("issuer"), is(""));
+        assertThat(result.get("organisational_unit_id"), is("hihihi"));
+        assertThat(result.get("jwt_mac_key"), is("hihihihihi"));
+
+        result = databaseTestHelper.getGatewayAccount(accountId);
+        assertThat(result.get("integration_version_3ds"), is(1));
     }
 }
