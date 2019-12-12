@@ -31,6 +31,7 @@ import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccou
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.resource.ChargesFrontendResource;
 import uk.gov.pay.connector.chargeevent.resource.ChargeEventsResource;
+import uk.gov.pay.connector.cloudfront.CloudfrontEncryptionModule;
 import uk.gov.pay.connector.command.RenderStateTransitionGraphCommand;
 import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
 import uk.gov.pay.connector.common.exception.UnsupportedOperationExceptionMapper;
@@ -98,6 +99,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         bootstrap.addCommand(new RenderStateTransitionGraphCommand());
         bootstrap.getObjectMapper().getSubtypeResolver().registerSubtypes(LogstashConsoleAppenderFactory.class);
         bootstrap.getObjectMapper().getSubtypeResolver().registerSubtypes(GovUkPayDropwizardRequestJsonLogLayoutFactory.class);
+        bootstrap.getObjectMapper().registerModule(new CloudfrontEncryptionModule());
     }
 
     @Override

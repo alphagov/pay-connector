@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import uk.gov.pay.connector.cloudfront.CloudfrontEncryptedField;
 import uk.gov.pay.connector.common.model.domain.Address;
 
 import java.time.YearMonth;
@@ -12,7 +13,7 @@ import static uk.gov.pay.connector.gateway.model.PayersCardType.CREDIT_OR_DEBIT;
 @ValidAuthCardDetails
 public class AuthCardDetails implements AuthorisationDetails {
 
-    private String cardNo;
+    private CloudfrontEncryptedField cardNo;
     private String cardHolder;
     private String cvc;
     private String endDate;
@@ -31,8 +32,12 @@ public class AuthCardDetails implements AuthorisationDetails {
     }
 
     @JsonProperty("card_number")
-    public void setCardNo(String cardNo) {
+    public void setCardNo(CloudfrontEncryptedField cardNo) {
         this.cardNo = cardNo;
+    }
+    
+    public void setCardNo(String cardNo) {
+        this.cardNo = new CloudfrontEncryptedField(cardNo);
     }
 
     @JsonProperty("card_brand")
@@ -96,7 +101,7 @@ public class AuthCardDetails implements AuthorisationDetails {
     }
 
     public String getCardNo() {
-        return cardNo;
+        return cardNo.toString();
     }
 
     public String getCardHolder() {
