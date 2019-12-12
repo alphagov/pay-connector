@@ -786,4 +786,11 @@ public class DatabaseTestHelper {
                 .bind("accountId", accountId)
                 .first());
     }
+
+    public Map<String, Object> getGatewayAccount(Long accountId) {
+        return jdbi.withHandle(handle ->
+                handle.createQuery("SELECT * FROM gateway_accounts WHERE id = :accountId")
+                .bind("accountId", accountId)
+                .first());
+    }
 }

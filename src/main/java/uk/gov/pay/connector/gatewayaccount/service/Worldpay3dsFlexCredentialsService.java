@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.gatewayaccount.service;
 
+import com.google.inject.persist.Transactional;
+import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.dao.Worldpay3dsFlexCredentialsDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayUpdate3dsFlexCredentialsRequest;
@@ -10,13 +12,17 @@ import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentia
 
 public class Worldpay3dsFlexCredentialsService {
 
+    private GatewayAccountDao gatewayAccountDao;
     private Worldpay3dsFlexCredentialsDao worldpay3dsFlexCredentialsDao;
 
     @Inject
-    public Worldpay3dsFlexCredentialsService(Worldpay3dsFlexCredentialsDao worldpay3dsFlexCredentialsDao) {
+    public Worldpay3dsFlexCredentialsService(Worldpay3dsFlexCredentialsDao worldpay3dsFlexCredentialsDao,
+                                             GatewayAccountDao gatewayAccountDao) {
         this.worldpay3dsFlexCredentialsDao = worldpay3dsFlexCredentialsDao;
+        this.gatewayAccountDao = gatewayAccountDao;
     }
 
+    @Transactional
     public void setGatewayAccountWorldpay3dsFlexCredentials(WorldpayUpdate3dsFlexCredentialsRequest worldpayUpdate3dsFlexCredentialsRequest, GatewayAccountEntity gatewayAccountEntity) {
         worldpay3dsFlexCredentialsDao.findByGatewayAccountId(gatewayAccountEntity.getId()).ifPresentOrElse(worldpay3dsFlexCredentialsEntity -> {
             worldpay3dsFlexCredentialsEntity.setIssuer(worldpayUpdate3dsFlexCredentialsRequest.getIssuer());
@@ -32,5 +38,10 @@ public class Worldpay3dsFlexCredentialsService {
                     .build();
             worldpay3dsFlexCredentialsDao.merge(newWorldpay3dsFlexCredentialsEntity);
         });
+        gatewayAccountEntity.setIntegrationVersion3ds(
+                worldpayUpdate3dsFlexCredentialsRequest.hasAllCredentials() ?
+                        IntegrationVersion3DS.TWO.getValue() :
+                        IntegrationVersion3DS.ONE.getValue());
+        gatewayAccountDao.merge(gatewayAccountEntity);
     }
 }

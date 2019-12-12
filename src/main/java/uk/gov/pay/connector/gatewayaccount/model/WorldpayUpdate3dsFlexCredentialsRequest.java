@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
 
+import static org.apache.commons.lang3.StringUtils.isNoneBlank;
+
 public class WorldpayUpdate3dsFlexCredentialsRequest {
 
     @JsonProperty("issuer")
@@ -38,6 +40,10 @@ public class WorldpayUpdate3dsFlexCredentialsRequest {
 
     public String getJwtMacKey() {
         return jwtMacKey;
+    }
+
+    public boolean hasAllCredentials() {
+        return isNoneBlank(issuer, organisationalUnitId, jwtMacKey);
     }
 
     public static final class WorldpayUpdate3dsFlexCredentialsRequestBuilder {
