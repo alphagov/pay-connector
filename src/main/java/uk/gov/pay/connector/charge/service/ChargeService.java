@@ -13,6 +13,7 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.charge.exception.MotoNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -187,20 +188,20 @@ public class ChargeService {
     }
 
     public Optional<ChargeResponse> create(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
-        return createCharge(chargeRequest, accountId, uriInfo)
+        return createCharge(chargeRequest, accountId)
                 .map(charge ->
                         populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge).build()
                 );
     }
 
     @Transactional
-    private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, UriInfo uriInfo) {
+    private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
 
             checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
             
             if (chargeRequest.isMoto() && !gatewayAccount.isAllowMoto()) {
-
+                throw new MotoNotAllowedForGatewayAccountException(accountId);
             }
 
             if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
