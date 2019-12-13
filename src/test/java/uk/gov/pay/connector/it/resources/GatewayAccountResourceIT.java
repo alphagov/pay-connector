@@ -387,7 +387,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .statusCode(200)
                 .body("$", not(hasKey("worldpay_3ds_flex")));
     }
-    
+
     @Test
     public void shouldToggle3dsToFalse() {
         String gatewayAccountId = createAGatewayAccountFor("worldpay", "old-desc", "old-id");
@@ -477,6 +477,25 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    public void shouldReturn200_whenBlockPrepaidCardsIsUpdated() throws Exception {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String payload = new ObjectMapper().writeValueAsString(ImmutableMap.of("op", "replace",
+                "path", "block_prepaid_cards",
+                "value", true));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("block_prepaid_cards", is(true));
     }
 
     @Test
