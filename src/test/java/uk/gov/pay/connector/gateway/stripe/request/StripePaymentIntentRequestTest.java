@@ -16,6 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import java.net.URI;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
@@ -25,8 +26,6 @@ public class StripePaymentIntentRequestTest {
     private final String stripeConnectAccountId = "stripeConnectAccountId";
     private final String chargeExternalId = "payChargeExternalId";
     private final String stripeBaseUrl = "stripeUrl";
-
-    private StripePaymentIntentRequest stripePaymentIntentRequest;
 
     @Mock
     ChargeEntity charge;
@@ -51,14 +50,12 @@ public class StripePaymentIntentRequestTest {
         when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
-
-        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
-
-        stripePaymentIntentRequest = StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl);
     }
 
     @Test
     public void shouldHaveCorrectParametersWithAddress() {
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
+        StripePaymentIntentRequest stripePaymentIntentRequest = StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl);
         
         String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
         assertThat(payload, containsString("payment_method=" + paymentMethodId));
@@ -74,7 +71,32 @@ public class StripePaymentIntentRequestTest {
     }
 
     @Test
+    public void shouldSetFlagIfChargeIsConfiguredForMoto() {
+        when(charge.isMoto()).thenReturn(true);
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
+        StripePaymentIntentRequest stripePaymentIntentRequest = StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl);
+
+        
+        String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
+        assertThat(payload, containsString("payment_method_options%5Bcard%5BisMoto%5D%5D=true"));
+    }
+
+    @Test
+    public void shouldIgnoreFlagIfChargeIsNotConfiguredForMoto() {
+        when(charge.isMoto()).thenReturn(false);
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
+        StripePaymentIntentRequest stripePaymentIntentRequest = StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl);
+
+
+        String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
+        assertThat(payload, not(containsString("isMoto")));
+    }
+
+    @Test
     public void createsCorrectIdempotencyKey() {
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
+        StripePaymentIntentRequest stripePaymentIntentRequest = StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl);
+
         assertThat(
                 stripePaymentIntentRequest.getHeaders().get("Idempotency-Key"),
                 is("payment_intent" + chargeExternalId));
@@ -82,6 +104,8 @@ public class StripePaymentIntentRequestTest {
 
     @Test
     public void shouldCreateCorrectUrl() {
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
+        StripePaymentIntentRequest stripePaymentIntentRequest = StripePaymentIntentRequest.of(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl);
         assertThat(stripePaymentIntentRequest.getUrl(), is(URI.create(stripeBaseUrl + "/v1/payment_intents")));
     }
 }

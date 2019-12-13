@@ -21,6 +21,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.exception.MotoNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -347,6 +348,20 @@ public class ChargeServiceTest {
     @Test(expected = ZeroAmountNotAllowedForGatewayAccountException.class)
     public void shouldThrowExceptionWhenCreateChargeWithZeroAmountIfGatewayAccountDoesNotAllowIt() {
         final ChargeCreateRequest request = requestBuilder.withAmount(0).build();
+
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+
+    @Test(expected = MotoNotAllowedForGatewayAccountException.class)
+    public void shouldThrowExceptionWhenCreateChargeWithMotoIfGatewayAccountDoesNotAllowIt() {
+        final ChargeCreateRequest request = requestBuilder
+                .withAmount(100)
+                .withMoto(true)
+                .build();
+
+        gatewayAccount.setAllowMoto(false);
 
         service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
 

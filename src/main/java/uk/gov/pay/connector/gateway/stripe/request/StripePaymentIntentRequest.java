@@ -5,6 +5,7 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class StripePaymentIntentRequest extends StripeRequest {
@@ -64,7 +65,7 @@ public class StripePaymentIntentRequest extends StripeRequest {
 
     @Override
     protected Map<String, String> params() {
-        Map<String, String> params = Map.of(
+        Map<String, String> params = new HashMap<>(Map.of(
                 "payment_method", paymentMethodId,
                 "amount", amount,
                 "confirmation_method", "automatic",
@@ -75,7 +76,7 @@ public class StripePaymentIntentRequest extends StripeRequest {
                 "on_behalf_of", stripeConnectAccountId,
                 "confirm", "true",
                 "return_url", String.format("%s/card_details/%s/3ds_required_in", frontendUrl, chargeExternalId)
-        );
+        ));
 
         if (moto) {
             params.put("payment_method_options[card[isMoto]]", "true");
