@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -284,9 +285,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     public void setStatus(ChargeStatus targetStatus, Event event) {
         if (isValidTransition(fromString(this.status), targetStatus, event)) {
-            var logMessage = format("Changing charge status for externalId [%s] [%s]->[%s] [event=%s]",
-                    this.externalId, this.status, targetStatus.getValue(), event);
-            logger.info(logMessage, getStructuredLoggingArgs());
+            logStateChange(targetStatus, event);
             this.status = targetStatus.getValue();
         } else {
             var logMessage = format("Charge with state %s cannot proceed to %s [charge_external_id=%s, charge_status=%s, event=%s]",
@@ -294,6 +293,17 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
             logger.warn(logMessage, getStructuredLoggingArgs());
             throw new InvalidStateTransitionException(this.status, targetStatus.getValue(), event);
         }
+    }
+
+    private void logStateChange(ChargeStatus targetStatus, Event event) {
+        var logMessage = format("Changing charge status for externalId [%s] [%s]->[%s] [event=%s]",
+                this.externalId, this.status, targetStatus.getValue(), event);
+        var structuredArguments = Stream.concat(
+                getStructuredLoggingArgs().stream(),
+                Stream.of(kv("from_state", this.status), kv("to_state", targetStatus)))
+                .toArray();
+
+        logger.info(logMessage, structuredArguments);
     }
 
     public List<StructuredArgument> getStructuredLoggingArgs() {
