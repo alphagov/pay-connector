@@ -8,7 +8,6 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import uk.gov.pay.commons.model.ErrorIdentifier;
@@ -104,7 +103,6 @@ public class ChargingITestBase {
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
     }
 
-    @After
     public void tearDown() {
         databaseTestHelper.truncateAllData();
     }

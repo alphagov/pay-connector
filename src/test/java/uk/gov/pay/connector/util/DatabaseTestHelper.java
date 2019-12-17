@@ -696,9 +696,9 @@ public class DatabaseTestHelper {
     }
     
     public void truncateAllData() {
-        jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE gateway_accounts CASCADE").execute());
-        jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE emitted_events CASCADE").execute());
-        jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE tokens").execute());
+//        jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE gateway_accounts CASCADE").execute());
+//        jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE emitted_events CASCADE").execute());
+//        jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE tokens").execute());
     }
 
     public Long getChargeIdByExternalId(String externalChargeId) {
