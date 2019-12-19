@@ -3,6 +3,8 @@ package uk.gov.pay.connector.gateway.worldpay;
 import io.dropwizard.setup.Environment;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
@@ -27,6 +29,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.applepay.WorldpayWalletAuthorisationHandler;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
@@ -57,6 +60,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     public static final String WORLDPAY_MACHINE_COOKIE_NAME = "machine";
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GatewayClient authoriseClient;
     private final GatewayClient cancelClient;
     private final GatewayClient captureClient;
@@ -187,9 +191,10 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     private GatewayOrder buildAuthoriseOrder(CardAuthorisationGatewayRequest request) {
+        logMissingDdcResultFor3dsFlexIntegration(request);
+
         boolean is3dsRequired = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() ||
                 request.getGatewayAccount().isRequires3ds();
-
 
         var builder = aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId(request.getChargeExternalId())
@@ -207,6 +212,14 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 .withAmount(request.getAmount())
                 .withAuthorisationDetails(request.getAuthCardDetails())
                 .build();
+    }
+
+    private void logMissingDdcResultFor3dsFlexIntegration(CardAuthorisationGatewayRequest request) {
+        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
+        if (gatewayAccount.isRequires3ds() && gatewayAccount.getIntegrationVersion3ds() == 2 &&
+                request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isEmpty()) {
+            logger.info("[3DS Flex] Missing device data collection result for {}", gatewayAccount.getId());
+        }
     }
 
     private GatewayOrder build3dsResponseAuthOrder(Auth3dsResponseGatewayRequest request) {
