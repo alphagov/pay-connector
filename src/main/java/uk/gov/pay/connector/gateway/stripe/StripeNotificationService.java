@@ -32,6 +32,7 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class StripeNotificationService {
 
@@ -196,15 +197,22 @@ public class StripeNotificationService {
     }
 
     private void delayFor3dsReady(ChargeEntity charge) {
-        if (ChargeStatus.fromString(charge.getStatus()) == ChargeStatus.AUTHORISATION_3DS_READY) {
-            return;
+        int totalTimeDelayedInMillis = 0;
+        int delayInMillis = 200;
+        while (totalTimeDelayedInMillis < stripeGatewayConfig.getNotification3dsWaitDelay()) {
+            ChargeEntity chargeEntity = chargeService.findChargeById(charge.getExternalId());
+            if (ChargeStatus.fromString(chargeEntity.getStatus()) == AUTHORISATION_3DS_READY) {
+                break;
+            }
+            try {
+                Thread.sleep(delayInMillis);
+            } catch (InterruptedException e) {
+                logger.error("Waiting for 3ds ready locking state failed, {}", kv("error", e.getMessage()));
+            }
+            totalTimeDelayedInMillis += delayInMillis;
         }
-        logger.info("Frontend has not posted 3ds ready locking state, waiting for configured delay");
-        try {
-            Thread.sleep(stripeGatewayConfig.getNotification3dsWaitDelay());
-        } catch (InterruptedException e) {
-            logger.error("Waiting for 3ds ready locking state failed", kv("error", e.getMessage()));
-        }
+        logger.info("Total time waited for Frontend to update charge [{}] to 3ds ready - {} milliseconds,"
+                , kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()), totalTimeDelayedInMillis);
     }
 
     private boolean isASourceNotification(StripeNotification notification) {

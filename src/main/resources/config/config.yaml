@@ -100,7 +100,7 @@ stripe:
   platformAccountId: ${STRIPE_PLATFORM_ACCOUNT_ID}
   feePercentage: ${STRIPE_TRANSACTION_FEE_PERCENTAGE}
   collectFee: ${COLLECT_FEE_FEATURE_FLAG:-false}
-  notification3dsWaitDelay: ${NOTIFICATION_3DS_WAIT_DELAY:-100}
+  notification3dsWaitDelay: ${NOTIFICATION_3DS_WAIT_DELAY:-1000}
 
 executorServiceConfig:
   timeoutInSeconds: ${AUTH_READ_TIMEOUT_SECONDS:-1}
