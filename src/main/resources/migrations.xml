@@ -1360,4 +1360,17 @@
         </update>
     </changeSet>
 
+    <changeSet id="refunds and refunds_history table has user_email column" author="">
+        <addColumn tableName="refunds">
+            <column name="user_email" type="varchar(255)" >
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="refunds_history">
+            <column name="user_email" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
