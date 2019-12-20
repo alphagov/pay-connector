@@ -69,6 +69,7 @@ stripe:
   platformAccountId: ${STRIPE_PLATFORM_ACCOUNT_ID}
   feePercentage: ${STRIPE_TRANSACTION_FEE_PERCENTAGE:-0.08}
   collectFee: ${COLLECT_FEE_FEATURE_FLAG:-true}
+  notification3dsWaitDelay: ${NOTIFICATION_3DS_WAIT_DELAY:-100}
 
 jerseyClient:
   timeout: 500ms
