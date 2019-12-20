@@ -24,16 +24,19 @@ import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import javax.ws.rs.WebApplicationException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
@@ -229,6 +232,38 @@ public class StripeNotificationServiceTest {
         notificationService.handleNotificationFor(payload, signPayload(payload));
 
         verify(mockCard3dsResponseAuthService, never()).process3DSecureAuthorisationWithoutLocking(anyString(), any());
+    }
+
+    @Test
+    public void shouldWaitForSpecifiedDelayBeforeProcessingNotification() {
+        final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
+                sourceId, SOURCE_FAILED);
+        when(stripeGatewayConfig.getNotification3dsWaitDelay()).thenReturn(1000);
+        when(mockChargeService.findChargeById(anyString())).thenReturn(mockCharge);
+
+        Instant instantBeforeInvocation = Instant.now();
+        notificationService.handleNotificationFor(payload, signPayload(payload));
+        Instant instantAfterInvocation = Instant.now();
+        assertTrue(instantAfterInvocation.isAfter(instantBeforeInvocation.plusSeconds(1)));
+        assertTrue(instantAfterInvocation.isBefore(instantBeforeInvocation.plusMillis(1500))); //includes additional overhead to complete handleNotificationFor() 
+
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.DECLINED));
+    }
+
+    @Test
+    public void shouldNotWaitForSpecifiedDelayIfChargeIs3DSReady() {
+        final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
+                sourceId, SOURCE_FAILED);
+        when(stripeGatewayConfig.getNotification3dsWaitDelay()).thenReturn(2000);
+        when(mockChargeService.findChargeById(anyString())).thenReturn(mockCharge);
+        when(mockCharge.getStatus()).thenReturn(AUTHORISATION_3DS_READY.getValue());
+
+        Instant instantBeforeInvocation = Instant.now();
+        notificationService.handleNotificationFor(payload, signPayload(payload));
+        Instant instantAfterInvocation = Instant.now();
+        assertTrue(instantAfterInvocation.isBefore(instantBeforeInvocation.plusMillis(300))); // plus 300 to consider the time to process handleNotificationFor()
+
+        verify(mockCard3dsResponseAuthService).process3DSecureAuthorisationWithoutLocking(externalId, getAuth3dsDetails(Auth3dsDetails.Auth3dsResult.DECLINED));
     }
 
     @Test(expected = WebApplicationException.class)

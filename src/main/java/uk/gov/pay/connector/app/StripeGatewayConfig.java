@@ -3,6 +3,7 @@ package uk.gov.pay.connector.app;
 import io.dropwizard.Configuration;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +33,11 @@ public class StripeGatewayConfig extends Configuration {
     @NotNull
     private Boolean collectFee;
 
+    @Valid
+    @NotNull
+    @Min(1)
+    private int notification3dsWaitDelay;
+
     public String getUrl() {
         return url;
     }
@@ -54,5 +60,9 @@ public class StripeGatewayConfig extends Configuration {
 
     public String getPlatformAccountId() {
         return platformAccountId;
+    }
+
+    public int getNotification3dsWaitDelay() {
+        return notification3dsWaitDelay;
     }
 }

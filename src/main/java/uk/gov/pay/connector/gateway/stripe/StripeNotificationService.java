@@ -22,6 +22,7 @@ import javax.ws.rs.WebApplicationException;
 import java.util.List;
 import java.util.Optional;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -31,6 +32,7 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYMENT
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CANCELED;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_CHARGEABLE;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.SOURCE_FAILED;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class StripeNotificationService {
 
@@ -184,12 +186,33 @@ public class StripeNotificationService {
 
             Auth3dsDetails auth3dsDetails = new Auth3dsDetails();
             auth3dsDetails.setAuth3dsResult(getMappedAuth3dsResult(type));
+
+            delayFor3dsReady(charge);
             card3dsResponseAuthService.process3DSecureAuthorisationWithoutLocking(charge.getExternalId(), auth3dsDetails);
         } catch (OperationAlreadyInProgressRuntimeException e) {
             // CardExecutorService is asynchronous and sends back 'OperationAlreadyInProgressRuntimeException' 
             // exception while the charge is being authorised. Catch this exception to send a response with 
             // http status 200 instead of depending on the status returned by Exception 
         }
+    }
+
+    private void delayFor3dsReady(ChargeEntity charge) {
+        int totalTimeDelayedInMillis = 0;
+        int delayInMillis = 200;
+        while (totalTimeDelayedInMillis < stripeGatewayConfig.getNotification3dsWaitDelay()) {
+            ChargeEntity chargeEntity = chargeService.findChargeById(charge.getExternalId());
+            if (ChargeStatus.fromString(chargeEntity.getStatus()) == AUTHORISATION_3DS_READY) {
+                break;
+            }
+            try {
+                Thread.sleep(delayInMillis);
+            } catch (InterruptedException e) {
+                logger.error("Waiting for 3ds ready locking state failed, {}", kv("error", e.getMessage()));
+            }
+            totalTimeDelayedInMillis += delayInMillis;
+        }
+        logger.info("Total time waited for Frontend to update charge [{}] to 3ds ready - {} milliseconds,"
+                , kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()), totalTimeDelayedInMillis);
     }
 
     private boolean isASourceNotification(StripeNotification notification) {
