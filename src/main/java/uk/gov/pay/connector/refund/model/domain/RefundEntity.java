@@ -94,12 +94,13 @@ public class RefundEntity extends AbstractVersionedEntity {
         //for jpa
     }
 
-    public RefundEntity(ChargeEntity chargeEntity, Long amount, String userExternalId) {
+    public RefundEntity(ChargeEntity chargeEntity, Long amount, String userExternalId, String userEmail) {
         this.externalId = RandomIdGenerator.newId();
         this.chargeEntity = chargeEntity;
         this.amount = amount;
         this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
         this.userExternalId = userExternalId;
+        this.userEmail = userEmail;
     }
 
     public String getExternalId() {

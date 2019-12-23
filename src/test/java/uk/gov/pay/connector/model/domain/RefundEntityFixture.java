@@ -20,7 +20,7 @@ public class RefundEntityFixture {
     private ChargeEntity charge;
     private String reference = "reference";
     public static String userExternalId = "AA213FD51B3801043FBC";
-    public static String userEmail = "test@test.com";
+    public static String userEmail = "test@example.com";
     private String externalId = "someExternalId";
     private String transactionId = "123456";
     private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
@@ -31,7 +31,7 @@ public class RefundEntityFixture {
 
     public RefundEntity build() {
         ChargeEntity chargeEntity = charge == null ? buildChargeEntity() : charge;
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, amount, userExternalId);
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, amount, userExternalId, userEmail);
         refundEntity.setId(id);
         refundEntity.setStatus(status);
         refundEntity.setReference(reference);

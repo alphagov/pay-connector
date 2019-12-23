@@ -169,7 +169,8 @@ public class ChargeRefundService {
     @Transactional
     @SuppressWarnings("WeakerAccess")
     public RefundEntity createRefundEntity(RefundRequest refundRequest, ChargeEntity charge) {
-        RefundEntity refundEntity = new RefundEntity(charge, refundRequest.getAmount(), refundRequest.getUserExternalId());
+        RefundEntity refundEntity = new RefundEntity(charge, refundRequest.getAmount(), 
+                refundRequest.getUserExternalId(), refundRequest.getUserEmail());
         transitionRefundState(refundEntity, RefundStatus.CREATED);
         charge.getRefunds().add(refundEntity);
         refundDao.persist(refundEntity);

@@ -13,6 +13,9 @@ public class RefundRequest {
     @JsonProperty("user_external_id")
     private String userExternalId;
 
+    @JsonProperty("user_email")
+    private String userEmail;
+
     public RefundRequest() {}
 
     public RefundRequest(long amount, long amountAvailableForRefund, String userExternalId) {
@@ -30,4 +33,6 @@ public class RefundRequest {
     }
 
     public String getUserExternalId() { return userExternalId; }
+
+    public String getUserEmail() { return userEmail; }
 }

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources.sandbox;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
@@ -14,6 +13,7 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,6 +26,7 @@ import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
@@ -33,6 +34,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
+import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
+import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -120,12 +123,15 @@ public class SandboxRefundIT extends ChargingITestBase {
 
         Long refundAmount = defaultTestCharge.getAmount();
 
-        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
+        ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount(),
+                userExternalId, userEmail);
         String refundId = assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
         assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId.get(0), hasEntry("user_external_id", userExternalId));
+        assertThat(refundsFoundByChargeId.get(0), hasEntry("user_email", userEmail));
 
         assertRefundsHistoryInOrderInDBForSuccessfulOrPartialRefund(defaultTestCharge);
     }
@@ -282,7 +288,21 @@ public class SandboxRefundIT extends ChargingITestBase {
     }
 
     private ValidatableResponse postRefundFor(String chargeId, Long refundAmount, long refundAmountAvlbl) {
-        ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", refundAmount, "refund_amount_available", refundAmountAvlbl);
+        return postRefundFor(chargeId, refundAmount, refundAmountAvlbl, null, null);
+    }
+
+    private ValidatableResponse postRefundFor(String chargeId, Long refundAmount, long refundAmountAvlbl,
+                                              String userExternalId, String userEmail) {
+        Map<String, Object> refundData = new HashMap();
+        
+        refundData.put("amount", refundAmount);
+        refundData.put("refund_amount_available", refundAmountAvlbl);
+
+        if (userExternalId != null && userEmail != null) {
+            refundData.put("user_external_id", userExternalId);
+            refundData.put("user_email", userEmail);
+        }
+        
         String refundPayload = new Gson().toJson(refundData);
 
         return givenSetup()
