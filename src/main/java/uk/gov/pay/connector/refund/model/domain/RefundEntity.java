@@ -47,7 +47,8 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
                         @ColumnResult(name = "user_external_id", type = String.class),
                         @ColumnResult(name = "gateway_transaction_id", type = String.class),
                         @ColumnResult(name = "charge_external_id", type = String.class),
-                        @ColumnResult(name = "gateway_account_id", type = Long.class)
+                        @ColumnResult(name = "gateway_account_id", type = Long.class),
+                        @ColumnResult(name = "user_email", type = String.class)
                 }))
 
 @Entity
@@ -79,6 +80,9 @@ public class RefundEntity extends AbstractVersionedEntity {
     @Column(name = "user_external_id")
     private String userExternalId;
     
+    @Column(name = "user_email")
+    private String userEmail;
+
     @Column(name = "gateway_transaction_id")
     private String gatewayTransactionId;
 
@@ -176,6 +180,14 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     public void setUserExternalId(String userExternalId) {
         this.userExternalId = userExternalId;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
     @Override

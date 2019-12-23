@@ -154,14 +154,19 @@ public class DatabaseTestHelper {
     }
 
     public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId, String gatewayTransactionId, ZonedDateTime createdDate) {
-        return addRefund(externalId, reference, amount, status, chargeId, gatewayTransactionId, createdDate, null);
+        return addRefund(externalId, reference, amount, status, chargeId, gatewayTransactionId, createdDate, null, null);
     }
 
-    public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId, String gatewayTransactionId, ZonedDateTime createdDate, String submittedByUserExternalId) {
+    public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId, 
+                         String gatewayTransactionId, ZonedDateTime createdDate, String submittedByUserExternalId,
+                         String userEmail) {
         int refundId = RandomUtils.nextInt();
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO refunds(id, external_id, reference, amount, status, charge_id, gateway_transaction_id, created_date, user_external_id) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :gateway_transaction_id, :created_date, :user_external_id)")
+                        .createStatement("INSERT INTO refunds(id, external_id, reference, amount, status, charge_id," +
+                                " gateway_transaction_id, created_date, user_external_id, user_email) " +
+                                "VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, " +
+                                ":gateway_transaction_id, :created_date, :user_external_id, :user_email)")
                         .bind("id", refundId)
                         .bind("external_id", externalId)
                         .bind("reference", reference)
@@ -171,16 +176,17 @@ public class DatabaseTestHelper {
                         .bind("gateway_transaction_id", gatewayTransactionId)
                         .bind("created_date", Timestamp.from(createdDate.toInstant()))
                         .bind("user_external_id", submittedByUserExternalId)
+                        .bind("user_email", userEmail)
                         .bind("version", 1)
                         .execute()
         );
         return refundId;
     }
 
-    public void addRefundHistory(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate, String submittedByUserExternalId) {
+    public void addRefundHistory(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate, String submittedByUserExternalId, String userEmail) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO refunds_history(id, external_id, reference, amount, status, charge_id, created_date, history_start_date, history_end_date, user_external_id) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :history_start_date, :history_end_date, :user_external_id)")
+                        .createStatement("INSERT INTO refunds_history(id, external_id, reference, amount, status, charge_id, created_date, history_start_date, history_end_date, user_external_id, user_email) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :history_start_date, :history_end_date, :user_external_id, :user_email)")
                         .bind("id", id)
                         .bind("external_id", externalId)
                         .bind("reference", reference)
@@ -191,6 +197,7 @@ public class DatabaseTestHelper {
                         .bind("history_start_date", Timestamp.from(historyStartDate.toInstant()))
                         .bind("history_end_date", Timestamp.from(historyEndDate.toInstant()))
                         .bind("user_external_id", submittedByUserExternalId)
+                        .bind("user_email", userEmail)
                         .bind("version", 1)
                         .execute()
         );

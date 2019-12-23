@@ -147,7 +147,7 @@ public class ContractTest {
                               ZonedDateTime createdDate, RefundStatus refundStatus) {
         for (int i = 0; i < numberOfRefunds; i++) {
             dbHelper.addRefund("external" + RandomUtils.nextInt(), "reference", 1L, refundStatus,
-                    chargeId, randomAlphanumeric(10), createdDate, "user_external_id1234");
+                    chargeId, randomAlphanumeric(10), createdDate, "user_external_id1234", null);
         }
     }
 

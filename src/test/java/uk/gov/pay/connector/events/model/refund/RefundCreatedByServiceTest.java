@@ -24,7 +24,8 @@ public class RefundCreatedByServiceTest {
             charge.getId(), timeConverter.convertToDatabaseColumn(createdDate), 1L,
             "reference", timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(1L)),
             timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(2L)),
-            null, "gateway_transaction_id", charge.getExternalId(), charge.getGatewayAccount().getId());
+            null, "gateway_transaction_id", charge.getExternalId(), charge.getGatewayAccount().getId(),
+            null);
 
     @Test
     public void serializesEventDetailsGivenRefund() {
