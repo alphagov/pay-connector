@@ -20,6 +20,7 @@ public class RefundEntityFixture {
     private ChargeEntity charge;
     private String reference = "reference";
     public static String userExternalId = "AA213FD51B3801043FBC";
+    public static String userEmail = "test@test.com";
     private String externalId = "someExternalId";
     private String transactionId = "123456";
     private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));

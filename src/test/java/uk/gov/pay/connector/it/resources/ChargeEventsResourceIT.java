@@ -40,6 +40,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 public class ChargeEventsResourceIT {
 
     public static final String SUBMITTED_BY = "r378y387y8weriyi";
+    public static final String USER_EMAIL = "test@test.com";
 
     @DropwizardTestContext
     private TestContext testContext;
@@ -139,8 +140,8 @@ public class ChargeEventsResourceIT {
 
         ZonedDateTime historyRefund1SubmittedStartDate = createdDate.plusSeconds(8);
         createTestRefundHistory(refundedTestRefund1)
-                .insert(RefundStatus.CREATED, createdDate.plusSeconds(7), historyRefund1SubmittedStartDate, SUBMITTED_BY)
-                .insert(RefundStatus.REFUND_SUBMITTED, testReferenceRefund1, historyRefund1SubmittedStartDate, refundTest1RefundedDate, SUBMITTED_BY)
+                .insert(RefundStatus.CREATED, createdDate.plusSeconds(7), historyRefund1SubmittedStartDate, SUBMITTED_BY, USER_EMAIL)
+                .insert(RefundStatus.REFUND_SUBMITTED, testReferenceRefund1, historyRefund1SubmittedStartDate, refundTest1RefundedDate, SUBMITTED_BY, USER_EMAIL)
                 .insert(RefundStatus.REFUNDED, testReferenceRefund1, refundTest1RefundedDate, SUBMITTED_BY);
 
         ZonedDateTime historyRefund2SubmittedStartDate = createdDate.plusSeconds(11);
