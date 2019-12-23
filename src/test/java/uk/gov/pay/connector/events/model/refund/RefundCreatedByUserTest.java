@@ -25,7 +25,7 @@ public class RefundCreatedByUserTest {
             "reference", timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(1L)),
             timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(2L)),
             "user-external-id", "gateway_transaction_id", charge.getExternalId(), charge.getGatewayAccount().getId(),
-            "test@test.com"
+            "test@example.com"
             );
 
     @Test
@@ -40,6 +40,7 @@ public class RefundCreatedByUserTest {
         assertThat(details.getAmount(), is(50L));
         assertThat(details.getGatewayAccountId(), is(charge.getGatewayAccount().getId().toString()));
         assertThat(details.getRefundedBy(), is("user-external-id"));
+        assertThat(details.getUserEmail(), is("test@example.com"));
     }
 
 }

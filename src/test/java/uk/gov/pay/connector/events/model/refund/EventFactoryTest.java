@@ -83,6 +83,7 @@ public class EventFactoryTest {
         RefundHistory refundCreatedHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.CREATED.getValue())
                 .withUserExternalId("user_external_id")
+                .withUserEmail("test@example.com")
                 .withChargeExternalId(charge.getExternalId())
                 .withAmount(charge.getAmount())
                 .build();
@@ -97,14 +98,16 @@ public class EventFactoryTest {
         );
         List<Event> refundEvents = eventFactory.createEvents(refundStateTransition);
         
-        
         assertThat(refundEvents.size(), is(2));
         
         RefundCreatedByUser refundCreatedByUser = (RefundCreatedByUser) refundEvents.stream()
                 .filter(e -> ResourceType.REFUND.equals(e.getResourceType()))
                 .findFirst().get();
+
+        RefundCreatedByUserEventDetails eventDetails = (RefundCreatedByUserEventDetails) refundCreatedByUser.getEventDetails();
         assertThat(refundCreatedByUser.getParentResourceExternalId(), is(charge.getExternalId()));
-        assertThat(((RefundCreatedByUserEventDetails) refundCreatedByUser.getEventDetails()).getRefundedBy(), is("user_external_id"));
+        assertThat(eventDetails.getRefundedBy(), is("user_external_id"));
+        assertThat(eventDetails.getUserEmail(), is("test@example.com"));
         assertThat(refundCreatedByUser.getResourceType(), is(ResourceType.REFUND));
         assertThat(refundCreatedByUser.getEventDetails(), is(instanceOf(RefundCreatedByUserEventDetails.class)));
         
