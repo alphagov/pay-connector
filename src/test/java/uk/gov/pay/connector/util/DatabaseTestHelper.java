@@ -303,7 +303,7 @@ public class DatabaseTestHelper {
 
     public List<Map<String, Object>> getRefund(long refundId) {
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
-                h.createQuery("SELECT external_id, reference, amount, status, created_date, charge_id, user_external_id " +
+                h.createQuery("SELECT external_id, reference, amount, status, created_date, charge_id, user_external_id, user_email " +
                         "FROM refunds " +
                         "WHERE id = :refund_id")
                         .bind("refund_id", refundId)
@@ -313,7 +313,7 @@ public class DatabaseTestHelper {
 
     public List<Map<String, Object>> getRefundsByChargeId(long chargeId) {
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
-                h.createQuery("SELECT external_id, reference, amount, status, created_date, charge_id, user_external_id " +
+                h.createQuery("SELECT external_id, reference, amount, status, created_date, charge_id, user_external_id, user_email " +
                         "FROM refunds r " +
                         "WHERE charge_id = :charge_id")
                         .bind("charge_id", chargeId)

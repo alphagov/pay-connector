@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotNull;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.it.resources.ChargeEventsResourceIT.SUBMITTED_BY;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
+import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
@@ -126,7 +127,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
         ChargeEntity chargeEntity = new ChargeEntity();
         chargeEntity.setId(chargeTestRecord.getChargeId());
 
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId);
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId, userEmail);
         refundEntity.setStatus(REFUND_SUBMITTED);
         refundEntity.setReference("test-refund-entity");
 
@@ -141,6 +142,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
                 refundEntity.getChargeEntity().getId(), refundEntity.getAmount(), refundEntity.getStatus().getValue())));
         assertThat(refundByIdFound.get(0), hasEntry("created_date", java.sql.Timestamp.from(refundEntity.getCreatedDate().toInstant())));
         assertThat(refundByIdFound.get(0), hasEntry("user_external_id", userExternalId));
+        assertThat(refundByIdFound.get(0), hasEntry("user_email", userEmail));
     }
 
     @Test
@@ -148,14 +150,13 @@ public class RefundDaoJpaIT extends DaoITestBase {
         ChargeEntity chargeEntity = new ChargeEntity();
         chargeEntity.setId(chargeTestRecord.getChargeId());
 
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId);
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId, userEmail);
         refundEntity.setStatus(REFUND_SUBMITTED);
         refundEntity.setReference("test-refund-entity");
         refundEntity.setGatewayTransactionId(randomAlphanumeric(10));
 
         refundDao.persist(refundEntity);
         List<RefundHistory> refundHistoryList = refundDao.searchHistoryByChargeId(chargeEntity.getId());
-
 
         assertThat(refundHistoryList.size(), is(1));
 
@@ -164,12 +165,14 @@ public class RefundDaoJpaIT extends DaoITestBase {
         assertThat(refundHistory.getExternalId(), is(refundEntity.getExternalId()));
         assertThat(refundHistory.getAmount(), is(refundEntity.getAmount()));
         assertThat(refundHistory.getStatus(), is(refundEntity.getStatus()));
+        assertThat(refundHistory.getUserEmail(), is(refundEntity.getUserEmail()));
         assertNotNull(refundHistory.getChargeEntity());
         assertThat(refundHistory.getChargeEntity().getId(), is(refundEntity.getChargeEntity().getId()));
         assertThat(refundHistory.getCreatedDate(), is(refundEntity.getCreatedDate()));
         assertThat(refundHistory.getVersion(), is(refundEntity.getVersion()));
         assertThat(refundHistory.getReference(), is(refundEntity.getReference()));
         assertThat(refundEntity.getUserExternalId(), is(userExternalId));
+        assertThat(refundEntity.getUserEmail(), is(refundEntity.getUserEmail()));
         assertThat(refundHistory.getUserExternalId(), is(refundEntity.getUserExternalId()));
         assertThat(refundHistory.getGatewayTransactionId(), is(refundEntity.getGatewayTransactionId()));
     }
@@ -179,7 +182,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
         ChargeEntity chargeEntity = new ChargeEntity();
         chargeEntity.setId(chargeTestRecord.getChargeId());
 
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId);
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId, userEmail);
 
         refundEntity.setReference("test-refund-entity");
         refundEntity.setStatus(CREATED);
@@ -201,13 +204,12 @@ public class RefundDaoJpaIT extends DaoITestBase {
         ChargeEntity chargeEntity = new ChargeEntity();
         chargeEntity.setId(chargeTestRecord.getChargeId());
 
-        RefundEntity refundEntity1 = new RefundEntity(chargeEntity, 100L, userExternalId);
+        RefundEntity refundEntity1 = new RefundEntity(chargeEntity, 100L, userExternalId, userEmail);
         refundEntity1.setStatus(CREATED);
 
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId);
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId, userEmail);
         refundEntity.setStatus(REFUND_SUBMITTED);
         refundEntity.setReference("test-refund-entity");
-        refundEntity.setUserEmail("test@test.com");
 
         refundDao.persist(refundEntity);
         List<RefundHistory> refundHistoryList = refundDao.searchHistoryByChargeId(chargeEntity.getId());
@@ -238,11 +240,10 @@ public class RefundDaoJpaIT extends DaoITestBase {
         chargeEntity.setGatewayAccount(gatewayAccountEntity);
         chargeEntity.setId(chargeTestRecord.getChargeId());
 
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId);
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 100L, userExternalId, userEmail);
         refundEntity.setStatus(CREATED);
         refundEntity.setReference("test-refund-entity");
         refundEntity.setGatewayTransactionId(randomAlphanumeric(10));
-        refundEntity.setUserEmail("test@test.com");
 
         refundDao.persist(refundEntity);
         Optional<RefundHistory> mayBeRefundHistory = refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(refundEntity.getExternalId(), CREATED);
@@ -268,7 +269,6 @@ public class RefundDaoJpaIT extends DaoITestBase {
     @Test
     public void getRefundHistoryByDateRangeShouldReturnResultCorrectly() {
 
-        String userEmail = "test@test.com";
         ZonedDateTime historyDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
 
         DatabaseFixtures.TestAccount testAccount = withDatabaseTestHelper(databaseTestHelper).aTestAccount().insert();
@@ -278,7 +278,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
                 .withTestCharge(testCharge)
                 .withType(REFUNDED)
                 .withCreatedDate(now())
-                .withUserEmail("test@test.com")
+                .withUserEmail(userEmail)
                 .insert();
 
         withDatabaseTestHelper(databaseTestHelper)

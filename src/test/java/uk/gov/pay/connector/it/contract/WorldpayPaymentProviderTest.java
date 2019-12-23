@@ -51,6 +51,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
@@ -228,7 +229,7 @@ public class WorldpayPaymentProviderTest {
 
         assertThat(captureResponse.isSuccessful(), is(true));
 
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, 1L, userExternalId);
+        RefundEntity refundEntity = new RefundEntity(chargeEntity, 1L, userExternalId, userEmail);
 
         GatewayRefundResponse refundResponse = paymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity));
 
