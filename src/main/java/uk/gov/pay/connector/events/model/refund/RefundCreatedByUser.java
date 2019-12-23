@@ -18,7 +18,8 @@ public class RefundCreatedByUser extends RefundEvent {
                 new RefundCreatedByUserEventDetails(
                         refundHistory.getAmount(),
                         refundHistory.getUserExternalId(),
-                        refundHistory.getChargeEntity().getGatewayAccount().getId().toString()),
+                        refundHistory.getChargeEntity().getGatewayAccount().getId().toString(),
+                        refundHistory.getUserEmail()),
                 refundHistory.getHistoryStartDate());
     }
 }

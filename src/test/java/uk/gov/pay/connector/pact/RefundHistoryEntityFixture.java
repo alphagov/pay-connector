@@ -72,4 +72,9 @@ public class RefundHistoryEntityFixture {
         this.chargeId = chargeId;
         return this;
     }
+
+    public RefundHistoryEntityFixture withUserEmail(String userEmail) {
+        this.userEmail = userEmail;
+        return this;
+    }
 }

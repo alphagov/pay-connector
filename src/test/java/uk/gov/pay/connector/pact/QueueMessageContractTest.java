@@ -122,6 +122,7 @@ public class QueueMessageContractTest {
     public String verifyRefundCreatedByUserEvent() throws JsonProcessingException {
         RefundHistory refundHistory = aValidRefundHistoryEntity()
                 .withUserExternalId(RandomStringUtils.randomAlphanumeric(10))
+                .withUserEmail("test@example.com")
                 .build();
         RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory);
 
