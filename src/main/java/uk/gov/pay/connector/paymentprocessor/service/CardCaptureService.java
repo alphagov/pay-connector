@@ -80,8 +80,10 @@ public class CardCaptureService {
     public ChargeEntity markChargeAsEligibleForCapture(String externalId) {
         ChargeEntity charge = chargeService.markChargeAsEligibleForCapture(externalId);
 
-        if (!charge.isDelayedCapture())
+        if (!charge.isDelayedCapture()) {
             addChargeToCaptureQueue(charge);
+            userNotificationService.sendPaymentConfirmedEmail(charge);
+        }
 
         return charge;
     }
@@ -125,7 +127,7 @@ public class CardCaptureService {
                 charge.getGatewayAccount().getType(),
                 charge.getGatewayAccount().getId(), nextStatus.toString())).inc();
 
-        if (captureResponse.isSuccessful()) {
+        if (captureResponse.isSuccessful() && charge.isDelayedCapture()) {
             userNotificationService.sendPaymentConfirmedEmail(charge);
         }
     }
