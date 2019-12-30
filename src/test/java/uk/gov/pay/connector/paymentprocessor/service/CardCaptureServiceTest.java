@@ -61,8 +61,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
@@ -137,6 +137,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
+        charge.setDelayedCapture(true);
 
         ChargeEntity chargeSpy = spy(charge);
         mockChargeDaoOperations(chargeSpy);
@@ -169,6 +170,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         String gatewayTxId = "theTxId";
 
         ChargeEntity charge = createNewChargeWith("sandbox", 1L, CAPTURE_APPROVED, gatewayTxId);
+        charge.setDelayedCapture(true);
         ChargeEntity chargeSpy = spy(charge);
         mockChargeDaoOperations(chargeSpy);
 
@@ -215,7 +217,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
                 .thenReturn(Optional.empty());
         cardCaptureService.doCapture(chargeId);
         // verify an email notification is not sent when an unsuccessful capture
-        verifyZeroInteractions(mockUserNotificationService);
+        verifyNoInteractions(mockUserNotificationService);
     }
 
     @Test
@@ -228,7 +230,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         cardCaptureService.doCapture(charge.getExternalId());
         assertThat(charge.getStatus(), is(ChargeStatus.CAPTURE_READY.getValue()));
         // verify an email notification is not sent when an unsuccessful capture
-        verifyZeroInteractions(mockUserNotificationService);
+        verifyNoInteractions(mockUserNotificationService);
     }
 
     @Test
@@ -242,7 +244,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         cardCaptureService.doCapture(charge.getExternalId());
         assertThat(charge.getStatus(), is(ChargeStatus.CREATED.getValue()));
         // verify an email notification is not sent when an unsuccessful capture
-        verifyZeroInteractions(mockUserNotificationService);
+        verifyNoInteractions(mockUserNotificationService);
     }
 
     @Test
@@ -264,7 +266,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         cardCaptureService.doCapture(charge.getExternalId());
         assertThat(charge.getStatus(), is(ChargeStatus.CREATED.getValue()));
         // verify an email notification is not sent when an unsuccessful capture
-        verifyZeroInteractions(mockUserNotificationService);
+        verifyNoInteractions(mockUserNotificationService);
     }
 
     @Test
@@ -289,7 +291,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
 
         // verify an email notification is not sent when an unsuccessful capture
-        verifyZeroInteractions(mockUserNotificationService);
+        verifyNoInteractions(mockUserNotificationService);
     }
 
     @Test
@@ -337,31 +339,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
             throw e;
         }
 
-    }
-
-    @Test
-    public void markChargeAsCaptureApproved_shouldSetChargeStatusToCaptureApprovedAndWriteChargeEvent() {
-        ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId"));
-        when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
-
-        ChargeEntity result = cardCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
-
-        verify(chargeEntity).setStatus(CAPTURE_APPROVED);
-        verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(CAPTURE_APPROVED)), isNull());
-        assertThat(result.getStatus(), is(CAPTURE_APPROVED.getValue()));
-    }
-
-    @Test
-    public void markChargeAsCaptureApproved_shouldSetChargeStatusToAwaitingCaptureRequestWhenDelayedCapture() {
-        ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId"));
-        chargeEntity.setDelayedCapture(true);
-        when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
-
-        ChargeEntity result = cardCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
-
-        verify(chargeEntity).setStatus(AWAITING_CAPTURE_REQUEST);
-        verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(AWAITING_CAPTURE_REQUEST)), isNull());
-        assertThat(result.getStatus(), is(AWAITING_CAPTURE_REQUEST.getValue()));
     }
 
     @Test
@@ -453,13 +430,13 @@ public class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity result = cardCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
 
         verify(mockCaptureQueue).sendForCapture(result);
-
         verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(CAPTURE_APPROVED)), isNull());
+        verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeEntity);
         assertThat(result.getStatus(), is(CAPTURE_APPROVED.getValue()));
     }
 
     @Test
-    public void markChargeAsEligibleForCapture_shouldNotAddChargeToQueue_IfChargeIsDelayedCapture() {
+    public void markChargeAsEligibleForCapture_shouldSetChargeStatusToAwaitingCaptureRequest_IfChargeIsDelayedCapture() {
 
         ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId"));
         chargeEntity.setDelayedCapture(true);
@@ -467,9 +444,10 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         ChargeEntity result = cardCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
 
-        verifyZeroInteractions(mockCaptureQueue);
+        verifyNoInteractions(mockCaptureQueue);
 
         verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(AWAITING_CAPTURE_REQUEST)), isNull());
+        verifyNoInteractions(mockUserNotificationService);
         assertThat(result.getStatus(), is(AWAITING_CAPTURE_REQUEST.getValue()));
     }
 
@@ -494,20 +472,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
             verifyNoMoreInteractions(mockedChargeDao);
             throw e;
         }
-    }
-
-    @Test
-    public void markChargeAsCaptureApproved_shouldAddChargeToQueueAndUpdateChargeStatus() throws QueueException {
-
-        ChargeEntity chargeEntity = spy(createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, "gatewayTxId"));
-        when(mockedChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
-
-        ChargeEntity result = cardCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
-
-        verify(mockCaptureQueue).sendForCapture(chargeEntity);
-
-        verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(CAPTURE_APPROVED)), isNull());
-        assertThat(result.getStatus(), is(CAPTURE_APPROVED.getValue()));
     }
 
     @Test(expected = WebApplicationException.class)
