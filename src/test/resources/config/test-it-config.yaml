@@ -7,18 +7,13 @@ server:
       port: 0
   registerDefaultExceptionMappers: false
   requestLog:
-    appenders:
-      - type: console
-        layout:
-          type: govuk-pay-access-json
-          additionalFields:
-            container: "connector"
+    appenders: []
 
 logging:
   level: INFO
   appenders:
     - type: logstash-console
-      threshold: ${LOGGING_LEVEL:-ALL}
+      threshold: ${LOGGING_LEVEL:-ERROR}
       target: stdout
       customFields:
         container: "connector"

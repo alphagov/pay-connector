@@ -11,7 +11,7 @@ logging:
   level: INFO
   appenders:
     - type: logstash-console
-      threshold: ALL
+      threshold: ERROR
       target: stdout
       customFields:
         container: "connector"
