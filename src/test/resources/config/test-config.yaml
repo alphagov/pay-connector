@@ -8,10 +8,10 @@ server:
   registerDefaultExceptionMappers: false
 
 logging:
-  level: INFO
+  level: ERROR
   appenders:
     - type: logstash-console
-      threshold: ALL
+      threshold: ${LOGGING_LEVEL:-ERROR}
       target: stdout
       customFields:
         container: "connector"
