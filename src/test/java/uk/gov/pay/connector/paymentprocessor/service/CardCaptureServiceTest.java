@@ -137,7 +137,6 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
-        charge.setDelayedCapture(true);
 
         ChargeEntity chargeSpy = spy(charge);
         mockChargeDaoOperations(chargeSpy);
@@ -161,26 +160,41 @@ public class CardCaptureServiceTest extends CardServiceTest {
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
         assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
 
-        // verify an email notification is sent for a successful capture
+        verifyNoInteractions(mockUserNotificationService);
+    }
+
+    @Test
+    public void chargeIsCapturedAndEmailNotificationIsSentForDelayedCapture() {
+        String gatewayTxId = "theTxId";
+        ChargeEntity charge = createNewChargeWith("sandbox", 1L, CAPTURE_APPROVED, gatewayTxId);
+        charge.setDelayedCapture(true);
+        ChargeEntity chargeSpy = spy(charge);
+
+        verifyChargeIsCapturedImmediatelyFromPaymentProvider(chargeSpy);
+
         verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeSpy);
     }
 
     @Test
-    public void chargeIsCapturedImmediatelyFromPaymentProvider() {
+    public void chargeIsCapturedAndNoNotificationIsSentForNonDelayedCapture() {
         String gatewayTxId = "theTxId";
-
         ChargeEntity charge = createNewChargeWith("sandbox", 1L, CAPTURE_APPROVED, gatewayTxId);
-        charge.setDelayedCapture(true);
-        ChargeEntity chargeSpy = spy(charge);
+
+        verifyChargeIsCapturedImmediatelyFromPaymentProvider(spy(charge));
+
+        verifyNoInteractions(mockUserNotificationService);
+    }
+
+    public void verifyChargeIsCapturedImmediatelyFromPaymentProvider(ChargeEntity chargeSpy) {
         mockChargeDaoOperations(chargeSpy);
 
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
+        when(mockedProviders.byName(chargeSpy.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.capture(any())).thenReturn(
                 CaptureResponse.fromBaseCaptureResponse(
                         BaseCaptureResponse.fromTransactionId(randomUUID().toString(), SANDBOX),
                         COMPLETE)
         );
-        CaptureResponse response = cardCaptureService.doCapture(charge.getExternalId());
+        CaptureResponse response = cardCaptureService.doCapture(chargeSpy.getExternalId());
 
         assertThat(response.isSuccessful(), is(true));
         InOrder inOrder = Mockito.inOrder(chargeSpy);
@@ -199,11 +213,9 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         ArgumentCaptor<CaptureGatewayRequest> request = ArgumentCaptor.forClass(CaptureGatewayRequest.class);
         verify(mockedPaymentProvider, times(1)).capture(request.capture());
-        assertThat(request.getValue().getTransactionId(), is(gatewayTxId));
-
-        // verify an email notification is sent for a successful capture
-        verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeSpy);
+        assertThat(request.getValue().getTransactionId(), is(chargeSpy.getGatewayTransactionId()));
     }
+
 
     private void mockChargeDaoOperations(ChargeEntity charge) {
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
