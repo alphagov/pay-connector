@@ -30,14 +30,25 @@ public class TelephonePaymentsResource {
     @Path("/create-payment")
     public Response createPayment(TelephonePaymentRequest telephonePaymentRequest) {
         logger.info("Received request to create a telephone payment for Stripe id " + telephonePaymentRequest.getStripeId());
-        var builder = new TelephoneChargeCreateRequest.Builder();
-        var request = builder.withAmount(1337L)
-                .withProviderId(telephonePaymentRequest.getStripeId())
-                .withReference("test telephone payment")
-                .withProcessorId("processor_id")
-                .withPaymentOutcome(new PaymentOutcome("payment_outcome"))
-                .build();
-        chargeService.create(request, telephonePaymentRequest.getAccountId());
+        var telephoneRequestBuilder = new TelephoneChargeCreateRequest.Builder()
+                .withAmount(100L)
+                .withReference("Some reference")
+                .withDescription("Some description")
+                .withCreatedDate("2018-02-21T16:04:25Z")
+                .withAuthorisedDate("2018-02-21T16:05:33Z")
+                .withProcessorId("1PROC")
+                .withProviderId("1PROV")
+                .withAuthCode("666")
+                .withNameOnCard("Jane Doe")
+                .withEmailAddress("jane.doe@example.com")
+                .withTelephoneNumber("+447700900796")
+                .withCardType("visa")
+                .withCardExpiry("01/19")
+                .withLastFourDigits("1234")
+                .withPaymentOutcome(new PaymentOutcome("success"))
+                .withFirstSixDigits("123456");
+        
+        chargeService.create(telephoneRequestBuilder.build(), telephonePaymentRequest.getAccountId());
         return Response.ok().build();
     }
 }
