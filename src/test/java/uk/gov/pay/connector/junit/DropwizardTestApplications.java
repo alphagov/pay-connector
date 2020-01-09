@@ -50,14 +50,19 @@ final class DropwizardTestApplications {
         shutdownIfConfigHasChanged(configOverrides);
 
         if (!apps.containsKey(key)) {
-            String resourceConfigFilePath = ResourceHelpers.resourceFilePath(configClasspathLocation);
-            DropwizardTestSupport newApp = new DropwizardTestSupport(appClass,
-                    resourceConfigFilePath,
-                    configOverrides);
-            apps.put(key, newApp);
-            configs = Sets.newHashSet(configOverrides);
-            newApp.before();
-            return Optional.of(newApp);
+            try {
+                String resourceConfigFilePath = ResourceHelpers.resourceFilePath(configClasspathLocation);
+                DropwizardTestSupport newApp = new DropwizardTestSupport(appClass,
+                        resourceConfigFilePath,
+                        configOverrides);
+                apps.put(key, newApp);
+                configs = Sets.newHashSet(configOverrides);
+                newApp.before();
+                return Optional.of(newApp);
+            } catch (Exception ex) {
+                logger.info(ex.getMessage());
+            }
+
         }
         return Optional.empty();
     }

@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.tasks;
 
-import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.inject.Inject;
 import io.dropwizard.servlets.tasks.Task;
 import io.dropwizard.setup.Environment;
@@ -12,11 +10,15 @@ import uk.gov.pay.connector.app.config.EventEmitterConfig;
 
 import java.io.PrintWriter;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
+
+import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getDateParam;
+import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getOptionalLongParam;
 
 public class HistoricalEventEmitterByDateRangeTask extends Task {
     private static final String TASK_NAME = "historical-event-emitter-by-date";
@@ -46,9 +48,8 @@ public class HistoricalEventEmitterByDateRangeTask extends Task {
                 .workQueue(new SynchronousQueue<>())
                 .build();
     }
-
     @Override
-    public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) {
+    public void execute(Map<String, List<String>> parameters, PrintWriter output) throws Exception {
         try {
             Optional<ZonedDateTime> startDate = getDateParam(parameters, "start_date");
             Optional<ZonedDateTime> endDate = getDateParam(parameters, "end_date");
@@ -73,34 +74,10 @@ public class HistoricalEventEmitterByDateRangeTask extends Task {
         }
     }
 
-    private Optional getDateParam(ImmutableMultimap<String, String> parameters, String paramName) {
-        final ImmutableCollection<String> strings = parameters.get(paramName);
-
-        if (strings.isEmpty()) {
-            return Optional.empty();
-        } else {
-            try {
-                return Optional.of(ZonedDateTime.parse(strings.asList().get(0)));
-            } catch (DateTimeParseException exception) {
-                return Optional.empty();
-            }
-        }
-    }
-
-    private Long getDoNotRetryEmitUntilDuration(ImmutableMultimap<String, String> parameters) {
-        OptionalLong doNotRetryEmitUntil = getParam(parameters,
+    private Long getDoNotRetryEmitUntilDuration(Map<String, List<String>> parameters) {
+        OptionalLong doNotRetryEmitUntil = getOptionalLongParam(parameters,
                 "do_not_retry_emit_until");
         return doNotRetryEmitUntil.orElse(
                 eventEmitterConfig.getDefaultDoNotRetryEmittingEventUntilDurationInSeconds());
-    }
-
-    private OptionalLong getParam(ImmutableMultimap<String, String> parameters, String paramName) {
-        final ImmutableCollection<String> strings = parameters.get(paramName);
-
-        if (strings.isEmpty()) {
-            return OptionalLong.empty();
-        } else {
-            return OptionalLong.of(Long.parseLong(strings.asList().get(0)));
-        }
     }
 }

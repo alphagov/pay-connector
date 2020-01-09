@@ -1,20 +1,23 @@
 package uk.gov.pay.connector.tasks;
 
-import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.inject.Inject;
 import io.dropwizard.servlets.tasks.Task;
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.EventEmitterConfig;
 
 import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
-import java.util.function.Function;
+
+import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getLongParam;
+import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getParameterValue;
 
 public class ParityCheckTask extends Task {
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -48,7 +51,7 @@ public class ParityCheckTask extends Task {
     }
 
     @Override
-    public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) {
+    public void execute(Map<String, List<String>> parameters, PrintWriter output) throws Exception {
         Long startId = getLongParam(parameters, "start_id").orElse(0L);
         final Optional<Long> maybeMaxId = getLongParam(parameters, "max_id");
         boolean doNotReprocessValidRecords = getFlagParam(parameters, "do_not_reprocess_valid_records").orElse(false);
@@ -68,30 +71,17 @@ public class ParityCheckTask extends Task {
         }
     }
 
-    private Optional getParam(ImmutableMultimap<String, String> parameters, String paramName,
-                              Function<String, Object> convertFunction) {
-        final ImmutableCollection<String> strings = parameters.get(paramName);
-
-        if (strings.isEmpty()) {
-            return Optional.empty();
-        } else {
-            return Optional.of(convertFunction.apply(strings.asList().get(0)));
-        }
+    private Optional<Boolean> getFlagParam(Map<String, List<String>> parameters, String paramName) {
+        String value = getParameterValue(parameters, paramName);
+        return Optional.ofNullable(StringUtils.isNotBlank(value) ?
+                Boolean.valueOf(value) : null);
     }
 
-    private Optional<Long> getLongParam(ImmutableMultimap<String, String> parameters, String paramName) {
-        return getParam(parameters, paramName, Long::valueOf);
+    private Optional<String> getStringParam(Map<String, List<String>> parameters, String paramName) {
+        return Optional.ofNullable(getParameterValue(parameters, paramName));
     }
 
-    private Optional<Boolean> getFlagParam(ImmutableMultimap<String, String> parameters, String paramName) {
-        return getParam(parameters, paramName, Boolean::valueOf);
-    }
-
-    private Optional<String> getStringParam(ImmutableMultimap<String, String> parameters, String paramName) {
-        return getParam(parameters, paramName, v -> v);
-    }
-
-    private Long getDoNotRetryEmitUntilDuration(ImmutableMultimap<String, String> parameters) {
+    private Long getDoNotRetryEmitUntilDuration(Map<String, List<String>> parameters) {
         Optional<Long> doNotRetryEmitUntil = getLongParam(parameters,
                 "do_not_retry_emit_until");
         return doNotRetryEmitUntil.orElse(

@@ -487,6 +487,6 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .postCreateTelephoneCharge(payload)
                 .statusCode(422)
                 .contentType(JSON)
-                .body("message[0]", is("may not be null"));
+                .body("message[0]", is("must not be null"));
     }
 }

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.tasks;
 
-import com.google.common.collect.ImmutableMultimap;
 import io.dropwizard.lifecycle.setup.ExecutorServiceBuilder;
 import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
 import io.dropwizard.setup.Environment;
@@ -13,6 +12,8 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.EventEmitterConfig;
 
 import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -52,12 +53,12 @@ public class HistoricalEventEmitterByDateRangeTaskTest {
     }
 
     @Test
-    public void shouldInvokeExecutorForValidValues() {
+    public void shouldInvokeExecutorForValidValues() throws Exception{
         String startDate = "2016-01-25T13:23:55Z";
         String endDate = "2016-01-25T13:23:55Z";
         String doNotRetryEmitUntil = "1";
-        ImmutableMultimap map = ImmutableMultimap.of("start_date", startDate,
-                "end_date", endDate, "do_not_retry_emit_until", doNotRetryEmitUntil);
+        Map<String, List<String>> map = Map.of("start_date", List.of(startDate),
+                "end_date", List.of(endDate), "do_not_retry_emit_until", List.of(doNotRetryEmitUntil));
 
         historicalEventEmitterByDateRangeTask.execute(map, mockPrintWriter);
 
@@ -72,10 +73,10 @@ public class HistoricalEventEmitterByDateRangeTaskTest {
             "\"\", \"\", 1",
             "\"2016-01-25T13:23:55Z\", \"2016-01-25T13:23:55Z\", \"invalid-duration\"",
     })
-    public void rejectTaskForInvalidValues(String startDate, String endDate, String doNotRetryEmitUntil) {
-        ImmutableMultimap map = ImmutableMultimap.of("start_date", startDate,
-                "end_date", endDate,
-                "do_not_retry_emit_until", doNotRetryEmitUntil);
+    public void rejectTaskForInvalidValues(String startDate, String endDate, String doNotRetryEmitUntil) throws Exception{
+        Map<String, List<String>> map = Map.of("start_date", List.of(startDate),
+                "end_date", List.of(endDate),
+                "do_not_retry_emit_until", List.of(doNotRetryEmitUntil));
 
         historicalEventEmitterByDateRangeTask.execute(map, mockPrintWriter);
 
