@@ -10,7 +10,7 @@ import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
-@Path("/v1/api/ivr/")
+@Path("/v1/api/ivr")
 public class TelephonePaymentsResource {
     
     private static final Logger logger = LoggerFactory.getLogger(TelephonePaymentsResource.class);
