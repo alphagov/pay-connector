@@ -71,7 +71,7 @@ public class TelephonePaymentsResource {
                                 payment.getBillingDetails().getName(),
                                 stripeTelephonePaymentService.formatStripeExpiryDate(payment), 
                                 payment.getPaymentMethodDetails().getCard().getBrand(),
-                                CardType.valueOf(payment.getPaymentMethodDetails().getType())),
+                                CardType.valueOf(payment.getPaymentMethodDetails().getType().toUpperCase())),
                         null,
                         null,
                         payment.getId(),
