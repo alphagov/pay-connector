@@ -70,7 +70,7 @@ public class TelephonePaymentsResource {
                                 null,
                                 payment.getBillingDetails().getName(),
                                 stripeTelephonePaymentService.formatStripeExpiryDate(payment), 
-                                payment.getPaymentMethodDetails().getCard().getBrand(),
+                                payment.getPaymentMethodDetails().getCard().getFunding(),
                                 CardType.valueOf(payment.getPaymentMethodDetails().getType().toUpperCase())),
                         null,
                         null,
