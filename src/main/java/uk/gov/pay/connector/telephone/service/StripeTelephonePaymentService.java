@@ -23,7 +23,7 @@ public class StripeTelephonePaymentService {
 
     public Optional<Charge> getStripePayment(String paymentId) {
         try {
-            return Optional.ofNullable(Charge.retrieve("paymentId"));
+            return Optional.ofNullable(Charge.retrieve(paymentId));
         } catch (StripeException e) {
             logger.info("Error occurred when retrieving charge from stripe");
             return Optional.empty();
