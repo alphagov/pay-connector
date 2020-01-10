@@ -3,7 +3,10 @@ package uk.gov.pay.connector.telephone;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
@@ -24,11 +27,13 @@ public class TelephonePaymentsResource {
     private static final Logger logger = LoggerFactory.getLogger(TelephonePaymentsResource.class);
     private ChargeService chargeService;
     private StripeTelephonePaymentService stripeTelephonePaymentService;
+    private ChargeDao chargeDao;
     
     @Inject
-    TelephonePaymentsResource(ChargeService chargeService, StripeTelephonePaymentService stripeTelephonePaymentService) {
+    TelephonePaymentsResource(ChargeService chargeService, StripeTelephonePaymentService stripeTelephonePaymentService, ChargeDao chargeDao) {
         this.chargeService = chargeService;
         this.stripeTelephonePaymentService = stripeTelephonePaymentService;
+        this.chargeDao = chargeDao;
     }
 
     @POST
@@ -56,6 +61,22 @@ public class TelephonePaymentsResource {
         chargeService.create(telephoneRequestBuilder.build(), telephonePaymentRequest.getAccountId());
         stripeTelephonePaymentService.getStripePayment(telephonePaymentRequest.getStripeId()).ifPresent(payment -> {
             logger.info(payment.toString());
+                chargeDao.persist(new ChargeEntity(payment.getAmount(),
+                        null, 
+                        payment.getDescription(), 
+                        ChargeStatus.fromString(payment.getStatus()),
+                        payment.getBillingDetails().getEmail(), 
+                        new CardDetailsEntity(LastDigitsCardNumber.of(payment.getPaymentMethodDetails().getCard().getLast4()), 
+                                null,
+                                payment.getBillingDetails().getName(),
+                                stripeTelephonePaymentService.formatStripeExpiryDate(payment), 
+                                payment.getPaymentMethodDetails().getCard().getBrand(),
+                                CardType.valueOf(payment.getPaymentMethodDetails().getType())),
+                        null,
+                        null,
+                        payment.getId(),
+                        null
+            ));
         });
         return Response.ok().build();
     }

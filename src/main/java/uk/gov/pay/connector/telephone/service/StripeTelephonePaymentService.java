@@ -29,4 +29,9 @@ public class StripeTelephonePaymentService {
             return Optional.empty();
         }
     }
+
+    public String formatStripeExpiryDate(Charge stripeCharge) {
+        return String.valueOf(stripeCharge.getPaymentMethodDetails().getCard().getExpMonth()) +
+                String.valueOf(stripeCharge.getPaymentMethodDetails().getCard().getExpYear());
+    }
 }
