@@ -3,9 +3,13 @@ package uk.gov.pay.connector.telephone;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.telephone.service.StripeTelephonePaymentService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -19,10 +23,12 @@ public class TelephonePaymentsResource {
     
     private static final Logger logger = LoggerFactory.getLogger(TelephonePaymentsResource.class);
     private ChargeService chargeService;
+    private StripeTelephonePaymentService stripeTelephonePaymentService;
     
     @Inject
-    TelephonePaymentsResource(ChargeService chargeService) {
+    TelephonePaymentsResource(ChargeService chargeService, StripeTelephonePaymentService stripeTelephonePaymentService) {
         this.chargeService = chargeService;
+        this.stripeTelephonePaymentService = stripeTelephonePaymentService;
     }
 
     @POST
@@ -47,8 +53,10 @@ public class TelephonePaymentsResource {
                 .withLastFourDigits("1234")
                 .withPaymentOutcome(new PaymentOutcome("success"))
                 .withFirstSixDigits("123456");
-        
         chargeService.create(telephoneRequestBuilder.build(), telephonePaymentRequest.getAccountId());
+        stripeTelephonePaymentService.getStripePayment(telephonePaymentRequest.getStripeId()).ifPresent(payment -> {
+            logger.info(payment.toString());
+        });
         return Response.ok().build();
     }
 }

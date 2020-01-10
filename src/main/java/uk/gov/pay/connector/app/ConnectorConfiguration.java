@@ -101,6 +101,9 @@ public class ConnectorConfiguration extends Configuration {
     @Valid
     @NotNull
     private RestClientConfig restClientConfig;
+    
+    @NotNull
+    private String stripeTestApiKey;
 
     @NotNull
     @JsonProperty("ledgerBaseURL")
@@ -215,5 +218,9 @@ public class ConnectorConfiguration extends Configuration {
 
     public EventEmitterConfig getEventEmitterConfig() {
         return eventEmitterConfig;
+    }
+
+    public String getStripeTestApiKey() {
+        return stripeTestApiKey;
     }
 }

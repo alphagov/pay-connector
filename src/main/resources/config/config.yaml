@@ -232,3 +232,5 @@ restClientConfig:
   disabledSecureConnection: ${DISABLE_INTERNAL_HTTPS:-false}
 
 ledgerBaseURL: ${LEDGER_URL}
+
+stripeTestApiKey: ${STRIPE_TEST_API_KEY}
