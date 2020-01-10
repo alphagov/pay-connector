@@ -64,7 +64,7 @@ public class TelephonePaymentsResource {
                 chargeDao.persist(new ChargeEntity(payment.getAmount(),
                         null, 
                         payment.getDescription(), 
-                        ChargeStatus.fromString(payment.getStatus()),
+                        ChargeStatus.fromStripeString(payment.getStatus()),
                         payment.getBillingDetails().getEmail(), 
                         new CardDetailsEntity(LastDigitsCardNumber.of(payment.getPaymentMethodDetails().getCard().getLast4()), 
                                 null,

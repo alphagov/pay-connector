@@ -89,4 +89,11 @@ public enum ChargeStatus implements Status {
         }
         throw new IllegalArgumentException("charge status not recognized: " + status);
     }
+    
+    public static ChargeStatus fromStripeString(String stripeStatus) {
+        if(stripeStatus.equalsIgnoreCase("succeeded")) {
+            return ChargeStatus.AUTHORISATION_SUCCESS;
+        }
+        return ChargeStatus.AUTHORISATION_ERROR;
+    }
 }
