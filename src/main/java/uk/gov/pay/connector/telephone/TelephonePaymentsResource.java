@@ -3,15 +3,20 @@ package uk.gov.pay.connector.telephone;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.telephone.service.StripeTelephonePaymentService;
 
 import javax.ws.rs.Consumes;
@@ -28,12 +33,15 @@ public class TelephonePaymentsResource {
     private ChargeService chargeService;
     private StripeTelephonePaymentService stripeTelephonePaymentService;
     private ChargeDao chargeDao;
+    private GatewayAccountDao gatewayAccountDao;
     
     @Inject
-    TelephonePaymentsResource(ChargeService chargeService, StripeTelephonePaymentService stripeTelephonePaymentService, ChargeDao chargeDao) {
+    TelephonePaymentsResource(ChargeService chargeService, StripeTelephonePaymentService stripeTelephonePaymentService,
+                              ChargeDao chargeDao, GatewayAccountDao gatewayAccountDao) {
         this.chargeService = chargeService;
         this.stripeTelephonePaymentService = stripeTelephonePaymentService;
         this.chargeDao = chargeDao;
+        this.gatewayAccountDao = gatewayAccountDao;
     }
 
     @POST
@@ -62,20 +70,20 @@ public class TelephonePaymentsResource {
         stripeTelephonePaymentService.getStripePayment(telephonePaymentRequest.getStripeId()).ifPresent(payment -> {
             logger.info(payment.toString());
                 chargeDao.persist(new ChargeEntity(payment.getAmount(),
-                        null, 
+                        ServicePaymentReference.of(payment.getId()), 
                         payment.getDescription(), 
                         ChargeStatus.fromStripeString(payment.getStatus()),
                         payment.getBillingDetails().getEmail(), 
                         new CardDetailsEntity(LastDigitsCardNumber.of(payment.getPaymentMethodDetails().getCard().getLast4()), 
-                                null,
+                                FirstDigitsCardNumber.of("1234"),
                                 payment.getBillingDetails().getName(),
                                 stripeTelephonePaymentService.formatStripeExpiryDate(payment), 
                                 payment.getPaymentMethodDetails().getCard().getBrand(),
                                 CardType.valueOf(payment.getPaymentMethodDetails().getCard().getFunding().toUpperCase())),
                         null,
-                        null,
+                        gatewayAccountDao.findById(telephonePaymentRequest.getAccountId()).get(),
                         payment.getId(),
-                        null
+                        SupportedLanguage.ENGLISH
             ));
         });
         return Response.ok().build();
