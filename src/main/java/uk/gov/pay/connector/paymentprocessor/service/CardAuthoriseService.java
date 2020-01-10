@@ -56,8 +56,8 @@ public class CardAuthoriseService {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
 
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
-            GatewayResponse<BaseAuthoriseResponse> operationResponse = null;
-            ChargeStatus newStatus = null;
+            GatewayResponse<BaseAuthoriseResponse> operationResponse;
+            ChargeStatus newStatus;
             Optional<String> transactionId = Optional.empty();
             Optional<String> sessionIdentifier = Optional.empty();
             Optional<Auth3dsDetailsEntity> auth3dsDetailsEntity = Optional.empty();
@@ -65,7 +65,7 @@ public class CardAuthoriseService {
             try {
                 operationResponse = authorise(charge, authCardDetails);
 
-                if (!operationResponse.getBaseResponse().isPresent()) operationResponse.throwGatewayError();
+                if (operationResponse.getBaseResponse().isEmpty()) operationResponse.throwGatewayError();
 
                 newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
                 transactionId = cardAuthoriseBaseService.extractTransactionId(charge.getExternalId(), operationResponse);

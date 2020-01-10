@@ -147,9 +147,7 @@ public class ChargeRefundService {
     @Transactional
     @SuppressWarnings("WeakerAccess")
     public void setRefundStatus(Long refundEntityId, RefundStatus refundStatus) {
-        refundDao.findById(refundEntityId).ifPresent(refundEntity -> {
-            transitionRefundState(refundEntity, refundStatus);
-        });
+        refundDao.findById(refundEntityId).ifPresent(refundEntity -> transitionRefundState(refundEntity, refundStatus));
     }
 
     private RefundStatus determineRefundStatus(GatewayRefundResponse gatewayRefundResponse) {

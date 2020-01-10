@@ -10,7 +10,6 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.stream.Stream;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;

@@ -10,7 +10,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -56,13 +55,11 @@ public class PerformanceReportResource {
 
             return ok().entity(responsePayload).build();
           })
-          .orElseGet(() -> {
-            return Response
-              .status(Response.Status.BAD_REQUEST)
-              .entity("Could not parse date: " + rawDate)
-              .type(TEXT_PLAIN)
-              .build();
-          });
+          .orElseGet(() -> Response
+            .status(Response.Status.BAD_REQUEST)
+            .entity("Could not parse date: " + rawDate)
+            .type(TEXT_PLAIN)
+            .build());
     }
 
     @GET

@@ -35,7 +35,7 @@ public class RefundNotificationProcessor {
         }
 
         Optional<RefundEntity> optionalRefundEntity = refundService.findByProviderAndReference(gatewayName.getName(), reference);
-        if (!optionalRefundEntity.isPresent()) {
+        if (optionalRefundEntity.isEmpty()) {
             logger.warn("{} notification '{}' could not be used to update refund (associated refund entity not found)",
                     gatewayName, reference);
             return;

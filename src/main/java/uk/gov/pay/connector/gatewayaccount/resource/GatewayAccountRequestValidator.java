@@ -81,12 +81,9 @@ public class GatewayAccountRequestValidator {
                 validateEmailCollectionMode(payload);
                 break;
             case FIELD_ALLOW_GOOGLE_PAY:
-                validateReplaceBooleanValue(payload);
-                break;
-            case FIELD_ALLOW_APPLE_PAY:
-                validateReplaceBooleanValue(payload);
-                break;
+            case FIELD_BLOCK_PREPAID_CARDS:
             case FIELD_ALLOW_ZERO_AMOUNT:
+            case FIELD_ALLOW_APPLE_PAY:
                 validateReplaceBooleanValue(payload);
                 break;
             case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT:
@@ -98,8 +95,6 @@ public class GatewayAccountRequestValidator {
             case FIELD_INTEGRATION_VERSION_3DS:
                 validateIntegrationVersion3ds(payload);
                 break;
-            case FIELD_BLOCK_PREPAID_CARDS:
-                validateReplaceBooleanValue(payload);
         }
     }
 

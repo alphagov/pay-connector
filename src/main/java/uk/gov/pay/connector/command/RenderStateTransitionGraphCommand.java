@@ -7,7 +7,7 @@ import net.sourceforge.argparse4j.inf.Subparser;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,7 +39,7 @@ public class RenderStateTransitionGraphCommand extends Command {
     }
 
     private void writeToFile(String data, Path path) throws IOException {
-        byte[] bytes = data.getBytes(Charset.forName("UTF-8"));
+        byte[] bytes = data.getBytes(StandardCharsets.UTF_8);
         Files.write(path, bytes, StandardOpenOption.CREATE);
     }
 }

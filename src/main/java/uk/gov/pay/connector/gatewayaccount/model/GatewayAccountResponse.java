@@ -120,8 +120,7 @@ public class GatewayAccountResponse {
         }
 
         public GatewayAccountResponseBuilder generateLinks(URI href) {
-            List<Map<String, Object>> links = ImmutableList.of(ImmutableMap.of("href", href, "rel", "self", "method", "GET"));
-            this.links = links;
+            this.links = ImmutableList.of(ImmutableMap.of("href", href, "rel", "self", "method", "GET"));
             return this;
         }
 

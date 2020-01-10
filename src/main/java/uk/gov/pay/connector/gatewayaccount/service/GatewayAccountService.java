@@ -108,12 +108,12 @@ public class GatewayAccountService {
                 put(FIELD_ALLOW_GOOGLE_PAY,
                         (gatewayAccountRequest, gatewayAccountEntity) -> {
                             throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
-                            gatewayAccountEntity.setAllowGooglePay(Boolean.valueOf(gatewayAccountRequest.valueAsString()));
+                            gatewayAccountEntity.setAllowGooglePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
                         });
                 put(FIELD_ALLOW_APPLE_PAY,
                         (gatewayAccountRequest, gatewayAccountEntity) -> {
                             throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
-                            gatewayAccountEntity.setAllowApplePay(Boolean.valueOf(gatewayAccountRequest.valueAsString()));
+                            gatewayAccountEntity.setAllowApplePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
                         });
                 put(FIELD_NOTIFY_SETTINGS,
                         (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setNotifySettings(gatewayAccountRequest.valueAsObject()));
@@ -128,7 +128,7 @@ public class GatewayAccountService {
                 put(FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT,
                         (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporatePrepaidDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong()));
                 put(FIELD_ALLOW_ZERO_AMOUNT,
-                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowZeroAmount(Boolean.valueOf(gatewayAccountRequest.valueAsString())));
+                        (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setAllowZeroAmount(Boolean.parseBoolean(gatewayAccountRequest.valueAsString())));
                 put(FIELD_INTEGRATION_VERSION_3DS,
                         (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setIntegrationVersion3ds(gatewayAccountRequest.valueAsInt()));
                 put(FIELD_BLOCK_PREPAID_CARDS,

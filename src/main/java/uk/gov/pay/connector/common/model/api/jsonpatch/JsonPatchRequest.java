@@ -32,21 +32,21 @@ public class JsonPatchRequest {
     
     public long valueAsLong() {
         if (value != null && value.isNumber()) {
-            return Long.valueOf(value.asText());
+            return Long.parseLong(value.asText());
         }
         throw new JsonNodeNotCorrectTypeException("JSON node " + value + " is not of type number");
     }
     
     public int valueAsInt() {
         if(value != null && value.isNumber()) {
-            return Integer.valueOf(value.asText());
+            return Integer.parseInt(value.asText());
         }
         throw new JsonNodeNotCorrectTypeException("JSON node " + value + " is not of type number");
     }
 
     public boolean valueAsBoolean() {
         if (value != null && value.isBoolean()) {
-            return Boolean.valueOf(value.asText());
+            return Boolean.parseBoolean(value.asText());
         }
         throw new JsonNodeNotCorrectTypeException("JSON node " + value + " is not of type boolean");
     }

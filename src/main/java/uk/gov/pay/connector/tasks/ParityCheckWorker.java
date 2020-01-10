@@ -60,7 +60,7 @@ public class ParityCheckWorker {
             if (parityCheckStatus.isPresent()) {
                 checkParityForParityCheckStatus(parityCheckStatus);
             } else {
-                maxId = maybeMaxId.orElseGet(() -> chargeDao.findMaxId());
+                maxId = maybeMaxId.orElseGet(chargeDao::findMaxId);
                 checkParityForIdRange(startId, maxId, doNotReprocessValidRecords);
             }
         } catch (NullPointerException e) {

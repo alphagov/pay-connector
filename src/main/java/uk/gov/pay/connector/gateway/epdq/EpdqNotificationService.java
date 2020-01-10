@@ -73,7 +73,7 @@ public class EpdqNotificationService {
 
         Optional<ChargeEntity> maybeCharge = chargeDao.findByProviderAndTransactionId(PAYMENT_GATEWAY_NAME, notification.getTransactionId());
 
-        if (!maybeCharge.isPresent()) {
+        if (maybeCharge.isEmpty()) {
             logger.error("{} notification {} could not be verified (associated charge entity not found)",
                     PAYMENT_GATEWAY_NAME, notification);
             return;

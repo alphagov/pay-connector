@@ -4,10 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.common.model.Status;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static java.util.Arrays.stream;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CANCELLED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CAPTURABLE;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;

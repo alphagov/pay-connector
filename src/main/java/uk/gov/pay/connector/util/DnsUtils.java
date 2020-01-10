@@ -24,7 +24,7 @@ public class DnsUtils {
         try {
             String ipAddress = extractForwardedIp(forwardedAddress);
             Optional<String> host = reverseDnsLookup(ipAddress);
-            if (!host.isPresent()) {
+            if (host.isEmpty()) {
                 throw new Exception(format("Host not found for ip address '%s'", ipAddress));
             }
             if (!host.get().endsWith(domain + ".")) {

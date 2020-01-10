@@ -8,7 +8,6 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.*;
-import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
@@ -77,8 +76,6 @@ public class EpdqPaymentProvider implements PaymentProvider {
     private final MetricRegistry metricRegistry;
     private final GatewayClient authoriseClient;
     private final GatewayClient cancelClient;
-    private final GatewayClient captureClient;
-    private final GatewayClient refundClient;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final Map<String, String> gatewayUrlMap;
     private final EpdqCaptureHandler epdqCaptureHandler;
@@ -92,8 +89,8 @@ public class EpdqPaymentProvider implements PaymentProvider {
         gatewayUrlMap = configuration.getGatewayConfigFor(EPDQ).getUrls();
         authoriseClient = gatewayClientFactory.createGatewayClient(EPDQ, AUTHORISE, environment.metrics());
         cancelClient = gatewayClientFactory.createGatewayClient(EPDQ, CANCEL, environment.metrics());
-        captureClient = gatewayClientFactory.createGatewayClient(EPDQ, CAPTURE, environment.metrics());
-        refundClient = gatewayClientFactory.createGatewayClient(EPDQ, REFUND, environment.metrics());
+        GatewayClient captureClient = gatewayClientFactory.createGatewayClient(EPDQ, CAPTURE, environment.metrics());
+        GatewayClient refundClient = gatewayClientFactory.createGatewayClient(EPDQ, REFUND, environment.metrics());
         frontendUrl = configuration.getLinks().getFrontendUrl();
         metricRegistry = environment.metrics();
         externalRefundAvailabilityCalculator = new EpdqExternalRefundAvailabilityCalculator();
@@ -169,8 +166,8 @@ public class EpdqPaymentProvider implements PaymentProvider {
     @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         Optional<String> transactionId = Optional.empty();
-        String stringifiedResponse = null;
-        BaseAuthoriseResponse.AuthoriseStatus authorisationStatus = null;
+        String stringifiedResponse;
+        BaseAuthoriseResponse.AuthoriseStatus authorisationStatus;
         
         try {
             URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_QUERY_ORDER));
@@ -194,7 +191,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 gatewayResponse = reconstructErrorBiasedGatewayResponse(gatewayResponse, authoriseStatus, auth3DResult);
             }
             
-            if (!gatewayResponse.getBaseResponse().isPresent()) gatewayResponse.throwGatewayError();
+            if (gatewayResponse.getBaseResponse().isEmpty()) gatewayResponse.throwGatewayError();
             
             transactionId = Optional.ofNullable(gatewayResponse.getBaseResponse().get().getTransactionId());
             stringifiedResponse = gatewayResponse.toString();

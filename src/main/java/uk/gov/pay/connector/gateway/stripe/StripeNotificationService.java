@@ -112,7 +112,7 @@ public class StripeNotificationService {
             
             Optional<ChargeEntity> maybeCharge = chargeService.findByProviderAndTransactionId(PAYMENT_GATEWAY_NAME, paymentIntent.getId());
 
-            if (!maybeCharge.isPresent()) {
+            if (maybeCharge.isEmpty()) {
                 logger.info("{} notification for payment intent [{}] could not be verified (associated charge entity not found)",
                         PAYMENT_GATEWAY_NAME, paymentIntent.getId());
                 return;
@@ -163,7 +163,7 @@ public class StripeNotificationService {
 
             Optional<ChargeEntity> maybeCharge = chargeService.findByProviderAndTransactionId(PAYMENT_GATEWAY_NAME, stripeSourcesResponse.getTransactionId());
 
-            if (!maybeCharge.isPresent()) {
+            if (maybeCharge.isEmpty()) {
                 logger.error("{} notification for source [{}] could not be verified (associated charge entity not found)",
                         PAYMENT_GATEWAY_NAME, stripeSourcesResponse.getTransactionId());
                 return;

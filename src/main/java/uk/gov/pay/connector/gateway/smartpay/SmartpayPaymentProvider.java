@@ -90,8 +90,8 @@ public class SmartpayPaymentProvider implements PaymentProvider {
     @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         Optional<String> transactionId = Optional.empty();
-        String stringifiedResponse = null;
-        BaseAuthoriseResponse.AuthoriseStatus authorisationStatus = null;
+        String stringifiedResponse;
+        BaseAuthoriseResponse.AuthoriseStatus authorisationStatus;
         
         try {
             GatewayClient.Response response = client.postRequestFor(gatewayUrlMap.get(request.getGatewayAccount().getType()), 
@@ -99,7 +99,7 @@ public class SmartpayPaymentProvider implements PaymentProvider {
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getSmartpayGatewayResponse(response, Smartpay3dsAuthorisationResponse.class);
             
-            if (!gatewayResponse.getBaseResponse().isPresent())
+            if (gatewayResponse.getBaseResponse().isEmpty())
                 gatewayResponse.throwGatewayError();
             
             transactionId = Optional.ofNullable(gatewayResponse.getBaseResponse().get().getTransactionId());

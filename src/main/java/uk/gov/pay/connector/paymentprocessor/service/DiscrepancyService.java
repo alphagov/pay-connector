@@ -7,7 +7,6 @@ import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.gateway.GatewayException;
-import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.report.model.GatewayStatusComparison;
 
 import javax.inject.Inject;

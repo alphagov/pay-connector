@@ -104,13 +104,13 @@ public class StatusMapper<T> {
                 .filter(validStatus -> validStatus.getFromStatus().equals(gatewayStatus))
                 .findFirst();
 
-        if (!statusMap.isPresent()) {
+        if (statusMap.isEmpty()) {
             return new UnknownStatus();
         }
 
         Optional<Status> statusMaybe = statusMap.flatMap(StatusMap::getToStatus);
 
-        if (!statusMaybe.isPresent()) {
+        if (statusMaybe.isEmpty()) {
             return new IgnoredStatus();
         }
 

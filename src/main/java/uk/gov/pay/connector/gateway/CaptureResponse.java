@@ -55,7 +55,7 @@ public class CaptureResponse {
     }
 
     public Optional<String> getErrorMessage() {
-        return getError().map(error -> error.getMessage());
+        return getError().map(GatewayError::getMessage);
     }
 
     /**

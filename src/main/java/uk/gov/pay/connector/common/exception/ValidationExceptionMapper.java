@@ -7,7 +7,6 @@ import uk.gov.pay.connector.common.model.api.ErrorResponse;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
-import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -17,7 +16,7 @@ public class ValidationExceptionMapper implements ExceptionMapper<ValidationExce
 
     @Override
     public Response toResponse(ValidationException exception) {
-        LOGGER.error(exception.getErrors().stream().collect(Collectors.joining("\n")));
+        LOGGER.error(String.join("\n", exception.getErrors()));
         ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.GENERIC, exception.getErrors());
         return Response.status(400).entity(errorResponse).type(APPLICATION_JSON).build();
     }
