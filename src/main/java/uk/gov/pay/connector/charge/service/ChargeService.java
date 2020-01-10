@@ -317,7 +317,7 @@ public class ChargeService {
             } else {
                 String message = Stream.of(ExternalChargeState.values())
                         .filter(chargeState -> chargeState.getCode() != null)
-                        .collect(Collectors.toMap(e -> e.getCode(), e -> e.getMessage()))
+                        .collect(Collectors.toMap(ExternalChargeState::getCode, ExternalChargeState::getMessage))
                         .get(externalMetadata.getMetadata().get("code").toString());
 
                 state = new ExternalTransactionState(

@@ -63,7 +63,6 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GatewayClient authoriseClient;
     private final GatewayClient cancelClient;
-    private final GatewayClient captureClient;
     private final GatewayClient inquiryClient;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final WorldpayCaptureHandler worldpayCaptureHandler;
@@ -81,7 +80,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         authoriseClient = gatewayClientFactory.createGatewayClient(WORLDPAY, AUTHORISE, environment.metrics());
         cancelClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CANCEL, environment.metrics());
         inquiryClient = gatewayClientFactory.createGatewayClient(WORLDPAY, QUERY, environment.metrics());
-        captureClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CAPTURE, environment.metrics());
+        GatewayClient captureClient = gatewayClientFactory.createGatewayClient(WORLDPAY, CAPTURE, environment.metrics());
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         worldpayCaptureHandler = new WorldpayCaptureHandler(captureClient, gatewayUrlMap);
         worldpayRefundHandler = new WorldpayRefundHandler(captureClient, gatewayUrlMap);
@@ -152,7 +151,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getWorldpayGatewayResponse(response);
 
-            if (!gatewayResponse.getBaseResponse().isPresent()) gatewayResponse.throwGatewayError();
+            if (gatewayResponse.getBaseResponse().isEmpty()) gatewayResponse.throwGatewayError();
 
             BaseAuthoriseResponse authoriseResponse = gatewayResponse.getBaseResponse().get();
 

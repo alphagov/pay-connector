@@ -47,7 +47,7 @@ public class WalletAuthoriseService {
     public GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, WalletAuthorisationData walletAuthorisationData) {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId);
-            GatewayResponse<BaseAuthoriseResponse> operationResponse = null;
+            GatewayResponse<BaseAuthoriseResponse> operationResponse;
             Optional<String> transactionId = Optional.empty();
             Optional<String> sessionIdentifier = Optional.empty();
             ChargeStatus chargeStatus = null;

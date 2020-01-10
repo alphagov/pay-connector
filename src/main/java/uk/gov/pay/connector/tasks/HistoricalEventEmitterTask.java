@@ -21,7 +21,6 @@ public class HistoricalEventEmitterTask extends Task {
     private static final String TASK_NAME = "historical-event-emitter";
     private HistoricalEventEmitterWorker worker;
     private EventEmitterConfig eventEmitterConfig;
-    private Environment environment;
     private ExecutorService executor;
 
     public HistoricalEventEmitterTask() {
@@ -33,7 +32,6 @@ public class HistoricalEventEmitterTask extends Task {
                                       HistoricalEventEmitterWorker historicalEventEmitterWorker) {
         this();
         this.worker = historicalEventEmitterWorker;
-        this.environment = environment;
         this.eventEmitterConfig = connectorConfiguration.getEventEmitterConfig();
         // Use of a synchronous work queue and a single thread pool ensures that only one job runs at a time
         // the queue has no capacity so attempts to put items into it will block if there is nothing trying 
@@ -72,7 +70,7 @@ public class HistoricalEventEmitterTask extends Task {
         if (strings.isEmpty()) {
             return OptionalLong.empty();
         } else {
-            return OptionalLong.of(Long.valueOf(strings.asList().get(0)));
+            return OptionalLong.of(Long.parseLong(strings.asList().get(0)));
         }
     }
 

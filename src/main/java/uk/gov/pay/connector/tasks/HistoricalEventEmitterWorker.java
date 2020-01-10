@@ -52,7 +52,7 @@ public class HistoricalEventEmitterWorker {
         try {
             MDC.put(HEADER_REQUEST_ID, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
-            maxId = maybeMaxId.orElseGet(() -> chargeDao.findMaxId());
+            maxId = maybeMaxId.orElseGet(chargeDao::findMaxId);
             logger.info("Starting from {} up to {}", startId, maxId);
             for (long i = startId; i <= maxId; i++) {
                 emitEventsFor(i);

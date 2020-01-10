@@ -48,7 +48,7 @@ public class ParityCheckTask extends Task {
     }
 
     @Override
-    public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) throws Exception {
+    public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output) {
         Long startId = getLongParam(parameters, "start_id").orElse(0L);
         final Optional<Long> maybeMaxId = getLongParam(parameters, "max_id");
         boolean doNotReprocessValidRecords = getFlagParam(parameters, "do_not_reprocess_valid_records").orElse(false);
@@ -80,11 +80,11 @@ public class ParityCheckTask extends Task {
     }
 
     private Optional<Long> getLongParam(ImmutableMultimap<String, String> parameters, String paramName) {
-        return getParam(parameters, paramName, v -> Long.valueOf(v));
+        return getParam(parameters, paramName, Long::valueOf);
     }
 
     private Optional<Boolean> getFlagParam(ImmutableMultimap<String, String> parameters, String paramName) {
-        return getParam(parameters, paramName, v -> Boolean.valueOf(v));
+        return getParam(parameters, paramName, Boolean::valueOf);
     }
 
     private Optional<String> getStringParam(ImmutableMultimap<String, String> parameters, String paramName) {

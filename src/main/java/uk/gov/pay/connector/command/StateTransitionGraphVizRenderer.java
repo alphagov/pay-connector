@@ -42,9 +42,7 @@ public class StateTransitionGraphVizRenderer {
     }
 
     private void nodeColours(StringJoiner s) {
-        transitions.allStatuses().forEach(c -> {
-            s.add(String.format("%s [color=\"%s\" shape=%s] ;", nameFor(c), colourFor(c), shapeFor(c)));
-        });
+        transitions.allStatuses().forEach(c -> s.add(String.format("%s [color=\"%s\" shape=%s] ;", nameFor(c), colourFor(c), shapeFor(c))));
     }
 
     private String shapeFor(ChargeStatus c) {

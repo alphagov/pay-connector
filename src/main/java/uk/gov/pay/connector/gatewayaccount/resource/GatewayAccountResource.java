@@ -140,9 +140,7 @@ public class GatewayAccountResource {
 
         logger.debug("Getting gateway accounts {}.", accountIdsArg);
 
-        gatewayAccountResourceDTOList.forEach(account -> {
-            account.addLink("self", buildUri(uriInfo, account.getAccountId()));
-        });
+        gatewayAccountResourceDTOList.forEach(account -> account.addLink("self", buildUri(uriInfo, account.getAccountId())));
 
         return Response
                 .ok(ImmutableMap.of("accounts", gatewayAccountResourceDTOList))

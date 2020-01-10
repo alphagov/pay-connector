@@ -38,9 +38,9 @@ public class ApiValidators {
         AMOUNT(AMOUNT_KEY) {
             @Override
             boolean validate(String amount) {
-                Integer amountValue;
+                int amountValue;
                 try {
-                    amountValue  = Integer.valueOf(amount);
+                    amountValue  = Integer.parseInt(amount);
                 } catch (NumberFormatException e) {
                     return false;
                 }
@@ -115,12 +115,12 @@ public class ApiValidators {
         List<String> errors = newArrayList();
 
         Optional<ZonedDateTime> fromOptional = parseZonedDateTime(fromDate);
-        if (!fromOptional.isPresent()) {
+        if (fromOptional.isEmpty()) {
             errors.add("query param '" + fromDateParamName + "' not in correct format");
         }
 
         Optional<ZonedDateTime> toOptional = parseZonedDateTime(toDate);
-        if (!toOptional.isPresent()) {
+        if (toOptional.isEmpty()) {
             errors.add("query param '" + toDateParamName + "' not in correct format");
         }
 

@@ -50,7 +50,7 @@ public class StripeNotification {
         @Override
         public String toString() {
             return "StripeEventData {" +
-                    "object='" + object + "\'" +
+                    "object='" + object + "'" +
                     '}';
         }
     }
@@ -59,8 +59,8 @@ public class StripeNotification {
     public String toString() {
         // do not add `data` to toString() as it can contain PII (personally identifiable information)
         return "StripeNotification {" +
-                "id='" + id + "\'" +
-                ", type='" + type + "\'" +
+                "id='" + id + "'" +
+                ", type='" + type + "'" +
                 '}';
     }
 }

@@ -32,9 +32,9 @@ public class SQSHealthCheck extends HealthCheck {
     }
 
     @Override
-    protected Result check() throws Exception {
+    protected Result check() {
         List<String> queueChecks = checkList.stream()
-                .map(nameValuePair -> this.checkQueue(nameValuePair))
+                .map(this::checkQueue)
                 .flatMap(Optional::stream)
                 .collect(Collectors.toUnmodifiableList());
         if (!queueChecks.isEmpty()) {
