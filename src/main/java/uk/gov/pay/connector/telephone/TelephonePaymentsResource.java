@@ -75,7 +75,7 @@ public class TelephonePaymentsResource {
                         ChargeStatus.fromStripeString(payment.getStatus()),
                         payment.getBillingDetails().getEmail(), 
                         new CardDetailsEntity(LastDigitsCardNumber.of(payment.getPaymentMethodDetails().getCard().getLast4()), 
-                                FirstDigitsCardNumber.of("1234"),
+                                FirstDigitsCardNumber.of("123456"),
                                 payment.getBillingDetails().getName(),
                                 stripeTelephonePaymentService.formatStripeExpiryDate(payment), 
                                 payment.getPaymentMethodDetails().getCard().getBrand(),
