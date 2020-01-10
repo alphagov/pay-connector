@@ -102,7 +102,6 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     private RestClientConfig restClientConfig;
     
-    @NotNull
     private String stripeTestApiKey;
 
     @NotNull
