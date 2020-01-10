@@ -49,27 +49,28 @@ public class TelephonePaymentsResource {
     @Path("/create-payment")
     public Response createPayment(TelephonePaymentRequest telephonePaymentRequest) {
         logger.info("Received request to create a telephone payment for Stripe id " + telephonePaymentRequest.getStripeId());
-        var telephoneRequestBuilder = new TelephoneChargeCreateRequest.Builder()
-                .withAmount(100L)
-                .withReference("Some reference")
-                .withDescription("Some description")
-                .withCreatedDate("2018-02-21T16:04:25Z")
-                .withAuthorisedDate("2018-02-21T16:05:33Z")
-                .withProcessorId("1PROC")
-                .withProviderId("1PROV")
-                .withAuthCode("666")
-                .withNameOnCard("Jane Doe")
-                .withEmailAddress("jane.doe@example.com")
-                .withTelephoneNumber("+447700900796")
-                .withCardType("visa")
-                .withCardExpiry("01/19")
-                .withLastFourDigits("1234")
-                .withPaymentOutcome(new PaymentOutcome("success"))
-                .withFirstSixDigits("123456");
-        chargeService.create(telephoneRequestBuilder.build(), telephonePaymentRequest.getAccountId());
         stripeTelephonePaymentService.getStripePayment(telephonePaymentRequest.getStripeId()).ifPresent(payment -> {
             logger.info(payment.toString());
-                chargeDao.persist(new ChargeEntity(payment.getAmount(),
+            var telephoneRequestBuilder = new TelephoneChargeCreateRequest.Builder()
+                    .withAmount(payment.getAmount())
+                    .withReference(payment.getDescription())
+                    .withDescription(payment.getDescription())
+                    .withCreatedDate(String.valueOf(payment.getCreated()))
+                    .withAuthorisedDate("2018-02-21T16:05:33Z")
+                    .withProcessorId("1PROC")
+                    .withProviderId("1PROV")
+                    .withAuthCode(payment.getAuthorizationCode())
+                    .withNameOnCard(payment.getBillingDetails().getName())
+                    .withEmailAddress(payment.getBillingDetails().getEmail())
+                    .withTelephoneNumber(payment.getBillingDetails().getPhone())
+                    .withCardType(payment.getPaymentMethodDetails().getCard().getBrand())
+                    .withCardExpiry(stripeTelephonePaymentService.formatStripeExpiryDate(payment))
+                    .withLastFourDigits(payment.getPaymentMethodDetails().getCard().getLast4())
+                    .withPaymentOutcome(new PaymentOutcome("success"))
+                    .withFirstSixDigits("123456");
+            chargeService.create(telephoneRequestBuilder.build(), telephonePaymentRequest.getAccountId());
+
+            chargeDao.persist(new ChargeEntity(payment.getAmount(),
                         ServicePaymentReference.of(payment.getId()), 
                         payment.getDescription(), 
                         ChargeStatus.fromStripeString(payment.getStatus()),
