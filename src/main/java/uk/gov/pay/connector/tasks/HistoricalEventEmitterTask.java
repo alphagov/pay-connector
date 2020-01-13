@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.tasks;
 
-import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.inject.Inject;
 import io.dropwizard.servlets.tasks.Task;
 import io.dropwizard.setup.Environment;
@@ -11,9 +9,13 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.EventEmitterConfig;
 
 import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
 import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
+
+import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getOptionalLongParam;
 
 public class HistoricalEventEmitterTask extends Task {
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -45,14 +47,14 @@ public class HistoricalEventEmitterTask extends Task {
     }
 
     @Override
-    public void execute(ImmutableMultimap<String, String> parameters, PrintWriter output){
-        Long startId = getParam(parameters, "start_id").orElse(0);
-        final OptionalLong maybeMaxId = getParam(parameters, "max_id");
+    public void execute(Map<String, List<String>> parameters, PrintWriter output) throws Exception {
+        Long startId = getOptionalLongParam(parameters, "start_id").orElse(0);
+        final OptionalLong maybeMaxId = getOptionalLongParam(parameters, "max_id");
         final Long doNotRetryEmitUntilDuration = getDoNotRetryEmitUntilDuration(parameters);
 
         logger.info("Execute called start_id={} max_id={} doNotRetryEmitUntilDuration={} - processing",
                 startId, maybeMaxId, doNotRetryEmitUntilDuration);
-        
+
         try {
             logger.info("Request accepted");
             executor.execute(() -> worker.execute(startId, maybeMaxId, doNotRetryEmitUntilDuration));
@@ -64,18 +66,8 @@ public class HistoricalEventEmitterTask extends Task {
         }
     }
 
-    private OptionalLong getParam(ImmutableMultimap<String, String> parameters, String paramName) {
-        final ImmutableCollection<String> strings = parameters.get(paramName);
-        
-        if (strings.isEmpty()) {
-            return OptionalLong.empty();
-        } else {
-            return OptionalLong.of(Long.parseLong(strings.asList().get(0)));
-        }
-    }
-
-    private Long getDoNotRetryEmitUntilDuration(ImmutableMultimap<String, String> parameters) {
-        OptionalLong doNotRetryEmitUntil = getParam(parameters,
+    private Long getDoNotRetryEmitUntilDuration(Map<String, List<String>> parameters) {
+        OptionalLong doNotRetryEmitUntil = getOptionalLongParam(parameters,
                 "do_not_retry_emit_until");
         return doNotRetryEmitUntil.orElse(
                 eventEmitterConfig.getDefaultDoNotRetryEmittingEventUntilDurationInSeconds());

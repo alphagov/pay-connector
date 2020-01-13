@@ -248,8 +248,12 @@ public class ClientFactoryIT {
             System.clearProperty(PROXY_HOST_PROPERTY);
             System.clearProperty(PROXY_PORT_PROPERTY);
         }
-        app.before();
-        return app;
+        try {
+            app.before();
+            return app;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     private String getServerUrl() {

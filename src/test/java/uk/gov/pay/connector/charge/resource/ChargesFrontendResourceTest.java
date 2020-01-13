@@ -50,7 +50,7 @@ public class ChargesFrontendResourceTest {
         
         List<String> listOfErrors = (List) response.readEntity(Map.class).get("message");
         assertThat(listOfErrors.size(), is(1));
-        assertThat(listOfErrors, hasItem("may not be null"));
+        assertThat(listOfErrors, hasItem("must not be null"));
     }
 
     @Test

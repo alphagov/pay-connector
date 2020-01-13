@@ -4,15 +4,20 @@
     <groupId>uk.gov.pay</groupId>
     <version>0.1-SNAPSHOT</version>
     <artifactId>pay-connector</artifactId>
+    <parent>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-dependencies</artifactId>
+        <version>2.0.0</version>
+    </parent>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.version>1.3.17</dropwizard.version>
+        <dropwizard.version>2.0.0</dropwizard.version>
         <liquibase.version>3.7.0</liquibase.version>
         <wiremock.version>2.25.1</wiremock.version>
         <eclipselink.version>2.7.5</eclipselink.version>
         <guice.version>4.2.2</guice.version>
         <jackson.version>2.10.2</jackson.version>
-        <pay-java-commons.version>1.0.20191224120315</pay-java-commons.version>
+        <pay-java-commons.version>1.0.20200107160358</pay-java-commons.version>
         <surefire.version>3.0.0-M4</surefire.version>
         <javax.persistence.version>2.2.1</javax.persistence.version>
         <jooq.version>3.12.3</jooq.version>
@@ -302,7 +307,7 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-util</artifactId>
+            <artifactId>jetty-io</artifactId>
             <version>9.4.25.v20191220</version>
         </dependency>
         <dependency>
@@ -337,7 +342,7 @@
         <dependency>
             <groupId>org.dhatim</groupId>
             <artifactId>dropwizard-sentry</artifactId>
-            <version>1.3.9-2</version>
+            <version>2.0.0-4</version>
         </dependency>
         <!-- testing -->
         <dependency>
@@ -423,12 +428,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-jdbi</artifactId>
-            <version>${dropwizard.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
             <version>4.1.2</version>
@@ -476,6 +475,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi</artifactId>
+            <version>2.78</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>${jjwt.version}</version>
@@ -491,6 +496,11 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>${jjwt.version}</version>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-db</artifactId>
+            <version>${dropwizard.version}</version>
         </dependency>
     </dependencies>
     <build>

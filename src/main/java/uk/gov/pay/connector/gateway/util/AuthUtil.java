@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.util;
 
 import com.google.common.collect.ImmutableMap;
-import org.glassfish.jersey.internal.util.Base64;
+import java.util.Base64;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -18,7 +18,7 @@ public class AuthUtil {
     private static final String STRIPE_API_VERSION = "2019-05-16";
 
     private static String encode(String username, String password) {
-        return "Basic " + Base64.encodeAsString(username + ":" + password);
+        return "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes());
     }
 
     public static Map<String, String> getStripeAuthHeader(StripeGatewayConfig stripeGatewayConfig, boolean isLiveAccount) {
