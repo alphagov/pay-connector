@@ -68,24 +68,10 @@ public class TelephonePaymentsResource {
                     .withLastFourDigits(payment.getPaymentMethodDetails().getCard().getLast4())
                     .withPaymentOutcome(new PaymentOutcome("success"))
                     .withFirstSixDigits("123456");
-            chargeService.create(telephoneRequestBuilder.build(), telephonePaymentRequest.getAccountId());
-
-            chargeDao.persist(new ChargeEntity(payment.getAmount(),
-                        ServicePaymentReference.of(payment.getId()), 
-                        payment.getDescription(), 
-                        ChargeStatus.fromStripeString(payment.getStatus()),
-                        payment.getBillingDetails().getEmail(), 
-                        new CardDetailsEntity(LastDigitsCardNumber.of(payment.getPaymentMethodDetails().getCard().getLast4()), 
-                                FirstDigitsCardNumber.of("123456"),
-                                payment.getBillingDetails().getName(),
-                                stripeTelephonePaymentService.formatStripeExpiryDate(payment), 
-                                payment.getPaymentMethodDetails().getCard().getBrand(),
-                                CardType.valueOf(payment.getPaymentMethodDetails().getCard().getFunding().toUpperCase())),
-                        null,
-                        gatewayAccountDao.findById(telephonePaymentRequest.getAccountId()).get(),
-                        payment.getId(),
-                        SupportedLanguage.ENGLISH
-            ));
+            var response = chargeService.create(telephoneRequestBuilder.build(), telephonePaymentRequest.getAccountId());
+            response.ifPresent(chargeResponse -> {
+                logger.info("Charge Response " + chargeResponse.toString());
+            });
         });
         return Response.ok().build();
     }
