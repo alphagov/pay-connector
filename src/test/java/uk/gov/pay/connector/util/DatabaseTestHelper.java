@@ -3,10 +3,8 @@ package uk.gov.pay.connector.util;
 import com.google.gson.Gson;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jdbi.v3.core.Jdbi;
 import org.postgresql.util.PGobject;
-import org.skife.jdbi.v2.DBI;
-import org.skife.jdbi.v2.util.BooleanColumnMapper;
-import org.skife.jdbi.v2.util.StringColumnMapper;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
@@ -23,17 +21,19 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static java.sql.Types.OTHER;
 import static java.time.ZonedDateTime.now;
 
 public class DatabaseTestHelper {
 
-    private DBI jdbi;
+    private Jdbi jdbi;
 
-    public DatabaseTestHelper(DBI jdbi) {
+    public DatabaseTestHelper(Jdbi jdbi) {
         this.jdbi = jdbi;
     }
 
@@ -47,34 +47,30 @@ public class DatabaseTestHelper {
                 jsonObject.setValue(new Gson().toJson(params.getCredentials()));
             }
             jdbi.withHandle(h ->
-                    h.update("INSERT INTO gateway_accounts (id,\n" +
-                                    "                              payment_provider,\n" +
-                                    "                              credentials,\n" +
-                                    "                              service_name,\n" +
-                                    "                              type,\n" +
-                                    "                              description,\n" +
-                                    "                              analytics_id,\n" +
-                                    "                              email_collection_mode,\n" +
-                                    "                              integration_version_3ds,\n" +
-                                    "                              corporate_credit_card_surcharge_amount,\n" +
-                                    "                              corporate_debit_card_surcharge_amount,\n" +
-                                    "                              corporate_prepaid_credit_card_surcharge_amount,\n" +
-                                    "                              corporate_prepaid_debit_card_surcharge_amount)\n" +
-                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                            Long.valueOf(params.getAccountId()),
-                            params.getPaymentGateway(),
-                            jsonObject,
-                            params.getServiceName(),
-                            params.getProviderUrlType(),
-                            params.getDescription(),
-                            params.getAnalyticsId(),
-                            params.getEmailCollectionMode(),
-                            params.getIntegrationVersion3ds(),
-                            params.getCorporateCreditCardSurchargeAmount(),
-                            params.getCorporateDebitCardSurchargeAmount(),
-                            params.getCorporatePrepaidCreditCardSurchargeAmount(),
-                            params.getCorporatePrepaidDebitCardSurchargeAmount())
-            );
+                    h.createUpdate("INSERT INTO gateway_accounts (id, payment_provider, credentials, " +
+                            "service_name, type, description, analytics_id, email_collection_mode, " +
+                            "integration_version_3ds, corporate_credit_card_surcharge_amount, " +
+                            "corporate_debit_card_surcharge_amount, corporate_prepaid_credit_card_surcharge_amount, " +
+                            "corporate_prepaid_debit_card_surcharge_amount) " +
+                            "VALUES (:id, :payment_provider, :credentials, :service_name, :type, " +
+                            ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
+                            ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
+                            ":corporate_prepaid_credit_card_surcharge_amount, " +
+                            ":corporate_prepaid_debit_card_surcharge_amount)")
+                            .bind("id", Long.valueOf(params.getAccountId()))
+                            .bind("payment_provider", params.getPaymentGateway())
+                            .bindBySqlType("credentials", jsonObject, OTHER)
+                            .bind("service_name", params.getServiceName())
+                            .bind("type", params.getProviderUrlType())
+                            .bind("description", params.getDescription())
+                            .bind("analytics_id", params.getAnalyticsId())
+                            .bind("email_collection_mode", params.getEmailCollectionMode())
+                            .bind("integration_version_3ds", params.getIntegrationVersion3ds())
+                            .bind("corporate_credit_card_surcharge_amount", params.getCorporateCreditCardSurchargeAmount())
+                            .bind("corporate_debit_card_surcharge_amount", params.getCorporateDebitCardSurchargeAmount())
+                            .bind("corporate_prepaid_credit_card_surcharge_amount", params.getCorporatePrepaidCreditCardSurchargeAmount())
+                            .bind("corporate_prepaid_debit_card_surcharge_amount", params.getCorporatePrepaidDebitCardSurchargeAmount())
+                            .execute());
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -83,7 +79,7 @@ public class DatabaseTestHelper {
     public void updateGatewayAccountAllowZeroAmount(long gatewayAccountId, boolean allowZeroAmount) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("UPDATE gateway_accounts SET allow_zero_amount=:allow_zero_amount WHERE id=:gateway_account_id")
+                        .createUpdate("UPDATE gateway_accounts SET allow_zero_amount=:allow_zero_amount WHERE id=:gateway_account_id")
                         .bind("gateway_account_id", gatewayAccountId)
                         .bind("allow_zero_amount", allowZeroAmount)
                         .execute()
@@ -102,55 +98,42 @@ public class DatabaseTestHelper {
             throw new ExternalMetadataConverterException("Failed to persist external metadata");
         }
         jdbi.withHandle(h ->
-                h.update(
-                        "INSERT INTO" +
-                                "    charges(\n" +
-                                "        id,\n" +
-                                "        external_id,\n" +
-                                "        amount,\n" +
-                                "        status,\n" +
-                                "        gateway_account_id,\n" +
-                                "        return_url,\n" +
-                                "        gateway_transaction_id,\n" +
-                                "        description,\n" +
-                                "        created_date,\n" +
-                                "        reference,\n" +
-                                "        version,\n" +
-                                "        email,\n" +
-                                "        language,\n" +
-                                "        delayed_capture,\n" +
-                                "        corporate_surcharge,\n" +
-                                "        parity_check_status,\n" +
-                                "        external_metadata,\n" +
-                                "        card_type\n" +
-                                "    )\n" +
-                                "   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n",
-                        addChargeParams.getChargeId(),
-                        addChargeParams.getExternalChargeId(),
-                        addChargeParams.getAmount(),
-                        addChargeParams.getStatus().getValue(),
-                        Long.valueOf(addChargeParams.getGatewayAccountId()),
-                        addChargeParams.getReturnUrl(),
-                        addChargeParams.getTransactionId(),
-                        addChargeParams.getDescription(),
-                        Timestamp.from(addChargeParams.getCreatedDate().toInstant()),
-                        addChargeParams.getReference().toString(),
-                        addChargeParams.getVersion(),
-                        addChargeParams.getEmail(),
-                        addChargeParams.getLanguage().toString(),
-                        addChargeParams.isDelayedCapture(),
-                        addChargeParams.getCorporateSurcharge(),
-                        addChargeParams.getParityCheckStatus(),
-                        jsonMetadata,
-                        addChargeParams.getCardType()
-                )
-        );
+                h.createUpdate("INSERT INTO charges(id, external_id, amount, " +
+                        "status, gateway_account_id, return_url, gateway_transaction_id, " +
+                        "description, created_date, reference, version, email, language, " +
+                        "delayed_capture, corporate_surcharge, parity_check_status, " +
+                        "external_metadata, card_type) " +
+                        "VALUES(:id, :external_id, :amount, " +
+                        ":status, :gateway_account_id, :return_url, :gateway_transaction_id, " +
+                        ":description, :created_date, :reference, :version, :email, :language, " +
+                        ":delayed_capture, :corporate_surcharge, :parity_check_status, " +
+                        ":external_metadata, :card_type)")
+                    .bind("id", addChargeParams.getChargeId())
+                    .bind("external_id", addChargeParams.getExternalChargeId())
+                    .bind("amount", addChargeParams.getAmount())
+                    .bind("status", addChargeParams.getStatus().getValue())
+                    .bind("gateway_account_id", Long.valueOf(addChargeParams.getGatewayAccountId()))
+                    .bind("return_url", addChargeParams.getReturnUrl())
+                    .bind("gateway_transaction_id", addChargeParams.getTransactionId())
+                    .bind("description", addChargeParams.getDescription())
+                    .bind("created_date", Timestamp.from(addChargeParams.getCreatedDate().toInstant()))
+                    .bind("reference", addChargeParams.getReference().toString())
+                    .bind("version", addChargeParams.getVersion())
+                    .bind("email", addChargeParams.getEmail())
+                    .bind("language", addChargeParams.getLanguage().toString())
+                    .bind("delayed_capture", addChargeParams.isDelayedCapture())
+                    .bind("corporate_surcharge", addChargeParams.getCorporateSurcharge())
+                    .bind("parity_check_status", addChargeParams.getParityCheckStatus())
+                    .bindBySqlType("external_metadata", jsonMetadata, OTHER)
+                    .bind("card_type", addChargeParams.getCardType())
+                    .execute());
     }
 
     public void deleteAllChargesOnAccount(long accountId) {
         jdbi.withHandle(handle ->
-                handle.createStatement("DELETE FROM charges where gateway_account_id = :accountId")
-                        .bind("accountId", accountId).execute());
+                handle.createUpdate("DELETE FROM charges where gateway_account_id = :accountId")
+                        .bind("accountId", accountId)
+                        .execute());
     }
 
     public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId, String gatewayTransactionId, ZonedDateTime createdDate) {
@@ -163,7 +146,7 @@ public class DatabaseTestHelper {
         int refundId = RandomUtils.nextInt();
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO refunds(id, external_id, reference, amount, status, charge_id," +
+                        .createUpdate("INSERT INTO refunds(id, external_id, reference, amount, status, charge_id," +
                                 " gateway_transaction_id, created_date, user_external_id, user_email) " +
                                 "VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, " +
                                 ":gateway_transaction_id, :created_date, :user_external_id, :user_email)")
@@ -186,7 +169,7 @@ public class DatabaseTestHelper {
     public void addRefundHistory(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate, String submittedByUserExternalId, String userEmail) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO refunds_history(id, external_id, reference, amount, status, charge_id, created_date, history_start_date, history_end_date, user_external_id, user_email) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :history_start_date, :history_end_date, :user_external_id, :user_email)")
+                        .createUpdate("INSERT INTO refunds_history(id, external_id, reference, amount, status, charge_id, created_date, history_start_date, history_end_date, user_external_id, user_email) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :history_start_date, :history_end_date, :user_external_id, :user_email)")
                         .bind("id", id)
                         .bind("external_id", externalId)
                         .bind("reference", reference)
@@ -206,7 +189,7 @@ public class DatabaseTestHelper {
     public void addRefundHistory(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, ZonedDateTime historyStartDate, String submittedByUserExternalId) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO refunds_history(id, external_id, reference, amount, status, charge_id, created_date, history_start_date, user_external_id) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :history_start_date, :user_external_id)")
+                        .createUpdate("INSERT INTO refunds_history(id, external_id, reference, amount, status, charge_id, created_date, history_start_date, user_external_id) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :history_start_date, :user_external_id)")
                         .bind("id", id)
                         .bind("external_id", externalId)
                         .bind("reference", reference)
@@ -225,7 +208,7 @@ public class DatabaseTestHelper {
                                         String line1, String line2, String postcode, String city, String county, String country) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("UPDATE charges SET card_brand=:card_brand, last_digits_card_number=:last_digits_card_number, first_digits_card_number=:first_digits_card_number, cardholder_name=:cardholder_name, expiry_date=:expiry_date, address_line1=:address_line1, address_line2=:address_line2, address_postcode=:address_postcode, address_city=:address_city, address_county=:address_county, address_country=:address_country, card_type=:card_type WHERE id=:id")
+                        .createUpdate("UPDATE charges SET card_brand=:card_brand, last_digits_card_number=:last_digits_card_number, first_digits_card_number=:first_digits_card_number, cardholder_name=:cardholder_name, expiry_date=:expiry_date, address_line1=:address_line1, address_line2=:address_line2, address_postcode=:address_postcode, address_city=:address_city, address_county=:address_county, address_country=:address_country, card_type=:card_type WHERE id=:id")
                         .bind("id", chargeId)
                         .bind("card_brand", cardBrand)
                         .bind("last_digits_card_number", lastDigitsCardNumber)
@@ -246,7 +229,7 @@ public class DatabaseTestHelper {
     public void updateCorporateSurcharge(Long chargeId, Long corporateSurcharge) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("UPDATE charges SET corporate_surcharge =:corporate_surcharge WHERE id=:id")
+                        .createUpdate("UPDATE charges SET corporate_surcharge =:corporate_surcharge WHERE id=:id")
                         .bind("id", chargeId)
                         .bind("corporate_surcharge", corporateSurcharge)
                         .execute());
@@ -255,7 +238,7 @@ public class DatabaseTestHelper {
     public void updateCharge3dsDetails(Long chargeId, String issuerUrl, String paRequest, String htmlOut) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("UPDATE charges SET pa_request_3ds=:pa_request_3ds, issuer_url_3ds=:issuer_url_3ds, html_out_3ds=:html_out_3ds WHERE id=:id")
+                        .createUpdate("UPDATE charges SET pa_request_3ds=:pa_request_3ds, issuer_url_3ds=:issuer_url_3ds, html_out_3ds=:html_out_3ds WHERE id=:id")
                         .bind("id", chargeId)
                         .bind("pa_request_3ds", paRequest)
                         .bind("issuer_url_3ds", issuerUrl)
@@ -267,7 +250,7 @@ public class DatabaseTestHelper {
     public void updateCharge3dsFlexChallengeDetails(Long chargeId, String acsUrl, String transactionId, String payload, String version) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("UPDATE charges " +
+                        .createUpdate("UPDATE charges " +
                                 " SET worldpay_challenge_acs_url_3ds = :acsUrl, " +
                                 " worldpay_challenge_transaction_id_3ds = :transactionId, " +
                                 " worldpay_challenge_payload_3ds = :payload, " +
@@ -287,7 +270,7 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT secure_redirect_token from tokens WHERE charge_id = :charge_id ORDER BY id DESC")
                         .bind("charge_id", chargeId)
-                        .map(StringColumnMapper.INSTANCE)
+                        .mapTo(String.class)
                         .first()
         );
     }
@@ -296,7 +279,7 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT used FROM tokens WHERE secure_redirect_token = :token_id")
                         .bind("token_id", tokenId)
-                        .map(BooleanColumnMapper.PRIMITIVE)
+                        .mapTo(Boolean.class)
                         .first()
         );
     }
@@ -307,6 +290,7 @@ public class DatabaseTestHelper {
                         "FROM refunds " +
                         "WHERE id = :refund_id")
                         .bind("refund_id", refundId)
+                        .mapToMap()
                         .list());
         return ret;
     }
@@ -317,6 +301,7 @@ public class DatabaseTestHelper {
                         "FROM refunds r " +
                         "WHERE charge_id = :charge_id")
                         .bind("charge_id", chargeId)
+                        .mapToMap()
                         .list());
         return ret;
     }
@@ -327,6 +312,7 @@ public class DatabaseTestHelper {
                         "FROM charges " +
                         "WHERE id = :charge_id")
                         .bind("charge_id", chargeId)
+                        .mapToMap()
                         .first());
         return ret;
     }
@@ -354,6 +340,7 @@ public class DatabaseTestHelper {
                         "FROM charges " +
                         "WHERE id = :charge_id")
                         .bind("charge_id", chargeId)
+                        .mapToMap()
                         .first());
         return ret;
     }
@@ -362,6 +349,7 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT * FROM charges WHERE external_id = :external_id")
                         .bind("external_id", externalId)
+                        .mapToMap()
                         .first());
     }
 
@@ -369,6 +357,7 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT * FROM charges WHERE gateway_transaction_id = :gatewayTransactionId")
                         .bind("gatewayTransactionId", gatewayTransactionId)
+                        .mapToMap()
                         .first());
     }
 
@@ -378,7 +367,7 @@ public class DatabaseTestHelper {
                 h.createQuery("SELECT template_body, enabled from email_notifications WHERE account_id = :account_id AND type = :type")
                         .bind("account_id", accountId)
                         .bind("type", type)
-                        .first()
+                        .mapToMap().findOne().orElse(null)
         );
     }
 
@@ -387,7 +376,7 @@ public class DatabaseTestHelper {
         String chargeId = jdbi.withHandle(h ->
                 h.createQuery("SELECT id from charges WHERE external_id = :external_id")
                         .bind("external_id", externalChargeId)
-                        .map(StringColumnMapper.INSTANCE)
+                        .mapTo(String.class)
                         .first()
         );
 
@@ -399,8 +388,9 @@ public class DatabaseTestHelper {
         String jsonString = jdbi.withHandle(h ->
                 h.createQuery("SELECT credentials from gateway_accounts WHERE id = :gatewayAccountId")
                         .bind("gatewayAccountId", gatewayAccountId)
-                        .map(StringColumnMapper.INSTANCE)
-                        .first()
+                        .mapTo(String.class)
+                        .findFirst()
+                        .orElse(null)
         );
         return new Gson().fromJson(jsonString, Map.class);
     }
@@ -409,7 +399,7 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT service_name from gateway_accounts WHERE id = :gatewayAccountId")
                         .bind("gatewayAccountId", gatewayAccountId)
-                        .map(StringColumnMapper.INSTANCE)
+                        .mapTo(String.class)
                         .first()
         );
     }
@@ -422,6 +412,7 @@ public class DatabaseTestHelper {
                         "LEFT JOIN accepted_card_types act ON ct.id = act.card_type_id " +
                         "WHERE act.gateway_account_id = :gatewayAccountId")
                         .bind("gatewayAccountId", gatewayAccountId)
+                        .mapToMap()
                         .list());
         return ret;
     }
@@ -432,6 +423,7 @@ public class DatabaseTestHelper {
                         "FROM charge_events ce " +
                         "WHERE ce.charge_id = :chargeId")
                         .bind("chargeId", chargeId)
+                        .mapToMap()
                         .list());
         return ret;
     }
@@ -443,7 +435,7 @@ public class DatabaseTestHelper {
     public void addToken(Long chargeId, String tokenId, boolean used) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO tokens(charge_id, secure_redirect_token, used) VALUES (:charge_id, :secure_redirect_token, :used)")
+                        .createUpdate("INSERT INTO tokens(charge_id, secure_redirect_token, used) VALUES (:charge_id, :secure_redirect_token, :used)")
                         .bind("charge_id", chargeId)
                         .bind("secure_redirect_token", tokenId)
                         .bind("used", used)
@@ -454,7 +446,7 @@ public class DatabaseTestHelper {
     public void addEmailNotification(Long accountId, String templateBody, boolean enabled, EmailNotificationType type) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO email_notifications(account_id, template_body, enabled, type) VALUES (:account_id, :templateBody, :enabled, :type)")
+                        .createUpdate("INSERT INTO email_notifications(account_id, template_body, enabled, type) VALUES (:account_id, :templateBody, :enabled, :type)")
                         .bind("account_id", accountId)
                         .bind("templateBody", templateBody)
                         .bind("enabled", enabled)
@@ -466,7 +458,7 @@ public class DatabaseTestHelper {
     public void deleteAllCardTypes() {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("DELETE FROM accepted_card_types; DELETE FROM card_types;")
+                        .createUpdate("DELETE FROM accepted_card_types; DELETE FROM card_types;")
                         .execute()
         );
     }
@@ -474,7 +466,7 @@ public class DatabaseTestHelper {
     public void addAcceptedCardType(long accountId, UUID cardTypeId) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO accepted_card_types(gateway_account_id, card_type_id) VALUES (:accountId, :cardTypeId)")
+                        .createUpdate("INSERT INTO accepted_card_types(gateway_account_id, card_type_id) VALUES (:accountId, :cardTypeId)")
                         .bind("accountId", accountId)
                         .bind("cardTypeId", cardTypeId)
                         .execute()
@@ -485,7 +477,7 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT status from charges WHERE id = :charge_id")
                         .bind("charge_id", chargeId)
-                        .map(StringColumnMapper.INSTANCE)
+                        .mapTo(String.class)
                         .first()
         );
     }
@@ -494,7 +486,7 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT card_brand from charges WHERE id = :charge_id")
                         .bind("charge_id", chargeId)
-                        .map(StringColumnMapper.INSTANCE)
+                        .mapTo(String.class)
                         .first()
         );
     }
@@ -505,9 +497,9 @@ public class DatabaseTestHelper {
             pgCredentials.setType("json");
             pgCredentials.setValue(credentials);
             jdbi.withHandle(handle ->
-                    handle.createStatement("UPDATE gateway_accounts set credentials=:credentials WHERE id=:gatewayAccountId")
+                    handle.createUpdate("UPDATE gateway_accounts set credentials=:credentials WHERE id=:gatewayAccountId")
                             .bind("gatewayAccountId", accountId)
-                            .bind("credentials", pgCredentials)
+                            .bindBySqlType("credentials", pgCredentials, OTHER)
                             .execute()
             );
         } catch (SQLException e) {
@@ -517,7 +509,7 @@ public class DatabaseTestHelper {
 
     public void updateServiceNameFor(long accountId, String serviceName) {
         jdbi.withHandle(handle ->
-                handle.createStatement("UPDATE gateway_accounts set service_name=:serviceName WHERE id=:gatewayAccountId")
+                handle.createUpdate("UPDATE gateway_accounts set service_name=:serviceName WHERE id=:gatewayAccountId")
                         .bind("gatewayAccountId", accountId)
                         .bind("serviceName", serviceName)
                         .execute()
@@ -526,7 +518,7 @@ public class DatabaseTestHelper {
 
     public void updateCorporateCreditCardSurchargeAmountFor(long accountId, long corporateCreditCardSurchargeAmount) {
         jdbi.withHandle(handle ->
-                handle.createStatement("UPDATE gateway_accounts set corporate_credit_card_surcharge_amount=:corporateCreditCardSurchargeAmount WHERE id=:gatewayAccountId")
+                handle.createUpdate("UPDATE gateway_accounts set corporate_credit_card_surcharge_amount=:corporateCreditCardSurchargeAmount WHERE id=:gatewayAccountId")
                         .bind("gatewayAccountId", accountId)
                         .bind("corporateCreditCardSurchargeAmount", corporateCreditCardSurchargeAmount)
                         .execute()
@@ -535,7 +527,7 @@ public class DatabaseTestHelper {
 
     public void updateCorporateDebitCardSurchargeAmountFor(long accountId, long corporateDebitCardSurchargeAmount) {
         jdbi.withHandle(handle ->
-                handle.createStatement("UPDATE gateway_accounts set corporate_debit_card_surcharge_amount=:corporateDebitCardSurchargeAmount WHERE id=:gatewayAccountId")
+                handle.createUpdate("UPDATE gateway_accounts set corporate_debit_card_surcharge_amount=:corporateDebitCardSurchargeAmount WHERE id=:gatewayAccountId")
                         .bind("gatewayAccountId", accountId)
                         .bind("corporateDebitCardSurchargeAmount", corporateDebitCardSurchargeAmount)
                         .execute()
@@ -544,7 +536,7 @@ public class DatabaseTestHelper {
 
     public void allowApplePay(long accountId) {
         jdbi.withHandle(handle ->
-                handle.createStatement("UPDATE gateway_accounts set allow_apple_pay=true WHERE id=:gatewayAccountId")
+                handle.createUpdate("UPDATE gateway_accounts set allow_apple_pay=true WHERE id=:gatewayAccountId")
                         .bind("gatewayAccountId", accountId)
                         .execute()
         );
@@ -552,7 +544,7 @@ public class DatabaseTestHelper {
 
     public void allowZeroAmount(long accountId) {
         jdbi.withHandle(handle ->
-                handle.createStatement("UPDATE gateway_accounts set allow_zero_amount=true WHERE id=:gatewayAccountId")
+                handle.createUpdate("UPDATE gateway_accounts set allow_zero_amount=true WHERE id=:gatewayAccountId")
                         .bind("gatewayAccountId", accountId)
                         .execute()
         );
@@ -560,7 +552,7 @@ public class DatabaseTestHelper {
     
     public void blockPrepaidCards(Long accountId) {
         jdbi.withHandle(handle ->
-                handle.createStatement("UPDATE gateway_accounts set block_prepaid_cards=true WHERE id=:gatewayAccountId")
+                handle.createUpdate("UPDATE gateway_accounts set block_prepaid_cards=true WHERE id=:gatewayAccountId")
                         .bind("gatewayAccountId", accountId)
                         .execute()
         );
@@ -568,7 +560,7 @@ public class DatabaseTestHelper {
 
     public void addWalletType(long chargeId, WalletType walletType) {
         jdbi.withHandle(handle ->
-                handle.createStatement("UPDATE CHARGES set wallet=:walletType WHERE id=:chargeId")
+                handle.createUpdate("UPDATE CHARGES set wallet=:walletType WHERE id=:chargeId")
                         .bind("chargeId", chargeId)
                         .bind("walletType", walletType)
                         .execute()
@@ -588,16 +580,16 @@ public class DatabaseTestHelper {
         }
 
         jdbi.withHandle(handle ->
-                handle.createStatement("UPDATE CHARGES set external_metadata=:metadata WHERE id=:chargeId")
+                handle.createUpdate("UPDATE CHARGES set external_metadata=:metadata WHERE id=:chargeId")
                         .bind("chargeId", chargeId)
-                        .bind("metadata", jsonExternMetadata)
+                        .bindBySqlType("metadata", jsonExternMetadata, OTHER)
                         .execute()
         );
     }
 
     public void enable3dsForGatewayAccount(long accountId) {
         jdbi.withHandle(handle ->
-                handle.createStatement("UPDATE gateway_accounts set requires_3ds=true WHERE id=:gatewayAccountId")
+                handle.createUpdate("UPDATE gateway_accounts set requires_3ds=true WHERE id=:gatewayAccountId")
                         .bind("gatewayAccountId", accountId)
                         .execute()
         );
@@ -605,7 +597,7 @@ public class DatabaseTestHelper {
 
     public void addNotificationCredentialsFor(long accountId, String username, String password) {
         jdbi.withHandle(handle ->
-                handle.createStatement("INSERT INTO notification_credentials(account_id, username, password, version) VALUES (:accountId, :username, :password, 1)")
+                handle.createUpdate("INSERT INTO notification_credentials(account_id, username, password, version) VALUES (:accountId, :username, :password, 1)")
                         .bind("accountId", accountId)
                         .bind("username", username)
                         .bind("password", password)
@@ -618,20 +610,23 @@ public class DatabaseTestHelper {
     }
 
     public void addEvent(Long chargeId, String chargeStatus, ZonedDateTime updated) {
-        jdbi.withHandle(
-                h -> {
-                    ZonedDateTime utcValue = updated.withZoneSameInstant(ZoneId.of("UTC"));
-                    return h.update("INSERT INTO charge_events(charge_id,status,updated) values(?,?,?)",
-                            chargeId, chargeStatus, Timestamp.valueOf(utcValue.toLocalDateTime()));
-                }
-        );
+        String sql = "INSERT INTO charge_events(charge_id, status, updated) VALUES(:charge_id, :status, :updated)";
+        jdbi.withHandle(h -> {
+            ZonedDateTime utcValue = updated.withZoneSameInstant(ZoneId.of("UTC"));
+            return h.createUpdate("INSERT INTO charge_events(charge_id, status, updated) " +
+                    "VALUES(:charge_id, :status, :updated)")
+                    .bind("charge_id", chargeId)
+                    .bind("status", chargeStatus)
+                    .bind("updated", Timestamp.valueOf(utcValue.toLocalDateTime()))
+                    .execute();
+        });
     }
 
     public List<String> getInternalEvents(String externalChargeId) {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT status from charge_events WHERE charge_id = (SELECT id from charges WHERE external_id=:external_id) order by charge_events.id")
                         .bind("external_id", externalChargeId)
-                        .map(StringColumnMapper.INSTANCE)
+                        .mapTo(String.class)
                         .list()
         );
     }
@@ -641,7 +636,7 @@ public class DatabaseTestHelper {
                 h.createQuery("SELECT id from card_types WHERE brand = :brand AND type = :type")
                         .bind("brand", brand)
                         .bind("type", type)
-                        .map(StringColumnMapper.INSTANCE)
+                        .mapTo(String.class)
                         .first()
         );
     }
@@ -675,7 +670,7 @@ public class DatabaseTestHelper {
                 h.createQuery("SELECT id, brand, type, label, requires_3ds from card_types WHERE brand = :brand AND type = :type")
                         .bind("brand", brand)
                         .bind("type", type)
-                        .map(CardTypeEntity.class)
+                        .mapToBean(CardTypeEntity.class)
                         .first()
         );
     }
@@ -683,7 +678,9 @@ public class DatabaseTestHelper {
     public List<Map<String, Object>> getRefundsHistoryByChargeId(Long chargeId) {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT status FROM refunds_history WHERE charge_id = :chargeId order by history_start_date desc")
-                        .bind("chargeId", chargeId).list()
+                        .bind("chargeId", chargeId)
+                        .mapToMap()
+                        .list()
         );
     }
 
@@ -692,20 +689,20 @@ public class DatabaseTestHelper {
         String jsonString = jdbi.withHandle(h ->
                 h.createQuery("SELECT notify_settings from gateway_accounts WHERE id = :gatewayAccountId")
                         .bind("gatewayAccountId", gatewayAccountId)
-                        .map(StringColumnMapper.INSTANCE)
+                        .mapTo(String.class)
                         .first()
         );
         return new Gson().fromJson(jsonString, Map.class);
     }
 
     public void truncateEmittedEvents() {
-        jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE emitted_events").execute());
+        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE emitted_events").execute());
     }
     
     public void truncateAllData() {
-        jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE gateway_accounts CASCADE").execute());
-        jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE emitted_events CASCADE").execute());
-        jdbi.withHandle(h -> h.createStatement("TRUNCATE TABLE tokens").execute());
+        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE gateway_accounts CASCADE").execute());
+        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE emitted_events CASCADE").execute());
+        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE tokens").execute());
     }
 
     public Long getChargeIdByExternalId(String externalChargeId) {
@@ -713,7 +710,7 @@ public class DatabaseTestHelper {
         String chargeId = jdbi.withHandle(h ->
                 h.createQuery("SELECT id from charges WHERE external_id = :external_id")
                         .bind("external_id", externalChargeId)
-                        .map(StringColumnMapper.INSTANCE)
+                        .mapTo(String.class)
                         .first()
         );
 
@@ -723,7 +720,7 @@ public class DatabaseTestHelper {
     public void addGatewayAccountsStripeSetupTask(long accountId, StripeAccountSetupTask task) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO gateway_accounts_stripe_setup(gateway_account_id, task) VALUES (:accountId, :task)")
+                        .createUpdate("INSERT INTO gateway_accounts_stripe_setup(gateway_account_id, task) VALUES (:accountId, :task)")
                         .bind("accountId", accountId)
                         .bind("task", task)
                         .execute()
@@ -733,7 +730,7 @@ public class DatabaseTestHelper {
     public void addFee(String externalId, long chargeId, long feeDue, long feeCollected, ZonedDateTime createdDate, String gatewayTransactionId) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO fees(external_id, charge_id, amount_due, amount_collected, created_date, gateway_transaction_id) VALUES (:external_id, :charge_id, :amount_due, :amount_collected, :created_date, :gateway_transaction_id)")
+                        .createUpdate("INSERT INTO fees(external_id, charge_id, amount_due, amount_collected, created_date, gateway_transaction_id) VALUES (:external_id, :charge_id, :amount_due, :amount_collected, :created_date, :gateway_transaction_id)")
                         .bind("external_id", externalId)
                         .bind("charge_id", chargeId)
                         .bind("amount_due", feeDue)
@@ -748,7 +745,7 @@ public class DatabaseTestHelper {
                                 Instant emittedDate , Instant doNotRetryEmitUntil) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO emitted_events(resource_type, resource_external_id, event_date, " +
+                        .createUpdate("INSERT INTO emitted_events(resource_type, resource_external_id, event_date, " +
                                 " event_type, emitted_date, do_not_retry_emit_until) VALUES (:resourceType, :externalId, :eventDate, " +
                                 " :eventType, :emittedDate, :doNotRetryEmitUntil)")
                         .bind("resourceType", resourceType)
@@ -765,20 +762,23 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(handle ->
                 handle.createQuery("SELECT * from emitted_events WHERE id = :id")
                         .bind("id", id)
+                        .mapToMap()
                         .first()
         );
     }
 
     public List<Map<String, Object>> readEmittedEvents() {
         return jdbi.withHandle(handle ->
-                handle.createQuery("SELECT * from emitted_events").list()
+                handle.createQuery("SELECT * from emitted_events")
+                        .mapToMap()
+                        .list()
         );
     }
 
     public void insertWorldpay3dsFlexCredential(Long gatewayAccountId, String jwtMacKey, String issuer, String organisationalUnitId, Long version) {
         jdbi.withHandle(handle ->
                 handle
-                        .createStatement("INSERT INTO worldpay_3ds_flex_credentials(gateway_account_id, jwt_mac_key, issuer, organisational_unit_id, version) VALUES (:gatewayAccountId, :jwtMacKey, :issuer, :organisationalUnitId, :version)")
+                        .createUpdate("INSERT INTO worldpay_3ds_flex_credentials(gateway_account_id, jwt_mac_key, issuer, organisational_unit_id, version) VALUES (:gatewayAccountId, :jwtMacKey, :issuer, :organisationalUnitId, :version)")
                         .bind("gatewayAccountId", gatewayAccountId)
                         .bind("jwtMacKey", jwtMacKey)
                         .bind("issuer", issuer)
@@ -791,6 +791,7 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(handle -> 
                 handle.createQuery("SELECT * FROM worldpay_3ds_flex_credentials WHERE gateway_account_id = :accountId")
                 .bind("accountId", accountId)
+                .mapToMap()
                 .first());
     }
 
@@ -798,6 +799,7 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(handle ->
                 handle.createQuery("SELECT * FROM gateway_accounts WHERE id = :accountId")
                 .bind("accountId", accountId)
+                .mapToMap()
                 .first());
     }
 }
