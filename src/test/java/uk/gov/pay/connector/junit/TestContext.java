@@ -2,7 +2,7 @@ package uk.gov.pay.connector.junit;
 
 import com.google.inject.Injector;
 import io.dropwizard.db.DataSourceFactory;
-import org.skife.jdbi.v2.DBI;
+import org.jdbi.v3.core.Jdbi;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -25,7 +25,7 @@ public class TestContext {
         databaseUrl = dataSourceFactory.getUrl();
         databaseUser = dataSourceFactory.getUser();
         databasePassword = dataSourceFactory.getPassword();
-        DBI jdbi = new DBI(databaseUrl, databaseUser, databasePassword);
+        Jdbi jdbi = Jdbi.create(databaseUrl, databaseUser, databasePassword);
         this.databaseTestHelper = new DatabaseTestHelper(jdbi);
         this.port = port;
         this.connectorConfiguration = connectorConfiguration;
