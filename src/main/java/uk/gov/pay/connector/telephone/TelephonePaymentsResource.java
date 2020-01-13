@@ -55,7 +55,7 @@ public class TelephonePaymentsResource {
                     .withAmount(payment.getAmount())
                     .withReference(payment.getDescription())
                     .withDescription(payment.getDescription())
-                    .withCreatedDate(String.valueOf(payment.getCreated()))
+                    .withCreatedDate("2018-02-21T16:05:13Z")
                     .withAuthorisedDate("2018-02-21T16:05:33Z")
                     .withProcessorId("1PROC")
                     .withProviderId("1PROV")
