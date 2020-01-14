@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.model;
 
+import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 
@@ -13,6 +14,7 @@ public final class ChargeCreateRequestBuilder {
     private SupportedLanguage language;
     private PrefilledCardHolderDetails prefilledCardHolderDetails;
     private ExternalMetadata externalMetadata;
+    private Source source;
 
     private ChargeCreateRequestBuilder() {
     }
@@ -66,8 +68,13 @@ public final class ChargeCreateRequestBuilder {
         return this;
     }
 
+    public ChargeCreateRequestBuilder withSource(Source source) {
+        this.source = source;
+        return this;
+    }
+
     public ChargeCreateRequest build() {
         return new ChargeCreateRequest(amount, description, reference, returnUrl, email, delayedCapture, language,
-                prefilledCardHolderDetails, externalMetadata);
+                prefilledCardHolderDetails, externalMetadata, source);
     }
 }

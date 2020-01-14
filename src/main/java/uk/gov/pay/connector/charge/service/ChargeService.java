@@ -216,7 +216,8 @@ public class ChargeService {
                     chargeRequest.getEmail(),
                     language,
                     chargeRequest.isDelayedCapture(),
-                    chargeRequest.getExternalMetadata().orElse(null));
+                    chargeRequest.getExternalMetadata().orElse(null),
+                    chargeRequest.getSource());
 
             chargeRequest.getPrefilledCardHolderDetails()
                     .map(this::createCardDetailsEntity)

@@ -169,8 +169,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     public ChargeEntity(Long amount, String returnUrl, String description, ServicePaymentReference reference,
                         GatewayAccountEntity gatewayAccount, String email, SupportedLanguage language,
-                        boolean delayedCapture, ExternalMetadata externalMetadata) {
-        this(amount, UNDEFINED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture, externalMetadata);
+                        boolean delayedCapture, ExternalMetadata externalMetadata, Source source) {
+        this(amount, UNDEFINED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture, externalMetadata, source);
     }
 
     public ChargeEntity(Long amount,
@@ -200,7 +200,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     // Only the ChargeEntityFixture should directly call this constructor
     public ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, ServicePaymentReference reference,
                         GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate, SupportedLanguage language,
-                        boolean delayedCapture, ExternalMetadata externalMetadata) {
+                        boolean delayedCapture, ExternalMetadata externalMetadata, Source source) {
         this.amount = amount;
         this.status = status.getValue();
         this.returnUrl = returnUrl;
@@ -213,6 +213,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.language = language;
         this.delayedCapture = delayedCapture;
         this.externalMetadata = externalMetadata;
+        this.source = source;
     }
 
     public Long getId() {

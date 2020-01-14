@@ -90,6 +90,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.commons.model.Source.CARD_API;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
@@ -495,6 +496,18 @@ public class ChargeServiceTest {
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
         assertThat(createdChargeEntity.getCardDetails(), is(nullValue()));
+    }
+
+    @Test
+    public void shouldCreateAChargeWithSource() {
+        final ChargeCreateRequest request = requestBuilder.
+                withSource(CARD_API).build();
+
+        service.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+        assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_API));
     }
 
     @Test
