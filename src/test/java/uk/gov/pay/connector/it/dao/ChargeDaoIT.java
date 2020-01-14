@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -226,6 +227,23 @@ public class ChargeDaoIT extends DaoITestBase {
         Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
 
         assertThat(charge.get().getExternalMetadata().get().getMetadata(), equalTo(expectedExternalMetadata.getMetadata()));
+    }
+
+    @Test
+    public void shouldCreateANewChargeWithSource() {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(defaultTestAccount.getPaymentProvider(), new HashMap<>(), TEST);
+        gatewayAccount.setId(defaultTestAccount.getAccountId());
+
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withSource(Source.CARD_API)
+                .build();
+
+        chargeDao.persist(chargeEntity);
+        chargeDao.forceRefresh(chargeEntity);
+        Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
+
+        assertThat(charge.get().getSource(), equalTo(Source.CARD_API));
     }
 
     @Test

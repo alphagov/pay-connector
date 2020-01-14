@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import net.logstash.logback.argument.StructuredArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.SupportedLanguageJpaConverter;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
@@ -157,6 +158,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     @Column(name = "parity_check_date")
     @Convert(converter = UTCDateTimeConverter.class)
     private ZonedDateTime parityCheckDate;
+
+    @Column(name = "source")
+    @Enumerated(EnumType.STRING)
+    private Source source;
 
     public ChargeEntity() {
         //for jpa
@@ -416,5 +421,13 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     public void updateParityCheck(ParityCheckStatus parityCheckStatus) {
         this.parityCheckStatus = parityCheckStatus;
         this.parityCheckDate = ZonedDateTime.now(ZoneId.of("UTC"));
+    }
+
+    public Source getSource() {
+        return source;
+    }
+
+    public void setSource(Source source) {
+        this.source = source;
     }
 }
