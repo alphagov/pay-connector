@@ -50,6 +50,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.junit.Assert.assertNull;
+import static uk.gov.pay.commons.model.Source.CARD_API;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
@@ -91,6 +92,7 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
     private static final String JSON_ADDRESS_LINE_2_KEY = "line2";
     private static final String JSON_ADDRESS_POST_CODE_KEY = "postcode";
     private static final String JSON_CARDHOLDER_NAME_KEY = "cardholder_name";
+    private static final String JSON_SOURCE_KEY = "source";
     private static final String JSON_ADDRESS_LINE_CITY = "city";
     private static final String JSON_ADDRESS_LINE_COUNTRY_CODE = "country";
 
@@ -672,6 +674,65 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
                         "Field [metadata] keys must be between 1 and 30 characters long",
                         "Field [metadata] must not have null values",
                         "Field [metadata] values must be no greater than 50 characters long"));
+    }
+
+    @Test
+    public void shouldCreateChargeWithSource() {
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_EMAIL_KEY, EMAIL,
+                JSON_SOURCE_KEY, CARD_API
+        ));
+
+        ValidatableResponse response = connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .contentType(JSON);
+
+        String chargeExternalId = response.extract().path(JSON_CHARGE_KEY);
+        Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(chargeExternalId);
+        assertThat(CARD_API.toString(), equalTo(charge.get("source")));
+    }
+
+    @Test
+    public void shouldReturn400ForInvalidSourceValue() {
+
+        String postBody = toJsonWithNulls(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_EMAIL_KEY, EMAIL,
+                JSON_SOURCE_KEY, "invalid-source0key"
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(400)
+                .contentType(JSON)
+                .body(JSON_MESSAGE_KEY, contains("Field [source] must be one of CARD_API, CARD_PAYMENT_LINK"));
+    }
+
+    @Test
+    public void shouldReturn400ForInvalidSourceType() {
+
+        String postBody = toJsonWithNulls(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_EMAIL_KEY, EMAIL,
+                JSON_SOURCE_KEY, true
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(400)
+                .contentType(JSON)
+                .body(JSON_MESSAGE_KEY, contains("Field [source] must be one of CARD_API, CARD_PAYMENT_LINK"));
     }
 
     @Test

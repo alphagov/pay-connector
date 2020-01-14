@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.hibernate.validator.constraints.Length;
 import uk.gov.pay.commons.api.json.ExternalMetadataDeserialiser;
+import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.SupportedLanguageJsonDeserializer;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
@@ -58,6 +59,10 @@ public class ChargeCreateRequest {
     @Valid
     private ExternalMetadata externalMetadata;
 
+    @JsonProperty("source")
+    @JsonDeserialize(using = SourceDeserialiser.class)
+    private Source source;
+
     public ChargeCreateRequest() {
         // for Jackson
     }
@@ -70,7 +75,8 @@ public class ChargeCreateRequest {
                         boolean delayedCapture,
                         SupportedLanguage language,
                         PrefilledCardHolderDetails prefilledCardHolderDetails,
-                        ExternalMetadata externalMetadata) {
+                        ExternalMetadata externalMetadata,
+                        Source source) {
         this.amount = amount;
         this.description = description;
         this.reference = reference;
@@ -80,6 +86,7 @@ public class ChargeCreateRequest {
         this.language = language;
         this.prefilledCardHolderDetails = prefilledCardHolderDetails;
         this.externalMetadata = externalMetadata;
+        this.source = source;
     }
 
     public long getAmount() {
@@ -118,12 +125,17 @@ public class ChargeCreateRequest {
         return Optional.ofNullable(externalMetadata);
     }
 
+    public Source getSource() {
+        return source;
+    }
+
     public String toStringWithoutPersonalIdentifiableInformation() {
         return "ChargeCreateRequest{" +
                 "amount=" + amount +
                 ", reference='" + reference + '\'' +
                 ", returnUrl='" + returnUrl + '\'' +
                 ", delayed_capture=" + delayedCapture +
+                ", source=" + source +
                 (language != null ? ", language=" + language.toString() : "") +
                 '}';
     }
