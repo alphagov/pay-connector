@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.model.domain;
 
 import com.google.common.collect.ImmutableMap;
+import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
@@ -54,6 +55,7 @@ public class ChargeEntityFixture {
     private CardDetailsEntity cardDetails = null;
     private ParityCheckStatus parityCheckStatus = null;
     private String gatewayTransactionId = null;
+    private Source source = null;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -70,6 +72,7 @@ public class ChargeEntityFixture {
         chargeEntity.getRefunds().addAll(refunds);
         chargeEntity.setProviderSessionId(providerSessionId);
         chargeEntity.set3dsDetails(auth3dsDetailsEntity);
+        chargeEntity.setSource(source);
 
         if (gatewayTransactionId != null) {
             chargeEntity.setGatewayTransactionId(gatewayTransactionId);
@@ -109,6 +112,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withGatewayAccountEntity(GatewayAccountEntity gatewayAccountEntity) {
         this.gatewayAccountEntity = gatewayAccountEntity;
+        return this;
+    }
+
+    public ChargeEntityFixture withSource(Source source) {
+        this.source = source;
         return this;
     }
 
