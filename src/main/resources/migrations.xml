@@ -1373,4 +1373,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add source column to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="source" type="varchar(50)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
