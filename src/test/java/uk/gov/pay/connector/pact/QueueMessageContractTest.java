@@ -12,18 +12,18 @@ import au.com.dius.pact.provider.junit.target.TestTarget;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.runner.RunWith;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
-import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEventDetails;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
-import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
@@ -36,6 +36,8 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
+import static uk.gov.pay.commons.model.Source.CARD_API;
+import static uk.gov.pay.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
 
@@ -57,6 +59,7 @@ public class QueueMessageContractTest {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
                 .withExternalMetadata(new ExternalMetadata(ImmutableMap.of("key", "value")))
                 .withCorporateSurcharge(55L)
+                .withSource(CARD_API)
                 .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
                 .build();
 
@@ -162,6 +165,7 @@ public class QueueMessageContractTest {
                 .withStatus(ChargeStatus.PAYMENT_NOTIFICATION_CREATED)
                 .withGatewayTransactionId("providerId")
                 .withEmail("j.doe@example.org")
+                .withSource(CARD_EXTERNAL_TELEPHONE)
                 .withCardDetails(anAuthCardDetails().withAddress(null).getCardDetailsEntity())
                 .withExternalMetadata(externalMetadata)
                 .build();

@@ -6,6 +6,7 @@ import junitparams.Parameters;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
+import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -39,6 +40,7 @@ public class PaymentCreatedTest {
             .withAmount(100L)
             .withCorporateSurcharge(77L)
             .withEmail(null)
+            .withSource(Source.CARD_API)
             .withExternalMetadata(new ExternalMetadata(ImmutableMap.of("key1", "value1", "key2", "value2")));
     private ChargeEntity chargeEntity;
 
@@ -152,6 +154,7 @@ public class PaymentCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.delayed_capture", equalTo(chargeEntity.isDelayedCapture())));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.key1", equalTo("value1")));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.key2", equalTo("value2")));
+        assertThat(actual, hasJsonPath("$.event_details.source", equalTo("CARD_API")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(time)));
