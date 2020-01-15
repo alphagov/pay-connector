@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
+import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -34,6 +35,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private final String addressCity;
     private final String addressCounty;
     private final String addressCountry;
+    private final Source source;
 
     public PaymentCreatedEventDetails(Builder builder) {
         this.amount = builder.amount;
@@ -54,6 +56,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         this.addressCity = builder.addressCity;
         this.addressCounty = builder.addressCounty;
         this.addressCountry = builder.addressCountry;
+        this.source = builder.source;
     }
 
     public static PaymentCreatedEventDetails from(ChargeEntity charge) {
@@ -68,7 +71,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 .withDelayedCapture(charge.isDelayedCapture())
                 .withLive(charge.getGatewayAccount().isLive())
                 .withExternalMetadata(charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null))
-                .withEmail(charge.getEmail());
+                .withEmail(charge.getEmail())
+                .withSource(charge.getSource());
 
         if (isInCreatedState(charge) || hasNotGoneThroughAuthorisation(charge)) {
             addCardDetailsIfExist(charge, builder);
@@ -176,6 +180,10 @@ public class PaymentCreatedEventDetails extends EventDetails {
         return addressCountry;
     }
 
+    public Source getSource() {
+        return source;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -198,13 +206,14 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 Objects.equals(addressPostcode, that.addressPostcode) &&
                 Objects.equals(addressCity, that.addressCity) &&
                 Objects.equals(addressCounty, that.addressCounty) &&
-                Objects.equals(addressCountry, that.addressCountry);
+                Objects.equals(addressCountry, that.addressCountry) &&
+                Objects.equals(source, that.source);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(amount, description, reference, returnUrl, gatewayAccountId, paymentProvider, language,
-                delayedCapture, live, externalMetadata);
+                delayedCapture, live, externalMetadata, source);
     }
 
     public static class Builder {
@@ -226,6 +235,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         private String addressCity;
         private String addressCounty;
         private String addressCountry;
+        private Source source;
 
         public PaymentCreatedEventDetails build() {
             return new PaymentCreatedEventDetails(this);
@@ -318,6 +328,11 @@ public class PaymentCreatedEventDetails extends EventDetails {
 
         public Builder withAddressCountry(String addressCountry) {
             this.addressCountry = addressCountry;
+            return this;
+        }
+
+        public Builder withSource(Source source) {
+            this.source = source;
             return this;
         }
     }
