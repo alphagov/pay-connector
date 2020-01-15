@@ -19,6 +19,7 @@ import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static uk.gov.pay.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -295,6 +296,22 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
                 .body("state.finished", is(true))
                 .body("state.message", is("Payment was cancelled by the user"));
         
+    }
+
+    @Test
+    public void createTelephoneChargeWithSource() {
+        postBody.replace("payment_outcome", Map.of("status", "success"));
+        postBody.replace("processor_id", stringOf51Characters);
+
+        connectorRestApiClient
+                .postCreateTelephoneCharge(toJson(postBody))
+                .statusCode(201)
+                .contentType(JSON);
+
+        DatabaseTestHelper testHelper = testContext.getDatabaseTestHelper();
+        Map<String, Object> chargeDetails = testHelper.getChargeByGatewayTransactionId(providerId);
+
+        assertThat(chargeDetails.get("source"), is(CARD_EXTERNAL_TELEPHONE.toString()));
     }
 
     @Test

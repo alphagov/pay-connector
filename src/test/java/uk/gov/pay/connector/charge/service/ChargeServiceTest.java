@@ -91,6 +91,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.commons.model.Source.CARD_API;
+import static uk.gov.pay.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
@@ -215,7 +216,8 @@ public class ChargeServiceTest {
                 externalMetadata,
                 gatewayAccount,
                 "1PROV",
-                SupportedLanguage.ENGLISH
+                SupportedLanguage.ENGLISH,
+                CARD_API
         );
 
         when(mockedChargeDao.findByGatewayTransactionId("1PROV")).thenReturn(Optional.of(returnedChargeEntity));
@@ -776,7 +778,22 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
     }
-    
+
+    @Test
+    public void shouldCreateAnExternalTelephoneChargeWithSource() {
+        PaymentOutcome paymentOutcome = new PaymentOutcome("success");
+        TelephoneChargeCreateRequest telephoneChargeCreateRequest = telephoneRequestBuilder
+                .withPaymentOutcome(paymentOutcome)
+                .build();
+
+        service.create(telephoneChargeCreateRequest, GATEWAY_ACCOUNT_ID);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = forClass(ChargeEntity.class);
+        verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_EXTERNAL_TELEPHONE));
+    }
+
     @Test
     public void shouldNotFindCharge() {
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
