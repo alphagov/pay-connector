@@ -192,6 +192,21 @@ public class ContractTest {
                 .withPaymentProvider(aDigitalWalletSupportedPaymentProvider)
                 .insert();
     }
+
+    @State("gateway accounts with ids 111, 222 exist in the database")
+    public void multipleGatewayAccountsExist() {
+        DatabaseFixtures
+                .withDatabaseTestHelper(dbHelper)
+                .aTestAccount()
+                .withAccountId(111L)
+                .insert();
+        DatabaseFixtures
+                .withDatabaseTestHelper(dbHelper)
+                .aTestAccount()
+                .withAccountId(222L)
+                .insert();
+    }
+    
     @State({"default", "Card types exist in the database"})
     public void defaultCase() {
     }
