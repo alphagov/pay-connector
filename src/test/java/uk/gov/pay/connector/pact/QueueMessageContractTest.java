@@ -37,6 +37,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static uk.gov.pay.commons.model.Source.CARD_API;
+import static uk.gov.pay.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
 
@@ -164,6 +165,7 @@ public class QueueMessageContractTest {
                 .withStatus(ChargeStatus.PAYMENT_NOTIFICATION_CREATED)
                 .withGatewayTransactionId("providerId")
                 .withEmail("j.doe@example.org")
+                .withSource(CARD_EXTERNAL_TELEPHONE)
                 .withCardDetails(anAuthCardDetails().withAddress(null).getCardDetailsEntity())
                 .withExternalMetadata(externalMetadata)
                 .build();

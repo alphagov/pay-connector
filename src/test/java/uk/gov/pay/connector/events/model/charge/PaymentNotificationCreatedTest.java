@@ -18,6 +18,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
 public class PaymentNotificationCreatedTest {
@@ -29,12 +30,13 @@ public class PaymentNotificationCreatedTest {
     private ChargeEntityFixture chargeEntityFixture;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.parse(time))
                 .withStatus(ChargeStatus.PAYMENT_NOTIFICATION_CREATED)
                 .withExternalId(paymentId)
                 .withTransactionId(providerId)
+                .withSource(CARD_EXTERNAL_TELEPHONE)
                 .withCardDetails(anAuthCardDetails().withAddress(null).getCardDetailsEntity())
                 .withAmount(100L);
     }
@@ -71,6 +73,7 @@ public class PaymentNotificationCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.cardholder_name", equalTo("Mr Test")));
         assertThat(actual, hasJsonPath("$.event_details.expiry_date", equalTo("12/99")));
         assertThat(actual, hasJsonPath("$.event_details.payment_provider", equalTo("sandbox")));
+        assertThat(actual, hasJsonPath("$.event_details.source", equalTo("CARD_EXTERNAL_TELEPHONE")));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.processor_id", equalTo("processorID")));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.auth_code", equalTo("012345")));
         assertThat(actual, hasJsonPath("$.event_details.external_metadata.telephone_number", equalTo("+447700900796")));
@@ -97,6 +100,7 @@ public class PaymentNotificationCreatedTest {
         assertThat(actual, hasJsonPath("$.event_details.email", equalTo("test@email.invalid")));
         assertThat(actual, hasJsonPath("$.event_details.gateway_transaction_id", equalTo(providerId)));
         assertThat(actual, hasJsonPath("$.event_details.payment_provider", equalTo("sandbox")));
+        assertThat(actual, hasJsonPath("$.event_details.source", equalTo("CARD_EXTERNAL_TELEPHONE")));
 
         assertThat(actual, hasNoJsonPath("$.event_details.card_brand"));
         assertThat(actual, hasNoJsonPath("$.event_details.first_digits_card_number"));
