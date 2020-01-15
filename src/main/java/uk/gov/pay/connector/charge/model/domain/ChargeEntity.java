@@ -182,7 +182,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                         ExternalMetadata externalMetadata,
                         GatewayAccountEntity gatewayAccount,
                         String gatewayTransactionId,
-                        SupportedLanguage language) {
+                        SupportedLanguage language,
+                        Source source) {
         this.amount = amount;
         this.reference = reference;
         this.description = description;
@@ -195,6 +196,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.externalId = RandomIdGenerator.newId();
         this.gatewayTransactionId = gatewayTransactionId;
         this.language = language;
+        this.source = source;
     }
 
     // Only the ChargeEntityFixture should directly call this constructor

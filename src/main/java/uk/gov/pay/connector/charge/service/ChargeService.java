@@ -77,6 +77,7 @@ import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static uk.gov.pay.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -165,7 +166,8 @@ public class ChargeService {
                     storeExtraFieldsInMetaData(telephoneChargeRequest),
                     gatewayAccount,
                     telephoneChargeRequest.getProviderId(),
-                    SupportedLanguage.ENGLISH
+                    SupportedLanguage.ENGLISH,
+                    CARD_EXTERNAL_TELEPHONE
             );
             
             chargeDao.persist(chargeEntity);
