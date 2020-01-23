@@ -55,6 +55,7 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
         databaseTestHelper.allowApplePay(Long.valueOf(accountId));
         databaseTestHelper.allowZeroAmount(Long.valueOf(accountId));
         databaseTestHelper.blockPrepaidCards(Long.valueOf(accountId));
+        databaseTestHelper.allowMoto(Long.valueOf(accountId));
 
         givenSetup().accept(JSON)
                 .get(ACCOUNTS_FRONTEND_URL + accountId)
@@ -79,7 +80,8 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
                 .body("allow_google_pay", is(false))
                 .body("allow_zero_amount", is(true))
                 .body("integration_version_3ds", is(1))
-                .body("block_prepaid_cards", is(true));
+                .body("block_prepaid_cards", is(true))
+                .body("allow_moto", is(true));
     }
 
     @Test
