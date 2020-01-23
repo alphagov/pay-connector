@@ -1381,4 +1381,21 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add allow_moto to gateway_accounts table" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="allow_moto" type="boolean">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add default to allow_moto" author="">
+        <addDefaultValue tableName="gateway_accounts" columnName="allow_moto" defaultValue="false"/>
+    </changeSet>
+
+    <changeSet id="update allow_moto with default value" author="">
+        <update tableName="gateway_accounts">
+            <column name="allow_moto" value="false"/>
+        </update>
+    </changeSet>
+
 </databaseChangeLog>
