@@ -39,6 +39,7 @@ public class GatewayAccountRequestValidator {
     public static final String FIELD_ALLOW_ZERO_AMOUNT = "allow_zero_amount";
     public static final String FIELD_INTEGRATION_VERSION_3DS = "integration_version_3ds";
     public static final String FIELD_BLOCK_PREPAID_CARDS = "block_prepaid_cards";
+    public static final String FIELD_ALLOW_MOTO = "allow_moto";
 
     private static final List<String> VALID_PATHS = asList(
             CREDENTIALS_GATEWAY_MERCHANT_ID,
@@ -52,7 +53,8 @@ public class GatewayAccountRequestValidator {
             FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT,
             FIELD_ALLOW_ZERO_AMOUNT,
             FIELD_INTEGRATION_VERSION_3DS,
-            FIELD_BLOCK_PREPAID_CARDS);
+            FIELD_BLOCK_PREPAID_CARDS,
+            FIELD_ALLOW_MOTO);
 
     private final RequestValidator requestValidator;
 
@@ -84,6 +86,7 @@ public class GatewayAccountRequestValidator {
             case FIELD_BLOCK_PREPAID_CARDS:
             case FIELD_ALLOW_ZERO_AMOUNT:
             case FIELD_ALLOW_APPLE_PAY:
+            case FIELD_ALLOW_MOTO:
                 validateReplaceBooleanValue(payload);
                 break;
             case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT:

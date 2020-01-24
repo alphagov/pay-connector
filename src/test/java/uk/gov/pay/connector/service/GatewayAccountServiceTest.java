@@ -258,6 +258,33 @@ public class GatewayAccountServiceTest {
     }
 
     @Test
+    public void shouldUpdateAllowMotoTrue() {
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "replace",
+                "path", "allow_moto",
+                "value", true)));
+
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        verify(mockGatewayAccountEntity).setAllowMoto(true);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
+    public void shouldUpdateAllowMotoFalse() {
+        JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of("op", "replace",
+                "path", "allow_moto",
+                "value", false)));
+
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        verify(mockGatewayAccountEntity).setAllowMoto(false);
+        verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+    
+    @Test
     public void shouldUpdateIntegrationVersion3ds() {
         JsonPatchRequest request = JsonPatchRequest.from(new ObjectMapper().valueToTree(Map.of(
                 "op", "replace",
