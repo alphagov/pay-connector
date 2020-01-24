@@ -35,7 +35,6 @@ public class GatewayAccountResourceDTOTest {
         entity.setAllowZeroAmount(true);
         entity.setIntegrationVersion3ds(2);
         entity.setBlockPrepaidCards(true);
-        entity.setAllowMoto(true);
 
         Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
         emailNotifications.put(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(new GatewayAccountEntity(), "testTemplate", true));
@@ -61,6 +60,5 @@ public class GatewayAccountResourceDTOTest {
         assertThat(dto.getEmailNotifications().get(EmailNotificationType.PAYMENT_CONFIRMED).getTemplateBody(), is("testTemplate"));
         assertThat(dto.getIntegrationVersion3ds(), is(entity.getIntegrationVersion3ds()));
         assertThat(dto.isBlockPrepaidCards(), is(entity.isBlockPrepaidCards()));
-        assertThat(dto.isAllowMoto(), is(entity.isAllowMoto()));
     }
 }
