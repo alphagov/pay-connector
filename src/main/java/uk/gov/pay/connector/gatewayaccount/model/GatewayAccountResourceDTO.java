@@ -70,6 +70,9 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("integration_version_3ds")
     private int integrationVersion3ds;
     
+    @JsonProperty("allow_moto")
+    private boolean allowMoto;
+    
     public GatewayAccountResourceDTO() {
     }
 
@@ -83,13 +86,15 @@ public class GatewayAccountResourceDTO {
                                      long corporateDebitCardSurchargeAmount,
                                      boolean allowApplePay,
                                      boolean allowGooglePay,
-                                     boolean blockPrepaidCards, long corporatePrepaidCreditCardSurchargeAmount,
+                                     boolean blockPrepaidCards,
+                                     long corporatePrepaidCreditCardSurchargeAmount,
                                      long corporatePrepaidDebitCardSurchargeAmount,
                                      Map<EmailNotificationType, EmailNotificationEntity> emailNotifications,
                                      EmailCollectionMode emailCollectionMode,
                                      boolean requires3ds,
                                      boolean allowZeroAmount,
-                                     int integrationVersion3ds) {
+                                     int integrationVersion3ds,
+                                     boolean allowMoto) {
         this.accountId = accountId;
         this.paymentProvider = paymentProvider;
         this.type = type;
@@ -108,6 +113,7 @@ public class GatewayAccountResourceDTO {
         this.requires3ds = requires3ds;
         this.allowZeroAmount = allowZeroAmount;
         this.integrationVersion3ds = integrationVersion3ds;
+        this.allowMoto = allowMoto;
     }
 
     public static GatewayAccountResourceDTO fromEntity(GatewayAccountEntity gatewayAccountEntity) {
@@ -129,7 +135,8 @@ public class GatewayAccountResourceDTO {
                 gatewayAccountEntity.getEmailCollectionMode(),
                 gatewayAccountEntity.isRequires3ds(),
                 gatewayAccountEntity.isAllowZeroAmount(),
-                gatewayAccountEntity.getIntegrationVersion3ds()
+                gatewayAccountEntity.getIntegrationVersion3ds(),
+                gatewayAccountEntity.isAllowMoto()
         );
     }
 
@@ -211,5 +218,9 @@ public class GatewayAccountResourceDTO {
 
     public int getIntegrationVersion3ds() {
         return integrationVersion3ds;
+    }
+
+    public boolean isAllowMoto() {
+        return allowMoto;
     }
 }
