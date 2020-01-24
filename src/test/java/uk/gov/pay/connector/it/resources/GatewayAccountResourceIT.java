@@ -13,6 +13,8 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
+import java.util.Map;
+
 import static io.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
@@ -448,6 +450,38 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .body("message", contains("Credentials update failure: Invalid password length"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+    }
+    
+    @Test
+    public void patchMotoPayments() throws Exception {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay");
+        String payload = new ObjectMapper().writeValueAsString(Map.of("op", "replace",
+                "path", "allow_moto",
+                "value", true));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("allow_moto", is(true));
+
+        payload = new ObjectMapper().writeValueAsString(Map.of("op", "replace",
+                "path", "allow_moto",
+                "value", false));
+        givenSetup()
+                .body(payload)
+                .patch("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode());
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("allow_moto", is(false));
     }
 
     @Test
