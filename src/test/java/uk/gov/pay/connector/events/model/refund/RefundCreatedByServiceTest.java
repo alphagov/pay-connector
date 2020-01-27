@@ -4,7 +4,7 @@ import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundCreatedByServiceEventDetails;
-import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 

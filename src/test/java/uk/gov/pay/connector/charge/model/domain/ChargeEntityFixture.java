@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.model.domain;
+package uk.gov.pay.connector.charge.model.domain;
 
 import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.commons.model.Source;
@@ -7,11 +7,6 @@ import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.charge.model.domain.FeeEntity;
-import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -62,36 +57,43 @@ public class ChargeEntityFixture {
     }
 
     public ChargeEntity build() {
-        ChargeEntity chargeEntity = new ChargeEntity(amount, status, returnUrl, description, reference,
-                gatewayAccountEntity, email, createdDate, language, delayedCapture, externalMetadata, source);
+        if (gatewayTransactionId == null) {
+            gatewayTransactionId = transactionId;
+        }
+        
+        ChargeEntity chargeEntity = new ChargeEntity(amount,
+                status,
+                returnUrl, 
+                description, 
+                reference,
+                gatewayAccountEntity,
+                email,
+                createdDate,
+                language,
+                delayedCapture,
+                externalMetadata,
+                source, 
+                gatewayTransactionId, 
+                cardDetails);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
-        chargeEntity.setGatewayTransactionId(transactionId);
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
         chargeEntity.getEvents().addAll(events);
         chargeEntity.getRefunds().addAll(refunds);
         chargeEntity.setProviderSessionId(providerSessionId);
         chargeEntity.set3dsDetails(auth3dsDetailsEntity);
         chargeEntity.setSource(source);
-
-        if (gatewayTransactionId != null) {
-            chargeEntity.setGatewayTransactionId(gatewayTransactionId);
-        }
+        chargeEntity.setWalletType(walletType);
 
         if (this.fee != null) {
             FeeEntity fee = new FeeEntity(chargeEntity, this.fee);
             chargeEntity.setFee(fee);
         }
 
-        if (cardDetails != null) {
-            chargeEntity.setCardDetails(cardDetails);
-        }
-
         if (parityCheckStatus != null) {
             chargeEntity.updateParityCheck(parityCheckStatus);
         }
 
-        chargeEntity.setWalletType(walletType);
         return chargeEntity;
     }
 

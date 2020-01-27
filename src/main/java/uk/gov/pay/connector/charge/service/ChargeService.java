@@ -77,8 +77,9 @@ import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static uk.gov.pay.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.aTelephoneChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.aWebChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
@@ -88,7 +89,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBM
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 
@@ -156,20 +156,17 @@ public class ChargeService {
                     null
             );
 
-            ChargeEntity chargeEntity = new ChargeEntity(
+            ChargeEntity chargeEntity = aTelephoneChargeEntity(
                     telephoneChargeRequest.getAmount(),
-                    ServicePaymentReference.of(telephoneChargeRequest.getReference()),
                     telephoneChargeRequest.getDescription(),
-                    UNDEFINED,
-                    telephoneChargeRequest.getEmailAddress().orElse(null),
-                    cardDetails,
-                    storeExtraFieldsInMetaData(telephoneChargeRequest),
+                    ServicePaymentReference.of(telephoneChargeRequest.getReference()),
                     gatewayAccount,
+                    telephoneChargeRequest.getEmailAddress().orElse(null),
+                    storeExtraFieldsInMetaData(telephoneChargeRequest),
                     telephoneChargeRequest.getProviderId(),
-                    SupportedLanguage.ENGLISH,
-                    CARD_EXTERNAL_TELEPHONE
+                    cardDetails
             );
-            
+
             chargeDao.persist(chargeEntity);
             transitionChargeState(chargeEntity, PAYMENT_NOTIFICATION_CREATED);
             transitionChargeState(chargeEntity, internalChargeStatus(telephoneChargeRequest.getPaymentOutcome().getCode().orElse(null)));
@@ -209,7 +206,7 @@ public class ChargeService {
                     ? chargeRequest.getLanguage()
                     : SupportedLanguage.ENGLISH;
 
-            ChargeEntity chargeEntity = new ChargeEntity(
+            ChargeEntity chargeEntity = aWebChargeEntity(
                     chargeRequest.getAmount(),
                     chargeRequest.getReturnUrl(),
                     chargeRequest.getDescription(),
@@ -772,7 +769,7 @@ public class ChargeService {
 
         return new ExternalMetadata(telephoneJSON);
     }
-    
+
     private String checkAndGetTruncatedValue(String processorId, String field, String value) {
         if (value.length() > 50) {
             logger.info("Telephone payment {} - {} field is longer than 50 characters and has been truncated and stored. Actual value is {}", processorId, field, value);

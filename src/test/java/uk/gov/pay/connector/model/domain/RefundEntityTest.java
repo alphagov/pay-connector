@@ -10,7 +10,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;

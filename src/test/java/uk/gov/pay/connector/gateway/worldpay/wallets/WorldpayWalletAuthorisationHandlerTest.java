@@ -16,7 +16,7 @@ import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gateway.worldpay.applepay.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;

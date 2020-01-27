@@ -7,7 +7,7 @@ import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 
 import java.time.ZonedDateTime;
 import java.util.Map;

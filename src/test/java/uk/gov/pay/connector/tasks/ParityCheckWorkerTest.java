@@ -14,7 +14,7 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
-import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.queue.StateTransitionService;

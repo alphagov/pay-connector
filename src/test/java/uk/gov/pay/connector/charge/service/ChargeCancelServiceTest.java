@@ -42,7 +42,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 @RunWith(JUnitParamsRunner.class)
 public class ChargeCancelServiceTest {
