@@ -1398,21 +1398,4 @@
         </update>
     </changeSet>
 
-    <changeSet id="add moto to charges table" author="">
-        <addColumn tableName="charges">
-            <column name="moto" type="boolean">
-            </column>
-        </addColumn>
-    </changeSet>
-
-    <changeSet id="add default to moto" author="">
-        <addDefaultValue tableName="charges" columnName="moto" defaultValue="false"/>
-    </changeSet>
-
-    <changeSet id="update moto with default value" author="">
-        <update tableName="charges">
-            <column name="moto" value="false"/>
-        </update>
-    </changeSet>
-
 </databaseChangeLog>
