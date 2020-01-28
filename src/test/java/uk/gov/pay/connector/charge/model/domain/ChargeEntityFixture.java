@@ -51,6 +51,7 @@ public class ChargeEntityFixture {
     private ParityCheckStatus parityCheckStatus = null;
     private String gatewayTransactionId = null;
     private Source source = null;
+    private boolean moto;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -74,7 +75,8 @@ public class ChargeEntityFixture {
                 externalMetadata,
                 source, 
                 gatewayTransactionId, 
-                cardDetails);
+                cardDetails,
+                moto);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
@@ -236,6 +238,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withEmail(String email) {
         this.email = email;
+        return this;
+    }
+    
+    public ChargeEntityFixture withMoto(boolean moto) {
+        this.moto = moto;
         return this;
     }
 }

@@ -21,7 +21,6 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -76,16 +75,6 @@ public class DatabaseTestHelper {
         }
     }
 
-    public void updateGatewayAccountAllowZeroAmount(long gatewayAccountId, boolean allowZeroAmount) {
-        jdbi.withHandle(handle ->
-                handle
-                        .createUpdate("UPDATE gateway_accounts SET allow_zero_amount=:allow_zero_amount WHERE id=:gateway_account_id")
-                        .bind("gateway_account_id", gatewayAccountId)
-                        .bind("allow_zero_amount", allowZeroAmount)
-                        .execute()
-        );
-    }
-
     public void addCharge(AddChargeParams addChargeParams) {
         PGobject jsonMetadata = new PGobject();
         jsonMetadata.setType("json");
@@ -108,25 +97,25 @@ public class DatabaseTestHelper {
                         ":description, :created_date, :reference, :version, :email, :language, " +
                         ":delayed_capture, :corporate_surcharge, :parity_check_status, " +
                         ":external_metadata, :card_type)")
-                    .bind("id", addChargeParams.getChargeId())
-                    .bind("external_id", addChargeParams.getExternalChargeId())
-                    .bind("amount", addChargeParams.getAmount())
-                    .bind("status", addChargeParams.getStatus().getValue())
-                    .bind("gateway_account_id", Long.valueOf(addChargeParams.getGatewayAccountId()))
-                    .bind("return_url", addChargeParams.getReturnUrl())
-                    .bind("gateway_transaction_id", addChargeParams.getTransactionId())
-                    .bind("description", addChargeParams.getDescription())
-                    .bind("created_date", Timestamp.from(addChargeParams.getCreatedDate().toInstant()))
-                    .bind("reference", addChargeParams.getReference().toString())
-                    .bind("version", addChargeParams.getVersion())
-                    .bind("email", addChargeParams.getEmail())
-                    .bind("language", addChargeParams.getLanguage().toString())
-                    .bind("delayed_capture", addChargeParams.isDelayedCapture())
-                    .bind("corporate_surcharge", addChargeParams.getCorporateSurcharge())
-                    .bind("parity_check_status", addChargeParams.getParityCheckStatus())
-                    .bindBySqlType("external_metadata", jsonMetadata, OTHER)
-                    .bind("card_type", addChargeParams.getCardType())
-                    .execute());
+                        .bind("id", addChargeParams.getChargeId())
+                        .bind("external_id", addChargeParams.getExternalChargeId())
+                        .bind("amount", addChargeParams.getAmount())
+                        .bind("status", addChargeParams.getStatus().getValue())
+                        .bind("gateway_account_id", Long.valueOf(addChargeParams.getGatewayAccountId()))
+                        .bind("return_url", addChargeParams.getReturnUrl())
+                        .bind("gateway_transaction_id", addChargeParams.getTransactionId())
+                        .bind("description", addChargeParams.getDescription())
+                        .bind("created_date", Timestamp.from(addChargeParams.getCreatedDate().toInstant()))
+                        .bind("reference", addChargeParams.getReference().toString())
+                        .bind("version", addChargeParams.getVersion())
+                        .bind("email", addChargeParams.getEmail())
+                        .bind("language", addChargeParams.getLanguage().toString())
+                        .bind("delayed_capture", addChargeParams.isDelayedCapture())
+                        .bind("corporate_surcharge", addChargeParams.getCorporateSurcharge())
+                        .bind("parity_check_status", addChargeParams.getParityCheckStatus())
+                        .bindBySqlType("external_metadata", jsonMetadata, OTHER)
+                        .bind("card_type", addChargeParams.getCardType())
+                        .execute());
     }
 
     public void deleteAllChargesOnAccount(long accountId) {
@@ -140,7 +129,7 @@ public class DatabaseTestHelper {
         return addRefund(externalId, reference, amount, status, chargeId, gatewayTransactionId, createdDate, null, null);
     }
 
-    public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId, 
+    public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId,
                          String gatewayTransactionId, ZonedDateTime createdDate, String submittedByUserExternalId,
                          String userEmail) {
         int refundId = RandomUtils.nextInt();
@@ -549,7 +538,7 @@ public class DatabaseTestHelper {
                         .execute()
         );
     }
-    
+
     public void blockPrepaidCards(Long accountId) {
         jdbi.withHandle(handle ->
                 handle.createUpdate("UPDATE gateway_accounts set block_prepaid_cards=true WHERE id=:gatewayAccountId")
@@ -557,6 +546,7 @@ public class DatabaseTestHelper {
                         .execute()
         );
     }
+
     public void allowMoto(long accountId) {
         jdbi.withHandle(handle ->
                 handle.createUpdate("UPDATE gateway_accounts set allow_moto=true WHERE id=:gatewayAccountId")
@@ -564,7 +554,7 @@ public class DatabaseTestHelper {
                         .execute()
         );
     }
-    
+
 
     public void addWalletType(long chargeId, WalletType walletType) {
         jdbi.withHandle(handle ->
@@ -706,7 +696,7 @@ public class DatabaseTestHelper {
     public void truncateEmittedEvents() {
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE emitted_events").execute());
     }
-    
+
     public void truncateAllData() {
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE gateway_accounts CASCADE").execute());
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE emitted_events CASCADE").execute());
@@ -750,7 +740,7 @@ public class DatabaseTestHelper {
     }
 
     public void addEmittedEvent(String resourceType, String externalId, Instant eventDate, String eventType,
-                                Instant emittedDate , Instant doNotRetryEmitUntil) {
+                                Instant emittedDate, Instant doNotRetryEmitUntil) {
         jdbi.withHandle(handle ->
                 handle
                         .createUpdate("INSERT INTO emitted_events(resource_type, resource_external_id, event_date, " +
@@ -765,7 +755,7 @@ public class DatabaseTestHelper {
                         .execute()
         );
     }
-    
+
     public Map<String, Object> readEmittedEvent(Long id) {
         return jdbi.withHandle(handle ->
                 handle.createQuery("SELECT * from emitted_events WHERE id = :id")
@@ -791,23 +781,24 @@ public class DatabaseTestHelper {
                         .bind("jwtMacKey", jwtMacKey)
                         .bind("issuer", issuer)
                         .bind("organisationalUnitId", organisationalUnitId)
-                        .bind("version", version) 
+                        .bind("version", version)
                         .execute()
         );
     }
+
     public Map<String, Object> getWorldpay3dsFlexCredentials(Long accountId) {
-        return jdbi.withHandle(handle -> 
+        return jdbi.withHandle(handle ->
                 handle.createQuery("SELECT * FROM worldpay_3ds_flex_credentials WHERE gateway_account_id = :accountId")
-                .bind("accountId", accountId)
-                .mapToMap()
-                .first());
+                        .bind("accountId", accountId)
+                        .mapToMap()
+                        .first());
     }
 
     public Map<String, Object> getGatewayAccount(Long accountId) {
         return jdbi.withHandle(handle ->
                 handle.createQuery("SELECT * FROM gateway_accounts WHERE id = :accountId")
-                .bind("accountId", accountId)
-                .mapToMap()
-                .first());
+                        .bind("accountId", accountId)
+                        .mapToMap()
+                        .first());
     }
 }

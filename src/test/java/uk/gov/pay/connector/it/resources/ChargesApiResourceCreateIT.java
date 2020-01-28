@@ -95,6 +95,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
     private static final String JSON_SOURCE_KEY = "source";
     private static final String JSON_ADDRESS_LINE_CITY = "city";
     private static final String JSON_ADDRESS_LINE_COUNTRY_CODE = "country";
+    private static final String JSON_MOTO_KEY = "moto";
 
     private static final String JSON_REFERENCE_VALUE = "Test reference";
     private static final String JSON_DESCRIPTION_VALUE = "Test description";
@@ -133,6 +134,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .body(JSON_EMAIL_KEY, is(EMAIL))
                 .body(JSON_LANGUAGE_KEY, is("cy"))
                 .body(JSON_DELAYED_CAPTURE_KEY, is(false))
+                .body(JSON_MOTO_KEY, is(false))
                 .body("containsKey('card_details')", is(false))
                 .body("containsKey('gateway_account')", is(false))
                 .body("refund_summary.amount_submitted", is(0))
@@ -177,6 +179,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .body(JSON_DELAYED_CAPTURE_KEY, is(false))
                 .body(JSON_CORPORATE_CARD_SURCHARGE_KEY, is(nullValue()))
                 .body(JSON_TOTAL_AMOUNT_KEY, is(nullValue()))
+                .body(JSON_MOTO_KEY, is(false))
                 .body("containsKey('card_details')", is(false))
                 .body("containsKey('gateway_account')", is(false))
                 .body("settlement_summary.capture_submit_time", nullValue())
@@ -295,7 +298,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
 
     @Test
     public void shouldMakeChargeWhenAmountIsZeroIfAccountAllowsIt() {
-        allowZeroAmountForGatewayAccount();
+        databaseTestHelper.allowZeroAmount(Long.valueOf(accountId));
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, 0,
@@ -310,6 +313,43 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .statusCode(201)
                 .contentType(JSON)
                 .body("amount", is(0));
+    }
+
+    @Test
+    public void shouldReturn422WhenMotoIsTrueIfAccountDoesNotAllowIt() {
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_MOTO_KEY, true
+        ));
+        
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(422)
+                .contentType(JSON)
+                .body("message", contains("MOTO payments are not enabled for this gateway account"))
+                .body("error_identifier", is(ErrorIdentifier.MOTO_NOT_ALLOWED.toString()));
+    }
+
+    @Test
+    public void shouldCreateMotoChargeIfAccountAllowsIt() {
+        databaseTestHelper.allowMoto(Long.valueOf(accountId));
+        
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_MOTO_KEY, true
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(201)
+                .contentType(JSON)
+                .body(JSON_MOTO_KEY, is(true));
     }
 
     @Test

@@ -15,6 +15,7 @@ public final class ChargeCreateRequestBuilder {
     private PrefilledCardHolderDetails prefilledCardHolderDetails;
     private ExternalMetadata externalMetadata;
     private Source source;
+    private boolean moto;
 
     private ChargeCreateRequestBuilder() {
     }
@@ -72,9 +73,14 @@ public final class ChargeCreateRequestBuilder {
         this.source = source;
         return this;
     }
+    
+    public ChargeCreateRequestBuilder withMoto(boolean moto) {
+        this.moto = moto;
+        return this;   
+    }
 
     public ChargeCreateRequest build() {
         return new ChargeCreateRequest(amount, description, reference, returnUrl, email, delayedCapture, language,
-                prefilledCardHolderDetails, externalMetadata, source);
+                prefilledCardHolderDetails, externalMetadata, source, moto);
     }
 }

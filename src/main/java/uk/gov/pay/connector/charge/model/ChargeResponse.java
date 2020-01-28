@@ -126,6 +126,9 @@ public class ChargeResponse {
     @JsonSerialize(using = ExternalMetadataSerialiser.class)
     private ExternalMetadata externalMetadata;
 
+    @JsonProperty("moto")
+    private boolean moto;
+
     ChargeResponse(AbstractChargeResponseBuilder<?, ? extends ChargeResponse> builder) {
         this.dataLinks = builder.getLinks();
         this.chargeId = builder.getChargeId();
@@ -157,6 +160,7 @@ public class ChargeResponse {
         this.netAmount = builder.getNetAmount();
         this.walletType = builder.getWalletType();
         this.externalMetadata = builder.getExternalMetadata();
+        this.moto = builder.isMoto();
     }
 
     public List<Map<String, Object>> getDataLinks() {
@@ -287,12 +291,17 @@ public class ChargeResponse {
                 .get();
     }
 
+    public boolean isMoto() {
+        return moto;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ChargeResponse that = (ChargeResponse) o;
         return delayedCapture == that.delayedCapture &&
+                moto == that.moto &&
                 Objects.equals(dataLinks, that.dataLinks) &&
                 Objects.equals(chargeId, that.chargeId) &&
                 Objects.equals(amount, that.amount) &&
@@ -301,25 +310,36 @@ public class ChargeResponse {
                 Objects.equals(gatewayTransactionId, that.gatewayTransactionId) &&
                 Objects.equals(returnUrl, that.returnUrl) &&
                 Objects.equals(email, that.email) &&
+                Objects.equals(telephoneNumber, that.telephoneNumber) &&
                 Objects.equals(description, that.description) &&
                 Objects.equals(reference, that.reference) &&
                 Objects.equals(providerName, that.providerName) &&
+                Objects.equals(processorId, that.processorId) &&
+                Objects.equals(providerId, that.providerId) &&
                 Objects.equals(createdDate, that.createdDate) &&
+                Objects.equals(authorisedDate, that.authorisedDate) &&
+                Objects.equals(paymentOutcome, that.paymentOutcome) &&
                 Objects.equals(refundSummary, that.refundSummary) &&
                 Objects.equals(settlementSummary, that.settlementSummary) &&
+                Objects.equals(authCode, that.authCode) &&
                 Objects.equals(auth3dsData, that.auth3dsData) &&
                 Objects.equals(cardDetails, that.cardDetails) &&
                 language == that.language &&
                 Objects.equals(corporateCardSurcharge, that.corporateCardSurcharge) &&
+                Objects.equals(fee, that.fee) &&
                 Objects.equals(totalAmount, that.totalAmount) &&
-                walletType == that.walletType;
+                Objects.equals(netAmount, that.netAmount) &&
+                walletType == that.walletType &&
+                Objects.equals(externalMetadata, that.externalMetadata);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(dataLinks, chargeId, amount, state, cardBrand, gatewayTransactionId, returnUrl, email,
-                description, reference, providerName, createdDate, refundSummary, settlementSummary, auth3dsData,
-                cardDetails, language, delayedCapture, corporateCardSurcharge, totalAmount, walletType);
+                telephoneNumber, description, reference, providerName, processorId, providerId, createdDate,
+                authorisedDate, paymentOutcome, refundSummary, settlementSummary, authCode, auth3dsData, cardDetails,
+                language, delayedCapture, corporateCardSurcharge, fee, totalAmount, netAmount, walletType,
+                externalMetadata, moto);
     }
 
     @Override
@@ -344,6 +364,7 @@ public class ChargeResponse {
                 ", corporateCardSurcharge=" + corporateCardSurcharge +
                 ", totalAmount=" + totalAmount +
                 ", walletType=" + walletType +
+                ", moto=" + moto +
                 '}';
     }
 
