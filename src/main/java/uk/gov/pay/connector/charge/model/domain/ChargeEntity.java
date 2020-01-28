@@ -55,6 +55,7 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
@@ -167,42 +168,23 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         //for jpa
     }
 
-    public ChargeEntity(Long amount, String returnUrl, String description, ServicePaymentReference reference,
-                        GatewayAccountEntity gatewayAccount, String email, SupportedLanguage language,
-                        boolean delayedCapture, ExternalMetadata externalMetadata, Source source) {
-        this(amount, UNDEFINED, returnUrl, description, reference, gatewayAccount, email, ZonedDateTime.now(ZoneId.of("UTC")), language, delayedCapture, externalMetadata, source);
-    }
-
-    public ChargeEntity(Long amount,
-                        ServicePaymentReference reference,
-                        String description,
-                        ChargeStatus status,
-                        String email,
-                        CardDetailsEntity cardDetails,
-                        ExternalMetadata externalMetadata,
-                        GatewayAccountEntity gatewayAccount,
-                        String gatewayTransactionId,
-                        SupportedLanguage language,
-                        Source source) {
-        this.amount = amount;
-        this.reference = reference;
-        this.description = description;
-        this.status = status.getValue();
-        this.email = email;
-        this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
-        this.cardDetails = cardDetails;
-        this.externalMetadata = externalMetadata;
-        this.gatewayAccount = gatewayAccount;
-        this.externalId = RandomIdGenerator.newId();
-        this.gatewayTransactionId = gatewayTransactionId;
-        this.language = language;
-        this.source = source;
-    }
-
     // Only the ChargeEntityFixture should directly call this constructor
-    public ChargeEntity(Long amount, ChargeStatus status, String returnUrl, String description, ServicePaymentReference reference,
-                        GatewayAccountEntity gatewayAccount, String email, ZonedDateTime createdDate, SupportedLanguage language,
-                        boolean delayedCapture, ExternalMetadata externalMetadata, Source source) {
+    ChargeEntity(
+            Long amount,
+            ChargeStatus status,
+            String returnUrl,
+            String description,
+            ServicePaymentReference reference,
+            GatewayAccountEntity gatewayAccount,
+            String email,
+            ZonedDateTime createdDate,
+            SupportedLanguage language,
+            boolean delayedCapture,
+            ExternalMetadata externalMetadata,
+            Source source,
+            String gatewayTransactionId,
+            CardDetailsEntity cardDetails
+    ) {
         this.amount = amount;
         this.status = status.getValue();
         this.returnUrl = returnUrl;
@@ -216,6 +198,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.delayedCapture = delayedCapture;
         this.externalMetadata = externalMetadata;
         this.source = source;
+        this.gatewayTransactionId = gatewayTransactionId;
+        this.cardDetails = cardDetails;
     }
 
     public Long getId() {
@@ -432,5 +416,169 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     public void setSource(Source source) {
         this.source = source;
+    }
+
+    public static final class WebChargeEntityBuilder {
+        private Long amount;
+        private String returnUrl;
+        private String email;
+        private GatewayAccountEntity gatewayAccount;
+        private String description;
+        private ServicePaymentReference reference;
+        private SupportedLanguage language;
+        private boolean delayedCapture;
+        private ExternalMetadata externalMetadata;
+        private Source source;
+
+        private WebChargeEntityBuilder() {
+        }
+
+        public static WebChargeEntityBuilder aWebChargeEntity() {
+            return new WebChargeEntityBuilder();
+        }
+
+        public WebChargeEntityBuilder withAmount(Long amount) {
+            this.amount = amount;
+            return this;
+        }
+
+        public WebChargeEntityBuilder withReturnUrl(String returnUrl) {
+            this.returnUrl = returnUrl;
+            return this;
+        }
+
+        public WebChargeEntityBuilder withEmail(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public WebChargeEntityBuilder withGatewayAccount(GatewayAccountEntity gatewayAccount) {
+            this.gatewayAccount = gatewayAccount;
+            return this;
+        }
+
+        public WebChargeEntityBuilder withDescription(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public WebChargeEntityBuilder withReference(ServicePaymentReference reference) {
+            this.reference = reference;
+            return this;
+        }
+
+        public WebChargeEntityBuilder withLanguage(SupportedLanguage language) {
+            this.language = language;
+            return this;
+        }
+
+        public WebChargeEntityBuilder withDelayedCapture(boolean delayedCapture) {
+            this.delayedCapture = delayedCapture;
+            return this;
+        }
+
+        public WebChargeEntityBuilder withExternalMetadata(ExternalMetadata externalMetadata) {
+            this.externalMetadata = externalMetadata;
+            return this;
+        }
+
+        public WebChargeEntityBuilder withSource(Source source) {
+            this.source = source;
+            return this;
+        }
+
+        public ChargeEntity build() {
+            return new ChargeEntity(
+                    amount,
+                    UNDEFINED,
+                    returnUrl,
+                    description,
+                    reference,
+                    gatewayAccount,
+                    email,
+                    ZonedDateTime.now(ZoneId.of("UTC")),
+                    language,
+                    delayedCapture,
+                    externalMetadata,
+                    source,
+                    null,
+                    null);
+        }
+    }
+
+    public static final class TelephoneChargeEntityBuilder {
+        private Long amount;
+        private String gatewayTransactionId;
+        private String email;
+        private CardDetailsEntity cardDetails;
+        private GatewayAccountEntity gatewayAccount;
+        private String description;
+        private ServicePaymentReference reference;
+        private ExternalMetadata externalMetadata;
+
+        private TelephoneChargeEntityBuilder() {
+        }
+
+        public static TelephoneChargeEntityBuilder aTelephoneChargeEntity() {
+            return new TelephoneChargeEntityBuilder();
+        }
+
+        public TelephoneChargeEntityBuilder withAmount(Long amount) {
+            this.amount = amount;
+            return this;
+        }
+
+        public TelephoneChargeEntityBuilder withGatewayTransactionId(String gatewayTransactionId) {
+            this.gatewayTransactionId = gatewayTransactionId;
+            return this;
+        }
+
+        public TelephoneChargeEntityBuilder withEmail(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public TelephoneChargeEntityBuilder withCardDetails(CardDetailsEntity cardDetails) {
+            this.cardDetails = cardDetails;
+            return this;
+        }
+
+        public TelephoneChargeEntityBuilder withGatewayAccount(GatewayAccountEntity gatewayAccount) {
+            this.gatewayAccount = gatewayAccount;
+            return this;
+        }
+
+        public TelephoneChargeEntityBuilder withDescription(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public TelephoneChargeEntityBuilder withReference(ServicePaymentReference reference) {
+            this.reference = reference;
+            return this;
+        }
+
+        public TelephoneChargeEntityBuilder withExternalMetadata(ExternalMetadata externalMetadata) {
+            this.externalMetadata = externalMetadata;
+            return this;
+        }
+
+        public ChargeEntity build() {
+            return new ChargeEntity(
+                    amount,
+                    UNDEFINED,
+                    null,
+                    description,
+                    reference,
+                    gatewayAccount,
+                    email,
+                    ZonedDateTime.now(ZoneId.of("UTC")),
+                    SupportedLanguage.ENGLISH,
+                    false,
+                    externalMetadata,
+                    CARD_EXTERNAL_TELEPHONE,
+                    gatewayTransactionId,
+                    cardDetails);
+        }
     }
 }

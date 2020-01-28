@@ -8,7 +8,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 public class ChargeEventEntityFixture {
     private ChargeStatus chargeStatus = ChargeStatus.CAPTURED;

@@ -32,6 +32,7 @@ import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.Supplemental;
@@ -51,7 +52,6 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
@@ -94,6 +94,7 @@ import static uk.gov.pay.commons.model.Source.CARD_API;
 import static uk.gov.pay.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
@@ -102,7 +103,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
-import static uk.gov.pay.connector.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ChargeServiceTest {
@@ -117,7 +117,7 @@ public class ChargeServiceTest {
 
     private ChargeCreateRequestBuilder requestBuilder;
     private TelephoneChargeCreateRequest.Builder telephoneRequestBuilder;
-    
+
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
@@ -206,19 +206,18 @@ public class ChargeServiceTest {
                 CardType.valueOf("DEBIT")
         );
 
-        returnedChargeEntity = new ChargeEntity(
-                100L,
-                ServicePaymentReference.of("Some reference"),
-                "Some description",
-                AUTHORISATION_SUCCESS,
-                "jane.doe@example.com",
-                cardDetails,
-                externalMetadata,
-                gatewayAccount,
-                "1PROV",
-                SupportedLanguage.ENGLISH,
-                CARD_API
-        );
+        returnedChargeEntity = aValidChargeEntity()
+                .withAmount(100L)
+                .withDescription("Some description")
+                .withReference(ServicePaymentReference.of("Some reference"))
+                .withGatewayAccountEntity(gatewayAccount)
+                .withEmail("jane.doe@example.com")
+                .withExternalMetadata(externalMetadata)
+                .withSource(CARD_API)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .withGatewayTransactionId("1PROV")
+                .withCardDetails(cardDetails)
+                .build();
 
         when(mockedChargeDao.findByGatewayTransactionId("1PROV")).thenReturn(Optional.of(returnedChargeEntity));
         when(mockedChargeDao.findByGatewayTransactionId("new")).thenReturn(Optional.empty());
@@ -669,7 +668,7 @@ public class ChargeServiceTest {
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
     }
-    
+
     @Test
     public void shouldCreateATelephoneChargeAndTruncateMetaDataOver50Characters() {
         String stringGreaterThan50 = StringUtils.repeat("*", 51);
@@ -850,7 +849,7 @@ public class ChargeServiceTest {
         assertThat(telephoneChargeResponse.get().getChargeId().length(), is(26));
         assertThat(telephoneChargeResponse.get().getState().getStatus(), is("success"));
         assertThat(telephoneChargeResponse.get().getState().isFinished(), is(true));
-        
+
     }
 
     @Test
@@ -1229,13 +1228,13 @@ public class ChargeServiceTest {
     public void updateChargeAndEmitEventPostAuthorisation_shouldEmitEvent() {
         ChargeEntity chargeSpy = spy(ChargeEntityFixture.aValidChargeEntity().build());
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
-        
+
         when(chargeEvent.getStatus()).thenReturn(ENTERING_CARD_DETAILS);
         when(chargeEvent.getUpdated()).thenReturn(now());
         when(mockedChargeEventDao.persistChargeEventOf(chargeSpy, null)).thenReturn(chargeEvent);
         when(mockedChargeDao.findByExternalId(chargeSpy.getExternalId())).thenReturn(Optional.of(chargeSpy));
         when(chargeSpy.getEvents()).thenReturn(List.of(chargeEvent));
-        
+
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo("1234567890");
         service.updateChargeAndEmitEventPostAuthorisation(chargeSpy.getExternalId(), ENTERING_CARD_DETAILS,
