@@ -30,7 +30,7 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
         app = ConnectorApp.class,
         config = "config/test-it-config.yaml"
 )
-public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
+public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
 
     private static final String PROVIDER_NAME = "sandbox";
     private static final HashMap<String, Object> postBody = new HashMap<>();
@@ -39,7 +39,7 @@ public class ChargesApiTelephonePaymentResourceIT extends ChargingITestBase {
 
     private final String providerId = "17498-8412u9-1273891239";
 
-    public ChargesApiTelephonePaymentResourceIT() {
+    public ChargesApiResourceTelephonePaymentsIT() {
         super(PROVIDER_NAME);
     }
 

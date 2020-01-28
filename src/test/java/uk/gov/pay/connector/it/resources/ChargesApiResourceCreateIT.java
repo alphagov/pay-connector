@@ -68,7 +68,7 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
                 @ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "true")
         }
 )
-public class ChargesApiCreateResourceIT extends ChargingITestBase {
+public class ChargesApiResourceCreateIT extends ChargingITestBase {
 
     private static final String FRONTEND_CARD_DETAILS_URL = "/secure";
     private static final String JSON_AMOUNT_KEY = "amount";
@@ -99,7 +99,7 @@ public class ChargesApiCreateResourceIT extends ChargingITestBase {
     private static final String JSON_REFERENCE_VALUE = "Test reference";
     private static final String JSON_DESCRIPTION_VALUE = "Test description";
 
-    public ChargesApiCreateResourceIT() {
+    public ChargesApiResourceCreateIT() {
         super(PROVIDER_NAME);
     }
     
