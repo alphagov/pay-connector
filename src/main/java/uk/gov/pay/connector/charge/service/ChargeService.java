@@ -78,8 +78,8 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.aTelephoneChargeEntity;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.aWebChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.TelephoneChargeEntityBuilder.aTelephoneChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.WebChargeEntityBuilder.aWebChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
@@ -156,16 +156,16 @@ public class ChargeService {
                     null
             );
 
-            ChargeEntity chargeEntity = aTelephoneChargeEntity(
-                    telephoneChargeRequest.getAmount(),
-                    telephoneChargeRequest.getDescription(),
-                    ServicePaymentReference.of(telephoneChargeRequest.getReference()),
-                    gatewayAccount,
-                    telephoneChargeRequest.getEmailAddress().orElse(null),
-                    storeExtraFieldsInMetaData(telephoneChargeRequest),
-                    telephoneChargeRequest.getProviderId(),
-                    cardDetails
-            );
+            ChargeEntity chargeEntity = aTelephoneChargeEntity()
+                    .withAmount(telephoneChargeRequest.getAmount())
+                    .withDescription(telephoneChargeRequest.getDescription())
+                    .withReference(ServicePaymentReference.of(telephoneChargeRequest.getReference()))
+                    .withGatewayAccount(gatewayAccount)
+                    .withEmail(telephoneChargeRequest.getEmailAddress().orElse(null))
+                    .withExternalMetadata(storeExtraFieldsInMetaData(telephoneChargeRequest))
+                    .withGatewayTransactionId(telephoneChargeRequest.getProviderId())
+                    .withCardDetails(cardDetails)
+                    .build();
 
             chargeDao.persist(chargeEntity);
             transitionChargeState(chargeEntity, PAYMENT_NOTIFICATION_CREATED);
@@ -206,17 +206,20 @@ public class ChargeService {
                     ? chargeRequest.getLanguage()
                     : SupportedLanguage.ENGLISH;
 
-            ChargeEntity chargeEntity = aWebChargeEntity(
-                    chargeRequest.getAmount(),
-                    chargeRequest.getReturnUrl(),
-                    chargeRequest.getDescription(),
-                    ServicePaymentReference.of(chargeRequest.getReference()),
-                    gatewayAccount,
-                    chargeRequest.getEmail(),
-                    language,
-                    chargeRequest.isDelayedCapture(),
-                    chargeRequest.getExternalMetadata().orElse(null),
-                    chargeRequest.getSource());
+            
+            
+            ChargeEntity chargeEntity = aWebChargeEntity()
+                    .withAmount(chargeRequest.getAmount())
+                    .withReturnUrl(chargeRequest.getReturnUrl())
+                    .withDescription(chargeRequest.getDescription())
+                    .withReference(ServicePaymentReference.of(chargeRequest.getReference()))
+                    .withGatewayAccount(gatewayAccount)
+                    .withEmail(chargeRequest.getEmail())
+                    .withLanguage(language)
+                    .withDelayedCapture(chargeRequest.isDelayedCapture())
+                    .withExternalMetadata(chargeRequest.getExternalMetadata().orElse(null))
+                    .withSource(chargeRequest.getSource())
+                    .build();
 
             chargeRequest.getPrefilledCardHolderDetails()
                     .map(this::createCardDetailsEntity)
