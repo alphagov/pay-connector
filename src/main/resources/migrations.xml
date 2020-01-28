@@ -1409,10 +1409,4 @@
         <addDefaultValue tableName="charges" columnName="moto" defaultValue="false"/>
     </changeSet>
 
-    <changeSet id="update moto with default value" author="">
-        <update tableName="charges">
-            <column name="moto" value="false"/>
-        </update>
-    </changeSet>
-
 </databaseChangeLog>
