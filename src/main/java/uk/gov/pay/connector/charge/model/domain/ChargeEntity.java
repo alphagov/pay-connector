@@ -163,6 +163,9 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
     @Column(name = "source")
     @Enumerated(EnumType.STRING)
     private Source source;
+    
+    @Column(name = "moto")
+    private boolean moto;
 
     public ChargeEntity() {
         //for jpa
@@ -183,7 +186,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
             ExternalMetadata externalMetadata,
             Source source,
             String gatewayTransactionId,
-            CardDetailsEntity cardDetails
+            CardDetailsEntity cardDetails,
+            boolean moto
     ) {
         this.amount = amount;
         this.status = status.getValue();
@@ -200,6 +204,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         this.source = source;
         this.gatewayTransactionId = gatewayTransactionId;
         this.cardDetails = cardDetails;
+        this.moto = moto;
     }
 
     public Long getId() {
@@ -264,6 +269,10 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     public Optional<ExternalMetadata> getExternalMetadata() {
         return Optional.ofNullable(externalMetadata);
+    }
+
+    public boolean isMoto() {
+        return moto;
     }
 
     public void setExternalId(String externalId) {
@@ -429,6 +438,7 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         private boolean delayedCapture;
         private ExternalMetadata externalMetadata;
         private Source source;
+        private boolean moto;
 
         private WebChargeEntityBuilder() {
         }
@@ -486,6 +496,11 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
             this.source = source;
             return this;
         }
+        
+        public WebChargeEntityBuilder withMoto(boolean moto) {
+            this.moto = moto;
+            return this;
+        }
 
         public ChargeEntity build() {
             return new ChargeEntity(
@@ -502,7 +517,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                     externalMetadata,
                     source,
                     null,
-                    null);
+                    null,
+                    moto);
         }
     }
 
@@ -578,7 +594,8 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
                     externalMetadata,
                     CARD_EXTERNAL_TELEPHONE,
                     gatewayTransactionId,
-                    cardDetails);
+                    cardDetails,
+                    false);
         }
     }
 }

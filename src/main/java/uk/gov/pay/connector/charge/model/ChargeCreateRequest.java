@@ -62,6 +62,9 @@ public class ChargeCreateRequest {
     @JsonProperty("source")
     @JsonDeserialize(using = SourceDeserialiser.class)
     private Source source;
+    
+    @JsonProperty("moto")
+    private boolean moto;
 
     public ChargeCreateRequest() {
         // for Jackson
@@ -76,7 +79,8 @@ public class ChargeCreateRequest {
                         SupportedLanguage language,
                         PrefilledCardHolderDetails prefilledCardHolderDetails,
                         ExternalMetadata externalMetadata,
-                        Source source) {
+                        Source source,
+                        boolean moto) {
         this.amount = amount;
         this.description = description;
         this.reference = reference;
@@ -87,6 +91,7 @@ public class ChargeCreateRequest {
         this.prefilledCardHolderDetails = prefilledCardHolderDetails;
         this.externalMetadata = externalMetadata;
         this.source = source;
+        this.moto = moto;
     }
 
     public long getAmount() {
@@ -129,6 +134,10 @@ public class ChargeCreateRequest {
         return source;
     }
 
+    public boolean isMoto() {
+        return moto;
+    }
+
     public String toStringWithoutPersonalIdentifiableInformation() {
         return "ChargeCreateRequest{" +
                 "amount=" + amount +
@@ -136,6 +145,7 @@ public class ChargeCreateRequest {
                 ", returnUrl='" + returnUrl + '\'' +
                 ", delayed_capture=" + delayedCapture +
                 ", source=" + source +
+                ", moto=" + moto +
                 (language != null ? ", language=" + language.toString() : "") +
                 '}';
     }

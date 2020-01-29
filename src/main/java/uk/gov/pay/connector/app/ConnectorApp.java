@@ -27,6 +27,7 @@ import uk.gov.pay.commons.utils.metrics.DatabaseMetricsService;
 import uk.gov.pay.commons.utils.xray.Xray;
 import uk.gov.pay.connector.cardtype.resource.CardTypesResource;
 import uk.gov.pay.connector.charge.exception.ConflictWebApplicationExceptionMapper;
+import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountExceptionMapper;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountExceptionMapper;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
 import uk.gov.pay.connector.charge.resource.ChargesFrontendResource;
@@ -118,6 +119,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new JsonMappingExceptionMapper());
         environment.jersey().register(new ZeroAmountNotAllowedForGatewayAccountExceptionMapper());
         environment.jersey().register(new ConflictWebApplicationExceptionMapper());
+        environment.jersey().register(new MotoPaymentNotAllowedForGatewayAccountExceptionMapper());
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(StripeAccountSetupResource.class));

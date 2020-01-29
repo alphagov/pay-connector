@@ -147,6 +147,7 @@ public class ChargesFrontendResourceIT {
                 .body("delayed_capture", is(true))
                 .body("corporate_card_surcharge", is(213))
                 .body("total_amount", is(6447))
+                .body("moto", is(false))
                 .body("links", hasSize(3))
                 .body("links", containsLink("self", GET, expectedLocation))
                 .body("links", containsLink("cardAuth", POST, expectedLocation + "/cards"))

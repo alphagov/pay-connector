@@ -363,8 +363,4 @@ public class ChargingITestBase {
 
         return externalChargeId;
     }
-
-    protected void allowZeroAmountForGatewayAccount() {
-        databaseTestHelper.updateGatewayAccountAllowZeroAmount(Long.valueOf(accountId), true);
-    }
 }

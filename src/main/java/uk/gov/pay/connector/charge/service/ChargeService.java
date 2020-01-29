@@ -13,6 +13,7 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -197,6 +198,7 @@ public class ChargeService {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
 
             checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
+            checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
 
             if (gatewayAccount.isLive() && !chargeRequest.getReturnUrl().startsWith("https://")) {
                 logger.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
@@ -205,8 +207,6 @@ public class ChargeService {
             SupportedLanguage language = chargeRequest.getLanguage() != null
                     ? chargeRequest.getLanguage()
                     : SupportedLanguage.ENGLISH;
-
-            
             
             ChargeEntity chargeEntity = aWebChargeEntity()
                     .withAmount(chargeRequest.getAmount())
@@ -219,6 +219,7 @@ public class ChargeService {
                     .withDelayedCapture(chargeRequest.isDelayedCapture())
                     .withExternalMetadata(chargeRequest.getExternalMetadata().orElse(null))
                     .withSource(chargeRequest.getSource())
+                    .withMoto(chargeRequest.isMoto())
                     .build();
 
             chargeRequest.getPrefilledCardHolderDetails()
@@ -393,7 +394,8 @@ public class ChargeService {
                 .withAuth3dsData(auth3dsData)
                 .withLink("self", GET, selfUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeId))
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()))
-                .withWalletType(chargeEntity.getWalletType());
+                .withWalletType(chargeEntity.getWalletType())
+                .withMoto(chargeEntity.isMoto());
 
         chargeEntity.getFeeAmount().ifPresent(builderOfResponse::withFee);
         chargeEntity.getExternalMetadata().ifPresent(builderOfResponse::withExternalMetadata);
@@ -784,6 +786,12 @@ public class ChargeService {
     private void checkIfZeroAmountAllowed(Long amount, GatewayAccountEntity gatewayAccount) {
         if (amount == 0L && !gatewayAccount.isAllowZeroAmount()) {
             throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
+        }
+    }
+    
+    private void checkIfMotoPaymentsAllowed(boolean moto, GatewayAccountEntity gatewayAccount) {
+        if (moto && !gatewayAccount.isAllowMoto()) {
+            throw new MotoPaymentNotAllowedForGatewayAccountException(gatewayAccount.getId());
         }
     }
 }
