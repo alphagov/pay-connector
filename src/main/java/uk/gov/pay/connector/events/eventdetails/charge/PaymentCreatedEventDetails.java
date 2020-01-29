@@ -36,6 +36,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private final String addressCounty;
     private final String addressCountry;
     private final Source source;
+    private final boolean moto;
 
     public PaymentCreatedEventDetails(Builder builder) {
         this.amount = builder.amount;
@@ -57,6 +58,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         this.addressCounty = builder.addressCounty;
         this.addressCountry = builder.addressCountry;
         this.source = builder.source;
+        this.moto = builder.moto;
     }
 
     public static PaymentCreatedEventDetails from(ChargeEntity charge) {
@@ -72,7 +74,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 .withLive(charge.getGatewayAccount().isLive())
                 .withExternalMetadata(charge.getExternalMetadata().map(ExternalMetadata::getMetadata).orElse(null))
                 .withEmail(charge.getEmail())
-                .withSource(charge.getSource());
+                .withSource(charge.getSource())
+                .withMoto(charge.isMoto());
 
         if (isInCreatedState(charge) || hasNotGoneThroughAuthorisation(charge)) {
             addCardDetailsIfExist(charge, builder);
@@ -142,6 +145,10 @@ public class PaymentCreatedEventDetails extends EventDetails {
 
     public boolean isLive() {
         return live;
+    }
+
+    public boolean isMoto() {
+        return moto;
     }
 
     public Map<String, Object> getExternalMetadata() {
@@ -236,6 +243,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         private String addressCounty;
         private String addressCountry;
         private Source source;
+        private boolean moto;
 
         public PaymentCreatedEventDetails build() {
             return new PaymentCreatedEventDetails(this);
@@ -333,6 +341,11 @@ public class PaymentCreatedEventDetails extends EventDetails {
 
         public Builder withSource(Source source) {
             this.source = source;
+            return this;
+        }
+
+        public Builder withMoto(boolean moto) {
+            this.moto = moto;
             return this;
         }
     }
