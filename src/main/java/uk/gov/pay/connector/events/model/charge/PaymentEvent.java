@@ -7,8 +7,7 @@ import uk.gov.pay.connector.events.model.ResourceType;
 import java.time.ZonedDateTime;
 
 public class PaymentEvent extends Event {
-
-
+    
     public PaymentEvent(String resourceExternalId, EventDetails eventDetails, ZonedDateTime timestamp) {
         super(resourceExternalId, eventDetails, timestamp);
     }
@@ -21,9 +20,7 @@ public class PaymentEvent extends Event {
     public ResourceType getResourceType() {
         return ResourceType.PAYMENT;
     }
-
-
-
+    
     @Override
     public String toString() {
         return "PaymentEvent{" +
