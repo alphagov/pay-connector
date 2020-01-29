@@ -275,7 +275,7 @@ public class ChargeServiceTest {
     }
 
     @Test
-    public void shouldCreateAChargeWithDefaultLanguageAndDefaultDelayedCapture() {
+    public void shouldCreateAChargeWithDefaults() {
         service.create(requestBuilder.build(), GATEWAY_ACCOUNT_ID, mockedUriInfo);
         
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
