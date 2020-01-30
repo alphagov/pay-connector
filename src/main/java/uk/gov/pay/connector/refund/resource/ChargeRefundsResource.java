@@ -8,6 +8,7 @@ import uk.gov.pay.connector.refund.exception.RefundException;
 import uk.gov.pay.connector.refund.model.RefundRequest;
 import uk.gov.pay.connector.refund.model.RefundResponse;
 import uk.gov.pay.connector.refund.model.RefundsResponse;
+import uk.gov.pay.connector.refund.service.ChargeRefundResponse;
 import uk.gov.pay.connector.refund.service.ChargeRefundService;
 
 import javax.inject.Inject;
@@ -47,7 +48,7 @@ public class ChargeRefundsResource {
     @Produces(APPLICATION_JSON)
     public Response submitRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, RefundRequest refundRequest, @Context UriInfo uriInfo) {
         validateRefundRequest(refundRequest.getAmount());
-        final ChargeRefundService.Response refundServiceResponse = refundService.doRefund(accountId, chargeId, refundRequest);
+        final ChargeRefundResponse refundServiceResponse = refundService.doRefund(accountId, chargeId, refundRequest);
         GatewayRefundResponse refundResponse = refundServiceResponse.getGatewayRefundResponse();
         if (refundResponse.isSuccessful()) {
             return Response.accepted(RefundResponse.valueOf(refundServiceResponse.getRefundEntity(), uriInfo).serialize()).build();
