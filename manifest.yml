@@ -18,7 +18,7 @@ applications:
       DISABLE_INTERNAL_HTTPS: ((disable_internal_https))
       ENVIRONMENT: ((space))
       EVENT_QUEUE_ENABLED: ((sqs_enabled))
-      FRONTEND_URL: ((frontend_url))
+      FRONTEND_URL: ((card_frontend_url))
 
       # Provided via apple-pay service
       APPLE_PAY_PAYMENT_PROCESSING_CERTIFICATE: ((apple_pay_certificate))
