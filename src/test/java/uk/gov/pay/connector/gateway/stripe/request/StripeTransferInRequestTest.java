@@ -48,7 +48,6 @@ public class StripeTransferInRequestTest {
     public void setUp() {
         when(gatewayAccount.getCredentials()).thenReturn(ImmutableMap.of("stripe_account_id", stripeConnectAccountId));
 
-        when(charge.getGatewayAccount()).thenReturn(gatewayAccount);
         when(charge.getExternalId()).thenReturn(chargeExternalId);
 
         when(refund.getAmount()).thenReturn(refundAmount);
@@ -59,7 +58,7 @@ public class StripeTransferInRequestTest {
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         when(stripeGatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
 
-        final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(refund);
+        final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(refund, gatewayAccount);
 
         stripeTransferInRequest = StripeTransferInRequest.of(refundGatewayRequest, stripeChargeId, stripeGatewayConfig);
     }

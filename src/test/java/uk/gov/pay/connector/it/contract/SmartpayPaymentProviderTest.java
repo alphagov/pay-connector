@@ -232,7 +232,7 @@ public class SmartpayPaymentProviderTest {
         assertTrue(captureGatewayResponse.isSuccessful());
 
         RefundEntity refundEntity = new RefundEntity(chargeEntity, 1L, userExternalId, userEmail);
-        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity);
+        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity, gatewayAccountEntity);
         GatewayRefundResponse refundResponse = smartpay.refund(refundRequest);
 
         assertThat(refundResponse.isSuccessful(), is(true));

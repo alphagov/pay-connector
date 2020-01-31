@@ -55,6 +55,7 @@ public class StripePaymentProviderTest {
     private StripePaymentProvider stripePaymentProvider;
 
     private static final Long chargeAmount = 500L;
+    private GatewayAccountEntity gatewayAccountEntity;
     private JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
 
     @Before
@@ -64,6 +65,7 @@ public class StripePaymentProviderTest {
         GatewayClientFactory gatewayClientFactory = app.getInstanceFromGuiceContainer(GatewayClientFactory.class);
         Environment environment = app.getInstanceFromGuiceContainer(Environment.class);
         stripePaymentProvider = new StripePaymentProvider(gatewayClientFactory, connectorConfig, objectMapper, environment);
+        gatewayAccountEntity = new GatewayAccountEntity();
     }
 
     @Test
@@ -113,7 +115,7 @@ public class StripePaymentProviderTest {
         stripePaymentProvider.capture(request);
         final RefundEntity refundEntity = new RefundEntity(chargeEntity, chargeAmount, "some-user-external-id", userEmail);
 
-        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity);
+        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity, gatewayAccountEntity);
         GatewayRefundResponse refundResponse = stripePaymentProvider.refund(refundRequest);
 
         assertTrue(refundResponse.isSuccessful());
@@ -129,7 +131,7 @@ public class StripePaymentProviderTest {
         stripePaymentProvider.capture(request);
         final RefundEntity refundEntity = new RefundEntity(chargeEntity, chargeAmount / 2, "some-user-external-id", userEmail);
 
-        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity);
+        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity, gatewayAccountEntity);
         GatewayRefundResponse refundResponse = stripePaymentProvider.refund(refundRequest);
 
         assertTrue(refundResponse.isSuccessful());
@@ -145,7 +147,7 @@ public class StripePaymentProviderTest {
         stripePaymentProvider.capture(request);
         final RefundEntity refundEntity = new RefundEntity(chargeEntity, chargeAmount + 1L, "some-user-external-id", userEmail);
 
-        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity);
+        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity, gatewayAccountEntity);
         GatewayRefundResponse refundResponse = stripePaymentProvider.refund(refundRequest);
 
         assertTrue(refundResponse.getError().isPresent());
@@ -163,14 +165,14 @@ public class StripePaymentProviderTest {
         stripePaymentProvider.capture(request);
         final RefundEntity refundEntity = new RefundEntity(chargeEntity, chargeAmount, "some-user-external-id", userEmail);
 
-        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity);
+        RefundGatewayRequest refundRequest = RefundGatewayRequest.valueOf(refundEntity, gatewayAccountEntity);
         GatewayRefundResponse refundResponse = stripePaymentProvider.refund(refundRequest);
 
         assertTrue(refundResponse.isSuccessful());
 
         RefundEntity secondRefundEntity = new RefundEntity(chargeEntity, 1L, "some-user-external-id", userEmail);
 
-        refundRequest = RefundGatewayRequest.valueOf(secondRefundEntity);
+        refundRequest = RefundGatewayRequest.valueOf(secondRefundEntity, gatewayAccountEntity);
         refundResponse = stripePaymentProvider.refund(refundRequest);
 
         assertTrue(refundResponse.getError().isPresent());
@@ -191,14 +193,13 @@ public class StripePaymentProviderTest {
     }
 
     private ChargeEntity getCharge() {
-        GatewayAccountEntity validGatewayAccount = new GatewayAccountEntity();
-        validGatewayAccount.setId(123L);
-        validGatewayAccount.setGatewayName(PaymentGatewayName.STRIPE.getName());
+        gatewayAccountEntity.setId(123L);
+        gatewayAccountEntity.setGatewayName(PaymentGatewayName.STRIPE.getName());
         String stripeAccountId = "<replace me>";
-        validGatewayAccount.setCredentials(ImmutableMap.of("stripe_account_id", stripeAccountId));
-        validGatewayAccount.setType(TEST);
+        gatewayAccountEntity.setCredentials(ImmutableMap.of("stripe_account_id", stripeAccountId));
+        gatewayAccountEntity.setType(TEST);
         return aValidChargeEntity()
-                .withGatewayAccountEntity(validGatewayAccount)
+                .withGatewayAccountEntity(gatewayAccountEntity)
                 .withAmount(chargeAmount)
                 .withTransactionId(randomUUID().toString())
                 .withDescription("stripe payment provider test charge")

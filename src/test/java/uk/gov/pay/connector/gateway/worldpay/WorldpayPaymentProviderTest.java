@@ -107,7 +107,7 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
                 .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
 
         var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
-        worldpayPaymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity));
+        worldpayPaymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity, gatewayAccountEntity));
 
         String expectedRefundRequest =
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +

@@ -71,6 +71,7 @@ public class EpdqPaymentProviderTest {
     private String password = envOrThrow("GDS_CONNECTOR_EPDQ_PASSWORD");
     private String shaInPassphrase = envOrThrow("GDS_CONNECTOR_EPDQ_SHA_IN_PASSPHRASE");
     private ChargeEntity chargeEntity;
+    private GatewayAccountEntity gatewayAccountEntity;
     private EpdqPaymentProvider paymentProvider;
 
     @Mock
@@ -261,15 +262,14 @@ public class EpdqPaymentProviderTest {
                     "username", username,
                     "password", password,
                     "sha_in_passphrase", shaInPassphrase);
-            GatewayAccountEntity validGatewayAccount = new GatewayAccountEntity();
-            validGatewayAccount.setId(123L);
-            validGatewayAccount.setGatewayName("epdq");
-            validGatewayAccount.setCredentials(validEpdqCredentials);
-            validGatewayAccount.setType(TEST);
-            validGatewayAccount.setRequires3ds(require3ds);
+            gatewayAccountEntity.setId(123L);
+            gatewayAccountEntity.setGatewayName("epdq");
+            gatewayAccountEntity.setCredentials(validEpdqCredentials);
+            gatewayAccountEntity.setType(TEST);
+            gatewayAccountEntity.setRequires3ds(require3ds);
 
             chargeEntity = aValidChargeEntity()
-                    .withGatewayAccountEntity(validGatewayAccount)
+                    .withGatewayAccountEntity(gatewayAccountEntity)
                     .withTransactionId(randomUUID().toString())
                     .build();
 
@@ -283,8 +283,9 @@ public class EpdqPaymentProviderTest {
         return CaptureGatewayRequest.valueOf(chargeEntity);
     }
 
-    private static RefundGatewayRequest buildRefundRequest(ChargeEntity chargeEntity, Long refundAmount) {
-        return RefundGatewayRequest.valueOf(new RefundEntity(chargeEntity, refundAmount, userExternalId, userEmail));
+    private RefundGatewayRequest buildRefundRequest(ChargeEntity chargeEntity, Long refundAmount) {
+        return RefundGatewayRequest.valueOf(new RefundEntity(chargeEntity, refundAmount, userExternalId, userEmail),
+                gatewayAccountEntity);
     }
 
     private CancelGatewayRequest buildCancelRequest(ChargeEntity chargeEntity, String transactionId) {
