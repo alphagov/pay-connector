@@ -17,6 +17,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -30,6 +31,7 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR
 public class SandboxPaymentProviderTest {
 
     private SandboxPaymentProvider provider;
+    private GatewayAccountEntity gatewayAccountEntity;
 
     private static final String AUTH_SUCCESS_CARD_NUMBER = "4242424242424242";
     private static final String AUTH_REJECTED_CARD_NUMBER = "4000000000000069";
@@ -41,6 +43,7 @@ public class SandboxPaymentProviderTest {
     @Before
     public void setup() {
         provider = new SandboxPaymentProvider();
+        gatewayAccountEntity = new GatewayAccountEntity();
     }
 
     @Test
@@ -130,7 +133,8 @@ public class SandboxPaymentProviderTest {
     @Test
     public void refund_shouldSucceedWhenRefundingAnyCharge() {
 
-        GatewayRefundResponse refundResponse = provider.refund(RefundGatewayRequest.valueOf(RefundEntityFixture.aValidRefundEntity().build()));
+        GatewayRefundResponse refundResponse = provider.refund(RefundGatewayRequest.valueOf(RefundEntityFixture.aValidRefundEntity().build(),
+                gatewayAccountEntity));
 
         assertThat(refundResponse.isSuccessful(), is(true));
         assertThat(refundResponse.getReference().isPresent(), is(true));

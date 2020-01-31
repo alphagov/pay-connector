@@ -231,7 +231,7 @@ public class WorldpayPaymentProviderTest {
 
         RefundEntity refundEntity = new RefundEntity(chargeEntity, 1L, userExternalId, userEmail);
 
-        GatewayRefundResponse refundResponse = paymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity));
+        GatewayRefundResponse refundResponse = paymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity, validGatewayAccount));
 
         assertTrue(refundResponse.isSuccessful());
     }

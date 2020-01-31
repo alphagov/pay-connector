@@ -44,8 +44,6 @@ public class StripeRefundRequestTest {
     public void setUp() {
         when(gatewayAccount.getCredentials()).thenReturn(ImmutableMap.of("stripe_account_id", "stripe_account_id"));
 
-        when(charge.getGatewayAccount()).thenReturn(gatewayAccount);
-
         when(refund.getAmount()).thenReturn(refundAmount);
         when(refund.getExternalId()).thenReturn(refundExternalId);
         when(refund.getChargeEntity()).thenReturn(charge);
@@ -53,7 +51,7 @@ public class StripeRefundRequestTest {
         when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
 
-        final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(refund);
+        final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(refund, gatewayAccount);
 
         stripeRefundRequest = StripeRefundRequest.of(refundGatewayRequest, stripeChargeId, stripeGatewayConfig);
     }

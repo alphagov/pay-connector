@@ -62,7 +62,7 @@ public class ChargeRefundService {
         RefundEntity refundEntity = createRefund(accountId, chargeId, refundRequest);
         GatewayRefundResponse gatewayRefundResponse = providers
                 .byName(PaymentGatewayName.valueFrom(gatewayAccountEntity.getGatewayName()))
-                .refund(RefundGatewayRequest.valueOf(refundEntity));
+                .refund(RefundGatewayRequest.valueOf(refundEntity, gatewayAccountEntity));
         RefundEntity refund = processRefund(gatewayRefundResponse, refundEntity.getId(), gatewayAccountEntity);
         return new ChargeRefundResponse(gatewayRefundResponse, refund);
     }

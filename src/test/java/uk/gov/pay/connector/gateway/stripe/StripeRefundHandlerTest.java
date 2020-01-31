@@ -68,7 +68,7 @@ public class StripeRefundHandlerTest {
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
 
-        refundRequest = RefundGatewayRequest.valueOf(refundEntity);
+        refundRequest = RefundGatewayRequest.valueOf(refundEntity, gatewayAccount);
 
         GatewayClient.Response response = mock(GatewayClient.Response.class);
         when(response.getEntity()).thenReturn(load(STRIPE_PAYMENT_INTENT_WITH_CHARGE_RESPONSE));
@@ -83,7 +83,7 @@ public class StripeRefundHandlerTest {
                 .withChargeTransactionId("pi_123")
                 .withGatewayAccountEntity(gatewayAccount)
                 .build();
-        refundRequest = RefundGatewayRequest.valueOf(refundEntity);
+        refundRequest = RefundGatewayRequest.valueOf(refundEntity, gatewayAccount);
         mockTransferSuccess();
         mockRefundSuccess();
 

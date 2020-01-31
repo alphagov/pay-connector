@@ -64,10 +64,10 @@ public class RefundGatewayRequest implements GatewayRequest {
      *          - Their reference to the Refund in smartpay will be returned as `pspReference`.
      * </p>
      */
-    public static RefundGatewayRequest valueOf(RefundEntity refundEntity) {
+    public static RefundGatewayRequest valueOf(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity) {
         return new RefundGatewayRequest(
                 refundEntity.getChargeEntity().getGatewayTransactionId(),
-                refundEntity.getChargeEntity().getGatewayAccount(),
+                gatewayAccountEntity,
                 String.valueOf(refundEntity.getAmount()),
                 refundEntity.getExternalId(),
                 refundEntity.getChargeEntity().getExternalId()

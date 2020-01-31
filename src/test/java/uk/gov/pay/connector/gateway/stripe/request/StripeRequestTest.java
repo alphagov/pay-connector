@@ -35,12 +35,11 @@ public class StripeRequestTest {
     @Before
     public void setUp() {
         when(gatewayAccount.getCredentials()).thenReturn(ImmutableMap.of("stripe_account_id", "stripe_connect_account_id"));
-        when(charge.getGatewayAccount()).thenReturn(gatewayAccount);
         when(refund.getChargeEntity()).thenReturn(charge);
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         when(stripeAuthTokens.getLive()).thenReturn("live");
         when(stripeAuthTokens.getTest()).thenReturn("test");
-        final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(refund);
+        final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(refund, gatewayAccount);
 
         stripeRefundRequest = StripeRefundRequest.of(refundGatewayRequest, "charge_id", stripeGatewayConfig);
     }
