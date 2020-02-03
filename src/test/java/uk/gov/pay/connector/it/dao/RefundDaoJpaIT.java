@@ -143,6 +143,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
         assertThat(refundByIdFound.get(0), hasEntry("created_date", java.sql.Timestamp.from(refundEntity.getCreatedDate().toInstant())));
         assertThat(refundByIdFound.get(0), hasEntry("user_external_id", userExternalId));
         assertThat(refundByIdFound.get(0), hasEntry("user_email", userEmail));
+        assertThat(refundByIdFound.get(0), hasEntry("charge_external_id", chargeEntity.getExternalId()));
     }
 
     @Test
