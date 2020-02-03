@@ -132,6 +132,7 @@ public class SandboxRefundIT extends ChargingITestBase {
         assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
         assertThat(refundsFoundByChargeId.get(0), hasEntry("user_external_id", userExternalId));
         assertThat(refundsFoundByChargeId.get(0), hasEntry("user_email", userEmail));
+        assertThat(refundsFoundByChargeId.get(0), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
 
         assertRefundsHistoryInOrderInDBForSuccessfulOrPartialRefund(defaultTestCharge);
     }
