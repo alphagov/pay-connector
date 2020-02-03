@@ -1422,4 +1422,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="create charge external id index on refunds table" author="">
+        <createIndex indexName="idx_refunds_charge_external_id"
+                     tableName="refunds"
+                     unique="false">
+            <column name="charge_external_id" type="char(26)"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
