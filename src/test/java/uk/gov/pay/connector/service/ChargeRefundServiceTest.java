@@ -171,6 +171,7 @@ public class ChargeRefundServiceTest {
 
         assertThat(refundEntity.getAmount(), is(refundAmount));
         assertThat(refundEntity.getStatus(), is(CREATED));
+        assertThat(refundEntity.getChargeExternalId(), is(externalChargeId));
     }
 
     @Test

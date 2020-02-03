@@ -176,6 +176,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
         assertThat(refundEntity.getUserEmail(), is(refundEntity.getUserEmail()));
         assertThat(refundHistory.getUserExternalId(), is(refundEntity.getUserExternalId()));
         assertThat(refundHistory.getGatewayTransactionId(), is(refundEntity.getGatewayTransactionId()));
+        assertThat(refundHistory.getChargeExternalId(), is(chargeEntity.getExternalId()));
     }
 
     @Test
