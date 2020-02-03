@@ -14,11 +14,13 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.net.URI;
+import java.net.URLEncoder;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -70,7 +72,7 @@ public class StripePaymentIntentRequestTest {
         assertThat(payload, containsString("on_behalf_of=" + stripeConnectAccountId));
         assertThat(payload, containsString("confirm=true"));
         assertThat(payload, containsString("description=" + description));
-        assertThat(payload, containsString("return_url=" + frontendUrl + "%2Fcard_details%2F" + chargeExternalId + "%2F3ds_required_in"));
+        assertThat(payload, containsString("return_url=" + URLEncoder.encode(frontendUrl + "/card_details/" + chargeExternalId + "/3ds_required_in", UTF_8)));
     }
 
     @Test
@@ -97,7 +99,7 @@ public class StripePaymentIntentRequestTest {
         StripePaymentIntentRequest stripePaymentIntentRequest = createStripePaymentIntentRequest();
 
         String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
-        assertThat(payload, containsString("payment_method_options%5Bcard%5Bmoto%5D%5D=true"));
+        assertThat(payload, containsString(URLEncoder.encode("payment_method_options[card[moto]]", UTF_8) + "=true"));
     }
     
     @Test
@@ -107,7 +109,7 @@ public class StripePaymentIntentRequestTest {
         StripePaymentIntentRequest stripePaymentIntentRequest = createStripePaymentIntentRequest();
 
         String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
-        assertThat(payload, not(containsString("payment_method_options%5Bcard%5Bmoto%5D%5D")));
+        assertThat(payload, not(containsString(URLEncoder.encode("payment_method_options[card[moto]]", UTF_8))));
     }
     
     private StripePaymentIntentRequest createStripePaymentIntentRequest() {
