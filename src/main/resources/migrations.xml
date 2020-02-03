@@ -1409,4 +1409,17 @@
         <addDefaultValue tableName="charges" columnName="moto" defaultValue="false"/>
     </changeSet>
 
+    <changeSet id="add charge_external_id column to refunds and refunds_history table" author="">
+        <addColumn tableName="refunds">
+            <column name="charge_external_id" type="char(26)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="refunds_history">
+            <column name="charge_external_id" type="char(26)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
