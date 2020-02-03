@@ -90,6 +90,9 @@ public class RefundEntity extends AbstractVersionedEntity {
     @Convert(converter = UTCDateTimeConverter.class)
     private ZonedDateTime createdDate;
 
+    @Column(name = "charge_external_id")
+    private String chargeExternalId;
+
     public RefundEntity() {
         //for jpa
     }
@@ -101,6 +104,7 @@ public class RefundEntity extends AbstractVersionedEntity {
         this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
         this.userExternalId = userExternalId;
         this.userEmail = userEmail;
+        this.chargeExternalId = chargeEntity.getExternalId();
     }
 
     public String getExternalId() {
@@ -203,5 +207,13 @@ public class RefundEntity extends AbstractVersionedEntity {
                 ", gatewayTransactionId=" + gatewayTransactionId +
                 ", createdDate=" + createdDate +
                 '}';
+    }
+
+    public String getChargeExternalId() {
+        return chargeExternalId;
+    }
+
+    public void setChargeExternalId(String chargeExternalId) {
+        this.chargeExternalId = chargeExternalId;
     }
 }

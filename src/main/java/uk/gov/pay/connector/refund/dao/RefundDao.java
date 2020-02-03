@@ -62,7 +62,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
     public List<RefundHistory> searchHistoryByChargeId(Long chargeId) {
 
         String query = "SELECT id, external_id, amount, status, charge_id, created_date, version, reference, " +
-                "history_start_date, history_end_date, user_external_id, gateway_transaction_id, user_email " +
+                "history_start_date, history_end_date, user_external_id, gateway_transaction_id, user_email, charge_external_id " +
                 "FROM refunds_history r " +
                 "WHERE charge_id = ?1 AND status != ?2";
 
