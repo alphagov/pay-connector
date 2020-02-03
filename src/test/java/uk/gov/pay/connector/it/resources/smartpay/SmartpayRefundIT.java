@@ -98,6 +98,7 @@ public class SmartpayRefundIT extends ChargingITestBase {
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
         assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is("8514774917520978"), defaultTestCharge.getChargeId(), refundAmount, "REFUND SUBMITTED")));
+        assertThat(refundsFoundByChargeId.get(0), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
     }
 
     @Test
