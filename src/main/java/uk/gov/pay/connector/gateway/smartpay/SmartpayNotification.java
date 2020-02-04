@@ -22,6 +22,7 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
     private String eventCode;
     private String originalReference;
     private String pspReference;
+    private String reason;
     private String success;
 
     private Optional<ChargeStatus> chargeStatus = Optional.empty();
@@ -35,6 +36,7 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
         this.pspReference = (String) notification.get("pspReference");
         this.success = (String) notification.get("success");
         this.eventDate = ZonedDateTime.parse((String) notification.get("eventDate"));
+        this.reason = (String) notification.getOrDefault("reason", null);
     }
 
     private void verify(Map<String, Object> notification, Set<String> mandatoryFields) {
@@ -66,6 +68,10 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
         return "true".equals(success);
     }
 
+    public String getReason() {
+        return reason;
+    }
+
     public ZonedDateTime getEventDate() {
         return eventDate;
     }
@@ -94,6 +100,7 @@ public class SmartpayNotification implements ChargeStatusRequest, Comparable<Sma
                 ", eventCode='" + eventCode + '\'' +
                 ", originalReference='" + originalReference + '\'' +
                 ", pspReference='" + pspReference + '\'' +
+                ", reason='" + reason + '\'' +
                 ", success='" + success + '\'' +
                 ", chargeStatus=" + chargeStatus +
                 '}';
