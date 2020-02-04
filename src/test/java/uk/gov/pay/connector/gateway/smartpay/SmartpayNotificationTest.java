@@ -19,6 +19,7 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class SmartpayNotificationTest {
@@ -32,11 +33,13 @@ public class SmartpayNotificationTest {
                 "originalReference", "originalReference",
                 "pspReference", "pspReference",
                 "eventCode", "eventCode",
+                "reason", "It failed because",
                 "success", "true",
                 "eventDate", "2015-10-08T13:48:30+02:00");
         assertThat(smartpayNotification.getTransactionId(), is("pspReference"));
         assertThat(smartpayNotification.getOriginalReference(), is("originalReference"));
         assertThat(smartpayNotification.getPspReference(), is("pspReference"));
+        assertThat(smartpayNotification.getReason(), is ("It failed because"));
         assertThat(smartpayNotification.getEventCode(), is("eventCode"));
         assertThat(smartpayNotification.isSuccessFul(), is(true));
 
@@ -67,6 +70,25 @@ public class SmartpayNotificationTest {
         assertThat(earlyNotification, is(lessThan(laterNotification)));
         assertThat(laterNotification, is(greaterThan(earlyNotification)));
     }
+
+    @Test
+    public void simpleFieldsShould_simplyMapWithNullReason() {
+        SmartpayNotification smartpayNotification = aNotificationWith(
+                "originalReference", "originalReference",
+                "pspReference", "pspReference",
+                "eventCode", "eventCode",
+                "success", "true",
+                "eventDate", "2015-10-08T13:48:30+02:00");
+        assertThat(smartpayNotification.getTransactionId(), is("pspReference"));
+        assertThat(smartpayNotification.getOriginalReference(), is("originalReference"));
+        assertThat(smartpayNotification.getPspReference(), is("pspReference"));
+        assertThat(smartpayNotification.getReason(), is(nullValue()));
+        assertThat(smartpayNotification.getEventCode(), is("eventCode"));
+        assertThat(smartpayNotification.isSuccessFul(), is(true));
+
+        assertThat(smartpayNotification.getEventDate(), is(ZonedDateTime.of(2015, 10, 8, 13, 48, 30, 0, ZoneOffset.ofHours(2))));
+    }
+
 
     private final static Map<String, Object> defaults = ImmutableMap.of(
             "pspReference", "1234-5678-9012",
