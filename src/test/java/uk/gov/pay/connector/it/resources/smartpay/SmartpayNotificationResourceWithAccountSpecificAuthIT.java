@@ -134,7 +134,9 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthIT extends Charg
         String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
         Long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge-"));
         String externalRefundId = "refund-" + RandomUtils.nextInt();
-        int refundId = databaseTestHelper.addRefund(externalRefundId, reference, 10L, REFUND_SUBMITTED, chargeId, randomAlphanumeric(10), ZonedDateTime.now());
+        int refundId = databaseTestHelper.addRefund(externalRefundId, reference, 10L,
+                REFUND_SUBMITTED, chargeId, randomAlphanumeric(10), ZonedDateTime.now(),
+                externalChargeId);
 
         String response = notifyConnector(notificationPayloadForTransaction(externalRefundId, transactionId, reference, "notification-refund"))
                 .then()

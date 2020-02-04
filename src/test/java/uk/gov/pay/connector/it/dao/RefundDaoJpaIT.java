@@ -310,4 +310,19 @@ public class RefundDaoJpaIT extends DaoITestBase {
         assertThat(refundHistory.getId(), is(testRefund.getId()));
         assertThat(refundHistory.getUserEmail(), is(testRefund.getUserEmail()));
     }
+
+    @Test
+    public void findByChargeExternalIdShouldReturnAListOfRefunds() {
+        DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestRefund()
+                .withReference(randomAlphanumeric(10))
+                .withGatewayTransactionId(randomAlphanumeric(10))
+                .withTestCharge(chargeTestRecord).insert();
+
+        List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(chargeTestRecord.externalChargeId);
+        assertThat(refundEntityList.size(), is(2));
+        assertThat(refundEntityList.get(0).getChargeExternalId(), is(chargeTestRecord.externalChargeId));
+        assertThat(refundEntityList.get(1).getChargeExternalId(), is(chargeTestRecord.externalChargeId));
+    }
 }

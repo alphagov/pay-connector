@@ -6,6 +6,7 @@ import au.com.dius.pact.provider.junit.target.Target;
 import au.com.dius.pact.provider.junit.target.TestTarget;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.common.collect.ImmutableMap;
 import io.dropwizard.testing.ConfigOverride;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
@@ -30,7 +31,9 @@ import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
@@ -38,6 +41,7 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR
 import static uk.gov.pay.connector.rules.AppWithPostgresRule.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ContractTest {
 
@@ -144,10 +148,10 @@ public class ContractTest {
     }
 
     private void setUpRefunds(int numberOfRefunds, Long chargeId,
-                              ZonedDateTime createdDate, RefundStatus refundStatus) {
+                              ZonedDateTime createdDate, RefundStatus refundStatus, String chargeExternalId) {
         for (int i = 0; i < numberOfRefunds; i++) {
             dbHelper.addRefund("external" + RandomUtils.nextInt(), "reference", 1L, refundStatus,
-                    chargeId, randomAlphanumeric(10), createdDate, "user_external_id1234", null);
+                    chargeId, randomAlphanumeric(10), createdDate, "user_external_id1234", null, chargeExternalId);
         }
     }
 
@@ -218,6 +222,16 @@ public class ContractTest {
                 .withPaymentGateway("sandbox")
                 .withServiceName("a cool service")
                 .build());
+    }
+    
+    @State("a gateway account has moto payments enabled")
+    public void createGatewayAccountWithMotoEnabled(Map<String, String> params) {
+        given().port(app.getLocalPort())
+                .contentType(JSON)
+                .body(toJson(Map.of("op", "replace","path", "allow_moto", "value", true)))
+                .patch("/v1/api/accounts/" + params.get("gateway_account_id"))
+                .then()
+                .statusCode(OK.getStatusCode());
     }
 
     @State("a charge with fee and net_amount exists")
@@ -299,8 +313,8 @@ public class ContractTest {
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(accountId));
         long chargeId = 1234L;
         setUpSingleCharge(accountId, chargeId, chargeExternalId, ChargeStatus.CAPTURED, ZonedDateTime.now(), false);
-        setUpRefunds(1, chargeId, ZonedDateTime.parse("2016-01-25T13:23:55Z"), REFUNDED);
-        setUpRefunds(1, chargeId, ZonedDateTime.parse("2016-01-25T16:23:55Z"), REFUND_ERROR);
+        setUpRefunds(1, chargeId, ZonedDateTime.parse("2016-01-25T13:23:55Z"), REFUNDED, chargeExternalId);
+        setUpRefunds(1, chargeId, ZonedDateTime.parse("2016-01-25T16:23:55Z"), REFUND_ERROR, chargeExternalId);
     }
 
     @State("a payment refund exists")
@@ -326,7 +340,8 @@ public class ContractTest {
                 .withEmail("test@test.com")
                 .build());
         dbHelper.addRefund(refundId, "reference", 100L, REFUNDED,
-                paymentId, randomAlphanumeric(10), createdDate);
+                paymentId, randomAlphanumeric(10), createdDate,
+                Long.toString(paymentId));
     }
 
     @State("a charge with corporate surcharge exists")

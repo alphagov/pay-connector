@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ConnectorModule;
+import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.junit.ConfigOverride;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -82,8 +83,10 @@ public class SendRefundEmailIT {
         String payIdSub = "2";
         String refundExternalId = "999999";
 
-        long chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper).chargeId;
-        databaseTestHelper.addRefund(refundExternalId, transactionId + "/" + payIdSub, 100,  REFUND_SUBMITTED, chargeId, randomAlphanumeric(10), ZonedDateTime.now());
+        ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper);
+        databaseTestHelper.addRefund(refundExternalId, transactionId + "/" + payIdSub,
+                100,  REFUND_SUBMITTED, chargeId.chargeId, randomAlphanumeric(10),
+                ZonedDateTime.now(), chargeId.toString());
 
         given().port(testContext.getPort())
                 .body(epdqNotificationPayload(transactionId, payIdSub, "8", credentials.get(CREDENTIALS_SHA_OUT_PASSPHRASE)))

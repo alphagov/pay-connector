@@ -108,7 +108,9 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
         int refundAmount = 1000;
 
         ChargeUtils.ExternalChargeId externalChargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper);
-        databaseTestHelper.addRefund(refundExternalId, transactionId + "/" + payIdSub, 1000,  REFUND_SUBMITTED, externalChargeId.chargeId, randomAlphanumeric(10), ZonedDateTime.now());
+        databaseTestHelper.addRefund(refundExternalId, transactionId + "/" + payIdSub, 1000,
+                REFUND_SUBMITTED, externalChargeId.chargeId, randomAlphanumeric(10), ZonedDateTime.now(),
+                externalChargeId.toString());
         
         String response = notifyConnector(transactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
                 .statusCode(200)

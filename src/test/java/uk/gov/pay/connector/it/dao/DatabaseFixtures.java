@@ -757,7 +757,7 @@ public class DatabaseFixtures {
             if (testCharge == null)
                 throw new IllegalStateException("Test charge must be provided.");
             id = databaseTestHelper.addRefund(externalRefundId, reference, amount, status, testCharge.getChargeId(),
-                    gatewayTransactionId, createdDate, submittedByUserExternalId, userEmail);
+                    gatewayTransactionId, createdDate, submittedByUserExternalId, userEmail, testCharge.externalChargeId);
             return this;
         }
 
