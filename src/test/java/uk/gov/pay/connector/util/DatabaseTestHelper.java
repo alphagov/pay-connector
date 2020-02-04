@@ -125,20 +125,20 @@ public class DatabaseTestHelper {
                         .execute());
     }
 
-    public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId, String gatewayTransactionId, ZonedDateTime createdDate) {
-        return addRefund(externalId, reference, amount, status, chargeId, gatewayTransactionId, createdDate, null, null);
+    public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId, String gatewayTransactionId, ZonedDateTime createdDate, String chargeExternalId) {
+        return addRefund(externalId, reference, amount, status, chargeId, gatewayTransactionId, createdDate, null, null, chargeExternalId);
     }
 
     public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId,
                          String gatewayTransactionId, ZonedDateTime createdDate, String submittedByUserExternalId,
-                         String userEmail) {
+                         String userEmail, String chargeExternalId) {
         int refundId = RandomUtils.nextInt();
         jdbi.withHandle(handle ->
                 handle
                         .createUpdate("INSERT INTO refunds(id, external_id, reference, amount, status, charge_id," +
-                                " gateway_transaction_id, created_date, user_external_id, user_email) " +
+                                " gateway_transaction_id, created_date, user_external_id, user_email, charge_external_id) " +
                                 "VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, " +
-                                ":gateway_transaction_id, :created_date, :user_external_id, :user_email)")
+                                ":gateway_transaction_id, :created_date, :user_external_id, :user_email, :charge_external_id)")
                         .bind("id", refundId)
                         .bind("external_id", externalId)
                         .bind("reference", reference)
@@ -149,6 +149,7 @@ public class DatabaseTestHelper {
                         .bind("created_date", Timestamp.from(createdDate.toInstant()))
                         .bind("user_external_id", submittedByUserExternalId)
                         .bind("user_email", userEmail)
+                        .bind("charge_external_id", chargeExternalId)
                         .bind("version", 1)
                         .execute()
         );
