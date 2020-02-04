@@ -144,10 +144,10 @@ public class ContractTest {
     }
 
     private void setUpRefunds(int numberOfRefunds, Long chargeId,
-                              ZonedDateTime createdDate, RefundStatus refundStatus) {
+                              ZonedDateTime createdDate, RefundStatus refundStatus, String chargeExternalId) {
         for (int i = 0; i < numberOfRefunds; i++) {
             dbHelper.addRefund("external" + RandomUtils.nextInt(), "reference", 1L, refundStatus,
-                    chargeId, randomAlphanumeric(10), createdDate, "user_external_id1234", null);
+                    chargeId, randomAlphanumeric(10), createdDate, "user_external_id1234", null, chargeExternalId);
         }
     }
 
@@ -299,8 +299,8 @@ public class ContractTest {
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(accountId));
         long chargeId = 1234L;
         setUpSingleCharge(accountId, chargeId, chargeExternalId, ChargeStatus.CAPTURED, ZonedDateTime.now(), false);
-        setUpRefunds(1, chargeId, ZonedDateTime.parse("2016-01-25T13:23:55Z"), REFUNDED);
-        setUpRefunds(1, chargeId, ZonedDateTime.parse("2016-01-25T16:23:55Z"), REFUND_ERROR);
+        setUpRefunds(1, chargeId, ZonedDateTime.parse("2016-01-25T13:23:55Z"), REFUNDED, chargeExternalId);
+        setUpRefunds(1, chargeId, ZonedDateTime.parse("2016-01-25T16:23:55Z"), REFUND_ERROR, chargeExternalId);
     }
 
     @State("a payment refund exists")
@@ -326,7 +326,8 @@ public class ContractTest {
                 .withEmail("test@test.com")
                 .build());
         dbHelper.addRefund(refundId, "reference", 100L, REFUNDED,
-                paymentId, randomAlphanumeric(10), createdDate);
+                paymentId, randomAlphanumeric(10), createdDate,
+                Long.toString(paymentId));
     }
 
     @State("a charge with corporate surcharge exists")

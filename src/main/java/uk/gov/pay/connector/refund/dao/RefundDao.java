@@ -115,4 +115,14 @@ public class RefundDao extends JpaDao<RefundEntity> {
                 .setParameter(4, offset)
                 .getResultList();
     }
+
+    public List<RefundEntity> findRefundsByChargeExternalId(String chargeExternalId) {
+        String query = "SELECT refund FROM RefundEntity refund " +
+                "WHERE refund.chargeExternalId = :chargeExternalId";
+
+        return entityManager.get()
+                .createQuery(query, RefundEntity.class)
+                .setParameter("chargeExternalId", chargeExternalId)
+                .getResultList();
+    }
 }
