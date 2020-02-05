@@ -6,6 +6,7 @@ import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.db.DataSourceFactory;
 import uk.gov.pay.connector.app.config.EmittedEventSweepConfig;
 import uk.gov.pay.connector.app.config.EventEmitterConfig;
+import uk.gov.pay.connector.app.config.ExpungeConfig;
 import uk.gov.pay.connector.app.config.RestClientConfig;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
@@ -75,6 +76,11 @@ public class ConnectorConfiguration extends Configuration {
 
     @NotNull
     private EventEmitterConfig eventEmitterConfig;
+
+    @Valid
+    @NotNull
+    @JsonProperty("expungeConfig")
+    private ExpungeConfig expungeConfig;
 
     @NotNull
     private String graphiteHost;
@@ -215,5 +221,9 @@ public class ConnectorConfiguration extends Configuration {
 
     public EventEmitterConfig getEventEmitterConfig() {
         return eventEmitterConfig;
+    }
+
+    public ExpungeConfig getExpungeConfig() {
+        return expungeConfig;
     }
 }

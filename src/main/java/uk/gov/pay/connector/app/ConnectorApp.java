@@ -37,6 +37,7 @@ import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
 import uk.gov.pay.connector.common.exception.UnsupportedOperationExceptionMapper;
 import uk.gov.pay.connector.common.exception.ValidationExceptionMapper;
 import uk.gov.pay.connector.events.resource.EmittedEventResource;
+import uk.gov.pay.connector.expunge.resource.ExpungeResource;
 import uk.gov.pay.connector.filters.LoggingMDCRequestFilter;
 import uk.gov.pay.connector.filters.LoggingMDCResponseFilter;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
@@ -127,6 +128,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(ChargeEventsResource.class));
         environment.jersey().register(injector.getInstance(SecurityTokensResource.class));
         environment.jersey().register(injector.getInstance(ChargesApiResource.class));
+        environment.jersey().register(injector.getInstance(ExpungeResource.class));
         environment.jersey().register(injector.getInstance(ChargesFrontendResource.class));
         environment.jersey().register(injector.getInstance(ChargeRefundsResource.class));
         environment.jersey().register(injector.getInstance(NotificationResource.class));
