@@ -4,10 +4,12 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
 import uk.gov.pay.connector.refund.model.RefundRequest;
 import uk.gov.pay.connector.refund.model.RefundResponse;
 import uk.gov.pay.connector.refund.model.RefundsResponse;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.ChargeRefundResponse;
 import uk.gov.pay.connector.refund.service.ChargeRefundService;
 
@@ -21,6 +23,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MAX_AMOUNT;
@@ -35,11 +38,13 @@ public class ChargeRefundsResource {
 
     private final ChargeRefundService refundService;
     private final ChargeDao chargeDao;
+    private final RefundDao refundDao;
 
     @Inject
-    public ChargeRefundsResource(ChargeRefundService refundService, ChargeDao chargeDao) {
+    public ChargeRefundsResource(ChargeRefundService refundService, ChargeDao chargeDao, RefundDao refundDao) {
         this.refundService = refundService;
         this.chargeDao = chargeDao;
+        this.refundDao = refundDao;
     }
 
     @POST
@@ -79,12 +84,15 @@ public class ChargeRefundsResource {
     @Produces(APPLICATION_JSON)
     public Response getRefunds(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(chargeEntity -> Response.ok(RefundsResponse.valueOf(chargeEntity, uriInfo).serialize()).build())
-                .orElseGet(() -> responseWithChargeNotFound(chargeId));
+                .map(chargeEntity -> {
+                    List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(chargeId);
+                    return Response.ok(RefundsResponse.valueOf(chargeEntity, refundEntityList, uriInfo).serialize()).build();
+                })
+                .orElse(responseWithChargeNotFound(chargeId));
     }
 
     private Response getRefundResponse(ChargeEntity chargeEntity, String refundId, UriInfo uriInfo) {
-        return chargeEntity.getRefunds().stream()
+        return refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId()).stream()
                 .filter(refundEntity -> refundEntity.getExternalId().equals(refundId))
                 .findFirst()
                 .map(refundEntity -> Response.ok(RefundResponse.valueOf(refundEntity, uriInfo).serialize()).build())

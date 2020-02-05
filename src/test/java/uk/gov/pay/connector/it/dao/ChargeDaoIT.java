@@ -419,15 +419,6 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(charge.getReturnUrl(), is(defaultTestCharge.getReturnUrl()));
         assertThat(charge.getCreatedDate(), is(defaultTestCharge.getCreatedDate()));
         assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
-
-        assertThat(charge.getRefunds().size(), is(1));
-        RefundEntity refund = charge.getRefunds().get(0);
-        assertThat(refund.getId(), is(defaultTestRefund.getId()));
-        assertThat(refund.getAmount(), is(defaultTestRefund.getAmount()));
-        assertThat(refund.getStatus(), is(defaultTestRefund.getStatus()));
-        assertThat(refund.getCreatedDate(), is(defaultTestRefund.getCreatedDate()));
-        assertThat(refund.getChargeEntity().getId(), is(defaultTestCharge.getChargeId()));
-        assertNotNull(refund.getVersion());
     }
 
     @Test

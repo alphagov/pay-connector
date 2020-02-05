@@ -35,11 +35,13 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.request.StripeAuthoriseRequest;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.List;
 import java.util.Optional;
 
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
@@ -180,7 +182,7 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
-        return externalRefundAvailabilityCalculator.calculate(chargeEntity);
+    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity, List<RefundEntity> refundEntityList) {
+        return externalRefundAvailabilityCalculator.calculate(chargeEntity, refundEntityList);
     }
 }

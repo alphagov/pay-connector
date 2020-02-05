@@ -118,7 +118,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
 
     public List<RefundEntity> findRefundsByChargeExternalId(String chargeExternalId) {
         String query = "SELECT refund FROM RefundEntity refund " +
-                "WHERE refund.chargeExternalId = :chargeExternalId";
+                "WHERE refund.chargeExternalId = :chargeExternalId ORDER BY refund.createdDate ASC";
 
         return entityManager.get()
                 .createQuery(query, RefundEntity.class)

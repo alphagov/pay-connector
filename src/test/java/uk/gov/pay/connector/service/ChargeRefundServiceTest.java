@@ -33,6 +33,7 @@ import uk.gov.pay.connector.refund.service.ChargeRefundResponse;
 import uk.gov.pay.connector.refund.service.ChargeRefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -91,7 +92,7 @@ public class ChargeRefundServiceTest {
     public void setUp() {
         refundId = ThreadLocalRandom.current().nextLong();
         when(mockProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockProvider);
-        when(mockProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         chargeRefundService = new ChargeRefundService(
                 mockChargeDao, mockRefundDao, mockGatewayAccountDao, mockProviders, mockUserNotificationService, mockStateTransitionService
         );
@@ -144,7 +145,7 @@ public class ChargeRefundServiceTest {
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity).setReference(refundEntity.getExternalId());
 
-        verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
+        verifyNoMoreInteractions(mockChargeDao);
     }
 
     @Test
@@ -225,7 +226,7 @@ public class ChargeRefundServiceTest {
         verify(spiedRefundEntity, never()).setStatus(RefundStatus.REFUNDED);
         verify(spiedRefundEntity).setReference(reference);
 
-        verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
+        verifyNoMoreInteractions(mockChargeDao);
     }
 
     @Test
@@ -401,7 +402,7 @@ public class ChargeRefundServiceTest {
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUNDED);
 
-        verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
+        verifyNoMoreInteractions(mockChargeDao);
     }
 
     @Test
@@ -561,7 +562,7 @@ public class ChargeRefundServiceTest {
         verify(mockRefundDao, times(1)).findById(refundId);
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_ERROR);
 
-        verifyNoMoreInteractions(mockChargeDao, mockRefundDao);
+        verifyNoMoreInteractions(mockChargeDao);
     }
     @Test
     public void shouldOfferRefundStateTransition() {

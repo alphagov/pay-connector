@@ -51,33 +51,33 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
 
     @Test
     public void testGetChargeRefundAvailabilityReturnsPending() {
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CREATED)), is(EXTERNAL_PENDING));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(ENTERING_CARD_DETAILS)), is(EXTERNAL_PENDING));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_READY)), is(EXTERNAL_PENDING));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_3DS_REQUIRED)), is(EXTERNAL_PENDING));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_3DS_READY)), is(EXTERNAL_PENDING));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_SUBMITTED)), is(EXTERNAL_PENDING));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_SUCCESS)), is(EXTERNAL_PENDING));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURE_READY)), is(EXTERNAL_PENDING));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURE_APPROVED)), is(EXTERNAL_PENDING));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURE_APPROVED_RETRY)), is(EXTERNAL_PENDING));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURE_SUBMITTED)), is(EXTERNAL_PENDING));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CREATED), List.of()), is(EXTERNAL_PENDING));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(ENTERING_CARD_DETAILS), List.of()), is(EXTERNAL_PENDING));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_READY), List.of()), is(EXTERNAL_PENDING));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_3DS_REQUIRED), List.of()), is(EXTERNAL_PENDING));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_3DS_READY), List.of()), is(EXTERNAL_PENDING));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_SUBMITTED), List.of()), is(EXTERNAL_PENDING));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_SUCCESS), List.of()), is(EXTERNAL_PENDING));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURE_READY), List.of()), is(EXTERNAL_PENDING));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURE_APPROVED), List.of()), is(EXTERNAL_PENDING));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURE_APPROVED_RETRY), List.of()), is(EXTERNAL_PENDING));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURE_SUBMITTED), List.of()), is(EXTERNAL_PENDING));
     }
 
     @Test
     public void testGetChargeRefundAvailabilityReturnsUnavailable() {
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_REJECTED)), is(EXTERNAL_UNAVAILABLE));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_ERROR)), is(EXTERNAL_UNAVAILABLE));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(EXPIRED)), is(EXTERNAL_UNAVAILABLE));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURE_ERROR)), is(EXTERNAL_UNAVAILABLE));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(EXPIRE_CANCEL_READY)), is(EXTERNAL_UNAVAILABLE));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(EXPIRE_CANCEL_FAILED)), is(EXTERNAL_UNAVAILABLE));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(SYSTEM_CANCEL_READY)), is(EXTERNAL_UNAVAILABLE));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(SYSTEM_CANCEL_ERROR)), is(EXTERNAL_UNAVAILABLE));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(SYSTEM_CANCELLED)), is(EXTERNAL_UNAVAILABLE));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(USER_CANCEL_READY)), is(EXTERNAL_UNAVAILABLE));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(USER_CANCELLED)), is(EXTERNAL_UNAVAILABLE));
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(USER_CANCEL_ERROR)), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_REJECTED), List.of()), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(AUTHORISATION_ERROR), List.of()), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(EXPIRED), List.of()), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURE_ERROR), List.of()), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(EXPIRE_CANCEL_READY), List.of()), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(EXPIRE_CANCEL_FAILED), List.of()), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(SYSTEM_CANCEL_READY), List.of()), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(SYSTEM_CANCEL_ERROR), List.of()), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(SYSTEM_CANCELLED), List.of()), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(USER_CANCEL_READY), List.of()), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(USER_CANCELLED), List.of()), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(USER_CANCEL_ERROR), List.of()), is(EXTERNAL_UNAVAILABLE));
     }
 
     @Test
@@ -89,12 +89,12 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
                 aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(199L).build()
         );
 
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURED, 500L, refunds)), is(EXTERNAL_AVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURED, 500L), refunds), is(EXTERNAL_AVAILABLE));
     }
 
     @Test
     public void shouldGetChargeRefundAvailabilityAsUnavailable_whenChargeStatusIsInANonRefundableState() {
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(EXPIRED, 500L)), is(EXTERNAL_UNAVAILABLE));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(EXPIRED, 500L), List.of()), is(EXTERNAL_UNAVAILABLE));
     }
 
     @Test
@@ -105,7 +105,7 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
                 aValidRefundEntity().withStatus(RefundStatus.REFUNDED).withAmount(200L).build()
         );
 
-        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURED, 500L, refunds)), is(EXTERNAL_FULL));
+        assertThat(defaultExternalRefundAvailabilityCalculator.calculate(chargeEntity(CAPTURED, 500L), refunds), is(EXTERNAL_FULL));
 
     }
 
@@ -118,10 +118,4 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountEntity.Type.TEST);
         return aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).withAmount(amount).build();
     }
-
-    private static ChargeEntity chargeEntity(ChargeStatus status, long amount, List<RefundEntity> refunds) {
-        GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountEntity.Type.TEST);
-        return aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).withAmount(amount).withRefunds(refunds).build();
-    }
-
 }

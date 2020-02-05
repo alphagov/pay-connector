@@ -139,7 +139,7 @@ public class ParityCheckWorker {
     private ParityCheckStatus getChargeAndRefundsParityCheckStatus(ChargeEntity charge) {
         var parityCheckStatus = getChargeParityCheckStatus(charge);
         if (parityCheckStatus.equals(ParityCheckStatus.EXISTS_IN_LEDGER)) {
-            return getRefundsParityCheckStatus(charge.getRefunds());
+            return getRefundsParityCheckStatus(refundDao.findRefundsByChargeExternalId(charge.getExternalId()));
         }
 
         return parityCheckStatus;

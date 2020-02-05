@@ -12,8 +12,10 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PaymentProvider {
@@ -36,5 +38,5 @@ public interface PaymentProvider {
 
     GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException;
 
-    ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity);
+    ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity, List<RefundEntity> refundEntityList);
 }

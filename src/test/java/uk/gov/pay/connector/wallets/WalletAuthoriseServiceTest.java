@@ -134,7 +134,8 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
-                null, null, mockConfiguration, null, mockStateTransitionService, mockEventService));
+                null, null, mockConfiguration, null, mockStateTransitionService,
+                mockEventService, mockedRefundDao));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,
