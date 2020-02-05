@@ -55,6 +55,8 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paritycheck.LedgerService;
+import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.token.dao.TokenDao;
@@ -93,6 +95,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.commons.model.Source.CARD_API;
 import static uk.gov.pay.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
@@ -137,6 +140,8 @@ public class ChargeServiceTest {
     @Mock
     private ChargeEventEntity mockChargeEvent;
 
+    @Mock
+    private LedgerService ledgerService;
 
     @Mock
     private GatewayAccountDao mockedGatewayAccountDao;
@@ -271,7 +276,7 @@ public class ChargeServiceTest {
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
-                mockStateTransitionService, mockEventService, mockRefundDao);
+                mockStateTransitionService, ledgerService, mockEventService, mockRefundDao);
     }
 
     @After
@@ -1276,5 +1281,51 @@ public class ChargeServiceTest {
         thrown.expect(ConflictRuntimeException.class);
         thrown.expectMessage("HTTP 409 Conflict");
         service.markDelayedCaptureChargeAsCaptureApproved(chargeEntityExternalId);
+    }
+
+    @Test
+    public void shouldFindCharge_fromDbIfExists() {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build();
+        
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(
+                chargeEntity.getExternalId(), 
+                GATEWAY_ACCOUNT_ID
+        )).thenReturn(Optional.of(chargeEntity));
+
+        Optional<Charge> charge = service.findCharge(chargeEntity.getExternalId(), GATEWAY_ACCOUNT_ID);
+
+        verifyNoInteractions(ledgerService);
+
+        assertThat(charge.isPresent(), is(true));
+        final Charge result = charge.get();
+        assertThat(result.getExternalId(), is(chargeEntity.getExternalId()));
+        assertThat(result.getAmount(), is(chargeEntity.getAmount()));
+    }
+
+    @Test
+    public void shouldFindCharge_fromLedgerIfNotExists() {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build();
+
+        LedgerTransaction transaction = new LedgerTransaction();
+        transaction.setTransactionId(chargeEntity.getExternalId());
+        transaction.setAmount(chargeEntity.getAmount());
+
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(
+                chargeEntity.getExternalId(),
+                GATEWAY_ACCOUNT_ID
+        )).thenReturn(Optional.empty());
+        
+        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(transaction));
+
+        Optional<Charge> charge = service.findCharge(chargeEntity.getExternalId(), GATEWAY_ACCOUNT_ID);
+
+        assertThat(charge.isPresent(), is(true));
+        final Charge result = charge.get();
+        assertThat(result.getExternalId(), is(chargeEntity.getExternalId()));
+        assertThat(result.getAmount(), is(chargeEntity.getAmount()));
     }
 }

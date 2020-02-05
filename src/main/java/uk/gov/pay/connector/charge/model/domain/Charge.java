@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.charge.model.domain;
 
+import uk.gov.pay.connector.paritycheck.LedgerTransaction;
+
 import java.util.Optional;
 
 public class Charge {
@@ -21,7 +23,7 @@ public class Charge {
         this.refundAvailabilityStatus = refundAvailabilityStatus;
         this.historic = historic;
     }
-    
+
     public static Charge from(ChargeEntity chargeEntity) {
         return new Charge(
                 chargeEntity.getExternalId(),
@@ -31,6 +33,24 @@ public class Charge {
                 chargeEntity.getCorporateSurcharge().orElse(null),
                 null, 
                 false);
+    }
+
+    public static Charge from(LedgerTransaction transaction) {
+        String externalRefundState = null;
+
+        if (transaction.getRefundSummary() != null ) {
+            externalRefundState = transaction.getRefundSummary().getStatus();
+        }
+
+        return new Charge(
+                transaction.getTransactionId(),
+                transaction.getAmount(),
+                null,
+                transaction.getGatewayTransactionId(),
+                transaction.getCorporateCardSurcharge(),
+                externalRefundState,
+                false
+        );
     }
 
     public String getExternalId() {

@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
-
 import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -27,6 +26,7 @@ public class LedgerTransaction {
     private Long fee;
     private Long netAmount;
     private String createdDate;
+    private String gatewayTransactionId;
     private TransactionState state;
     private String returnUrl;
     private String paymentProvider;
@@ -37,7 +37,6 @@ public class LedgerTransaction {
     private boolean moto;
     private Boolean live;
     private Source source;
-    private String gatewayTransactionId;
     private String walletType;
     private Map<String, Object> externalMetaData;
 
@@ -109,6 +108,10 @@ public class LedgerTransaction {
         return paymentProvider;
     }
 
+    public String getGatewayTransactionId() {
+        return gatewayTransactionId;
+    }
+
     public ChargeResponse.RefundSummary getRefundSummary() {
         return refundSummary;
     }
@@ -137,15 +140,19 @@ public class LedgerTransaction {
         return source;
     }
 
-    public String getGatewayTransactionId() {
-        return gatewayTransactionId;
-    }
-
     public String getWalletType() {
         return walletType;
     }
 
     public Map<String, Object> getExternalMetaData() {
         return externalMetaData;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    public void setAmount(Long amount) {
+        this.amount = amount;
     }
 }
