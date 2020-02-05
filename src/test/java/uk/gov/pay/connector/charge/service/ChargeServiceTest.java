@@ -55,6 +55,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.queue.StateTransitionService;
+import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -162,6 +163,9 @@ public class ChargeServiceTest {
     
     @Mock
     private StateTransitionService mockStateTransitionService;
+
+    @Mock
+    private RefundDao mockRefundDao;
     
     @Captor
     private ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
@@ -261,12 +265,12 @@ public class ChargeServiceTest {
                 .getBaseUriBuilder();
 
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
-        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class))).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(ChargeEntity.class), any(List.class))).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedConfig.getEmitPaymentStateTransitionEvents()).thenReturn(true);
 
         service = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
-                mockStateTransitionService, mockEventService);
+                mockStateTransitionService, mockEventService, mockRefundDao);
     }
 
     @After

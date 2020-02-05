@@ -22,7 +22,6 @@ import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.UnspecifiedEvent;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
 
@@ -112,10 +111,6 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     @OneToOne(mappedBy = "chargeEntity", fetch = FetchType.EAGER)
     private FeeEntity fee;
-
-    @OneToMany(mappedBy = "chargeEntity", fetch = FetchType.EAGER)
-    @OrderBy("createdDate")
-    private List<RefundEntity> refunds = new ArrayList<>();
 
     @OneToMany(mappedBy = "chargeEntity")
     @OrderBy("updated DESC")
@@ -245,10 +240,6 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
 
     public ZonedDateTime getCreatedDate() {
         return createdDate;
-    }
-
-    public List<RefundEntity> getRefunds() {
-        return refunds;
     }
 
     public List<ChargeEventEntity> getEvents() {

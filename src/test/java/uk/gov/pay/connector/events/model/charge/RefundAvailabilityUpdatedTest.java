@@ -8,6 +8,7 @@ import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdated
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,7 +25,7 @@ public class RefundAvailabilityUpdatedTest {
         
         String event = new RefundAvailabilityUpdated(
                 charge.getExternalId(),
-                RefundAvailabilityUpdatedEventDetails.from(charge, ExternalChargeRefundAvailability.EXTERNAL_FULL),
+                RefundAvailabilityUpdatedEventDetails.from(charge, List.of(), ExternalChargeRefundAvailability.EXTERNAL_FULL),
                 ZonedDateTime.now()
         ).toJsonString();
         

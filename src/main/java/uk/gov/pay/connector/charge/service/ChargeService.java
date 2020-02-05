@@ -54,6 +54,8 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.StateTransitionService;
+import uk.gov.pay.connector.refund.dao.RefundDao;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -109,13 +111,15 @@ public class ChargeService {
 
     private final StateTransitionService stateTransitionService;
     private final Boolean shouldEmitPaymentStateTransitionEvents;
+    private final RefundDao refundDao;
     private EventService eventService;
 
     @Inject
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
                          ConnectorConfiguration config, PaymentProviders providers,
-                         StateTransitionService stateTransitionService, EventService eventService) {
+                         StateTransitionService stateTransitionService, EventService eventService,
+                         RefundDao refundDao) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -127,6 +131,7 @@ public class ChargeService {
         this.stateTransitionService = stateTransitionService;
         this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
         this.eventService = eventService;
+        this.refundDao = refundDao;
     }
 
     @Transactional
@@ -705,9 +710,10 @@ public class ChargeService {
 
     private ChargeResponse.RefundSummary buildRefundSummary(ChargeEntity charge) {
         ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
-        refund.setStatus(providers.byName(charge.getPaymentGatewayName()).getExternalChargeRefundAvailability(charge).getStatus());
-        refund.setAmountSubmitted(RefundCalculator.getRefundedAmount(charge));
-        refund.setAmountAvailable(RefundCalculator.getTotalAmountAvailableToBeRefunded(charge));
+        List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(charge.getExternalId());
+        refund.setStatus(providers.byName(charge.getPaymentGatewayName()).getExternalChargeRefundAvailability(charge, refundEntityList).getStatus());
+        refund.setAmountSubmitted(RefundCalculator.getRefundedAmount(refundEntityList));
+        refund.setAmountAvailable(RefundCalculator.getTotalAmountAvailableToBeRefunded(charge, refundEntityList));
         return refund;
     }
 

@@ -5,6 +5,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import java.util.List;
 
@@ -45,16 +46,17 @@ public class DefaultExternalRefundAvailabilityCalculator implements ExternalRefu
     private static final List<ChargeStatus> STATUSES_THAT_MAP_TO_EXTERNAL_AVAILABLE_OR_EXTERNAL_FULL = ImmutableList.of(CAPTURED);
 
     @Override
-    public ExternalChargeRefundAvailability calculate(ChargeEntity chargeEntity) {
-        return calculate(chargeEntity, STATUSES_THAT_MAP_TO_EXTERNAL_PENDING, STATUSES_THAT_MAP_TO_EXTERNAL_AVAILABLE_OR_EXTERNAL_FULL);
+    public ExternalChargeRefundAvailability calculate(ChargeEntity chargeEntity, List<RefundEntity> refundEntityList) {
+        return calculate(chargeEntity, STATUSES_THAT_MAP_TO_EXTERNAL_PENDING, STATUSES_THAT_MAP_TO_EXTERNAL_AVAILABLE_OR_EXTERNAL_FULL, refundEntityList);
     }
 
     protected ExternalChargeRefundAvailability calculate(ChargeEntity chargeEntity, List<ChargeStatus> statusesThatMapToExternalPending,
-                                                         List<ChargeStatus> statusesThatMapToExternalAvailableOrExternalFull) {
+                                                         List<ChargeStatus> statusesThatMapToExternalAvailableOrExternalFull,
+                                                         List<RefundEntity> refundEntityList) {
         if (chargeIsPending(chargeEntity, statusesThatMapToExternalPending)) {
             return EXTERNAL_PENDING;
         } else if (chargeIsAvailableOrFull(chargeEntity, statusesThatMapToExternalAvailableOrExternalFull)) {
-            if (RefundCalculator.getTotalAmountAvailableToBeRefunded(chargeEntity) > 0) {
+            if (RefundCalculator.getTotalAmountAvailableToBeRefunded(chargeEntity, refundEntityList) > 0) {
                 return EXTERNAL_AVAILABLE;
             } else {
                 return EXTERNAL_FULL;

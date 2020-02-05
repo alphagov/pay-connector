@@ -19,6 +19,7 @@ import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import java.util.List;
 import java.util.Optional;
@@ -105,12 +106,13 @@ public class ParityCheckWorkerTest {
 
     @Test
     public void executeRecordsParityStatusForChargeAndRefundsExistingInLedger() {
-        chargeEntity.getRefunds().add(aValidRefundEntity().build());
+        RefundEntity refundEntity = aValidRefundEntity().build();
         chargeEntity.setStatus(ChargeStatus.EXPIRED);
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+        when(refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of(refundEntity));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().withStatus("timedout").build()));
-        when(ledgerService.getTransaction(chargeEntity.getRefunds().get(0).getExternalId()))
+        when(ledgerService.getTransaction(refundEntity.getExternalId()))
                 .thenReturn(Optional.of(aValidLedgerTransaction().withStatus("submitted").build()));
 
         worker.execute(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus, 1L);
@@ -118,7 +120,7 @@ public class ParityCheckWorkerTest {
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.EXISTS_IN_LEDGER);
         verify(ledgerService, times(2)).getTransaction(any());
         verify(ledgerService, times(1)).getTransaction(chargeEntity.getExternalId());
-        verify(ledgerService, times(1)).getTransaction(chargeEntity.getRefunds().get(0).getExternalId());
+        verify(refundDao, times(1)).findRefundsByChargeExternalId(chargeEntity.getExternalId());
         verify(stateTransitionService, never()).offerStateTransition(any(), any(), any());
         verify(emittedEventDao, never()).recordEmission(any(), any());
         verify(chargeDao, never()).findById(2L);
@@ -126,7 +128,6 @@ public class ParityCheckWorkerTest {
 
     @Test
     public void executeRecordsParityStatusForChargeWithDifferentStatusInLedger() {
-        chargeEntity.getRefunds().add(aValidRefundEntity().build());
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().withStatus("started").build()));
@@ -136,15 +137,14 @@ public class ParityCheckWorkerTest {
         verify(chargeService, times(1)).updateChargeParityStatus(chargeEntity.getExternalId(), ParityCheckStatus.DATA_MISMATCH);
         verify(ledgerService, times(1)).getTransaction(any());
         verify(ledgerService, times(1)).getTransaction(chargeEntity.getExternalId());
-        verify(ledgerService, never()).getTransaction(chargeEntity.getRefunds().get(0).getExternalId());
         verify(stateTransitionService, times(1)).offerStateTransition(any(), any(), notNull());
     }
 
     @Test
     public void executeEmitsEventAndRecordsEmissionWhenRefundDoesNotExist() {
-        chargeEntity.getRefunds().add(aValidRefundEntity().build());
-        chargeEntity.getRefunds().add(aValidRefundEntity().build());
         when(chargeDao.findMaxId()).thenReturn(1L);
+        when(refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId()))
+                .thenReturn(List.of(aValidRefundEntity().build(), aValidRefundEntity().build()));
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(any())).thenReturn(Optional.empty());
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().build()));
@@ -158,9 +158,9 @@ public class ParityCheckWorkerTest {
 
     @Test
     public void executeEmitsEventAndRecordsEmissionWhenRefundWithDifferentStatusInLedger() {
-        chargeEntity.getRefunds().add(aValidRefundEntity().build());
-        chargeEntity.getRefunds().add(aValidRefundEntity().build());
         when(chargeDao.findMaxId()).thenReturn(1L);
+        when(refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId()))
+                .thenReturn(List.of(aValidRefundEntity().build(), aValidRefundEntity().build()));
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(any())).thenReturn(Optional.empty());
         when(ledgerService.getTransaction(any())).thenReturn(Optional.of(
