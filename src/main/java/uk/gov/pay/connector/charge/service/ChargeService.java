@@ -53,6 +53,8 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paritycheck.LedgerService;
+import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
@@ -111,6 +113,7 @@ public class ChargeService {
     private final PaymentProviders providers;
 
     private final StateTransitionService stateTransitionService;
+    private final LedgerService ledgerService;
     private final Boolean shouldEmitPaymentStateTransitionEvents;
     private final RefundDao refundDao;
     private EventService eventService;
@@ -119,7 +122,7 @@ public class ChargeService {
     public ChargeService(TokenDao tokenDao, ChargeDao chargeDao, ChargeEventDao chargeEventDao,
                          CardTypeDao cardTypeDao, GatewayAccountDao gatewayAccountDao,
                          ConnectorConfiguration config, PaymentProviders providers,
-                         StateTransitionService stateTransitionService, EventService eventService,
+                         StateTransitionService stateTransitionService, LedgerService ledgerService, EventService eventService,
                          RefundDao refundDao) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
@@ -131,6 +134,7 @@ public class ChargeService {
         this.captureProcessConfig = config.getCaptureProcessConfig();
         this.stateTransitionService = stateTransitionService;
         this.shouldEmitPaymentStateTransitionEvents = config.getEmitPaymentStateTransitionEvents();
+        this.ledgerService = ledgerService;
         this.eventService = eventService;
         this.refundDao = refundDao;
     }
@@ -213,7 +217,7 @@ public class ChargeService {
             SupportedLanguage language = chargeRequest.getLanguage() != null
                     ? chargeRequest.getLanguage()
                     : SupportedLanguage.ENGLISH;
-            
+
             ChargeEntity chargeEntity = aWebChargeEntity()
                     .withAmount(chargeRequest.getAmount())
                     .withReturnUrl(chargeRequest.getReturnUrl())
@@ -271,8 +275,14 @@ public class ChargeService {
     }
 
     public Optional<Charge> findCharge(String chargeExternalId, Long gatewayAccountId) {
-        return chargeDao.findByExternalIdAndGatewayAccount(chargeExternalId, gatewayAccountId)
-                .map(Charge::from);
+        Optional<ChargeEntity> maybeChargeEntity = chargeDao.findByExternalIdAndGatewayAccount(chargeExternalId, gatewayAccountId);
+
+        if(maybeChargeEntity.isPresent()) {
+            return maybeChargeEntity.map(Charge::from);
+        }
+        else{
+            return ledgerService.getTransaction(chargeExternalId).map(Charge::from);
+        }
     }
 
     @Transactional
@@ -801,7 +811,7 @@ public class ChargeService {
             throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
         }
     }
-    
+
     private void checkIfMotoPaymentsAllowed(boolean moto, GatewayAccountEntity gatewayAccount) {
         if (moto && !gatewayAccount.isAllowMoto()) {
             throw new MotoPaymentNotAllowedForGatewayAccountException(gatewayAccount.getId());

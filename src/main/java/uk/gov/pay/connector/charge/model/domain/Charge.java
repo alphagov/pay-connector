@@ -2,6 +2,7 @@ package uk.gov.pay.connector.charge.model.domain;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import java.util.Optional;
 
 public class Charge {
@@ -47,6 +48,28 @@ public class Charge {
                 chargeEntity.getCreatedDate(),
                 chargeEntity.getEmail(),
                 false);
+    }
+
+    public static Charge from(LedgerTransaction transaction) {
+        String externalRefundState = null;
+
+        if (transaction.getRefundSummary() != null ) {
+            externalRefundState = transaction.getRefundSummary().getStatus();
+        }
+
+        return new Charge(
+                transaction.getTransactionId(),
+                transaction.getAmount(),
+                null,
+                transaction.getGatewayTransactionId(),
+                transaction.getCorporateCardSurcharge(),
+                externalRefundState,
+                transaction.getReference(),
+                transaction.getDescription(),
+                ZonedDateTime.parse(transaction.getCreatedDate()),
+                transaction.getEmail(),
+                true
+        );
     }
 
     public String getExternalId() {
