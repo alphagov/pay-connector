@@ -6,6 +6,7 @@ import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.CaptureResponse;
@@ -186,8 +187,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
-    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity, List<RefundEntity> refundEntityList) {
-        return externalRefundAvailabilityCalculator.calculate(chargeEntity, refundEntityList);
+    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<RefundEntity> refundEntityList) {
+        return externalRefundAvailabilityCalculator.calculate(charge, refundEntityList);
     }
 
     private GatewayOrder buildAuthoriseOrder(CardAuthorisationGatewayRequest request) {

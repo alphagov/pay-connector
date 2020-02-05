@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import org.junit.Test;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
@@ -109,13 +110,17 @@ public class DefaultExternalRefundAvailabilityCalculatorTest {
 
     }
 
-    private static ChargeEntity chargeEntity(ChargeStatus status) {
+    private static Charge chargeEntity(ChargeStatus status) {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountEntity.Type.TEST);
-        return aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).build();
+        return Charge.from(
+                aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).build()
+        );
     }
 
-    private static ChargeEntity chargeEntity(ChargeStatus status, long amount) {
+    private static Charge chargeEntity(ChargeStatus status, long amount) {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity("sandbox", newHashMap(), GatewayAccountEntity.Type.TEST);
-        return aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).withAmount(amount).build();
+        return Charge.from(
+                aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).withStatus(status).withAmount(amount).build()
+        );
     }
 }
