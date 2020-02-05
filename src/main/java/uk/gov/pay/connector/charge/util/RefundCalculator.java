@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.util;
 
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
@@ -13,6 +14,10 @@ public class RefundCalculator {
 
     private RefundCalculator() {
         // prevent Java for adding a public constructor
+    }
+
+    public static long getTotalAmountAvailableToBeRefunded(Charge charge, List<RefundEntity> refundEntities) {
+        return CorporateCardSurchargeCalculator.getTotalAmountFor(charge) - getRefundedAmount(refundEntities);
     }
 
     public static long getTotalAmountAvailableToBeRefunded(ChargeEntity chargeEntity, List<RefundEntity> refundEntities) {

@@ -24,11 +24,7 @@ import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
-import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.charge.model.domain.*;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.Supplemental;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
@@ -269,6 +265,11 @@ public class ChargeService {
                 .orElseGet(Optional::empty);
     }
 
+    public Optional<Charge> findCharge(String chargeExternalId, Long gatewayAccountId) {
+        return chargeDao.findByExternalIdAndGatewayAccount(chargeExternalId, gatewayAccountId)
+                .map(Charge::from);
+    }
+
     @Transactional
     public Optional<ChargeEntity> updateCharge(String chargeId, PatchRequestBuilder.PatchRequest chargePatchRequest) {
         return chargeDao.findByExternalId(chargeId)
@@ -411,7 +412,7 @@ public class ChargeService {
 
         chargeEntity.getCorporateSurcharge().ifPresent(corporateSurcharge ->
                 builderOfResponse.withCorporateCardSurcharge(corporateSurcharge)
-                        .withTotalAmount(CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity)));
+                        .withTotalAmount(CorporateCardSurchargeCalculator.getTotalAmountFor(Charge.from(chargeEntity))));
 
         // @TODO(sfount) consider if total and net columns could be calculation columns in postgres (single source of truth)
         chargeEntity.getNetAmount().ifPresent(builderOfResponse::withNetAmount);
@@ -711,9 +712,9 @@ public class ChargeService {
     private ChargeResponse.RefundSummary buildRefundSummary(ChargeEntity charge) {
         ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
         List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(charge.getExternalId());
-        refund.setStatus(providers.byName(charge.getPaymentGatewayName()).getExternalChargeRefundAvailability(charge, refundEntityList).getStatus());
+        refund.setStatus(providers.byName(charge.getPaymentGatewayName()).getExternalChargeRefundAvailability(Charge.from(charge), refundEntityList).getStatus());
         refund.setAmountSubmitted(RefundCalculator.getRefundedAmount(refundEntityList));
-        refund.setAmountAvailable(RefundCalculator.getTotalAmountAvailableToBeRefunded(charge, refundEntityList));
+        refund.setAmountAvailable(RefundCalculator.getTotalAmountAvailableToBeRefunded(Charge.from(charge), refundEntityList));
         return refund;
     }
 

@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -166,7 +167,7 @@ public class UserNotificationService {
 
         map.put("serviceReference", charge.getReference().toString());
         map.put("date", DateTimeUtils.toUserFriendlyDate(charge.getCreatedDate()));
-        map.put("amount", formatToPounds(CorporateCardSurchargeCalculator.getTotalAmountFor(charge)));
+        map.put("amount", formatToPounds(CorporateCardSurchargeCalculator.getTotalAmountFor(Charge.from(charge))));
         map.put("description", charge.getDescription());
         map.put("customParagraph", isBlank(customParagraph) ? "" : "^ " + LITERAL_DOLLAR_REFERENCE.matcher(customParagraph)
                 .replaceAll(Matcher.quoteReplacement(charge.getReference().toString())));
