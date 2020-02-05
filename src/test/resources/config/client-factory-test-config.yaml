@@ -166,3 +166,7 @@ restClientConfig:
   disabledSecureConnection: true
 
 ledgerBaseURL: ${LEDGER_URL:-localhost:10700}
+
+expungeConfig:
+  minimumAgeOfChargeInDays: ${EXPUNGE_CHARGES_OLDER_THAN_DAYS:-90}
+  numberOfChargesToExpunge: ${EXPUNGE_NO_OF_CHARGE_PER_TASK_RUN:-25000}
