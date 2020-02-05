@@ -253,6 +253,28 @@ public class ContractTest {
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, ZonedDateTime.now(), true);
     }
 
+    @State("a charge exists")
+    public void aChargeExists(Map<String, String> params) {
+        String gatewayAccountId = params.get("gateway_account_id");
+        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        String chargeExternalId = params.get("charge_id");
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
+        dbHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(chargeExternalId)
+                .withGatewayAccountId(gatewayAccountId)
+                .withAmount(100)
+                .withStatus(ChargeStatus.AWAITING_CAPTURE_REQUEST)
+                .withReturnUrl("aReturnUrl")
+                .withTransactionId(params.get("gateway_transaction_id"))
+                .withDescription("Test description")
+                .withReference(ServicePaymentReference.of("aReference"))
+                .withCreatedDate(ZonedDateTime.now())
+                .withEmail("test@test.com")
+                .withDelayedCapture(true)
+                .build());
+    }
+
     @State("a charge with delayed capture true and awaiting capture request status exists")
     public void createChargeWithDelayedCaptureTrueAndAwaitingCaptureRequestStatus(Map<String, String> params) {
         String gatewayAccountId = params.get("gateway_account_id");
