@@ -80,7 +80,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .findFirst();
     }
 
-    public Optional<ChargeEntity> findByExternalIdAndGatewayAccount(String externalId, Long accountId) {
+    public Optional<ChargeEntity> findByExternalIdAndGatewayAccount(String chargeExternalId, Long accountId) {
 
         String query = "SELECT c FROM ChargeEntity c " +
                 "WHERE c.externalId = :externalId " +
@@ -88,7 +88,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
         return entityManager.get()
                 .createQuery(query, ChargeEntity.class)
-                .setParameter("externalId", externalId)
+                .setParameter("externalId", chargeExternalId)
                 .setParameter("accountId", accountId)
                 .getResultList().stream().findFirst();
     }
