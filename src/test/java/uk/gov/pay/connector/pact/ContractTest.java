@@ -6,7 +6,6 @@ import au.com.dius.pact.provider.junit.target.Target;
 import au.com.dius.pact.provider.junit.target.TestTarget;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import com.google.common.collect.ImmutableMap;
 import io.dropwizard.testing.ConfigOverride;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
