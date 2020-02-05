@@ -188,4 +188,26 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setMaxResults(size)
                 .getResultList();
     }
+
+    public Optional<ChargeEntity> findChargeToExpunge(int minimumAgeOfChargeInDays) {
+        String query = "SELECT c FROM ChargeEntity c " +
+                "WHERE (c.parityCheckDate is null or c.parityCheckDate < :parityCheckedBeforeDate)" +
+                " AND c.createdDate < :createdBeforeDate " +
+                " ORDER BY c.createdDate asc";
+
+        ZonedDateTime parityCheckedBeforeDate = ZonedDateTime.now()
+                .minus(Duration.ofDays(7))
+                .withZoneSameInstant(ZoneId.of("UTC"));
+
+        ZonedDateTime createdBeforeDate = ZonedDateTime.now()
+                .minus(Duration.ofDays(minimumAgeOfChargeInDays))
+                .withZoneSameInstant(ZoneId.of("UTC"));
+
+        return entityManager.get()
+                .createQuery(query, ChargeEntity.class)
+                .setParameter("parityCheckedBeforeDate", parityCheckedBeforeDate)
+                .setParameter("createdBeforeDate", createdBeforeDate)
+                .setMaxResults(1)
+                .getResultList().stream().findFirst();
+    }
 }

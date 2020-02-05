@@ -90,12 +90,12 @@ public class DatabaseTestHelper {
                 h.createUpdate("INSERT INTO charges(id, external_id, amount, " +
                         "status, gateway_account_id, return_url, gateway_transaction_id, " +
                         "description, created_date, reference, version, email, language, " +
-                        "delayed_capture, corporate_surcharge, parity_check_status, " +
+                        "delayed_capture, corporate_surcharge, parity_check_status, parity_check_date, " +
                         "external_metadata, card_type) " +
                         "VALUES(:id, :external_id, :amount, " +
                         ":status, :gateway_account_id, :return_url, :gateway_transaction_id, " +
                         ":description, :created_date, :reference, :version, :email, :language, " +
-                        ":delayed_capture, :corporate_surcharge, :parity_check_status, " +
+                        ":delayed_capture, :corporate_surcharge, :parity_check_status, :parity_check_date, " +
                         ":external_metadata, :card_type)")
                         .bind("id", addChargeParams.getChargeId())
                         .bind("external_id", addChargeParams.getExternalChargeId())
@@ -113,6 +113,7 @@ public class DatabaseTestHelper {
                         .bind("delayed_capture", addChargeParams.isDelayedCapture())
                         .bind("corporate_surcharge", addChargeParams.getCorporateSurcharge())
                         .bind("parity_check_status", addChargeParams.getParityCheckStatus())
+                        .bind("parity_check_date", addChargeParams.getParityCheckDate())
                         .bindBySqlType("external_metadata", jsonMetadata, OTHER)
                         .bind("card_type", addChargeParams.getCardType())
                         .execute());

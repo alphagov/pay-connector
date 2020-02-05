@@ -498,6 +498,7 @@ public class DatabaseFixtures {
         WalletType walletType;
         ParityCheckStatus parityCheckStatus;
         private String description = "Test description";
+        private ZonedDateTime parityCheckDate;
 
         public TestCardDetails getCardDetails() {
             return cardDetails;
@@ -573,6 +574,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestCharge withParityCheckDate(ZonedDateTime parityCheckDate) {
+            this.parityCheckDate = parityCheckDate;
+            return this;
+        }
+
         public TestCharge insert() {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
@@ -594,6 +600,7 @@ public class DatabaseFixtures {
                     .withEmail(email)
                     .withCorporateSurcharge(corporateCardSurcharge)
                     .withParityCheckStatus(parityCheckStatus)
+                    .withParityCheckDate(parityCheckDate)
                     .build());
 
             if (cardDetails != null) {

@@ -34,6 +34,7 @@ public class AddChargeParams {
     private final ExternalMetadata externalMetadata;
     private final ParityCheckStatus parityCheckStatus;
     private final CardType cardType;
+    private final ZonedDateTime parityCheckDate;
 
     private AddChargeParams(AddChargeParamsBuilder builder) {
         chargeId = builder.chargeId;
@@ -54,6 +55,7 @@ public class AddChargeParams {
         corporateSurcharge = builder.corporateSurcharge;
         externalMetadata = builder.externalMetadata;
         parityCheckStatus = builder.parityCheckStatus;
+        parityCheckDate = builder.parityCheckDate;
         cardType = builder.cardType;
     }
 
@@ -128,6 +130,10 @@ public class AddChargeParams {
     public ParityCheckStatus getParityCheckStatus() {
         return parityCheckStatus;
     }
+
+    public ZonedDateTime getParityCheckDate() {
+        return parityCheckDate;
+    }
     
     public CardType getCardType() {
         return cardType;
@@ -153,6 +159,7 @@ public class AddChargeParams {
         private ExternalMetadata externalMetadata;
         private ParityCheckStatus parityCheckStatus;
         private CardType cardType;
+        private ZonedDateTime parityCheckDate;
 
         private AddChargeParamsBuilder() {
         }
@@ -249,6 +256,11 @@ public class AddChargeParams {
 
         public AddChargeParamsBuilder withParityCheckStatus(ParityCheckStatus parityCheckStatus) {
             this.parityCheckStatus = parityCheckStatus;
+            return this;
+        }
+
+        public AddChargeParamsBuilder withParityCheckDate(ZonedDateTime parityCheckDate) {
+            this.parityCheckDate = parityCheckDate;
             return this;
         }
         
