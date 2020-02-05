@@ -46,9 +46,9 @@ public class ChargeRefundsResource {
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response submitRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, RefundRequest refundRequest, @Context UriInfo uriInfo) {
+    public Response submitRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeExternalId, RefundRequest refundRequest, @Context UriInfo uriInfo) {
         validateRefundRequest(refundRequest.getAmount());
-        final ChargeRefundResponse refundServiceResponse = refundService.doRefund(accountId, chargeId, refundRequest);
+        final ChargeRefundResponse refundServiceResponse = refundService.doRefund(accountId, chargeExternalId, refundRequest);
         GatewayRefundResponse refundResponse = refundServiceResponse.getGatewayRefundResponse();
         if (refundResponse.isSuccessful()) {
             return Response.accepted(RefundResponse.valueOf(refundServiceResponse.getRefundEntity(), uriInfo).serialize()).build();

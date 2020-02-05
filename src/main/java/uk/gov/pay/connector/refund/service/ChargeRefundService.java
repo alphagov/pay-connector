@@ -56,10 +56,10 @@ public class ChargeRefundService {
         this.stateTransitionService = stateTransitionService;
     }
 
-    public ChargeRefundResponse doRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
+    public ChargeRefundResponse doRefund(Long accountId, String chargeExternalId, RefundRequest refundRequest) {
         GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(accountId).orElseThrow(
                 () -> new GatewayAccountNotFoundException(accountId));
-        RefundEntity refundEntity = createRefund(accountId, chargeId, refundRequest);
+        RefundEntity refundEntity = createRefund(accountId, chargeExternalId, refundRequest);
         GatewayRefundResponse gatewayRefundResponse = providers
                 .byName(PaymentGatewayName.valueFrom(gatewayAccountEntity.getGatewayName()))
                 .refund(RefundGatewayRequest.valueOf(refundEntity, gatewayAccountEntity));
@@ -69,10 +69,10 @@ public class ChargeRefundService {
 
     @Transactional
     @SuppressWarnings("WeakerAccess")
-    public RefundEntity createRefund(Long accountId, String chargeId, RefundRequest refundRequest) {
+    public RefundEntity createRefund(Long accountId, String chargeExternalId, RefundRequest refundRequest) {
         GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(accountId).orElseThrow(
                 () -> new GatewayAccountNotFoundException(accountId));
-        return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId).map(chargeEntity -> {
+        return chargeDao.findByExternalIdAndGatewayAccount(chargeExternalId, accountId).map(chargeEntity -> {
             long availableAmount = validateRefundAndGetAvailableAmount(chargeEntity, gatewayAccountEntity, refundRequest);
             RefundEntity refundEntity = createRefundEntity(refundRequest, chargeEntity);
 
@@ -88,7 +88,7 @@ public class ChargeRefundService {
                     gatewayAccountEntity.getType(),
                     refundRequest.getUserExternalId());
             return refundEntity;
-        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
     }
 
     public Optional<RefundEntity> findByProviderAndReference(String name, String reference) {
