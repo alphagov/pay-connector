@@ -30,6 +30,7 @@ import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalcul
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.applepay.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
@@ -185,8 +186,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
-    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity) {
-        return externalRefundAvailabilityCalculator.calculate(chargeEntity);
+    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(ChargeEntity chargeEntity, List<RefundEntity> refundEntityList) {
+        return externalRefundAvailabilityCalculator.calculate(chargeEntity, refundEntityList);
     }
 
     private GatewayOrder buildAuthoriseOrder(CardAuthorisationGatewayRequest request) {

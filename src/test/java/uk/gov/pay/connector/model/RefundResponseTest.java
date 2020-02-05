@@ -16,6 +16,8 @@ import uk.gov.pay.connector.refund.model.RefundsResponse;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import java.util.List;
+
 import static com.google.common.collect.Lists.newArrayList;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -61,8 +63,7 @@ public class RefundResponseTest {
         RefundEntity refund1 = RefundEntityFixture.aValidRefundEntity().withAmount(10L).withStatus(RefundStatus.REFUNDED).build();
         RefundEntity refund2 = RefundEntityFixture.aValidRefundEntity().withAmount(20L).withStatus(RefundStatus.CREATED).build();
 
-        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-                .withRefunds(newArrayList(refund1, refund2)).build();
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
 
         String chargeId = chargeEntity.getExternalId();
         String refundIdRefund1 = refund1.getExternalId();
@@ -75,7 +76,7 @@ public class RefundResponseTest {
                 UriBuilder.fromUri("http://app.com"), UriBuilder.fromUri("http://app.com"), UriBuilder.fromUri("http://app.com"), UriBuilder.fromUri("http://app.com"), UriBuilder.fromUri("http://app.com"));
 
         // when
-        String serializedResponse = RefundsResponse.valueOf(chargeEntity, mockUriInfo).serialize();
+        String serializedResponse = RefundsResponse.valueOf(chargeEntity, List.of(refund1, refund2), mockUriInfo).serialize();
 
         // then
         JsonAssert.with(serializedResponse)

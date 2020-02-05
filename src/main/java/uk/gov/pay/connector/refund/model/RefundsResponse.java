@@ -3,6 +3,7 @@ package uk.gov.pay.connector.refund.model;
 import black.door.hate.HalRepresentation;
 import black.door.hate.HalResource;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
@@ -15,7 +16,7 @@ public class RefundsResponse extends HalResourceResponse {
         super(refundHalRepresentation, location);
     }
 
-    public static RefundsResponse valueOf(ChargeEntity chargeEntity, UriInfo uriInfo) {
+    public static RefundsResponse valueOf(ChargeEntity chargeEntity, List<RefundEntity> refundEntityList, UriInfo uriInfo) {
 
         String accountId = chargeEntity.getGatewayAccount().getId().toString();
         String externalChargeId = chargeEntity.getExternalId();
@@ -28,7 +29,7 @@ public class RefundsResponse extends HalResourceResponse {
                 .path("/v1/api/accounts/{accountId}/charges/{chargeId}")
                 .build(accountId, externalChargeId);
 
-        List<HalResource> refunds = chargeEntity.getRefunds().stream()
+        List<HalResource> refunds = refundEntityList.stream()
                 .map(refundEntity -> RefundResponse.valueOf(refundEntity, uriInfo))
                 .collect(Collectors.toList());
 

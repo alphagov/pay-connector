@@ -38,7 +38,6 @@ public class ChargeEntityFixture {
     private String transactionId;
     private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
     private List<ChargeEventEntity> events = new ArrayList<>();
-    private List<RefundEntity> refunds = new ArrayList<>();
     private Auth3dsDetailsEntity auth3dsDetailsEntity;
     private String providerSessionId;
     private SupportedLanguage language = SupportedLanguage.ENGLISH;
@@ -81,7 +80,6 @@ public class ChargeEntityFixture {
         chargeEntity.setExternalId(externalId);
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
         chargeEntity.getEvents().addAll(events);
-        chargeEntity.getRefunds().addAll(refunds);
         chargeEntity.setProviderSessionId(providerSessionId);
         chargeEntity.set3dsDetails(auth3dsDetailsEntity);
         chargeEntity.setSource(source);
@@ -151,11 +149,6 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withEvents(List<ChargeEventEntity> events) {
         this.events = events;
-        return this;
-    }
-
-    public ChargeEntityFixture withRefunds(List<RefundEntity> refunds) {
-        this.refunds = refunds;
         return this;
     }
 

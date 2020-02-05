@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import java.util.List;
 
@@ -40,8 +41,8 @@ public class EpdqExternalRefundAvailabilityCalculator extends DefaultExternalRef
             CAPTURED);
 
     @Override
-    public ExternalChargeRefundAvailability calculate(ChargeEntity chargeEntity) {
-        return calculate(chargeEntity, STATUSES_THAT_MAP_TO_EXTERNAL_PENDING, STATUSES_THAT_MAP_TO_EXTERNAL_AVAILABLE_OR_EXTERNAL_FULL);
+    public ExternalChargeRefundAvailability calculate(ChargeEntity chargeEntity, List<RefundEntity> refundEntityList) {
+        return calculate(chargeEntity, STATUSES_THAT_MAP_TO_EXTERNAL_PENDING, STATUSES_THAT_MAP_TO_EXTERNAL_AVAILABLE_OR_EXTERNAL_FULL, refundEntityList);
     }
 
 }
