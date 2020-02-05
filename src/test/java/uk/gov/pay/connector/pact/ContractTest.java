@@ -30,7 +30,9 @@ import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
@@ -38,6 +40,7 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR
 import static uk.gov.pay.connector.rules.AppWithPostgresRule.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ContractTest {
 
@@ -218,6 +221,16 @@ public class ContractTest {
                 .withPaymentGateway("sandbox")
                 .withServiceName("a cool service")
                 .build());
+    }
+    
+    @State("a gateway account has moto payments enabled")
+    public void createGatewayAccountWithMotoEnabled(Map<String, String> params) {
+        given().port(app.getLocalPort())
+                .contentType(JSON)
+                .body(toJson(Map.of("op", "replace","path", "allow_moto", "value", true)))
+                .patch("/v1/api/accounts/" + params.get("gateway_account_id"))
+                .then()
+                .statusCode(OK.getStatusCode());
     }
 
     @State("a charge with fee and net_amount exists")
