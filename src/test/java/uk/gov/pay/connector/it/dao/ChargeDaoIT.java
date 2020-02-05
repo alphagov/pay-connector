@@ -44,6 +44,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
@@ -53,7 +54,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.model.domain.Auth3dsDetailsEntityFixture.anAuth3dsDetailsEntity;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 public class ChargeDaoIT extends DaoITestBase {
 
@@ -688,6 +688,43 @@ public class ChargeDaoIT extends DaoITestBase {
 
         assertThat(charges.size(), is(1));
         assertThat(charges.get(0).getParityCheckStatus(), is(ParityCheckStatus.MISSING_IN_LEDGER));
+    }
+
+    @Test
+    public void findChargeToExpunge_shouldReturnChargeReadyForExpunging() {
+        TestCharge chargeToExpunge = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withCreatedDate(now(ZoneId.of("UTC")).minusDays(90))
+                .withParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER)
+                .insert();
+
+        TestCharge chargeEligibleButParityCheckedWithInWeek = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withCreatedDate(now(ZoneId.of("UTC")).minusDays(90))
+                .withParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER)
+                .withParityCheckDate(now(ZoneId.of("UTC")).minusDays(6))
+                .insert();
+
+        TestCharge chargeToExclude = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withCreatedDate(now(ZoneId.of("UTC")).minusDays(4))
+                .withParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER)
+                .withParityCheckDate(now(ZoneId.of("UTC")).minusDays(1))
+                .insert();
+
+        Optional<ChargeEntity> maybeChargeToExpunge = chargeDao.findChargeToExpunge(5);
+
+        assertThat(maybeChargeToExpunge.isPresent(), is(true));
+        ChargeEntity chargeToExpungeFromDB = maybeChargeToExpunge.get();
+        assertThat(chargeToExpungeFromDB.getId(), is(chargeToExpunge.getChargeId()));
+        assertThat(chargeToExpungeFromDB.getExternalId(), is(chargeToExpunge.getExternalChargeId()));
+        assertThat(chargeToExpungeFromDB.getCreatedDate(), is(chargeToExpunge.getCreatedDate()));
     }
 
     private void insertTestAccount() {
