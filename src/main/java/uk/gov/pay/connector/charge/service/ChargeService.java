@@ -29,6 +29,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.Supplemental;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
@@ -267,6 +268,11 @@ public class ChargeService {
                     return Optional.of(chargeEntity);
                 })
                 .orElseGet(Optional::empty);
+    }
+
+    public Optional<Charge> findCharge(String chargeExternalId, Long gatewayAccountId) {
+        return chargeDao.findByExternalIdAndGatewayAccount(chargeExternalId, gatewayAccountId)
+                .map(Charge::from);
     }
 
     @Transactional
@@ -711,9 +717,9 @@ public class ChargeService {
     private ChargeResponse.RefundSummary buildRefundSummary(ChargeEntity charge) {
         ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
         List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(charge.getExternalId());
-        refund.setStatus(providers.byName(charge.getPaymentGatewayName()).getExternalChargeRefundAvailability(charge, refundEntityList).getStatus());
+        refund.setStatus(providers.byName(charge.getPaymentGatewayName()).getExternalChargeRefundAvailability(Charge.from(charge), refundEntityList).getStatus());
         refund.setAmountSubmitted(RefundCalculator.getRefundedAmount(refundEntityList));
-        refund.setAmountAvailable(RefundCalculator.getTotalAmountAvailableToBeRefunded(charge, refundEntityList));
+        refund.setAmountAvailable(RefundCalculator.getTotalAmountAvailableToBeRefunded(Charge.from(charge), refundEntityList));
         return refund;
     }
 
