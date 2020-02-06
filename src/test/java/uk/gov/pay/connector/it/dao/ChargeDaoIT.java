@@ -55,8 +55,6 @@ import static uk.gov.pay.connector.model.domain.Auth3dsDetailsEntityFixture.anAu
 
 public class ChargeDaoIT extends DaoITestBase {
 
-    private static final String FROM_DATE = "2016-01-01T01:00:00Z";
-    private static final String TO_DATE = "2026-01-08T01:00:00Z";
     private static final String DESCRIPTION = "Test description";
 
     @Rule
@@ -755,62 +753,11 @@ public class ChargeDaoIT extends DaoITestBase {
                 .update();
     }
 
-    private void insertTestChargeWithReference(ServicePaymentReference reference) {
-        this.defaultTestCharge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withReference(reference)
-                .insert();
-        defaultTestCardDetails
-                .withChargeId(defaultTestCharge.chargeId)
-                .update();
-    }
-
-    private DatabaseFixtures.TestCharge insertTestChargeForCardBrand(String cardBrand) {
-        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .insert();
-        defaultTestCardDetails
-                .withChargeId(testCharge.chargeId)
-                .withCardBrand(cardBrand)
-                .update();
-
-        return testCharge;
-    }
-
     private void insertTestRefund() {
         this.defaultTestRefund = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestRefund()
                 .withTestCharge(defaultTestCharge)
                 .insert();
-    }
-
-    private DatabaseFixtures.TestCharge insertNewChargeWithId(Long chargeId, ZonedDateTime creationDate) {
-        return DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withChargeId(chargeId)
-                .withCreatedDate(creationDate)
-                .withTestAccount(defaultTestAccount)
-                .insert();
-    }
-
-    private void assertCharge(ChargeEntity charge) {
-        assertCharge(defaultTestCardDetails.getCardBrand(), defaultTestCharge, charge);
-    }
-
-    private void assertCharge(String cardBrand, DatabaseFixtures.TestCharge expectedCharge, ChargeEntity actualCharge) {
-        assertThat(actualCharge.getId(), is(expectedCharge.getChargeId()));
-        assertThat(actualCharge.getAmount(), is(expectedCharge.getAmount()));
-        assertThat(actualCharge.getReference(), is(expectedCharge.getReference()));
-        assertThat(actualCharge.getEmail(), is(expectedCharge.getEmail()));
-        assertThat(actualCharge.getDescription(), is(DESCRIPTION));
-        assertThat(actualCharge.getStatus(), is(expectedCharge.getChargeStatus().toString()));
-        assertThat(actualCharge.getCardDetails().getCardBrand(), is(cardBrand));
-        assertDateMatch(actualCharge.getCreatedDate().toString());
     }
 }
