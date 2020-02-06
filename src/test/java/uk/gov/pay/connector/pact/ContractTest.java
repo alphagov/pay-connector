@@ -264,6 +264,7 @@ public class ContractTest {
                 .withExternalChargeId(chargeExternalId)
                 .withGatewayAccountId(gatewayAccountId)
                 .withAmount(100)
+                .withCorporateSurcharge(250L)
                 .withStatus(ChargeStatus.AWAITING_CAPTURE_REQUEST)
                 .withReturnUrl("aReturnUrl")
                 .withTransactionId(params.get("gateway_transaction_id"))
