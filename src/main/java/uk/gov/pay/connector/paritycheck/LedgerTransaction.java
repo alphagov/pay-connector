@@ -155,4 +155,8 @@ public class LedgerTransaction {
     public void setAmount(Long amount) {
         this.amount = amount;
     }
+
+    public void setRefundSummary(ChargeResponse.RefundSummary refundSummary) {
+        this.refundSummary = refundSummary;
+    }
 }

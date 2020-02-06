@@ -81,7 +81,7 @@ public class ChargeRefundService {
 
             logger.info("Card refund request sent - charge_external_id={}, status={}, amount={}, transaction_id={}, account_id={}, operation_type=Refund, amount_available_refund={}, amount_requested_refund={}, provider={}, provider_type={}, user_external_id={}",
                     charge.getExternalId(),
-                    fromString(charge.getStatus()),
+                    charge.getStatus(),
                     charge.getAmount(),
                     charge.getGatewayTransactionId(),
                     gatewayAccountEntity.getId(),
