@@ -11,11 +11,16 @@ public class ExpungeConfig extends Configuration {
     @Valid
     @NotNull
     private int minimumAgeOfChargeInDays;
-    
+
     @Valid
     @NotNull
     @Min(1)
     private int numberOfChargesToExpunge;
+
+    @Valid
+    @NotNull
+    @Min(0)
+    private int excludeChargesParityCheckedWithInDays;
 
     public int getMinimumAgeOfChargeInDays() {
         return minimumAgeOfChargeInDays;
@@ -23,5 +28,9 @@ public class ExpungeConfig extends Configuration {
 
     public int getNumberOfChargesToExpunge() {
         return numberOfChargesToExpunge;
+    }
+
+    public int getExcludeChargesParityCheckedWithInDays() {
+        return excludeChargesParityCheckedWithInDays;
     }
 }

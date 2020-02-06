@@ -23,6 +23,7 @@ public class ChargeExpungeServiceTest {
     private ChargeExpungeService chargeExpungeService;
     private int minimumAgeOfChargeInDays = 3;
     private int defaultNumberOfChargesToExpunge = 10;
+    private int defaultExcludeChargesParityCheckedWithInDays = 1;
 
     @Mock
     private ExpungeConfig mockExpungeConfig;
@@ -36,20 +37,23 @@ public class ChargeExpungeServiceTest {
         when(mockConnectorConfiguration.getExpungeConfig()).thenReturn(mockExpungeConfig);
         when(mockExpungeConfig.getNumberOfChargesToExpunge()).thenReturn(defaultNumberOfChargesToExpunge);
         when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
+        when(mockExpungeConfig.getExcludeChargesParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
 
-        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays)).thenReturn(Optional.of(chargeEntity));
+        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
+                .thenReturn(Optional.of(chargeEntity));
         chargeExpungeService = new ChargeExpungeService(mockChargeDao, mockConnectorConfiguration);
     }
 
     @Test
     public void expunge_shouldExpungeCharges() {
         chargeExpungeService.expunge(2);
-        verify(mockChargeDao, times(2)).findChargeToExpunge(minimumAgeOfChargeInDays);
+        verify(mockChargeDao, times(2)).findChargeToExpunge(minimumAgeOfChargeInDays, 1);
     }
 
     @Test
     public void expunge_shouldExpungeNoOfChargesAsPerConfiguration() {
         chargeExpungeService.expunge(null);
-        verify(mockChargeDao, times(defaultNumberOfChargesToExpunge)).findChargeToExpunge(minimumAgeOfChargeInDays);
+        verify(mockChargeDao, times(defaultNumberOfChargesToExpunge)).findChargeToExpunge(minimumAgeOfChargeInDays,
+                defaultExcludeChargesParityCheckedWithInDays);
     }
 }

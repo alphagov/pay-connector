@@ -189,14 +189,15 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .getResultList();
     }
 
-    public Optional<ChargeEntity> findChargeToExpunge(int minimumAgeOfChargeInDays) {
+    public Optional<ChargeEntity> findChargeToExpunge(int minimumAgeOfChargeInDays,
+                                                      int excludeChargesParityCheckedWithInDays) {
         String query = "SELECT c FROM ChargeEntity c " +
                 "WHERE (c.parityCheckDate is null or c.parityCheckDate < :parityCheckedBeforeDate)" +
                 " AND c.createdDate < :createdBeforeDate " +
                 " ORDER BY c.createdDate asc";
 
         ZonedDateTime parityCheckedBeforeDate = ZonedDateTime.now()
-                .minus(Duration.ofDays(7))
+                .minus(Duration.ofDays(excludeChargesParityCheckedWithInDays))
                 .withZoneSameInstant(ZoneId.of("UTC"));
 
         ZonedDateTime createdBeforeDate = ZonedDateTime.now()
