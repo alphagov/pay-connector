@@ -246,4 +246,8 @@ public class LedgerTransaction {
     public void setExternalMetaData(Map<String, Object> externalMetaData) {
         this.externalMetaData = externalMetaData;
     }
+
+    public void setRefundSummary(ChargeResponse.RefundSummary refundSummary) {
+        this.refundSummary = refundSummary;
+    }
 }
