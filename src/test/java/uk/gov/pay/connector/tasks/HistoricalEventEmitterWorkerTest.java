@@ -289,8 +289,9 @@ public class HistoricalEventEmitterWorkerTest {
                 .build();
 
         chargeEntity.getEvents().clear();
-        when(refundDao.searchAllHistoryByChargeId(chargeEntity.getId())).thenReturn(List.of(refundHistory));
+        when(refundDao.searchAllHistoryByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of(refundHistory));
         when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
 
         worker.execute(1L, OptionalLong.empty(), 1L);
@@ -376,9 +377,9 @@ public class HistoricalEventEmitterWorkerTest {
         RefundHistory refundHistory2 = getRefundHistoryEntity(chargeEntity, RefundStatus.REFUNDED);
 
         chargeEntity.getEvents().clear();
-        when(chargeDao.findById(any())).thenReturn(Optional.of(chargeEntity));
+        when(chargeDao.findByExternalId(any())).thenReturn(Optional.of(chargeEntity));
         when(refundDao.getRefundHistoryByDateRange(eventDate, eventDate, 1, 100)).thenReturn(List.of(refundHistory));
-        when(refundDao.searchAllHistoryByChargeId(chargeEntity.getId())).thenReturn(List.of(refundHistory, refundHistory2));
+        when(refundDao.searchAllHistoryByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of(refundHistory, refundHistory2));
 
         worker.executeForDateRange(eventDate, eventDate, 1L);
 

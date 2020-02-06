@@ -18,19 +18,19 @@ public class RefundsResponse extends HalResourceResponse {
 
     public static RefundsResponse valueOf(ChargeEntity chargeEntity, List<RefundEntity> refundEntityList, UriInfo uriInfo) {
 
-        String accountId = chargeEntity.getGatewayAccount().getId().toString();
+        Long accountId = chargeEntity.getGatewayAccount().getId();
         String externalChargeId = chargeEntity.getExternalId();
 
         URI selfLink = uriInfo.getBaseUriBuilder()
                 .path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
-                .build(accountId, externalChargeId);
+                .build(accountId.toString(), externalChargeId);
 
         URI paymentLink = uriInfo.getBaseUriBuilder()
                 .path("/v1/api/accounts/{accountId}/charges/{chargeId}")
-                .build(accountId, externalChargeId);
+                .build(accountId.toString(), externalChargeId);
 
         List<HalResource> refunds = refundEntityList.stream()
-                .map(refundEntity -> RefundResponse.valueOf(refundEntity, uriInfo))
+                .map(refundEntity -> RefundResponse.valueOf(refundEntity, accountId, uriInfo))
                 .collect(Collectors.toList());
 
         return new RefundsResponse(HalRepresentation.builder()

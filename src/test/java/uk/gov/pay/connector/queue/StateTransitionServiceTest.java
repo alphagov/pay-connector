@@ -110,7 +110,7 @@ public class StateTransitionServiceTest {
         RefundHistory refundHistory = aValidRefundHistoryEntity()
                 .withExternalId("external-id")
                 .build();
-        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory);
+        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory, 1L);
         ZonedDateTime doNotEmitRetryUntil = now(UTC);
 
         stateTransitionService.offerStateTransition(refundStateTransition, refundCreatedByUser, doNotEmitRetryUntil);

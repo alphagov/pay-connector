@@ -14,19 +14,18 @@ public class RefundResponse extends HalResourceResponse {
         super(refundHalRepresentation, location);
     }
 
-    public static RefundResponse valueOf(RefundEntity refundEntity, UriInfo uriInfo) {
+    public static RefundResponse valueOf(RefundEntity refundEntity, Long gatewayAccountId, UriInfo uriInfo) {
 
-        Long accountId = refundEntity.getChargeEntity().getGatewayAccount().getId();
-        String externalChargeId = refundEntity.getChargeEntity().getExternalId();
+        String externalChargeId = refundEntity.getChargeExternalId();
         String externalRefundId = refundEntity.getExternalId();
 
         URI selfLink = uriInfo.getBaseUriBuilder()
                 .path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}")
-                .build(accountId, externalChargeId, externalRefundId);
+                .build(gatewayAccountId, externalChargeId, externalRefundId);
 
         URI paymentLink = uriInfo.getBaseUriBuilder()
                 .path("/v1/api/accounts/{accountId}/charges/{chargeId}")
-                .build(accountId, externalChargeId);
+                .build(gatewayAccountId, externalChargeId);
 
         return new RefundResponse(HalRepresentation.builder()
                 .addProperty("refund_id", refundEntity.getExternalId())

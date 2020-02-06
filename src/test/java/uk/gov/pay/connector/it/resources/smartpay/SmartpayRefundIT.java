@@ -79,7 +79,7 @@ public class SmartpayRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is("8514774917520978"), defaultTestCharge.getChargeId(), refundAmount, "REFUND SUBMITTED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is("8514774917520978"), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
 
         List<String> refundsHistory = databaseTestHelper.getRefundsHistoryByChargeId(defaultTestCharge.getChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
         assertThat(refundsHistory.size(), is(2));
@@ -97,7 +97,7 @@ public class SmartpayRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is("8514774917520978"), defaultTestCharge.getChargeId(), refundAmount, "REFUND SUBMITTED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is("8514774917520978"), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
         assertThat(refundsFoundByChargeId.get(0), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
     }
 
@@ -121,8 +121,8 @@ public class SmartpayRefundIT extends ChargingITestBase {
         assertThat(refundsFoundByChargeId.size(), is(2));
 
         assertThat(refundsFoundByChargeId, hasItems(
-                aRefundMatching(secondRefundId, is("8514774917520978"), chargeId, secondRefundAmount, "REFUND SUBMITTED"),
-                aRefundMatching(firstRefundId, is("8514774917520978"), chargeId, firstRefundAmount, "REFUND SUBMITTED")));
+                aRefundMatching(secondRefundId, is("8514774917520978"), externalChargeId, secondRefundAmount, "REFUND SUBMITTED"),
+                aRefundMatching(firstRefundId, is("8514774917520978"), externalChargeId, firstRefundAmount, "REFUND SUBMITTED")));
 
         connectorRestApiClient.withChargeId(externalChargeId)
                 .getCharge()
@@ -232,7 +232,7 @@ public class SmartpayRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(firstRefundId, is("8514774917520978"), defaultTestCharge.getChargeId(), firstRefundAmount, "REFUND SUBMITTED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(firstRefundId, is("8514774917520978"), defaultTestCharge.getExternalChargeId(), firstRefundAmount, "REFUND SUBMITTED")));
 
         postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount)
                 .statusCode(400)
@@ -242,7 +242,7 @@ public class SmartpayRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId1 = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId1.size(), is(1));
-        assertThat(refundsFoundByChargeId1, hasItems(aRefundMatching(firstRefundId, is("8514774917520978"), defaultTestCharge.getChargeId(), firstRefundAmount, "REFUND SUBMITTED")));
+        assertThat(refundsFoundByChargeId1, hasItems(aRefundMatching(firstRefundId, is("8514774917520978"), defaultTestCharge.getExternalChargeId(), firstRefundAmount, "REFUND SUBMITTED")));
     }
 
     @Test
@@ -272,6 +272,7 @@ public class SmartpayRefundIT extends ChargingITestBase {
                 .aTestRefund()
                 .withTestCharge(defaultTestCharge)
                 .withType(RefundStatus.REFUND_SUBMITTED)
+                .withChargeExternalId(defaultTestCharge.getExternalChargeId())
                 .insert();
 
         ValidatableResponse validatableResponse = getRefundFor(
@@ -281,7 +282,7 @@ public class SmartpayRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(testRefund.getReference()), defaultTestCharge.getChargeId(), testRefund.getAmount(), "REFUND SUBMITTED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(testRefund.getReference()), defaultTestCharge.getExternalChargeId(), testRefund.getAmount(), "REFUND SUBMITTED")));
     }
 
     @Test
@@ -294,6 +295,7 @@ public class SmartpayRefundIT extends ChargingITestBase {
                 .withCreatedDate(ZonedDateTime.of(2016, 8, 1, 0, 0, 0, 0, ZoneId.of("UTC")))
                 .withTestCharge(defaultTestCharge)
                 .withType(RefundStatus.REFUND_SUBMITTED)
+                .withChargeExternalId(defaultTestCharge.getExternalChargeId())
                 .insert();
 
         DatabaseFixtures.TestRefund testRefund2 = DatabaseFixtures
@@ -303,6 +305,7 @@ public class SmartpayRefundIT extends ChargingITestBase {
                 .withCreatedDate(ZonedDateTime.of(2016, 8, 2, 0, 0, 0, 0, ZoneId.of("UTC")))
                 .withTestCharge(defaultTestCharge)
                 .withType(RefundStatus.REFUND_SUBMITTED)
+                .withChargeExternalId(defaultTestCharge.getExternalChargeId())
                 .insert();
 
         String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",

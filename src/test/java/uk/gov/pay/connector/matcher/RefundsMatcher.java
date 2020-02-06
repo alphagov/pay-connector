@@ -9,18 +9,18 @@ import java.util.Map;
 public class RefundsMatcher extends TypeSafeMatcher<Map<String, Object>> {
     private final String externalId;
     private final Matcher reference;
-    private final long chargeId;
+    private final String chargeExternalId;
     private final long amount;
     private final String status;
 
-    public static RefundsMatcher aRefundMatching(String externalId, Matcher reference, long chargeId, long amount, String status) {
-        return new RefundsMatcher(externalId, reference, chargeId, amount, status);
+    public static RefundsMatcher aRefundMatching(String externalId, Matcher reference, String chargeExternalId, long amount, String status) {
+        return new RefundsMatcher(externalId, reference, chargeExternalId, amount, status);
     }
 
-    private <T> RefundsMatcher(String externalId, Matcher<T> reference, long chargeId, long amount, String status) {
+    private <T> RefundsMatcher(String externalId, Matcher<T> reference, String chargeExternalId, long amount, String status) {
         this.externalId = externalId;
         this.reference = reference;
-        this.chargeId = chargeId;
+        this.chargeExternalId = chargeExternalId;
         this.amount = amount;
         this.status = status;
     }
@@ -28,7 +28,7 @@ public class RefundsMatcher extends TypeSafeMatcher<Map<String, Object>> {
     @Override
     public void describeTo(Description description) {
         description.appendText("{amount=").appendValue(amount).appendText(", ");
-        description.appendText("charge_id=").appendValue(chargeId).appendText(", ");
+        description.appendText("charge_external_id=").appendValue(chargeExternalId).appendText(", ");
         description.appendText("reference=").appendValue(reference).appendText(", ");
         description.appendText("external_id=").appendValue(externalId).appendText(", ");
         description.appendText("status=").appendValue(status).appendText("}");
@@ -41,6 +41,6 @@ public class RefundsMatcher extends TypeSafeMatcher<Map<String, Object>> {
                 reference.matches(record.get("reference")) &&
                 record.get("amount").equals(amount) &&
                 record.get("status").equals(status) &&
-                record.get("charge_id").equals(chargeId);
+                record.get("charge_external_id").equals(chargeExternalId);
     }
 }

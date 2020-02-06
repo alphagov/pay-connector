@@ -101,7 +101,8 @@ public class WorldpayNotificationService {
         if (isCaptureNotification(notification)) {
             chargeNotificationProcessor.invoke(notification.getTransactionId(), optionalChargeEntity.get(), CAPTURED, notification.getGatewayEventDate());
         } else if (isRefundNotification(notification)) {
-            refundNotificationProcessor.invoke(getPaymentGatewayName(), newRefundStatus(notification), notification.getReference(), notification.getTransactionId());
+            refundNotificationProcessor.invoke(getPaymentGatewayName(), newRefundStatus(notification), optionalChargeEntity.get().getGatewayAccount(),
+                    notification.getReference(), notification.getTransactionId(), optionalChargeEntity.get());
         } else {
             logger.error("{} notification {} unknown", gatewayName(), notification);
         }

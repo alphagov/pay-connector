@@ -34,8 +34,7 @@ public class RefundHistoryEntityFixture {
     public RefundHistory build() {
         return new RefundHistory(id, externalId, amount, status, chargeId, Timestamp.valueOf(createdDate.toLocalDateTime()),
                 version, reference, Timestamp.valueOf(historyStartDate.toLocalDateTime()), Timestamp.valueOf(historyEndDate.toLocalDateTime()),
-                userExternalId, gatewayTransactionId, chargeExternalId, gatewayAccountId,
-                userEmail);
+                userExternalId, gatewayTransactionId, chargeExternalId, userEmail);
     }
 
     public RefundHistoryEntityFixture withExternalId(String externalId) {

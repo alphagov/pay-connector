@@ -9,6 +9,7 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DnsUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
@@ -45,6 +46,8 @@ public class WorldpayNotificationServiceTest {
     private RefundNotificationProcessor mockRefundNotificationProcessor;
     @Mock
     private ChargeEntity mockCharge;
+    @Mock
+    private GatewayAccountEntity mockGatewayAccountEntity;
 
     private final String ipAddress = "1.1.1.1";
     private final String referenceId = "refund-reference";
@@ -105,7 +108,7 @@ public class WorldpayNotificationServiceTest {
 
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, times(2)).invoke(WORLDPAY, RefundStatus.REFUNDED, referenceId, transactionId);
+        verify(mockRefundNotificationProcessor, times(2)).invoke(WORLDPAY, RefundStatus.REFUNDED, null, referenceId, transactionId, mockCharge);
     }
 
     @Test
@@ -118,7 +121,7 @@ public class WorldpayNotificationServiceTest {
         assertTrue(result);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor).invoke(WORLDPAY, RefundStatus.REFUND_ERROR, referenceId, transactionId);
+        verify(mockRefundNotificationProcessor).invoke(WORLDPAY, RefundStatus.REFUND_ERROR, null, referenceId, transactionId, mockCharge);
     }
 
 
@@ -178,7 +181,7 @@ public class WorldpayNotificationServiceTest {
             assertTrue(notificationService.handleNotificationFor(ipAddress, payload));
 
             verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-            verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
+            verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
         }
     }
 
@@ -199,7 +202,7 @@ public class WorldpayNotificationServiceTest {
         assertFalse(result);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -210,7 +213,7 @@ public class WorldpayNotificationServiceTest {
         assertTrue(result);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
     }
 
     private static String sampleWorldpayNotification(

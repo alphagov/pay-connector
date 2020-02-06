@@ -18,6 +18,8 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -128,6 +130,7 @@ public class ChargeEventsResourceIT {
                 .withType(RefundStatus.REFUNDED)
                 .withCreatedDate(refundTest1RefundedDate)
                 .withSubmittedBy(SUBMITTED_BY)
+                .withChargeExternalId(testCharge.getExternalChargeId())
                 .insert();
 
         ZonedDateTime refundTest2RefundedDate = createdDate.plusSeconds(12);
@@ -136,13 +139,14 @@ public class ChargeEventsResourceIT {
                 .withType(RefundStatus.REFUNDED)
                 .withReference(testReferenceRefund2)
                 .withCreatedDate(refundTest2RefundedDate)
+                .withChargeExternalId(testCharge.getExternalChargeId())
                 .insert();
 
         ZonedDateTime historyRefund1SubmittedStartDate = createdDate.plusSeconds(8);
         createTestRefundHistory(refundedTestRefund1)
                 .insert(RefundStatus.CREATED, createdDate.plusSeconds(7), historyRefund1SubmittedStartDate, SUBMITTED_BY, USER_EMAIL)
                 .insert(RefundStatus.REFUND_SUBMITTED, testReferenceRefund1, historyRefund1SubmittedStartDate, refundTest1RefundedDate, SUBMITTED_BY, USER_EMAIL)
-                .insert(RefundStatus.REFUNDED, testReferenceRefund1, refundTest1RefundedDate, SUBMITTED_BY);
+                .insert(RefundStatus.REFUNDED, testReferenceRefund1, refundTest1RefundedDate, SUBMITTED_BY, testCharge.getExternalChargeId());
 
         ZonedDateTime historyRefund2SubmittedStartDate = createdDate.plusSeconds(11);
         createTestRefundHistory(refundedTestRefund2)
@@ -150,6 +154,8 @@ public class ChargeEventsResourceIT {
                 .insert(RefundStatus.REFUND_SUBMITTED, testReferenceRefund2, historyRefund2SubmittedStartDate, refundTest2RefundedDate)
                 .insert(RefundStatus.REFUNDED, testReferenceRefund2, refundTest2RefundedDate);
 
+        List<Map<String, Object>> charges = databaseTestHelper.getChargeEvents(testCharge.getChargeId());
+        List<Map<String, Object>> refunds = databaseTestHelper.getRefundsHistoryByChargeId(testCharge.getChargeId());
         connectorApi
                 .getEvents(testCharge.getExternalChargeId())
                 .body("charge_id", is(testCharge.getExternalChargeId()))

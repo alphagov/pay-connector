@@ -15,6 +15,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.LinksConfig;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -284,7 +285,7 @@ public class EpdqPaymentProviderTest {
     }
 
     private RefundGatewayRequest buildRefundRequest(ChargeEntity chargeEntity, Long refundAmount) {
-        return RefundGatewayRequest.valueOf(new RefundEntity(chargeEntity, refundAmount, userExternalId, userEmail),
+        return RefundGatewayRequest.valueOf(Charge.from(chargeEntity), new RefundEntity(refundAmount, userExternalId, userEmail, chargeEntity.getExternalId()),
                 gatewayAccountEntity);
     }
 

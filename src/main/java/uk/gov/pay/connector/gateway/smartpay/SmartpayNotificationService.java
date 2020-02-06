@@ -88,8 +88,10 @@ public class SmartpayNotificationService {
             refundNotificationProcessor.invoke(
                     SMARTPAY,
                     interpretedStatus.getRefundStatus(),
+                    charge.getGatewayAccount(),
                     notification.getPspReference(),
-                    notification.getOriginalReference()
+                    notification.getOriginalReference(),
+                    charge
             );
         } else {
             logger.error("{} notification {} unknown", PAYMENT_GATEWAY_NAME, notification);

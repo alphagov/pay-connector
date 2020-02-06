@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.model.request;
 
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.gateway.GatewayOperation;
@@ -64,13 +65,13 @@ public class RefundGatewayRequest implements GatewayRequest {
      *          - Their reference to the Refund in smartpay will be returned as `pspReference`.
      * </p>
      */
-    public static RefundGatewayRequest valueOf(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity) {
+    public static RefundGatewayRequest valueOf(Charge charge, RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity) {
         return new RefundGatewayRequest(
-                refundEntity.getChargeEntity().getGatewayTransactionId(),
+                charge.getGatewayTransactionId(),
                 gatewayAccountEntity,
                 String.valueOf(refundEntity.getAmount()),
                 refundEntity.getExternalId(),
-                refundEntity.getChargeEntity().getExternalId()
+                charge.getExternalId()
         );
     }
     

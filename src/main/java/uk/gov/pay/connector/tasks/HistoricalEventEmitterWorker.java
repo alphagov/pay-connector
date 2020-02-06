@@ -72,7 +72,7 @@ public class HistoricalEventEmitterWorker {
     }
 
     private void initializeHistoricalEventEmitter(Long doNotRetryEmitUntilDuration) {
-        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, false,
+        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeDao, false,
                 eventService, stateTransitionService, doNotRetryEmitUntilDuration);
     }
 
@@ -118,7 +118,7 @@ public class HistoricalEventEmitterWorker {
                 logger.info("Processing refunds events [page {}, no.of refund events {}] by date range", page, refundHistoryList.size());
                 refundHistoryList
                         .stream()
-                        .map(refundHistory -> refundHistory.getChargeEntity().getId())
+                        .map(refundHistory -> refundHistory.getChargeExternalId())
                         .distinct()
                         .forEach(this::processRefundsEventsForCharge);
                 page++;
@@ -154,9 +154,9 @@ public class HistoricalEventEmitterWorker {
         }
     }
 
-    private void processRefundsEventsForCharge(Long chargeId) {
+    private void processRefundsEventsForCharge(String chargeExternalId) {
         try {
-            Optional<ChargeEntity> maybeCharge = chargeDao.findById(chargeId);
+            Optional<ChargeEntity> maybeCharge = chargeDao.findByExternalId(chargeExternalId);
             maybeCharge.ifPresent(c -> MDC.put("chargeId", c.getExternalId()));
 
             if (maybeCharge.isPresent()) {

@@ -7,6 +7,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.w3c.dom.Document;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -101,13 +102,13 @@ public class WorldpayPaymentProviderTest extends WorldpayBasePaymentProviderTest
     @Test
     public void testRefundRequestContainsReference() throws Exception {
         ChargeEntity chargeEntity = chargeEntityFixture.withTransactionId("transaction-id").build();
-        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().withCharge(chargeEntity).build();
+        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().build();
 
         when(mockGatewayClient.postRequestFor(any(URI.class), any(GatewayAccountEntity.class), any(GatewayOrder.class), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
 
         var worldpayPaymentProvider = new WorldpayPaymentProvider(configuration, gatewayClientFactory, environment);
-        worldpayPaymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity, gatewayAccountEntity));
+        worldpayPaymentProvider.refund(RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, gatewayAccountEntity));
 
         String expectedRefundRequest =
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +

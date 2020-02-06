@@ -200,7 +200,7 @@ public class StripeNotificationService {
         int totalTimeDelayedInMillis = 0;
         int delayInMillis = 200;
         while (totalTimeDelayedInMillis < stripeGatewayConfig.getNotification3dsWaitDelay()) {
-            ChargeEntity chargeEntity = chargeService.findChargeById(charge.getExternalId());
+            ChargeEntity chargeEntity = chargeService.findChargeByExternalId(charge.getExternalId());
             if (ChargeStatus.fromString(chargeEntity.getStatus()) == AUTHORISATION_3DS_READY) {
                 break;
             }

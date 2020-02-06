@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.EmittedEventSweepConfig;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
@@ -37,13 +38,14 @@ public class EmittedEventsBackfillService {
 
     @Inject
     public EmittedEventsBackfillService(EmittedEventDao emittedEventDao, ChargeService chargeService, RefundDao refundDao,
-                                        EventService eventService, StateTransitionService stateTransitionService,
+                                        ChargeDao chargeDao, EventService eventService,
+                                        StateTransitionService stateTransitionService,
                                         ConnectorConfiguration configuration) {
         this.emittedEventDao = emittedEventDao;
         this.chargeService = chargeService;
         this.refundDao = refundDao;
         this.sweepConfig = configuration.getEmittedEventSweepConfig();
-        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, shouldForceEmission,
+        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeDao, shouldForceEmission,
                 eventService, stateTransitionService);
     }
 
@@ -80,12 +82,17 @@ public class EmittedEventsBackfillService {
     @Transactional
     public void backfillEvent(EmittedEventEntity event) {
         try {
-            Optional<ChargeEntity> charge;
+            Optional<ChargeEntity> charge = Optional.empty();
 
             if (ResourceType.valueOf(event.getResourceType().toUpperCase()).equals(ResourceType.PAYMENT)) {
-                charge = Optional.of(chargeService.findChargeById(event.getResourceExternalId()));
+                charge = Optional.of(chargeService.findChargeByExternalId(event.getResourceExternalId()));
             } else {
-                charge = refundDao.findByExternalId(event.getResourceExternalId()).map(RefundEntity::getChargeEntity);
+                Optional<RefundEntity> refundEntity = refundDao.findByExternalId(event.getResourceExternalId())
+                        .stream()
+                        .findFirst();
+                if (refundEntity.isPresent()) {
+                    charge = Optional.ofNullable(chargeService.findChargeByExternalId(refundEntity.get().getChargeExternalId()));
+                }
             }
 
             charge.ifPresent(c -> MDC.put("chargeId", c.getExternalId()));

@@ -44,7 +44,7 @@ public class DiscrepancyService {
 
     private Stream<GatewayStatusComparison> toGatewayStatusComparisonList(List<String> chargeIds) {
         return chargeIds.stream()
-                .map(chargeService::findChargeById)
+                .map(chargeService::findChargeByExternalId)
                 .map(charge -> {
                     try {
                         return GatewayStatusComparison.from(charge, queryService.getChargeGatewayStatus(charge));

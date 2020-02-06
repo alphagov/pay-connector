@@ -57,7 +57,7 @@ public class LoggingMDCRequestFilter implements ContainerRequestFilter {
     private Optional<ChargeEntity> getChargeFromRequest(ContainerRequestContext requestContext) {
         try {
             return getPathParameterFromRequest("chargeId", requestContext)
-                .map(chargeService::findChargeById);
+                .map(chargeService::findChargeByExternalId);
         } catch (ChargeNotFoundRuntimeException ex) {
             return Optional.empty();
         }

@@ -44,7 +44,7 @@ public class Card3dsResponseAuthService {
 
     public Gateway3DSAuthorisationResponse process3DSecureAuthorisationWithoutLocking(String chargeId, Auth3dsDetails auth3DsDetails) {
         return cardAuthoriseBaseService.executeAuthorise(chargeId, () -> {
-            final ChargeEntity charge = chargeService.findChargeById(chargeId);
+            final ChargeEntity charge = chargeService.findChargeByExternalId(chargeId);
             return authoriseAndProcess3DS(auth3DsDetails, charge);
         });
     }

@@ -4,6 +4,8 @@ import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
@@ -47,6 +49,7 @@ public class HistoricalEventEmitter {
     private static final Logger logger = LoggerFactory.getLogger(HistoricalEventEmitter.class);
     private final EmittedEventDao emittedEventDao;
     private final RefundDao refundDao;
+    private final ChargeDao chargeDao;
     private boolean shouldForceEmission;
 
     private final List<ChargeStatus> TERMINAL_AUTHENTICATION_STATES = List.of(
@@ -76,21 +79,24 @@ public class HistoricalEventEmitter {
     public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
                                   RefundDao refundDao,
                                   EventService eventService,
-                                  StateTransitionService stateTransitionService) {
-        this(emittedEventDao, refundDao, false, eventService, stateTransitionService, null);
+                                  StateTransitionService stateTransitionService,
+                                  ChargeDao chargeDao) {
+        this(emittedEventDao, refundDao, chargeDao, false, eventService, stateTransitionService, null);
     }
 
     public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
-                                  RefundDao refundDao, boolean shouldForceEmission, EventService eventService,
+                                  RefundDao refundDao, ChargeDao chargeDao, boolean shouldForceEmission, EventService eventService,
                                   StateTransitionService stateTransitionService) {
-        this(emittedEventDao, refundDao, shouldForceEmission, eventService, stateTransitionService, null);
+        this(emittedEventDao, refundDao, chargeDao, shouldForceEmission, eventService, stateTransitionService, null);
     }
 
     public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
-                                  RefundDao refundDao, boolean shouldForceEmission, EventService eventService,
-                                  StateTransitionService stateTransitionService, Long doNotRetryEmitUntilDuration) {
+                                  RefundDao refundDao, ChargeDao chargeDao, boolean shouldForceEmission,
+                                  EventService eventService, StateTransitionService stateTransitionService,
+                                  Long doNotRetryEmitUntilDuration) {
         this.emittedEventDao = emittedEventDao;
         this.refundDao = refundDao;
+        this.chargeDao = chargeDao;
         this.paymentGatewayStateTransitions = PaymentGatewayStateTransitions.getInstance();
         this.shouldForceEmission = shouldForceEmission;
         this.eventService = eventService;
@@ -112,7 +118,7 @@ public class HistoricalEventEmitter {
 
     @Transactional
     public void processRefundEvents(ChargeEntity charge) {
-        List<RefundHistory> refundHistories = refundDao.searchAllHistoryByChargeId(charge.getId());
+        List<RefundHistory> refundHistories = refundDao.searchAllHistoryByChargeExternalId(charge.getExternalId());
 
         refundHistories
                 .stream()
@@ -122,7 +128,10 @@ public class HistoricalEventEmitter {
 
     public void emitAndPersistEventForRefundHistoryEntry(RefundHistory refundHistory) {
         Class refundEventClass = RefundStateEventMap.calculateRefundEventClass(refundHistory.getUserExternalId(), refundHistory.getStatus());
-        Event event = EventFactory.createRefundEvent(refundHistory, refundEventClass);
+        ChargeEntity chargeEntity = chargeDao.findByExternalId(refundHistory.getChargeExternalId())
+                .orElseThrow(() -> new ChargeNotFoundRuntimeException(refundHistory.getChargeExternalId()));
+        Event event = EventFactory.createRefundEvent(refundHistory, refundEventClass,
+                chargeEntity.getGatewayAccount().getId());
 
         if (shouldForceEmission) {
             emitRefundEvent(refundHistory, refundEventClass, event);

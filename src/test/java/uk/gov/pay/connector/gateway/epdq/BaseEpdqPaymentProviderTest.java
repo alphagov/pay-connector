@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.GatewayConfig;
 import uk.gov.pay.connector.app.LinksConfig;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.ClientFactory;
@@ -188,9 +189,9 @@ public abstract class BaseEpdqPaymentProviderTest {
         return TestTemplateResourceLoader.load(EPDQ_DELETE_SUCCESS_RESPONSE);
     }
 
-    private RefundGatewayRequest buildTestRefundRequest(ChargeEntity chargeEntity) {
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, chargeEntity.getAmount() - 100, userExternalId, userEmail);
-        return RefundGatewayRequest.valueOf(refundEntity, buildTestGatewayAccountEntity());
+    private RefundGatewayRequest buildTestRefundRequest(Charge charge, GatewayAccountEntity gatewayAccountEntity) {
+        RefundEntity refundEntity = new RefundEntity(charge.getAmount() - 100, userExternalId, userEmail, charge.getExternalId());
+        return RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccountEntity);
     }
 
     private GatewayAccountEntity buildTestGatewayAccountEntity() {
@@ -247,12 +248,12 @@ public abstract class BaseEpdqPaymentProviderTest {
         return CancelGatewayRequest.valueOf(chargeEntity);
     }
 
-    private RefundGatewayRequest buildTestRefundRequest(GatewayAccountEntity accountEntity) {
+    private RefundGatewayRequest buildTestRefundRequest(GatewayAccountEntity gatewayAccountEntity) {
         ChargeEntity chargeEntity = aValidChargeEntity()
-                .withGatewayAccountEntity(accountEntity)
+                .withGatewayAccountEntity(gatewayAccountEntity)
                 .withTransactionId("payId")
                 .build();
-        return buildTestRefundRequest(chargeEntity);
+        return buildTestRefundRequest(Charge.from(chargeEntity), gatewayAccountEntity);
     }
 
     private AuthCardDetails buildTestAuthCardDetails() {

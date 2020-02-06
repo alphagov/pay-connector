@@ -3,6 +3,8 @@ package uk.gov.pay.connector.gateway.processor;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -27,7 +29,8 @@ public class RefundNotificationProcessor {
         this.userNotificationService = userNotificationService;
     }
 
-    public void invoke(PaymentGatewayName gatewayName, RefundStatus newStatus, String reference, String transactionId) {
+    public void invoke(PaymentGatewayName gatewayName, RefundStatus newStatus, GatewayAccountEntity gatewayAccountEntity,
+                       String reference, String transactionId, ChargeEntity chargeEntity) {
         if (isBlank(reference)) {
             logger.warn("{} refund notification could not be used to update charge (missing reference)",
                     gatewayName);
@@ -47,19 +50,18 @@ public class RefundNotificationProcessor {
         refundService.transitionRefundState(refundEntity, newStatus);
 
         if (RefundStatus.REFUNDED.equals(newStatus)) {
-            userNotificationService.sendRefundIssuedEmail(refundEntity);
+            userNotificationService.sendRefundIssuedEmail(refundEntity, Charge.from(chargeEntity), gatewayAccountEntity);
         }
 
-        GatewayAccountEntity gatewayAccount = refundEntity.getChargeEntity().getGatewayAccount();
         logger.info("Notification received for refund. Updating refund - charge_external_id={}, refund_reference={}, transaction_id={}, status={}, "
                         + "status_to={}, account_id={}, provider={}, provider_type={}",
-                refundEntity.getChargeEntity().getExternalId(),
+                refundEntity.getChargeExternalId(),
                 reference,
                 transactionId,
                 oldStatus,
                 newStatus,
-                gatewayAccount.getId(),
-                gatewayAccount.getGatewayName(),
-                gatewayAccount.getType());
+                gatewayAccountEntity.getId(),
+                gatewayAccountEntity.getGatewayName(),
+                gatewayAccountEntity.getType());
     }
 }

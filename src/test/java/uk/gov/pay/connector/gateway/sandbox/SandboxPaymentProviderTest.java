@@ -6,6 +6,8 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -132,8 +134,8 @@ public class SandboxPaymentProviderTest {
 
     @Test
     public void refund_shouldSucceedWhenRefundingAnyCharge() {
-
-        GatewayRefundResponse refundResponse = provider.refund(RefundGatewayRequest.valueOf(RefundEntityFixture.aValidRefundEntity().build(),
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        GatewayRefundResponse refundResponse = provider.refund(RefundGatewayRequest.valueOf(Charge.from(chargeEntity), RefundEntityFixture.aValidRefundEntity().build(),
                 gatewayAccountEntity));
 
         assertThat(refundResponse.isSuccessful(), is(true));
