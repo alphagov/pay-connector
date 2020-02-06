@@ -235,4 +235,5 @@ ledgerBaseURL: ${LEDGER_URL}
 
 expungeConfig:
   minimumAgeOfChargeInDays: ${EXPUNGE_CHARGES_OLDER_THAN_DAYS:-90}
+  excludeChargesParityCheckedWithInDays: ${EXPUNGE_EXCLUDE_CHARGES_PARITY_CHECKED_WITHIN_DAYS:-7}
   numberOfChargesToExpunge: ${EXPUNGE_NO_OF_CHARGE_PER_TASK_RUN:-25000}

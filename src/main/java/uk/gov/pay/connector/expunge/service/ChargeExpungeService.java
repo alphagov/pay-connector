@@ -31,7 +31,10 @@ public class ChargeExpungeService {
         int noOfChargesProcessed = 0;
 
         while (noOfChargesProcessed < noOfChargesToExpunge) {
-            Optional<ChargeEntity> mayBeChargeEntity = chargeDao.findChargeToExpunge(expungeConfig.getMinimumAgeOfChargeInDays());
+            Optional<ChargeEntity> mayBeChargeEntity =
+                    chargeDao.findChargeToExpunge(expungeConfig.getMinimumAgeOfChargeInDays(),
+                            expungeConfig.getExcludeChargesParityCheckedWithInDays()
+                    );
 
             mayBeChargeEntity.ifPresent(chargeEntity -> {
                 // TODO: in PP-6098 
