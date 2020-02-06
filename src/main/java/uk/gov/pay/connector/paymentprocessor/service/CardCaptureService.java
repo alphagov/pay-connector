@@ -91,7 +91,7 @@ public class CardCaptureService {
     @Transactional
     void markChargeAsCaptureError(String chargeId) {
         LOG.error("CAPTURE_ERROR for charge [charge_external_id={}] - reached maximum number of capture attempts",
-                chargeId);
+                chargeId); // log line used by Splunk for alerting
         chargeService.transitionChargeState(chargeId, CAPTURE_ERROR);
     }
 
