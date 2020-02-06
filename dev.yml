@@ -1,8 +1,4 @@
 memory: 500M
-db_password: mysecretpassword
-db_user: connector
-db_name: connector
-db_ssl_option: ssl=none
 disk_quota: 500M
 disable_internal_https: 'true'
 run_migration: 'true'
