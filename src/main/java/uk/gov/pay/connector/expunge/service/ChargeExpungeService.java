@@ -26,26 +26,30 @@ public class ChargeExpungeService {
     }
 
     public void expunge(Integer noOfChargesToExpungeQueryParam) {
-        int noOfChargesToExpunge = getNumberOfChargesToExpunge(noOfChargesToExpungeQueryParam);
+        if (expungeConfig.isExpungeChargesEnabled()) {
+            int noOfChargesToExpunge = getNumberOfChargesToExpunge(noOfChargesToExpungeQueryParam);
 
-        int noOfChargesProcessed = 0;
+            int noOfChargesProcessed = 0;
 
-        while (noOfChargesProcessed < noOfChargesToExpunge) {
-            Optional<ChargeEntity> mayBeChargeEntity =
-                    chargeDao.findChargeToExpunge(expungeConfig.getMinimumAgeOfChargeInDays(),
-                            expungeConfig.getExcludeChargesParityCheckedWithInDays()
-                    );
+            while (noOfChargesProcessed < noOfChargesToExpunge) {
+                Optional<ChargeEntity> mayBeChargeEntity =
+                        chargeDao.findChargeToExpunge(expungeConfig.getMinimumAgeOfChargeInDays(),
+                                expungeConfig.getExcludeChargesParityCheckedWithInDays()
+                        );
 
-            mayBeChargeEntity.ifPresent(chargeEntity -> {
-                // TODO: in PP-6098 
-                // Parity check charges with Ledger and 1. delete charge if matches or 2. update charge with parity_check_date
+                mayBeChargeEntity.ifPresent(chargeEntity -> {
+                    // TODO: in PP-6098 
+                    // Parity check charges with Ledger and 1. delete charge if matches or 2. update charge with parity_check_date
 
-                logger.info("Charge expunged from connector", kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
-            });
+                    logger.info("Charge expunged from connector", kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
+                });
 
-            if (mayBeChargeEntity.isEmpty())
-                break;
-            noOfChargesProcessed++;
+                if (mayBeChargeEntity.isEmpty())
+                    break;
+                noOfChargesProcessed++;
+            }
+        } else {
+            logger.info("Charge expunging feature is disabled. No charges have been expunged");
         }
     }
 

@@ -22,6 +22,8 @@ public class ExpungeConfig extends Configuration {
     @Min(0)
     private int excludeChargesParityCheckedWithInDays;
 
+    private boolean expungeChargesEnabled;
+
     public int getMinimumAgeOfChargeInDays() {
         return minimumAgeOfChargeInDays;
     }
@@ -32,5 +34,9 @@ public class ExpungeConfig extends Configuration {
 
     public int getExcludeChargesParityCheckedWithInDays() {
         return excludeChargesParityCheckedWithInDays;
+    }
+
+    public boolean isExpungeChargesEnabled() {
+        return expungeChargesEnabled;
     }
 }
