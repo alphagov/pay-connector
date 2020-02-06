@@ -254,7 +254,7 @@ public class ContractTest {
     }
 
     @State("a charge exists")
-    public void aChargeExists(Map<String, String> params) {
+    public void aChargeExists(Map<String, String> params) throws Exception {
         String gatewayAccountId = params.get("gateway_account_id");
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
@@ -270,6 +270,7 @@ public class ContractTest {
                 .withTransactionId(params.get("gateway_transaction_id"))
                 .withDescription("Test description")
                 .withReference(ServicePaymentReference.of("aReference"))
+                .withExternalMetadata(new ExternalMetadata(objectMapper.readValue("{\"ledger_code\":123, \"some_key\":\"key\"}", Map.class)))
                 .withCreatedDate(ZonedDateTime.now())
                 .withEmail("test@test.com")
                 .withDelayedCapture(true)
