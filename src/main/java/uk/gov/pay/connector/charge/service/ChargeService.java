@@ -714,12 +714,13 @@ public class ChargeService {
                 .map(CardTypeEntity::getLabel);
     }
 
-    private ChargeResponse.RefundSummary buildRefundSummary(ChargeEntity charge) {
+    private ChargeResponse.RefundSummary buildRefundSummary(ChargeEntity chargeEntity) {
         ChargeResponse.RefundSummary refund = new ChargeResponse.RefundSummary();
-        List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(charge.getExternalId());
-        refund.setStatus(providers.byName(charge.getPaymentGatewayName()).getExternalChargeRefundAvailability(Charge.from(charge), refundEntityList).getStatus());
+        Charge charge = Charge.from(chargeEntity);
+        List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId());
+        refund.setStatus(providers.byName(chargeEntity.getPaymentGatewayName()).getExternalChargeRefundAvailability(charge, refundEntityList).getStatus());
         refund.setAmountSubmitted(RefundCalculator.getRefundedAmount(refundEntityList));
-        refund.setAmountAvailable(RefundCalculator.getTotalAmountAvailableToBeRefunded(Charge.from(charge), refundEntityList));
+        refund.setAmountAvailable(RefundCalculator.getTotalAmountAvailableToBeRefunded(charge, refundEntityList));
         return refund;
     }
 

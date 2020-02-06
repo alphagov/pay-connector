@@ -3,14 +3,12 @@ package uk.gov.pay.connector.refund.service;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
-import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
@@ -242,17 +240,16 @@ public class ChargeRefundService {
                                                      RefundRequest refundRequest,
                                                      List<RefundEntity> refundEntityList) {
         ExternalChargeRefundAvailability refundAvailability;
-        
-        if(charge.isInFlight()) {
+
+        if(charge.isHistoric()) {
+            refundAvailability = ExternalChargeRefundAvailability.valueOf(charge.getRefundAvailabilityStatus());
+        } else {
             refundAvailability = providers
                     .byName(PaymentGatewayName.valueFrom(gatewayAccountEntity.getGatewayName()))
                     .getExternalChargeRefundAvailability(charge, refundEntityList);
-            checkIfChargeIsRefundableOrTerminate(charge, refundAvailability, gatewayAccountEntity);
-        } else {
-            refundAvailability = ExternalChargeRefundAvailability.valueOf(charge.getExternalRefundState());
-            checkIfChargeIsRefundableOrTerminate(charge, refundAvailability, gatewayAccountEntity);
         }
-        
+        checkIfChargeIsRefundableOrTerminate(charge, refundAvailability, gatewayAccountEntity);
+
         List<RefundEntity> refundEntities = refundDao.findRefundsByChargeExternalId(charge.getExternalId());
 
         long availableToBeRefunded = RefundCalculator.getTotalAmountAvailableToBeRefunded(charge, refundEntities);

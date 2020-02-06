@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.charge.model.domain;
 
-import uk.gov.pay.connector.common.model.api.ExternalChargeState;
-
 import java.util.Optional;
 
 public class Charge {
@@ -11,17 +9,17 @@ public class Charge {
     private String status;
     private String gatewayTransactionId;
     private Long corporateSurcharge;
-    private String externalRefundState;
-    private boolean inFlight;
+    private String refundAvailabilityStatus;
+    private boolean historic;
 
-    public Charge(String externalId, Long amount, String status, String gatewayTransactionId, Long corporateSurcharge, String externalRefundState, boolean inFlight) {
+    public Charge(String externalId, Long amount, String status, String gatewayTransactionId, Long corporateSurcharge, String refundAvailabilityStatus, boolean historic) {
         this.externalId = externalId;
         this.amount = amount;
         this.status = status;
         this.gatewayTransactionId = gatewayTransactionId;
         this.corporateSurcharge = corporateSurcharge;
-        this.externalRefundState = externalRefundState;
-        this.inFlight = inFlight;
+        this.refundAvailabilityStatus = refundAvailabilityStatus;
+        this.historic = historic;
     }
     
     public static Charge from(ChargeEntity chargeEntity) {
@@ -32,7 +30,7 @@ public class Charge {
                 chargeEntity.getGatewayTransactionId(),
                 chargeEntity.getCorporateSurcharge().orElse(null),
                 null, 
-                true);
+                false);
     }
 
     public String getExternalId() {
@@ -55,11 +53,11 @@ public class Charge {
         return Optional.ofNullable(corporateSurcharge);
     }
 
-    public boolean isInFlight() {
-        return inFlight;
+    public boolean isHistoric() {
+        return historic;
     }
 
-    public String getExternalRefundState() {
-        return externalRefundState;
+    public String getRefundAvailabilityStatus() {
+        return refundAvailabilityStatus;
     }
 }
