@@ -99,15 +99,15 @@ public class HistoricalEventEmitter {
     }
 
     public void processPaymentAndRefundEvents(ChargeEntity charge) {
-        processPaymentEvents(charge);
+        processPaymentEvents(charge, shouldForceEmission);
         processRefundEvents(charge);
     }
 
-    public void processPaymentEvents(ChargeEntity charge) {
+    public void processPaymentEvents(ChargeEntity charge, boolean forceEmission) {
         List<ChargeEventEntity> chargeEventEntities = getSortedChargeEvents(charge);
 
-        processChargeStateTransitionEvents(charge.getId(), chargeEventEntities);
-        processPaymentDetailEnteredEvent(chargeEventEntities);
+        processChargeStateTransitionEvents(charge.getId(), chargeEventEntities, forceEmission);
+        processPaymentDetailEnteredEvent(chargeEventEntities, forceEmission);
     }
 
     @Transactional
@@ -167,7 +167,8 @@ public class HistoricalEventEmitter {
         }
     }
 
-    private void processChargeStateTransitionEvents(long currentId, List<ChargeEventEntity> chargeEventEntities) {
+    private void processChargeStateTransitionEvents(long currentId, List<ChargeEventEntity> chargeEventEntities,
+                                                    boolean forceEmission) {
         for (int index = 0; index < chargeEventEntities.size(); index++) {
             ChargeStatus fromChargeState;
             ChargeEventEntity chargeEventEntity = chargeEventEntities.get(index);
@@ -178,17 +179,19 @@ public class HistoricalEventEmitter {
                 fromChargeState = chargeEventEntities.get(index - 1).getStatus();
             }
 
-            processSingleChargeStateTransitionEvent(currentId, fromChargeState, chargeEventEntity);
+            processSingleChargeStateTransitionEvent(currentId, fromChargeState, chargeEventEntity,
+                    forceEmission);
         }
     }
 
     private void processSingleChargeStateTransitionEvent(long currentId, ChargeStatus fromChargeState,
-                                                         ChargeEventEntity chargeEventEntity) {
+                                                         ChargeEventEntity chargeEventEntity,
+                                                         boolean forceEmission) {
         Optional<Class<Event>> eventForTransition = getEventForTransition(fromChargeState, chargeEventEntity);
 
         eventForTransition.ifPresent(eventType -> {
             PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventType);
-            offerPaymentStateTransitionEvents(currentId, chargeEventEntity, transition);
+            offerPaymentStateTransitionEvents(currentId, chargeEventEntity, transition, forceEmission);
         });
     }
 
@@ -216,10 +219,11 @@ public class HistoricalEventEmitter {
         return eventForTransition;
     }
 
-    private void offerPaymentStateTransitionEvents(long currentId, ChargeEventEntity chargeEventEntity, PaymentStateTransition transition) {
+    private void offerPaymentStateTransitionEvents(long currentId, ChargeEventEntity chargeEventEntity, 
+                                                   PaymentStateTransition transition, boolean forceEmission) {
         Event event = EventFactory.createPaymentEvent(chargeEventEntity, transition.getStateTransitionEventClass());
 
-        if (shouldForceEmission) {
+        if (forceEmission) {
             offerStateTransitionEvent(currentId, chargeEventEntity, transition, event);
         } else {
             final boolean emittedBefore = emittedEventDao.hasBeenEmittedBefore(event);
@@ -237,14 +241,14 @@ public class HistoricalEventEmitter {
         stateTransitionService.offerStateTransition(transition, event, getDoNotRetryEmitUntilDate());
     }
 
-    private void processPaymentDetailEnteredEvent(List<ChargeEventEntity> chargeEventEntities) {
+    private void processPaymentDetailEnteredEvent(List<ChargeEventEntity> chargeEventEntities, boolean forceEmission) {
         // transition to AUTHORISATION_READY does not record state transition, verify details have been entered by
         // checking against any terminal authentication transition
         chargeEventEntities
                 .stream()
                 .filter(event -> isValidPaymentDetailsEnteredTransition(chargeEventEntities, event))
                 .map(PaymentDetailsEntered::from)
-                .filter(event -> shouldForceEmission || !emittedEventDao.hasBeenEmittedBefore(event))
+                .filter(event -> forceEmission || !emittedEventDao.hasBeenEmittedBefore(event))
                 .forEach(event -> eventService.emitAndRecordEvent(event, getDoNotRetryEmitUntilDate()));
     }
 

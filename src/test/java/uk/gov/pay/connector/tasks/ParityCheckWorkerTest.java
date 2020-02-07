@@ -3,6 +3,7 @@ package uk.gov.pay.connector.tasks;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -46,6 +47,8 @@ public class ParityCheckWorkerTest {
     private EmittedEventDao emittedEventDao;
     @Mock
     private StateTransitionService stateTransitionService;
+    @InjectMocks
+    private ParityCheckService parityCheckService;
     @Mock
     private EventService eventService;
     @Mock
@@ -61,7 +64,7 @@ public class ParityCheckWorkerTest {
     @Before
     public void setUp() {
         worker = new ParityCheckWorker(chargeDao, chargeService, ledgerService, emittedEventDao,
-                stateTransitionService, eventService, refundDao);
+                stateTransitionService, eventService, refundDao, parityCheckService);
         CardDetailsEntity cardDetails = mock(CardDetailsEntity.class);
         chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
