@@ -97,7 +97,7 @@ public class HistoricalEventEmitterWorker {
             if (maybeCharge.isPresent()) {
                 final ChargeEntity charge = maybeCharge.get();
 
-                historicalEventEmitter.processPaymentEvents(charge);
+                historicalEventEmitter.processPaymentEvents(charge, false);
                 historicalEventEmitter.processRefundEvents(charge);
             } else {
                 logger.info("[{}/{}] - not found", currentId, maxId);
