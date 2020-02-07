@@ -275,6 +275,7 @@ public class ContractTest {
                 .withEmail("test@test.com")
                 .withDelayedCapture(true)
                 .build());
+        dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), params.get("gateway_transaction_id"));
     }
 
     @State("a charge with delayed capture true and awaiting capture request status exists")
