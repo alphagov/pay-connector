@@ -36,6 +36,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
+import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.from;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ParityCheckWorkerTest {
@@ -97,7 +98,7 @@ public class ParityCheckWorkerTest {
     public void executeRecordsParityStatusForChargesExistingInLedger() {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
-        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().build()));
+        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(from(chargeEntity).build()));
 
         worker.execute(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus, 1L);
 
@@ -114,7 +115,7 @@ public class ParityCheckWorkerTest {
         when(chargeDao.findMaxId()).thenReturn(1L);
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId())).thenReturn(List.of(refundEntity));
-        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().withStatus("timedout").build()));
+        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(from(chargeEntity).build()));
         when(ledgerService.getTransaction(refundEntity.getExternalId()))
                 .thenReturn(Optional.of(aValidLedgerTransaction().withStatus("submitted").build()));
 
@@ -150,7 +151,7 @@ public class ParityCheckWorkerTest {
                 .thenReturn(List.of(aValidRefundEntity().build(), aValidRefundEntity().build()));
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
         when(ledgerService.getTransaction(any())).thenReturn(Optional.empty());
-        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().build()));
+        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(from(chargeEntity).build()));
 
         worker.execute(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus, 1L);
 
@@ -168,7 +169,7 @@ public class ParityCheckWorkerTest {
         when(ledgerService.getTransaction(any())).thenReturn(Optional.empty());
         when(ledgerService.getTransaction(any())).thenReturn(Optional.of(
                 aValidLedgerTransaction().withStatus("success").build()));
-        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(aValidLedgerTransaction().build()));
+        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(from(chargeEntity).build()));
 
         worker.execute(1L, Optional.empty(), doNotReprocessValidRecords, emptyParityCheckStatus, 1L);
 
