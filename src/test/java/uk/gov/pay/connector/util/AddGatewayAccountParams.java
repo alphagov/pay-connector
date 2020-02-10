@@ -22,6 +22,7 @@ public class AddGatewayAccountParams {
     private long corporatePrepaidCreditCardSurchargeAmount;
     private long corporatePrepaidDebitCardSurchargeAmount;
     private int integrationVersion3ds;
+    private boolean allowMoto;
 
     public int getIntegrationVersion3ds() {
         return integrationVersion3ds;
@@ -75,13 +76,17 @@ public class AddGatewayAccountParams {
         return corporatePrepaidDebitCardSurchargeAmount;
     }
 
+    public boolean isAllowMoto() {
+        return allowMoto;
+    }
+
     public static final class AddGatewayAccountParamsBuilder {
         private String accountId;
-        private String paymentGateway;
+        private String paymentGateway = "provider";
         private Map<String, String> credentials;
-        private String serviceName;
+        private String serviceName = "service name";
         private GatewayAccountEntity.Type providerUrlType = TEST;
-        private String description;
+        private String description = "description";
         private String analyticsId;
         private EmailCollectionMode emailCollectionMode = MANDATORY;
         private long corporateCreditCardSurchargeAmount;
@@ -89,6 +94,7 @@ public class AddGatewayAccountParams {
         private long corporatePrepaidCreditCardSurchargeAmount;
         private long corporatePrepaidDebitCardSurchargeAmount;
         private int integrationVersion3ds = 2;
+        private boolean allowMoto;
 
         private AddGatewayAccountParamsBuilder() {
         }
@@ -156,6 +162,11 @@ public class AddGatewayAccountParams {
             this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
             return this;
         }
+        
+        public AddGatewayAccountParamsBuilder withAllowMoto(boolean allowMoto) {
+            this.allowMoto = allowMoto;
+            return this;
+        }
 
         public AddGatewayAccountParams build() {
             AddGatewayAccountParams addGatewayAccountParams = new AddGatewayAccountParams();
@@ -172,6 +183,7 @@ public class AddGatewayAccountParams {
             addGatewayAccountParams.emailCollectionMode = this.emailCollectionMode;
             addGatewayAccountParams.corporateDebitCardSurchargeAmount = this.corporateDebitCardSurchargeAmount;
             addGatewayAccountParams.integrationVersion3ds = this.integrationVersion3ds;
+            addGatewayAccountParams.allowMoto = this.allowMoto;
             return addGatewayAccountParams;
         }
 

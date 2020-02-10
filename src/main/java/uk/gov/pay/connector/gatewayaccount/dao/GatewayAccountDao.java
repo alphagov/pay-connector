@@ -4,6 +4,7 @@ import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -21,7 +22,7 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
     public Optional<GatewayAccountEntity> findById(Long gatewayAccountId) {
         return super.findById(GatewayAccountEntity.class, gatewayAccountId);
     }
-    
+
     public Optional<GatewayAccountEntity> findByNotificationCredentialsUsername(String username) {
         String query = "SELECT gae FROM GatewayAccountEntity gae " +
                 "WHERE gae.notificationCredentials.userName = :username";
@@ -35,15 +36,35 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
 
     public List<GatewayAccountEntity> list(List<Long> accountIds) {
         String query = "SELECT gae"
-                       + " FROM GatewayAccountEntity gae"
-                       + " WHERE gae.id IN :accountIds"
-                       + " ORDER BY gae.id";
+                + " FROM GatewayAccountEntity gae"
+                + " WHERE gae.id IN :accountIds"
+                + " ORDER BY gae.id";
 
         return entityManager
                 .get()
                 .createQuery(query, GatewayAccountEntity.class)
                 .setParameter("accountIds", accountIds)
                 .getResultList();
+    }
+
+    public List<GatewayAccountEntity> search(GatewayAccountSearchParams params) {
+        List<String> filterTemplates = params.getFilterTemplates();
+        String whereClause = filterTemplates.isEmpty() ?
+                "" :
+                " WHERE " + String.join(" AND ", filterTemplates);
+
+        String queryTemplate = "SELECT gae" +
+                " FROM GatewayAccountEntity gae" +
+                whereClause +
+                " ORDER BY gae.id";
+
+        var query = entityManager
+                .get()
+                .createQuery(queryTemplate, GatewayAccountEntity.class);
+        
+        params.getQueryMap().forEach(query::setParameter);
+        
+        return query.getResultList();
     }
 
     public List<GatewayAccountEntity> listAll() {
