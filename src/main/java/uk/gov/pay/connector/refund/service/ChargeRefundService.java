@@ -7,7 +7,6 @@ import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -28,7 +27,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
+import static uk.gov.pay.connector.charge.util.RefundCalculator.getTotalAmountAvailableToBeRefunded;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.refund.exception.RefundException.ErrorCode.NOT_SUFFICIENT_AMOUNT_AVAILABLE;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
@@ -81,7 +80,7 @@ public class ChargeRefundService {
 
             logger.info("Card refund request sent - charge_external_id={}, status={}, amount={}, transaction_id={}, account_id={}, operation_type=Refund, amount_available_refund={}, amount_requested_refund={}, provider={}, provider_type={}, user_external_id={}",
                     charge.getExternalId(),
-                    charge.getStatus(),
+                    charge.getExternalStatus(),
                     charge.getAmount(),
                     charge.getGatewayTransactionId(),
                     gatewayAccountEntity.getId(),
@@ -190,7 +189,7 @@ public class ChargeRefundService {
 
             logger.info("Charge doesn't have sufficient amount for refund - charge_external_id={}, status={}, refund_status={}, account_id={}, operation_type=Refund, provider={}, provider_type={}, amount_available_refund={}, amount_requested_refund={}",
                     reloadedCharge.getExternalId(),
-                    fromString(reloadedCharge.getStatus()),
+                    reloadedCharge.getExternalStatus(),
                     refundAvailability,
                     gatewayAccount.getId(),
                     gatewayAccount.getGatewayName(),
@@ -207,7 +206,7 @@ public class ChargeRefundService {
 
             logger.warn("Charge not available for refund - charge_external_id={}, status={}, refund_status={}, account_id={}, operation_type=Refund, provider={}, provider_type={}",
                     reloadedCharge.getExternalId(),
-                    fromString(reloadedCharge.getStatus()),
+                    reloadedCharge.getExternalStatus(),
                     refundAvailability,
                     gatewayAccount.getId(),
                     gatewayAccount.getGatewayName(),
@@ -242,7 +241,7 @@ public class ChargeRefundService {
         ExternalChargeRefundAvailability refundAvailability;
 
         if(charge.isHistoric()) {
-            refundAvailability = ExternalChargeRefundAvailability.valueOf(charge.getRefundAvailabilityStatus());
+            refundAvailability = ExternalChargeRefundAvailability.from(charge.getRefundAvailabilityStatus());
         } else {
             refundAvailability = providers
                     .byName(PaymentGatewayName.valueFrom(gatewayAccountEntity.getGatewayName()))
@@ -252,7 +251,7 @@ public class ChargeRefundService {
 
         List<RefundEntity> refundEntities = refundDao.findRefundsByChargeExternalId(charge.getExternalId());
 
-        long availableToBeRefunded = RefundCalculator.getTotalAmountAvailableToBeRefunded(charge, refundEntities);
+        long availableToBeRefunded = getTotalAmountAvailableToBeRefunded(charge, refundEntities);
         checkIfRefundRequestIsInConflictOrTerminate(refundRequest, charge, availableToBeRefunded);
 
         checkIfRefundAmountWithinLimitOrTerminate(refundRequest, charge, refundAvailability, 

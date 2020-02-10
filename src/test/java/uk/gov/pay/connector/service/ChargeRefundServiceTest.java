@@ -163,6 +163,8 @@ public class ChargeRefundServiceTest {
 
         GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
+
+        // @TODO(sfount) Requires PP-6066 to remove the requirements on the charge entity
         ChargeEntity charge = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
                 .withTransactionId("transaction-id")
