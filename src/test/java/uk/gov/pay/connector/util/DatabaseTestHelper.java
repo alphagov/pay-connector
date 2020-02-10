@@ -50,12 +50,12 @@ public class DatabaseTestHelper {
                             "service_name, type, description, analytics_id, email_collection_mode, " +
                             "integration_version_3ds, corporate_credit_card_surcharge_amount, " +
                             "corporate_debit_card_surcharge_amount, corporate_prepaid_credit_card_surcharge_amount, " +
-                            "corporate_prepaid_debit_card_surcharge_amount) " +
+                            "corporate_prepaid_debit_card_surcharge_amount, allow_moto) " +
                             "VALUES (:id, :payment_provider, :credentials, :service_name, :type, " +
                             ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
                             ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
                             ":corporate_prepaid_credit_card_surcharge_amount, " +
-                            ":corporate_prepaid_debit_card_surcharge_amount)")
+                            ":corporate_prepaid_debit_card_surcharge_amount, :allow_moto)")
                             .bind("id", Long.valueOf(params.getAccountId()))
                             .bind("payment_provider", params.getPaymentGateway())
                             .bindBySqlType("credentials", jsonObject, OTHER)
@@ -69,6 +69,7 @@ public class DatabaseTestHelper {
                             .bind("corporate_debit_card_surcharge_amount", params.getCorporateDebitCardSurchargeAmount())
                             .bind("corporate_prepaid_credit_card_surcharge_amount", params.getCorporatePrepaidCreditCardSurchargeAmount())
                             .bind("corporate_prepaid_debit_card_surcharge_amount", params.getCorporatePrepaidDebitCardSurchargeAmount())
+                            .bind("allow_moto", params.isAllowMoto())
                             .execute());
         } catch (SQLException e) {
             throw new RuntimeException(e);

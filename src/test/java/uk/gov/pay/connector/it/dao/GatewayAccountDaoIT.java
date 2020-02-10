@@ -5,8 +5,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.common.model.api.CommaDelimitedSetParameter;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 
 import java.util.Arrays;
@@ -25,6 +27,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -473,6 +476,51 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertEquals("service-name-3", gatewayAccounts.get(1).getServiceName());
         assertEquals(TEST.toString(), gatewayAccounts.get(1).getType());
         assertEquals("analytics-id-3", gatewayAccounts.get(1).getAnalyticsId());
+    }
+
+    @Test
+    public void shouldSearchForAccountsById() {
+        long gatewayAccountId_1 = nextLong();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .build());
+        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_2))
+                .build());
+        long gatewayAccountId_3 = gatewayAccountId_2 + 1;
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_3))
+                .build());
+        
+        var params = new GatewayAccountSearchParams();
+        params.setAccountIds(new CommaDelimitedSetParameter(gatewayAccountId_1 + "," + gatewayAccountId_2));
+
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+        assertThat(gatewayAccounts, hasSize(2));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+        assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_2));
+    }
+
+    @Test
+    public void shouldSearchForAccountsByMotoEnabled() {
+        long gatewayAccountId_1 = nextLong();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withAllowMoto(false)
+                .build());
+        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_2))
+                .withAllowMoto(true)
+                .build());
+
+        var params = new GatewayAccountSearchParams();
+        params.setMotoEnabled(true);
+
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+        assertThat(gatewayAccounts, hasSize(1));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
     }
 
     @Test
