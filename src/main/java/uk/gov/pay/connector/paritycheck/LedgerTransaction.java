@@ -45,16 +45,32 @@ public class LedgerTransaction {
         return amount;
     }
 
+    public void setAmount(Long amount) {
+        this.amount = amount;
+    }
+
     public String getDescription() {
         return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getReference() {
         return reference;
     }
 
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
+
     public String getEmail() {
         return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public boolean getDelayedCapture() {
@@ -65,24 +81,48 @@ public class LedgerTransaction {
         return corporateCardSurcharge;
     }
 
+    public void setCorporateCardSurcharge(Long corporateCardSurcharge) {
+        this.corporateCardSurcharge = corporateCardSurcharge;
+    }
+
     public Long getTotalAmount() {
         return totalAmount;
+    }
+
+    public void setTotalAmount(Long totalAmount) {
+        this.totalAmount = totalAmount;
     }
 
     public Long getFee() {
         return fee;
     }
 
+    public void setFee(Long fee) {
+        this.fee = fee;
+    }
+
     public Long getNetAmount() {
         return netAmount;
+    }
+
+    public void setNetAmount(Long netAmount) {
+        this.netAmount = netAmount;
     }
 
     public String getCreatedDate() {
         return createdDate;
     }
 
+    public void setCreatedDate(String createdDate) {
+        this.createdDate = createdDate;
+    }
+
     public String getTransactionId() {
         return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
     }
 
     public TransactionState getState() {
@@ -97,55 +137,111 @@ public class LedgerTransaction {
         return gatewayAccountId;
     }
 
+    public void setGatewayAccountId(Long gatewayAccountId) {
+        this.gatewayAccountId = gatewayAccountId;
+    }
+
     public boolean isDelayedCapture() {
         return delayedCapture;
+    }
+
+    public void setDelayedCapture(boolean delayedCapture) {
+        this.delayedCapture = delayedCapture;
     }
 
     public String getReturnUrl() {
         return returnUrl;
     }
 
+    public void setReturnUrl(String returnUrl) {
+        this.returnUrl = returnUrl;
+    }
+
     public String getPaymentProvider() {
         return paymentProvider;
+    }
+
+    public void setPaymentProvider(String paymentProvider) {
+        this.paymentProvider = paymentProvider;
     }
 
     public ChargeResponse.RefundSummary getRefundSummary() {
         return refundSummary;
     }
 
+    public void setRefundSummary(ChargeResponse.RefundSummary refundSummary) {
+        this.refundSummary = refundSummary;
+    }
+
     public ChargeResponse.SettlementSummary getSettlementSummary() {
         return settlementSummary;
+    }
+
+    public void setSettlementSummary(ChargeResponse.SettlementSummary settlementSummary) {
+        this.settlementSummary = settlementSummary;
     }
 
     public CardDetails getCardDetails() {
         return cardDetails;
     }
 
+    public void setCardDetails(CardDetails cardDetails) {
+        this.cardDetails = cardDetails;
+    }
+
     public SupportedLanguage getLanguage() {
         return language;
+    }
+
+    public void setLanguage(SupportedLanguage language) {
+        this.language = language;
     }
 
     public boolean isMoto() {
         return moto;
     }
 
+    public void setMoto(boolean moto) {
+        this.moto = moto;
+    }
+
     public Boolean getLive() {
         return live;
+    }
+
+    public void setLive(Boolean live) {
+        this.live = live;
     }
 
     public Source getSource() {
         return source;
     }
 
+    public void setSource(Source source) {
+        this.source = source;
+    }
+
     public String getGatewayTransactionId() {
         return gatewayTransactionId;
+    }
+
+    public void setGatewayTransactionId(String gatewayTransactionId) {
+        this.gatewayTransactionId = gatewayTransactionId;
     }
 
     public String getWalletType() {
         return walletType;
     }
 
+    public void setWalletType(String walletType) {
+        this.walletType = walletType;
+    }
+
     public Map<String, Object> getExternalMetaData() {
         return externalMetaData;
+    }
+
+    public void setExternalMetaData(Map<String, Object> externalMetaData) {
+        this.externalMetaData = externalMetaData;
     }
 }

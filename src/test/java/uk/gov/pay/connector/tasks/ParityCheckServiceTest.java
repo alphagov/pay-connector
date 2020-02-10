@@ -21,11 +21,12 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.DATA_MISMATCH;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
+import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.from;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ParityCheckServiceTest {
 
-    ParityCheckService parityCheckService;
+    private ParityCheckService parityCheckService;
     @Mock
     private LedgerService mockLedgerService;
     @Mock
@@ -47,8 +48,8 @@ public class ParityCheckServiceTest {
     }
 
     @Test
-    public void parityCheckChargeForExpunger_shouldReturnTrueIfChargeMatchesWithLedger() {
-        LedgerTransaction transaction = aValidLedgerTransaction().withStatus("success").build();
+    public void parityCheckChargeForExpunger_shouldReturnTrueIfChargeMatchesCommonFieldsWithLedger() {
+        LedgerTransaction transaction = from(chargeEntity).build();
         when(mockLedgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(transaction));
 
         boolean matchesWithLedger = parityCheckService.parityCheckChargeForExpunger(chargeEntity);
