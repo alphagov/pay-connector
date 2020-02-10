@@ -3,9 +3,11 @@ package uk.gov.pay.connector.paritycheck;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.commons.model.SupportedLanguageJsonDeserializer;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 
 import java.util.Map;
@@ -33,6 +35,7 @@ public class LedgerTransaction {
     private ChargeResponse.RefundSummary refundSummary;
     private ChargeResponse.SettlementSummary settlementSummary;
     private CardDetails cardDetails;
+    @JsonDeserialize(using = SupportedLanguageJsonDeserializer.class)
     private SupportedLanguage language;
     private boolean moto;
     private Boolean live;

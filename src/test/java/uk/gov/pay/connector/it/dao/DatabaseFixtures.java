@@ -529,6 +529,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestCharge withReturnUrl(String returnUrl) {
+            this.returnUrl = returnUrl;
+            return this;
+        }
+        
         public TestCharge withChargeStatus(ChargeStatus chargeStatus) {
             this.chargeStatus = chargeStatus;
             return this;

@@ -211,4 +211,9 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setMaxResults(1)
                 .getResultList().stream().findFirst();
     }
+
+    public void expungeCharge(Long id) {
+        ChargeEntity chargeEntity = entityManager.get().find(ChargeEntity.class, id);
+        entityManager.get().remove(chargeEntity);
+    }
 }

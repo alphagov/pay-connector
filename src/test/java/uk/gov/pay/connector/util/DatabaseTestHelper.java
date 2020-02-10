@@ -345,6 +345,16 @@ public class DatabaseTestHelper {
                         .first());
     }
 
+    public boolean containsChargeWithExternalId(String externalId) {
+        var result = jdbi.withHandle(h ->
+                h.createQuery("SELECT count(*) FROM charges WHERE external_id = :external_id")
+                        .bind("external_id", externalId)
+                        .mapTo(Integer.class)
+                        .first());
+        return result > 0;
+    }
+
+
     public Map<String, Object> getChargeByGatewayTransactionId(String gatewayTransactionId) {
         return jdbi.withHandle(h ->
                 h.createQuery("SELECT * FROM charges WHERE gateway_transaction_id = :gatewayTransactionId")
