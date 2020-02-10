@@ -20,6 +20,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.usernotification.service.GatewayAccountNotificationCredentialsService;
@@ -27,14 +28,13 @@ import uk.gov.pay.connector.usernotification.service.GatewayAccountNotificationC
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -108,63 +108,35 @@ public class GatewayAccountResource {
                 .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", accountId)));
     }
 
-    // This private method, instead of using a regex Path is due to, as far as
-    // I can tell, the binding of @POST causing /v1/api/accounts to 405, thus
-    // we have to explicitly define /v1/api/accounts with @GET
-    // As such, split out the common functionality in a private method and call
-    // it twice for each explicitly defined resource
-    private Response getGatewayAccounts(
-            String accountIdsArg,
-            UriInfo uriInfo
-    ) {
-        logger.debug("Parsing {} to filter all gateway accounts.", accountIdsArg);
-        List<Long> accountIds;
-
-        try {
-            accountIds = COMMA_SEPARATOR.splitToList(accountIdsArg)
-                    .stream()
-                    .map(Long::parseLong)
-                    .collect(Collectors.toList());
-        } catch (NumberFormatException e) {
-            logger.error("Could not parse accountIds {} as Longs", accountIdsArg);
-            return badRequestResponse(format("Could not parse accountIds %s as Longs.", accountIdsArg));
-        }
-
-        List<GatewayAccountResourceDTO> gatewayAccountResourceDTOList;
-
-        if (accountIds.isEmpty()) {
-            gatewayAccountResourceDTOList = gatewayAccountService.getAllGatewayAccounts();
-        } else {
-            gatewayAccountResourceDTOList = gatewayAccountService.getGatewayAccounts(accountIds);
-        }
-
-        logger.debug("Getting gateway accounts {}.", accountIdsArg);
-
-        gatewayAccountResourceDTOList.forEach(account -> account.addLink("self", buildUri(uriInfo, account.getAccountId())));
-
-        return Response
-                .ok(ImmutableMap.of("accounts", gatewayAccountResourceDTOList))
-                .build();
-    }
-
     @GET
     @Path("/v1/api/accounts")
     @Produces(APPLICATION_JSON)
     public Response getApiGatewayAccounts(
-            @DefaultValue("") @QueryParam("accountIds") String accountIdsArg,
+            @Valid @BeanParam GatewayAccountSearchParams gatewayAccountSearchParams,
             @Context UriInfo uriInfo
     ) {
-        return getGatewayAccounts(accountIdsArg, uriInfo);
+        return getGatewayAccounts(gatewayAccountSearchParams, uriInfo);
     }
 
     @GET
     @Path("/v1/frontend/accounts")
     @Produces(APPLICATION_JSON)
     public Response getFrontendGatewayAccounts(
-            @DefaultValue("") @QueryParam("accountIds") String accountIdsArg,
+            @Valid @BeanParam GatewayAccountSearchParams gatewayAccountSearchParams,
             @Context UriInfo uriInfo
     ) {
-        return getGatewayAccounts(accountIdsArg, uriInfo);
+        return getGatewayAccounts(gatewayAccountSearchParams, uriInfo);
+    }
+
+    private Response getGatewayAccounts(@BeanParam GatewayAccountSearchParams gatewayAccountSearchParams, @Context UriInfo uriInfo) {
+        logger.info("Searching gateway accounts by parameters " + gatewayAccountSearchParams.toString());
+        
+        List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountService.searchGatewayAccounts(gatewayAccountSearchParams);
+        gatewayAccounts.forEach(account -> account.addLink("self", buildUri(uriInfo, account.getAccountId())));
+
+        return Response
+                .ok(ImmutableMap.of("accounts", gatewayAccounts))
+                .build();
     }
 
     private URI buildUri(UriInfo uriInfo, long accountId) {

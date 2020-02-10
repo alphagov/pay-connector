@@ -86,6 +86,18 @@ public class GatewayAccountResourceTestBase {
                 .contentType(JSON);
     }
 
+    void updateGatewayAccount(String gatewayAccountId, String path, Object value) {
+        given()
+                .port(testContext.getPort())
+                .contentType(JSON)
+                .body(Map.of("path", path,
+                        "op", "replace",
+                        "value", value))
+                .patch(ACCOUNTS_API_URL + gatewayAccountId)
+                .then()
+                .statusCode(200);
+    }
+
     public static void assertGettingAccountReturnsProviderName(int port, ValidatableResponse response, String providerName, GatewayAccountEntity.Type providerUrlType) {
         given().port(port)
                 .contentType(JSON)
@@ -97,7 +109,7 @@ public class GatewayAccountResourceTestBase {
                 .body("gateway_account_id", is(notNullValue()))
                 .body("type", is(providerUrlType.toString()));
     }
-    
+
     public static void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountEntity.Type type, String description, String analyticsId, String name) {
         String accountId = response.extract().path("gateway_account_id");
         String urlSlug = "api/accounts/" + accountId;

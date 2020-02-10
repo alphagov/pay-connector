@@ -34,19 +34,6 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
                 .getResultList().stream().findFirst();
     }
 
-    public List<GatewayAccountEntity> list(List<Long> accountIds) {
-        String query = "SELECT gae"
-                + " FROM GatewayAccountEntity gae"
-                + " WHERE gae.id IN :accountIds"
-                + " ORDER BY gae.id";
-
-        return entityManager
-                .get()
-                .createQuery(query, GatewayAccountEntity.class)
-                .setParameter("accountIds", accountIds)
-                .getResultList();
-    }
-
     public List<GatewayAccountEntity> search(GatewayAccountSearchParams params) {
         List<String> filterTemplates = params.getFilterTemplates();
         String whereClause = filterTemplates.isEmpty() ?
@@ -65,16 +52,5 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
         params.getQueryMap().forEach(query::setParameter);
         
         return query.getResultList();
-    }
-
-    public List<GatewayAccountEntity> listAll() {
-        String query = "SELECT gae " +
-                "FROM GatewayAccountEntity gae " +
-                "ORDER BY gae.id";
-
-        return entityManager
-                .get()
-                .createQuery(query, GatewayAccountEntity.class)
-                .getResultList();
     }
 }

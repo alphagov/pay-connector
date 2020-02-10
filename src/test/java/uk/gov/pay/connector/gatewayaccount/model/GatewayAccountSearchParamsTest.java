@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
-import org.hamcrest.collection.IsMapWithSize;
 import org.junit.Test;
 import uk.gov.pay.connector.common.model.api.CommaDelimitedSetParameter;
 
@@ -19,7 +18,7 @@ public class GatewayAccountSearchParamsTest {
     public void shouldReturnFilterTemplatesWithAllParameters() {
         var params = new GatewayAccountSearchParams();
         params.setAccountIds(new CommaDelimitedSetParameter("1,2"));
-        params.setMotoEnabled(false);
+        params.setMotoEnabled("false");
 
         List<String> filterTemplates = params.getFilterTemplates();
         assertThat(filterTemplates, hasSize(2));
@@ -49,7 +48,7 @@ public class GatewayAccountSearchParamsTest {
     public void shouldReturnQueryMapWithAllParameters() {
         var params = new GatewayAccountSearchParams();
         params.setAccountIds(new CommaDelimitedSetParameter("1,2"));
-        params.setMotoEnabled(false);
+        params.setMotoEnabled("false");
 
         Map<String, Object> queryMap = params.getQueryMap();
         assertThat(queryMap, hasEntry("accountIds", List.of("1", "2")));

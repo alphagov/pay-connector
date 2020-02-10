@@ -316,168 +316,24 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldListAllAccounts() {
-        final long gatewayAccountId_1 = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_1))
-                .withPaymentGateway("provider-1")
-                .withCredentials(Map.of("user", "fuser", "password", "word"))
-                .withServiceName("service-name-1")
-                .withDescription("description-1")
-                .withAnalyticsId("analytics-id-1")
-                .withCorporateCreditCardSurchargeAmount(100)
-                .withCorporateDebitCardSurchargeAmount(200)
-                .withCorporatePrepaidCreditCardSurchargeAmount(300)
-                .withCorporatePrepaidDebitCardSurchargeAmount(400)
-                .build());
-        final long gatewayAccountId_2 = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_2))
-                .withPaymentGateway("provider-2")
-                .withServiceName("service-name-2")
-                .withDescription("description-2")
-                .withAnalyticsId("analytics-id-2")
-                .withCorporateCreditCardSurchargeAmount(250)
-                .withCorporateDebitCardSurchargeAmount(50)
-                .withCorporatePrepaidCreditCardSurchargeAmount(250)
-                .withCorporatePrepaidDebitCardSurchargeAmount(50)
-                .build());
-        final long gatewayAccountId_3 = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_3))
-                .withPaymentGateway("provider-3")
-                .withServiceName("service-name-3")
-                .withDescription("description-3")
-                .withAnalyticsId("analytics-id-3")
-                .withProviderUrlType(GatewayAccountEntity.Type.LIVE)
-                .build());
-
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.listAll();
-
-        assertEquals(3, gatewayAccounts.size());
-
-        List<GatewayAccountEntity> gatewayAccountWithId_1 = gatewayAccounts.stream().filter(ga -> ga.getId() == gatewayAccountId_1).collect(Collectors.toList());
-        assertEquals(gatewayAccountWithId_1.size(), 1);
-        GatewayAccountEntity gatewayAccountEntity = gatewayAccountWithId_1.get(0);
-        assertThat(gatewayAccountEntity.getId(), is(gatewayAccountId_1));
-        assertEquals("provider-1", gatewayAccountEntity.getGatewayName());
-        assertEquals("description-1", gatewayAccountEntity.getDescription());
-        assertEquals("service-name-1", gatewayAccountEntity.getServiceName());
-        assertEquals(TEST.toString(), gatewayAccountEntity.getType());
-        assertEquals("analytics-id-1", gatewayAccountEntity.getAnalyticsId());
-        assertEquals(100L, gatewayAccountEntity.getCorporateNonPrepaidCreditCardSurchargeAmount());
-        assertEquals(200L, gatewayAccountEntity.getCorporateNonPrepaidDebitCardSurchargeAmount());
-        assertEquals(300L, gatewayAccountEntity.getCorporatePrepaidCreditCardSurchargeAmount());
-        assertEquals(400L, gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount());
-
-        List<GatewayAccountEntity> gatewayAccountWithId_2 = gatewayAccounts.stream().filter(ga -> ga.getId() == gatewayAccountId_2).collect(Collectors.toList());
-        assertEquals(gatewayAccountWithId_2.size(), 1);
-        gatewayAccountEntity = gatewayAccountWithId_2.get(0);
-        assertEquals("provider-2", gatewayAccountEntity.getGatewayName());
-        assertEquals(250L, gatewayAccountEntity.getCorporateNonPrepaidCreditCardSurchargeAmount());
-        assertEquals(50L, gatewayAccountEntity.getCorporateNonPrepaidDebitCardSurchargeAmount());
-        assertThat(gatewayAccountEntity.getId(), is(gatewayAccountId_2));
-
-        List<GatewayAccountEntity> gatewayAccountWithId_3 = gatewayAccounts.stream().filter(ga -> ga.getId() == gatewayAccountId_3).collect(Collectors.toList());
-        assertEquals(gatewayAccountWithId_3.size(), 1);
-        gatewayAccountEntity = gatewayAccountWithId_3.get(0);
-        assertEquals("provider-3", gatewayAccountEntity.getGatewayName());
-        assertEquals(0L, gatewayAccountEntity.getCorporatePrepaidCreditCardSurchargeAmount());
-        assertEquals(0L, gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount());
-        assertThat(gatewayAccountEntity.getId(), is(gatewayAccountId_3));
-    }
-    
-    
-    @Test
-    public void shouldListASubsetOfAccountsSingle() {
+    public void shouldReturnAllAccountsWhenNoSearchParamaters() {
         long gatewayAccountId_1 = nextLong();
-        databaseTestHelper.addGatewayAccount(
-                anAddGatewayAccountParams()
-                        .withAccountId(String.valueOf(gatewayAccountId_1))
-                        .withPaymentGateway("provider-1")
-                        .withCredentials(Map.of("user", "fuser","password", "word"))
-                        .withServiceName("service-name-1")
-                        .withDescription("description-1")
-                        .withAnalyticsId("analytics-id-1")
-                        .build());
-        long gatewayAccountId_2 = nextLong();
-        databaseTestHelper.addGatewayAccount(
-                anAddGatewayAccountParams()
-                        .withAccountId(String.valueOf(gatewayAccountId_2))
-                        .withPaymentGateway("provider-2")
-                        .withServiceName("service-name-2")
-                        .withDescription("description-2")
-                        .withAnalyticsId("analytics-id-2")
-                        .build());
-
-        List<Long> accountIds = Collections.singletonList(gatewayAccountId_2);
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.list(accountIds);
-
-        assertEquals(1, gatewayAccounts.size());
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
-        assertEquals("provider-2", gatewayAccounts.get(0).getGatewayName());
-        assertEquals("description-2", gatewayAccounts.get(0).getDescription());
-        assertEquals("service-name-2", gatewayAccounts.get(0).getServiceName());
-        assertEquals(TEST.toString(), gatewayAccounts.get(0).getType());
-        assertEquals("analytics-id-2", gatewayAccounts.get(0).getAnalyticsId());
-    }
-
-    @Test
-    public void shouldListASubsetOfAccountsMultiple() {
-        final long gatewayAccountId_1 = nextLong();
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_1))
-                .withPaymentGateway("provider-1")
-                .withCredentials(Map.of("user", "fuser","password", "word"))
-                .withServiceName("service-name-1")
-                .withDescription("description-1")
-                .withAnalyticsId("analytics-id-1")
                 .build());
-        final long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_2))
-                .withPaymentGateway("provider-2")
-                .withServiceName("service-name-2")
-                .withDescription("description-2")
-                .withAnalyticsId("analytics-id-2")
-                .withCorporateCreditCardSurchargeAmount(100)
-                .withCorporateDebitCardSurchargeAmount(200)
-                .withCorporatePrepaidCreditCardSurchargeAmount(300)
-                .withCorporatePrepaidDebitCardSurchargeAmount(400)
-                .build());
-        final long gatewayAccountId_3 = gatewayAccountId_2 + 1;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_3))
-                .withPaymentGateway("provider-3")
-                .withServiceName("service-name-3")
-                .withDescription("description-3")
-                .withAnalyticsId("analytics-id-3")
                 .build());
 
-        List<Long> accountIds = Arrays.asList(gatewayAccountId_2, gatewayAccountId_3);
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.list(accountIds);
+        var params = new GatewayAccountSearchParams();
 
-        assertEquals(2, gatewayAccounts.size());
-
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
-        assertEquals("provider-2", gatewayAccounts.get(0).getGatewayName());
-        assertEquals("description-2", gatewayAccounts.get(0).getDescription());
-        assertEquals("service-name-2", gatewayAccounts.get(0).getServiceName());
-        assertEquals(TEST.toString(), gatewayAccounts.get(0).getType());
-        assertEquals("analytics-id-2", gatewayAccounts.get(0).getAnalyticsId());
-        assertEquals(100, gatewayAccounts.get(0).getCorporateNonPrepaidCreditCardSurchargeAmount());
-        assertEquals(200L, gatewayAccounts.get(0).getCorporateNonPrepaidDebitCardSurchargeAmount());
-        assertEquals(300L, gatewayAccounts.get(0).getCorporatePrepaidCreditCardSurchargeAmount());
-        assertEquals(400L, gatewayAccounts.get(0).getCorporatePrepaidDebitCardSurchargeAmount());
-
-        assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_3));
-        assertEquals("provider-3", gatewayAccounts.get(1).getGatewayName());
-        assertEquals("description-3", gatewayAccounts.get(1).getDescription());
-        assertEquals("service-name-3", gatewayAccounts.get(1).getServiceName());
-        assertEquals(TEST.toString(), gatewayAccounts.get(1).getType());
-        assertEquals("analytics-id-3", gatewayAccounts.get(1).getAnalyticsId());
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+        assertThat(gatewayAccounts, hasSize(2));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+        assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_2));
     }
-
+    
     @Test
     public void shouldSearchForAccountsById() {
         long gatewayAccountId_1 = nextLong();
@@ -516,7 +372,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
                 .build());
 
         var params = new GatewayAccountSearchParams();
-        params.setMotoEnabled(true);
+        params.setMotoEnabled("true");
 
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
         assertThat(gatewayAccounts, hasSize(1));

@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriInfo;
@@ -55,15 +56,9 @@ public class GatewayAccountService {
     public Optional<GatewayAccountEntity> getGatewayAccount(long gatewayAccountId) {
         return gatewayAccountDao.findById(gatewayAccountId);
     }
-
-    public List<GatewayAccountResourceDTO> getAllGatewayAccounts() {
-        return gatewayAccountDao.listAll().stream()
-                .map(GatewayAccountResourceDTO::fromEntity)
-                .collect(Collectors.toList());
-    }
-
-    public List<GatewayAccountResourceDTO> getGatewayAccounts(List<Long> gatewayAccountIds) {
-        return gatewayAccountDao.list(gatewayAccountIds).stream()
+    
+    public List<GatewayAccountResourceDTO> searchGatewayAccounts(GatewayAccountSearchParams params) {
+        return gatewayAccountDao.search(params).stream()
                 .map(GatewayAccountResourceDTO::fromEntity)
                 .collect(Collectors.toList());
     }
