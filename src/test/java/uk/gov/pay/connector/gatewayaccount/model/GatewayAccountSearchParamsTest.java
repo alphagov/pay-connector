@@ -11,6 +11,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.collection.IsMapWithSize.anEmptyMap;
 
 public class GatewayAccountSearchParamsTest {
     
@@ -60,7 +61,7 @@ public class GatewayAccountSearchParamsTest {
         var params = new GatewayAccountSearchParams();
 
         Map<String, Object> queryMap = params.getQueryMap();
-        assertThat(queryMap, IsMapWithSize.anEmptyMap());
+        assertThat(queryMap, anEmptyMap());
     }
 
     @Test
@@ -69,6 +70,6 @@ public class GatewayAccountSearchParamsTest {
         params.setAccountIds(new CommaDelimitedSetParameter(""));
 
         Map<String, Object> queryMap = params.getQueryMap();
-        assertThat(queryMap, IsMapWithSize.anEmptyMap());
+        assertThat(queryMap, anEmptyMap());
     }
 }
