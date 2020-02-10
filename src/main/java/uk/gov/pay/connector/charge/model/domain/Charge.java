@@ -10,6 +10,7 @@ public class Charge {
     private String externalId;
     private Long amount;
     private String status;
+    private String externalStatus;
     private String gatewayTransactionId;
     private Long corporateSurcharge;
     private String refundAvailabilityStatus;
@@ -19,12 +20,13 @@ public class Charge {
     private String email;
     private boolean historic;
 
-    public Charge(String externalId, Long amount, String status, String gatewayTransactionId,
+    public Charge(String externalId, Long amount, String status, String externalStatus, String gatewayTransactionId,
                   Long corporateSurcharge, String refundAvailabilityStatus, String reference,
                   String description, ZonedDateTime createdDate, String email, boolean historic) {
         this.externalId = externalId;
         this.amount = amount;
         this.status = status;
+        this.externalStatus = externalStatus;
         this.gatewayTransactionId = gatewayTransactionId;
         this.corporateSurcharge = corporateSurcharge;
         this.refundAvailabilityStatus = refundAvailabilityStatus;
@@ -36,10 +38,13 @@ public class Charge {
     }
 
     public static Charge from(ChargeEntity chargeEntity) {
+        ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
+
         return new Charge(
                 chargeEntity.getExternalId(),
                 chargeEntity.getAmount(),
                 chargeEntity.getStatus(),
+                chargeStatus.toExternal().toString(),
                 chargeEntity.getGatewayTransactionId(),
                 chargeEntity.getCorporateSurcharge().orElse(null),
                 null, 
@@ -52,15 +57,21 @@ public class Charge {
 
     public static Charge from(LedgerTransaction transaction) {
         String externalRefundState = null;
+        String externalStatus = null;
 
         if (transaction.getRefundSummary() != null ) {
             externalRefundState = transaction.getRefundSummary().getStatus();
+        }
+
+        if (transaction.getState() != null) {
+            externalStatus = transaction.getState().getStatus();
         }
 
         return new Charge(
                 transaction.getTransactionId(),
                 transaction.getAmount(),
                 null,
+                externalStatus,
                 transaction.getGatewayTransactionId(),
                 transaction.getCorporateCardSurcharge(),
                 externalRefundState,
@@ -137,5 +148,9 @@ public class Charge {
                 Objects.equals(description, charge.description) &&
                 Objects.equals(createdDate, charge.createdDate) &&
                 Objects.equals(email, charge.email);
+    }
+
+    public String getExternalStatus() {
+        return externalStatus;
     }
 }

@@ -162,6 +162,8 @@ public class ChargeRefundServiceTest {
 
         GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
+
+        // @TODO(sfount) Requires PP-6066 to remove the requirements on the charge entity
         ChargeEntity charge = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
                 .withTransactionId("transaction-id")
@@ -177,11 +179,11 @@ public class ChargeRefundServiceTest {
         transaction.setAmount(charge.getAmount());
         transaction.setRefundSummary(refundSummary);
 
-        RefundEntity refundEntity = aValidRefundEntity().withCharge(charge).withAmount(refundAmount).build();
+        RefundEntity refundEntity = aValidRefundEntity().withChargeExternalId(charge.getExternalId()).withAmount(refundAmount).build();
         RefundEntity spiedRefundEntity = spy(refundEntity);
 
         when(mockGatewayAccountDao.findById(accountId)).thenReturn(Optional.of(account));
-        when(mockChargeService.findChargeById(externalChargeId)).thenReturn(charge);
+        when(mockChargeService.findChargeByExternalId(externalChargeId)).thenReturn(charge);
         when(mockChargeService.findCharge(externalChargeId, accountId))
                 .thenReturn(Optional.of(transaction).map(Charge::from));
         when(mockProviders.byName(WORLDPAY)).thenReturn(mockProvider);
@@ -203,7 +205,7 @@ public class ChargeRefundServiceTest {
         assertThat(gatewayResponse.getRefundEntity(), is(spiedRefundEntity));
 
         verify(mockChargeService).findCharge(externalChargeId, accountId);
-        verify(mockChargeService).findChargeById(externalChargeId);
+        verify(mockChargeService).findChargeByExternalId(externalChargeId);
         verify(mockRefundDao).persist(argThat(aRefundEntity(refundAmount, charge)));
         verify(mockProvider).refund(argThat(aRefundRequestWith(charge, refundAmount)));
         verify(mockRefundDao, times(1)).findById(refundId);
