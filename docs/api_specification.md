@@ -194,12 +194,17 @@ Content-Type: application/json
 ---------------------------------------------------------------------------------------------------------------
 ## GET /v1/api/accounts
 
-Retrieves a collection of all the accounts
+Retrieves a collection of accounts, optionally filtering by the provided query parameters
+
+| Field          | Always present | Description                                                                                                                                |
+|:---------------|:--------------:|:-------------------------------------------------------------------------------------------------------------------------------------------|
+| `accountIds`   |                | The account IDs that the results should be filtered by. A comma separated list of IDs.                                                     |
+| `moto_enabled` |                | The accounts will be filtered by whether or not MOTO payment are enabled for the account if this parameter is provided. "true" or "false". |
 
 ### Request example
 
 ```
-GET /v1/api/accounts
+GET /v1/api/accounts?accountIds
 ```
 
 ### Response example
