@@ -224,6 +224,20 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     }
 
     @Test
+    public void shouldGetGatewayAccountsByMotoDisabled() {
+        String gatewayAccountId1 = createAGatewayAccountFor("sandbox");
+        updateGatewayAccount(gatewayAccountId1, "allow_moto", true);
+        String gatewayAccountId2 = createAGatewayAccountFor("sandbox");
+
+        givenSetup()
+                .get("/v1/api/accounts?moto_enabled=false")
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("accounts", hasSize(1))
+                .body("accounts[0].gateway_account_id", is(Integer.valueOf(gatewayAccountId2)));
+    }
+
+    @Test
     public void shouldReturn422ForMotoEnabledNotBooleanValue() {
         givenSetup()
                 .get("/v1/api/accounts?moto_enabled=blah")
