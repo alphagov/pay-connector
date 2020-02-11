@@ -34,6 +34,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultCardDetails;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.from;
@@ -69,7 +70,7 @@ public class ParityCheckWorkerTest {
         CardDetailsEntity cardDetails = mock(CardDetailsEntity.class);
         chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
-                .withCardDetails(cardDetails)
+                .withCardDetails(defaultCardDetails())
                 .build();
         ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(chargeEntity.getCreatedDate())
