@@ -14,7 +14,7 @@ public class RefundSucceeded extends RefundEvent {
 
     public static RefundSucceeded from(RefundHistory refundHistory) {
         return new RefundSucceeded(refundHistory.getExternalId(),
-                refundHistory.getChargeEntity().getExternalId(),
+                refundHistory.getChargeExternalId(),
                 new RefundEventWithReferenceDetails(refundHistory.getReference()),
                 refundHistory.getHistoryStartDate());
     }

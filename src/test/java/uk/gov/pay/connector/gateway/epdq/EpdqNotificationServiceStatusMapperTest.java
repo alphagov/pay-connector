@@ -3,8 +3,11 @@ package uk.gov.pay.connector.gateway.epdq;
 import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.List;
 
@@ -38,6 +41,9 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 
 public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationServiceTest {
+
+    private GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
+    private ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).build();
 
     @Before
     public void setup() {
@@ -121,7 +127,7 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         final String payload = notificationPayloadForTransaction(payId, EPDQ_PAYMENT_DELETED);
 
         notificationService.handleNotificationFor(payload);
-        verify(mockRefundNotificationProcessor).invoke(PaymentGatewayName.EPDQ, REFUNDED, payId + "/" + payIdSub, payId);
+        verify(mockRefundNotificationProcessor).invoke(PaymentGatewayName.EPDQ, REFUNDED, mockGatewayAccountEntity,payId + "/" + payIdSub, payId, mockCharge);
     }
 
     @Test
@@ -129,7 +135,7 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         final String payload = notificationPayloadForTransaction(payId, EPDQ_REFUND);
 
         notificationService.handleNotificationFor(payload);
-        verify(mockRefundNotificationProcessor).invoke(PaymentGatewayName.EPDQ, REFUNDED, payId + "/" + payIdSub, payId);
+        verify(mockRefundNotificationProcessor).invoke(PaymentGatewayName.EPDQ, REFUNDED, mockGatewayAccountEntity, payId + "/" + payIdSub, payId, mockCharge);
     }
 
     @Test
@@ -137,7 +143,7 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         final String payload = notificationPayloadForTransaction(payId, EPDQ_REFUND_REFUSED);
 
         notificationService.handleNotificationFor(payload);
-        verify(mockRefundNotificationProcessor).invoke(PaymentGatewayName.EPDQ, REFUND_ERROR, payId + "/" + payIdSub, payId);
+        verify(mockRefundNotificationProcessor).invoke(PaymentGatewayName.EPDQ, REFUND_ERROR, mockGatewayAccountEntity, payId + "/" + payIdSub, payId, mockCharge);
     }
 
     @Test
@@ -145,7 +151,7 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         final String payload = notificationPayloadForTransaction(payId, EPDQ_DELETION_REFUSED);
 
         notificationService.handleNotificationFor(payload);
-        verify(mockRefundNotificationProcessor).invoke(PaymentGatewayName.EPDQ, REFUND_ERROR, payId + "/" + payIdSub, payId);
+        verify(mockRefundNotificationProcessor).invoke(PaymentGatewayName.EPDQ, REFUND_ERROR, mockGatewayAccountEntity,payId + "/" + payIdSub, payId, mockCharge);
     }
 
     @Test
@@ -153,7 +159,7 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         final String payload = notificationPayloadForTransaction(payId, EPDQ_REFUND_DECLINED_BY_ACQUIRER);
 
         notificationService.handleNotificationFor(payload);
-        verify(mockRefundNotificationProcessor).invoke(PaymentGatewayName.EPDQ, REFUND_ERROR, payId + "/" + payIdSub, payId);
+        verify(mockRefundNotificationProcessor).invoke(PaymentGatewayName.EPDQ, REFUND_ERROR, mockGatewayAccountEntity,payId + "/" + payIdSub, payId, mockCharge);
     }
 
     @Test
@@ -161,6 +167,6 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         final String payload = notificationPayloadForTransaction(payId, UNKNOWN);
 
         notificationService.handleNotificationFor(payload);
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
     }
 }

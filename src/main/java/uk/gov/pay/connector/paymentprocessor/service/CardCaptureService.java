@@ -82,7 +82,7 @@ public class CardCaptureService {
 
         if (!charge.isDelayedCapture()) {
             addChargeToCaptureQueue(charge);
-            userNotificationService.sendPaymentConfirmedEmail(charge);
+            userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount());
         }
 
         return charge;
@@ -128,7 +128,7 @@ public class CardCaptureService {
                 charge.getGatewayAccount().getId(), nextStatus.toString())).inc();
 
         if (captureResponse.isSuccessful() && charge.isDelayedCapture()) {
-            userNotificationService.sendPaymentConfirmedEmail(charge);
+            userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount());
         }
     }
 

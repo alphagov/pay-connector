@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
@@ -33,7 +34,6 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.pact.RefundHistoryEntityFixture;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
@@ -70,7 +70,7 @@ public class EventFactoryTest {
     
     @Before
     public void setUp() {
-        when(chargeService.findChargeById(charge.getExternalId())).thenReturn(charge);
+        when(chargeService.findChargeByExternalId(charge.getExternalId())).thenReturn(charge);
         
         PaymentProvider paymentProvider = new SandboxPaymentProvider();
         when(paymentProviders.byName(any(PaymentGatewayName.class))).thenReturn(paymentProvider);

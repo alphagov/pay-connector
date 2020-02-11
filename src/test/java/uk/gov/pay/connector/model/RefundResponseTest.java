@@ -33,8 +33,12 @@ public class RefundResponseTest {
     public void shouldSerializeARefundWithExpectedFieldsDefined() {
 
         // given
-        RefundEntity refund = RefundEntityFixture.aValidRefundEntity().build();
-        String chargeId = refund.getChargeEntity().getExternalId();
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        RefundEntity refund = RefundEntityFixture.aValidRefundEntity()
+                .withChargeExternalId(chargeEntity.getExternalId())
+                .build();
+
+        String chargeId = refund.getChargeExternalId();
         String refundId = refund.getExternalId();
 
         String expectedPaymentLink = "http://app.com/v1/api/accounts/1/charges/" + chargeId;
@@ -44,7 +48,7 @@ public class RefundResponseTest {
                 UriBuilder.fromUri("http://app.com"));
 
         // when
-        String serializedResponse = RefundResponse.valueOf(refund, mockUriInfo).serialize();
+        String serializedResponse = RefundResponse.valueOf(refund, chargeEntity.getGatewayAccount().getId(), mockUriInfo).serialize();
 
         // then
         JsonAssert.with(serializedResponse)

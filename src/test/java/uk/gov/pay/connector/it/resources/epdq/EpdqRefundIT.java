@@ -79,7 +79,7 @@ public class EpdqRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getChargeId(), refundAmount, "REFUND SUBMITTED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
     }
 
     @Test
@@ -93,7 +93,7 @@ public class EpdqRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getChargeId(), refundAmount, "REFUND SUBMITTED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
         assertThat(refundsFoundByChargeId.get(0), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
     }
 
@@ -116,7 +116,7 @@ public class EpdqRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(captureSubmittedCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), captureSubmittedCharge.getChargeId(), refundAmount, "REFUND SUBMITTED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), captureSubmittedCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
     }
 
     @Test
@@ -139,8 +139,8 @@ public class EpdqRefundIT extends ChargingITestBase {
         assertThat(refundsFoundByChargeId.size(), is(2));
 
         assertThat(refundsFoundByChargeId, hasItems(
-                aRefundMatching(secondRefundId, is(notNullValue()), chargeId, secondRefundAmount, "REFUND SUBMITTED"),
-                aRefundMatching(firstRefundId, is(notNullValue()), chargeId, firstRefundAmount, "REFUND SUBMITTED")));
+                aRefundMatching(secondRefundId, is(notNullValue()), externalChargeId, secondRefundAmount, "REFUND SUBMITTED"),
+                aRefundMatching(firstRefundId, is(notNullValue()), externalChargeId, firstRefundAmount, "REFUND SUBMITTED")));
 
         connectorRestApiClient.withChargeId(externalChargeId)
                 .getCharge()
@@ -250,7 +250,7 @@ public class EpdqRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getChargeId(), firstRefundAmount, "REFUND SUBMITTED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), firstRefundAmount, "REFUND SUBMITTED")));
 
         epdqMockClient.mockRefundSuccess();
         postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount)
@@ -261,7 +261,7 @@ public class EpdqRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId1 = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId1.size(), is(1));
-        assertThat(refundsFoundByChargeId1, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getChargeId(), firstRefundAmount, "REFUND SUBMITTED")));
+        assertThat(refundsFoundByChargeId1, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), firstRefundAmount, "REFUND SUBMITTED")));
     }
 
     @Test
@@ -296,6 +296,7 @@ public class EpdqRefundIT extends ChargingITestBase {
                 .withTestCharge(defaultTestCharge)
                 .withType(RefundStatus.REFUND_SUBMITTED)
                 .withReference(randomAlphanumeric(10))
+                .withChargeExternalId(defaultTestCharge.getExternalChargeId())
                 .insert();
 
         ValidatableResponse validatableResponse = getRefundFor(
@@ -305,7 +306,7 @@ public class EpdqRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getChargeId(), testRefund.getAmount(), "REFUND SUBMITTED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), testRefund.getAmount(), "REFUND SUBMITTED")));
     }
 
     @Test
@@ -318,6 +319,7 @@ public class EpdqRefundIT extends ChargingITestBase {
                 .withCreatedDate(ZonedDateTime.of(2016, 8, 1, 0, 0, 0, 0, ZoneId.of("UTC")))
                 .withTestCharge(defaultTestCharge)
                 .withType(RefundStatus.REFUND_SUBMITTED)
+                .withChargeExternalId(defaultTestCharge.getExternalChargeId())
                 .insert();
 
         DatabaseFixtures.TestRefund testRefund2 = DatabaseFixtures
@@ -327,6 +329,7 @@ public class EpdqRefundIT extends ChargingITestBase {
                 .withCreatedDate(ZonedDateTime.of(2016, 8, 2, 0, 0, 0, 0, ZoneId.of("UTC")))
                 .withTestCharge(defaultTestCharge)
                 .withType(RefundStatus.REFUND_SUBMITTED)
+                .withChargeExternalId(defaultTestCharge.getExternalChargeId())
                 .insert();
 
         String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",

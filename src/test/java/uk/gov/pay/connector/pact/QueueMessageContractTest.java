@@ -127,7 +127,7 @@ public class QueueMessageContractTest {
                 .withUserExternalId(RandomStringUtils.randomAlphanumeric(10))
                 .withUserEmail("test@example.com")
                 .build();
-        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory);
+        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory, 1L);
 
         return refundCreatedByUser.toJsonString();
     }

@@ -11,13 +11,13 @@ public class RefundCreatedByService extends RefundEvent {
         super(resourceExternalId, parentResourceExternalId, eventDetails, timestamp);
     }
 
-    public static RefundCreatedByService from(RefundHistory refundHistory) {
+    public static RefundCreatedByService from(RefundHistory refundHistory, Long gatewayAccountId) {
         return new RefundCreatedByService(
                 refundHistory.getExternalId(),
-                refundHistory.getChargeEntity().getExternalId(),
+                refundHistory.getChargeExternalId(),
                 new RefundCreatedByServiceEventDetails(
                         refundHistory.getAmount(),
-                        refundHistory.getChargeEntity().getGatewayAccount().getId().toString()),
+                        gatewayAccountId.toString()),
                 refundHistory.getHistoryStartDate()
         );
 

@@ -9,13 +9,13 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
-import uk.gov.pay.connector.gateway.stripe.request.StripeGetPaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeRefundRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferReversalRequest;
@@ -36,7 +36,6 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_WITH_CHARGE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_REFUND_FULL_CHARGE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSFER_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
@@ -52,6 +51,8 @@ public class StripeRefundHandlerTest {
     private GatewayClient gatewayClient;
     @Mock
     private StripeGatewayConfig gatewayConfig;
+    @Mock
+    private Charge charge;
 
     @Before
     public void setUp() throws Exception {
@@ -65,14 +66,9 @@ public class StripeRefundHandlerTest {
         RefundEntity refundEntity = RefundEntityFixture
                 .aValidRefundEntity()
                 .withAmount(100L)
-                .withGatewayAccountEntity(gatewayAccount)
                 .build();
-
-        refundRequest = RefundGatewayRequest.valueOf(refundEntity, gatewayAccount);
-
-        GatewayClient.Response response = mock(GatewayClient.Response.class);
-        when(response.getEntity()).thenReturn(load(STRIPE_PAYMENT_INTENT_WITH_CHARGE_RESPONSE));
-        when(gatewayClient.postRequestFor(any(StripeGetPaymentIntentRequest.class))).thenReturn(response);
+        when(charge.getGatewayTransactionId()).thenReturn("gatewayTransactionId");
+        refundRequest = RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccount);
     }
 
     @Test
@@ -81,9 +77,8 @@ public class StripeRefundHandlerTest {
                 .aValidRefundEntity()
                 .withAmount(100L)
                 .withChargeTransactionId("pi_123")
-                .withGatewayAccountEntity(gatewayAccount)
                 .build();
-        refundRequest = RefundGatewayRequest.valueOf(refundEntity, gatewayAccount);
+        refundRequest = RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccount);
         mockTransferSuccess();
         mockRefundSuccess();
 

@@ -74,7 +74,7 @@ public class SandboxRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUNDED")));
 
         assertRefundsHistoryInOrderInDBForSuccessfulOrPartialRefund(defaultTestCharge);
     }
@@ -92,8 +92,8 @@ public class SandboxRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(2));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId_2, is(notNullValue()), defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId_2, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUNDED")));
 
         assertRefundsHistoryInOrderInDBForTwoRefunds(defaultTestCharge);
     }
@@ -113,7 +113,7 @@ public class SandboxRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUNDED")));
 
         assertRefundsHistoryInOrderInDBForSuccessfulOrPartialRefund(defaultTestCharge);
     }
@@ -129,7 +129,7 @@ public class SandboxRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getChargeId(), refundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUNDED")));
         assertThat(refundsFoundByChargeId.get(0), hasEntry("user_external_id", userExternalId));
         assertThat(refundsFoundByChargeId.get(0), hasEntry("user_email", userEmail));
         assertThat(refundsFoundByChargeId.get(0), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
@@ -154,8 +154,8 @@ public class SandboxRefundIT extends ChargingITestBase {
         assertThat(refundsFoundByChargeId.size(), is(2));
 
         assertThat(refundsFoundByChargeId, hasItems(
-                aRefundMatching(secondRefundId, is(notNullValue()), chargeId, secondRefundAmount, "REFUNDED"),
-                aRefundMatching(firstRefundId, is(notNullValue()), chargeId, firstRefundAmount, "REFUNDED")));
+                aRefundMatching(secondRefundId, is(notNullValue()), externalChargeId, secondRefundAmount, "REFUNDED"),
+                aRefundMatching(firstRefundId, is(notNullValue()), externalChargeId, firstRefundAmount, "REFUNDED")));
 
         assertRefundsHistoryInOrderInDBForTwoRefunds(defaultTestCharge);
 
@@ -273,7 +273,7 @@ public class SandboxRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getChargeId(), firstRefundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), firstRefundAmount, "REFUNDED")));
 
         postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount)
                 .statusCode(400)
@@ -283,7 +283,7 @@ public class SandboxRefundIT extends ChargingITestBase {
 
         List<Map<String, Object>> refundsFoundByChargeId1 = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
         assertThat(refundsFoundByChargeId1.size(), is(1));
-        assertThat(refundsFoundByChargeId1, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getChargeId(), firstRefundAmount, "REFUNDED")));
+        assertThat(refundsFoundByChargeId1, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), firstRefundAmount, "REFUNDED")));
 
         assertRefundsHistoryInOrderInDBForSuccessfulOrPartialRefund(defaultTestCharge);
     }

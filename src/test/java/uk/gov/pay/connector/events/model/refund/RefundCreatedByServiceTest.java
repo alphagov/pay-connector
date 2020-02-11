@@ -24,12 +24,13 @@ public class RefundCreatedByServiceTest {
             charge.getId(), timeConverter.convertToDatabaseColumn(createdDate), 1L,
             "reference", timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(1L)),
             timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(2L)),
-            null, "gateway_transaction_id", charge.getExternalId(), charge.getGatewayAccount().getId(),
+            null, "gateway_transaction_id", charge.getExternalId(),
             null);
 
     @Test
     public void serializesEventDetailsGivenRefund() {
-        RefundCreatedByService refundCreatedByService = RefundCreatedByService.from(refundHistory);
+        RefundCreatedByService refundCreatedByService = RefundCreatedByService
+                .from(refundHistory, charge.getGatewayAccount().getId());
 
         assertThat(refundCreatedByService.getParentResourceExternalId(), is(charge.getExternalId()));
         assertThat(refundCreatedByService.getResourceExternalId(), is("external_id"));

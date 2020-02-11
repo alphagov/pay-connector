@@ -81,7 +81,7 @@ public class ChargesFrontendResource {
     @Produces(APPLICATION_JSON)
     public Response getWorldpay3dsFlexDdcJwt(@PathParam("chargeId") String chargeId) {
 
-        ChargeEntity chargeEntity = chargeService.findChargeById(chargeId);
+        ChargeEntity chargeEntity = chargeService.findChargeByExternalId(chargeId);
         GatewayAccount gatewayAccount = GatewayAccount.valueOf(chargeEntity.getGatewayAccount());
         Worldpay3dsFlexCredentials worldpay3dsFlexCredentials = chargeEntity.getGatewayAccount().getWorldpay3dsFlexCredentials();
         String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, chargeEntity.getCreatedDate());

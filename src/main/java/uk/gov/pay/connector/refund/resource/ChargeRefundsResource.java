@@ -56,7 +56,7 @@ public class ChargeRefundsResource {
         final ChargeRefundResponse refundServiceResponse = refundService.doRefund(accountId, chargeExternalId, refundRequest);
         GatewayRefundResponse refundResponse = refundServiceResponse.getGatewayRefundResponse();
         if (refundResponse.isSuccessful()) {
-            return Response.accepted(RefundResponse.valueOf(refundServiceResponse.getRefundEntity(), uriInfo).serialize()).build();
+            return Response.accepted(RefundResponse.valueOf(refundServiceResponse.getRefundEntity(), accountId, uriInfo).serialize()).build();
         }
         return serviceErrorResponse(refundResponse.getError().map(GatewayError::getMessage).orElse("unknown error"));
     }
@@ -75,7 +75,7 @@ public class ChargeRefundsResource {
     @Produces(APPLICATION_JSON)
     public Response getRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @PathParam("refundId") String refundId, @Context UriInfo uriInfo) {
         return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(chargeEntity -> getRefundResponse(chargeEntity, refundId, uriInfo))
+                .map(chargeEntity -> getRefundResponse(chargeEntity, refundId, accountId, uriInfo))
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
@@ -91,11 +91,11 @@ public class ChargeRefundsResource {
                 .orElse(responseWithChargeNotFound(chargeId));
     }
 
-    private Response getRefundResponse(ChargeEntity chargeEntity, String refundId, UriInfo uriInfo) {
+    private Response getRefundResponse(ChargeEntity chargeEntity, String refundId, Long accountId, UriInfo uriInfo) {
         return refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId()).stream()
                 .filter(refundEntity -> refundEntity.getExternalId().equals(refundId))
                 .findFirst()
-                .map(refundEntity -> Response.ok(RefundResponse.valueOf(refundEntity, uriInfo).serialize()).build())
+                .map(refundEntity -> Response.ok(RefundResponse.valueOf(refundEntity, accountId, uriInfo).serialize()).build())
                 .orElseGet(() -> responseWithRefundNotFound(refundId));
     }
 }

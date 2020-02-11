@@ -14,7 +14,7 @@ public class RefundSubmitted extends RefundEvent {
 
     public static RefundSubmitted from(RefundHistory refundHistory) {
         return new RefundSubmitted(refundHistory.getExternalId(),
-                refundHistory.getChargeEntity().getExternalId(),
+                refundHistory.getChargeExternalId(),
                 new RefundEventWithReferenceDetails(refundHistory.getReference()),
                 refundHistory.getHistoryStartDate());
     }

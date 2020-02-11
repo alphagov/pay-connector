@@ -8,6 +8,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -33,15 +35,17 @@ public class StripeTransferInRequestTest {
     private StripeTransferInRequest stripeTransferInRequest;
     
     @Mock
-    RefundEntity refund;
+    RefundEntity refundEntity;
     @Mock
-    ChargeEntity charge;
+    Charge charge;
     @Mock
     GatewayAccountEntity gatewayAccount;
     @Mock
     StripeGatewayConfig stripeGatewayConfig;
     @Mock
     StripeAuthTokens stripeAuthTokens;
+    @Mock
+    ChargeDao chargeDao;
 
 
     @Before
@@ -50,15 +54,14 @@ public class StripeTransferInRequestTest {
 
         when(charge.getExternalId()).thenReturn(chargeExternalId);
 
-        when(refund.getAmount()).thenReturn(refundAmount);
-        when(refund.getExternalId()).thenReturn(refundExternalId);
-        when(refund.getChargeEntity()).thenReturn(charge);
+        when(refundEntity.getAmount()).thenReturn(refundAmount);
+        when(refundEntity.getExternalId()).thenReturn(refundExternalId);
 
         when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         when(stripeGatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
 
-        final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(refund, gatewayAccount);
+        final RefundGatewayRequest refundGatewayRequest = RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccount);
 
         stripeTransferInRequest = StripeTransferInRequest.of(refundGatewayRequest, stripeChargeId, stripeGatewayConfig);
     }

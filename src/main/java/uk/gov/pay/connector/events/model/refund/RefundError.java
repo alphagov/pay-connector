@@ -14,7 +14,7 @@ public class RefundError extends RefundEvent {
 
     public RefundError from(RefundHistory refundHistory) {
         return new RefundError(refundHistory.getExternalId(),
-                refundHistory.getChargeEntity().getExternalId(),
+                refundHistory.getChargeExternalId(),
                 new RefundEventWithReferenceDetails(refundHistory.getReference()),
                 refundHistory.getHistoryStartDate());
     }

@@ -93,7 +93,8 @@ public class EpdqNotificationService {
         } else {
             final Optional<RefundStatus> newRefundStatus = newRefundStateForRefundNotification(notification.getStatus());
             newRefundStatus.ifPresent(refundStatus -> refundNotificationProcessor.invoke(
-                    PaymentGatewayName.EPDQ, refundStatus, notification.getReference(), notification.getTransactionId()));
+                    PaymentGatewayName.EPDQ, refundStatus, charge.getGatewayAccount(),
+                    notification.getReference(), notification.getTransactionId(), charge));
         }
     }
 

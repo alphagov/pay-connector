@@ -50,7 +50,7 @@ public class ChargeEventsResource {
     private Response buildEventsResponse(ChargeEntity chargeEntity) {
         List<TransactionEvent> chargeTransactionEvents = normaliseChargeEvents(chargeEntity.getEvents());
         List<TransactionEvent> refundTransactionEvents = normaliseRefundEvents(
-                refundDao.searchHistoryByChargeId(chargeEntity.getId()));
+                refundDao.searchHistoryByChargeExternalId(chargeEntity.getExternalId()));
 
         List<TransactionEvent> allTransactionEvents = Stream
                 .concat(chargeTransactionEvents.stream(), refundTransactionEvents.stream())
@@ -78,7 +78,7 @@ public class ChargeEventsResource {
         return events.stream()
                 .map(event -> new TransactionEvent(
                         REFUND,
-                        event.getChargeEntity().getExternalId(),
+                        event.getChargeExternalId(),
                         event.getReference(),
                         extractState(event.getStatus().toExternal()),
                         event.getAmount(),

@@ -96,7 +96,7 @@ public class UserNotificationServiceEmailCollectionModeTest {
         var gatewayAccount = defaultGatewayAccountEntity();
         gatewayAccount.setEmailCollectionMode(EmailCollectionMode.fromString(emailCollectionMode));
         var chargeEntity = aValidChargeEntity().withEmail(emailAddress).withGatewayAccountEntity(gatewayAccount).build();
-        userNotificationService.sendPaymentConfirmedEmail(chargeEntity).get(1000, TimeUnit.SECONDS);
+        userNotificationService.sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount()).get(1000, TimeUnit.SECONDS);
 
         verify(notificationClient, times(shouldEmailBeSent? 1 : 0)).sendEmail(anyString(), anyString(), anyMap(), isNull());
     }

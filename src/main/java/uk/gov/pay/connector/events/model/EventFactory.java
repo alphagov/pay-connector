@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.events.model;
 
 import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
@@ -93,10 +94,12 @@ public class EventFactory {
                 refundStateTransition.getRefundExternalId(),
                 refundStateTransition.getRefundStatus())
                 .orElseThrow(() -> new EventCreationException(refundStateTransition.getIdentifier()));
+        ChargeEntity chargeEntity = chargeService.findChargeByExternalId(refundHistory.getChargeExternalId());
 
-        Event refundEvent = createRefundEvent(refundHistory, refundStateTransition.getStateTransitionEventClass());
+        Event refundEvent = createRefundEvent(refundHistory, refundStateTransition.getStateTransitionEventClass(),
+                chargeEntity.getGatewayAccount().getId());
         Optional<Event> refundAvailabilityEvent = createRefundAvailabilityUpdatedEvent(
-                refundHistory.getChargeEntity().getExternalId(),
+                refundHistory.getChargeExternalId(),
                 refundHistory.getHistoryStartDate(),
                 refundStateTransition.getStateTransitionEventClass()
         );
@@ -129,16 +132,16 @@ public class EventFactory {
         }
     }
 
-    public static Event createRefundEvent(RefundHistory refundHistory, Class<? extends RefundEvent> eventClass) {
+    public static Event createRefundEvent(RefundHistory refundHistory, Class<? extends RefundEvent> eventClass, Long gatewayAccountId) {
         try {
             if (eventClass == RefundCreatedByService.class) {
-                return RefundCreatedByService.from(refundHistory);
+                return RefundCreatedByService.from(refundHistory, gatewayAccountId);
             } else if (eventClass == RefundCreatedByUser.class) {
-                return RefundCreatedByUser.from(refundHistory);
+                return RefundCreatedByUser.from(refundHistory, gatewayAccountId);
             } else {
                 return eventClass.getConstructor(String.class, String.class, RefundEventWithReferenceDetails.class, ZonedDateTime.class).newInstance(
                         refundHistory.getExternalId(),
-                        refundHistory.getChargeEntity().getExternalId(),
+                        refundHistory.getChargeExternalId(),
                         new RefundEventWithReferenceDetails(refundHistory.getReference()),
                         refundHistory.getHistoryStartDate()
                 );
@@ -152,7 +155,7 @@ public class EventFactory {
             String chargeExternalId, ZonedDateTime eventTimestamp, Class eventClass) throws EventCreationException {
         if (EVENTS_AFFECTING_REFUNDABILITY.contains(eventClass) || EVENTS_LEADING_TO_TERMINAL_STATE.contains(eventClass)) {
             RefundAvailabilityUpdated refundAvailabilityUpdatedEvent =
-                    Optional.ofNullable(chargeService.findChargeById(chargeExternalId))
+                    Optional.ofNullable(chargeService.findChargeByExternalId(chargeExternalId))
                     .map(charge -> {
                         List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(chargeExternalId);
                         return new RefundAvailabilityUpdated(

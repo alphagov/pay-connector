@@ -17,28 +17,27 @@ public class RefundEntityFixture {
     private Long id = nextLong();
     private Long amount = 500L;
     private RefundStatus status = RefundStatus.CREATED;
-    private GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
-    private ChargeEntity charge;
     private String reference = "reference";
     public static String userExternalId = "AA213FD51B3801043FBC";
     public static String userEmail = "test@example.com";
     private String externalId = "someExternalId";
     private String transactionId = "123456";
     private ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+    private String chargeExternalId = "chargeExternalId";
 
     public static RefundEntityFixture aValidRefundEntity() {
         return new RefundEntityFixture();
     }
 
     public RefundEntity build() {
-        ChargeEntity chargeEntity = charge == null ? buildChargeEntity() : charge;
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, amount, userExternalId, userEmail);
+        RefundEntity refundEntity = new RefundEntity(amount, userExternalId, userEmail, chargeExternalId);
         refundEntity.setId(id);
         refundEntity.setStatus(status);
         refundEntity.setReference(reference);
         refundEntity.setExternalId(externalId);
         refundEntity.setUserExternalId(userExternalId);
         refundEntity.setCreatedDate(createdDate);
+        refundEntity.setGatewayTransactionId(transactionId);
         return refundEntity;
     }
 
@@ -62,29 +61,18 @@ public class RefundEntityFixture {
         return this;
     }
 
-    public RefundEntityFixture withGatewayAccountEntity(GatewayAccountEntity gatewayAccountEntity) {
-        this.gatewayAccountEntity = gatewayAccountEntity;
-        return this;
-    }
-
     public RefundEntityFixture withUserExternalId(String userExternalId) {
         this.userExternalId = userExternalId;
         return this;
     }
 
+    public RefundEntityFixture withChargeExternalId(String chargeExternalId) {
+        this.chargeExternalId = chargeExternalId;
+        return this;
+    }
+
     public Long getAmount() {
         return amount;
-    }
-
-    private ChargeEntity buildChargeEntity() {
-        return aValidChargeEntity()
-                .withGatewayAccountEntity(gatewayAccountEntity)
-                .withTransactionId(transactionId).build();
-    }
-
-    public RefundEntityFixture withCharge(ChargeEntity charge) {
-        this.charge = charge;
-        return this;
     }
 
     public RefundEntityFixture withExternalId(String externalId) {

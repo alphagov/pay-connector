@@ -176,7 +176,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         verifyChargeIsCapturedImmediatelyFromPaymentProvider(chargeSpy);
 
-        verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeSpy);
+        verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeSpy, charge.getGatewayAccount());
     }
 
     @Test
@@ -447,7 +447,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         verify(mockCaptureQueue).sendForCapture(result);
         verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(CAPTURE_APPROVED)), isNull());
-        verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeEntity);
+        verify(mockUserNotificationService).sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount());
         assertThat(result.getStatus(), is(CAPTURE_APPROVED.getValue()));
     }
 

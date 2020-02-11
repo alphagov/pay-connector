@@ -31,7 +31,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
     public Optional<RefundEntity> findByProviderAndReference(String provider, String reference) {
 
         String query = "SELECT refund FROM RefundEntity refund " +
-                "JOIN ChargeEntity charge ON refund.chargeEntity.id = charge.id " +
+                "JOIN ChargeEntity charge ON refund.chargeExternalId = charge.externalId " +
                 "JOIN GatewayAccountEntity gatewayAccount ON charge.gatewayAccount.id = gatewayAccount.id " +
                 "WHERE refund.reference = :reference AND gatewayAccount.gatewayName = :provider";
 
@@ -45,9 +45,9 @@ public class RefundDao extends JpaDao<RefundEntity> {
     public Optional<RefundHistory> getRefundHistoryByRefundExternalIdAndRefundStatus(String refundExternalId, RefundStatus refundStatus) {
         String query = "SELECT rh.id, rh.external_id, rh.amount, rh.status, rh.charge_id, rh.created_date, " +
                 "rh.version, rh.reference, rh.history_start_date, rh.history_end_date, rh.user_external_id, " +
-                "rh.gateway_transaction_id, ch.external_id AS charge_external_id, ch.gateway_account_id, rh.user_email " +
-                "FROM refunds_history rh, charges ch " +
-                "WHERE rh.external_id = ?1 AND rh.status = ?2 AND rh.charge_id = ch.id";
+                "rh.gateway_transaction_id, rh.charge_external_id, rh.user_email " +
+                "FROM refunds_history rh " +
+                "WHERE rh.external_id = ?1 AND rh.status = ?2";
 
         return entityManager.get()
                 .createNativeQuery(query, "RefundEntityHistoryMapping")
@@ -59,31 +59,30 @@ public class RefundDao extends JpaDao<RefundEntity> {
 
     }
 
-    public List<RefundHistory> searchHistoryByChargeId(Long chargeId) {
+    public List<RefundHistory> searchHistoryByChargeExternalId(String chargeExternalId) {
 
         String query = "SELECT id, external_id, amount, status, charge_id, created_date, version, reference, " +
                 "history_start_date, history_end_date, user_external_id, gateway_transaction_id, user_email, charge_external_id " +
                 "FROM refunds_history r " +
-                "WHERE charge_id = ?1 AND status != ?2";
+                "WHERE charge_external_id = ?1 AND status != ?2";
 
         return entityManager.get()
                 .createNativeQuery(query, "RefundEntityHistoryMapping")
-                .setParameter(1, chargeId)
+                .setParameter(1, chargeExternalId)
                 .setParameter(2, RefundStatus.CREATED.getValue())
                 .getResultList();
     }
 
-    public List<RefundHistory> searchAllHistoryByChargeId(Long chargeId) {
-        String query = "SELECT r.id, r.external_id, r.amount, r.status, charge_id, r.created_date, r.version, " +
+    public List<RefundHistory> searchAllHistoryByChargeExternalId(String chargeExternalId) {
+        String query = "SELECT r.id, r.external_id, r.amount, r.status, r.charge_id, r.created_date, r.version, " +
                 "r.reference, history_start_date, history_end_date, user_external_id, r.gateway_transaction_id, " +
-                "c.external_id AS charge_external_id, c.gateway_account_id, r.user_email " +
-                " FROM refunds_history r , charges c" +
-                " WHERE charge_id = ?1" +
-                " and r.charge_id = c.id";
+                "r.charge_external_id AS charge_external_id, r.user_email " +
+                " FROM refunds_history r " +
+                " WHERE charge_external_id = ?1";
 
         return entityManager.get()
                 .createNativeQuery(query, "RefundEntityHistoryMapping")
-                .setParameter(1, chargeId)
+                .setParameter(1, chargeExternalId)
                 .getResultList();
     }
 

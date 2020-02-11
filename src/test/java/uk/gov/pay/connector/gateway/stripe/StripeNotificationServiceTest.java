@@ -239,7 +239,7 @@ public class StripeNotificationServiceTest {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_FAILED);
         when(stripeGatewayConfig.getNotification3dsWaitDelay()).thenReturn(1000);
-        when(mockChargeService.findChargeById(anyString())).thenReturn(mockCharge);
+        when(mockChargeService.findChargeByExternalId(anyString())).thenReturn(mockCharge);
 
         Instant instantBeforeInvocation = Instant.now();
         notificationService.handleNotificationFor(payload, signPayload(payload));
@@ -255,7 +255,7 @@ public class StripeNotificationServiceTest {
         final String payload = sampleStripeNotification(STRIPE_NOTIFICATION_3DS_SOURCE,
                 sourceId, SOURCE_FAILED);
         when(stripeGatewayConfig.getNotification3dsWaitDelay()).thenReturn(2000);
-        when(mockChargeService.findChargeById(anyString())).thenReturn(mockCharge);
+        when(mockChargeService.findChargeByExternalId(anyString())).thenReturn(mockCharge);
         when(mockCharge.getStatus()).thenReturn(AUTHORISATION_3DS_READY.getValue());
 
         Instant instantBeforeInvocation = Instant.now();

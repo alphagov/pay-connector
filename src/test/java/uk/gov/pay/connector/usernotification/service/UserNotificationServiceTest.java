@@ -14,6 +14,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.app.NotifyConfiguration;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -81,10 +82,14 @@ public class UserNotificationServiceTest {
             .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneOffset.UTC))
             .build();
 
+    private final Charge charge = Charge.from(chargeEntity);
+
+    private final GatewayAccountEntity gatewayAccountEntity = chargeEntity.getGatewayAccount();
+
     private final RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity()
             .withAmount(100L)
             .withCreatedDate(ZonedDateTime.of(2017, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
-            .withCharge(chargeEntity).build();
+            .build();
 
     private UserNotificationService userNotificationService;
 
@@ -123,7 +128,7 @@ public class UserNotificationServiceTest {
                 personalisation,
                 null)).thenReturn(mockNotificationCreatedResponse);
 
-        Optional<String> maybeNotificationId = userNotificationService.sendPaymentConfirmedEmail(chargeEntity).get(1000, TimeUnit.SECONDS);
+        Optional<String> maybeNotificationId = userNotificationService.sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount()).get(1000, TimeUnit.SECONDS);
         assertThat(maybeNotificationId.get(), is(notificationId.toString()));
     }
 
@@ -153,7 +158,7 @@ public class UserNotificationServiceTest {
                 personalisation,
                 null)).thenReturn(mockNotificationCreatedResponse);
 
-        Optional<String> maybeNotificationId = userNotificationService.sendPaymentConfirmedEmail(charge).get(1000, TimeUnit.SECONDS);
+        Optional<String> maybeNotificationId = userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount()).get(1000, TimeUnit.SECONDS);
         assertThat(maybeNotificationId.get(), is(notificationId.toString()));
     }
 
@@ -171,7 +176,7 @@ public class UserNotificationServiceTest {
                 personalisation,
                 null)).thenReturn(mockNotificationCreatedResponse);
 
-        Optional<String> maybeNotificationId = userNotificationService.sendRefundIssuedEmail(refundEntity).get(1000, TimeUnit.SECONDS);
+        Optional<String> maybeNotificationId = userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity).get(1000, TimeUnit.SECONDS);
         assertThat(maybeNotificationId.get(), is(notificationId.toString()));
     }
 
@@ -203,9 +208,9 @@ public class UserNotificationServiceTest {
     @Test
     public void shouldNotSendPaymentConfirmedEmail_IfNotifyIsDisabled() throws Exception {
         when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(false);
-
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
-        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(ChargeEntityFixture.aValidChargeEntity().build());
+        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount());
         idF.get(1000, TimeUnit.SECONDS);
 
         verifyNoInteractions(mockNotifyClient);
@@ -214,9 +219,10 @@ public class UserNotificationServiceTest {
     @Test
     public void shouldNotSendRefundIssuedEmail_IfNotifyIsDisabled() throws Exception {
         when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(false);
-
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().build();
         userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
-        Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(RefundEntityFixture.aValidRefundEntity().build());
+        Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
         idF.get(1000, TimeUnit.SECONDS);
 
         verifyNoInteractions(mockNotifyClient);
@@ -230,7 +236,7 @@ public class UserNotificationServiceTest {
                 .setEnabled(false);
 
         userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
-        userNotificationService.sendPaymentConfirmedEmail(chargeEntity);
+        userNotificationService.sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount());
         verifyNoInteractions(mockNotifyClient);
     }
 
@@ -238,7 +244,7 @@ public class UserNotificationServiceTest {
     public void shouldRecordNotifyResponseTimesWhenSendPaymentConfirmationEmailSucceeds() throws Exception {
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
 
-        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(chargeEntity);
+        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount());
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockMetricRegistry).histogram("notify-operations.response_time");
@@ -253,7 +259,7 @@ public class UserNotificationServiceTest {
                 .get(EmailNotificationType.REFUND_ISSUED)
                 .setEnabled(false);
 
-        userNotificationService.sendRefundIssuedEmail(refundEntity);
+        userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
         verifyNoInteractions(mockNotifyClient);
     }
 
@@ -261,7 +267,7 @@ public class UserNotificationServiceTest {
     public void shouldRecordNotifyResponseTimesWhenSendRefundIssuedEmailSucceeds() throws Exception {
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
  
-        Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refundEntity);
+        Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
         idF.get(1000, TimeUnit.SECONDS);
         verify(mockMetricRegistry).histogram("notify-operations.response_time");
         verify(mockHistogram).update(anyLong());
@@ -272,7 +278,7 @@ public class UserNotificationServiceTest {
     public void shouldRecordNotifyResponseTimesAndFailureWhenSendPaymentConfirmationEmailFails() throws Exception {
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenThrow(NotificationClientException.class);
 
-        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(chargeEntity);
+        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount());
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockMetricRegistry).histogram("notify-operations.response_time");
@@ -284,7 +290,7 @@ public class UserNotificationServiceTest {
     public void shouldRecordNotifyResponseTimesAndFailureWhenSendRefundIssuedEmailFails() throws Exception {
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenThrow(NotificationClientException.class);
  
-        Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refundEntity);
+        Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockMetricRegistry).histogram("notify-operations.response_time");
@@ -301,7 +307,7 @@ public class UserNotificationServiceTest {
         emailNotificationEntity.setTemplateBody(null);
         accountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, emailNotificationEntity);
 
-        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(chargeEntity);
+        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount());
         idF.get(1000, TimeUnit.SECONDS);
 
         HashMap<String, String> map = new HashMap<>();
@@ -335,7 +341,7 @@ public class UserNotificationServiceTest {
         emailNotificationEntity.setTemplateBody(null);
         accountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, emailNotificationEntity);
 
-        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge);
+        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount());
         idF.get(1000, TimeUnit.SECONDS);
 
         HashMap<String, String> map = new HashMap<>();
@@ -367,7 +373,7 @@ public class UserNotificationServiceTest {
 
         userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
 
-        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge);
+        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount());
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockNotifyClientFactory).getInstance("my-api-key");
@@ -379,16 +385,16 @@ public class UserNotificationServiceTest {
         when(mockNotifyClientFactory.getInstance("my-api-key")).thenReturn(mockNotifyClient);
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
 
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
                 .withNotifySettings(ImmutableMap.of("api_token", "my-api-key", "refund_issued_template_id", "template_id2"))
                 .build();
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity()
                 .withAmount(100L)
                 .withCreatedDate(ZonedDateTime.of(2017, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
-                .withCharge(charge).build();
+                .build();
 
-        Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refundEntity);
+        Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refundEntity, Charge.from(chargeEntity), chargeEntity.getGatewayAccount());
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockNotifyClientFactory).getInstance("my-api-key");
@@ -404,7 +410,7 @@ public class UserNotificationServiceTest {
                 .withNotifySettings(ImmutableMap.of("template_id", "my-template-id"))
                 .build();
  
-        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge);
+        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount());
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockNotifyClientFactory).getInstance();
@@ -420,7 +426,7 @@ public class UserNotificationServiceTest {
                 .withNotifySettings(ImmutableMap.of("api_token", "my-api-key"))
                 .build();
  
-        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge);
+        Future<Optional<String>> idF = userNotificationService.sendPaymentConfirmedEmail(charge, charge.getGatewayAccount());
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockNotifyClientFactory).getInstance();
@@ -431,14 +437,14 @@ public class UserNotificationServiceTest {
     public void shouldUse_GovUkBrandedEmails_whenNotifySettingsDoNotHaveApiToken_ForRefundIssuedEmail() throws Exception {
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
  
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
                 .withNotifySettings(ImmutableMap.of("refund_issued_template_id", "my-template-id"))
                 .build();
 
-        RefundEntity refund = RefundEntityFixture.aValidRefundEntity().withCharge(charge).build();
+        RefundEntity refund = RefundEntityFixture.aValidRefundEntity().build();
 
-        Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refund);
+        Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refund, Charge.from(chargeEntity), chargeEntity.getGatewayAccount());
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockNotifyClientFactory).getInstance();
@@ -449,14 +455,14 @@ public class UserNotificationServiceTest {
     public void shouldUse_GovUkBrandedEmails_whenNotifySettingsDoNotHaveTemplate_ForRefundIssuedEmail() throws Exception {
         when(mockNotifyClient.sendEmail(any(), any(), any(), any())).thenReturn(mockNotificationCreatedResponse);
 
-        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(ZonedDateTime.of(2016, 1, 1, 10, 23, 12, 0, ZoneId.of("UTC")))
                 .withNotifySettings(ImmutableMap.of("api_token", "my-api-key"))
                 .build();
 
-        RefundEntity refund = RefundEntityFixture.aValidRefundEntity().withCharge(charge).build();
+        RefundEntity refund = RefundEntityFixture.aValidRefundEntity().build();
  
-        Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refund);
+        Future<Optional<String>> idF = userNotificationService.sendRefundIssuedEmail(refund, Charge.from(chargeEntity), chargeEntity.getGatewayAccount());
         idF.get(1000, TimeUnit.SECONDS);
 
         verify(mockNotifyClientFactory).getInstance();

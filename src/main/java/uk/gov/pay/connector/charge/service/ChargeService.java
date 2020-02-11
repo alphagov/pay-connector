@@ -472,7 +472,7 @@ public class ChargeService {
                                                                   Optional<String> emailAddress) {
         updateChargePostAuthorisation(chargeExternalId, status, authCardDetails, transactionId,
                 auth3dsDetails, sessionIdentifier, walletType, emailAddress);
-        ChargeEntity chargeEntity = findChargeById(chargeExternalId);
+        ChargeEntity chargeEntity = findChargeByExternalId(chargeExternalId);
 
         eventService.emitAndRecordEvent(PaymentDetailsEntered.from(chargeEntity));
 
@@ -582,7 +582,7 @@ public class ChargeService {
         return chargeDao.countChargesForImmediateCapture(notAttemptedWithin);
     }
 
-    public ChargeEntity findChargeById(String chargeId) {
+    public ChargeEntity findChargeByExternalId(String chargeId) {
         return chargeDao.findByExternalId(chargeId)
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
     }
@@ -670,7 +670,7 @@ public class ChargeService {
     }
 
     public boolean isChargeCaptureSuccess(String externalId) {
-        ChargeEntity charge = findChargeById(externalId);
+        ChargeEntity charge = findChargeByExternalId(externalId);
         ChargeStatus status = ChargeStatus.fromString(charge.getStatus());
         return status == CAPTURED || status == CAPTURE_SUBMITTED;
     }

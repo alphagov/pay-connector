@@ -10,6 +10,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.WorldpayConfig;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -229,9 +230,9 @@ public class WorldpayPaymentProviderTest {
 
         assertThat(captureResponse.isSuccessful(), is(true));
 
-        RefundEntity refundEntity = new RefundEntity(chargeEntity, 1L, userExternalId, userEmail);
+        RefundEntity refundEntity = new RefundEntity(1L, userExternalId, userEmail, chargeEntity.getExternalId());
 
-        GatewayRefundResponse refundResponse = paymentProvider.refund(RefundGatewayRequest.valueOf(refundEntity, validGatewayAccount));
+        GatewayRefundResponse refundResponse = paymentProvider.refund(RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, validGatewayAccount));
 
         assertTrue(refundResponse.isSuccessful());
     }

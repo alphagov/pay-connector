@@ -5,6 +5,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.Optional;
@@ -23,6 +26,9 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 @RunWith(MockitoJUnitRunner.class)
 public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest {
 
+    private GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
+    private ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity).build();
+
     @Before
     public void setup() {
         super.setup();
@@ -37,7 +43,7 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
 
         notificationService.handleNotificationFor(payload);
 
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
         verify(mockChargeNotificationProcessor).invoke(payId, mockCharge, CAPTURED, null);
     }
 
@@ -51,7 +57,7 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
         notificationService.handleNotificationFor(payload);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor).invoke(EPDQ, RefundStatus.REFUNDED, payId + "/" + payIdSub, payId);
+        verify(mockRefundNotificationProcessor).invoke(EPDQ, RefundStatus.REFUNDED, mockGatewayAccountEntity, payId + "/" + payIdSub, payId, mockCharge);
     }
 
     @Test
@@ -66,7 +72,7 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
         notificationService.handleNotificationFor(payload);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -77,7 +83,7 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
         notificationService.handleNotificationFor(payload);
 
         verify(mockChargeNotificationProcessor, never()).invoke(anyString(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -87,7 +93,7 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
         notificationService.handleNotificationFor(payload);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -99,7 +105,7 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
         notificationService.handleNotificationFor(payload);
 
         verify(mockChargeNotificationProcessor, never()).invoke(anyString(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -113,6 +119,6 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
         notificationService.handleNotificationFor(payload);
 
         verify(mockChargeNotificationProcessor, never()).invoke(anyString(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
     }
 }

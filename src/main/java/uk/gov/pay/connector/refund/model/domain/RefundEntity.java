@@ -47,7 +47,6 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
                         @ColumnResult(name = "user_external_id", type = String.class),
                         @ColumnResult(name = "gateway_transaction_id", type = String.class),
                         @ColumnResult(name = "charge_external_id", type = String.class),
-                        @ColumnResult(name = "gateway_account_id", type = Long.class),
                         @ColumnResult(name = "user_email", type = String.class)
                 }))
 
@@ -73,10 +72,6 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     private String status;
 
-    @ManyToOne
-    @JoinColumn(name = "charge_id")
-    private ChargeEntity chargeEntity;
-
     @Column(name = "user_external_id")
     private String userExternalId;
     
@@ -93,18 +88,20 @@ public class RefundEntity extends AbstractVersionedEntity {
     @Column(name = "charge_external_id")
     private String chargeExternalId;
 
+    @Column(name = "charge_id")
+    private Long chargeId;
+
     public RefundEntity() {
         //for jpa
     }
 
-    public RefundEntity(ChargeEntity chargeEntity, Long amount, String userExternalId, String userEmail) {
+    public RefundEntity(Long amount, String userExternalId, String userEmail, String chargeExternalId) {
         this.externalId = RandomIdGenerator.newId();
-        this.chargeEntity = chargeEntity;
         this.amount = amount;
         this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
         this.userExternalId = userExternalId;
         this.userEmail = userEmail;
-        this.chargeExternalId = chargeEntity.getExternalId();
+        this.chargeExternalId = chargeExternalId;
     }
 
     public String getExternalId() {
@@ -117,10 +114,6 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     public String getReference() {
         return reference;
-    }
-
-    public ChargeEntity getChargeEntity() {
-        return chargeEntity;
     }
 
     public Long getAmount() {
@@ -145,10 +138,6 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     public void setStatus(RefundStatus status) {
         this.status = status.getValue();
-    }
-
-    protected void setChargeEntity(ChargeEntity chargeEntity) {
-        this.chargeEntity = chargeEntity;
     }
 
     public void setStatus(String status) {
@@ -195,6 +184,10 @@ public class RefundEntity extends AbstractVersionedEntity {
         this.userEmail = userEmail;
     }
 
+    public void setChargeId(Long chargeId) {
+        this.chargeId = chargeId;
+    }
+
     @Override
     public String toString() {
         return "RefundEntity{" +
@@ -203,8 +196,8 @@ public class RefundEntity extends AbstractVersionedEntity {
                 ", amount=" + amount +
                 ", status='" + status + '\'' +
                 ", userExternalId='" + userExternalId + '\'' +
-                ", chargeEntity=" + chargeEntity +
                 ", gatewayTransactionId=" + gatewayTransactionId +
+                ", chargeExternalId=" + chargeExternalId +
                 ", createdDate=" + createdDate +
                 '}';
     }

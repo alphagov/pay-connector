@@ -6,11 +6,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.service.ChargeExpiryService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayException;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -48,7 +48,7 @@ public class DiscrepancyServiceTest {
                 .withStatus(EXPIRED)
                 .build();
         ChargeQueryResponse chargeQueryResponse = new ChargeQueryResponse(AUTHORISATION_SUCCESS, "Raw response");
-        when(chargeService.findChargeById(charge.getExternalId())).thenReturn(charge);
+        when(chargeService.findChargeByExternalId(charge.getExternalId())).thenReturn(charge);
         when(queryService.getChargeGatewayStatus(charge)).thenReturn(chargeQueryResponse);
         when(expiryService.forceCancelWithGateway(charge)).thenReturn(true);
 
@@ -113,7 +113,7 @@ public class DiscrepancyServiceTest {
     }
 
     private void assertChargeIsNotCancelled(ChargeEntity charge, ChargeQueryResponse chargeQueryResponse) throws GatewayException {
-        when(chargeService.findChargeById(charge.getExternalId())).thenReturn(charge);
+        when(chargeService.findChargeByExternalId(charge.getExternalId())).thenReturn(charge);
         when(queryService.getChargeGatewayStatus(charge)).thenReturn(chargeQueryResponse);
 
         discrepancyService.resolveDiscrepancies(Collections.singletonList(charge.getExternalId()));
