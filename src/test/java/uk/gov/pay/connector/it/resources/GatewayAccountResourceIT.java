@@ -24,7 +24,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -97,7 +96,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
 
     @Test
     public void getAccountShouldReturn3dsSetting() {
-        String gatewayAccountId = extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), "stripe", "desc", null, "true"));
+        String gatewayAccountId = createAGatewayAccountFor("stripe", "desc", "id", "true", "test");
         givenSetup()
                 .get(ACCOUNTS_API_URL + gatewayAccountId)
                 .then()
@@ -238,12 +237,111 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     }
 
     @Test
+    public void shouldGetGatewayAccountsByApplePayEnabled() {
+        String gatewayAccountId1 = createAGatewayAccountFor("worldpay");
+        updateGatewayAccount(gatewayAccountId1, "allow_apple_pay", true);
+        createAGatewayAccountFor("sandbox");
+
+        givenSetup()
+                .get("/v1/api/accounts?apple_pay_enabled=true")
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("accounts", hasSize(1))
+                .body("accounts[0].gateway_account_id", is(Integer.valueOf(gatewayAccountId1)));
+    }
+
+    @Test
+    public void shouldGetGatewayAccountsByGooglePayEnabled() {
+        String gatewayAccountId1 = createAGatewayAccountFor("worldpay");
+        updateGatewayAccount(gatewayAccountId1, "allow_google_pay", true);
+        createAGatewayAccountFor("sandbox");
+
+        givenSetup()
+                .get("/v1/api/accounts?google_pay_enabled=true")
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("accounts", hasSize(1))
+                .body("accounts[0].gateway_account_id", is(Integer.valueOf(gatewayAccountId1)));
+    }
+
+    @Test
+    public void shouldGetGatewayAccountsByType() {
+        String gatewayAccountId1 = createAGatewayAccountFor("worldpay", "descr", "analytics", "true", "live");
+        createAGatewayAccountFor("sandbox");
+
+        givenSetup()
+                .get("/v1/api/accounts?type=live")
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("accounts", hasSize(1))
+                .body("accounts[0].gateway_account_id", is(Integer.valueOf(gatewayAccountId1)));
+    }
+
+    @Test
+    public void shouldGetGatewayAccountsByProvider() {
+        String gatewayAccountId1 = createAGatewayAccountFor("worldpay");
+        createAGatewayAccountFor("sandbox");
+
+        givenSetup()
+                .get("/v1/api/accounts?payment_provider=worldpay")
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("accounts", hasSize(1))
+                .body("accounts[0].gateway_account_id", is(Integer.valueOf(gatewayAccountId1)));
+    }
+
+    @Test
     public void shouldReturn422ForMotoEnabledNotBooleanValue() {
         givenSetup()
                 .get("/v1/api/accounts?moto_enabled=blah")
                 .then()
                 .statusCode(422)
                 .body("message[0]", is("Parameter [moto_enabled] must be true or false"));
+    }
+
+    @Test
+    public void shouldReturn422ForApplePayEnabledNotBooleanValue() {
+        givenSetup()
+                .get("/v1/api/accounts?apple_pay_enabled=blah")
+                .then()
+                .statusCode(422)
+                .body("message[0]", is("Parameter [apple_pay_enabled] must be true or false"));
+    }
+
+    @Test
+    public void shouldReturn422ForGooglePayEnabledNotBooleanValue() {
+        givenSetup()
+                .get("/v1/api/accounts?google_pay_enabled=blah")
+                .then()
+                .statusCode(422)
+                .body("message[0]", is("Parameter [google_pay_enabled] must be true or false"));
+    }
+
+    @Test
+    public void shouldReturn422ForRequires3dsdNotBooleanValue() {
+        givenSetup()
+                .get("/v1/api/accounts?requires_3ds=blah")
+                .then()
+                .statusCode(422)
+                .body("message[0]", is("Parameter [requires_3ds] must be true or false"));
+    }
+
+    @Test
+    public void shouldReturn422ForTypeNotAllowedValue() {
+        givenSetup()
+                .get("/v1/api/accounts?type=blah")
+                .then()
+                .statusCode(422)
+                .body("message[0]", is("Parameter [type] must be 'live' or 'test'"));
+    }
+
+    @Test
+    public void shouldReturn422ForPaymentProviderNotAllowedValue() {
+        givenSetup()
+                .get("/v1/api/accounts?payment_provider=blah")
+                .then()
+                .statusCode(422)
+                .body("message[0]", is("Parameter [payment_provider] must be one of 'sandbox', 'worldpay', 'smartpay', 'epdq' or 'stripe'"));
     }
 
     @Test
@@ -693,9 +791,5 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .patch("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(NOT_FOUND.getStatusCode());
-    }
-
-    private String createAGatewayAccountFor(String provider, String desc, String id) {
-        return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider, desc, id));
     }
 }

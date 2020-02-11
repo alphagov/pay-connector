@@ -12,12 +12,10 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyMap;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
@@ -34,6 +32,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
@@ -373,6 +372,111 @@ public class GatewayAccountDaoIT extends DaoITestBase {
 
         var params = new GatewayAccountSearchParams();
         params.setMotoEnabled("true");
+
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+        assertThat(gatewayAccounts, hasSize(1));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+    }
+
+    @Test
+    public void shouldSearchForAccountsByApplePayEnabled() {
+        long gatewayAccountId_1 = nextLong();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withAllowApplePay(false)
+                .build());
+        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_2))
+                .withAllowApplePay(true)
+                .build());
+
+        var params = new GatewayAccountSearchParams();
+        params.setApplePayEnabled("true");
+
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+        assertThat(gatewayAccounts, hasSize(1));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+    }
+
+    @Test
+    public void shouldSearchForAccountsByGooglePayEnabled() {
+        long gatewayAccountId_1 = nextLong();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withAllowGooglePay(false)
+                .build());
+        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_2))
+                .withAllowGooglePay(true)
+                .build());
+
+        var params = new GatewayAccountSearchParams();
+        params.setGooglePayEnabled("true");
+
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+        assertThat(gatewayAccounts, hasSize(1));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+    }
+
+    @Test
+    public void shouldSearchForAccountsByRequires3ds() {
+        long gatewayAccountId_1 = nextLong();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withRequires3ds(false)
+                .build());
+        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_2))
+                .withRequires3ds(true)
+                .build());
+
+        var params = new GatewayAccountSearchParams();
+        params.setRequires3ds("true");
+
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+        assertThat(gatewayAccounts, hasSize(1));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+    }
+
+    @Test
+    public void shouldSearchForAccountsByType() {
+        long gatewayAccountId_1 = nextLong();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withType(TEST)
+                .build());
+        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_2))
+                .withType(LIVE)
+                .build());
+
+        var params = new GatewayAccountSearchParams();
+        params.setType("live");
+
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+        assertThat(gatewayAccounts, hasSize(1));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+    }
+
+    @Test
+    public void shouldSearchForAccountsByPaymentProvider() {
+        long gatewayAccountId_1 = nextLong();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withPaymentGateway("sandbox")
+                .build());
+        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_2))
+                .withPaymentGateway("stripe")
+                .build());
+
+        var params = new GatewayAccountSearchParams();
+        params.setPaymentProvider("stripe");
 
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
         assertThat(gatewayAccounts, hasSize(1));

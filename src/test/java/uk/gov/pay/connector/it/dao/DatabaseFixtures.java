@@ -461,7 +461,7 @@ public class DatabaseFixtures {
                     .withPaymentGateway(paymentProvider)
                     .withCredentials(credentials)
                     .withServiceName(serviceName)
-                    .withProviderUrlType(type)
+                    .withType(type)
                     .withDescription(description)
                     .withAnalyticsId(analyticsId)
                     .withEmailCollectionMode(emailCollectionMode)
