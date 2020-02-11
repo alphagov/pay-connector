@@ -5,10 +5,16 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import uk.gov.pay.connector.charge.model.AddressEntity;
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.paritycheck.Address;
+import uk.gov.pay.connector.paritycheck.CardDetails;
 import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import uk.gov.pay.connector.refund.dao.RefundDao;
@@ -18,6 +24,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.DATA_MISMATCH;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
@@ -108,12 +117,13 @@ public class ParityCheckService {
         MDC.put(PAYMENT_EXTERNAL_ID, externalId);
 
         if (transaction == null) {
-            logger.info("Transaction missing in Ledger for Charge");
+            logger.info("Transaction missing in Ledger for Charge [external_id={}]", chargeEntity.getExternalId());
             parityCheckStatus = MISSING_IN_LEDGER;
         } else {
             boolean fieldsMatch;
 
             fieldsMatch = matchCommonFields(chargeEntity, transaction);
+            fieldsMatch = fieldsMatch && matchCardDetails(chargeEntity.getCardDetails(), transaction.getCardDetails());
 
             if (fieldsMatch) {
                 parityCheckStatus = EXISTS_IN_LEDGER;
@@ -141,11 +151,64 @@ public class ParityCheckService {
         return fieldsMatch;
     }
 
+    private boolean matchCardDetails(CardDetailsEntity cardDetailsEntity, CardDetails ledgerCardDetails) {
+        boolean fieldsMatch;
+
+        if (isNull(cardDetailsEntity) && isNull(ledgerCardDetails)) {
+            return true;
+        }
+
+        if (nonNull(cardDetailsEntity) && isNull(ledgerCardDetails) || isNull(cardDetailsEntity)) {
+            logger.info("Field value does not match between ledger and connector [field_name={}]", "card_details",
+                    kv(FIELD_NAME, "card_details"));
+            fieldsMatch = false;
+        } else {
+            fieldsMatch = isEquals(cardDetailsEntity.getCardHolderName(), ledgerCardDetails.getCardholderName(), "cardholder_name");
+            fieldsMatch = fieldsMatch && isEquals(
+                    ofNullable(cardDetailsEntity.getLastDigitsCardNumber()).map(LastDigitsCardNumber::toString).orElse(null),
+                    ledgerCardDetails.getLastDigitsCardNumber(), "last_digits_card_number");
+            fieldsMatch = fieldsMatch && isEquals(
+                    ofNullable(cardDetailsEntity.getFirstDigitsCardNumber()).map(FirstDigitsCardNumber::toString).orElse(null),
+                    ledgerCardDetails.getFirstDigitsCardNumber(), "first_digits_card_number");
+            fieldsMatch = fieldsMatch && isEquals(cardDetailsEntity.getCardBrand(), ledgerCardDetails.getCardBrand(), "card_brand");
+            fieldsMatch = fieldsMatch && isEquals(cardDetailsEntity.getExpiryDate(), ledgerCardDetails.getExpiryDate(), "expiry_date");
+            fieldsMatch = fieldsMatch && isEquals(cardDetailsEntity.getCardType(), ledgerCardDetails.getCardType(), "card_type");
+
+            fieldsMatch = fieldsMatch && matchBillingAddress(cardDetailsEntity.getBillingAddress().orElse(null), ledgerCardDetails.getBillingAddress());
+        }
+
+        return fieldsMatch;
+    }
+
+    private boolean matchBillingAddress(AddressEntity addressEntity, Address ledgerBillingAddress) {
+
+        boolean fieldsMatch;
+
+        if (isNull(addressEntity) && isNull(ledgerBillingAddress)) {
+            return true;
+        }
+
+        if (nonNull(addressEntity) && isNull(ledgerBillingAddress) || isNull(addressEntity)) {
+            logger.info("Field value does not match between ledger and connector [field_name={}]", "billing_address",
+                    kv(FIELD_NAME, "billing_address"));
+            fieldsMatch = false;
+        } else {
+            fieldsMatch = isEquals(addressEntity.getLine1(), ledgerBillingAddress.getLine1(), "line_1");
+            fieldsMatch = fieldsMatch && isEquals(addressEntity.getLine2(), ledgerBillingAddress.getLine2(), "line_2");
+            fieldsMatch = fieldsMatch && isEquals(addressEntity.getCity(), ledgerBillingAddress.getCity(), "city");
+            fieldsMatch = fieldsMatch && isEquals(addressEntity.getCounty(), ledgerBillingAddress.getCounty(), "county");
+            fieldsMatch = fieldsMatch && isEquals(addressEntity.getCountry(), ledgerBillingAddress.getCountry(), "country");
+            fieldsMatch = fieldsMatch && isEquals(addressEntity.getPostcode(), ledgerBillingAddress.getPostcode(), "post_code");
+        }
+
+        return fieldsMatch;
+    }
+
     private boolean isEquals(Object value1, Object value2, String fieldName) {
         if (Objects.equals(value1, value2)) {
             return true;
         } else {
-            logger.info("Field value does not match between ledger and connector",
+            logger.info("Field value does not match between ledger and connector [field_name={}]", fieldName,
                     kv(FIELD_NAME, fieldName));
             return false;
         }

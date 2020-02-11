@@ -5,11 +5,14 @@ import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
+import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -56,15 +59,57 @@ public class ChargeEntityFixture {
         return new ChargeEntityFixture();
     }
 
+    public static GatewayAccountEntity defaultGatewayAccountEntity() {
+        GatewayAccountEntity accountEntity = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
+        accountEntity.setId(1L);
+        accountEntity.setServiceName("MyService");
+        EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(accountEntity);
+        emailNotificationEntity.setTemplateBody("template body");
+        accountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, emailNotificationEntity);
+        accountEntity.addNotification(EmailNotificationType.REFUND_ISSUED, emailNotificationEntity);
+        return accountEntity;
+    }
+
+    public static CardDetailsEntity defaultCardDetails() {
+        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
+        CardBrandLabelEntity CardBrandLabelEntity = new CardBrandLabelEntity();
+        CardBrandLabelEntity.setBrand("visa");
+        CardBrandLabelEntity.setLabel("Visa");
+
+        cardDetailsEntity.setCardHolderName("Test");
+        cardDetailsEntity.setCardBrand("visa");
+        cardDetailsEntity.setExpiryDate("11/99");
+        cardDetailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of("123456"));
+        cardDetailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of("1234"));
+        cardDetailsEntity.setCardType(CardType.DEBIT);
+        cardDetailsEntity.setCardTypeDetails(CardBrandLabelEntity);
+        cardDetailsEntity.setBillingAddress(defaultBillingAddress());
+
+        return cardDetailsEntity;
+    }
+
+    public static AddressEntity defaultBillingAddress() {
+        AddressEntity addressEntity = new AddressEntity();
+
+        addressEntity.setLine1("10 WCB");
+        addressEntity.setLine2("address line 2");
+        addressEntity.setCity("London");
+        addressEntity.setCounty("London");
+        addressEntity.setPostcode("E1 8XX");
+        addressEntity.setCountry("UK");
+
+        return addressEntity;
+    }
+
     public ChargeEntity build() {
         if (gatewayTransactionId == null) {
             gatewayTransactionId = transactionId;
         }
-        
+
         ChargeEntity chargeEntity = new ChargeEntity(amount,
                 status,
-                returnUrl, 
-                description, 
+                returnUrl,
+                description,
                 reference,
                 gatewayAccountEntity,
                 email,
@@ -72,8 +117,8 @@ public class ChargeEntityFixture {
                 language,
                 delayedCapture,
                 externalMetadata,
-                source, 
-                gatewayTransactionId, 
+                source,
+                gatewayTransactionId,
                 cardDetails,
                 moto);
         chargeEntity.setId(id);
@@ -208,17 +253,6 @@ public class ChargeEntityFixture {
         return this;
     }
 
-    public static GatewayAccountEntity defaultGatewayAccountEntity() {
-        GatewayAccountEntity accountEntity = new GatewayAccountEntity("sandbox", new HashMap<>(), TEST);
-        accountEntity.setId(1L);
-        accountEntity.setServiceName("MyService");
-        EmailNotificationEntity emailNotificationEntity = new EmailNotificationEntity(accountEntity);
-        emailNotificationEntity.setTemplateBody("template body");
-        accountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, emailNotificationEntity);
-        accountEntity.addNotification(EmailNotificationType.REFUND_ISSUED, emailNotificationEntity);
-        return accountEntity;
-    }
-
     public ChargeEntityFixture withParityStatus(ParityCheckStatus parityCheckStatus) {
         this.parityCheckStatus = parityCheckStatus;
         return this;
@@ -233,7 +267,7 @@ public class ChargeEntityFixture {
         this.email = email;
         return this;
     }
-    
+
     public ChargeEntityFixture withMoto(boolean moto) {
         this.moto = moto;
         return this;
