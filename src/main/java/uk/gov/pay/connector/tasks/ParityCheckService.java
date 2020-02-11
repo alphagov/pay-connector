@@ -13,6 +13,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paritycheck.Address;
 import uk.gov.pay.connector.paritycheck.CardDetails;
 import uk.gov.pay.connector.paritycheck.LedgerService;
@@ -28,6 +29,7 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.DATA_MISMATCH;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING_IN_LEDGER;
@@ -124,6 +126,8 @@ public class ParityCheckService {
 
             fieldsMatch = matchCommonFields(chargeEntity, transaction);
             fieldsMatch = fieldsMatch && matchCardDetails(chargeEntity.getCardDetails(), transaction.getCardDetails());
+            fieldsMatch = fieldsMatch && matchGatewayAccountFields(chargeEntity.getGatewayAccount(), transaction);
+            fieldsMatch = fieldsMatch && matchFeatureSpecificFields(chargeEntity, transaction);
 
             if (fieldsMatch) {
                 parityCheckStatus = EXISTS_IN_LEDGER;
@@ -144,6 +148,9 @@ public class ParityCheckService {
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getEmail(), transaction.getEmail(), "email");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getReturnUrl(), transaction.getReturnUrl(), "return_url");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getGatewayTransactionId(), transaction.getGatewayTransactionId(), "gateway_transaction_id");
+        fieldsMatch = fieldsMatch && isEquals(
+                ISO_INSTANT_MILLISECOND_PRECISION.format(chargeEntity.getCreatedDate()),
+                transaction.getCreatedDate(), "created_date");
 
         String chargeExternalStatus = ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().getStatusV2();
         fieldsMatch = fieldsMatch && isEquals(chargeExternalStatus, transaction.getState().getStatus(), "status");
@@ -200,6 +207,30 @@ public class ParityCheckService {
             fieldsMatch = fieldsMatch && isEquals(addressEntity.getCountry(), ledgerBillingAddress.getCountry(), "country");
             fieldsMatch = fieldsMatch && isEquals(addressEntity.getPostcode(), ledgerBillingAddress.getPostcode(), "post_code");
         }
+
+        return fieldsMatch;
+    }
+
+    private boolean matchGatewayAccountFields(GatewayAccountEntity gatewayAccount, LedgerTransaction transaction) {
+        boolean fieldsMatch = isEquals(gatewayAccount.getId(), transaction.getGatewayAccountId(), "gateway_account_id");
+        fieldsMatch = fieldsMatch && isEquals(gatewayAccount.getGatewayName(), transaction.getPaymentProvider(), "payment_provider");
+        fieldsMatch = fieldsMatch && isEquals(gatewayAccount.isLive(), transaction.getLive(), "live");
+        return fieldsMatch;
+    }
+
+    private boolean matchFeatureSpecificFields(ChargeEntity chargeEntity, LedgerTransaction transaction) {
+        boolean fieldsMatch = isEquals(chargeEntity.isDelayedCapture(), transaction.getDelayedCapture(), "delayed_capture");
+        fieldsMatch = fieldsMatch && isEquals(chargeEntity.getSource(), transaction.getSource(), "source");
+        fieldsMatch = fieldsMatch && isEquals(chargeEntity.isMoto(), transaction.isMoto(), "moto");
+
+        fieldsMatch = fieldsMatch && isEquals(chargeEntity.getFeeAmount().orElse(null),
+                transaction.getFee(), "fee");
+        fieldsMatch = fieldsMatch && isEquals(chargeEntity.getCorporateSurcharge().orElse(null),
+                transaction.getCorporateCardSurcharge(), "corporate_surcharge");
+        fieldsMatch = fieldsMatch && isEquals(chargeEntity.getNetAmount().orElse(null),
+                transaction.getNetAmount(), "net_amount");
+
+        fieldsMatch = fieldsMatch && isEquals(chargeEntity.getWalletType().toString(), transaction.getWalletType(), "wallet_type");
 
         return fieldsMatch;
     }
