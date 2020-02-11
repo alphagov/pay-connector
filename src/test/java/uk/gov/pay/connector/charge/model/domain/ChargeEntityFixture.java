@@ -272,4 +272,9 @@ public class ChargeEntityFixture {
         this.moto = moto;
         return this;
     }
+
+    public ChargeEntityFixture withDelayedCapture(boolean delayedCapture) {
+        this.delayedCapture = delayedCapture;
+        return this;
+    }
 }
