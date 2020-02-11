@@ -706,6 +706,8 @@ public class DatabaseTestHelper {
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE gateway_accounts CASCADE").execute());
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE emitted_events CASCADE").execute());
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE tokens").execute());
+        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE refunds").execute());
+        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE refunds_history").execute());
     }
 
     public Long getChargeIdByExternalId(String externalChargeId) {
