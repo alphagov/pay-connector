@@ -1,8 +1,9 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
+import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.common.model.api.CommaDelimitedSetParameter;
 
-import javax.ws.rs.DefaultValue;
+import javax.validation.constraints.Pattern;
 import javax.ws.rs.QueryParam;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,17 +15,21 @@ public class GatewayAccountSearchParams {
     private static final String ACCOUNT_IDS_SQL_FIELD = "accountIds";
     private static final String ALLOW_MOTO_SQL_FIELD = "allowMoto";
     
-    @DefaultValue("")
     @QueryParam("accountIds")
     private CommaDelimitedSetParameter accountIds;
+    
+    // This is a string value rather than boolean as if the parameter isn't provided, it should not filter by
+    // moto enabled/disabled
     @QueryParam("moto_enabled")
-    private Boolean motoEnabled;
+    @Pattern(regexp = "true|false",
+            message = "Parameter [moto_enabled] must be true or false")
+    private String motoEnabled;
 
     public void setAccountIds(CommaDelimitedSetParameter accountIds) {
         this.accountIds = accountIds;
     }
 
-    public void setMotoEnabled(Boolean motoEnabled) {
+    public void setMotoEnabled(String motoEnabled) {
         this.motoEnabled = motoEnabled;
     }
 
@@ -34,7 +39,7 @@ public class GatewayAccountSearchParams {
         if (accountIds != null && accountIds.isNotEmpty()) {
             filters.add(" gae.id IN :" + ACCOUNT_IDS_SQL_FIELD);
         }
-        if (motoEnabled != null) {
+        if (StringUtils.isNotEmpty(motoEnabled)) {
             filters.add(" gae.allowMoto = :" + ALLOW_MOTO_SQL_FIELD);
         }
         
@@ -47,10 +52,16 @@ public class GatewayAccountSearchParams {
         if (accountIds != null && accountIds.isNotEmpty()) {
             queryMap.put(ACCOUNT_IDS_SQL_FIELD, accountIds.getParameters());
         }
-        if (motoEnabled != null) {
-            queryMap.put(ALLOW_MOTO_SQL_FIELD, motoEnabled);
+        if (StringUtils.isNotEmpty(motoEnabled)) {
+            queryMap.put(ALLOW_MOTO_SQL_FIELD, Boolean.valueOf(motoEnabled));
         }
         
         return queryMap;
+    }
+
+    @Override
+    public String toString() {
+        return "accountIds=" + accountIds +
+                ", moto_enabled=" + motoEnabled;
     }
 }

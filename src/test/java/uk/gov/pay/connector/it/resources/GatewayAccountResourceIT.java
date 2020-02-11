@@ -173,78 +173,77 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     }
 
     @Test
-    public void shouldReturnCollectionOfAccounts() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestAccount()
-                .withAccountId(100)
-                .withPaymentProvider("sandbox")
-                .withType(TEST)
-                .insert();
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestAccount()
-                .withAccountId(200)
-                .withPaymentProvider("sandbox")
-                .withType(LIVE)
-                .insert();
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestAccount()
-                .withAccountId(300)
-                .withPaymentProvider("smartpay")
-                .withType(LIVE)
-                .insert();
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestAccount()
-                .withAccountId(400)
-                .withPaymentProvider("worldpay")
-                .withType(TEST)
-                .withServiceName(null)
-                .insert();
-
-        // assert properties are there
-        givenSetup()
-                .get("/v1/api/accounts")
-                .then()
-                .statusCode(200)
-                .body("accounts", hasSize(4))
-                .body("accounts[0].gateway_account_id", is(100))
-                .body("accounts[0].payment_provider", is("sandbox"))
-                .body("accounts[0].type", is(TEST.toString()))
-                .body("accounts[0].description", is("a description"))
-                .body("accounts[0].service_name", is("service_name"))
-                .body("accounts[0].analytics_id", is("an analytics id"))
-                .body("accounts[0].corporate_credit_card_surcharge_amount", is(0))
-                .body("accounts[0].corporate_debit_card_surcharge_amount", is(0))
-                .body("accounts[0]._links.self.href", is("https://localhost:" + testContext.getPort() + ACCOUNTS_API_URL + 100))
-                // and credentials should be missing
-                .body("accounts[0].credentials", nullValue())
-
-                .body("accounts[2].gateway_account_id", is(300))
-                .body("accounts[2].payment_provider", is("smartpay"))
-                .body("accounts[2].type", is(LIVE.toString()))
-                .body("accounts[2].description", is("a description"))
-                .body("accounts[2].service_name", is("service_name"))
-                .body("accounts[2].analytics_id", is("an analytics id"))
-                .body("accounts[2].corporate_credit_card_surcharge_amount", is(0))
-                .body("accounts[2].corporate_debit_card_surcharge_amount", is(0))
-                .body("accounts[2]._links.self.href", is("https://localhost:" + testContext.getPort() + ACCOUNTS_API_URL + 300))
-                // and credentials should be missing
-                .body("accounts[2].credentials", nullValue())
-
-                // service name for the last one should be absent in response as its null
-                .body("accounts[3].service_name", nullValue());
-    }
-
-    @Test
     public void shouldReturnEmptyCollectionOfAccountsWhenNoneFound() {
         givenSetup()
                 .get("/v1/api/accounts")
                 .then()
                 .statusCode(200)
                 .body("accounts", hasSize(0));
+    }
+
+    @Test
+    public void shouldGetAllGatewayAccountsWhenSearchWithNoParams() {
+        String gatewayAccountId1 = createAGatewayAccountFor("sandbox");
+        updateGatewayAccount(gatewayAccountId1, "allow_moto", true);
+        createAGatewayAccountFor("sandbox");
+
+        givenSetup()
+                .get("/v1/api/accounts")
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("accounts", hasSize(2));
+    }
+
+    @Test
+    public void shouldGetGatewayAccountsByIds() {
+        String gatewayAccountId1 = createAGatewayAccountFor("sandbox");
+        String gatewayAccountId2 = createAGatewayAccountFor("sandbox");
+        createAGatewayAccountFor("sandbox");
+
+        givenSetup()
+                .get("/v1/api/accounts?accountIds=" + gatewayAccountId1 + "," + gatewayAccountId2)
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("accounts", hasSize(2))
+                .body("accounts[0].gateway_account_id", is(Integer.valueOf(gatewayAccountId1)))
+                .body("accounts[1].gateway_account_id", is(Integer.valueOf(gatewayAccountId2)));
+    }
+
+    @Test
+    public void shouldGetGatewayAccountsByMotoEnabled() {
+        String gatewayAccountId1 = createAGatewayAccountFor("sandbox");
+        updateGatewayAccount(gatewayAccountId1, "allow_moto", true);
+        createAGatewayAccountFor("sandbox");
+
+        givenSetup()
+                .get("/v1/api/accounts?moto_enabled=true")
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("accounts", hasSize(1))
+                .body("accounts[0].gateway_account_id", is(Integer.valueOf(gatewayAccountId1)));
+    }
+
+    @Test
+    public void shouldGetGatewayAccountsByMotoDisabled() {
+        String gatewayAccountId1 = createAGatewayAccountFor("sandbox");
+        updateGatewayAccount(gatewayAccountId1, "allow_moto", true);
+        String gatewayAccountId2 = createAGatewayAccountFor("sandbox");
+
+        givenSetup()
+                .get("/v1/api/accounts?moto_enabled=false")
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("accounts", hasSize(1))
+                .body("accounts[0].gateway_account_id", is(Integer.valueOf(gatewayAccountId2)));
+    }
+
+    @Test
+    public void shouldReturn422ForMotoEnabledNotBooleanValue() {
+        givenSetup()
+                .get("/v1/api/accounts?moto_enabled=blah")
+                .then()
+                .statusCode(422)
+                .body("message[0]", is("Parameter [moto_enabled] must be true or false"));
     }
 
     @Test

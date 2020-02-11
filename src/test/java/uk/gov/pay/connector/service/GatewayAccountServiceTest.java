@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,6 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 
 import java.util.Arrays;
@@ -72,21 +72,12 @@ public class GatewayAccountServiceTest {
     }
 
     @Test
-    public void shouldGetAllGatewayAccounts() {
-        when(mockGatewayAccountDao.listAll()).thenReturn(Arrays.asList(getMockGatewayAccountEntity1, getMockGatewayAccountEntity2));
-        List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountService.getAllGatewayAccounts();
+    public void shouldSearchGatewayAccounts() {
+        GatewayAccountSearchParams gatewayAccountSearchParams = new GatewayAccountSearchParams();
+        when(mockGatewayAccountDao.search(gatewayAccountSearchParams))
+                .thenReturn(Arrays.asList(getMockGatewayAccountEntity1, getMockGatewayAccountEntity2));
 
-        assertThat(gatewayAccounts, hasSize(2));
-        assertThat(gatewayAccounts.get(0).getServiceName(), is("service one"));
-        assertThat(gatewayAccounts.get(1).getServiceName(), is("service two"));
-    }
-
-    @Test
-    public void shouldGetGatewayAccountsByIds() {
-        List<Long> accountIds = Arrays.asList(1L, 2L);
-        when(mockGatewayAccountDao.list(accountIds)).thenReturn(Arrays.asList(getMockGatewayAccountEntity1, getMockGatewayAccountEntity2));
-
-        List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountService.getGatewayAccounts(accountIds);
+        List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountService.searchGatewayAccounts(gatewayAccountSearchParams);
 
         assertThat(gatewayAccounts, hasSize(2));
         assertThat(gatewayAccounts.get(0).getServiceName(), is("service one"));
