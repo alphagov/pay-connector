@@ -20,6 +20,7 @@ import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.wallets.WalletType;
 
 import java.util.List;
 import java.util.Objects;
@@ -27,6 +28,7 @@ import java.util.Optional;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
@@ -229,8 +231,11 @@ public class ParityCheckService {
                 transaction.getCorporateCardSurcharge(), "corporate_surcharge");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getNetAmount().orElse(null),
                 transaction.getNetAmount(), "net_amount");
-
-        fieldsMatch = fieldsMatch && isEquals(chargeEntity.getWalletType().toString(), transaction.getWalletType(), "wallet_type");
+        
+        fieldsMatch = fieldsMatch &&
+                isEquals(Optional.ofNullable(chargeEntity.getWalletType())
+                        .map(WalletType::toString)
+                        .orElse(null), transaction.getWalletType(), "wallet_type");
 
         return fieldsMatch;
     }

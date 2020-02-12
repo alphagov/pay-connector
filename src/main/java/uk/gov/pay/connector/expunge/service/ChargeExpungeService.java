@@ -10,10 +10,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.tasks.ParityCheckService;
 
 import javax.inject.Inject;
-import java.time.ZonedDateTime;
 import java.util.stream.IntStream;
 
-import static java.time.ZoneOffset.UTC;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 

@@ -75,6 +75,11 @@ public class LedgerStub {
                 String.valueOf(value)));
         Optional.ofNullable(testCharge.getTransactionId()).ifPresent(value -> map.put("gateway_transaction_id",
                 value));
+        Optional.ofNullable(testCharge.getTestAccount().getAccountId()).ifPresent(account -> map.put("gateway_account_id",
+                account));
+        Optional.ofNullable(testCharge.getTestAccount().getPaymentProvider()).ifPresent(account -> map.put("payment_provider",
+                account));
+        map.put("live", false);
         return map;
     }
 
