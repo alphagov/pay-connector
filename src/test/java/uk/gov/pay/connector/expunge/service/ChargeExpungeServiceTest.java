@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.expunge.service;
 
-import com.google.inject.internal.cglib.core.$LocalVariablesSorter;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,13 +15,10 @@ import uk.gov.pay.connector.tasks.ParityCheckService;
 
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.WebChargeEntityBuilder.aWebChargeEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 
 @RunWith(MockitoJUnitRunner.class)
