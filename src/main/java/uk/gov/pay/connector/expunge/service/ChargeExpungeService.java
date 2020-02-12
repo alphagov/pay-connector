@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.expunge.service;
 
+import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -21,13 +22,17 @@ public class ChargeExpungeService {
     private final ChargeDao chargeDao;
     private final ExpungeConfig expungeConfig;
     private final ParityCheckService parityCheckService;
-    
+
     @Inject
     public ChargeExpungeService(ChargeDao chargeDao, ConnectorConfiguration connectorConfiguration,
                                 ParityCheckService parityCheckService) {
         this.chargeDao = chargeDao;
         expungeConfig = connectorConfiguration.getExpungeConfig();
         this.parityCheckService = parityCheckService;
+    }
+
+    private static boolean inTerminalState(ChargeEntity chargeEntity) {
+        return ChargeStatus.fromString(chargeEntity.getStatus()).isExpungeable();
     }
 
     public void expunge(Integer noOfChargesToExpungeQueryParam) {
@@ -54,12 +59,12 @@ public class ChargeExpungeService {
 
     private void parityCheckAndExpungeIfMet(ChargeEntity chargeEntity) {
         boolean hasChargeBeenParityCheckedBefore = chargeEntity.getParityCheckDate() != null;
-        
+
         if (!inTerminalState(chargeEntity)) {
             logger.info("Charge not expunged because it is not in a terminal state {}",
                     kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
         } else if (parityCheckService.parityCheckChargeForExpunger(chargeEntity)) {
-            chargeDao.expungeCharge(chargeEntity.getId());
+            expungeCharge(chargeEntity);
             logger.info("Charge expunged from connector {}",
                     kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
         } else {
@@ -73,8 +78,9 @@ public class ChargeExpungeService {
         }
     }
 
-    private static boolean inTerminalState(ChargeEntity chargeEntity) {
-        return ChargeStatus.fromString(chargeEntity.getStatus()).isExpungeable();
+    @Transactional
+    public void expungeCharge(ChargeEntity chargeEntity) {
+        chargeDao.expungeCharge(chargeEntity.getId());
     }
-    
+
 }

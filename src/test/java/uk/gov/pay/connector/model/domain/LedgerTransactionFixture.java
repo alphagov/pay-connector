@@ -3,22 +3,33 @@ package uk.gov.pay.connector.model.domain;
 import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paritycheck.Address;
 import uk.gov.pay.connector.paritycheck.CardDetails;
 import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import uk.gov.pay.connector.paritycheck.TransactionState;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getTotalAmountFor;
 
 public class LedgerTransactionFixture {
     private String status = "created";
@@ -42,17 +53,20 @@ public class LedgerTransactionFixture {
     private Long corporateCardSurcharge;
     private Long fee;
     private boolean moto;
+    private Long totalAmount;
+    private ZonedDateTime captureSubmittedDate;
+    private ZonedDateTime capturedDate;
+    private ChargeResponse.RefundSummary refundSummary;
 
     public static LedgerTransactionFixture aValidLedgerTransaction() {
         return new LedgerTransactionFixture();
     }
 
-    public static LedgerTransactionFixture from(ChargeEntity chargeEntity) {
+    public static LedgerTransactionFixture from(ChargeEntity chargeEntity, List<RefundEntity> refundsList) {
         LedgerTransactionFixture ledgerTransactionFixture =
                 aValidLedgerTransaction()
                         .withStatus(ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().getStatusV2())
                         .withExternalId(chargeEntity.getExternalId())
-                        .withCreatedDate(chargeEntity.getCreatedDate())
                         .withAmount(chargeEntity.getAmount())
                         .withDescription(chargeEntity.getDescription())
                         .withReference(chargeEntity.getReference().toString())
@@ -66,8 +80,10 @@ public class LedgerTransactionFixture {
                         .withFee(chargeEntity.getFeeAmount().orElse(null))
                         .withCorporateCardSurcharge(chargeEntity.getCorporateSurcharge().orElse(null))
                         .withWalletType(chargeEntity.getWalletType())
+                        .withTotalAmount(getTotalAmountFor(chargeEntity))
                         .withNetAmount(chargeEntity.getNetAmount().orElse(null));
 
+        ledgerTransactionFixture.withCreatedDate(getEventDate(chargeEntity.getEvents(), CREATED));
         if (chargeEntity.getGatewayAccount() != null) {
             GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
             ledgerTransactionFixture.withPaymentProvider(gatewayAccount.getGatewayName());
@@ -99,8 +115,30 @@ public class LedgerTransactionFixture {
             ledgerTransactionFixture.withCardDetails(cardDetails);
         }
 
+        ledgerTransactionFixture.withCapturedDate(getEventDate(chargeEntity.getEvents(), CAPTURED));
+        ledgerTransactionFixture.withCaptureSubmittedDate(getEventDate(chargeEntity.getEvents(), CAPTURE_SUBMITTED));
+
+        ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
+        ExternalChargeRefundAvailability refundAvailability;
+        if (refundsList != null) {
+            refundAvailability = new DefaultExternalRefundAvailabilityCalculator()
+                    .calculate(Charge.from(chargeEntity), refundsList);
+        } else {
+            refundAvailability = new DefaultExternalRefundAvailabilityCalculator()
+                    .calculate(Charge.from(chargeEntity), List.of());
+        }
+        refundSummary.setStatus(refundAvailability.getStatus());
+        ledgerTransactionFixture.withRefundSummary(refundSummary);
 
         return ledgerTransactionFixture;
+    }
+
+    private static ZonedDateTime getEventDate(List<ChargeEventEntity> chargeEventEntities, ChargeStatus status) {
+        return ofNullable(chargeEventEntities).flatMap(entities -> entities.stream()
+                .filter(chargeEvent -> status.equals(chargeEvent.getStatus()))
+                .findFirst()
+                .map(ChargeEventEntity::getUpdated))
+                .orElse(null);
     }
 
     public LedgerTransaction build() {
@@ -129,8 +167,15 @@ public class LedgerTransactionFixture {
         ledgerTransaction.setFee(fee);
         ledgerTransaction.setCorporateCardSurcharge(corporateCardSurcharge);
         ledgerTransaction.setNetAmount(netAmount);
+        ledgerTransaction.setTotalAmount(totalAmount);
         ledgerTransaction.setWalletType(walletType);
-        
+
+        ChargeResponse.SettlementSummary settlementSummary = new ChargeResponse.SettlementSummary();
+        settlementSummary.setCapturedTime(capturedDate);
+        settlementSummary.setCaptureSubmitTime(captureSubmittedDate);
+        ledgerTransaction.setSettlementSummary(settlementSummary);
+        ledgerTransaction.setRefundSummary(refundSummary);
+
         return ledgerTransaction;
     }
 
@@ -236,6 +281,26 @@ public class LedgerTransactionFixture {
 
     public LedgerTransactionFixture withDelayedCapture(boolean delayedCapture) {
         this.delayedCapture = delayedCapture;
+        return this;
+    }
+
+    public LedgerTransactionFixture withTotalAmount(Long totalAmount) {
+        this.totalAmount = totalAmount;
+        return this;
+    }
+
+    public LedgerTransactionFixture withCaptureSubmittedDate(ZonedDateTime captureSubmittedDate) {
+        this.captureSubmittedDate = captureSubmittedDate;
+        return this;
+    }
+
+    public LedgerTransactionFixture withCapturedDate(ZonedDateTime capturedDate) {
+        this.capturedDate = capturedDate;
+        return this;
+    }
+
+    public LedgerTransactionFixture withRefundSummary(ChargeResponse.RefundSummary refundSummary) {
+        this.refundSummary = refundSummary;
         return this;
     }
 

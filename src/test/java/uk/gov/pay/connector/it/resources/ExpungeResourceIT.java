@@ -31,6 +31,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.commons.model.SupportedLanguage.ENGLISH;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -64,7 +65,6 @@ public class ExpungeResourceIT {
                 .insert();
     }
 
-
     @Test
     public void shouldExpungeCharge() throws JsonProcessingException {
         var chargedId = ThreadLocalRandom.current().nextLong();
@@ -84,6 +84,7 @@ public class ExpungeResourceIT {
                 .withReturnUrl("https://www.test.test/")
                 .withChargeStatus(ChargeStatus.CAPTURED)
                 .insert();
+        insertChargeEvent(expungeableCharge1);
         ledgerStub.returnLedgerTransaction("external_charge_id", expungeableCharge1);
         var charge = databaseTestHelper.containsChargeWithExternalId("external_charge_id");
         assertThat(charge, is(true));
@@ -95,7 +96,16 @@ public class ExpungeResourceIT {
         var postCharge = databaseTestHelper.containsChargeWithExternalId("external_charge_id");
         assertThat(postCharge, is(false));
     }
-    
+
+    private void insertChargeEvent(DatabaseFixtures.TestCharge charge) {
+        DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper).aTestChargeEvent()
+                .withChargeStatus(CREATED)
+                .withDate(charge.getCreatedDate())
+                .withChargeId(charge.getChargeId())
+                .withTestCharge(charge)
+                .insert();
+    }
+
     @Test
     public void shouldUpdateTheParityCheckedDateOfNonCriteriaMatchedCharge() throws JsonProcessingException {
         var chargedId = ThreadLocalRandom.current().nextLong();
@@ -110,6 +120,7 @@ public class ExpungeResourceIT {
                 .withAmount(2500)
                 .withChargeStatus(ChargeStatus.CAPTURED)
                 .insert();
+        insertChargeEvent(expungeableCharge1);
         ledgerStub.returnLedgerTransactionWithMismatch("external_charge_id", expungeableCharge1);
         var charge = databaseTestHelper.containsChargeWithExternalId("external_charge_id");
         assertThat(charge, is(true));
@@ -142,6 +153,7 @@ public class ExpungeResourceIT {
                 .withReturnUrl("https://www.test.test/")
                 .withChargeStatus(ChargeStatus.CAPTURED)
                 .insert();
+        insertChargeEvent(expungeableCharge1);
         ledgerStub.returnLedgerTransaction("external_charge_id", expungeableCharge1);
         var charge = databaseTestHelper.containsChargeWithExternalId("external_charge_id_2");
         assertThat(charge, is(true));
@@ -175,6 +187,7 @@ public class ExpungeResourceIT {
                 .withReturnUrl("https://www.test.test/")
                 .withChargeStatus(ChargeStatus.CAPTURED)
                 .insert();
+        insertChargeEvent(expungeableCharge1);
         ledgerStub.returnLedgerTransaction("external_charge_id_10", expungeableCharge1);
 
         var chargedId2 = ThreadLocalRandom.current().nextLong();
@@ -195,6 +208,7 @@ public class ExpungeResourceIT {
                 .withReturnUrl("https://www.test.test/")
                 .withChargeStatus(ChargeStatus.CAPTURED)
                 .insert();
+        insertChargeEvent(nonExpungeableCharge1);
         ledgerStub.returnLedgerTransaction("external_charge_id_11", nonExpungeableCharge1);
 
         var chargedId3 = ThreadLocalRandom.current().nextLong();
@@ -215,6 +229,7 @@ public class ExpungeResourceIT {
                 .withReturnUrl("https://www.test.test/")
                 .withChargeStatus(ChargeStatus.CAPTURED)
                 .insert();
+        insertChargeEvent(expungeableCharge2);
         ledgerStub.returnLedgerTransaction("external_charge_id_12", expungeableCharge2);
 
         var chargedId4 = ThreadLocalRandom.current().nextLong();
@@ -235,6 +250,7 @@ public class ExpungeResourceIT {
                 .withReturnUrl("https://www.test.test/")
                 .withChargeStatus(ChargeStatus.CAPTURED)
                 .insert();
+        insertChargeEvent(nonExpungeableCharge2);
         ledgerStub.returnLedgerTransaction("external_charge_id_13", nonExpungeableCharge2);
         
         given().port(testContext.getPort())

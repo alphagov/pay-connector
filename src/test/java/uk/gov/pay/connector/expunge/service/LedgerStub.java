@@ -3,10 +3,8 @@ package uk.gov.pay.connector.expunge.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
+import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.it.util.ChargeUtils;
-import uk.gov.pay.connector.model.domain.LedgerTransactionFixture;
-import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +31,7 @@ public class LedgerStub {
         ledgerTransactionFields.put("description", "This is a mismatch");
         stubResponse(externalId, ledgerTransactionFields);
     }
-    
+
     private void stubResponse(String externalId, Map<String, Object> ledgerTransactionFields) throws JsonProcessingException {
         ResponseDefinitionBuilder responseDefBuilder = aResponse()
                 .withHeader(CONTENT_TYPE, APPLICATION_JSON)
@@ -47,8 +45,8 @@ public class LedgerStub {
                         )
         );
     }
-    
-    private static Map<String, Object> testChargeToLedgerTransactionJson(DatabaseFixtures.TestCharge testCharge)  {
+
+    private static Map<String, Object> testChargeToLedgerTransactionJson(DatabaseFixtures.TestCharge testCharge) {
         var map = new HashMap<String, Object>();
         Optional.ofNullable(testCharge.getExternalChargeId()).ifPresent(value -> map.put("id", value));
         Optional.of(testCharge.getAmount()).ifPresent(value -> map.put("amount", String.valueOf(value)));
@@ -79,6 +77,12 @@ public class LedgerStub {
                 account));
         Optional.ofNullable(testCharge.getTestAccount().getPaymentProvider()).ifPresent(account -> map.put("payment_provider",
                 account));
+
+        ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
+        refundSummary.setStatus("available");
+        Optional.ofNullable(testCharge.getTestAccount().getPaymentProvider()).ifPresent(account -> map.put("refund_summary",
+                refundSummary));
+
         map.put("live", false);
         return map;
     }
