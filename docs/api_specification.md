@@ -196,15 +196,20 @@ Content-Type: application/json
 
 Retrieves a collection of accounts, optionally filtering by the provided query parameters
 
-| Field          | Always present | Description                                                                                                                                |
-|:---------------|:--------------:|:-------------------------------------------------------------------------------------------------------------------------------------------|
-| `accountIds`   |                | The account IDs that the results should be filtered by. A comma separated list of IDs.                                                     |
-| `moto_enabled` |                | The accounts will be filtered by whether or not MOTO payment are enabled for the account if this parameter is provided. "true" or "false". |
+| Field                | Always present | Description                                                                                                                                      |
+|:---------------------|:--------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------|
+| `accountIds`         |                | The account IDs that the results should be filtered by. A comma separated list of IDs.                                                           |
+| `moto_enabled`       |                | The accounts will be filtered by whether or not MOTO payment are enabled for the account if this parameter is provided. "true" or "false".       |
+| `apple_pay_enabled`  |                | The accounts will be filtered by whether or not Apple pay is enabled for the account if this parameter is provided. "true" or "false".           |
+| `google_pay_enabled` |                | The accounts will be filtered by whether or not Google pay is enabled for the account if this parameter is provided. "true" or "false".          |
+| `requires_3ds`       |                | The accounts will be filtered by whether or not 3DS is required for the account if this parameter is provided. "true" or "false".                |
+| `type`               |                | The accounts will be filtered by type if this parameter is provided. "test" or "live".                                                           |
+| `payment_provider`   |                | The accounts will be filtered by payment provider if this parameter is provided. One of "sandbox" or "worldpay", "smartpay", "epdq" or "stripe". |
 
 ### Request example
 
 ```
-GET /v1/api/accounts?accountIds
+GET /v1/api/accounts?accountIds=1,2&payment_provider=worldpay
 ```
 
 ### Response example

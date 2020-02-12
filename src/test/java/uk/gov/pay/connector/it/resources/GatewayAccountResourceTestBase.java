@@ -53,6 +53,14 @@ public class GatewayAccountResourceTestBase {
         return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider));
     }
 
+    protected String createAGatewayAccountFor(String provider, String desc, String analyticsId) {
+        return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider, desc, analyticsId));
+    }
+    
+    protected String createAGatewayAccountFor(String provider, String description, String analyticsId, String requires3ds, String type) {
+        return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider, description, analyticsId, requires3ds, type));
+    }
+
     public static String extractGatewayAccountId(ValidatableResponse validatableResponse) {
         return validatableResponse.extract().path("gateway_account_id");
     }
@@ -62,10 +70,10 @@ public class GatewayAccountResourceTestBase {
     }
 
     public static ValidatableResponse createAGatewayAccountFor(int port, String testProvider, String description, String analyticsId) {
-        return createAGatewayAccountFor(port, testProvider, description, analyticsId, null);
+        return createAGatewayAccountFor(port, testProvider, description, analyticsId, null, "test");
     }
 
-    public static ValidatableResponse createAGatewayAccountFor(int port, String testProvider, String description, String analyticsId, String requires_3ds) {
+    public static ValidatableResponse createAGatewayAccountFor(int port, String testProvider, String description, String analyticsId, String requires3ds, String type) {
         Map<String, String> payload = Maps.newHashMap();
         payload.put("payment_provider", testProvider);
         if (description != null) {
@@ -74,8 +82,11 @@ public class GatewayAccountResourceTestBase {
         if (analyticsId != null) {
             payload.put("analytics_id", analyticsId);
         }
-        if (requires_3ds != null) {
-            payload.put("requires_3ds", requires_3ds);
+        if (requires3ds != null) {
+            payload.put("requires_3ds", requires3ds);
+        }
+        if (type != null) {
+            payload.put("type", type);
         }
         return given().port(port)
                 .contentType(JSON)

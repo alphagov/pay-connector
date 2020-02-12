@@ -13,7 +13,7 @@ public class AddGatewayAccountParams {
     private String paymentGateway;
     private Map<String, String> credentials;
     private String serviceName;
-    private GatewayAccountEntity.Type providerUrlType;
+    private GatewayAccountEntity.Type type;
     private String description;
     private String analyticsId;
     private EmailCollectionMode emailCollectionMode;
@@ -23,6 +23,9 @@ public class AddGatewayAccountParams {
     private long corporatePrepaidDebitCardSurchargeAmount;
     private int integrationVersion3ds;
     private boolean allowMoto;
+    private boolean allowApplePay;
+    private boolean allowGooglePay;
+    private boolean requires3ds;
 
     public int getIntegrationVersion3ds() {
         return integrationVersion3ds;
@@ -44,8 +47,8 @@ public class AddGatewayAccountParams {
         return serviceName;
     }
 
-    public GatewayAccountEntity.Type getProviderUrlType() {
-        return providerUrlType;
+    public GatewayAccountEntity.Type getType() {
+        return type;
     }
 
     public String getDescription() {
@@ -80,12 +83,24 @@ public class AddGatewayAccountParams {
         return allowMoto;
     }
 
+    public boolean isAllowApplePay() {
+        return allowApplePay;
+    }
+
+    public boolean isAllowGooglePay() {
+        return allowGooglePay;
+    }
+
+    public boolean isRequires3ds() {
+        return requires3ds;
+    }
+
     public static final class AddGatewayAccountParamsBuilder {
         private String accountId;
         private String paymentGateway = "provider";
         private Map<String, String> credentials;
         private String serviceName = "service name";
-        private GatewayAccountEntity.Type providerUrlType = TEST;
+        private GatewayAccountEntity.Type type = TEST;
         private String description = "description";
         private String analyticsId;
         private EmailCollectionMode emailCollectionMode = MANDATORY;
@@ -95,6 +110,9 @@ public class AddGatewayAccountParams {
         private long corporatePrepaidDebitCardSurchargeAmount;
         private int integrationVersion3ds = 2;
         private boolean allowMoto;
+        private boolean allowApplePay;
+        private boolean allowGooglePay;
+        private boolean requires3ds;
 
         private AddGatewayAccountParamsBuilder() {
         }
@@ -123,8 +141,8 @@ public class AddGatewayAccountParams {
             return this;
         }
 
-        public AddGatewayAccountParamsBuilder withProviderUrlType(GatewayAccountEntity.Type providerUrlType) {
-            this.providerUrlType = providerUrlType;
+        public AddGatewayAccountParamsBuilder withType(GatewayAccountEntity.Type type) {
+            this.type = type;
             return this;
         }
 
@@ -167,6 +185,21 @@ public class AddGatewayAccountParams {
             this.allowMoto = allowMoto;
             return this;
         }
+        
+        public AddGatewayAccountParamsBuilder withAllowApplePay(boolean allowApplePay) {
+            this.allowApplePay = allowApplePay;
+            return this;
+        }
+        
+        public AddGatewayAccountParamsBuilder withAllowGooglePay(boolean allowGooglePay) {
+            this.allowGooglePay = allowGooglePay;
+            return this;
+        }
+        
+        public AddGatewayAccountParamsBuilder withRequires3ds(boolean requires3ds) {
+            this.requires3ds = requires3ds;
+            return this;
+        }
 
         public AddGatewayAccountParams build() {
             AddGatewayAccountParams addGatewayAccountParams = new AddGatewayAccountParams();
@@ -175,7 +208,7 @@ public class AddGatewayAccountParams {
             addGatewayAccountParams.corporatePrepaidDebitCardSurchargeAmount = this.corporatePrepaidDebitCardSurchargeAmount;
             addGatewayAccountParams.analyticsId = this.analyticsId;
             addGatewayAccountParams.corporatePrepaidCreditCardSurchargeAmount = this.corporatePrepaidCreditCardSurchargeAmount;
-            addGatewayAccountParams.providerUrlType = this.providerUrlType;
+            addGatewayAccountParams.type = this.type;
             addGatewayAccountParams.credentials = this.credentials;
             addGatewayAccountParams.description = this.description;
             addGatewayAccountParams.serviceName = this.serviceName;
@@ -184,6 +217,9 @@ public class AddGatewayAccountParams {
             addGatewayAccountParams.corporateDebitCardSurchargeAmount = this.corporateDebitCardSurchargeAmount;
             addGatewayAccountParams.integrationVersion3ds = this.integrationVersion3ds;
             addGatewayAccountParams.allowMoto = this.allowMoto;
+            addGatewayAccountParams.allowApplePay = this.allowApplePay;
+            addGatewayAccountParams.allowGooglePay = this.allowGooglePay;
+            addGatewayAccountParams.requires3ds = this.requires3ds;
             return addGatewayAccountParams;
         }
 

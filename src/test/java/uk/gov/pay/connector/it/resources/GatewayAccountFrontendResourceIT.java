@@ -510,10 +510,6 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
         return format("{\"card_types\": [%s]}", join(",", cardTypeIds));
     }
 
-    private String createAGatewayAccountFor(String provider, String desc, String id) {
-        return extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), provider, desc, id));
-    }
-
     private DatabaseFixtures.TestAccount createAccountRecordWithCards(CardTypeEntity... cardTypes) {
         return databaseFixtures
                 .aTestAccount()
