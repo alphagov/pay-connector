@@ -1430,4 +1430,36 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="drop foreign key constraint on charge_id on refunds table" author="">
+        <dropForeignKeyConstraint
+                baseTableName="refunds"
+                constraintName="fk__refunds_charges"/>
+    </changeSet>
+
+    <changeSet author="" id="drop not null constraint on charge_id on refunds table">
+        <dropNotNullConstraint columnDataType="bigserial"
+                               columnName="charge_id"
+                               tableName="refunds"/>
+    </changeSet>
+
+    <changeSet author="" id="drop not null constraint on charge_id refunds_history table">
+        <dropNotNullConstraint columnDataType="bigserial"
+                               columnName="charge_id"
+                               tableName="refunds_history"/>
+    </changeSet>
+    
+    <changeSet id="drop index on charge_id on refunds table" author="">
+        <dropIndex tableName="refunds" indexName="idx_refunds_charge_id"/>
+    </changeSet>
+
+    <changeSet id="drop index on charge_id on refunds_history table" author="">
+        <dropIndex tableName="refunds_history" indexName="idx_refunds_history_charge_id"/>
+    </changeSet>
+
+    <changeSet id="create charge_external_id index on refunds_history table" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_refunds_history_charge_external_id ON refunds_history (charge_external_id);
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
