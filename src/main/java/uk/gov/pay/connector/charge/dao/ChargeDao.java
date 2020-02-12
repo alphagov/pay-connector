@@ -213,7 +213,14 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
     }
 
     public void expungeCharge(Long id) {
-        ChargeEntity chargeEntity = entityManager.get().find(ChargeEntity.class, id);
-        entityManager.get().remove(chargeEntity);
+        entityManager.get()
+                .createNativeQuery("delete from charge_events where charge_id = ?1")
+                .setParameter(1, id)
+                .executeUpdate();
+
+        entityManager.get()
+                .createNativeQuery("delete from charges where id = ?1")
+                .setParameter(1, id)
+                .executeUpdate();
     }
 }

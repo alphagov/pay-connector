@@ -7,12 +7,17 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
+import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paritycheck.Address;
 import uk.gov.pay.connector.paritycheck.CardDetails;
@@ -20,21 +25,27 @@ import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.DATA_MISMATCH;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING_IN_LEDGER;
+import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getTotalAmountFor;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class ParityCheckService {
@@ -130,6 +141,8 @@ public class ParityCheckService {
             fieldsMatch = fieldsMatch && matchCardDetails(chargeEntity.getCardDetails(), transaction.getCardDetails());
             fieldsMatch = fieldsMatch && matchGatewayAccountFields(chargeEntity.getGatewayAccount(), transaction);
             fieldsMatch = fieldsMatch && matchFeatureSpecificFields(chargeEntity, transaction);
+            fieldsMatch = fieldsMatch && matchCaptureFields(chargeEntity, transaction);
+            fieldsMatch = fieldsMatch && matchRefundSummary(chargeEntity, transaction);
 
             if (fieldsMatch) {
                 parityCheckStatus = EXISTS_IN_LEDGER;
@@ -151,7 +164,8 @@ public class ParityCheckService {
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getReturnUrl(), transaction.getReturnUrl(), "return_url");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getGatewayTransactionId(), transaction.getGatewayTransactionId(), "gateway_transaction_id");
         fieldsMatch = fieldsMatch && isEquals(
-                ISO_INSTANT_MILLISECOND_PRECISION.format(chargeEntity.getCreatedDate()),
+                getChargeEventDate(chargeEntity, List.of(CREATED, PAYMENT_NOTIFICATION_CREATED))
+                        .map(ISO_INSTANT_MILLISECOND_PRECISION::format).orElse(null),
                 transaction.getCreatedDate(), "created_date");
 
         String chargeExternalStatus = ChargeStatus.fromString(chargeEntity.getStatus()).toExternal().getStatusV2();
@@ -231,13 +245,46 @@ public class ParityCheckService {
                 transaction.getCorporateCardSurcharge(), "corporate_surcharge");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getNetAmount().orElse(null),
                 transaction.getNetAmount(), "net_amount");
-        
+        fieldsMatch = fieldsMatch && isEquals(getTotalAmountFor(chargeEntity),
+                transaction.getTotalAmount(), "total_amount");
+
         fieldsMatch = fieldsMatch &&
-                isEquals(Optional.ofNullable(chargeEntity.getWalletType())
+                isEquals(ofNullable(chargeEntity.getWalletType())
                         .map(WalletType::toString)
                         .orElse(null), transaction.getWalletType(), "wallet_type");
 
         return fieldsMatch;
+    }
+
+    private boolean matchCaptureFields(ChargeEntity chargeEntity, LedgerTransaction transaction) {
+        boolean fieldsMatch = isEquals(
+                getChargeEventDate(chargeEntity, List.of(CAPTURED)).map(DateTimeUtils::toUTCDateString).orElse(null),
+                ofNullable(transaction.getSettlementSummary()).map(ChargeResponse.SettlementSummary::getCapturedDate).orElse(null),
+                "captured_date");
+        fieldsMatch &= isEquals(
+                getChargeEventDate(chargeEntity, List.of(CAPTURE_SUBMITTED)).map(ISO_INSTANT_MILLISECOND_PRECISION::format).orElse(null),
+                ofNullable(transaction.getSettlementSummary()).map(ChargeResponse.SettlementSummary::getCaptureSubmitTime).orElse(null),
+                "capture_submit_time");
+
+        return fieldsMatch;
+    }
+
+    private boolean matchRefundSummary(ChargeEntity chargeEntity, LedgerTransaction transaction) {
+        List<RefundEntity> refundsList = refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId());
+
+        DefaultExternalRefundAvailabilityCalculator defaultExternalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+        ExternalChargeRefundAvailability refundAvailability = defaultExternalRefundAvailabilityCalculator.calculate(Charge.from(chargeEntity), refundsList);
+
+        return isEquals(refundAvailability.getStatus(),
+                ofNullable(transaction.getRefundSummary()).map(refundSummary -> refundSummary.getStatus()).orElse(null), "refund_summary.status");
+    }
+
+    private Optional<ZonedDateTime> getChargeEventDate(ChargeEntity chargeEntity, List<ChargeStatus> chargeEventStatuses) {
+        return chargeEntity.getEvents()
+                .stream()
+                .filter(chargeEventEntity -> chargeEventStatuses.contains(chargeEventEntity.getStatus()))
+                .findFirst()
+                .map(ChargeEventEntity::getUpdated);
     }
 
     private boolean isEquals(Object value1, Object value2, String fieldName) {
