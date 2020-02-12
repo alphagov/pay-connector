@@ -1,15 +1,14 @@
 package uk.gov.pay.connector.charge.model;
 
 import org.apache.commons.lang3.StringUtils;
+import uk.gov.pay.commons.model.WrappedStringValue;
 
 import java.util.Objects;
 
-public class FirstDigitsCardNumber {
-
-    private final String firstDigitsCardNumber;
+public class FirstDigitsCardNumber extends WrappedStringValue {
 
     private FirstDigitsCardNumber(String firstDigitsCardNumber) {
-        this.firstDigitsCardNumber = Objects.requireNonNull(firstDigitsCardNumber);
+        super(firstDigitsCardNumber);
     }
 
     private static boolean isValid(String firstDigitsCardNumber) {
@@ -28,25 +27,6 @@ public class FirstDigitsCardNumber {
             return null;
         }
         return new FirstDigitsCardNumber(firstDigitsCardNumber);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other != null && other.getClass() == FirstDigitsCardNumber.class) {
-            FirstDigitsCardNumber that = (FirstDigitsCardNumber) other;
-            return this.firstDigitsCardNumber.equals(that.firstDigitsCardNumber);
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return firstDigitsCardNumber.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return firstDigitsCardNumber;
     }
 
 }
