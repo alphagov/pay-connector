@@ -92,7 +92,6 @@ public class DatabaseFixtures {
 
         private String externalId;
         private long id;
-        private Long chargeId;
         private long amount;
         private ZonedDateTime createdDate;
         private String userExternalId;
@@ -100,7 +99,6 @@ public class DatabaseFixtures {
 
         TestRefundHistory(TestRefund testRefund) {
             this.id = testRefund.getId();
-            this.chargeId = testRefund.getTestCharge().getChargeId();
             this.externalId = testRefund.getExternalRefundId();
             this.amount = testRefund.getAmount();
             this.createdDate = testRefund.getCreatedDate();
@@ -109,32 +107,32 @@ public class DatabaseFixtures {
         }
 
         public TestRefundHistory insert(RefundStatus status, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate) {
-            databaseTestHelper.addRefundHistory(id, externalId, "", amount, status.toString(), chargeId, createdDate, historyStartDate, historyEndDate, null, null, chargeExternalId);
+            databaseTestHelper.addRefundHistory(id, externalId, "", amount, status.toString(), createdDate, historyStartDate, historyEndDate, null, null, chargeExternalId);
             return this;
         }
 
         public TestRefundHistory insert(RefundStatus status, String reference, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate) {
-            databaseTestHelper.addRefundHistory(id, externalId, reference, amount, status.toString(), chargeId, createdDate, historyStartDate, historyEndDate, null, null, chargeExternalId);
+            databaseTestHelper.addRefundHistory(id, externalId, reference, amount, status.toString(), createdDate, historyStartDate, historyEndDate, null, null, chargeExternalId);
             return this;
         }
 
         public TestRefundHistory insert(RefundStatus status, String reference, ZonedDateTime historyStartDate) {
-            databaseTestHelper.addRefundHistory(id, externalId, reference, amount, status.toString(), chargeId, createdDate, historyStartDate, null, chargeExternalId);
+            databaseTestHelper.addRefundHistory(id, externalId, reference, amount, status.toString(), createdDate, historyStartDate, null, chargeExternalId);
             return this;
         }
 
         public TestRefundHistory insert(RefundStatus status, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate, String submittedByExternalId, String userEmail) {
-            databaseTestHelper.addRefundHistory(id, externalId, "", amount, status.toString(), chargeId, createdDate, historyStartDate, historyEndDate, submittedByExternalId, userEmail, chargeExternalId);
+            databaseTestHelper.addRefundHistory(id, externalId, "", amount, status.toString(), createdDate, historyStartDate, historyEndDate, submittedByExternalId, userEmail, chargeExternalId);
             return this;
         }
 
         public TestRefundHistory insert(RefundStatus status, String reference, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate, String submittedByExternalId, String userEmail) {
-            databaseTestHelper.addRefundHistory(id, externalId, reference, amount, status.toString(), chargeId, createdDate, historyStartDate, historyEndDate, submittedByExternalId, userEmail, chargeExternalId);
+            databaseTestHelper.addRefundHistory(id, externalId, reference, amount, status.toString(), createdDate, historyStartDate, historyEndDate, submittedByExternalId, userEmail, chargeExternalId);
             return this;
         }
 
         public TestRefundHistory insert(RefundStatus status, String reference, ZonedDateTime historyStartDate, String submittedByExternalId, String chargeExternalId) {
-            databaseTestHelper.addRefundHistory(id, externalId, reference, amount, status.toString(), chargeId, createdDate, historyStartDate, submittedByExternalId, chargeExternalId);
+            databaseTestHelper.addRefundHistory(id, externalId, reference, amount, status.toString(), createdDate, historyStartDate, submittedByExternalId, chargeExternalId);
             return this;
         }
     }
@@ -776,8 +774,9 @@ public class DatabaseFixtures {
         public TestRefund insert() {
             if (testCharge == null)
                 throw new IllegalStateException("Test charge must be provided.");
-            id = databaseTestHelper.addRefund(externalRefundId, reference, amount, status, testCharge.getChargeId(),
-                    gatewayTransactionId, createdDate, submittedByUserExternalId, userEmail, chargeExternalId == null ? testCharge.getExternalChargeId() : chargeExternalId);
+            id = databaseTestHelper.addRefund(externalRefundId, reference, amount, status, gatewayTransactionId,
+                    createdDate, submittedByUserExternalId, userEmail,
+                    chargeExternalId == null ? testCharge.getExternalChargeId() : chargeExternalId);
             return this;
         }
 

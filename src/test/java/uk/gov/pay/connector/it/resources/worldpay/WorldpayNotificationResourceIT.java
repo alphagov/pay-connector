@@ -188,7 +188,7 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
         String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
         String chargeId = externalChargeId.substring(externalChargeId.indexOf("-") + 1);
         databaseTestHelper.addRefund(refundExternalId, refundExternalId, refundAmount, REFUND_SUBMITTED,
-                Long.valueOf(chargeId), randomAlphanumeric(10), ZonedDateTime.now(),
+                randomAlphanumeric(10), ZonedDateTime.now(),
                 externalChargeId);
         return externalChargeId;
     }

@@ -155,7 +155,7 @@ public class ChargeEventsResourceIT {
                 .insert(RefundStatus.REFUNDED, testReferenceRefund2, refundTest2RefundedDate);
 
         List<Map<String, Object>> charges = databaseTestHelper.getChargeEvents(testCharge.getChargeId());
-        List<Map<String, Object>> refunds = databaseTestHelper.getRefundsHistoryByChargeId(testCharge.getChargeId());
+        List<Map<String, Object>> refunds = databaseTestHelper.getRefundsHistoryByChargeExternalId(testCharge.getExternalChargeId());
         connectorApi
                 .getEvents(testCharge.getExternalChargeId())
                 .body("charge_id", is(testCharge.getExternalChargeId()))

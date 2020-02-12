@@ -77,9 +77,9 @@ public class EpdqRefundIT extends ChargingITestBase {
         ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
         String refundId = assertRefundResponseWith(defaultTestCharge.getExternalChargeId(), refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(1));
+        assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
     }
 
     @Test
@@ -91,10 +91,10 @@ public class EpdqRefundIT extends ChargingITestBase {
         ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
         String refundId = assertRefundResponseWith(defaultTestCharge.getExternalChargeId(), refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
-        assertThat(refundsFoundByChargeId.get(0), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(1));
+        assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
+        assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
     }
 
     @Test
@@ -114,9 +114,9 @@ public class EpdqRefundIT extends ChargingITestBase {
         ValidatableResponse validatableResponse = postRefundFor(captureSubmittedCharge.getExternalChargeId(), refundAmount, captureSubmittedCharge.getAmount());
         String refundId = assertRefundResponseWith(captureSubmittedCharge.getExternalChargeId(), refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(captureSubmittedCharge.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), captureSubmittedCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(captureSubmittedCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(1));
+        assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), captureSubmittedCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
     }
 
     @Test
@@ -124,7 +124,6 @@ public class EpdqRefundIT extends ChargingITestBase {
 
         Long firstRefundAmount = 80L;
         Long secondRefundAmount = 20L;
-        Long chargeId = defaultTestCharge.getChargeId();
         String externalChargeId = defaultTestCharge.getExternalChargeId();
 
         epdqMockClient.mockRefundSuccess();
@@ -135,10 +134,10 @@ public class EpdqRefundIT extends ChargingITestBase {
         ValidatableResponse secondValidatableResponse = postRefundFor(externalChargeId, secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount);
         String secondRefundId = assertRefundResponseWith(externalChargeId, secondRefundAmount, secondValidatableResponse, ACCEPTED.getStatusCode());
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(chargeId);
-        assertThat(refundsFoundByChargeId.size(), is(2));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(externalChargeId);
+        assertThat(refundsFoundByChargeExternalId.size(), is(2));
 
-        assertThat(refundsFoundByChargeId, hasItems(
+        assertThat(refundsFoundByChargeExternalId, hasItems(
                 aRefundMatching(secondRefundId, is(notNullValue()), externalChargeId, secondRefundAmount, "REFUND SUBMITTED"),
                 aRefundMatching(firstRefundId, is(notNullValue()), externalChargeId, firstRefundAmount, "REFUND SUBMITTED")));
 
@@ -170,8 +169,8 @@ public class EpdqRefundIT extends ChargingITestBase {
                 .body("message", contains(format("Charge with id [%s] not available for refund.", testCharge.getExternalChargeId())))
                 .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(0));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(0));
     }
 
     @Test
@@ -179,7 +178,6 @@ public class EpdqRefundIT extends ChargingITestBase {
 
         Long refundAmount = defaultTestCharge.getAmount();
         String externalChargeId = defaultTestCharge.getExternalChargeId();
-        Long chargeId = defaultTestCharge.getChargeId();
 
         epdqMockClient.mockRefundSuccess();
         postRefundFor(externalChargeId, refundAmount, defaultTestCharge.getAmount())
@@ -191,8 +189,8 @@ public class EpdqRefundIT extends ChargingITestBase {
                 .body("message", contains(format("Charge with id [%s] not available for refund.", externalChargeId)))
                 .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(chargeId);
-        assertThat(refundsFoundByChargeId.size(), is(1));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(externalChargeId);
+        assertThat(refundsFoundByChargeExternalId.size(), is(1));
     }
 
     @Test
@@ -205,8 +203,8 @@ public class EpdqRefundIT extends ChargingITestBase {
                 .body("message", contains("Not sufficient amount available for refund"))
                 .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(0));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(0));
     }
 
     @Test
@@ -220,8 +218,8 @@ public class EpdqRefundIT extends ChargingITestBase {
                 .body("message", contains("Not sufficient amount available for refund"))
                 .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(0));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(0));
     }
 
     @Test
@@ -235,8 +233,8 @@ public class EpdqRefundIT extends ChargingITestBase {
                 .body("message", contains("Validation error for amount. Minimum amount for a refund is 1"))
                 .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(0));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(0));
     }
 
     @Test
@@ -248,9 +246,9 @@ public class EpdqRefundIT extends ChargingITestBase {
         ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), firstRefundAmount, defaultTestCharge.getAmount());
         String firstRefundId = assertRefundResponseWith(defaultTestCharge.getExternalChargeId(), firstRefundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), firstRefundAmount, "REFUND SUBMITTED")));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(1));
+        assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), firstRefundAmount, "REFUND SUBMITTED")));
 
         epdqMockClient.mockRefundSuccess();
         postRefundFor(defaultTestCharge.getExternalChargeId(), secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount)
@@ -259,9 +257,9 @@ public class EpdqRefundIT extends ChargingITestBase {
                 .body("message", contains("Not sufficient amount available for refund"))
                 .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
-        List<Map<String, Object>> refundsFoundByChargeId1 = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
-        assertThat(refundsFoundByChargeId1.size(), is(1));
-        assertThat(refundsFoundByChargeId1, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), firstRefundAmount, "REFUND SUBMITTED")));
+        List<Map<String, Object>> refundsFoundByChargeExternalId1 = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId1.size(), is(1));
+        assertThat(refundsFoundByChargeExternalId1, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), firstRefundAmount, "REFUND SUBMITTED")));
     }
 
     @Test
@@ -277,13 +275,13 @@ public class EpdqRefundIT extends ChargingITestBase {
                                 "If you are the owner or the integrator of this website, " +
                                 "please log into the  back office to see the details of the error.)"));
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, contains(
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(1));
+        assertThat(refundsFoundByChargeExternalId, contains(
                 allOf(
                         hasEntry("amount", (Object) refundAmount),
                         hasEntry("status", RefundStatus.REFUND_ERROR.getValue()),
-                        hasEntry("charge_id", (Object) defaultTestCharge.getChargeId())
+                        hasEntry("charge_external_id", (Object) defaultTestCharge.getExternalChargeId())
 
                 )));
     }
@@ -304,9 +302,9 @@ public class EpdqRefundIT extends ChargingITestBase {
         String refundId = assertRefundResponseWith(defaultTestCharge.getExternalChargeId(), testRefund.getAmount(), validatableResponse, OK.getStatusCode());
 
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), testRefund.getAmount(), "REFUND SUBMITTED")));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(1));
+        assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), testRefund.getAmount(), "REFUND SUBMITTED")));
     }
 
     @Test
