@@ -11,7 +11,7 @@ import static java.util.stream.Collectors.toMap;
 public enum WorldpayStatus {
     AUTHORISED("AUTHORISED", ChargeStatus.AUTHORISATION_SUCCESS),
     CANCELLED("CANCELLED", ChargeStatus.AUTHORISATION_CANCELLED),
-    CAPRURED("CAPTURED", ChargeStatus.CAPTURED),
+    CAPTURED("CAPTURED", ChargeStatus.CAPTURED),
     REFUSED("REFUSED", ChargeStatus.AUTHORISATION_REJECTED);
 
     private final String worldpayStatus;
