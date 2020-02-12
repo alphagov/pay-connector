@@ -18,11 +18,13 @@ public class Charge {
     private String description;
     private ZonedDateTime createdDate;
     private String email;
+    private Long gatewayAccountId;
+    private String paymentGatewayName;
     private boolean historic;
 
     public Charge(String externalId, Long amount, String status, String externalStatus, String gatewayTransactionId,
                   Long corporateSurcharge, String refundAvailabilityStatus, String reference,
-                  String description, ZonedDateTime createdDate, String email, boolean historic) {
+                  String description, ZonedDateTime createdDate, String email, Long gatewayAccountId, String paymentGatewayName, boolean historic) {
         this.externalId = externalId;
         this.amount = amount;
         this.status = status;
@@ -34,6 +36,8 @@ public class Charge {
         this.description = description;
         this.createdDate = createdDate;
         this.email = email;
+        this.gatewayAccountId = gatewayAccountId;
+        this.paymentGatewayName = paymentGatewayName;
         this.historic = historic;
     }
 
@@ -52,6 +56,8 @@ public class Charge {
                 chargeEntity.getDescription(),
                 chargeEntity.getCreatedDate(),
                 chargeEntity.getEmail(),
+                chargeEntity.getGatewayAccount().getId(),
+                chargeEntity.getPaymentGatewayName().getName(),
                 false);
     }
 
@@ -79,6 +85,8 @@ public class Charge {
                 transaction.getDescription(),
                 ZonedDateTime.parse(transaction.getCreatedDate()),
                 transaction.getEmail(),
+                transaction.getGatewayAccountId(),
+                transaction.getPaymentProvider(),
                 true
         );
     }
@@ -152,5 +160,13 @@ public class Charge {
 
     public String getExternalStatus() {
         return externalStatus;
+    }
+
+    public Long getGatewayAccountId() {
+        return gatewayAccountId;
+    }
+
+    public String getPaymentGatewayName() {
+        return paymentGatewayName;
     }
 }

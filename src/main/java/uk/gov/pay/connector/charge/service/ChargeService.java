@@ -273,6 +273,11 @@ public class ChargeService {
                 .orElseGet(Optional::empty);
     }
 
+    public Optional<Charge> findCharge(String chargeExternalId) {
+        return chargeDao.findByExternalId(chargeExternalId)
+                .map(Charge::from);
+    }
+
     public Optional<Charge> findCharge(String chargeExternalId, Long gatewayAccountId) {
         Optional<ChargeEntity> maybeChargeEntity = chargeDao.findByExternalIdAndGatewayAccount(chargeExternalId, gatewayAccountId);
 

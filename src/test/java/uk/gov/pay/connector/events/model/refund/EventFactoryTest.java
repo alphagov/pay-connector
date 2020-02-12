@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -70,8 +71,7 @@ public class EventFactoryTest {
     
     @Before
     public void setUp() {
-        when(chargeService.findChargeByExternalId(charge.getExternalId())).thenReturn(charge);
-        
+        when(chargeService.findCharge(charge.getExternalId())).thenReturn(Optional.of(Charge.from(charge)));
         PaymentProvider paymentProvider = new SandboxPaymentProvider();
         when(paymentProviders.byName(any(PaymentGatewayName.class))).thenReturn(paymentProvider);
         

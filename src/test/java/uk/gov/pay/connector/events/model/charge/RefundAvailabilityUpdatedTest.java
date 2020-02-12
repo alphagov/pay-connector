@@ -2,6 +2,7 @@ package uk.gov.pay.connector.events.model.charge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.Test;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
@@ -25,7 +26,7 @@ public class RefundAvailabilityUpdatedTest {
         
         String event = new RefundAvailabilityUpdated(
                 charge.getExternalId(),
-                RefundAvailabilityUpdatedEventDetails.from(charge, List.of(), ExternalChargeRefundAvailability.EXTERNAL_FULL),
+                RefundAvailabilityUpdatedEventDetails.from(Charge.from(charge), List.of(), ExternalChargeRefundAvailability.EXTERNAL_FULL),
                 ZonedDateTime.now()
         ).toJsonString();
         
