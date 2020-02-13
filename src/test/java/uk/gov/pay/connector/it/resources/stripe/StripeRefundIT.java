@@ -98,10 +98,10 @@ public class StripeRefundIT extends ChargingITestBase {
                 .then()
                 .statusCode(ACCEPTED_202);
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(testChargeCreatedWithStripeChargeAPI.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId.get(0).get("status"), is("REFUNDED"));
-        MatcherAssert.assertThat(refundsFoundByChargeId.get(0), hasEntry("charge_external_id", testChargeCreatedWithStripeChargeAPI.getExternalChargeId()));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(testChargeCreatedWithStripeChargeAPI.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(1));
+        assertThat(refundsFoundByChargeExternalId.get(0).get("status"), is("REFUNDED"));
+        MatcherAssert.assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("charge_external_id", testChargeCreatedWithStripeChargeAPI.getExternalChargeId()));
         String refundId = response.extract().path("refund_id");
         
         verify(postRequestedFor(urlEqualTo("/v1/refunds"))
@@ -136,9 +136,9 @@ public class StripeRefundIT extends ChargingITestBase {
                 .then()
                 .statusCode(ACCEPTED_202);
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId.get(0).get("status"), is("REFUNDED"));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(1));
+        assertThat(refundsFoundByChargeExternalId.get(0).get("status"), is("REFUNDED"));
         String refundId = response.extract().path("refund_id");
         verify(postRequestedFor(urlEqualTo("/v1/payment_intents/" + defaultTestCharge.getTransactionId())));
         verify(postRequestedFor(urlEqualTo("/v1/refunds"))
@@ -170,9 +170,9 @@ public class StripeRefundIT extends ChargingITestBase {
                 .then()
                 .statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId.get(0).get("status"), is("REFUND ERROR"));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(1));
+        assertThat(refundsFoundByChargeExternalId.get(0).get("status"), is("REFUND ERROR"));
     }
     
     @Test
@@ -199,8 +199,8 @@ public class StripeRefundIT extends ChargingITestBase {
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
 
-        List<Map<String, Object>> refundsFoundByChargeId = databaseTestHelper.getRefundsByChargeId(defaultTestCharge.getChargeId());
-        assertThat(refundsFoundByChargeId.size(), is(1));
-        assertThat(refundsFoundByChargeId.get(0).get("status"), is("REFUND ERROR"));
+        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(1));
+        assertThat(refundsFoundByChargeExternalId.get(0).get("status"), is("REFUND ERROR"));
     }
 }

@@ -284,7 +284,6 @@ public class HistoricalEventEmitterWorkerTest {
         RefundHistory refundHistory = RefundHistoryEntityFixture
                 .aValidRefundHistoryEntity()
                 .withChargeExternalId(chargeEntity.getExternalId())
-                .withChargeId(chargeEntity.getId())
                 .withStatus(RefundStatus.CREATED.toString())
                 .build();
 
@@ -394,7 +393,6 @@ public class HistoricalEventEmitterWorkerTest {
         return RefundHistoryEntityFixture
                 .aValidRefundHistoryEntity()
                 .withChargeExternalId(chargeEntity.getExternalId())
-                .withChargeId(chargeEntity.getId())
                 .withStatus(refundStatus.toString())
                 .build();
     }

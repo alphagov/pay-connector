@@ -85,7 +85,7 @@ public class SendRefundEmailIT {
 
         ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper);
         databaseTestHelper.addRefund(refundExternalId, transactionId + "/" + payIdSub,
-                100,  REFUND_SUBMITTED, chargeId.chargeId, randomAlphanumeric(10),
+                100,  REFUND_SUBMITTED, randomAlphanumeric(10),
                 ZonedDateTime.now(), chargeId.toString());
 
         given().port(testContext.getPort())

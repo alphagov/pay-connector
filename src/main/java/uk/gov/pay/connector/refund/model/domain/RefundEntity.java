@@ -38,7 +38,6 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
                         @ColumnResult(name = "external_id", type = String.class),
                         @ColumnResult(name = "amount", type = Long.class),
                         @ColumnResult(name = "status", type = String.class),
-                        @ColumnResult(name = "charge_id", type = Long.class),
                         @ColumnResult(name = "created_date", type = Timestamp.class),
                         @ColumnResult(name = "version", type=Long.class),
                         @ColumnResult(name = "reference", type = String.class),
@@ -87,9 +86,6 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     @Column(name = "charge_external_id")
     private String chargeExternalId;
-
-    @Column(name = "charge_id")
-    private Long chargeId;
 
     public RefundEntity() {
         //for jpa
@@ -182,10 +178,6 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     public void setUserEmail(String userEmail) {
         this.userEmail = userEmail;
-    }
-
-    public void setChargeId(Long chargeId) {
-        this.chargeId = chargeId;
     }
 
     @Override

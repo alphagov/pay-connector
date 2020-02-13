@@ -150,7 +150,7 @@ public class ContractTest {
                               ZonedDateTime createdDate, RefundStatus refundStatus, String chargeExternalId) {
         for (int i = 0; i < numberOfRefunds; i++) {
             dbHelper.addRefund("external" + RandomUtils.nextInt(), "reference", 1L, refundStatus,
-                    chargeId, randomAlphanumeric(10), createdDate, "user_external_id1234", null, chargeExternalId);
+                    randomAlphanumeric(10), createdDate, "user_external_id1234", null, chargeExternalId);
         }
     }
 
@@ -364,7 +364,7 @@ public class ContractTest {
                 .withEmail("test@test.com")
                 .build());
         dbHelper.addRefund(refundId, "reference", 100L, REFUNDED,
-                paymentId, randomAlphanumeric(10), createdDate,
+                randomAlphanumeric(10), createdDate,
                 Long.toString(paymentId));
     }
 

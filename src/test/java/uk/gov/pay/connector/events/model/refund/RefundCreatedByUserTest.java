@@ -21,7 +21,7 @@ public class RefundCreatedByUserTest {
     private UTCDateTimeConverter timeConverter = new UTCDateTimeConverter();
 
     private RefundHistory refundHistory = new RefundHistory(1L, "external_id", 50L, RefundStatus.CREATED.getValue(),
-            charge.getId(), timeConverter.convertToDatabaseColumn(createdDate), 1L,
+            timeConverter.convertToDatabaseColumn(createdDate), 1L,
             "reference", timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(1L)),
             timeConverter.convertToDatabaseColumn(createdDate.plusSeconds(2L)),
             "user-external-id", "gateway_transaction_id", charge.getExternalId(),

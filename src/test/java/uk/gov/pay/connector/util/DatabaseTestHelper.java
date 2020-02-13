@@ -132,26 +132,25 @@ public class DatabaseTestHelper {
                         .execute());
     }
 
-    public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId, String gatewayTransactionId, ZonedDateTime createdDate, String chargeExternalId) {
-        return addRefund(externalId, reference, amount, status, chargeId, gatewayTransactionId, createdDate, null, null, chargeExternalId);
+    public int addRefund(String externalId, String reference, long amount, RefundStatus status, String gatewayTransactionId, ZonedDateTime createdDate, String chargeExternalId) {
+        return addRefund(externalId, reference, amount, status, gatewayTransactionId, createdDate, null, null, chargeExternalId);
     }
 
-    public int addRefund(String externalId, String reference, long amount, RefundStatus status, Long chargeId,
+    public int addRefund(String externalId, String reference, long amount, RefundStatus status,
                          String gatewayTransactionId, ZonedDateTime createdDate, String submittedByUserExternalId,
                          String userEmail, String chargeExternalId) {
         int refundId = RandomUtils.nextInt();
         jdbi.withHandle(handle ->
                 handle
-                        .createUpdate("INSERT INTO refunds(id, external_id, reference, amount, status, charge_id," +
+                        .createUpdate("INSERT INTO refunds(id, external_id, reference, amount, status, " +
                                 " gateway_transaction_id, created_date, user_external_id, user_email, charge_external_id) " +
-                                "VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, " +
+                                "VALUES (:id, :external_id, :reference, :amount, :status, " +
                                 ":gateway_transaction_id, :created_date, :user_external_id, :user_email, :charge_external_id)")
                         .bind("id", refundId)
                         .bind("external_id", externalId)
                         .bind("reference", reference)
                         .bind("amount", amount)
                         .bind("status", status.getValue())
-                        .bind("charge_id", chargeId)
                         .bind("gateway_transaction_id", gatewayTransactionId)
                         .bind("created_date", Timestamp.from(createdDate.toInstant()))
                         .bind("user_external_id", submittedByUserExternalId)
@@ -163,16 +162,15 @@ public class DatabaseTestHelper {
         return refundId;
     }
 
-    public void addRefundHistory(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate, String submittedByUserExternalId, String userEmail, String chargeExternalId) {
+    public void addRefundHistory(long id, String externalId, String reference, long amount, String status, ZonedDateTime createdDate, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate, String submittedByUserExternalId, String userEmail, String chargeExternalId) {
         jdbi.withHandle(handle ->
                 handle
-                        .createUpdate("INSERT INTO refunds_history(id, external_id, reference, amount, status, charge_id, created_date, history_start_date, history_end_date, user_external_id, user_email, charge_external_id) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :history_start_date, :history_end_date, :user_external_id, :user_email, :charge_external_id)")
+                        .createUpdate("INSERT INTO refunds_history(id, external_id, reference, amount, status, created_date, history_start_date, history_end_date, user_external_id, user_email, charge_external_id) VALUES (:id, :external_id, :reference, :amount, :status, :created_date, :history_start_date, :history_end_date, :user_external_id, :user_email, :charge_external_id)")
                         .bind("id", id)
                         .bind("external_id", externalId)
                         .bind("reference", reference)
                         .bind("amount", amount)
                         .bind("status", status)
-                        .bind("charge_id", chargeId)
                         .bind("created_date", Timestamp.from(createdDate.toInstant()))
                         .bind("history_start_date", Timestamp.from(historyStartDate.toInstant()))
                         .bind("history_end_date", Timestamp.from(historyEndDate.toInstant()))
@@ -184,16 +182,15 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void addRefundHistory(long id, String externalId, String reference, long amount, String status, Long chargeId, ZonedDateTime createdDate, ZonedDateTime historyStartDate, String submittedByUserExternalId, String chargeExternalId) {
+    public void addRefundHistory(long id, String externalId, String reference, long amount, String status, ZonedDateTime createdDate, ZonedDateTime historyStartDate, String submittedByUserExternalId, String chargeExternalId) {
         jdbi.withHandle(handle ->
                 handle
-                        .createUpdate("INSERT INTO refunds_history(id, external_id, reference, amount, status, charge_id, created_date, history_start_date, user_external_id, charge_external_id) VALUES (:id, :external_id, :reference, :amount, :status, :charge_id, :created_date, :history_start_date, :user_external_id, :charge_external_id)")
+                        .createUpdate("INSERT INTO refunds_history(id, external_id, reference, amount, status, created_date, history_start_date, user_external_id, charge_external_id) VALUES (:id, :external_id, :reference, :amount, :status, :created_date, :history_start_date, :user_external_id, :charge_external_id)")
                         .bind("id", id)
                         .bind("external_id", externalId)
                         .bind("reference", reference)
                         .bind("amount", amount)
                         .bind("status", status)
-                        .bind("charge_id", chargeId)
                         .bind("created_date", Timestamp.from(createdDate.toInstant()))
                         .bind("history_start_date", Timestamp.from(historyStartDate.toInstant()))
                         .bind("user_external_id", submittedByUserExternalId)
@@ -294,12 +291,12 @@ public class DatabaseTestHelper {
         return ret;
     }
 
-    public List<Map<String, Object>> getRefundsByChargeId(long chargeId) {
+    public List<Map<String, Object>> getRefundsByChargeExternalId(String chargeExternalId) {
         List<Map<String, Object>> ret = jdbi.withHandle(h ->
-                h.createQuery("SELECT external_id, reference, amount, status, created_date, charge_id, user_external_id, user_email, charge_external_id " +
+                h.createQuery("SELECT external_id, reference, amount, status, created_date, user_external_id, user_email, charge_external_id " +
                         "FROM refunds r " +
-                        "WHERE charge_id = :charge_id")
-                        .bind("charge_id", chargeId)
+                        "WHERE charge_external_id = :charge_external_id")
+                        .bind("charge_external_id", chargeExternalId)
                         .mapToMap()
                         .list());
         return ret;
@@ -693,10 +690,10 @@ public class DatabaseTestHelper {
         );
     }
 
-    public List<Map<String, Object>> getRefundsHistoryByChargeId(Long chargeId) {
+    public List<Map<String, Object>> getRefundsHistoryByChargeExternalId(String chargeExternalId) {
         return jdbi.withHandle(h ->
-                h.createQuery("SELECT status FROM refunds_history WHERE charge_id = :chargeId order by history_start_date desc")
-                        .bind("chargeId", chargeId)
+                h.createQuery("SELECT status FROM refunds_history WHERE charge_external_id = :chargeExternalId order by history_start_date desc")
+                        .bind("chargeExternalId", chargeExternalId)
                         .mapToMap()
                         .list()
         );
