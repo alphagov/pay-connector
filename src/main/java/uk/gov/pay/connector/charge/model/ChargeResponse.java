@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import uk.gov.pay.commons.api.json.ApiResponseDateTimeSerializer;
@@ -386,6 +387,7 @@ public class ChargeResponse {
 
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class RefundSummary {
 
         @JsonProperty("status")

@@ -37,6 +37,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
+import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseBaseService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
@@ -103,6 +104,9 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
     private StateTransitionService mockStateTransitionService;
 
     @Mock
+    private LedgerService ledgerService;
+
+    @Mock
     private EventQueue eventQueue;
     @Mock
     private EmittedEventDao emittedEventDao;
@@ -135,7 +139,7 @@ public class WalletAuthoriseServiceTest extends CardServiceTest {
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null, mockStateTransitionService,
-                mockEventService, mockedRefundDao));
+                ledgerService, mockEventService, mockedRefundDao));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,

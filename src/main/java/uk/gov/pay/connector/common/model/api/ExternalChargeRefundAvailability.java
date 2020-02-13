@@ -26,4 +26,13 @@ public enum ExternalChargeRefundAvailability {
         return this.value;
     }
 
+    public static ExternalChargeRefundAvailability from(String value) {
+        for (ExternalChargeRefundAvailability status : values()) {
+            if (status.value.equalsIgnoreCase(value)) {
+                return status;
+            }
+        }
+        return null;
+    }
+
 }

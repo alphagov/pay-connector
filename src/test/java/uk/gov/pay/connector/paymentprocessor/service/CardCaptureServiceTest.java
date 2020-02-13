@@ -35,6 +35,7 @@ import uk.gov.pay.connector.fee.dao.FeeDao;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
+import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.queue.CaptureQueue;
 import uk.gov.pay.connector.queue.QueueException;
 import uk.gov.pay.connector.queue.StateTransitionService;
@@ -105,6 +106,8 @@ public class CardCaptureServiceTest extends CardServiceTest {
     @Mock
     private StateTransitionService mockStateTransitionService;
     @Mock
+    private LedgerService ledgerService;
+    @Mock
     private EventService mockEventService;
     @Mock
     private RefundDao mockRefundDao;
@@ -117,7 +120,7 @@ public class CardCaptureServiceTest extends CardServiceTest {
 
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null,
-                mockStateTransitionService, mockEventService, mockRefundDao);
+                mockStateTransitionService, ledgerService, mockEventService, mockRefundDao);
 
         cardCaptureService = new CardCaptureService(chargeService, feeDao, mockedProviders, mockUserNotificationService, mockEnvironment,
                 mockCaptureQueue);

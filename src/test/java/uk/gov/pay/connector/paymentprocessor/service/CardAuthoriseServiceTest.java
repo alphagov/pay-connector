@@ -40,6 +40,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AddressFixture;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.queue.StateTransitionService;
 
@@ -102,6 +103,9 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
     private StateTransitionService stateTransitionService;
 
     @Mock
+    private LedgerService ledgerService;
+
+    @Mock
     private EventQueue eventQueue;
     @Mock
     private EventService mockEventService;
@@ -116,7 +120,7 @@ public class CardAuthoriseServiceTest extends CardServiceTest {
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
         ChargeService chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, mockConfiguration, null,
-                stateTransitionService, mockEventService, mockedRefundDao);
+                stateTransitionService, ledgerService, mockEventService, mockedRefundDao);
 
         CardAuthoriseBaseService cardAuthoriseBaseService = new CardAuthoriseBaseService(mockExecutorService, mockEnvironment);
         cardAuthorisationService = new CardAuthoriseService(
