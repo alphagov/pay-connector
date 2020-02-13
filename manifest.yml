@@ -12,6 +12,7 @@ applications:
     disk_quota: ((disk_quota))
     services:
       - app-catalog
+      - card-connector-secret-service
       - sqs
       - card-connector-db
     env:
@@ -20,14 +21,36 @@ applications:
       # Provided by the app-catalog service - see src/main/resources/env-map.yml
       FRONTEND_URL: ""
 
+      # Provided by card-connector-secret-service - see src/main/resource/env-map.yml
+      CAPTURE_USING_SQS_FEATURE_FLAG: ""
+      EVENT_QUEUE_ENABLED: ""
+      NOTIFY_BASE_URL: ""
+      NOTIFY_PAYMENT_RECEIPT_EMAIL_TEMPLATE_ID: ""
+      NOTIFY_REFUND_ISSUED_EMAIL_TEMPLATE_ID: ""
+      STRIPE_TRANSACTION_FEE_PERCENTAGE: ""
+      AWS_ACCESS_KEY: ""
+      AWS_SECRET_KEY: ""
+      APPLE_PAY_PAYMENT_PROCESSING_CERTIFICATE: ""
+      APPLE_PAY_PAYMENT_PROCESSING_PRIVATE_KEY: ""
+      GDS_CONNECTOR_EPDQ_LIVE_URL: ""
+      GDS_CONNECTOR_EPDQ_TEST_URL: ""
+      GDS_CONNECTOR_SMARTPAY_LIVE_URL: ""
+      GDS_CONNECTOR_SMARTPAY_NOTIFICATION_PASSWORD: ""
+      GDS_CONNECTOR_SMARTPAY_NOTIFICATION_USER: ""
+      GDS_CONNECTOR_SMARTPAY_TEST_URL: ""
+      GDS_CONNECTOR_WORLDPAY_LIVE_URL: ""
+      GDS_CONNECTOR_WORLDPAY_TEST_URL: ""
+      SECURE_WORLDPAY_NOTIFICATION_DOMAIN: ""
+      SECURE_WORLDPAY_NOTIFICATION_ENABLED: ""
+      NOTIFY_API_KEY: ""
+
+
       # Provided by the sqs service - see src/main/resources/env-map.yml
       AWS_SQS_CAPTURE_QUEUE_URL: ""
       AWS_SQS_ENDPOINT: ""
       AWS_SQS_PAYMENT_EVENT_QUEUE_URL: ""
 
       # Other sqs settings
-      AWS_ACCESS_KEY: ((aws_access_key))
-      AWS_SECRET_KEY: ((aws_secret_key))
       AWS_SQS_MESSAGE_MAXIMUM_WAIT_TIME_IN_SECONDS: '20'
       AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT: 'true'
       AWS_SQS_REGION: region-1
@@ -44,31 +67,10 @@ applications:
       CAPTURE_PROCESS_SCHEDULER_INITIAL_DELAY_SECONDS: '0'
       CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MAXIMUM_SECONDS: '1'
       CAPTURE_PROCESS_SCHEDULER_RANDOM_INTERVAL_MINIMUM_SECONDS: '1'
-      CAPTURE_USING_SQS_FEATURE_FLAG: ((sqs_enabled))
       DISABLE_INTERNAL_HTTPS: ((disable_internal_https))
       ENVIRONMENT: ((space))
-      EVENT_QUEUE_ENABLED: ((sqs_enabled))
 
-      # Provided via apple-pay service
-      APPLE_PAY_PAYMENT_PROCESSING_CERTIFICATE: ((apple_pay_certificate))
-      APPLE_PAY_PAYMENT_PROCESSING_PRIVATE_KEY: ((apple_pay_key))
       AUTH_READ_TIMEOUT_SECONDS: '1'
-
-      # Provide via epdq service
-      GDS_CONNECTOR_EPDQ_LIVE_URL: ((epdq_live_url))
-      GDS_CONNECTOR_EPDQ_TEST_URL: ((epdq_test_url))
-
-      # Provide via smartpay service
-      GDS_CONNECTOR_SMARTPAY_LIVE_URL: ((smartpay_live_url))
-      GDS_CONNECTOR_SMARTPAY_NOTIFICATION_PASSWORD: ((smartpay_notification_password))
-      GDS_CONNECTOR_SMARTPAY_NOTIFICATION_USER: ((smartpay_notification_user))
-      GDS_CONNECTOR_SMARTPAY_TEST_URL: ((smartpay_test_url))
-
-      # Provide via worldpay service
-      GDS_CONNECTOR_WORLDPAY_LIVE_URL: ((worldpay_live_url))
-      GDS_CONNECTOR_WORLDPAY_TEST_URL: ((worldpay_test_url))
-      SECURE_WORLDPAY_NOTIFICATION_DOMAIN: ((secure_worldpay_notification_domain))
-      SECURE_WORLDPAY_NOTIFICATION_ENABLED: ((secure_worldpay_notification_enabled))
 
       JAVA_OPTS: -Xms512m -Xmx1G
       JBP_CONFIG_JAVA_MAIN: '{ arguments: "server /home/vcap/app/config/config.yaml" }'
@@ -76,14 +78,7 @@ applications:
       JPA_LOG_LEVEL: 'INFO'
       JPA_SQL_LOG_LEVEL: 'INFO'
 
-      # Provide via notify service
-      NOTIFY_API_KEY: ((notify_api_key))
-      NOTIFY_BASE_URL: ((notify_base_url))
-
       NOTIFY_EMAIL_ENABLED: 'true'
-      NOTIFY_PAYMENT_RECEIPT_EMAIL_TEMPLATE_ID: ((notify_receipt_email_template_id))
-      NOTIFY_REFUND_ISSUED_EMAIL_TEMPLATE_ID: ((notify_refund_email_template_id))
       RUN_APP: 'true'
-      RUN_MIGRATION: ((run_migration))
-      STRIPE_TRANSACTION_FEE_PERCENTAGE: ((stripe_transaction_fee_percentage))
+      RUN_MIGRATION: 'false'
 
