@@ -22,6 +22,7 @@ applications:
       FRONTEND_URL: ""
 
       # Provided by card-connector-secret-service - see src/main/resource/env-map.yml
+      SENTRY_DSN: ""
       CAPTURE_USING_SQS_FEATURE_FLAG: ""
       EVENT_QUEUE_ENABLED: ""
       NOTIFY_BASE_URL: ""
@@ -43,7 +44,10 @@ applications:
       SECURE_WORLDPAY_NOTIFICATION_DOMAIN: ""
       SECURE_WORLDPAY_NOTIFICATION_ENABLED: ""
       NOTIFY_API_KEY: ""
-
+      GDS_CONNECTOR_STRIPE_AUTH_TOKEN: ""
+      GDS_CONNECTOR_STRIPE_AUTH_LIVE_TOKEN: ""
+      GDS_CONNECTOR_STRIPE_WEBHOOK_SIGN_SECRET: ""
+      GDS_CONNECTOR_STRIPE_WEBHOOK_LIVE_SIGN_SECRET: ""
 
       # Provided by the sqs service - see src/main/resources/env-map.yml
       AWS_SQS_CAPTURE_QUEUE_URL: ""
