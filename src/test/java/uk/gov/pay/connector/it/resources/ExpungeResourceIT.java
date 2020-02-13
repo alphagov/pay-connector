@@ -310,6 +310,7 @@ public class ExpungeResourceIT {
         insertChargeEvent(expungeableCharge1);
         emittedEventDao.persist(anEmittedEventEntity()
                 .withResourceExternalId(expungeableCharge1.getExternalChargeId())
+                .withResourceType("PAYMENT")
                 .withId(RandomUtils.nextLong())
                 .build());
 
