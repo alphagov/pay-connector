@@ -80,7 +80,7 @@ public class ChargeExpungeService {
 
     @Transactional
     public void expungeCharge(ChargeEntity chargeEntity) {
-        chargeDao.expungeCharge(chargeEntity.getId());
+        chargeDao.expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
     }
 
 }

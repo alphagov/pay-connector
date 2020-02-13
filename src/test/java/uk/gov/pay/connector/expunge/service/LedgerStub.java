@@ -21,13 +21,13 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 public class LedgerStub {
 
-    public void returnLedgerTransaction(String externalId, DatabaseFixtures.TestCharge testCharge) throws JsonProcessingException {
-        Map<String, Object> ledgerTransactionFields = testChargeToLedgerTransactionJson(testCharge);
+    public void returnLedgerTransaction(String externalId, DatabaseFixtures.TestCharge testCharge, DatabaseFixtures.TestFee testFee) throws JsonProcessingException {
+        Map<String, Object> ledgerTransactionFields = testChargeToLedgerTransactionJson(testCharge, testFee);
         stubResponse(externalId, ledgerTransactionFields);
     }
 
-    public void returnLedgerTransactionWithMismatch(String externalId, DatabaseFixtures.TestCharge testCharge) throws JsonProcessingException {
-        Map<String, Object> ledgerTransactionFields = testChargeToLedgerTransactionJson(testCharge);
+    public void returnLedgerTransactionWithMismatch(String externalId, DatabaseFixtures.TestCharge testCharge, DatabaseFixtures.TestFee testFee) throws JsonProcessingException {
+        Map<String, Object> ledgerTransactionFields = testChargeToLedgerTransactionJson(testCharge, testFee);
         ledgerTransactionFields.put("description", "This is a mismatch");
         stubResponse(externalId, ledgerTransactionFields);
     }
@@ -46,7 +46,7 @@ public class LedgerStub {
         );
     }
 
-    private static Map<String, Object> testChargeToLedgerTransactionJson(DatabaseFixtures.TestCharge testCharge) {
+    private static Map<String, Object> testChargeToLedgerTransactionJson(DatabaseFixtures.TestCharge testCharge, DatabaseFixtures.TestFee fee) {
         var map = new HashMap<String, Object>();
         Optional.ofNullable(testCharge.getExternalChargeId()).ifPresent(value -> map.put("id", value));
         Optional.of(testCharge.getAmount()).ifPresent(value -> map.put("amount", String.valueOf(value)));
@@ -77,6 +77,11 @@ public class LedgerStub {
                 account));
         Optional.ofNullable(testCharge.getTestAccount().getPaymentProvider()).ifPresent(account -> map.put("payment_provider",
                 account));
+        if(fee != null) {
+            map.put("fee", 0);
+            Optional.of(testCharge.getAmount()).ifPresent(amount -> map.put("net_amount", amount));
+            Optional.of(testCharge.getAmount()).ifPresent(amount -> map.put("total_amount", amount));
+        }
 
         ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
         refundSummary.setStatus("available");

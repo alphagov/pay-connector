@@ -79,6 +79,6 @@ public class ChargeExpungeServiceTest {
         when(parityCheckService.parityCheckChargeForExpunger(chargeEntity)).thenReturn(true);
 
         chargeExpungeService.expunge(2);
-        verify(mockChargeDao).expungeCharge(chargeEntity.getId());
+        verify(mockChargeDao).expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
     }
 }

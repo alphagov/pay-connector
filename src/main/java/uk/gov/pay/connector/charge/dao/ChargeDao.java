@@ -212,9 +212,25 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .getResultList().stream().findFirst();
     }
 
-    public void expungeCharge(Long id) {
+    public void expungeCharge(Long id, String externalId) {
+
         entityManager.get()
                 .createNativeQuery("delete from charge_events where charge_id = ?1")
+                .setParameter(1, id)
+                .executeUpdate();
+
+        entityManager.get()
+                .createNativeQuery("delete from tokens where charge_id = ?1")
+                .setParameter(1, id)
+                .executeUpdate();
+
+        entityManager.get()
+                .createNativeQuery("delete from emitted_events where resource_external_id = ?1")
+                .setParameter(1, externalId)
+                .executeUpdate();
+
+        entityManager.get()
+                .createNativeQuery("delete from fees where charge_id = ?1")
                 .setParameter(1, id)
                 .executeUpdate();
 
