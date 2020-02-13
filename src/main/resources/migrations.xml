@@ -1462,4 +1462,12 @@
         </sql>
     </changeSet>
 
+    <changeSet id="drop charge_id from refunds table" runInTransaction="false" author="">
+        <dropColumn tableName="refunds" columnName="charge_id"/>
+    </changeSet>
+
+    <changeSet id="drop charge_id from refunds_history table" runInTransaction="false" author="">
+        <dropColumn tableName="refunds_history" columnName="charge_id"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -43,7 +43,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
     }
 
     public Optional<RefundHistory> getRefundHistoryByRefundExternalIdAndRefundStatus(String refundExternalId, RefundStatus refundStatus) {
-        String query = "SELECT rh.id, rh.external_id, rh.amount, rh.status, rh.charge_id, rh.created_date, " +
+        String query = "SELECT rh.id, rh.external_id, rh.amount, rh.status, rh.created_date, " +
                 "rh.version, rh.reference, rh.history_start_date, rh.history_end_date, rh.user_external_id, " +
                 "rh.gateway_transaction_id, rh.charge_external_id, rh.user_email " +
                 "FROM refunds_history rh " +
@@ -61,7 +61,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
 
     public List<RefundHistory> searchHistoryByChargeExternalId(String chargeExternalId) {
 
-        String query = "SELECT id, external_id, amount, status, charge_id, created_date, version, reference, " +
+        String query = "SELECT id, external_id, amount, status, created_date, version, reference, " +
                 "history_start_date, history_end_date, user_external_id, gateway_transaction_id, user_email, charge_external_id " +
                 "FROM refunds_history r " +
                 "WHERE charge_external_id = ?1 AND status != ?2";
@@ -74,7 +74,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
     }
 
     public List<RefundHistory> searchAllHistoryByChargeExternalId(String chargeExternalId) {
-        String query = "SELECT r.id, r.external_id, r.amount, r.status, r.charge_id, r.created_date, r.version, " +
+        String query = "SELECT r.id, r.external_id, r.amount, r.status, r.created_date, r.version, " +
                 "r.reference, history_start_date, history_end_date, user_external_id, r.gateway_transaction_id, " +
                 "r.charge_external_id AS charge_external_id, r.user_email " +
                 " FROM refunds_history r " +
@@ -98,7 +98,7 @@ public class RefundDao extends JpaDao<RefundEntity> {
 
     public List<RefundHistory> getRefundHistoryByDateRange(ZonedDateTime startDate, ZonedDateTime endDate, int page, int size) {
 
-        String query = "SELECT id, external_id, amount, status, charge_id, created_date, version, reference, " +
+        String query = "SELECT id, external_id, amount, status, created_date, version, reference, " +
                 "       history_start_date, history_end_date, user_external_id, gateway_transaction_id, user_email " +
                 " FROM refunds_history rh " +
                 " WHERE rh.history_start_date >= ?1 AND rh.history_start_date <= ?2" +

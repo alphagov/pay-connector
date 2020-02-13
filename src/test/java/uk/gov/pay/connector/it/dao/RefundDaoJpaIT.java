@@ -2,10 +2,7 @@ package uk.gov.pay.connector.it.dao;
 
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
@@ -35,7 +32,6 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMI
 public class RefundDaoJpaIT extends DaoITestBase {
 
     private RefundDao refundDao;
-    private ChargeDao chargeDao;
     private DatabaseFixtures.TestAccount sandboxAccount;
     private DatabaseFixtures.TestCharge chargeTestRecord;
     private DatabaseFixtures.TestRefund refundTestRecord;
@@ -44,7 +40,6 @@ public class RefundDaoJpaIT extends DaoITestBase {
     public void setUp() throws Exception {
         setup();
         refundDao = env.getInstance(RefundDao.class);
-        chargeDao = env.getInstance(ChargeDao.class);
         databaseTestHelper.deleteAllCardTypes();
 
         DatabaseFixtures.TestAccount testAccount = DatabaseFixtures
