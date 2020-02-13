@@ -1313,7 +1313,7 @@ public class ChargeServiceTest {
         LedgerTransaction transaction = new LedgerTransaction();
         transaction.setTransactionId(chargeEntity.getExternalId());
         transaction.setAmount(chargeEntity.getAmount());
-
+        transaction.setCreatedDate(ZonedDateTime.now(ZoneId.of("UTC")).toString());
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(
                 chargeEntity.getExternalId(),
                 GATEWAY_ACCOUNT_ID

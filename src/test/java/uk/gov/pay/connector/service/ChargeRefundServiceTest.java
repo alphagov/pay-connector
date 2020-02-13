@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.service;
 
+import com.stripe.model.Refund;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,6 +37,8 @@ import uk.gov.pay.connector.refund.service.ChargeRefundResponse;
 import uk.gov.pay.connector.refund.service.ChargeRefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
@@ -163,27 +166,21 @@ public class ChargeRefundServiceTest {
         GatewayAccountEntity account = new GatewayAccountEntity(providerName, newHashMap(), TEST);
         account.setId(accountId);
 
-        // @TODO(sfount) Requires PP-6066 to remove the requirements on the charge entity
-        ChargeEntity charge = aValidChargeEntity()
-                .withGatewayAccountEntity(account)
-                .withTransactionId("transaction-id")
-                .withExternalId(externalChargeId)
-                .withStatus(CAPTURED)
-                .build();
-
         ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
         refundSummary.setStatus("available");
 
         LedgerTransaction transaction = new LedgerTransaction();
-        transaction.setTransactionId(charge.getExternalId());
-        transaction.setAmount(charge.getAmount());
+        transaction.setTransactionId(externalChargeId);
+        transaction.setAmount(500L);
         transaction.setRefundSummary(refundSummary);
+        transaction.setReference("reference");
+        transaction.setDescription("description");
+        transaction.setCreatedDate(ZonedDateTime.now(ZoneId.of("UTC")).toString());
 
-        RefundEntity refundEntity = aValidRefundEntity().withChargeExternalId(charge.getExternalId()).withAmount(refundAmount).build();
+        RefundEntity refundEntity = aValidRefundEntity().withChargeExternalId(externalChargeId).withAmount(refundAmount).build();
         RefundEntity spiedRefundEntity = spy(refundEntity);
 
         when(mockGatewayAccountDao.findById(accountId)).thenReturn(Optional.of(account));
-        when(mockChargeService.findChargeByExternalId(externalChargeId)).thenReturn(charge);
         when(mockChargeService.findCharge(externalChargeId, accountId))
                 .thenReturn(Optional.of(transaction).map(Charge::from));
         when(mockProviders.byName(WORLDPAY)).thenReturn(mockProvider);
@@ -197,7 +194,7 @@ public class ChargeRefundServiceTest {
 
         when(mockRefundDao.findById(refundId)).thenReturn(Optional.of(spiedRefundEntity));
 
-        ChargeRefundResponse gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(refundAmount, charge.getAmount(), userExternalId));
+        ChargeRefundResponse gatewayResponse = chargeRefundService.doRefund(accountId, externalChargeId, new RefundRequest(refundAmount, 500L, userExternalId));
 
         assertThat(gatewayResponse.getGatewayRefundResponse().isSuccessful(), is(true));
         assertThat(gatewayResponse.getGatewayRefundResponse().getError().isPresent(), is(false));
@@ -205,9 +202,8 @@ public class ChargeRefundServiceTest {
         assertThat(gatewayResponse.getRefundEntity(), is(spiedRefundEntity));
 
         verify(mockChargeService).findCharge(externalChargeId, accountId);
-        verify(mockChargeService).findChargeByExternalId(externalChargeId);
-        verify(mockRefundDao).persist(argThat(aRefundEntity(refundAmount, charge)));
-        verify(mockProvider).refund(argThat(aRefundRequestWith(charge, refundAmount)));
+        verify(mockRefundDao).persist(any(RefundEntity.class));
+        verify(mockProvider).refund(any(RefundGatewayRequest.class));
         verify(mockRefundDao, times(1)).findById(refundId);
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity).setReference(refundEntity.getExternalId());
