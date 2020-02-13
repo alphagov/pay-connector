@@ -280,7 +280,7 @@ public class ChargeService {
             return maybeChargeEntity.map(Charge::from);
         }
         else{
-            return ledgerService.getTransaction(chargeExternalId).map(Charge::from);
+            return ledgerService.getTransactionForGatewayAccount(chargeExternalId, gatewayAccountId).map(Charge::from);
         }
     }
 

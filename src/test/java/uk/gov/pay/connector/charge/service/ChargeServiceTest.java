@@ -1319,7 +1319,7 @@ public class ChargeServiceTest {
                 GATEWAY_ACCOUNT_ID
         )).thenReturn(Optional.empty());
         
-        when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(transaction));
+        when(ledgerService.getTransactionForGatewayAccount(chargeEntity.getExternalId(), GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(transaction));
 
         Optional<Charge> charge = service.findCharge(chargeEntity.getExternalId(), GATEWAY_ACCOUNT_ID);
 

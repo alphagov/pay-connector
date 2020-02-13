@@ -40,4 +40,22 @@ public class LedgerService {
 
         return Optional.empty();
     }
+
+    public Optional<LedgerTransaction> getTransactionForGatewayAccount(String id, Long gatewayAccountId) {
+        var uri = UriBuilder
+                .fromPath(ledgerUrl)
+                .path(format("/v1/transaction/%s", id))
+                .queryParam("account_id", gatewayAccountId);
+
+        Response response = client
+                .target(uri)
+                .request()
+                .get();
+
+        if (response.getStatus() == SC_OK) {
+            return Optional.of(response.readEntity(LedgerTransaction.class));
+        }
+
+        return Optional.empty();
+    }
 }
