@@ -361,6 +361,32 @@ public class DatabaseTestHelper {
         return result > 0;
     }
 
+    public boolean containsTokenWithChargeId(Long chargeId) {
+        var result = jdbi.withHandle(h ->
+                h.createQuery("SELECT count(*) FROM tokens WHERE charge_id = :charge_id")
+                        .bind("charge_id", chargeId)
+                        .mapTo(Integer.class)
+                        .first());
+        return result > 0;
+    }
+
+    public boolean containsFeeWithChargeId(Long chargeId) {
+        var result = jdbi.withHandle(h ->
+                h.createQuery("SELECT count(*) FROM fees WHERE charge_id = :charge_id")
+                        .bind("charge_id", chargeId)
+                        .mapTo(Integer.class)
+                        .first());
+        return result > 0;
+    }
+
+    public boolean containsEmittedEventWithExternalId(String externalId) {
+        var result = jdbi.withHandle(h ->
+                h.createQuery("SELECT count(*) FROM emitted_events WHERE resource_external_id = :external_id")
+                        .bind("external_id", externalId)
+                        .mapTo(Integer.class)
+                        .first());
+        return result > 0;
+    }
 
     public Map<String, Object> getChargeByGatewayTransactionId(String gatewayTransactionId) {
         return jdbi.withHandle(h ->
