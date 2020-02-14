@@ -5,7 +5,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -42,11 +41,11 @@ public class RefundResponseTest {
         String chargeId = refund.getChargeExternalId();
         String refundId = refund.getExternalId();
 
-        String expectedPaymentLink = "http://example.org/v1/api/accounts/1/charges/" + chargeId;
+        String expectedPaymentLink = "http://app.com/v1/api/accounts/1/charges/" + chargeId;
         String expectedSelfLink = expectedPaymentLink + "/refunds/" + refundId;
 
-        when(mockUriInfo.getBaseUriBuilder()).thenReturn(UriBuilder.fromUri("http://example.org"),
-                UriBuilder.fromUri("http://example.org"));
+        when(mockUriInfo.getBaseUriBuilder()).thenReturn(UriBuilder.fromUri("http://app.com"),
+                UriBuilder.fromUri("http://app.com"));
 
         // when
         String serializedResponse = RefundResponse.valueOf(refund, chargeEntity.getGatewayAccount().getId(), mockUriInfo).serialize();
@@ -74,15 +73,14 @@ public class RefundResponseTest {
         String refundIdRefund1 = refund1.getExternalId();
         String refundIdRefund2 = refund2.getExternalId();
 
-        String expectedPaymentLink = "http://example.org/v1/api/accounts/1/charges/" + chargeId;
+        String expectedPaymentLink = "http://app.com/v1/api/accounts/1/charges/" + chargeId;
         String expectedSelfLink = expectedPaymentLink + "/refunds";
 
-        when(mockUriInfo.getBaseUriBuilder()).thenReturn(UriBuilder.fromUri("http://example.org"),
-                UriBuilder.fromUri("http://example.org"), UriBuilder.fromUri("http://example.org"), UriBuilder.fromUri("http://example.org"), UriBuilder.fromUri("http://example.org"), UriBuilder.fromUri("http://example.org"));
+        when(mockUriInfo.getBaseUriBuilder()).thenReturn(UriBuilder.fromUri("http://app.com"),
+                UriBuilder.fromUri("http://app.com"), UriBuilder.fromUri("http://app.com"), UriBuilder.fromUri("http://app.com"), UriBuilder.fromUri("http://app.com"), UriBuilder.fromUri("http://app.com"));
 
         // when
-        String serializedResponse = RefundsResponse.valueOf(Charge.from(chargeEntity), List.of(refund1, refund2),
-                chargeEntity.getGatewayAccount().getId(), mockUriInfo).serialize();
+        String serializedResponse = RefundsResponse.valueOf(chargeEntity, List.of(refund1, refund2), mockUriInfo).serialize();
 
         // then
         JsonAssert.with(serializedResponse)
