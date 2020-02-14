@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.events.model;
 
 import uk.gov.pay.connector.charge.model.domain.Charge;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
@@ -20,6 +19,7 @@ import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
 import uk.gov.pay.connector.events.model.refund.RefundError;
 import uk.gov.pay.connector.events.model.refund.RefundEvent;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.RefundStateTransition;
@@ -79,7 +79,7 @@ public class EventFactory {
          PaymentEvent paymentEvent = createPaymentEvent(chargeEvent, paymentStateTransition.getStateTransitionEventClass());
 
         Optional<Event> refundAvailabilityEvent = createRefundAvailabilityUpdatedEvent(
-                chargeEvent.getChargeEntity().getExternalId(),
+                Charge.from(chargeEvent.getChargeEntity()),
                 chargeEvent.getUpdated(),
                 paymentStateTransition.getStateTransitionEventClass()
         );
@@ -94,12 +94,12 @@ public class EventFactory {
                 refundStateTransition.getRefundExternalId(),
                 refundStateTransition.getRefundStatus())
                 .orElseThrow(() -> new EventCreationException(refundStateTransition.getIdentifier()));
-        ChargeEntity chargeEntity = chargeService.findChargeByExternalId(refundHistory.getChargeExternalId());
+        Charge charge = chargeService.findCharge(refundHistory.getChargeExternalId()).get();
 
         Event refundEvent = createRefundEvent(refundHistory, refundStateTransition.getStateTransitionEventClass(),
-                chargeEntity.getGatewayAccount().getId());
+                charge.getGatewayAccountId());
         Optional<Event> refundAvailabilityEvent = createRefundAvailabilityUpdatedEvent(
-                refundHistory.getChargeExternalId(),
+                charge,
                 refundHistory.getHistoryStartDate(),
                 refundStateTransition.getStateTransitionEventClass()
         );
@@ -152,26 +152,26 @@ public class EventFactory {
     }
 
     private Optional<Event> createRefundAvailabilityUpdatedEvent(
-            String chargeExternalId, ZonedDateTime eventTimestamp, Class eventClass) throws EventCreationException {
+            Charge charge, ZonedDateTime eventTimestamp, Class eventClass) throws EventCreationException {
         if (EVENTS_AFFECTING_REFUNDABILITY.contains(eventClass) || EVENTS_LEADING_TO_TERMINAL_STATE.contains(eventClass)) {
             RefundAvailabilityUpdated refundAvailabilityUpdatedEvent =
-                    Optional.ofNullable(chargeService.findChargeByExternalId(chargeExternalId))
-                    .map(charge -> {
-                        List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(chargeExternalId);
+                    Optional.ofNullable(charge)
+                    .map(c -> {
+                        List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(c.getExternalId());
                         return new RefundAvailabilityUpdated(
-                                        chargeExternalId,
+                                        c.getExternalId(),
                                         RefundAvailabilityUpdatedEventDetails.from(
                                                 charge,
                                                 refundEntityList,
                                                 paymentProviders
-                                                        .byName(charge.getPaymentGatewayName())
-                                                        .getExternalChargeRefundAvailability(Charge.from(charge), refundEntityList)
+                                                        .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
+                                                        .getExternalChargeRefundAvailability(charge, refundEntityList)
                                         ),
                                         eventTimestamp
                                 );
                             }
                     )
-                    .orElseThrow(() -> new EventCreationException(chargeExternalId));
+                    .orElseThrow(() -> new EventCreationException(charge.getExternalId()));
 
             return Optional.of(refundAvailabilityUpdatedEvent);
         }

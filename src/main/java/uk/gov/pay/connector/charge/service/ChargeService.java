@@ -273,6 +273,17 @@ public class ChargeService {
                 .orElseGet(Optional::empty);
     }
 
+    public Optional<Charge> findCharge(String chargeExternalId) {
+        Optional<ChargeEntity> maybeChargeEntity = chargeDao.findByExternalId(chargeExternalId);
+
+        if(maybeChargeEntity.isPresent()) {
+            return maybeChargeEntity.map(Charge::from);
+        }
+        else{
+            return ledgerService.getTransaction(chargeExternalId).map(Charge::from);
+        }
+    }
+
     public Optional<Charge> findCharge(String chargeExternalId, Long gatewayAccountId) {
         Optional<ChargeEntity> maybeChargeEntity = chargeDao.findByExternalIdAndGatewayAccount(chargeExternalId, gatewayAccountId);
 
