@@ -2,6 +2,7 @@ package uk.gov.pay.connector.paritycheck;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -18,7 +19,7 @@ public class LedgerTransaction {
 
     private String transactionId;
     private Long amount;
-    private Long gatewayAccountId;
+    private String gatewayAccountId;
     private String description;
     private String reference;
     private String email;
@@ -33,7 +34,7 @@ public class LedgerTransaction {
     private String returnUrl;
     private String paymentProvider;
     private ChargeResponse.RefundSummary refundSummary;
-    private ChargeResponse.SettlementSummary settlementSummary;
+    private SettlementSummary settlementSummary;
     private CardDetails cardDetails;
     @JsonDeserialize(using = SupportedLanguageJsonDeserializer.class)
     private SupportedLanguage language;
@@ -41,7 +42,12 @@ public class LedgerTransaction {
     private Boolean live;
     private Source source;
     private String walletType;
+    @JsonProperty("metadata")
     private Map<String, Object> externalMetaData;
+
+    public LedgerTransaction() {
+
+    }
 
     public Long getAmount() {
         return amount;
@@ -135,11 +141,11 @@ public class LedgerTransaction {
         this.state = transactionState;
     }
 
-    public Long getGatewayAccountId() {
+    public String getGatewayAccountId() {
         return gatewayAccountId;
     }
 
-    public void setGatewayAccountId(Long gatewayAccountId) {
+    public void setGatewayAccountId(String gatewayAccountId) {
         this.gatewayAccountId = gatewayAccountId;
     }
 
@@ -175,11 +181,11 @@ public class LedgerTransaction {
         this.refundSummary = refundSummary;
     }
 
-    public ChargeResponse.SettlementSummary getSettlementSummary() {
+    public SettlementSummary getSettlementSummary() {
         return settlementSummary;
     }
 
-    public void setSettlementSummary(ChargeResponse.SettlementSummary settlementSummary) {
+    public void setSettlementSummary(SettlementSummary settlementSummary) {
         this.settlementSummary = settlementSummary;
     }
 

@@ -3,15 +3,9 @@ package uk.gov.pay.connector.paritycheck;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import uk.gov.pay.connector.cardtype.model.domain.CardType;
-import uk.gov.pay.connector.common.model.api.ToLowerCaseStringSerializer;
 
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -25,10 +19,14 @@ public class CardDetails {
     private String lastDigitsCardNumber;
     private String firstDigitsCardNumber;
     private String expiryDate;
-    private CardType cardType;
+    private String cardType;
+
+    public CardDetails() {
+
+    }
 
     public CardDetails(String cardholderName, Address billingAddress, String cardBrand,
-                       String lastDigitsCardNumber, String firstDigitsCardNumber, String cardExpiryDate, CardType cardType) {
+                       String lastDigitsCardNumber, String firstDigitsCardNumber, String cardExpiryDate, String cardType) {
         this.cardholderName = cardholderName;
         this.billingAddress = billingAddress;
         this.cardBrand = cardBrand;
@@ -62,10 +60,9 @@ public class CardDetails {
         return expiryDate;
     }
 
-    @Enumerated(EnumType.STRING)
-    @JsonProperty("card_type")
-    @JsonSerialize(using = ToLowerCaseStringSerializer.class)
-    public CardType getCardType() { return cardType; }
+    public String getCardType() {
+        return cardType;
+    }
 
     @Override
     public boolean equals(Object o) {

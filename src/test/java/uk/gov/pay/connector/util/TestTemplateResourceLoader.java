@@ -147,6 +147,8 @@ public class TestTemplateResourceLoader {
     public static final String SQS_SEND_MESSAGE_RESPONSE = TEMPLATE_BASE_NAME + "/sqs/send-message-response.xml";
     public static final String SQS_ERROR_RESPONSE = TEMPLATE_BASE_NAME + "/sqs/error-response.xml";
     
+    public static final String LEDGER_GET_TRANSACTION = TEMPLATE_BASE_NAME + "/ledger/transaction.json";
+
     public static String load(String location) {
         return fixture(location);
     }

@@ -5,9 +5,10 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import uk.gov.pay.commons.model.charge.ExternalMetadata;
+import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
-import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -23,6 +24,7 @@ import uk.gov.pay.connector.paritycheck.Address;
 import uk.gov.pay.connector.paritycheck.CardDetails;
 import uk.gov.pay.connector.paritycheck.LedgerService;
 import uk.gov.pay.connector.paritycheck.LedgerTransaction;
+import uk.gov.pay.connector.paritycheck.SettlementSummary;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -30,6 +32,7 @@ import uk.gov.pay.connector.wallets.WalletType;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -113,7 +116,6 @@ public class ParityCheckService {
     public boolean parityCheckChargeForExpunger(ChargeEntity chargeEntity) {
         ParityCheckStatus parityCheckStatus = getChargeParityCheckStatus(chargeEntity);
 
-        //TODO (kbottla) PP-6098: to be replaced by `MATCHES_WITH_LEDGER`
         if (EXISTS_IN_LEDGER.equals(parityCheckStatus)) {
             return true;
         }
@@ -193,9 +195,13 @@ public class ParityCheckService {
             fieldsMatch = fieldsMatch && isEquals(
                     ofNullable(cardDetailsEntity.getFirstDigitsCardNumber()).map(FirstDigitsCardNumber::toString).orElse(null),
                     ledgerCardDetails.getFirstDigitsCardNumber(), "first_digits_card_number");
-            fieldsMatch = fieldsMatch && isEquals(cardDetailsEntity.getCardBrand(), ledgerCardDetails.getCardBrand(), "card_brand");
+            fieldsMatch = fieldsMatch && isEquals(
+                    cardDetailsEntity.getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null),
+                    ledgerCardDetails.getCardBrand(), "card_brand");
             fieldsMatch = fieldsMatch && isEquals(cardDetailsEntity.getExpiryDate(), ledgerCardDetails.getExpiryDate(), "expiry_date");
-            fieldsMatch = fieldsMatch && isEquals(cardDetailsEntity.getCardType(), ledgerCardDetails.getCardType(), "card_type");
+            fieldsMatch = fieldsMatch && isEquals(
+                    ofNullable(cardDetailsEntity.getCardType()).map(cardType -> cardType.toString().toLowerCase()).get(),
+                    ledgerCardDetails.getCardType(), "card_type");
 
             fieldsMatch = fieldsMatch && matchBillingAddress(cardDetailsEntity.getBillingAddress().orElse(null), ledgerCardDetails.getBillingAddress());
         }
@@ -228,7 +234,7 @@ public class ParityCheckService {
     }
 
     private boolean matchGatewayAccountFields(GatewayAccountEntity gatewayAccount, LedgerTransaction transaction) {
-        boolean fieldsMatch = isEquals(gatewayAccount.getId(), transaction.getGatewayAccountId(), "gateway_account_id");
+        boolean fieldsMatch = isEquals(gatewayAccount.getId().toString(), transaction.getGatewayAccountId(), "gateway_account_id");
         fieldsMatch = fieldsMatch && isEquals(gatewayAccount.getGatewayName(), transaction.getPaymentProvider(), "payment_provider");
         fieldsMatch = fieldsMatch && isEquals(gatewayAccount.isLive(), transaction.getLive(), "live");
         return fieldsMatch;
@@ -253,17 +259,31 @@ public class ParityCheckService {
                         .map(WalletType::toString)
                         .orElse(null), transaction.getWalletType(), "wallet_type");
 
+        fieldsMatch = fieldsMatch && externalMetadataMatches(chargeEntity, transaction);
+
         return fieldsMatch;
+    }
+
+    private boolean externalMetadataMatches(ChargeEntity chargeEntity,
+                                            LedgerTransaction transaction) {
+        Optional<ExternalMetadata> chargeExternalMetadata = chargeEntity.getExternalMetadata();
+        Map<String, Object> ledgerExternalMetaData = transaction.getExternalMetaData();
+        if (chargeExternalMetadata.isEmpty() && isNull(ledgerExternalMetaData)) {
+            return true;
+        }
+
+        return (chargeExternalMetadata.isEmpty() || (nonNull(ledgerExternalMetaData) && ledgerExternalMetaData.size() > 0))
+                && (chargeExternalMetadata.isPresent() && chargeExternalMetadata.get().getMetadata().size() > 0);
     }
 
     private boolean matchCaptureFields(ChargeEntity chargeEntity, LedgerTransaction transaction) {
         boolean fieldsMatch = isEquals(
                 getChargeEventDate(chargeEntity, List.of(CAPTURED)).map(DateTimeUtils::toUTCDateString).orElse(null),
-                ofNullable(transaction.getSettlementSummary()).map(ChargeResponse.SettlementSummary::getCapturedDate).orElse(null),
+                ofNullable(transaction.getSettlementSummary()).map(SettlementSummary::getCapturedDate).orElse(null),
                 "captured_date");
         fieldsMatch &= isEquals(
                 getChargeEventDate(chargeEntity, List.of(CAPTURE_SUBMITTED)).map(ISO_INSTANT_MILLISECOND_PRECISION::format).orElse(null),
-                ofNullable(transaction.getSettlementSummary()).map(ChargeResponse.SettlementSummary::getCaptureSubmitTime).orElse(null),
+                ofNullable(transaction.getSettlementSummary()).map(SettlementSummary::getCaptureSubmitTime).orElse(null),
                 "capture_submit_time");
 
         return fieldsMatch;
