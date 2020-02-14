@@ -4,6 +4,7 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.refund.RefundEventWithReferenceDetails;
@@ -158,14 +159,22 @@ public class EventFactory {
                     Optional.ofNullable(charge)
                     .map(c -> {
                         List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(c.getExternalId());
+                        ExternalChargeRefundAvailability refundAvailability;
+
+                        if(charge.isHistoric()) {
+                            refundAvailability = ExternalChargeRefundAvailability.from(charge.getRefundAvailabilityStatus());
+                        } else {
+                            refundAvailability = paymentProviders
+                                    .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
+                                    .getExternalChargeRefundAvailability(charge, refundEntityList);
+                        }
+
                         return new RefundAvailabilityUpdated(
                                         c.getExternalId(),
                                         RefundAvailabilityUpdatedEventDetails.from(
                                                 charge,
                                                 refundEntityList,
-                                                paymentProviders
-                                                        .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
-                                                        .getExternalChargeRefundAvailability(charge, refundEntityList)
+                                                refundAvailability
                                         ),
                                         eventTimestamp
                                 );

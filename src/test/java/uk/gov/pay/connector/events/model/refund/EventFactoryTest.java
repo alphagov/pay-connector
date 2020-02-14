@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -37,6 +38,7 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.pact.RefundHistoryEntityFixture;
+import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import uk.gov.pay.connector.queue.PaymentStateTransition;
 import uk.gov.pay.connector.queue.RefundStateTransition;
 import uk.gov.pay.connector.queue.StateTransition;
@@ -44,6 +46,7 @@ import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -71,7 +74,6 @@ public class EventFactoryTest {
     
     @Before
     public void setUp() {
-        when(chargeService.findCharge(charge.getExternalId())).thenReturn(Optional.of(Charge.from(charge)));
         PaymentProvider paymentProvider = new SandboxPaymentProvider();
         when(paymentProviders.byName(any(PaymentGatewayName.class))).thenReturn(paymentProvider);
         
@@ -80,6 +82,7 @@ public class EventFactoryTest {
     
     @Test
     public void shouldCreateCorrectEventsFromRefundCreatedStateTransition() throws Exception {
+        when(chargeService.findCharge(charge.getExternalId())).thenReturn(Optional.of(Charge.from(charge)));
         RefundHistory refundCreatedHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.CREATED.getValue())
                 .withUserExternalId("user_external_id")
@@ -121,6 +124,7 @@ public class EventFactoryTest {
 
     @Test
     public void shouldCreateCorrectEventsFromRefundSubmittedStateTransition() throws Exception {
+        when(chargeService.findCharge(charge.getExternalId())).thenReturn(Optional.of(Charge.from(charge)));
         RefundHistory refundSubmittedHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.REFUND_SUBMITTED.getValue())
                 .withUserExternalId("user_external_id")
@@ -151,6 +155,7 @@ public class EventFactoryTest {
 
     @Test
     public void shouldCreateCorrectEventsFromRefundSucceededStateTransition() throws Exception {
+        when(chargeService.findCharge(charge.getExternalId())).thenReturn(Optional.of(Charge.from(charge)));
         RefundHistory refundSucceededHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.REFUNDED.getValue())
                 .withUserExternalId("user_external_id")
@@ -181,6 +186,7 @@ public class EventFactoryTest {
 
     @Test
     public void shouldCreateCorrectEventsFromRefundErrorStateTransition() throws Exception {
+        when(chargeService.findCharge(charge.getExternalId())).thenReturn(Optional.of(Charge.from(charge)));
         RefundHistory refundErrorHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
                 .withStatus(RefundStatus.REFUND_ERROR.getValue())
                 .withUserExternalId("user_external_id")
@@ -286,6 +292,47 @@ public class EventFactoryTest {
         RefundAvailabilityUpdated event2 = (RefundAvailabilityUpdated) events.get(1);
         Assert.assertThat(event2, instanceOf(RefundAvailabilityUpdated.class));
         Assert.assertThat(event2.getEventDetails(), instanceOf(RefundAvailabilityUpdatedEventDetails.class));
+    }
+
+    @Test
+    public void shouldCreatedARefundAvailabilityUpdatedEvent_ifPaymentIsHistoric() throws Exception {
+        ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
+        refundSummary.setStatus("available");
+        LedgerTransaction transaction = new LedgerTransaction();
+        transaction.setTransactionId(charge.getExternalId());
+        transaction.setPaymentProvider("sandbox");
+        transaction.setRefundSummary(refundSummary);
+        transaction.setAmount(charge.getAmount());
+        transaction.setTotalAmount(charge.getAmount());
+        transaction.setCreatedDate(ZonedDateTime.now().toString());
+        transaction.setGatewayAccountId(charge.getGatewayAccount().getId().toString());
+        when(chargeService.findCharge(transaction.getTransactionId())).thenReturn(Optional.of(Charge.from(transaction)));
+
+        RefundHistory refundErrorHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
+                .withStatus(RefundStatus.REFUND_ERROR.getValue())
+                .withUserExternalId("user_external_id")
+                .withChargeExternalId(charge.getExternalId())
+                .withAmount(charge.getAmount())
+                .build();
+        when(refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
+                refundErrorHistory.getExternalId(),
+                refundErrorHistory.getStatus())
+        ).thenReturn(Optional.of(refundErrorHistory));
+
+
+        StateTransition refundStateTransition = new RefundStateTransition(
+                refundErrorHistory.getExternalId(), refundErrorHistory.getStatus(), RefundError.class
+        );
+        List<Event> refundEvents = eventFactory.createEvents(refundStateTransition);
+
+        assertThat(refundEvents.size(), is(2));
+
+        RefundAvailabilityUpdated refundAvailabilityUpdated = (RefundAvailabilityUpdated) refundEvents.stream()
+                .filter(e -> ResourceType.PAYMENT.equals(e.getResourceType()))
+                .findFirst().get();
+        assertThat(refundAvailabilityUpdated.getResourceExternalId(), is(transaction.getTransactionId()));
+        assertThat(refundAvailabilityUpdated.getResourceType(), is(ResourceType.PAYMENT));
+        assertThat(refundAvailabilityUpdated.getEventDetails(), is(instanceOf(RefundAvailabilityUpdatedEventDetails.class)));
     }
     
     @Test
