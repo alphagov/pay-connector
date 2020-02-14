@@ -20,6 +20,10 @@ public class Address {
     private String county;
     private String country;
 
+    public Address() {
+
+    }
+
     public Address(String line1, String line2, String postcode,
                    String city, String county, String country) {
         this.line1 = line1;

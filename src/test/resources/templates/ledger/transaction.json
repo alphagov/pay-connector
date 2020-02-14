@@ -1,0 +1,53 @@
+{
+  "gateway_account_id": "3",
+  "amount": 12000,
+  "total_amount": 12000,
+  "state": {
+    "finished": true,
+    "status": "success"
+  },
+  "description": "New passport application",
+  "reference": "1_86",
+  "language": "cy",
+  "return_url": "https://service-name.gov.uk/transactions/12345",
+  "email": "Joe.Bogs@example.org",
+  "payment_provider": "sandbox",
+  "created_date": "2020-02-13T16:26:04.204Z",
+  "card_details": {
+    "cardholder_name": "J. Bogs",
+    "billing_address": {
+      "line1": "address line 1",
+      "line2": "address line 2",
+      "postcode": "E6 6BL",
+      "city": "address city",
+      "country": "GB"
+    },
+    "card_brand": "Visa",
+    "last_digits_card_number": "4242",
+    "first_digits_card_number": "424242",
+    "expiry_date": "11/21",
+    "card_type": "credit"
+  },
+  "delayed_capture": false,
+  "gateway_transaction_id": "a8d5dff4-404b-4f65-b2ea-65e4ea9daabc",
+  "refund_summary": {
+    "status": "available",
+    "user_external_id": null,
+    "amount_available": 12000,
+    "amount_submitted": 0,
+    "amount_refunded": 123
+  },
+  "settlement_summary": {
+    "capture_submit_time": "2020-02-13T16:26:30.242Z",
+    "captured_date": "2020-02-13"
+  },
+  "metadata": {
+    "cost code": "value 1"
+  },
+  "transaction_type": "PAYMENT",
+  "moto": false,
+  "live": false,
+  "source": "CARD_API",
+  "wallet": "APPLE_Pay",
+  "transaction_id": "external-id"
+}

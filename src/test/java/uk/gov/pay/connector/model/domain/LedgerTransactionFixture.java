@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model.domain;
 
 import uk.gov.pay.commons.model.Source;
 import uk.gov.pay.commons.model.SupportedLanguage;
+import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
@@ -16,8 +17,10 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paritycheck.Address;
 import uk.gov.pay.connector.paritycheck.CardDetails;
 import uk.gov.pay.connector.paritycheck.LedgerTransaction;
+import uk.gov.pay.connector.paritycheck.SettlementSummary;
 import uk.gov.pay.connector.paritycheck.TransactionState;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import java.time.ZonedDateTime;
@@ -104,13 +107,12 @@ public class LedgerTransactionFixture {
 
             CardDetails cardDetails = new CardDetails(chargeEntityCardDetails.getCardHolderName(),
                     ledgerAddress,
-                    chargeEntityCardDetails.getCardBrand(),
+                    chargeEntityCardDetails.getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null),
                     ofNullable(chargeEntityCardDetails.getLastDigitsCardNumber()).map(LastDigitsCardNumber::toString).orElse(null),
                     ofNullable(chargeEntityCardDetails.getFirstDigitsCardNumber()).map(FirstDigitsCardNumber::toString).orElse(null),
                     chargeEntityCardDetails.getExpiryDate(),
-                    chargeEntityCardDetails.getCardType()
+                    ofNullable(chargeEntityCardDetails.getCardType()).map(cardType -> cardType.toString().toLowerCase()).orElse(null)
             );
-
 
             ledgerTransactionFixture.withCardDetails(cardDetails);
         }
@@ -159,7 +161,10 @@ public class LedgerTransactionFixture {
 
         ledgerTransaction.setLive(live);
         ledgerTransaction.setPaymentProvider(paymentProvider);
-        ledgerTransaction.setGatewayAccountId(gatewayAccountId);
+
+        if (gatewayAccountId != null) {
+            ledgerTransaction.setGatewayAccountId(gatewayAccountId.toString());
+        }
 
         ledgerTransaction.setSource(source);
         ledgerTransaction.setMoto(moto);
@@ -170,8 +175,10 @@ public class LedgerTransactionFixture {
         ledgerTransaction.setTotalAmount(totalAmount);
         ledgerTransaction.setWalletType(walletType);
 
-        ChargeResponse.SettlementSummary settlementSummary = new ChargeResponse.SettlementSummary();
-        settlementSummary.setCapturedTime(capturedDate);
+        SettlementSummary settlementSummary = new SettlementSummary();
+        if (capturedDate != null) {
+            settlementSummary.setCapturedDate(DateTimeUtils.toUTCDateString(capturedDate));
+        }
         settlementSummary.setCaptureSubmitTime(captureSubmittedDate);
         ledgerTransaction.setSettlementSummary(settlementSummary);
         ledgerTransaction.setRefundSummary(refundSummary);

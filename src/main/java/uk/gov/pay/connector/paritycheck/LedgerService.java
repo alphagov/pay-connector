@@ -4,9 +4,9 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-
 import java.util.Optional;
 
 import static java.lang.String.format;
@@ -29,16 +29,7 @@ public class LedgerService {
                 .path(format("/v1/transaction/%s", id))
                 .queryParam("override_account_id_restriction", "true");
 
-        Response response = client
-                .target(uri)
-                .request()
-                .get();
-
-        if (response.getStatus() == SC_OK) {
-            return Optional.of(response.readEntity(LedgerTransaction.class));
-        }
-
-        return Optional.empty();
+        return getTransactionFromLedger(uri);
     }
 
     public Optional<LedgerTransaction> getTransactionForGatewayAccount(String id, Long gatewayAccountId) {
@@ -47,9 +38,14 @@ public class LedgerService {
                 .path(format("/v1/transaction/%s", id))
                 .queryParam("account_id", gatewayAccountId);
 
+        return getTransactionFromLedger(uri);
+    }
+
+    private Optional<LedgerTransaction> getTransactionFromLedger(UriBuilder uri) {
         Response response = client
                 .target(uri)
                 .request()
+                .accept(MediaType.APPLICATION_JSON)
                 .get();
 
         if (response.getStatus() == SC_OK) {
@@ -58,4 +54,5 @@ public class LedgerService {
 
         return Optional.empty();
     }
+
 }
