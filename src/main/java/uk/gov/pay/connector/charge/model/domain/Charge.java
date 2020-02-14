@@ -85,7 +85,7 @@ public class Charge {
                 transaction.getDescription(),
                 ZonedDateTime.parse(transaction.getCreatedDate()),
                 transaction.getEmail(),
-                transaction.getGatewayAccountId(),
+                Long.valueOf(transaction.getGatewayAccountId()),
                 transaction.getPaymentProvider(),
                 true
         );

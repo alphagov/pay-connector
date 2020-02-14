@@ -1314,6 +1314,7 @@ public class ChargeServiceTest {
         transaction.setTransactionId(chargeEntity.getExternalId());
         transaction.setAmount(chargeEntity.getAmount());
         transaction.setCreatedDate(ZonedDateTime.now(ZoneId.of("UTC")).toString());
+        transaction.setGatewayAccountId(String.valueOf(GATEWAY_ACCOUNT_ID));
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(
                 chargeEntity.getExternalId(),
                 GATEWAY_ACCOUNT_ID

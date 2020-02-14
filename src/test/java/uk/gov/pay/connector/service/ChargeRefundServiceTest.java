@@ -175,6 +175,7 @@ public class ChargeRefundServiceTest {
         transaction.setRefundSummary(refundSummary);
         transaction.setReference("reference");
         transaction.setDescription("description");
+        transaction.setGatewayAccountId(String.valueOf(accountId));
         transaction.setCreatedDate(ZonedDateTime.now(ZoneId.of("UTC")).toString());
 
         RefundEntity refundEntity = aValidRefundEntity().withChargeExternalId(externalChargeId).withAmount(refundAmount).build();
