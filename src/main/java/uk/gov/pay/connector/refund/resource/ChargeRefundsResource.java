@@ -1,9 +1,12 @@
 package uk.gov.pay.connector.refund.resource;
 
-import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
+import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.exception.RefundException;
 import uk.gov.pay.connector.refund.model.RefundRequest;
@@ -37,14 +40,14 @@ import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 public class ChargeRefundsResource {
 
     private final ChargeRefundService refundService;
-    private final ChargeDao chargeDao;
     private final RefundDao refundDao;
+    private final ChargeService chargeService;
 
     @Inject
-    public ChargeRefundsResource(ChargeRefundService refundService, ChargeDao chargeDao, RefundDao refundDao) {
+    public ChargeRefundsResource(ChargeRefundService refundService, RefundDao refundDao, ChargeService chargeService) {
         this.refundService = refundService;
-        this.chargeDao = chargeDao;
         this.refundDao = refundDao;
+        this.chargeService = chargeService;
     }
 
     @POST
@@ -74,8 +77,8 @@ public class ChargeRefundsResource {
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds/{refundId}")
     @Produces(APPLICATION_JSON)
     public Response getRefund(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @PathParam("refundId") String refundId, @Context UriInfo uriInfo) {
-        return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(chargeEntity -> getRefundResponse(chargeEntity, refundId, accountId, uriInfo))
+        return chargeService.findCharge(chargeId, accountId)
+                .map(charge -> getRefundResponse(charge, refundId, accountId, uriInfo))
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
@@ -83,16 +86,16 @@ public class ChargeRefundsResource {
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
     @Produces(APPLICATION_JSON)
     public Response getRefunds(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
-        return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(chargeEntity -> {
+        return chargeService.findCharge(chargeId, accountId)
+                .map(charge -> {
                     List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(chargeId);
-                    return Response.ok(RefundsResponse.valueOf(chargeEntity, refundEntityList, uriInfo).serialize()).build();
+                    return Response.ok(RefundsResponse.valueOf(charge, refundEntityList, accountId, uriInfo).serialize()).build();
                 })
                 .orElse(responseWithChargeNotFound(chargeId));
     }
 
-    private Response getRefundResponse(ChargeEntity chargeEntity, String refundId, Long accountId, UriInfo uriInfo) {
-        return refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId()).stream()
+    private Response getRefundResponse(Charge charge, String refundId, Long accountId, UriInfo uriInfo) {
+        return refundDao.findRefundsByChargeExternalId(charge.getExternalId()).stream()
                 .filter(refundEntity -> refundEntity.getExternalId().equals(refundId))
                 .findFirst()
                 .map(refundEntity -> Response.ok(RefundResponse.valueOf(refundEntity, accountId, uriInfo).serialize()).build())

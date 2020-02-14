@@ -2,7 +2,8 @@ package uk.gov.pay.connector.refund.model;
 
 import black.door.hate.HalRepresentation;
 import black.door.hate.HalResource;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import javax.ws.rs.core.UriInfo;
@@ -16,25 +17,25 @@ public class RefundsResponse extends HalResourceResponse {
         super(refundHalRepresentation, location);
     }
 
-    public static RefundsResponse valueOf(ChargeEntity chargeEntity, List<RefundEntity> refundEntityList, UriInfo uriInfo) {
+    public static RefundsResponse valueOf(Charge charge, List<RefundEntity> refundEntityList,
+                                          Long gatewayAccountId, UriInfo uriInfo) {
 
-        Long accountId = chargeEntity.getGatewayAccount().getId();
-        String externalChargeId = chargeEntity.getExternalId();
+        String externalChargeId = charge.getExternalId();
 
         URI selfLink = uriInfo.getBaseUriBuilder()
                 .path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
-                .build(accountId.toString(), externalChargeId);
+                .build(gatewayAccountId.toString(), externalChargeId);
 
         URI paymentLink = uriInfo.getBaseUriBuilder()
                 .path("/v1/api/accounts/{accountId}/charges/{chargeId}")
-                .build(accountId.toString(), externalChargeId);
+                .build(gatewayAccountId.toString(), externalChargeId);
 
         List<HalResource> refunds = refundEntityList.stream()
-                .map(refundEntity -> RefundResponse.valueOf(refundEntity, accountId, uriInfo))
+                .map(refundEntity -> RefundResponse.valueOf(refundEntity, gatewayAccountId, uriInfo))
                 .collect(Collectors.toList());
 
         return new RefundsResponse(HalRepresentation.builder()
-                .addProperty("payment_id", chargeEntity.getExternalId())
+                .addProperty("payment_id", charge.getExternalId())
                 .addLink("self", selfLink)
                 .addLink("payment", paymentLink)
                 .addEmbedded("refunds", refunds), selfLink);
