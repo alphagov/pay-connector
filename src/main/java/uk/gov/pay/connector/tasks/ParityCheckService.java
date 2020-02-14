@@ -199,8 +199,14 @@ public class ParityCheckService {
                     cardDetailsEntity.getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null),
                     ledgerCardDetails.getCardBrand(), "card_brand");
             fieldsMatch = fieldsMatch && isEquals(cardDetailsEntity.getExpiryDate(), ledgerCardDetails.getExpiryDate(), "expiry_date");
+
+            String cardType = null;
+            if (cardDetailsEntity.getCardType() != null) {
+                cardType = cardDetailsEntity.getCardType().toString().toLowerCase();
+            }
+
             fieldsMatch = fieldsMatch && isEquals(
-                    ofNullable(cardDetailsEntity.getCardType()).map(cardType -> cardType.toString().toLowerCase()).get(),
+                    cardType,
                     ledgerCardDetails.getCardType(), "card_type");
 
             fieldsMatch = fieldsMatch && matchBillingAddress(cardDetailsEntity.getBillingAddress().orElse(null), ledgerCardDetails.getBillingAddress());

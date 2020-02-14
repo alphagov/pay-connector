@@ -26,7 +26,7 @@ public class ExpungeResource {
     @POST
     @Path("/v1/tasks/expunge")
     @Produces(APPLICATION_JSON)
-    public Response expungeCharges(@QueryParam("number_of_charges_to_expire") Integer noOfChargesToExpunge) {
+    public Response expungeCharges(@QueryParam("number_of_charges_to_expunge") Integer noOfChargesToExpunge) {
         chargeExpungeService.expunge(noOfChargesToExpunge);
         return status(OK).build();
     }
