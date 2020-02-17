@@ -49,6 +49,7 @@ import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.DATA_MI
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING_IN_LEDGER;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getTotalAmountFor;
+import static uk.gov.pay.connector.tasks.HistoricalEventEmitter.TERMINAL_AUTHENTICATION_STATES;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class ParityCheckService {
@@ -179,15 +180,11 @@ public class ParityCheckService {
     private boolean matchCardDetails(CardDetailsEntity cardDetailsEntity, CardDetails ledgerCardDetails) {
         boolean fieldsMatch;
 
-        if (isNull(cardDetailsEntity) && isNull(ledgerCardDetails)) {
+        if (isNull(cardDetailsEntity)) {
             return true;
         }
 
-        if (nonNull(cardDetailsEntity) && isNull(ledgerCardDetails) || isNull(cardDetailsEntity)) {
-            logger.info("Field value does not match between ledger and connector [field_name={}]", "card_details",
-                    kv(FIELD_NAME, "card_details"));
-            fieldsMatch = false;
-        } else {
+        if (nonNull(ledgerCardDetails)) {
             fieldsMatch = isEquals(cardDetailsEntity.getCardHolderName(), ledgerCardDetails.getCardholderName(), "cardholder_name");
             fieldsMatch = fieldsMatch && isEquals(
                     ofNullable(cardDetailsEntity.getLastDigitsCardNumber()).map(LastDigitsCardNumber::toString).orElse(null),
@@ -210,9 +207,13 @@ public class ParityCheckService {
                     ledgerCardDetails.getCardType(), "card_type");
 
             fieldsMatch = fieldsMatch && matchBillingAddress(cardDetailsEntity.getBillingAddress().orElse(null), ledgerCardDetails.getBillingAddress());
-        }
 
-        return fieldsMatch;
+            return fieldsMatch;
+        } else {
+            logger.info("Field value does not match between ledger and connector [field_name={}]", "card_details",
+                    kv(FIELD_NAME, "card_details"));
+            return false;
+        }
     }
 
     private boolean matchBillingAddress(AddressEntity addressEntity, Address ledgerBillingAddress) {
@@ -257,8 +258,11 @@ public class ParityCheckService {
                 transaction.getCorporateCardSurcharge(), "corporate_surcharge");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getNetAmount().orElse(null),
                 transaction.getNetAmount(), "net_amount");
-        fieldsMatch = fieldsMatch && isEquals(getTotalAmountFor(chargeEntity),
-                transaction.getTotalAmount(), "total_amount");
+
+        if (hasTerminalAuthenticationState(chargeEntity.getEvents())) {
+            fieldsMatch = fieldsMatch && isEquals(getTotalAmountFor(chargeEntity),
+                    transaction.getTotalAmount(), "total_amount");
+        }
 
         fieldsMatch = fieldsMatch &&
                 isEquals(ofNullable(chargeEntity.getWalletType())
@@ -268,6 +272,13 @@ public class ParityCheckService {
         fieldsMatch = fieldsMatch && externalMetadataMatches(chargeEntity, transaction);
 
         return fieldsMatch;
+    }
+
+    private boolean hasTerminalAuthenticationState(List<ChargeEventEntity> eventEntities) {
+        Optional<ChargeEventEntity> mayBeChargeEventEntity = eventEntities.stream()
+                .filter(chargeEventEntity -> TERMINAL_AUTHENTICATION_STATES.contains(chargeEventEntity.getStatus()))
+                .findFirst();
+        return mayBeChargeEventEntity.isPresent();
     }
 
     private boolean externalMetadataMatches(ChargeEntity chargeEntity,

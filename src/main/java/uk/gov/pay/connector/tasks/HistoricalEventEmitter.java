@@ -52,7 +52,7 @@ public class HistoricalEventEmitter {
     private final ChargeDao chargeDao;
     private boolean shouldForceEmission;
 
-    private final List<ChargeStatus> TERMINAL_AUTHENTICATION_STATES = List.of(
+    public static final List<ChargeStatus> TERMINAL_AUTHENTICATION_STATES = List.of(
             AUTHORISATION_3DS_REQUIRED,
             AUTHORISATION_SUBMITTED,
             AUTHORISATION_SUCCESS,
