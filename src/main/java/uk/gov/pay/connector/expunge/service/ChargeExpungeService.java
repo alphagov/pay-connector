@@ -8,12 +8,14 @@ import uk.gov.pay.connector.app.config.ExpungeConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.tasks.ParityCheckService;
 
 import javax.inject.Inject;
 import java.util.stream.IntStream;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class ChargeExpungeService {
@@ -22,13 +24,16 @@ public class ChargeExpungeService {
     private final ChargeDao chargeDao;
     private final ExpungeConfig expungeConfig;
     private final ParityCheckService parityCheckService;
+    private final ChargeService chargeService;
 
     @Inject
     public ChargeExpungeService(ChargeDao chargeDao, ConnectorConfiguration connectorConfiguration,
-                                ParityCheckService parityCheckService) {
+                                ParityCheckService parityCheckService,
+                                ChargeService chargeService) {
         this.chargeDao = chargeDao;
         expungeConfig = connectorConfiguration.getExpungeConfig();
         this.parityCheckService = parityCheckService;
+        this.chargeService = chargeService;
     }
 
     private static boolean inTerminalState(ChargeEntity chargeEntity) {
@@ -61,6 +66,7 @@ public class ChargeExpungeService {
         boolean hasChargeBeenParityCheckedBefore = chargeEntity.getParityCheckDate() != null;
 
         if (!inTerminalState(chargeEntity)) {
+            chargeService.updateChargeParityStatus(chargeEntity.getExternalId(), SKIPPED);
             logger.info("Charge not expunged because it is not in a terminal state {}",
                     kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
         } else if (parityCheckService.parityCheckChargeForExpunger(chargeEntity)) {
