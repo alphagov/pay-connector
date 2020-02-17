@@ -264,8 +264,8 @@ public class ChargeService {
     }
 
     @Transactional
-    public Optional<ChargeEntity> updateChargeParityStatus(String chargeId, ParityCheckStatus parityCheckStatus) {
-        return chargeDao.findByExternalId(chargeId)
+    public Optional<ChargeEntity> updateChargeParityStatus(String externalId, ParityCheckStatus parityCheckStatus) {
+        return chargeDao.findByExternalId(externalId)
                 .map(chargeEntity -> {
                     chargeEntity.updateParityCheck(parityCheckStatus);
                     return Optional.of(chargeEntity);

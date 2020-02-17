@@ -11,14 +11,19 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.tasks.ParityCheckService;
 
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -35,6 +40,8 @@ public class ChargeExpungeServiceTest {
     @Mock
     private ChargeDao mockChargeDao;
     @Mock
+    private ChargeService mockChargeService;
+    @Mock
     private ConnectorConfiguration mockConnectorConfiguration;
     @Mock
     private ParityCheckService parityCheckService;
@@ -48,7 +55,8 @@ public class ChargeExpungeServiceTest {
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
         when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
                 .thenReturn(Optional.of(chargeEntity.build()));
-        chargeExpungeService = new ChargeExpungeService(mockChargeDao, mockConnectorConfiguration, parityCheckService);
+        chargeExpungeService = new ChargeExpungeService(mockChargeDao, mockConnectorConfiguration, parityCheckService,
+                mockChargeService);
     }
 
     @Test
@@ -63,6 +71,20 @@ public class ChargeExpungeServiceTest {
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(false);
         chargeExpungeService.expunge(null);
         verifyNoInteractions(mockChargeDao);
+    }
+
+    @Test
+    public void expunge_shouldNotExpungeChargeIfInTerminalStateAndUpdateParityCheckStatusToSkipped() {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(CAPTURE_SUBMITTED)
+                .build();
+        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
+                .thenReturn(Optional.of(chargeEntity));
+
+        chargeExpungeService.expunge(1);
+
+        verify(mockChargeService).updateChargeParityStatus(chargeEntity.getExternalId(), SKIPPED);
+        verify(mockChargeDao, never()).expungeCharge(any(), any());
     }
 
     @Test
