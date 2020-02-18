@@ -34,6 +34,7 @@ public class ExpungeResource {
         String correlationId = MDC.get(HEADER_REQUEST_ID) == null ? "ExpungeResource-" + UUID.randomUUID().toString() : MDC.get(HEADER_REQUEST_ID);
         MDC.put(HEADER_REQUEST_ID, correlationId);
         chargeExpungeService.expunge(noOfChargesToExpunge);
+        MDC.remove(HEADER_REQUEST_ID);
         return status(OK).build();
     }
 }

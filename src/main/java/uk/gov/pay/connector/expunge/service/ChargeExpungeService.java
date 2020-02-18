@@ -14,10 +14,13 @@ import uk.gov.pay.connector.tasks.ParityCheckService;
 
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.stream.IntStream;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED;
+import static uk.gov.pay.connector.filters.RestClientLoggingFilter.HEADER_REQUEST_ID;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class ChargeExpungeService {
@@ -38,8 +41,14 @@ public class ChargeExpungeService {
         this.chargeService = chargeService;
     }
 
-    private static boolean inTerminalState(ChargeEntity chargeEntity) {
-        return ChargeStatus.fromString(chargeEntity.getStatus()).isExpungeable();
+    private boolean inTerminalState(ChargeEntity chargeEntity) {
+        long ageInDays = ChronoUnit.DAYS.between(chargeEntity.getCreatedDate(), ZonedDateTime.now());
+        boolean chargeIsHistoric = ageInDays > expungeConfig.getMinimumAgeForHistoricChargeExceptions();
+        ChargeStatus status = ChargeStatus.fromString(chargeEntity.getStatus());
+        if (chargeIsHistoric && status.equals(ChargeStatus.CAPTURE_SUBMITTED)) {
+            return true;
+        }
+        return status.isExpungeable();
     }
 
     public void expunge(Integer noOfChargesToExpungeQueryParam) {
@@ -58,6 +67,7 @@ public class ChargeExpungeService {
                                 parityCheckAndExpungeIfMet(chargeEntity);
                             } catch(OptimisticLockException error) {
                                 logger.info("Expunging process conflicted with an already running process, exit");
+                                MDC.remove(HEADER_REQUEST_ID);
                                 throw error;
                             }
                             MDC.remove(PAYMENT_EXTERNAL_ID);

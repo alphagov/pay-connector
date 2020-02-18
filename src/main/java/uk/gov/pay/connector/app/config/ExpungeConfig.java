@@ -14,6 +14,10 @@ public class ExpungeConfig extends Configuration {
 
     @Valid
     @NotNull
+    private int minimumAgeForHistoricChargeExceptions;
+
+    @Valid
+    @NotNull
     @Min(1)
     private int numberOfChargesToExpunge;
 
@@ -38,5 +42,9 @@ public class ExpungeConfig extends Configuration {
 
     public boolean isExpungeChargesEnabled() {
         return expungeChargesEnabled;
+    }
+
+    public int getMinimumAgeForHistoricChargeExceptions() {
+        return minimumAgeForHistoricChargeExceptions;
     }
 }
