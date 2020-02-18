@@ -238,3 +238,4 @@ expungeConfig:
   excludeChargesParityCheckedWithInDays: ${EXPUNGE_EXCLUDE_CHARGES_PARITY_CHECKED_WITHIN_DAYS:-7}
   numberOfChargesToExpunge: ${EXPUNGE_NO_OF_CHARGE_PER_TASK_RUN:-25000}
   expungeChargesEnabled: ${EXPUNGE_CHARGES_ENABLED:-false}
+  minimumAgeForHistoricChargeExceptions: ${EXPUNGE_HISTORIC_CHARGE_EXCEPTIONS_OLDER_THAN_DAYS:-90}
