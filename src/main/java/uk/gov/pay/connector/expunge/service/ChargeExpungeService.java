@@ -3,6 +3,7 @@ package uk.gov.pay.connector.expunge.service;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -12,6 +13,7 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.tasks.ParityCheckService;
 
 import javax.inject.Inject;
+import javax.persistence.OptimisticLockException;
 import java.util.stream.IntStream;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -50,7 +52,16 @@ public class ChargeExpungeService {
 
             IntStream.range(0, noOfChargesToExpunge).forEach(number -> {
                 chargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, createdWithinLast)
-                        .ifPresent(this::parityCheckAndExpungeIfMet);
+                        .ifPresent(chargeEntity -> {
+                            MDC.put(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId());
+                            try {
+                                parityCheckAndExpungeIfMet(chargeEntity);
+                            } catch(OptimisticLockException error) {
+                                logger.info("Expunging process conflicted with an already running process, exit");
+                                throw error;
+                            }
+                            MDC.remove(PAYMENT_EXTERNAL_ID);
+                        });
             });
         }
     }
@@ -67,19 +78,15 @@ public class ChargeExpungeService {
 
         if (!inTerminalState(chargeEntity)) {
             chargeService.updateChargeParityStatus(chargeEntity.getExternalId(), SKIPPED);
-            logger.info("Charge not expunged because it is not in a terminal state {}",
-                    kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
+            logger.info("Charge not expunged because it is not in a terminal state");
         } else if (parityCheckService.parityCheckChargeForExpunger(chargeEntity)) {
             expungeCharge(chargeEntity);
-            logger.info("Charge expunged from connector {}",
-                    kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
+            logger.info("Charge expunged from connector");
         } else {
             if (hasChargeBeenParityCheckedBefore) {
-                logger.error("Charge cannot be expunged because parity check with ledger repeatedly failed {}",
-                        kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
+                logger.error("Charge cannot be expunged because parity check with ledger repeatedly failed");
             } else {
-                logger.info("Charge cannot be expunged because parity check with ledger failed {}",
-                        kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
+                logger.info("Charge cannot be expunged because parity check with ledger failed");
             }
         }
     }
