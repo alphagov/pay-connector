@@ -70,11 +70,15 @@ public class ChargeCancelService {
                 .of(chargeStatus).getAuthorisationStage();
 
         boolean cancellableWithGateway = authorisationStage == ExpirableChargeStatus.AuthorisationStage.POST_AUTHORISATION
-                || (authorisationStage == ExpirableChargeStatus.AuthorisationStage.DURING_AUTHORISATION
-                && queryService.isTerminableWithGateway(chargeEntity));
+                || authorisationStage == ExpirableChargeStatus.AuthorisationStage.DURING_AUTHORISATION;
 
         if (cancellableWithGateway) {
-            cancelChargeWithGatewayCleanup(chargeEntity, statusFlow);
+            boolean isTerminable = queryService.isTerminableWithGateway(chargeEntity);
+
+            if (isTerminable) {
+                cancelChargeWithGatewayCleanup(chargeEntity, statusFlow);
+            }
+
         } else {
             nonGatewayCancel(chargeEntity, statusFlow);
         }

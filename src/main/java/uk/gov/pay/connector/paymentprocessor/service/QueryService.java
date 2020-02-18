@@ -29,7 +29,9 @@ public class QueryService {
                     .getMappedStatus()
                     .map(chargeStatus -> !chargeStatus.toExternal().isFinished())
                     .orElse(false);
-        } catch (WebApplicationException | UnsupportedOperationException | GatewayException | IllegalArgumentException e) {
+        } catch (UnsupportedOperationException e) {
+            return true;
+        } catch (WebApplicationException | GatewayException | IllegalArgumentException e) {
             logger.info("Unable to retrieve status for charge {}: {}", charge.getExternalId(), e.getMessage());
             return false;
         }

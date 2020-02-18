@@ -13,7 +13,7 @@ import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public final class GatewayStatusComparison {
+public class GatewayStatusComparison {
     private final ChargeStatus payStatus;
     @JsonProperty("gatewayStatus")
     @JsonSerialize(using = ToStringSerializer.class)
