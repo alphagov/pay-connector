@@ -31,12 +31,14 @@ import uk.gov.pay.connector.events.model.charge.PaymentExpired;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
 import uk.gov.pay.connector.events.model.charge.ServiceApprovedForCapture;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuthorisation;
 import uk.gov.pay.connector.events.model.charge.UserApprovedForCapture;
 import uk.gov.pay.connector.events.model.charge.UserApprovedForCaptureAwaitingServiceApproval;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -78,6 +80,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_
 
 public class PaymentGatewayStateTransitions {
     private static PaymentGatewayStateTransitions instance;
+    
+    private static Map<ChargeStatus, ModelledTypedEvent> eventsForForceUpdatingStatus = Map.of(
+            CAPTURED, new ModelledTypedEvent<>(StatusCorrectedToCapturedToMatchGatewayStatus.class));
 
     public static PaymentGatewayStateTransitions getInstance() {
         if (instance == null) {
@@ -256,6 +261,11 @@ public class PaymentGatewayStateTransitions {
                 .stream()
                 .filter(chargeStatus -> graph.predecessors(toStatus).contains(chargeStatus))
                 .findFirst();
+    }
+    
+    public static <T extends Event> Optional<Class<T>> getEventForForceUpdate(ChargeStatus targetChargeStatus) {
+        return Optional.ofNullable(eventsForForceUpdatingStatus.get(targetChargeStatus))
+                .map(modelledTypedEvent -> modelledTypedEvent.getClazz());
     }
 
     private boolean isValidTransitionImpl(ChargeStatus state, ChargeStatus targetState, Event event) {

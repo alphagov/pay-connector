@@ -288,6 +288,19 @@ public class ChargeEntity extends AbstractVersionedEntity implements Nettable {
         }
     }
 
+    /**
+     * This bypasses checks that we can move from the current charge status to the target charge status as enforced by
+     * the standard payment flow.
+     * Should be used to set the status only when correcting the charge status when the status we have conflicts with
+     * the status with the payment gateway.
+     */
+    public void setStatusIgnoringValidTransitions(ChargeStatus targetStatus) {
+        var logMessage = format("Forcibly changing charge status for externalId [%s] [%s]->[%s]",
+                this.externalId, this.status, targetStatus.getValue());
+        logger.info(logMessage, getStructuredLoggingArgs());
+        this.status = targetStatus.getValue();
+    }
+
     public List<StructuredArgument> getStructuredLoggingArgs() {
         return List.of(
                 kv(PAYMENT_EXTERNAL_ID, externalId),
