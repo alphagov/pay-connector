@@ -15,9 +15,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 public class QueryServiceTest {
@@ -54,5 +54,14 @@ public class QueryServiceTest {
         when(paymentProvider.queryPaymentStatus(chargeEntity)).thenReturn(response);
 
         assertThat(queryService.isTerminableWithGateway(chargeEntity), is(false));
+    }
+
+    @Test
+    public void isTerminableWithGateway_returnsTrueIfQueryPaymentStatusUnsupported() throws Exception {
+        ChargeEntity chargeEntity = aValidChargeEntity().build();
+        
+        when(paymentProvider.queryPaymentStatus(chargeEntity)).thenThrow(UnsupportedOperationException.class);
+        
+        assertThat(queryService.isTerminableWithGateway(chargeEntity), is(true));
     }
 }

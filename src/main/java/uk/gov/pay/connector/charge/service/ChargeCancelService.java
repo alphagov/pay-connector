@@ -21,8 +21,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.charge.service.StatusFlow.USER_CANCELLATION_FLOW;
+import static uk.gov.pay.logging.LoggingKeys.CURRENT_INTERNAL_STATE;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ERROR;
 
 public class ChargeCancelService {
 
@@ -96,7 +99,9 @@ public class ChargeCancelService {
             chargeStatus = determineTerminalState(gatewayResponse.getBaseResponse().get(), statusFlow);
             stringifiedResponse = gatewayResponse.getBaseResponse().get().toString();
         } catch (GatewayException e) {
-            logger.error(e.getMessage());
+            logger.error("Gateway error while cancelling the charge",
+                    kv(CURRENT_INTERNAL_STATE, chargeEntity.getStatus()),
+                    kv(GATEWAY_ERROR, e.getMessage()));
             chargeStatus = statusFlow.getFailureTerminalState();
             stringifiedResponse = e.getMessage();
         }

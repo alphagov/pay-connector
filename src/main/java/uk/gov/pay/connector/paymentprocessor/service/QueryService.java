@@ -18,7 +18,7 @@ public class QueryService {
     public QueryService(PaymentProviders providers) {
         this.providers = providers;
     }
-    
+
     public ChargeQueryResponse getChargeGatewayStatus(ChargeEntity charge) throws GatewayException {
         return providers.byName(charge.getPaymentGatewayName()).queryPaymentStatus(charge);
     }
@@ -29,7 +29,11 @@ public class QueryService {
                     .getMappedStatus()
                     .map(chargeStatus -> !chargeStatus.toExternal().isFinished())
                     .orElse(false);
-        } catch (WebApplicationException | UnsupportedOperationException | GatewayException | IllegalArgumentException e) {
+        } catch (UnsupportedOperationException e) {
+            // we cannot query the charge status with the gateway, so we will always attempt to terminate with the
+            // gateway if possible.
+            return true;
+        } catch (WebApplicationException | GatewayException | IllegalArgumentException e) {
             logger.info("Unable to retrieve status for charge {}: {}", charge.getExternalId(), e.getMessage());
             return false;
         }

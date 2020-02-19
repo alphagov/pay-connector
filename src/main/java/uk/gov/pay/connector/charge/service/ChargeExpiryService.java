@@ -39,6 +39,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
@@ -47,6 +48,9 @@ import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.Aut
 import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.POST_AUTHORISATION;
 import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.PRE_AUTHORISATION;
 import static uk.gov.pay.connector.charge.service.StatusFlow.EXPIRE_FLOW;
+import static uk.gov.pay.logging.LoggingKeys.CURRENT_INTERNAL_STATE;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ERROR;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class ChargeExpiryService {
 
@@ -174,8 +178,10 @@ public class ChargeExpiryService {
                 newStatus = determineTerminalState(gatewayResponse);
             } catch (GatewayException e) {
                 newStatus= EXPIRE_FLOW.getFailureTerminalState();
-                logger.error("Gateway error while cancelling the Charge - charge_external_id={}, gateway_error={}",
-                        chargeEntity.getExternalId(), e.getMessage());
+                logger.error("Gateway error while cancelling the charge during expiry",
+                        kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()),
+                        kv(CURRENT_INTERNAL_STATE, chargeEntity.getStatus()),
+                        kv(GATEWAY_ERROR, e.getMessage()));
             }
 
             ChargeEntity expiredCharge = chargeService.transitionChargeState(processedEntity.getExternalId(), newStatus);
