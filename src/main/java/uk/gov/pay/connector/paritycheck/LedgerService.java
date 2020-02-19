@@ -32,8 +32,8 @@ public class LedgerService {
         return getTransactionFromLedger(uri);
     }
 
-    public Optional<LedgerTransaction> findByProviderAndGatewayTransactionId(String paymentGatewayName,
-                                                                             String gatewayTransactionId) {
+    public Optional<LedgerTransaction> getTransactionForProviderAndGatewayTransactionId(String paymentGatewayName,
+                                                                                        String gatewayTransactionId) {
         var uri = UriBuilder
                 .fromPath(ledgerUrl)
                 .path(format("/v1/transaction/gateway-transaction/%s", gatewayTransactionId))

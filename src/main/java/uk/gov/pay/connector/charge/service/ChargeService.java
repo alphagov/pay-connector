@@ -302,7 +302,7 @@ public class ChargeService {
             return maybeChargeEntity.map(Charge::from);
         }
         else{
-            return ledgerService.findByProviderAndGatewayTransactionId(paymentGatewayName,gatewayTransactionId)
+            return ledgerService.getTransactionForProviderAndGatewayTransactionId(paymentGatewayName,gatewayTransactionId)
                     .map(Charge::from);
         }
     }

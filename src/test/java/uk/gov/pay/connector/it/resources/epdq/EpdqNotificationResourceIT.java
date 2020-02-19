@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources.epdq;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.response.ValidatableResponse;
 import junitparams.Parameters;
 import org.junit.Test;
@@ -139,8 +140,9 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotUpdateStatusToDatabaseIfGatewayAccountIsNotFound() {
+    public void shouldNotUpdateStatusToDatabaseIfGatewayAccountIsNotFound() throws JsonProcessingException {
         String chargeId = createNewCharge(AUTHORISATION_SUCCESS);
+        ledgerStub.returnNotFoundForFindByProviderAndGatewayTransactionId( "epdq", "unknown-transation-id");
 
         notifyConnector("unknown-transation-id", "GARBAGE", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
                 .statusCode(200)

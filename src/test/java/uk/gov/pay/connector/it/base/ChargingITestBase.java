@@ -15,6 +15,7 @@ import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.expunge.service.LedgerStub;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -67,6 +68,7 @@ public class ChargingITestBase {
     protected static final WorldpayMockClient worldpayMockClient = new WorldpayMockClient();
     protected static final SmartpayMockClient smartpayMockClient = new SmartpayMockClient();
     protected static final EpdqMockClient epdqMockClient = new EpdqMockClient();
+    protected static final LedgerStub ledgerStub = new LedgerStub();
 
     private final String paymentProvider;
     protected RestAssuredClient connectorRestApiClient;

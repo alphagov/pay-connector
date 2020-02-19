@@ -32,6 +32,19 @@ public class LedgerStub {
         stubResponse(externalId, ledgerTransactionFields);
     }
 
+    public void returnNotFoundForFindByProviderAndGatewayTransactionId(String paymentProvider, String gatewayTransactionId) throws JsonProcessingException {
+        ResponseDefinitionBuilder responseDefBuilder = aResponse()
+                .withHeader(CONTENT_TYPE, APPLICATION_JSON)
+                .withStatus(404);
+        stubFor(
+                get(urlPathEqualTo(format("/v1/transaction/gateway-transaction/%s", gatewayTransactionId)))
+                        .withQueryParam("payment_provider", equalTo(paymentProvider))
+                        .willReturn(
+                                responseDefBuilder
+                        )
+        );
+    }
+
     private void stubResponse(String externalId, Map<String, Object> ledgerTransactionFields) throws JsonProcessingException {
         ResponseDefinitionBuilder responseDefBuilder = aResponse()
                 .withHeader(CONTENT_TYPE, APPLICATION_JSON)

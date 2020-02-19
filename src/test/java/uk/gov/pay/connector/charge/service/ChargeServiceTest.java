@@ -1364,7 +1364,7 @@ public class ChargeServiceTest {
                 chargeEntity.getExternalId()
         )).thenReturn(Optional.empty());
 
-        when(ledgerService.findByProviderAndGatewayTransactionId("sandbox",
+        when(ledgerService.getTransactionForProviderAndGatewayTransactionId("sandbox",
                 chargeEntity.getExternalId())).thenReturn(Optional.of(transaction));
 
         Optional<Charge> charge = service.findByProviderAndTransactionIdFromDbOrLedger("sandbox",
