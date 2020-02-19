@@ -5,11 +5,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DnsUtils;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
@@ -35,7 +37,9 @@ public class WorldpayNotificationServiceTest {
     private WorldpayNotificationService notificationService;
 
     @Mock
-    private ChargeDao mockChargeDao;
+    private ChargeService mockChargeService;
+    @Mock
+    private GatewayAccountService mockGatewayAccountService;
     @Mock
     private WorldpayNotificationConfiguration mockWorldpayConfiguration;
     @Mock
@@ -44,10 +48,8 @@ public class WorldpayNotificationServiceTest {
     private ChargeNotificationProcessor mockChargeNotificationProcessor;
     @Mock
     private RefundNotificationProcessor mockRefundNotificationProcessor;
-    @Mock
-    private ChargeEntity mockCharge;
-    @Mock
-    private GatewayAccountEntity mockGatewayAccountEntity;
+    private Charge charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().build());
+    private GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
 
     private final String ipAddress = "1.1.1.1";
     private final String referenceId = "refund-reference";
@@ -56,13 +58,14 @@ public class WorldpayNotificationServiceTest {
     @Before
     public void setup() {
         notificationService = new WorldpayNotificationService(
-                mockChargeDao,
+                mockChargeService,
                 mockWorldpayConfiguration,
                 mockDnsUtils,
                 mockChargeNotificationProcessor,
-                mockRefundNotificationProcessor
-        );
-        when(mockChargeDao.findByProviderAndTransactionId(WORLDPAY.getName(), transactionId)).thenReturn(Optional.of(mockCharge));
+                mockRefundNotificationProcessor,
+                mockGatewayAccountService);
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(WORLDPAY.getName(), transactionId)).thenReturn(Optional.of(charge));
+        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
     }
 
     @Test
@@ -87,7 +90,7 @@ public class WorldpayNotificationServiceTest {
                 transactionId,
                 referenceId
         );
-        verify(mockChargeNotificationProcessor).invoke(expectedNotification.getTransactionId(), mockCharge, CAPTURED, expectedNotification.getGatewayEventDate());
+        verify(mockChargeNotificationProcessor).invoke(expectedNotification.getTransactionId(), charge, CAPTURED, expectedNotification.getGatewayEventDate());
     }
 
     @Test
@@ -108,7 +111,8 @@ public class WorldpayNotificationServiceTest {
 
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, times(2)).invoke(WORLDPAY, RefundStatus.REFUNDED, null, referenceId, transactionId, mockCharge);
+        verify(mockRefundNotificationProcessor, times(2)).invoke(WORLDPAY, RefundStatus.REFUNDED,
+                gatewayAccountEntity, referenceId, transactionId, charge);
     }
 
     @Test
@@ -121,7 +125,8 @@ public class WorldpayNotificationServiceTest {
         assertTrue(result);
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor).invoke(WORLDPAY, RefundStatus.REFUND_ERROR, null, referenceId, transactionId, mockCharge);
+        verify(mockRefundNotificationProcessor).invoke(WORLDPAY, RefundStatus.REFUND_ERROR,
+                gatewayAccountEntity, referenceId, transactionId, charge);
     }
 
 
@@ -135,7 +140,8 @@ public class WorldpayNotificationServiceTest {
                 "03",
                 "2017");
 
-        when(mockChargeDao.findByProviderAndTransactionId(WORLDPAY.getName(), transactionId)).thenReturn(Optional.empty());
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(WORLDPAY.getName(), 
+                transactionId)).thenReturn(Optional.empty());
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
         assertFalse(result);

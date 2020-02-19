@@ -5,12 +5,14 @@ import com.google.inject.persist.Transactional;
 import org.apache.http.NameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.List;
@@ -31,24 +33,25 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR
 
 public class EpdqNotificationService {
 
+    private static final String PAYMENT_GATEWAY_NAME = PaymentGatewayName.EPDQ.getName();
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
-    private final ChargeDao chargeDao;
+    private final ChargeService chargeService;
     private final SignatureGenerator signatureGenerator;
     private final ChargeNotificationProcessor chargeNotificationProcessor;
     private final RefundNotificationProcessor refundNotificationProcessor;
-
-    private static final String PAYMENT_GATEWAY_NAME = PaymentGatewayName.EPDQ.getName();
+    private final GatewayAccountService gatewayAccountService;
 
     @Inject
-    public EpdqNotificationService(ChargeDao chargeDao,
+    public EpdqNotificationService(ChargeService chargeService,
                                    SignatureGenerator signatureGenerator,
                                    ChargeNotificationProcessor chargeNotificationProcessor,
-                                   RefundNotificationProcessor refundNotificationProcessor) {
-        this.chargeDao = chargeDao;
+                                   RefundNotificationProcessor refundNotificationProcessor,
+                                   GatewayAccountService gatewayAccountService) {
+        this.chargeService = chargeService;
         this.signatureGenerator = signatureGenerator;
         this.chargeNotificationProcessor = chargeNotificationProcessor;
         this.refundNotificationProcessor = refundNotificationProcessor;
+        this.gatewayAccountService = gatewayAccountService;
     }
 
     @Transactional
@@ -65,13 +68,14 @@ public class EpdqNotificationService {
         }
 
         logger.info("Verifying {} notification {}", PAYMENT_GATEWAY_NAME, notification);
-        
+
         if (isBlank(notification.getTransactionId())) {
             logger.error("{} notification {} failed verification because it has no transaction ID", PAYMENT_GATEWAY_NAME, notification);
             return;
         }
 
-        Optional<ChargeEntity> maybeCharge = chargeDao.findByProviderAndTransactionId(PAYMENT_GATEWAY_NAME, notification.getTransactionId());
+        Optional<Charge> maybeCharge = chargeService.findByProviderAndTransactionIdFromDbOrLedger(
+                PAYMENT_GATEWAY_NAME, notification.getTransactionId());
 
         if (maybeCharge.isEmpty()) {
             logger.error("{} notification {} could not be verified (associated charge entity not found)",
@@ -79,8 +83,11 @@ public class EpdqNotificationService {
             return;
         }
 
-        ChargeEntity charge = maybeCharge.get();
-        if (!isValidNotificationSignature(notification, charge)) {
+        Charge charge = maybeCharge.get();
+        GatewayAccountEntity gatewayAccountEntity
+                = gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId()).get();
+
+        if (!isValidNotificationSignature(notification, gatewayAccountEntity)) {
             return;
         }
 
@@ -93,15 +100,15 @@ public class EpdqNotificationService {
         } else {
             final Optional<RefundStatus> newRefundStatus = newRefundStateForRefundNotification(notification.getStatus());
             newRefundStatus.ifPresent(refundStatus -> refundNotificationProcessor.invoke(
-                    PaymentGatewayName.EPDQ, refundStatus, charge.getGatewayAccount(),
+                    PaymentGatewayName.EPDQ, refundStatus, gatewayAccountEntity,
                     notification.getReference(), notification.getTransactionId(), charge));
         }
     }
 
-    private boolean isValidNotificationSignature(EpdqNotification notification, ChargeEntity charge) {
+    private boolean isValidNotificationSignature(EpdqNotification notification, GatewayAccountEntity gatewayAccountEntity) {
         String actualSignature = signatureGenerator.sign(
                 getParams(notification, false),
-                getShaOutPassphrase(charge)
+                getShaOutPassphrase(gatewayAccountEntity)
         );
 
         final String expectedShaSignature = getExpectedShaSignature(notification);
@@ -128,8 +135,8 @@ public class EpdqNotificationService {
                 .get(withShaSignature);
     }
 
-    private String getShaOutPassphrase(ChargeEntity charge) {
-        return charge.getGatewayAccount().getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE);
+    private String getShaOutPassphrase(GatewayAccountEntity gatewayAccountEntity) {
+        return gatewayAccountEntity.getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE);
     }
 
     private static Optional<ChargeStatus> newChargeStateForChargeNotification(String notificationStatus, ChargeStatus chargeStatus) {

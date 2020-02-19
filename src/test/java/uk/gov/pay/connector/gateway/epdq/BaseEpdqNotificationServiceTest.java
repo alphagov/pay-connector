@@ -7,18 +7,19 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Before;
 import org.mockito.Mock;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 
@@ -26,15 +27,15 @@ public abstract class BaseEpdqNotificationServiceTest {
     EpdqNotificationService notificationService;
 
     @Mock
-    protected ChargeDao mockChargeDao;
+    protected ChargeService mockChargeService;
+    @Mock
+    protected GatewayAccountService mockGatewayAccountService;
     @Mock
     protected ChargeNotificationProcessor mockChargeNotificationProcessor;
     @Mock
     protected RefundNotificationProcessor mockRefundNotificationProcessor;
-    @Mock
-    protected ChargeEntity mockCharge;
-    @Mock
-    protected GatewayAccountEntity mockGatewayAccountEntity;
+    protected Charge charge;
+    protected GatewayAccountEntity gatewayAccountEntity;
 
     protected final String payId = "transaction-reference";
     final String payIdSub = "pay-id-sub";
@@ -43,19 +44,23 @@ public abstract class BaseEpdqNotificationServiceTest {
     @Before
     public void setup() {
         notificationService = new EpdqNotificationService(
-                mockChargeDao,
+                mockChargeService,
                 new EpdqSha512SignatureGenerator(),
                 mockChargeNotificationProcessor,
-                mockRefundNotificationProcessor
+                mockRefundNotificationProcessor,
+                mockGatewayAccountService
         );
-        when(mockCharge.getStatus()).thenReturn(CAPTURE_APPROVED.getValue());
-        when(mockCharge.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
-        when(mockGatewayAccountEntity.getCredentials()).thenReturn(ImmutableMap.of(CREDENTIALS_SHA_OUT_PASSPHRASE, shaPhraseOut));
+        gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
+        gatewayAccountEntity.setCredentials(ImmutableMap.of(CREDENTIALS_SHA_OUT_PASSPHRASE, shaPhraseOut));
+        charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .build());
 
-        when(mockChargeDao.findByProviderAndTransactionId(EPDQ.getName(), payId)).thenReturn(Optional.of(mockCharge));
+        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
     }
 
-    protected String notificationPayloadForTransaction(String payId, EpdqNotification.StatusCode statusCode) {
+    String notificationPayloadForTransaction(String payId, EpdqNotification.StatusCode statusCode) {
         List<NameValuePair> payloadParameters = buildPayload(payId, statusCode.getCode());
         return notificationPayloadForTransaction(payloadParameters);
     }
@@ -67,7 +72,7 @@ public abstract class BaseEpdqNotificationServiceTest {
                 new BasicNameValuePair("PAYIDSUB", "pay-id-sub"));
     }
 
-    protected String notificationPayloadForTransaction(List<NameValuePair> payloadParameters) {
+    private String notificationPayloadForTransaction(List<NameValuePair> payloadParameters) {
         String signature = new EpdqSha512SignatureGenerator().sign(payloadParameters, shaPhraseOut);
 
         payloadParameters.add(new BasicNameValuePair("SHASIGN", signature));
