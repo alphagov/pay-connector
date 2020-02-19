@@ -22,7 +22,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
@@ -81,6 +80,7 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
     public void respondWith204WithLockingState_whenCancellationAfterAuth() {
         String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
         worldpayMockClient.mockCancelSuccess();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
 
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, NO_CONTENT.getStatusCode());
 
@@ -120,6 +120,7 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
 
         String gatewayTransactionId = "gatewayTransactionId";
         worldpayMockClient.mockCancelError();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
         String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), gatewayTransactionId);
 
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCEL_ERROR, 204);
@@ -132,12 +133,13 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
 
     @Test
     public void respondWith204With3DSRequiredState_whenCancellationBeforeAuth() {
-
         String chargeId = addCharge(AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusHours(1), "irrelvant");
+        worldpayMockClient.mockCancelSuccess();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
         List<String> events = databaseTestHelper.getInternalEvents(chargeId);
-        assertThat(events.size(), is(2));
-        assertThat(events, hasItems(AUTHORISATION_3DS_REQUIRED.getValue(), USER_CANCELLED.getValue()));
+        assertThat(events.size(), is(3));
+        assertThat(events, hasItems(AUTHORISATION_3DS_REQUIRED.getValue(), USER_CANCEL_READY.getValue(), USER_CANCELLED.getValue()));
     }
     
     private String userCancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int httpStatusCode) {

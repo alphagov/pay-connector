@@ -21,13 +21,20 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static java.lang.String.format;
+import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.DURING_AUTHORISATION;
+import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.POST_AUTHORISATION;
 import static uk.gov.pay.connector.charge.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.charge.service.StatusFlow.USER_CANCELLATION_FLOW;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
 
 public class ChargeCancelService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    
+
     private final ChargeDao chargeDao;
     private final PaymentProviders providers;
     private final ChargeService chargeService;
@@ -61,22 +68,41 @@ public class ChargeCancelService {
     }
 
     private void doCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
-        
+
         validateChargeStatus(statusFlow, chargeEntity);
-        
-        ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
+
+        ChargeStatus currentChargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
 
         ExpirableChargeStatus.AuthorisationStage authorisationStage = ExpirableChargeStatus
-                .of(chargeStatus).getAuthorisationStage();
-
-        boolean cancellableWithGateway = authorisationStage == ExpirableChargeStatus.AuthorisationStage.POST_AUTHORISATION
-                || (authorisationStage == ExpirableChargeStatus.AuthorisationStage.DURING_AUTHORISATION
-                && queryService.isTerminableWithGateway(chargeEntity));
-
-        if (cancellableWithGateway) {
+                .of(currentChargeStatus).getAuthorisationStage();
+        
+        if ((authorisationStage == DURING_AUTHORISATION || authorisationStage == POST_AUTHORISATION)
+                && queryService.canQueryChargeGatewayStatus(chargeEntity.getPaymentGatewayName())) {
+            cancelChargeOrPotentiallyForceTransitionState(chargeEntity, statusFlow);
+        } else if (authorisationStage == POST_AUTHORISATION) {
             cancelChargeWithGatewayCleanup(chargeEntity, statusFlow);
         } else {
             nonGatewayCancel(chargeEntity, statusFlow);
+        }
+    }
+
+    private void cancelChargeOrPotentiallyForceTransitionState(ChargeEntity chargeEntity, StatusFlow statusFlow) {
+        Optional<ChargeStatus> gatewayStatus = queryService.getMappedGatewayStatus(chargeEntity);
+        if (gatewayStatus.isPresent()) {
+            if (gatewayStatus.get().toExternal().isFinished()) {
+                var message = format("Cancelling charge aborted as charge is in a terminal state on the gateway " +
+                        "provider. Attempting to force state on charge to [%s]", gatewayStatus.get().getValue());
+                logger.info(message, List.of(kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()),
+                        kv(GATEWAY_ACCOUNT_ID, chargeEntity.getGatewayAccount().getId()),
+                        kv(PROVIDER, chargeEntity.getGatewayAccount().getGatewayName())));
+                chargeService.forceTransitionChargeState(chargeEntity, gatewayStatus.get());
+            } else {
+                cancelChargeWithGatewayCleanup(chargeEntity, statusFlow);
+            }
+        } else {
+            var message = format("Cancelling charge aborted as gateway status does not map to any charge status in " +
+                    "%s. ", ChargeStatus.class.getCanonicalName());
+            logger.info(message, List.of(kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId())));
         }
     }
 
@@ -92,7 +118,7 @@ public class ChargeCancelService {
             if (gatewayResponse.getBaseResponse().isEmpty()) {
                 gatewayResponse.throwGatewayError();
             }
-            
+
             chargeStatus = determineTerminalState(gatewayResponse.getBaseResponse().get(), statusFlow);
             stringifiedResponse = gatewayResponse.getBaseResponse().get().toString();
         } catch (GatewayException e) {
@@ -132,11 +158,11 @@ public class ChargeCancelService {
 
         chargeService.transitionChargeState(chargeEntity.getExternalId(), completeStatus);
     }
-    
+
     private void prepareForTerminate(ChargeEntity chargeEntity, StatusFlow statusFlow) {
         ChargeStatus lockState = statusFlow.getLockState();
         ChargeStatus currentStatus = ChargeStatus.fromString(chargeEntity.getStatus());
-        
+
         // Used by Sumo Logic saved search
         logger.info("Card cancel request sent - charge_external_id={}, charge_status={}, account_id={}, transaction_id={}, amount={}, operation_type={}, provider={}, provider_type={}, locking_status={}",
                 chargeEntity.getExternalId(),
@@ -158,7 +184,7 @@ public class ChargeCancelService {
         if (statusFlow.isInProgress(chargeStatus)) {
             throw new OperationAlreadyInProgressRuntimeException(statusFlow.getName(), chargeEntity.getExternalId());
         }
-        
+
         if (!chargeIsInTerminableStatus(statusFlow, chargeStatus)) {
             logger.info("Charge is not in one of the legal states. charge_external_id={}, status={}, legal_states={}",
                     chargeEntity.getExternalId(), chargeEntity.getStatus(), getLegalStatusNames(statusFlow.getTerminatableStatuses()));

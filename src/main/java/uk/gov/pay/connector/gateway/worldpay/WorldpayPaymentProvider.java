@@ -119,6 +119,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                         )));
     }
 
+    @Override
+    public boolean canQueryPaymentStatus() {
+        return true;
+    }
+
     private GatewayOrder buildQuery(ChargeEntity charge) {
         return aWorldpayInquiryRequestBuilder()
                 .withTransactionId(charge.getGatewayTransactionId())

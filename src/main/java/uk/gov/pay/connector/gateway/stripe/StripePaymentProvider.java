@@ -95,6 +95,11 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
+    public boolean canQueryPaymentStatus() {
+        return false;
+    }
+
+    @Override
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request) {
         return stripeAuthoriseHandler.authorise(request);
     }
