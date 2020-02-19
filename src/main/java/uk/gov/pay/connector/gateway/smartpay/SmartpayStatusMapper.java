@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
 import org.apache.commons.lang3.tuple.Pair;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.StatusMapper;
 import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
 
@@ -38,15 +37,7 @@ public class SmartpayStatusMapper {
                     .ignore(Pair.of("REPORT_AVAILABLE", false))
                     .build();
 
-    public static StatusMapper<Pair<String, Boolean>> get() {
-        return STATUS_MAPPER;
-    }
-
-    public static InterpretedStatus from(Pair<String, Boolean> gatewayStatus, ChargeStatus currentStatus) {
-        return get().from(gatewayStatus, currentStatus);
-    }
-
     public static InterpretedStatus from(Pair<String, Boolean> gatewayStatus) {
-        return get().from(gatewayStatus);
+        return STATUS_MAPPER.from(gatewayStatus);
     }
 }

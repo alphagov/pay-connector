@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gateway;
 
 import com.google.common.collect.ImmutableList;
 import uk.gov.pay.connector.gateway.model.status.GatewayStatusOnly;
-import uk.gov.pay.connector.gateway.model.status.GatewayStatusWithCurrentStatus;
 import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
 import uk.gov.pay.connector.gateway.model.status.MappedChargeStatus;
 import uk.gov.pay.connector.gateway.model.status.MappedRefundStatus;
@@ -55,11 +54,6 @@ public class StatusMapper<T> {
     public static class Builder<T> {
         private List<StatusMap<T>> validStatuses = new ArrayList<>();
 
-        public Builder<T> map(T gatewayStatus, ChargeStatus currentStatus, Status status) {
-            validStatuses.add(StatusMap.of(GatewayStatusWithCurrentStatus.of(gatewayStatus, currentStatus), status));
-            return this;
-        }
-
         public Builder<T> map(T gatewayStatus, Status status) {
             validStatuses.add(StatusMap.of(GatewayStatusOnly.of(gatewayStatus), status));
             return this;
@@ -85,16 +79,8 @@ public class StatusMapper<T> {
         return new Builder<>();
     }
 
-    public InterpretedStatus from(T gatewayStatus, ChargeStatus currentStatus) {
-        return from(GatewayStatusWithCurrentStatus.of(gatewayStatus, currentStatus), validStatuses);
-    }
-
     public InterpretedStatus from(T gatewayStatus) {
-        List<StatusMap<T>> gatewayStatusesOnly = this.validStatuses
-                .stream()
-                .filter(validStatus -> validStatus.getFromStatus() instanceof GatewayStatusOnly)
-                .collect(Collectors.toList());
-        return from(GatewayStatusOnly.of(gatewayStatus), gatewayStatusesOnly);
+        return from(GatewayStatusOnly.of(gatewayStatus), this.validStatuses);
     }
 
     private InterpretedStatus from(StatusMapFromStatus<T> gatewayStatus, List<StatusMap<T>> wantedValidStatuses) {

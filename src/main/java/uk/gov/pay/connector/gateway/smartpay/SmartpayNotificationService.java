@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
 import uk.gov.pay.connector.gateway.model.status.MappedChargeStatus;
 import uk.gov.pay.connector.gateway.model.status.MappedRefundStatus;
@@ -75,7 +74,7 @@ public class SmartpayNotificationService {
         }
 
         ChargeEntity charge = maybeCharge.get();
-        InterpretedStatus interpretedStatus = interpretStatus(notification, charge);
+        InterpretedStatus interpretedStatus = interpretStatus(notification);
 
         if (interpretedStatus instanceof MappedChargeStatus) {
             chargeNotificationProcessor.invoke(
@@ -98,11 +97,8 @@ public class SmartpayNotificationService {
         }
     }
 
-    private InterpretedStatus interpretStatus(SmartpayNotification notification, ChargeEntity charge) {
-        return SmartpayStatusMapper.from(
-                notification.getStatus(),
-                ChargeStatus.fromString(charge.getStatus())
-        );
+    private InterpretedStatus interpretStatus(SmartpayNotification notification) {
+        return SmartpayStatusMapper.from(notification.getStatus());
     }
 
     private boolean shouldIgnore(SmartpayNotification notification) {
