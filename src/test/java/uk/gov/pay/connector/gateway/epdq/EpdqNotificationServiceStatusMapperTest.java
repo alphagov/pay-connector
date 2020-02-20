@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
 import java.util.Optional;
 
+import static java.time.ZonedDateTime.now;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -46,7 +47,7 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
 
     @Rule
     public MockitoRule rule = MockitoJUnit.rule();
-    
+
     @Before
     public void setup() {
         super.setup();
@@ -81,8 +82,10 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
     public void shouldUpdateChargeToSystemCancel_IfEpdqStatusIs6WithRelevantChargeStatus(String status) {
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(ChargeStatus.fromString(status))
+                .withGatewayTransactionId(payId)
                 .build());
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any())).thenReturn(Optional.of(charge));
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger("epdq", payId))
+                .thenReturn(Optional.of(charge));
 
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
         notificationService.handleNotificationFor(payload);
@@ -120,6 +123,31 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
                 .withStatus(CAPTURED)
                 .build());
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any())).thenReturn(Optional.of(charge));
+
+        final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
+
+        notificationService.handleNotificationFor(payload);
+        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
+    }
+
+    @Test
+    public void shouldNotUpdateCharge_IfEpdqStatusIs6AndChargeStatusIsNotPresent() {
+        charge = getCharge(false);
+        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
+
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any())).thenReturn(Optional.of(charge));
+
+        final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
+
+        notificationService.handleNotificationFor(payload);
+        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
+    }
+
+    @Test
+    public void shouldNotUpdateCharge_IfEpdqStatusIs6AndChargeIsHistoric() {
+        charge = getCharge(true);
+        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
         when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any())).thenReturn(Optional.of(charge));
 
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
@@ -182,5 +210,11 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
 
         notificationService.handleNotificationFor(payload);
         verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
+    }
+    
+    private Charge getCharge(boolean isHistoric){
+        return new Charge("external-id", 10L, null, null, "transaction-id",
+                10L, null, "ref-1", "desc", now(),
+                "test@example.org", 123L, "epdq", isHistoric);
     }
 }

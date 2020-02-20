@@ -296,15 +296,13 @@ public class ChargeService {
     }
 
     public Optional<Charge> findByProviderAndTransactionIdFromDbOrLedger(String paymentGatewayName, String gatewayTransactionId) {
-        Optional<ChargeEntity> maybeChargeEntity = chargeDao.findByProviderAndTransactionId(paymentGatewayName, gatewayTransactionId);
+        return Optional.ofNullable(chargeDao.findByProviderAndTransactionId(paymentGatewayName, gatewayTransactionId)
+                .map(Charge::from)
+                .orElseGet(() -> findChargeFromLedger(paymentGatewayName, gatewayTransactionId).orElse(null)));
+    }
 
-        if(maybeChargeEntity.isPresent()) {
-            return maybeChargeEntity.map(Charge::from);
-        }
-        else{
-            return ledgerService.getTransactionForProviderAndGatewayTransactionId(paymentGatewayName,gatewayTransactionId)
-                    .map(Charge::from);
-        }
+    private Optional<Charge> findChargeFromLedger(String paymentGatewayName, String gatewayTransactionId) {
+        return ledgerService.getTransactionForProviderAndGatewayTransactionId(paymentGatewayName,gatewayTransactionId).map(Charge::from);
     }
 
     @Transactional

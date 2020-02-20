@@ -1375,4 +1375,21 @@ public class ChargeServiceTest {
         assertThat(result.getAmount(), is(chargeEntity.getAmount()));
         assertThat(result.getExternalId(), is(chargeEntity.getExternalId()));
     }
+
+    @Test
+    public void findByProviderAndTransactionIdFromDbOrLedger_shouldReturnEmptyOptionalIfChargeIsNotInDbOrLedger() {
+        ChargeEntity chargeEntity = aValidChargeEntity().build();
+
+        when(mockedChargeDao.findByProviderAndTransactionId(
+                "sandbox", chargeEntity.getExternalId()
+        )).thenReturn(Optional.empty());
+
+        when(ledgerService.getTransactionForProviderAndGatewayTransactionId("sandbox",
+                chargeEntity.getExternalId())).thenReturn(Optional.empty());
+
+        Optional<Charge> charge = service.findByProviderAndTransactionIdFromDbOrLedger("sandbox",
+                chargeEntity.getExternalId());
+
+        assertThat(charge.isPresent(), is(false));
+    }
 }
