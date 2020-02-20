@@ -1,12 +1,9 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
-import uk.gov.pay.connector.gateway.model.status.MappedRefundStatus;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
@@ -16,70 +13,70 @@ public class SmartpayStatusMapperTest {
 
     @Test
     public void shouldReturnAStatusForCaptureTrue() {
-        Pair<String, Boolean> value = Pair.of("CAPTURE", true);
+        SmartpayStatus value = new SmartpayStatus("CAPTURE", true);
         InterpretedStatus status = SmartpayStatusMapper.from(value);
 
-        assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
-        assertThat(status.getChargeStatus(), is(CAPTURED));
+        assertThat(status.getType()).isEqualTo(InterpretedStatus.Type.CHARGE_STATUS);
+        assertThat(status.getChargeStatus()).isEqualTo(CAPTURED);
     }
 
     @Test
     public void shouldReturnAStatusForCaptureFalse() {
-        Pair<String, Boolean> value = Pair.of("CAPTURE", false);
+        SmartpayStatus value = new SmartpayStatus("CAPTURE", false);
         InterpretedStatus status = SmartpayStatusMapper.from(value);
 
-        assertThat(status.getType(), is(InterpretedStatus.Type.CHARGE_STATUS));
-        assertThat(status.getChargeStatus(), is(CAPTURE_ERROR));
+        assertThat(status.getType()).isEqualTo(InterpretedStatus.Type.CHARGE_STATUS);
+        assertThat(status.getChargeStatus()).isEqualTo(CAPTURE_ERROR);
     }
 
     @Test
     public void shouldReturnAStatusForRefundedTrue() {
-        Pair<String, Boolean> value = Pair.of("REFUND", true);
+        SmartpayStatus value = new SmartpayStatus("REFUND", true);
         InterpretedStatus status = SmartpayStatusMapper.from(value);
 
-        assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
-        assertThat(((MappedRefundStatus) status).getRefundStatus(), is(REFUNDED));
+        assertThat(status.getType()).isEqualTo(InterpretedStatus.Type.REFUND_STATUS);
+        assertThat(status.getRefundStatus()).isEqualTo(REFUNDED);
     }
 
     @Test
     public void shouldReturnAStatusForRefundedFalse() {
-        Pair<String, Boolean> value = Pair.of("REFUND", false);
+        SmartpayStatus value = new SmartpayStatus("REFUND", false);
         InterpretedStatus status = SmartpayStatusMapper.from(value);
 
-        assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
-        assertThat(status.getRefundStatus(), is(REFUND_ERROR));
+        assertThat(status.getType()).isEqualTo(InterpretedStatus.Type.REFUND_STATUS);
+        assertThat(status.getRefundStatus()).isEqualTo(REFUND_ERROR);
     }
 
     @Test
     public void shouldReturnAStatusForRefundFailedTrue() {
-        Pair<String, Boolean> value = Pair.of("REFUND_FAILED", true);
+        SmartpayStatus value = new SmartpayStatus("REFUND_FAILED", true);
         InterpretedStatus status = SmartpayStatusMapper.from(value);
 
-        assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
-        assertThat(status.getRefundStatus(), is(REFUND_ERROR));
+        assertThat(status.getType()).isEqualTo(InterpretedStatus.Type.REFUND_STATUS);
+        assertThat(status.getRefundStatus()).isEqualTo(REFUND_ERROR);
     }
 
     @Test
     public void shouldReturnAStatusForRefundFailedFalse() {
-        Pair<String, Boolean> value = Pair.of("REFUND_FAILED", false);
+        SmartpayStatus value = new SmartpayStatus("REFUND_FAILED", false);
         InterpretedStatus status = SmartpayStatusMapper.from(value);
 
-        assertThat(status.getType(), is(InterpretedStatus.Type.REFUND_STATUS));
-        assertThat(status.getRefundStatus(), is(REFUND_ERROR));
+        assertThat(status.getType()).isEqualTo(InterpretedStatus.Type.REFUND_STATUS);
+        assertThat(status.getRefundStatus()).isEqualTo(REFUND_ERROR);
     }
 
     @Test
     public void shouldReturnEmptyWhenStatusIsUnknown() {
-        InterpretedStatus status = SmartpayStatusMapper.from(Pair.of("UNKNOWN", true));
+        InterpretedStatus status = SmartpayStatusMapper.from(new SmartpayStatus("UNKNOWN", true));
 
-        assertThat(status.getType(), is(InterpretedStatus.Type.UNKNOWN));
+        assertThat(status.getType()).isEqualTo(InterpretedStatus.Type.UNKNOWN);
     }
 
     @Test
     public void shouldReturnEmptyWhenStatusIsIgnored() {
-        InterpretedStatus status = SmartpayStatusMapper.from(Pair.of("AUTHORISATION", true));
+        InterpretedStatus status = SmartpayStatusMapper.from(new SmartpayStatus("AUTHORISATION", true));
 
-        assertThat(status.getType(), is(InterpretedStatus.Type.IGNORED));
+        assertThat(status.getType()).isEqualTo(InterpretedStatus.Type.IGNORED);
     }
 
 }

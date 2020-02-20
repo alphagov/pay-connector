@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gateway.smartpay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.persist.Transactional;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -113,13 +112,12 @@ public class SmartpayNotificationService {
     }
 
     private boolean shouldIgnore(SmartpayNotification notification) {
-        return interpretedStatusFrom(notification.getStatus())
-                .getType() == InterpretedStatus.Type.IGNORED;
+        return SmartpayStatusMapper.from(notification.getStatus()).getType() 
+                == InterpretedStatus.Type.IGNORED;
     }
 
-    private InterpretedStatus interpretedStatusFrom(Pair<String, Boolean> status) {
-        return SmartpayStatusMapper
-                .from(status);
+    private InterpretedStatus interpretedStatusFrom(SmartpayStatus status) {
+        return SmartpayStatusMapper.from(status);
     }
 
     private List<SmartpayNotification> parse(String payload) {
