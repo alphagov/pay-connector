@@ -20,9 +20,8 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
@@ -36,8 +35,9 @@ import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SmartpayNotificationServiceTest {
+    private final String originalReference = "original-reference";
+    private final String pspReference = "psp-reference";
     private SmartpayNotificationService notificationService;
-
     @Mock
     private ChargeService mockChargeService;
     @Mock
@@ -48,114 +48,6 @@ public class SmartpayNotificationServiceTest {
     private RefundNotificationProcessor mockRefundNotificationProcessor;
     private Charge charge;
     private GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
-
-    private final String originalReference = "original-reference";
-    private final String pspReference = "psp-reference";
-
-    @Before
-    public void setup() {
-        notificationService = new SmartpayNotificationService(
-                mockChargeService,
-                mockChargeNotificationProcessor,
-                mockRefundNotificationProcessor,
-                mockGatewayAccountService
-        );
-         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
-                 .withStatus(AUTHORISATION_SUCCESS)
-                 .build());
-
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(SMARTPAY.getName(), originalReference)).thenReturn(Optional.of(charge));
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
-    }
-
-    @Test
-    public void shouldUpdateCharge_WhenNotificationIsForChargeCapture() {
-        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE,
-                randomId(), originalReference, pspReference);
-
-        notificationService.handleNotificationFor(payload);
-
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
-        verify(mockChargeNotificationProcessor).invoke(originalReference, charge, CAPTURED,
-                ZonedDateTime.parse("2015-10-08T13:48:30+02:00"));  // from notification-capture.json
-    }
-
-    @Test
-    public void shouldUpdateRefund_WhenNotificationIsForRefund() {
-        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
-                randomId(), originalReference, pspReference);
-
-        notificationService.handleNotificationFor(payload);
-
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor).invoke(SMARTPAY,
-                RefundStatus.REFUNDED, gatewayAccountEntity, pspReference, originalReference, charge);
-    }
-
-    @Test
-    public void shouldIgnore_WhenNotificationIsForAuthorisation() {
-        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_AUTHORISATION,
-                randomId(), originalReference, pspReference);
-
-        notificationService.handleNotificationFor(payload);
-
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
-    }
-
-    @Test
-    public void shouldProcessMultipleNotifications() {
-        final String payload = sampleSmartpayNotification(SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES,
-                randomId(), originalReference, pspReference);
-
-        notificationService.handleNotificationFor(payload);
-
-        verify(mockChargeNotificationProcessor, times(1)).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
-    }
-
-    @Test
-    public void shouldIgnoreNotificationWhenStatusIsUnknown() {
-        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS,
-                randomId(), originalReference, pspReference);
-
-        notificationService.handleNotificationFor(payload);
-
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
-    }
-
-    @Test
-    public void shouldNotUpdateChargeOrRefund_WhenTransactionIdIsNotAvailable() {
-        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
-                randomId(), originalReference, StringUtils.EMPTY);
-
-        notificationService.handleNotificationFor(payload);
-
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
-    }
-
-    @Test
-    public void shouldNotUpdateChargeOrRefund_WhenChargeIsNotFoundForTransactionId() {
-        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
-                randomId(), "unknown-transaction-id", pspReference);
-
-        notificationService.handleNotificationFor(payload);
-
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
-    }
-
-    @Test
-    public void shouldNotUpdateChargeOrRefund_WhenPayloadIsInvalid() {
-        final String payload = "invalid-payload";
-
-        notificationService.handleNotificationFor(payload);
-
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
-    }
 
     private static String sampleSmartpayNotification(String location,
                                                      String merchantReference,
@@ -168,5 +60,139 @@ public class SmartpayNotificationServiceTest {
                 .replace("{{transactionId2}}", originalReference)
                 .replace("{{originalReference}}", originalReference)
                 .replace("{{pspReference}}", pspReference);
+    }
+
+    @Before
+    public void setup() {
+        notificationService = new SmartpayNotificationService(
+                mockChargeService,
+                mockChargeNotificationProcessor,
+                mockRefundNotificationProcessor,
+                mockGatewayAccountService
+        );
+        charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build());
+
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(SMARTPAY.getName(), originalReference)).thenReturn(Optional.of(charge));
+        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
+    }
+
+    @Test
+    public void shouldUpdateCharge_WhenNotificationIsForChargeCapture() {
+        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE,
+                randomId(), originalReference, pspReference);
+
+        notificationService.handleNotificationFor(payload);
+
+        verifyNoInteractions(mockRefundNotificationProcessor);
+        verify(mockChargeNotificationProcessor).invoke(originalReference, charge, CAPTURED,
+                ZonedDateTime.parse("2015-10-08T13:48:30+02:00"));  // from notification-capture.json
+    }
+
+    @Test
+    public void shouldNotUpdateCharge_WhenNotificationIsForCaptureAndChargeIsHistoric() {
+        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE,
+                randomId(), originalReference, pspReference);
+
+        charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build());
+        charge.setHistoric(true);
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(SMARTPAY.getName(), originalReference)).thenReturn(Optional.of(charge));
+
+        notificationService.handleNotificationFor(payload);
+
+        verifyNoInteractions(mockRefundNotificationProcessor);
+        verifyNoInteractions(mockChargeNotificationProcessor);
+    }
+
+    @Test
+    public void shouldUpdateRefund_WhenNotificationIsForRefund() {
+        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
+                randomId(), originalReference, pspReference);
+
+        notificationService.handleNotificationFor(payload);
+
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verify(mockRefundNotificationProcessor).invoke(SMARTPAY,
+                RefundStatus.REFUNDED, gatewayAccountEntity, pspReference, originalReference, charge);
+    }
+
+    @Test
+    public void shouldIgnore_WhenNotificationIsForAuthorisation() {
+        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_AUTHORISATION,
+                randomId(), originalReference, pspReference);
+
+        notificationService.handleNotificationFor(payload);
+
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
+    }
+
+    @Test
+    public void shouldProcessMultipleNotifications() {
+        final String payload = sampleSmartpayNotification(SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES,
+                randomId(), originalReference, pspReference);
+
+        notificationService.handleNotificationFor(payload);
+
+        verify(mockChargeNotificationProcessor).invoke(any(), any(), any(), any());
+        verifyNoInteractions(mockRefundNotificationProcessor);
+    }
+
+    @Test
+    public void shouldIgnoreNotificationWhenStatusIsUnknown() {
+        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_CAPTURE_WITH_UNKNOWN_STATUS,
+                randomId(), originalReference, pspReference);
+
+        notificationService.handleNotificationFor(payload);
+
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
+    }
+
+    @Test
+    public void shouldNotUpdateChargeOrRefund_WhenTransactionIdIsNotAvailable() {
+        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
+                randomId(), originalReference, StringUtils.EMPTY);
+
+        notificationService.handleNotificationFor(payload);
+
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
+    }
+
+    @Test
+    public void shouldNotUpdateChargeOrRefund_WhenGatewayAccountEntityIsNotAvailable() {
+        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
+                randomId(), originalReference, pspReference);
+
+        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.empty());
+        notificationService.handleNotificationFor(payload);
+
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
+    }
+
+    @Test
+    public void shouldNotUpdateChargeOrRefund_WhenChargeIsNotFoundForTransactionId() {
+        final String payload = sampleSmartpayNotification(SMARTPAY_NOTIFICATION_REFUND,
+                randomId(), "unknown-transaction-id", pspReference);
+
+        notificationService.handleNotificationFor(payload);
+
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
+    }
+
+    @Test
+    public void shouldNotUpdateChargeOrRefund_WhenPayloadIsInvalid() {
+        final String payload = "invalid-payload";
+
+        notificationService.handleNotificationFor(payload);
+
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
     }
 }

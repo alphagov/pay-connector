@@ -17,9 +17,8 @@ import java.util.Optional;
 
 import static java.time.ZonedDateTime.now;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -89,7 +88,7 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
 
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
         notificationService.handleNotificationFor(payload);
-        verify(mockChargeNotificationProcessor, times(1)).invoke(payId, charge, SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState(), null);
+        verify(mockChargeNotificationProcessor).invoke(payId, charge, SYSTEM_CANCELLATION_FLOW.getSuccessTerminalState(), null);
     }
 
     @Test
@@ -128,7 +127,7 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
 
         notificationService.handleNotificationFor(payload);
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
     @Test
@@ -141,7 +140,7 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
 
         notificationService.handleNotificationFor(payload);
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
     @Test
@@ -153,7 +152,7 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         final String payload = notificationPayloadForTransaction(payId, EPDQ_AUTHORISED_CANCELLED);
 
         notificationService.handleNotificationFor(payload);
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
     @Test
@@ -161,7 +160,7 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         final String payload = notificationPayloadForTransaction(payId, UNKNOWN);
         notificationService.handleNotificationFor(payload);
 
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
     @Test
@@ -209,7 +208,7 @@ public class EpdqNotificationServiceStatusMapperTest extends EpdqNotificationSer
         final String payload = notificationPayloadForTransaction(payId, UNKNOWN);
 
         notificationService.handleNotificationFor(payload);
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
+        verifyNoInteractions(mockChargeNotificationProcessor);
     }
     
     private Charge getCharge(boolean isHistoric){

@@ -20,10 +20,15 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class WorldpayNotificationService {
+
+    private static final String PAYMENT_GATEWAY_NAME = PaymentGatewayName.WORLDPAY.getName();
 
     private static final List<String> IGNORED_STATUSES = ImmutableList.of(
             "SENT_FOR_AUTHORISATION",
@@ -65,37 +70,39 @@ public class WorldpayNotificationService {
     @Transactional
     public boolean handleNotificationFor(String ipAddress, String payload) {
         if (isNotificationRejectedFromIpAddress(ipAddress)) {
-            logger.error("{} notification received from ip '{}' which is not in domain '{}'", gatewayName(), ipAddress, notificationDomain());
+            logger.error("{} notification received from ip '{}' which is not in domain '{}'", PAYMENT_GATEWAY_NAME,
+                    ipAddress, notificationDomain());
             return false;
         }
 
         WorldpayNotification notification;
         try {
-            logger.info("Parsing {} notification", gatewayName());
+            logger.info("Parsing {} notification", PAYMENT_GATEWAY_NAME);
             logger.debug("Payload: {}", payload);
             notification = XMLUnmarshaller.unmarshall(payload, WorldpayNotification.class);
-            logger.info("Parsed {} notification: {}", gatewayName(), notification);
+            logger.info("Parsed {} notification: {}", PAYMENT_GATEWAY_NAME, notification);
         } catch (XMLUnmarshallerException e) {
-            logger.error("{} notification parsing failed: {}", gatewayName(), e.toString());
+            logger.error("{} notification parsing failed: {}", PAYMENT_GATEWAY_NAME, e);
             return true;
         }
 
         if (isIgnored(notification)) {
-            logger.info("{} notification {} ignored", gatewayName(), notification);
+            logger.info("{} notification {} ignored", PAYMENT_GATEWAY_NAME, notification);
             return true;
         }
 
         if (isTransactionIdBlank(notification)) {
-            logger.warn("{} notification {} failed verification because it has no transaction ID", gatewayName(), notification);
+            logger.warn("{} notification {} failed verification because it has no transaction ID", 
+                    PAYMENT_GATEWAY_NAME, notification);
             return true;
         }
 
         Optional<Charge> maybeCharge = chargeService.findByProviderAndTransactionIdFromDbOrLedger(
-                gatewayName(), notification.getTransactionId());
+                PAYMENT_GATEWAY_NAME, notification.getTransactionId());
 
         if (maybeCharge.isEmpty()) {
             logger.info("{} notification {} could not be evaluated (associated charge entity not found)",
-                    gatewayName(), notification);
+                    PAYMENT_GATEWAY_NAME, notification);
             // Respond with an error, which will cause worldpay to try to send the notification
             // again later — this is necessary because sometimes we might receive a notification
             // for a telephone payment before we know about the payment itself
@@ -103,16 +110,36 @@ public class WorldpayNotificationService {
         }
 
         Charge charge = maybeCharge.get();
-        GatewayAccountEntity gatewayAccountEntity =
-                gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId()).get();
+        Optional<GatewayAccountEntity> mayBeGatewayAccountEntity =
+                gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId());
+
+        if (mayBeGatewayAccountEntity.isEmpty()) {
+            logger.error("{} notification {} could not be processes (associated gateway account [{}] not found for charge [{}] {}, {})",
+                    PAYMENT_GATEWAY_NAME, notification,
+                    charge.getGatewayAccountId(),
+                    charge.getExternalId(),
+                    kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
+                    kv(GATEWAY_ACCOUNT_ID, charge.getGatewayAccountId()));
+            return false;
+        }
+
+        GatewayAccountEntity gatewayAccountEntity = mayBeGatewayAccountEntity.get();
         
         if (isCaptureNotification(notification)) {
+            if(charge.isHistoric()){
+                logger.error("{} notification {} could not be processed as charge [{}] has been expunged from connector {} {}",
+                        PAYMENT_GATEWAY_NAME, notification,
+                        charge.getExternalId(),
+                        kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
+                        kv(GATEWAY_ACCOUNT_ID, charge.getGatewayAccountId()));
+                return false;
+            }
             chargeNotificationProcessor.invoke(notification.getTransactionId(), charge, CAPTURED, notification.getGatewayEventDate());
         } else if (isRefundNotification(notification)) {
-            refundNotificationProcessor.invoke(getPaymentGatewayName(), newRefundStatus(notification), gatewayAccountEntity,
+            refundNotificationProcessor.invoke(PaymentGatewayName.WORLDPAY, newRefundStatus(notification), gatewayAccountEntity,
                     notification.getReference(), notification.getTransactionId(), charge);
         } else {
-            logger.error("{} notification {} unknown", gatewayName(), notification);
+            logger.error("{} notification {} unknown", PAYMENT_GATEWAY_NAME, notification);
         }
         return true;
     }
@@ -147,13 +174,5 @@ public class WorldpayNotificationService {
 
     public Boolean isNotificationEndpointSecured() {
         return config.isNotificationEndpointSecured();
-    }
-
-    public PaymentGatewayName getPaymentGatewayName() {
-        return PaymentGatewayName.WORLDPAY;
-    }
-
-    public String gatewayName() {
-        return getPaymentGatewayName().getName();
     }
 }

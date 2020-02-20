@@ -5,14 +5,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
@@ -37,8 +37,26 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
 
         notificationService.handleNotificationFor(payload);
 
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
+        verifyNoInteractions(mockRefundNotificationProcessor);
         verify(mockChargeNotificationProcessor).invoke(payId, charge, CAPTURED, null);
+    }
+
+    @Test
+    public void givenAChargeCapturedNotification_chargeNotificationProcessorShouldNotBeInvokedIfChargeIsHistoric() {
+        final String payload = notificationPayloadForTransaction(
+                payId,
+                EPDQ_PAYMENT_REQUESTED);
+        charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .build());
+        charge.setHistoric(true);
+
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
+
+        notificationService.handleNotificationFor(payload);
+
+        verifyNoInteractions(mockRefundNotificationProcessor);
+        verifyNoInteractions(mockChargeNotificationProcessor);
     }
 
     @Test
@@ -50,7 +68,7 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
 
         notificationService.handleNotificationFor(payload);
 
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verifyNoInteractions(mockChargeNotificationProcessor);
         verify(mockRefundNotificationProcessor).invoke(EPDQ, RefundStatus.REFUNDED, gatewayAccountEntity, 
                 payId + "/" + payIdSub, payId, charge);
     }
@@ -66,8 +84,23 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
 
         notificationService.handleNotificationFor(payload);
 
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
+    }
+
+    @Test
+    public void ifGatewayAccountNotFound_shouldNotInvokeChargeOrRefundNotificationProcessor() {
+        final String payload = notificationPayloadForTransaction(
+                payId,
+                EPDQ_REFUND);
+
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
+        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.empty());
+
+        notificationService.handleNotificationFor(payload);
+
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
     }
 
     @Test
@@ -77,8 +110,8 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
                 EPDQ_REFUND);
         notificationService.handleNotificationFor(payload);
 
-        verify(mockChargeNotificationProcessor, never()).invoke(anyString(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
     }
 
     @Test
@@ -87,8 +120,8 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
 
         notificationService.handleNotificationFor(payload);
 
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
     }
 
     @Test
@@ -99,8 +132,8 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
 
         notificationService.handleNotificationFor(payload);
 
-        verify(mockChargeNotificationProcessor, never()).invoke(anyString(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
     }
 
     @Test
@@ -111,7 +144,7 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
 
         notificationService.handleNotificationFor(payload);
 
-        verify(mockChargeNotificationProcessor, never()).invoke(anyString(), any(), any(), any());
-        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
     }
 }
