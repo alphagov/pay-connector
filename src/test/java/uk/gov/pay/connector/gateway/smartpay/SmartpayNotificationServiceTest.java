@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.smartpay;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -9,10 +8,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -24,7 +21,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES;
@@ -49,19 +45,14 @@ public class SmartpayNotificationServiceTest {
 
     private final String originalReference = "original-reference";
     private final String pspReference = "psp-reference";
-    private GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
 
     @Before
     public void setup() {
-        ObjectMapper objectMapper = new ObjectMapper();
-
         notificationService = new SmartpayNotificationService(
                 mockChargeDao,
                 mockChargeNotificationProcessor,
                 mockRefundNotificationProcessor
         );
-        when(mockCharge.getStatus()).thenReturn(AUTHORISATION_SUCCESS.getValue());
-
         when(mockChargeDao.findByProviderAndTransactionId(SMARTPAY.getName(), originalReference)).thenReturn(Optional.of(mockCharge));
     }
 
