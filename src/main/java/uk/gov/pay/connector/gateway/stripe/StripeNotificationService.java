@@ -120,14 +120,12 @@ public class StripeNotificationService {
 
             ChargeEntity charge = maybeCharge.get();
 
-
             if (PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED.getType().equals(notification.getType()) &&
                     !paymentIntent.getAmountCapturable().equals(charge.getAmount())) {
                 logger.error("{} notification for payment intent [{}] does not have amount capturable equal to original charge {}",
                         PAYMENT_GATEWAY_NAME, paymentIntent.getId(), charge.getExternalId());
                 return;
             }
-
 
             if (isChargeIn3DSRequiredOrReadyState(ChargeStatus.fromString(charge.getStatus()))) {
                 executePost3DSAuthorisation(charge, notification.getType());

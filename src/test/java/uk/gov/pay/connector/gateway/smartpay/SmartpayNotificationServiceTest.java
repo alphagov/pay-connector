@@ -6,10 +6,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -21,6 +24,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SMARTPAY_MULTIPLE_NOTIFICATIONS_DIFFERENT_DATES;
@@ -35,13 +39,15 @@ public class SmartpayNotificationServiceTest {
     private SmartpayNotificationService notificationService;
 
     @Mock
-    private ChargeDao mockChargeDao;
+    private ChargeService mockChargeService;
+    @Mock
+    private GatewayAccountService mockGatewayAccountService;
     @Mock
     private ChargeNotificationProcessor mockChargeNotificationProcessor;
     @Mock
     private RefundNotificationProcessor mockRefundNotificationProcessor;
-    @Mock
-    private ChargeEntity mockCharge;
+    private Charge charge;
+    private GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
 
     private final String originalReference = "original-reference";
     private final String pspReference = "psp-reference";
@@ -49,11 +55,17 @@ public class SmartpayNotificationServiceTest {
     @Before
     public void setup() {
         notificationService = new SmartpayNotificationService(
-                mockChargeDao,
+                mockChargeService,
                 mockChargeNotificationProcessor,
-                mockRefundNotificationProcessor
+                mockRefundNotificationProcessor,
+                mockGatewayAccountService
         );
-        when(mockChargeDao.findByProviderAndTransactionId(SMARTPAY.getName(), originalReference)).thenReturn(Optional.of(mockCharge));
+         charge = Charge.from(ChargeEntityFixture.aValidChargeEntity()
+                 .withStatus(AUTHORISATION_SUCCESS)
+                 .build());
+
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(SMARTPAY.getName(), originalReference)).thenReturn(Optional.of(charge));
+        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
     }
 
     @Test
@@ -64,7 +76,7 @@ public class SmartpayNotificationServiceTest {
         notificationService.handleNotificationFor(payload);
 
         verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
-        verify(mockChargeNotificationProcessor).invoke(originalReference, mockCharge, CAPTURED,
+        verify(mockChargeNotificationProcessor).invoke(originalReference, charge, CAPTURED,
                 ZonedDateTime.parse("2015-10-08T13:48:30+02:00"));  // from notification-capture.json
     }
 
@@ -77,7 +89,7 @@ public class SmartpayNotificationServiceTest {
 
         verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
         verify(mockRefundNotificationProcessor).invoke(SMARTPAY,
-                RefundStatus.REFUNDED, null, pspReference, originalReference, mockCharge);
+                RefundStatus.REFUNDED, gatewayAccountEntity, pspReference, originalReference, charge);
     }
 
     @Test

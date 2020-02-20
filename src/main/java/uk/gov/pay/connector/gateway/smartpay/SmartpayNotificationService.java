@@ -5,13 +5,17 @@ import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
 import uk.gov.pay.connector.gateway.model.status.MappedChargeStatus;
 import uk.gov.pay.connector.gateway.model.status.MappedRefundStatus;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -25,19 +29,22 @@ public class SmartpayNotificationService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final ChargeDao chargeDao;
+    private final ChargeService chargeService;
+    private final GatewayAccountService gatewayAccountService;
     private final ChargeNotificationProcessor chargeNotificationProcessor;
     private final RefundNotificationProcessor refundNotificationProcessor;
 
     private static final String PAYMENT_GATEWAY_NAME = SMARTPAY.getName();
 
     @Inject
-    public SmartpayNotificationService(ChargeDao chargeDao,
+    public SmartpayNotificationService(ChargeService chargeService,
                                        ChargeNotificationProcessor chargeNotificationProcessor,
-                                       RefundNotificationProcessor refundNotificationProcessor) {
-        this.chargeDao = chargeDao;
+                                       RefundNotificationProcessor refundNotificationProcessor,
+                                       GatewayAccountService gatewayAccountService) {
+        this.chargeService = chargeService;
         this.chargeNotificationProcessor = chargeNotificationProcessor;
         this.refundNotificationProcessor = refundNotificationProcessor;
+        this.gatewayAccountService = gatewayAccountService;
     }
 
     @Transactional
@@ -64,7 +71,7 @@ public class SmartpayNotificationService {
 
         logger.info("Evaluating {} notification {}", PAYMENT_GATEWAY_NAME, notification);
 
-        Optional<ChargeEntity> maybeCharge = chargeDao.findByProviderAndTransactionId(PAYMENT_GATEWAY_NAME,
+        Optional<Charge> maybeCharge = chargeService.findByProviderAndTransactionIdFromDbOrLedger(PAYMENT_GATEWAY_NAME,
                 notification.getOriginalReference());
 
         if (maybeCharge.isEmpty()) {
@@ -73,7 +80,11 @@ public class SmartpayNotificationService {
             return;
         }
 
-        ChargeEntity charge = maybeCharge.get();
+        Charge charge = maybeCharge.get();
+        
+        GatewayAccountEntity gatewayAccountEntity =
+                gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId()).get();
+
         InterpretedStatus interpretedStatus = interpretStatus(notification);
 
         if (interpretedStatus instanceof MappedChargeStatus) {
@@ -87,7 +98,7 @@ public class SmartpayNotificationService {
             refundNotificationProcessor.invoke(
                     SMARTPAY,
                     interpretedStatus.getRefundStatus(),
-                    charge.getGatewayAccount(),
+                    gatewayAccountEntity,
                     notification.getPspReference(),
                     notification.getOriginalReference(),
                     charge

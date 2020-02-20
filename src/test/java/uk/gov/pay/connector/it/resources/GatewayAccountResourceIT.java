@@ -479,8 +479,6 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
         givenSetup()
                 .get("/v1/frontend/accounts/" + gatewayAccountId)
                 .then()
-                .log()
-                .all()
                 .statusCode(200)
                 .body("$", not(hasKey("worldpay_3ds_flex")));
     }

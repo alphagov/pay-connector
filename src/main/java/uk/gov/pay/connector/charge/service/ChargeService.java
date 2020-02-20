@@ -295,6 +295,16 @@ public class ChargeService {
         }
     }
 
+    public Optional<Charge> findByProviderAndTransactionIdFromDbOrLedger(String paymentGatewayName, String gatewayTransactionId) {
+        return Optional.ofNullable(chargeDao.findByProviderAndTransactionId(paymentGatewayName, gatewayTransactionId)
+                .map(Charge::from)
+                .orElseGet(() -> findChargeFromLedger(paymentGatewayName, gatewayTransactionId).orElse(null)));
+    }
+
+    private Optional<Charge> findChargeFromLedger(String paymentGatewayName, String gatewayTransactionId) {
+        return ledgerService.getTransactionForProviderAndGatewayTransactionId(paymentGatewayName,gatewayTransactionId).map(Charge::from);
+    }
+
     @Transactional
     public Optional<ChargeEntity> updateCharge(String chargeId, PatchRequestBuilder.PatchRequest chargePatchRequest) {
         return chargeDao.findByExternalId(chargeId)

@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
@@ -30,7 +29,7 @@ public class RefundNotificationProcessor {
     }
 
     public void invoke(PaymentGatewayName gatewayName, RefundStatus newStatus, GatewayAccountEntity gatewayAccountEntity,
-                       String reference, String transactionId, ChargeEntity chargeEntity) {
+                       String reference, String transactionId, Charge charge) {
         if (isBlank(reference)) {
             logger.warn("{} refund notification could not be used to update charge (missing reference)",
                     gatewayName);
@@ -50,7 +49,7 @@ public class RefundNotificationProcessor {
         refundService.transitionRefundState(refundEntity, newStatus);
 
         if (RefundStatus.REFUNDED.equals(newStatus)) {
-            userNotificationService.sendRefundIssuedEmail(refundEntity, Charge.from(chargeEntity), gatewayAccountEntity);
+            userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
         }
 
         logger.info("Notification received for refund. Updating refund - charge_external_id={}, refund_reference={}, transaction_id={}, status={}, "

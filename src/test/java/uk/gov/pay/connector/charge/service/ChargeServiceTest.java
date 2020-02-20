@@ -81,10 +81,10 @@ import static javax.ws.rs.HttpMethod.GET;
 import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -1328,5 +1328,68 @@ public class ChargeServiceTest {
         final Charge result = charge.get();
         assertThat(result.getExternalId(), is(chargeEntity.getExternalId()));
         assertThat(result.getAmount(), is(chargeEntity.getAmount()));
+    }
+
+    @Test
+    public void findByProviderAndTransactionIdFromDbOrLedger_fromDbIfExists() {
+        ChargeEntity chargeEntity = aValidChargeEntity().build();
+
+        when(mockedChargeDao.findByProviderAndTransactionId(
+                "sandbox",
+                chargeEntity.getExternalId()
+        )).thenReturn(Optional.of(chargeEntity));
+
+        Optional<Charge> charge = service.findByProviderAndTransactionIdFromDbOrLedger("sandbox",
+                chargeEntity.getExternalId());
+
+        verifyNoInteractions(ledgerService);
+
+        assertThat(charge.isPresent(), is(true));
+        final Charge result = charge.get();
+        assertThat(result.getAmount(), is(chargeEntity.getAmount()));
+        assertThat(result.getExternalId(), is(chargeEntity.getExternalId()));
+    }
+
+    @Test
+    public void findByProviderAndTransactionIdFromDbOrLedger_fromLedgerIfNotExists() {
+        ChargeEntity chargeEntity = aValidChargeEntity().build();
+
+        LedgerTransaction transaction = new LedgerTransaction();
+        transaction.setTransactionId(chargeEntity.getExternalId());
+        transaction.setAmount(chargeEntity.getAmount());
+        transaction.setCreatedDate(ZonedDateTime.now(ZoneId.of("UTC")).toString());
+        transaction.setGatewayAccountId(String.valueOf(GATEWAY_ACCOUNT_ID));
+        when(mockedChargeDao.findByProviderAndTransactionId(
+                "sandbox",
+                chargeEntity.getExternalId()
+        )).thenReturn(Optional.empty());
+
+        when(ledgerService.getTransactionForProviderAndGatewayTransactionId("sandbox",
+                chargeEntity.getExternalId())).thenReturn(Optional.of(transaction));
+
+        Optional<Charge> charge = service.findByProviderAndTransactionIdFromDbOrLedger("sandbox",
+                chargeEntity.getExternalId());
+
+        assertThat(charge.isPresent(), is(true));
+        final Charge result = charge.get();
+        assertThat(result.getAmount(), is(chargeEntity.getAmount()));
+        assertThat(result.getExternalId(), is(chargeEntity.getExternalId()));
+    }
+
+    @Test
+    public void findByProviderAndTransactionIdFromDbOrLedger_shouldReturnEmptyOptionalIfChargeIsNotInDbOrLedger() {
+        ChargeEntity chargeEntity = aValidChargeEntity().build();
+
+        when(mockedChargeDao.findByProviderAndTransactionId(
+                "sandbox", chargeEntity.getExternalId()
+        )).thenReturn(Optional.empty());
+
+        when(ledgerService.getTransactionForProviderAndGatewayTransactionId("sandbox",
+                chargeEntity.getExternalId())).thenReturn(Optional.empty());
+
+        Optional<Charge> charge = service.findByProviderAndTransactionIdFromDbOrLedger("sandbox",
+                chargeEntity.getExternalId());
+
+        assertThat(charge.isPresent(), is(false));
     }
 }

@@ -28,9 +28,8 @@ import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,6 +54,7 @@ public class RefundNotificationProcessorTest {
             .withReference(ServicePaymentReference.of(reference))
             .withTransactionId(transactionId)
             .build();
+    private Charge charge;
 
     @Mock
     private Appender<ILoggingEvent> mockAppender;
@@ -64,7 +64,7 @@ public class RefundNotificationProcessorTest {
 
     @Before
     public void setup() {
-
+        charge = Charge.from(chargeEntity);
         refundEntity = aValidRefundEntity().build();
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
 
@@ -79,19 +79,19 @@ public class RefundNotificationProcessorTest {
 
     @Test
     public void shouldInvokeSendEmailNotificationsForSuccessfulRefunds() {
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, reference, transactionId, chargeEntity);
-        verify(userNotificationService).sendRefundIssuedEmail(refundEntity, Charge.from(chargeEntity), gatewayAccountEntity);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, reference, transactionId, charge);
+        verify(userNotificationService).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
     @Test
     public void shouldNotInvokeSendEmailNotifications_WhenRefundStatusIsNotRefunded() {
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, reference, transactionId, chargeEntity);
-        verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, Charge.from(chargeEntity), gatewayAccountEntity);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, reference, transactionId, charge);
+        verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
     @Test
     public void shouldLogError_whenReferenceIsNotAvailable() {
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, null, transactionId, chargeEntity);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, null, transactionId, charge);
         
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
 
@@ -103,7 +103,7 @@ public class RefundNotificationProcessorTest {
 
     @Test
     public void shouldLogError_whenRefundEntityIsNotAvailable() {
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, "unknown", transactionId, chargeEntity);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, "unknown", transactionId, charge);
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();

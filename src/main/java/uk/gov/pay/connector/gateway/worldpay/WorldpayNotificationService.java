@@ -4,13 +4,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshallerException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.DnsUtils;
 
@@ -36,26 +38,28 @@ public class WorldpayNotificationService {
     private static final List<String> REFUND_STATUSES = ImmutableList.of("REFUNDED", "REFUNDED_BY_MERCHANT", "REFUND_FAILED");
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final ChargeDao chargeDao;
+    private final ChargeService chargeService;
     private final WorldpayNotificationConfiguration config;
     private final DnsUtils dnsUtils;
     private final ChargeNotificationProcessor chargeNotificationProcessor;
     private final RefundNotificationProcessor refundNotificationProcessor;
+    private GatewayAccountService gatewayAccountService;
 
     @Inject
     public WorldpayNotificationService(
-            ChargeDao chargeDao,
+            ChargeService chargeService,
             WorldpayNotificationConfiguration config,
             DnsUtils dnsUtils,
             ChargeNotificationProcessor chargeNotificationProcessor,
-            RefundNotificationProcessor refundNotificationProcessor
-    ) {
-        this.chargeDao = chargeDao;
+            RefundNotificationProcessor refundNotificationProcessor,
+            GatewayAccountService gatewayAccountService) {
+        this.chargeService = chargeService;
         this.config = config;
         this.dnsUtils = dnsUtils;
 
         this.chargeNotificationProcessor = chargeNotificationProcessor;
         this.refundNotificationProcessor = refundNotificationProcessor;
+        this.gatewayAccountService = gatewayAccountService;
     }
 
     @Transactional
@@ -86,10 +90,10 @@ public class WorldpayNotificationService {
             return true;
         }
 
-        Optional<ChargeEntity> optionalChargeEntity = chargeDao.findByProviderAndTransactionId(gatewayName(),
-                notification.getTransactionId());
+        Optional<Charge> maybeCharge = chargeService.findByProviderAndTransactionIdFromDbOrLedger(
+                gatewayName(), notification.getTransactionId());
 
-        if (optionalChargeEntity.isEmpty()) {
+        if (maybeCharge.isEmpty()) {
             logger.info("{} notification {} could not be evaluated (associated charge entity not found)",
                     gatewayName(), notification);
             // Respond with an error, which will cause worldpay to try to send the notification
@@ -98,11 +102,15 @@ public class WorldpayNotificationService {
             return false;
         }
 
+        Charge charge = maybeCharge.get();
+        GatewayAccountEntity gatewayAccountEntity =
+                gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId()).get();
+        
         if (isCaptureNotification(notification)) {
-            chargeNotificationProcessor.invoke(notification.getTransactionId(), optionalChargeEntity.get(), CAPTURED, notification.getGatewayEventDate());
+            chargeNotificationProcessor.invoke(notification.getTransactionId(), charge, CAPTURED, notification.getGatewayEventDate());
         } else if (isRefundNotification(notification)) {
-            refundNotificationProcessor.invoke(getPaymentGatewayName(), newRefundStatus(notification), optionalChargeEntity.get().getGatewayAccount(),
-                    notification.getReference(), notification.getTransactionId(), optionalChargeEntity.get());
+            refundNotificationProcessor.invoke(getPaymentGatewayName(), newRefundStatus(notification), gatewayAccountEntity,
+                    notification.getReference(), notification.getTransactionId(), charge);
         } else {
             logger.error("{} notification {} unknown", gatewayName(), notification);
         }
