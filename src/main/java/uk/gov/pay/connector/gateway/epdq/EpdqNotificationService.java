@@ -32,6 +32,7 @@ import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.SHASIGN_KEY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class EpdqNotificationService {
@@ -87,8 +88,21 @@ public class EpdqNotificationService {
         }
 
         Charge charge = maybeCharge.get();
-        GatewayAccountEntity gatewayAccountEntity
-                = gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId()).get();
+
+        Optional<GatewayAccountEntity> mayBeGatewayAccountEntity =
+                gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId());
+
+        if (mayBeGatewayAccountEntity.isEmpty()) {
+            logger.error("{} notification {} could not be processes (associated gateway account [{}] not found for charge [{}] {}, {})",
+                    PAYMENT_GATEWAY_NAME, notification,
+                    charge.getGatewayAccountId(),
+                    charge.getExternalId(),
+                    kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
+                    kv(GATEWAY_ACCOUNT_ID, charge.getGatewayAccountId()));
+            return;
+        }
+
+        GatewayAccountEntity gatewayAccountEntity = mayBeGatewayAccountEntity.get();
 
         if (!isValidNotificationSignature(notification, gatewayAccountEntity)) {
             return;
@@ -99,6 +113,14 @@ public class EpdqNotificationService {
         final Optional<ChargeStatus> newChargeStatus = newChargeStateForChargeNotification(notification.getStatus(), charge);
 
         if (newChargeStatus.isPresent()) {
+            if(charge.isHistoric()){
+                logger.error("{} notification {} could not be processed as charge [{}] has been expunged from connector {} {}",
+                        PAYMENT_GATEWAY_NAME, notification,
+                        charge.getExternalId(),
+                        kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
+                        kv(GATEWAY_ACCOUNT_ID, charge.getGatewayAccountId()));
+                return;
+            }
             chargeNotificationProcessor.invoke(notification.getTransactionId(), charge, newChargeStatus.get(), null);
         } else {
             final Optional<RefundStatus> newRefundStatus = newRefundStateForRefundNotification(notification.getStatus());
@@ -162,7 +184,7 @@ public class EpdqNotificationService {
 
     private static Optional<ChargeStatus> newChargeStateForAuthorisationCancelledNotification(Charge charge) {
         if (charge.isHistoric() || isEmpty(charge.getStatus())) {
-            logger.info("Could not derive charge status for authorisation cancelled notification as charge [{}] has been expunged or status is empty {}",
+            logger.error("Could not derive charge status for authorisation cancelled notification as charge [{}] has been expunged or status is empty {}",
                     charge.getExternalId(),
                     kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()));
             return Optional.empty();

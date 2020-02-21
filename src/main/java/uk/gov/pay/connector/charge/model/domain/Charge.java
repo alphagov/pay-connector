@@ -1,8 +1,9 @@
 package uk.gov.pay.connector.charge.model.domain;
 
+import uk.gov.pay.connector.paritycheck.LedgerTransaction;
+
 import java.time.ZonedDateTime;
 import java.util.Objects;
-import uk.gov.pay.connector.paritycheck.LedgerTransaction;
 import java.util.Optional;
 
 public class Charge {
@@ -168,5 +169,9 @@ public class Charge {
 
     public String getPaymentGatewayName() {
         return paymentGatewayName;
+    }
+
+    public void setHistoric(boolean historic) {
+        this.historic = historic;
     }
 }

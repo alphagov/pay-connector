@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.status.InterpretedStatus;
 import uk.gov.pay.connector.gateway.model.status.MappedChargeStatus;
@@ -21,8 +19,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class SmartpayNotificationService {
 
@@ -80,13 +81,32 @@ public class SmartpayNotificationService {
         }
 
         Charge charge = maybeCharge.get();
-        
-        GatewayAccountEntity gatewayAccountEntity =
-                gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId()).get();
+
+        Optional<GatewayAccountEntity> mayBeGatewayAccountEntity =
+                gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId());
+
+        if (mayBeGatewayAccountEntity.isEmpty()) {
+            logger.error("{} notification {} could not be processes (associated gateway account [{}] not found for charge [{}] {}, {})",
+                    PAYMENT_GATEWAY_NAME, notification,
+                    charge.getGatewayAccountId(),
+                    charge.getExternalId(),
+                    kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
+                    kv(GATEWAY_ACCOUNT_ID, charge.getGatewayAccountId()));
+            return;
+        }
+        GatewayAccountEntity gatewayAccountEntity = mayBeGatewayAccountEntity.get();
 
         InterpretedStatus interpretedStatus = interpretStatus(notification);
 
         if (interpretedStatus instanceof MappedChargeStatus) {
+            if(charge.isHistoric()){
+                logger.error("{} notification {} could not be processed as charge [{}] has been expunged from connector {} {}",
+                        PAYMENT_GATEWAY_NAME, notification,
+                        charge.getExternalId(),
+                        kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
+                        kv(GATEWAY_ACCOUNT_ID, charge.getGatewayAccountId()));
+                return;
+            }
             chargeNotificationProcessor.invoke(
                     notification.getOriginalReference(),
                     charge,
