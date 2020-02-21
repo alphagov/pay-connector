@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.DnsUtils;
@@ -12,6 +13,8 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static java.lang.String.format;
@@ -19,8 +22,9 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
@@ -68,6 +72,41 @@ public class WorldpayNotificationResourceIT extends ChargingITestBase {
         assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
         assertFrontendChargeStatusIs(externalChargeId, CAPTURED.getValue());
         assertRefundStatus(externalChargeId, refundExternalId, "success", refundAmount);
+    }
+
+    @Test
+    public void shouldHandleARefundNotification_forAnExpungedCharge() throws Exception {
+        String gatewayTransactionId = RandomIdGenerator.newId();
+        String refundExternalId = String.valueOf(nextLong());
+        String chargeExternalId = randomAlphanumeric(26);
+
+        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(getTestAccount())
+                .withExternalChargeId(chargeExternalId)
+                .withTransactionId(gatewayTransactionId);
+
+        ledgerStub.returnLedgerTransactionForProviderAndGatewayTransactionId(testCharge, getPaymentProvider());
+
+        databaseTestHelper.addRefund(refundExternalId, refundExternalId, 1000,
+                REFUND_SUBMITTED, randomAlphanumeric(10), ZonedDateTime.now(),
+                chargeExternalId);
+
+        String response = notifyConnector(gatewayTransactionId, "REFUNDED", refundExternalId)
+                .statusCode(200)
+                .extract().body()
+                .asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
+
+        Map<String, Object> chargeFromDB = databaseTestHelper.getChargeByExternalId(chargeExternalId);
+        assertThat(chargeFromDB, is(nullValue()));
+
+        List<Map<String, Object>> refundsByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(chargeExternalId);
+        assertThat(refundsByChargeExternalId.size(), is(1));
+        assertThat(refundsByChargeExternalId.get(0).get("charge_external_id"), is(chargeExternalId));
+        assertThat(refundsByChargeExternalId.get(0).get("reference"), is(refundExternalId));
+        assertThat(refundsByChargeExternalId.get(0).get("status"), is("REFUNDED"));
     }
 
     @Test

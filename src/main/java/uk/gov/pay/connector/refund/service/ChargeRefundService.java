@@ -91,8 +91,8 @@ public class ChargeRefundService {
         return refundEntity;
     }
 
-    public Optional<RefundEntity> findByProviderAndReference(String name, String reference) {
-        return refundDao.findByProviderAndReference(name, reference);
+    public Optional<RefundEntity> findByChargeExternalIdAndReference(String chargeExternalId, String reference) {
+        return refundDao.findByChargeExternalIdAndReference(chargeExternalId, reference);
     }
 
     private RefundEntity processRefund(GatewayRefundResponse gatewayRefundResponse, Long refundEntityId,

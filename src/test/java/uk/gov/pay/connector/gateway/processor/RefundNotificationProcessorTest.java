@@ -68,7 +68,7 @@ public class RefundNotificationProcessorTest {
         refundEntity = aValidRefundEntity().build();
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
 
-        when(refundService.findByProviderAndReference(paymentGatewayName.getName(), reference)).thenReturn(optionalRefundEntity);
+        when(refundService.findByChargeExternalIdAndReference(charge.getExternalId(), reference)).thenReturn(optionalRefundEntity);
 
         refundNotificationProcessor = new RefundNotificationProcessor(refundService, userNotificationService);
 

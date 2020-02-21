@@ -346,7 +346,8 @@ public class DatabaseTestHelper {
                 h.createQuery("SELECT * FROM charges WHERE external_id = :external_id")
                         .bind("external_id", externalId)
                         .mapToMap()
-                        .first());
+                        .findFirst()
+                        .orElse(null));
     }
 
     public boolean containsChargeWithExternalId(String externalId) {

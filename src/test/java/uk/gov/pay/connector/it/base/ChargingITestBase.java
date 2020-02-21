@@ -16,6 +16,7 @@ import uk.gov.pay.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.expunge.service.LedgerStub;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardTestContext;
 import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -47,10 +48,10 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
 import static uk.gov.pay.connector.junit.DropwizardJUnitRunner.WIREMOCK_PORT;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
-import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -74,6 +75,7 @@ public class ChargingITestBase {
     protected RestAssuredClient connectorRestApiClient;
     protected final String accountId;
     protected Map<String, String> credentials;
+    private DatabaseFixtures.TestAccount testAccount;
 
     @DropwizardTestContext
     protected TestContext testContext;
@@ -98,11 +100,13 @@ public class ChargingITestBase {
                 CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
         );
         databaseTestHelper = testContext.getDatabaseTestHelper();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(accountId)
-                .withPaymentGateway(paymentProvider)
+
+        testAccount = withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withAccountId(Long.parseLong(accountId))
+                .withPaymentProvider(getPaymentProvider())
                 .withCredentials(credentials)
-                .build());
+                .insert();
         connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
     }
 
@@ -364,5 +368,13 @@ public class ChargingITestBase {
         databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment", "03/18", null, "line1", null, "postcode", "city", null, "country");
 
         return externalChargeId;
+    }
+
+    protected String getPaymentProvider() {
+        return paymentProvider;
+    }
+
+    protected DatabaseFixtures.TestAccount getTestAccount() {
+        return testAccount;
     }
 }

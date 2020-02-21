@@ -88,8 +88,8 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findByProviderAndReference_shouldFindRefund() {
-        Optional<RefundEntity> refundEntityOptional = refundDao.findByProviderAndReference(sandboxAccount.getPaymentProvider(), refundTestRecord.getReference());
+    public void findByChargeExternalIdAndReference_shouldFindRefund() {
+        Optional<RefundEntity> refundEntityOptional = refundDao.findByChargeExternalIdAndReference(chargeTestRecord.getExternalChargeId(), refundTestRecord.getReference());
 
         assertThat(refundEntityOptional.isPresent(), is(true));
 
@@ -104,17 +104,17 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findByProviderAndReference_shouldNotFindRefundIfProviderDoesNotMatch() {
+    public void findByChargeExternalIdAndReference_shouldNotFindRefundIfChargeExternalIdDoesNotMatch() {
 
-        Optional<RefundEntity> refundEntityOptional = refundDao.findByProviderAndReference("worldpay", refundTestRecord.getReference());
+        Optional<RefundEntity> refundEntityOptional = refundDao.findByChargeExternalIdAndReference("charge-externalid-00", refundTestRecord.getReference());
 
         assertThat(refundEntityOptional, is(Optional.empty()));
     }
 
     @Test
-    public void findByProviderAndReference_shouldNotFindRefundIfReferenceDoesNotMatch() {
+    public void findByChargeExternalIdAndReference_shouldNotFindRefundIfReferenceDoesNotMatch() {
         String noExistingReference = "refund_0";
-        assertThat(refundDao.findByProviderAndReference(sandboxAccount.getPaymentProvider(), noExistingReference).isPresent(), is(false));
+        assertThat(refundDao.findByChargeExternalIdAndReference(chargeTestRecord.getExternalChargeId(), noExistingReference).isPresent(), is(false));
     }
 
     @Test

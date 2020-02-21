@@ -8,19 +8,23 @@ import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.it.util.NotificationUtils;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
@@ -112,7 +116,7 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
         databaseTestHelper.addRefund(refundExternalId, transactionId + "/" + payIdSub, 1000,
                 REFUND_SUBMITTED, randomAlphanumeric(10), ZonedDateTime.now(),
                 externalChargeId.toString());
-        
+
         String response = notifyConnector(transactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
                 .statusCode(200)
                 .extract().body()
@@ -122,6 +126,44 @@ public class EpdqNotificationResourceIT extends ChargingITestBase {
 
         assertFrontendChargeStatusIs(externalChargeId.toString(), CAPTURED.getValue());
         assertRefundStatus(externalChargeId.toString(), refundExternalId, "success", refundAmount);
+    }
+    
+    @Test
+    public void shouldHandleARefundNotification_forAnExpungedCharge() throws JsonProcessingException {
+        String gatewayTransactionId = "123456";
+        String payIdSub = "2";
+        String refundExternalId = randomAlphanumeric(26);
+        int refundAmount = 1000;
+        String refundReference = gatewayTransactionId + "/" + payIdSub;
+        String chargeExternalId = randomAlphanumeric(26);
+
+        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(getTestAccount())
+                .withExternalChargeId(chargeExternalId)
+                .withTransactionId(gatewayTransactionId);
+        
+        ledgerStub.returnLedgerTransactionForProviderAndGatewayTransactionId(testCharge, getPaymentProvider());
+
+        databaseTestHelper.addRefund(refundExternalId, refundReference, refundAmount,
+                REFUND_SUBMITTED, randomAlphanumeric(10), ZonedDateTime.now(),
+                chargeExternalId);
+
+        String response = notifyConnector(gatewayTransactionId, payIdSub, "8", getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE))
+                .statusCode(200)
+                .extract().body()
+                .asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_EPDQ));
+
+        Map<String, Object> chargeFromDB = databaseTestHelper.getChargeByExternalId(chargeExternalId);
+        assertThat(chargeFromDB, is(nullValue()));
+
+        List<Map<String, Object>> refundsByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(chargeExternalId);
+        assertThat(refundsByChargeExternalId.size(), is(1));
+        assertThat(refundsByChargeExternalId.get(0).get("charge_external_id"), is(chargeExternalId));
+        assertThat(refundsByChargeExternalId.get(0).get("reference"), is(refundReference));
+        assertThat(refundsByChargeExternalId.get(0).get("status"), is("REFUNDED"));
     }
 
     @Test
