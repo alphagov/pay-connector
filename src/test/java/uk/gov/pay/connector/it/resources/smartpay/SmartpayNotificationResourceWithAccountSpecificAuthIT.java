@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources.smartpay;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import io.restassured.response.Response;
 import org.apache.commons.lang.math.RandomUtils;
@@ -9,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
@@ -22,9 +24,10 @@ import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.Status.OK;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
@@ -119,7 +122,6 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthIT extends Charg
         assertFrontendChargeStatusIs(externalChargeId, "CAPTURED");
     }
 
-
     @Test
     public void shouldHandleRefundNotificationsCorrectly() {
 
@@ -132,7 +134,6 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthIT extends Charg
         String reference = randomId();
         String transactionId = randomId();
         String externalChargeId = createNewChargeWith(CAPTURED, transactionId);
-        Long chargeId = Long.parseLong(StringUtils.removeStart(externalChargeId, "charge-"));
         String externalRefundId = "refund-" + RandomUtils.nextInt();
         int refundId = databaseTestHelper.addRefund(externalRefundId, reference, 10L,
                 REFUND_SUBMITTED, randomAlphanumeric(10), ZonedDateTime.now(),
@@ -145,6 +146,43 @@ public class SmartpayNotificationResourceWithAccountSpecificAuthIT extends Charg
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_SMARTPAY));
         assertFrontendChargeStatusIs(externalChargeId, "CAPTURED");
+        assertRefundStatusIs(refundId, "REFUNDED");
+    }
+
+    @Test
+    public void shouldHandleARefundNotification_forAnExpungedCharge() throws JsonProcessingException {
+        String reference = randomId();
+        String transactionId = randomId();
+        String externalChargeId = randomAlphanumeric(26);
+        String externalRefundId = "refund-" + RandomUtils.nextInt();
+
+        givenSetup()
+                .body(toJson(ImmutableMap.of("username", "bob", "password", "bobsbigsecret")))
+                .post("/v1/api/accounts/" + accountId + "/notification-credentials")
+                .then()
+                .statusCode(OK.getStatusCode());
+
+        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+                .aTestCharge()
+                .withTestAccount(getTestAccount())
+                .withExternalChargeId(externalChargeId)
+                .withTransactionId(transactionId);
+        ledgerStub.returnLedgerTransactionForProviderAndGatewayTransactionId(testCharge, getPaymentProvider());
+
+        int refundId = databaseTestHelper.addRefund(externalRefundId, reference, 10L,
+                REFUND_SUBMITTED, randomAlphanumeric(10), ZonedDateTime.now(),
+                externalChargeId);
+
+        String response = notifyConnector(notificationPayloadForTransaction(externalRefundId, transactionId, reference, "notification-refund"))
+                .then()
+                .statusCode(200)
+                .extract().body().asString();
+
+        assertThat(response, is(RESPONSE_EXPECTED_BY_SMARTPAY));
+
+        Map<String, Object> chargeFromDB = databaseTestHelper.getChargeByExternalId(externalChargeId);
+        assertThat(chargeFromDB, is(nullValue()));
+
         assertRefundStatusIs(refundId, "REFUNDED");
     }
 

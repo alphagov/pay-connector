@@ -28,17 +28,15 @@ public class RefundDao extends JpaDao<RefundEntity> {
         return super.findById(RefundEntity.class, refundId);
     }
 
-    public Optional<RefundEntity> findByProviderAndReference(String provider, String reference) {
+    public Optional<RefundEntity> findByChargeExternalIdAndReference(String chargeExternalId, String reference) {
 
         String query = "SELECT refund FROM RefundEntity refund " +
-                "JOIN ChargeEntity charge ON refund.chargeExternalId = charge.externalId " +
-                "JOIN GatewayAccountEntity gatewayAccount ON charge.gatewayAccount.id = gatewayAccount.id " +
-                "WHERE refund.reference = :reference AND gatewayAccount.gatewayName = :provider";
+                "WHERE refund.reference = :reference AND refund.chargeExternalId = :chargeExternalId";
 
         return entityManager.get()
                 .createQuery(query, RefundEntity.class)
                 .setParameter("reference", reference)
-                .setParameter("provider", provider)
+                .setParameter("chargeExternalId", chargeExternalId)
                 .getResultList().stream().findFirst();
     }
 

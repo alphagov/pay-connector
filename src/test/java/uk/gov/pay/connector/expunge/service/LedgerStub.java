@@ -16,6 +16,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.lang.String.format;
+import static java.util.Objects.nonNull;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -32,10 +33,33 @@ public class LedgerStub {
         stubResponse(externalId, ledgerTransactionFields);
     }
 
-    public void returnNotFoundForFindByProviderAndGatewayTransactionId(String paymentProvider, String gatewayTransactionId) throws JsonProcessingException {
+    public void returnNotFoundForFindByProviderAndGatewayTransactionId(String paymentProvider,
+                                                                       String gatewayTransactionId) throws JsonProcessingException {
+        stubResponseForProviderAndGatewayTransactionId(gatewayTransactionId, paymentProvider,
+                null, 404);
+    }
+
+    public void returnLedgerTransactionForProviderAndGatewayTransactionId(DatabaseFixtures.TestCharge testCharge,
+                                                                          String paymentProvider) throws JsonProcessingException {
+        Map<String, Object> ledgerTransactionFields = testChargeToLedgerTransactionJson(testCharge, null);
+        String body = null;
+
+        new ObjectMapper().writeValueAsString(ledgerTransactionFields);
+
+        stubResponseForProviderAndGatewayTransactionId(testCharge.getTransactionId(),
+                paymentProvider,
+                ledgerTransactionFields, 200);
+    }
+
+    private void stubResponseForProviderAndGatewayTransactionId(String gatewayTransactionId, String paymentProvider,
+                                                                Map<String, Object> ledgerTransactionFields, int status) throws JsonProcessingException {
         ResponseDefinitionBuilder responseDefBuilder = aResponse()
                 .withHeader(CONTENT_TYPE, APPLICATION_JSON)
-                .withStatus(404);
+                .withStatus(status);
+
+        if (nonNull(ledgerTransactionFields) && ledgerTransactionFields.size() > 0) {
+            responseDefBuilder.withBody(new ObjectMapper().writeValueAsString(ledgerTransactionFields));
+        }
         stubFor(
                 get(urlPathEqualTo(format("/v1/transaction/gateway-transaction/%s", gatewayTransactionId)))
                         .withQueryParam("payment_provider", equalTo(paymentProvider))

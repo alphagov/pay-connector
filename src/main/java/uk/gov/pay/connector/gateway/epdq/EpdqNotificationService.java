@@ -93,7 +93,7 @@ public class EpdqNotificationService {
                 gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId());
 
         if (mayBeGatewayAccountEntity.isEmpty()) {
-            logger.error("{} notification {} could not be processes (associated gateway account [{}] not found for charge [{}] {}, {})",
+            logger.error("{} notification {} could not be processed (associated gateway account [{}] not found for charge [{}] {}, {})",
                     PAYMENT_GATEWAY_NAME, notification,
                     charge.getGatewayAccountId(),
                     charge.getExternalId(),

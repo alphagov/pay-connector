@@ -36,7 +36,8 @@ public class RefundNotificationProcessor {
             return;
         }
 
-        Optional<RefundEntity> optionalRefundEntity = refundService.findByProviderAndReference(gatewayName.getName(), reference);
+        Optional<RefundEntity> optionalRefundEntity 
+                = refundService.findByChargeExternalIdAndReference(charge.getExternalId(), reference);
         if (optionalRefundEntity.isEmpty()) {
             logger.warn("{} notification '{}' could not be used to update refund (associated refund entity not found)",
                     gatewayName, reference);
