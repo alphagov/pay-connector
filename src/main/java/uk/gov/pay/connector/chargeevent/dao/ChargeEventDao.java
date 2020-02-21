@@ -11,7 +11,8 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
+
+import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
 
 @Transactional
 public class ChargeEventDao extends JpaDao<ChargeEventEntity> {
@@ -26,8 +27,11 @@ public class ChargeEventDao extends JpaDao<ChargeEventEntity> {
     }
 
     public ChargeEventEntity persistChargeEventOf(ChargeEntity chargeEntity, ZonedDateTime gatewayEventDate) {
-        ChargeEventEntity chargeEventEntity = ChargeEventEntity.from(chargeEntity, ChargeStatus.fromString(chargeEntity.getStatus()),
-                Optional.ofNullable(gatewayEventDate));
+        var chargeEventEntity = aChargeEventEntity()
+                .withChargeEntity(chargeEntity)
+                .withStatus(ChargeStatus.fromString(chargeEntity.getStatus()))
+                .withGatewayEventDate(gatewayEventDate)
+                .build();
         this.persist(chargeEventEntity);
         this.flush();
         this.forceRefresh(chargeEventEntity);

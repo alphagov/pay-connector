@@ -49,11 +49,11 @@ public class ChargeEventEntity extends AbstractVersionedEntity {
     protected ChargeEventEntity() {
     }
 
-    public ChargeEventEntity(ChargeEntity chargeEntity, ChargeStatus chargeStatus, Optional<ZonedDateTime> updated, Optional<ZonedDateTime> gatewayEventDate) {
+    private ChargeEventEntity(ChargeEntity chargeEntity, ChargeStatus chargeStatus, ZonedDateTime updated, ZonedDateTime gatewayEventDate) {
         this.chargeEntity = chargeEntity;
         this.status = chargeStatus;
-        this.gatewayEventDate = gatewayEventDate.orElse(null);
-        this.updated = updated.orElse(null);
+        this.gatewayEventDate = gatewayEventDate;
+        this.updated = updated;
     }
 
     public Long getId() {
@@ -79,8 +79,42 @@ public class ChargeEventEntity extends AbstractVersionedEntity {
     public ChargeEntity getChargeEntity() {
         return chargeEntity;
     }
+    
+    public static final class ChargeEventEntityBuilder {
+        private ChargeEntity chargeEntity;
+        private ChargeStatus status;
+        private ZonedDateTime gatewayEventDate;
+        private ZonedDateTime updated;
 
-    public static ChargeEventEntity from(ChargeEntity chargeEntity, ChargeStatus chargeStatus, Optional<ZonedDateTime> gatewayEventDate) {
-        return new ChargeEventEntity(chargeEntity, chargeStatus, Optional.empty(), gatewayEventDate);
+        private ChargeEventEntityBuilder() {
+        }
+
+        public static ChargeEventEntityBuilder aChargeEventEntity() {
+            return new ChargeEventEntityBuilder();
+        }
+
+        public ChargeEventEntityBuilder withChargeEntity(ChargeEntity chargeEntity) {
+            this.chargeEntity = chargeEntity;
+            return this;
+        }
+
+        public ChargeEventEntityBuilder withStatus(ChargeStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        public ChargeEventEntityBuilder withGatewayEventDate(ZonedDateTime gatewayEventDate) {
+            this.gatewayEventDate = gatewayEventDate;
+            return this;
+        }
+
+        public ChargeEventEntityBuilder withUpdated(ZonedDateTime updated) {
+            this.updated = updated;
+            return this;
+        }
+
+        public ChargeEventEntity build() {
+            return new ChargeEventEntity(chargeEntity, status, updated, gatewayEventDate);
+        }
     }
 }
