@@ -31,16 +31,16 @@ public class RefundNotificationProcessor {
     public void invoke(PaymentGatewayName gatewayName, RefundStatus newStatus, GatewayAccountEntity gatewayAccountEntity,
                        String reference, String transactionId, Charge charge) {
         if (isBlank(reference)) {
-            logger.warn("{} refund notification could not be used to update charge (missing reference)",
-                    gatewayName);
+            logger.warn("{} refund notification could not be used to update charge [{}] (missing reference)",
+                    gatewayName, charge.getExternalId());
             return;
         }
 
         Optional<RefundEntity> optionalRefundEntity 
                 = refundService.findByChargeExternalIdAndReference(charge.getExternalId(), reference);
         if (optionalRefundEntity.isEmpty()) {
-            logger.warn("{} notification '{}' could not be used to update refund (associated refund entity not found)",
-                    gatewayName, reference);
+            logger.warn("{} notification '{}' could not be used to update refund (associated refund entity not found) for charge [{}]",
+                    gatewayName, reference, charge.getExternalId());
             return;
         }
 
