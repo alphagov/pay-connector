@@ -44,7 +44,6 @@ public class SmartpayAccountSpecificAuthenticatorTest {
         when(gatewayAccountDao.findByNotificationCredentialsUsername(username)).thenReturn(gatewayAccountEntityMayBe);
         when(gatewayAccountEntity.getNotificationCredentials()).thenReturn(notificationCredentials);
         when(notificationCredentials.getPassword()).thenReturn(hashedPassword);
-        when(hashUtil.check(password, hashedPassword)).thenReturn(true);
         when(gatewayAccountEntity.getNotificationCredentials().toBasicAuthUser()).thenReturn(basicAuthUser);
     }
 

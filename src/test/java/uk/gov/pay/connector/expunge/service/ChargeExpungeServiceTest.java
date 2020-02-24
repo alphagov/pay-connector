@@ -91,7 +91,6 @@ public class ChargeExpungeServiceTest {
 
     @Test
     public void expunge_shouldExpungeChargeIfInCaptureSubmittedAndChargeIsOlderThanHistoric() {
-        when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(1);
         when(mockExpungeConfig.getMinimumAgeForHistoricChargeExceptions()).thenReturn(2);
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
@@ -110,7 +109,6 @@ public class ChargeExpungeServiceTest {
 
     @Test
     public void expunge_shouldNotExpungeChargeIfInCaptureSubmittedAndChargeIsNewerThanHistoric() {
-        when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(1);
         when(mockExpungeConfig.getMinimumAgeForHistoricChargeExceptions()).thenReturn(8);
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()

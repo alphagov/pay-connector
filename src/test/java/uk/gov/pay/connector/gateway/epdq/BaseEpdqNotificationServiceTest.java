@@ -56,7 +56,7 @@ public abstract class BaseEpdqNotificationServiceTest {
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build());
 
-        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
+//        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
         when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
     }
 

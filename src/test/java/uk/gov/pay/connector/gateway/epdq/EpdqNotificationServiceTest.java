@@ -34,7 +34,8 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
         final String payload = notificationPayloadForTransaction(
                 payId,
                 EPDQ_PAYMENT_REQUESTED);
-
+        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
         notificationService.handleNotificationFor(payload);
 
         verifyNoInteractions(mockRefundNotificationProcessor);
@@ -65,7 +66,8 @@ public class EpdqNotificationServiceTest extends BaseEpdqNotificationServiceTest
         final String payload = notificationPayloadForTransaction(
                 payId,
                 EPDQ_REFUND);
-
+        when(mockGatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())).thenReturn(Optional.of(gatewayAccountEntity));
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(EPDQ.getName(), payId)).thenReturn(Optional.of(charge));
         notificationService.handleNotificationFor(payload);
 
         verifyNoInteractions(mockChargeNotificationProcessor);
