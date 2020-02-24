@@ -4,10 +4,11 @@ import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.events.EventService;
@@ -46,12 +47,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_READY;
 
 public class HistoricalEventEmitter {
-    private static final Logger logger = LoggerFactory.getLogger(HistoricalEventEmitter.class);
-    private final EmittedEventDao emittedEventDao;
-    private final RefundDao refundDao;
-    private final ChargeDao chargeDao;
-    private boolean shouldForceEmission;
-
     public static final List<ChargeStatus> TERMINAL_AUTHENTICATION_STATES = List.of(
             AUTHORISATION_3DS_REQUIRED,
             AUTHORISATION_SUBMITTED,
@@ -63,13 +58,17 @@ public class HistoricalEventEmitter {
             AUTHORISATION_TIMEOUT,
             AUTHORISATION_CANCELLED
     );
+    private static final Logger logger = LoggerFactory.getLogger(HistoricalEventEmitter.class);
     private static final List<ChargeStatus> INTERMEDIATE_READY_STATES = List.of(AUTHORISATION_3DS_READY,
             AUTHORISATION_READY,
             CAPTURE_READY,
             EXPIRE_CANCEL_READY,
             SYSTEM_CANCEL_READY,
             USER_CANCEL_READY);
-
+    private final EmittedEventDao emittedEventDao;
+    private final RefundDao refundDao;
+    private final ChargeService chargeService;
+    private boolean shouldForceEmission;
     private PaymentGatewayStateTransitions paymentGatewayStateTransitions;
     private EventService eventService;
     private StateTransitionService stateTransitionService;
@@ -80,23 +79,23 @@ public class HistoricalEventEmitter {
                                   RefundDao refundDao,
                                   EventService eventService,
                                   StateTransitionService stateTransitionService,
-                                  ChargeDao chargeDao) {
-        this(emittedEventDao, refundDao, chargeDao, false, eventService, stateTransitionService, null);
+                                  ChargeService chargeService) {
+        this(emittedEventDao, refundDao, chargeService, false, eventService, stateTransitionService, null);
     }
 
     public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
-                                  RefundDao refundDao, ChargeDao chargeDao, boolean shouldForceEmission, EventService eventService,
+                                  RefundDao refundDao, ChargeService chargeService, boolean shouldForceEmission, EventService eventService,
                                   StateTransitionService stateTransitionService) {
-        this(emittedEventDao, refundDao, chargeDao, shouldForceEmission, eventService, stateTransitionService, null);
+        this(emittedEventDao, refundDao, chargeService, shouldForceEmission, eventService, stateTransitionService, null);
     }
 
     public HistoricalEventEmitter(EmittedEventDao emittedEventDao,
-                                  RefundDao refundDao, ChargeDao chargeDao, boolean shouldForceEmission,
+                                  RefundDao refundDao, ChargeService chargeService, boolean shouldForceEmission,
                                   EventService eventService, StateTransitionService stateTransitionService,
                                   Long doNotRetryEmitUntilDuration) {
         this.emittedEventDao = emittedEventDao;
         this.refundDao = refundDao;
-        this.chargeDao = chargeDao;
+        this.chargeService = chargeService;
         this.paymentGatewayStateTransitions = PaymentGatewayStateTransitions.getInstance();
         this.shouldForceEmission = shouldForceEmission;
         this.eventService = eventService;
@@ -104,9 +103,20 @@ public class HistoricalEventEmitter {
         this.doNotRetryEmitUntilDuration = doNotRetryEmitUntilDuration;
     }
 
+    private static int sortOutOfOrderCaptureEvents(ChargeEventEntity lhs, ChargeEventEntity rhs) {
+        // puts CAPTURE_SUBMITTED at top of the events list (after first pass of sorting)
+        // when timestamp for CAPTURED is same or before CAPTURE_SUBMITTED timestamp 
+        if (lhs.getStatus().equals(ChargeStatus.CAPTURE_SUBMITTED)
+                && rhs.getStatus().equals(ChargeStatus.CAPTURED)) {
+            return -1;
+        } else {
+            return 0;
+        }
+    }
+
     public void processPaymentAndRefundEvents(ChargeEntity charge) {
         processPaymentEvents(charge, shouldForceEmission);
-        processRefundEvents(charge);
+        processRefundEvents(charge.getExternalId());
     }
 
     public void processPaymentEvents(ChargeEntity charge, boolean forceEmission) {
@@ -117,9 +127,8 @@ public class HistoricalEventEmitter {
     }
 
     @Transactional
-    public void processRefundEvents(ChargeEntity charge) {
-        List<RefundHistory> refundHistories = refundDao.searchAllHistoryByChargeExternalId(charge.getExternalId());
-
+    public void processRefundEvents(String chargeExternalId) {
+        List<RefundHistory> refundHistories = refundDao.searchAllHistoryByChargeExternalId(chargeExternalId);
         refundHistories
                 .stream()
                 .sorted(Comparator.comparing(RefundHistory::getHistoryStartDate))
@@ -128,10 +137,10 @@ public class HistoricalEventEmitter {
 
     public void emitAndPersistEventForRefundHistoryEntry(RefundHistory refundHistory) {
         Class refundEventClass = RefundStateEventMap.calculateRefundEventClass(refundHistory.getUserExternalId(), refundHistory.getStatus());
-        ChargeEntity chargeEntity = chargeDao.findByExternalId(refundHistory.getChargeExternalId())
+        Charge charge = chargeService.findCharge(refundHistory.getChargeExternalId())
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(refundHistory.getChargeExternalId()));
         Event event = EventFactory.createRefundEvent(refundHistory, refundEventClass,
-                chargeEntity.getGatewayAccount().getId());
+                charge.getGatewayAccountId());
 
         if (shouldForceEmission) {
             emitRefundEvent(refundHistory, refundEventClass, event);
@@ -163,17 +172,6 @@ public class HistoricalEventEmitter {
                 .sorted(Comparator.comparing(ChargeEventEntity::getUpdated))
                 .sorted(HistoricalEventEmitter::sortOutOfOrderCaptureEvents)
                 .collect(Collectors.toList());
-    }
-
-    private static int sortOutOfOrderCaptureEvents(ChargeEventEntity lhs, ChargeEventEntity rhs) {
-        // puts CAPTURE_SUBMITTED at top of the events list (after first pass of sorting)
-        // when timestamp for CAPTURED is same or before CAPTURE_SUBMITTED timestamp 
-        if (lhs.getStatus().equals(ChargeStatus.CAPTURE_SUBMITTED)
-                && rhs.getStatus().equals(ChargeStatus.CAPTURED)) {
-            return -1;
-        } else {
-            return 0;
-        }
     }
 
     private void processChargeStateTransitionEvents(long currentId, List<ChargeEventEntity> chargeEventEntities,
@@ -228,7 +226,7 @@ public class HistoricalEventEmitter {
         return eventForTransition;
     }
 
-    private void offerPaymentStateTransitionEvents(long currentId, ChargeEventEntity chargeEventEntity, 
+    private void offerPaymentStateTransitionEvents(long currentId, ChargeEventEntity chargeEventEntity,
                                                    PaymentStateTransition transition, boolean forceEmission) {
         Event event = EventFactory.createPaymentEvent(chargeEventEntity, transition.getStateTransitionEventClass());
 

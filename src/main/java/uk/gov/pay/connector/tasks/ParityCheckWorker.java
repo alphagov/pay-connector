@@ -77,7 +77,7 @@ public class ParityCheckWorker {
     }
 
     private void initializeHistoricalEventEmitter(Long doNotRetryEmitUntilDuration) {
-        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeDao, shouldForceEmission,
+        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeService, shouldForceEmission,
                 eventService, stateTransitionService, doNotRetryEmitUntilDuration);
     }
 
@@ -137,6 +137,6 @@ public class ParityCheckWorker {
 
     private void emitHistoricalEvents(ChargeEntity charge) {
         historicalEventEmitter.processPaymentEvents(charge, true);
-        historicalEventEmitter.processRefundEvents(charge);
+        historicalEventEmitter.processRefundEvents(charge.getExternalId());
     }
 }

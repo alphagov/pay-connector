@@ -45,7 +45,7 @@ public class EmittedEventsBackfillService {
         this.chargeService = chargeService;
         this.refundDao = refundDao;
         this.sweepConfig = configuration.getEmittedEventSweepConfig();
-        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeDao, shouldForceEmission,
+        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeService, shouldForceEmission,
                 eventService, stateTransitionService);
     }
 
