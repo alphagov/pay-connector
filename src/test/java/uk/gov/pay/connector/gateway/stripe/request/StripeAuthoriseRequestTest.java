@@ -54,7 +54,6 @@ public class StripeAuthoriseRequestTest {
         when(charge.getDescription()).thenReturn(description);
         when(charge.getAmount()).thenReturn(amount);
 
-        when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
         
         authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());

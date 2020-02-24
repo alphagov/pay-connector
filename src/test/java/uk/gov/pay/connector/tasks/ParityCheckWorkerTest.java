@@ -176,7 +176,6 @@ public class ParityCheckWorkerTest {
         when(refundDao.findRefundsByChargeExternalId(chargeEntity.getExternalId()))
                 .thenReturn(List.of(aValidRefundEntity().build(), aValidRefundEntity().build()));
         when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
-        when(ledgerService.getTransaction(any())).thenReturn(Optional.empty());
         when(ledgerService.getTransaction(any())).thenReturn(Optional.of(
                 aValidLedgerTransaction().withStatus("success").build()));
         when(ledgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(from(chargeEntity, null).build()));

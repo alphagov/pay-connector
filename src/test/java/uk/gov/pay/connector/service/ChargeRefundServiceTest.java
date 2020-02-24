@@ -392,7 +392,6 @@ public class ChargeRefundServiceTest {
                 .build();
         Optional<Charge> optionalCharge = Optional.of(Charge.from(chargeEntity));
         when(mockChargeService.findCharge(externalChargeId, accountId)).thenReturn(optionalCharge);
-        when(mockGatewayAccountDao.findById(accountId)).thenReturn(Optional.of(account));
 
         testSuccessfulRefund(chargeEntity, 100L, chargeEntity.getAmount());
     }
@@ -416,7 +415,6 @@ public class ChargeRefundServiceTest {
                 .withStatus(CAPTURED)
                 .build();
         when(mockChargeService.findCharge(externalChargeId, accountId)).thenReturn(Optional.of(Charge.from(chargeEntity)));
-        when(mockGatewayAccountDao.findById(accountId)).thenReturn(Optional.of(account));
 
         // when there is a corporate surcharge we expect the amount available for refund to include this
         long amountAvailableForRefund = chargeEntity.getAmount() + corporateSurcharge;
