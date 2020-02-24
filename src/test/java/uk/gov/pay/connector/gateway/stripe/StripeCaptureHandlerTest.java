@@ -30,6 +30,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
@@ -73,6 +74,7 @@ public class StripeCaptureHandlerTest {
         captureGatewayRequest = CaptureGatewayRequest.valueOf(chargeEntity);
     }
     
+    @Test
     public void shouldCaptureWithFeeAndTransferCorrectAmountToConnectAccount() throws Exception {
         GatewayClient.Response gatewayCaptureResponse = mock(GatewayClient.Response.class);
         when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_CAPTURE_SUCCESS_RESPONSE));
@@ -85,14 +87,14 @@ public class StripeCaptureHandlerTest {
         CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
 
         ArgumentCaptor<StripeTransferOutRequest> transferRequestCaptor = ArgumentCaptor.forClass(StripeTransferOutRequest.class);
-        verify(gatewayClient).postRequestFor(transferRequestCaptor.capture());
+        verify(gatewayClient, times(2)).postRequestFor(transferRequestCaptor.capture());
         
         assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9942"));
         
         assertTrue(captureResponse.isSuccessful());
         assertThat(captureResponse.state(), is(CaptureResponse.ChargeState.COMPLETE));
         assertThat(captureResponse.getTransactionId().isPresent(), is(true));
-        assertThat(captureResponse.getTransactionId().get(), is("ch_123456"));
+        assertThat(captureResponse.getTransactionId().get(), is(captureGatewayRequest.getTransactionId()));
         assertThat(captureResponse.getFee().isPresent(), is(true));
         assertThat(captureResponse.getFee().get(), is(58L));
     }
