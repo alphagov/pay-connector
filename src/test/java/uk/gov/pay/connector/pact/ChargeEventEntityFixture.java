@@ -6,13 +6,13 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
 
 public class ChargeEventEntityFixture {
     private ChargeStatus chargeStatus = ChargeStatus.CAPTURED;
-    private Optional<ZonedDateTime> updated = Optional.of(ZonedDateTime.now());
+    private ZonedDateTime updated = ZonedDateTime.now();
     private ZonedDateTime gatewayEventDate;
     private Long id = RandomUtils.nextLong();
     private ChargeEntity charge = aValidChargeEntity()
@@ -24,7 +24,12 @@ public class ChargeEventEntityFixture {
     }
 
     public ChargeEventEntity build() {
-        ChargeEventEntity chargeEventEntity = new ChargeEventEntity(charge, chargeStatus, updated, Optional.ofNullable(gatewayEventDate));
+        ChargeEventEntity chargeEventEntity = aChargeEventEntity()
+                .withChargeEntity(charge)
+                .withStatus(chargeStatus)
+                .withUpdated(updated)
+                .withGatewayEventDate(gatewayEventDate)
+                .build();
         chargeEventEntity.setId(id);
 
         return chargeEventEntity;
@@ -46,7 +51,7 @@ public class ChargeEventEntityFixture {
     }
 
     public ChargeEventEntityFixture withTimestamp(ZonedDateTime updated) {
-        this.updated = Optional.of(updated);
+        this.updated = updated;
         return this;
     }
 

@@ -6,21 +6,20 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
-import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.mockito.Mockito.mock;
+import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
 
 public abstract class CardServiceTest {
 
@@ -40,15 +39,15 @@ public abstract class CardServiceTest {
                 .withId(chargeId)
                 .withStatus(status)
                 .withEvents(List.of(
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.CREATED, Optional.of(ZonedDateTime.now().minusHours(3)), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_SUCCESS, Optional.of(ZonedDateTime.now()), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.ENTERING_CARD_DETAILS, Optional.of(ZonedDateTime.now().minusHours(2)), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_TIMEOUT, Optional.of(ZonedDateTime.now().minusHours(1)), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_ERROR, Optional.of(ZonedDateTime.now().minusHours(1)), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_3DS_REQUIRED, Optional.of(ZonedDateTime.now().minusHours(1)), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_CANCELLED, Optional.of(ZonedDateTime.now().minusHours(1)), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_REJECTED, Optional.of(ZonedDateTime.now().minusHours(1)), Optional.empty()),
-                        new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR, Optional.of(ZonedDateTime.now().minusHours(1)), Optional.empty())
+                        aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.CREATED).withUpdated(ZonedDateTime.now().minusHours(3)).build(),
+                        aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.AUTHORISATION_SUCCESS).withUpdated(ZonedDateTime.now()).build(),
+                        aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.ENTERING_CARD_DETAILS).withUpdated(ZonedDateTime.now().minusHours(2)).build(),
+                        aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.AUTHORISATION_TIMEOUT).withUpdated(ZonedDateTime.now().minusHours(1)).build(),
+                        aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.AUTHORISATION_ERROR).withUpdated(ZonedDateTime.now().minusHours(1)).build(),
+                        aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.AUTHORISATION_3DS_REQUIRED).withUpdated(ZonedDateTime.now().minusHours(1)).build(),
+                        aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.AUTHORISATION_CANCELLED).withUpdated(ZonedDateTime.now().minusHours(1)).build(),
+                        aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.AUTHORISATION_REJECTED).withUpdated(ZonedDateTime.now().minusHours(1)).build(),
+                        aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR).withUpdated(ZonedDateTime.now().minusHours(1)).build()
                 ))
                 .build();
         entity.setCardDetails(new CardDetailsEntity());

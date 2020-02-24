@@ -4,20 +4,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.wallets.WalletType;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
 public class PaymentDetailsEnteredTest {
@@ -33,9 +33,9 @@ public class PaymentDetailsEnteredTest {
         ZonedDateTime latestDateTime = ZonedDateTime.parse(time);
 
         List<ChargeEventEntity> list = List.of(
-                new ChargeEventEntity(new ChargeEntity(), ChargeStatus.CREATED, Optional.of(latestDateTime.minusHours(3)), Optional.empty()),
-                new ChargeEventEntity(new ChargeEntity(), ChargeStatus.AUTHORISATION_SUCCESS, Optional.of(latestDateTime), Optional.empty()),
-                new ChargeEventEntity(new ChargeEntity(), ChargeStatus.ENTERING_CARD_DETAILS, Optional.of(latestDateTime.minusHours(1)), Optional.empty())
+                aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.CREATED).withUpdated(latestDateTime.minusHours(3)).build(),
+                aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.AUTHORISATION_SUCCESS).withUpdated(latestDateTime).build(),
+                aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.ENTERING_CARD_DETAILS).withUpdated(latestDateTime.minusHours(1)).build()
         );
 
         chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()
