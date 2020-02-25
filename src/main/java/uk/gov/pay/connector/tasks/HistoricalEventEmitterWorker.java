@@ -6,7 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.EventService;
@@ -27,25 +29,26 @@ public class HistoricalEventEmitterWorker {
     private static final Logger logger = LoggerFactory.getLogger(HistoricalEventEmitterWorker.class);
     private static final int PAGE_SIZE = 100;
     private final ChargeDao chargeDao;
+    private final ChargeService chargeService;
     private final ChargeEventDao chargeEventDao;
     private final EmittedEventDao emittedEventDao;
     private final StateTransitionService stateTransitionService;
     private final EventService eventService;
-    private HistoricalEventEmitter historicalEventEmitter;
     private final RefundDao refundDao;
-
+    private HistoricalEventEmitter historicalEventEmitter;
     private long maxId;
 
     @Inject
     public HistoricalEventEmitterWorker(ChargeDao chargeDao, RefundDao refundDao, ChargeEventDao chargeEventDao,
-                                        EmittedEventDao emittedEventDao, StateTransitionService stateTransitionService, 
-                                        EventService eventService) {
+                                        EmittedEventDao emittedEventDao, StateTransitionService stateTransitionService,
+                                        EventService eventService, ChargeService chargeService) {
         this.chargeDao = chargeDao;
         this.refundDao = refundDao;
         this.chargeEventDao = chargeEventDao;
         this.emittedEventDao = emittedEventDao;
         this.stateTransitionService = stateTransitionService;
         this.eventService = eventService;
+        this.chargeService = chargeService;
     }
 
     public void execute(Long startId, OptionalLong maybeMaxId, Long doNotRetryEmitUntilDuration) {
@@ -72,7 +75,7 @@ public class HistoricalEventEmitterWorker {
     }
 
     private void initializeHistoricalEventEmitter(Long doNotRetryEmitUntilDuration) {
-        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeDao, false,
+        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeService, false,
                 eventService, stateTransitionService, doNotRetryEmitUntilDuration);
     }
 
@@ -84,6 +87,30 @@ public class HistoricalEventEmitterWorker {
 
         processChargeEvents(startDate, endDate);
         processRefundEvents(startDate, endDate);
+    }
+
+    public void executeForRefundsOnly(Long startId, OptionalLong maybeMaxId, Long doNotRetryEmitUntilDuration) {
+        try {
+            MDC.put(HEADER_REQUEST_ID, "HistoricalEventEmitterWorker-" + RandomUtils.nextLong(0, 10000));
+            initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
+
+            maxId = maybeMaxId.orElseGet(refundDao::findMaxId);
+            logger.info("Starting emitting refunds from {} up to {}", startId, maxId);
+            for (long currentId = startId; currentId <= maxId; currentId++) {
+
+                long finalCurrentId = currentId;
+                refundDao.findById(currentId)
+                        .ifPresentOrElse(
+                                refundEntity -> historicalEventEmitter.processRefundEvents(refundEntity.getChargeExternalId()),
+                                () -> logger.info("Refund [{}/{}] - not found", finalCurrentId, maxId));
+            }
+        } catch (Exception e) {
+            logger.error("Error attempting to process refunds events on job [start={}] [max={}] [error={}]", startId, maxId, e);
+        } finally {
+            MDC.remove(HEADER_REQUEST_ID);
+        }
+
+        logger.info("Terminating");
     }
 
     // needs to be public for transactional annotation
@@ -98,7 +125,7 @@ public class HistoricalEventEmitterWorker {
                 final ChargeEntity charge = maybeCharge.get();
 
                 historicalEventEmitter.processPaymentEvents(charge, false);
-                historicalEventEmitter.processRefundEvents(charge);
+                historicalEventEmitter.processRefundEvents(charge.getExternalId());
             } else {
                 logger.info("[{}/{}] - not found", currentId, maxId);
             }
@@ -156,12 +183,12 @@ public class HistoricalEventEmitterWorker {
 
     private void processRefundsEventsForCharge(String chargeExternalId) {
         try {
-            Optional<ChargeEntity> maybeCharge = chargeDao.findByExternalId(chargeExternalId);
+            Optional<Charge> maybeCharge = chargeService.findCharge(chargeExternalId);
             maybeCharge.ifPresent(c -> MDC.put("chargeId", c.getExternalId()));
 
             if (maybeCharge.isPresent()) {
-                final ChargeEntity charge = maybeCharge.get();
-                historicalEventEmitter.processRefundEvents(charge);
+                final Charge charge = maybeCharge.get();
+                historicalEventEmitter.processRefundEvents(charge.getExternalId());
             }
         } finally {
             MDC.remove("chargeId");

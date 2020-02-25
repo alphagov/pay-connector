@@ -122,4 +122,13 @@ public class RefundDao extends JpaDao<RefundEntity> {
                 .setParameter("chargeExternalId", chargeExternalId)
                 .getResultList();
     }
+
+    public Long findMaxId() {
+        String query = "SELECT r.id FROM RefundEntity r ORDER BY r.id DESC";
+
+        return entityManager.get()
+                .createQuery(query, Long.class)
+                .setMaxResults(1)
+                .getSingleResult();
+    }
 }

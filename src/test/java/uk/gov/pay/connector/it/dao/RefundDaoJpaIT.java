@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.dao;
 
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -14,6 +15,7 @@ import java.util.Optional;
 
 import static java.time.ZonedDateTime.now;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
@@ -257,7 +259,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestRefundHistory(testRefund)
                 .insert(REFUND_SUBMITTED, "ref-2", historyDate.plusMinutes(10), historyDate.plusMinutes(10), SUBMITTED_BY, userEmail)
-                .insert(CREATED, "ref-1",  historyDate, historyDate, SUBMITTED_BY, userEmail)
+                .insert(CREATED, "ref-1", historyDate, historyDate, SUBMITTED_BY, userEmail)
                 .insert(REFUNDED, "history-tobe-excluded", historyDate.minusDays(10), historyDate.minusDays(10))
                 .insert(REFUNDED, "history-tobe-excluded", historyDate.plusHours(1), historyDate.plusHours(1), SUBMITTED_BY, userEmail);
 
@@ -292,5 +294,20 @@ public class RefundDaoJpaIT extends DaoITestBase {
         assertThat(refundEntityList.size(), is(2));
         assertThat(refundEntityList.get(0).getChargeExternalId(), is(chargeTestRecord.externalChargeId));
         assertThat(refundEntityList.get(1).getChargeExternalId(), is(chargeTestRecord.externalChargeId));
+    }
+
+    @Test
+    public void findMaxId_returnsTheMaximumId() {
+        RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
+        refundEntity.setId(nextLong());
+        refundEntity.setStatus(REFUND_SUBMITTED.getValue());
+        refundDao.persist(refundEntity);
+
+        RefundEntity refundEntity2 = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
+        refundEntity2.setId(refundEntity.getId() - 100L);
+        refundEntity2.setStatus(REFUND_SUBMITTED.getValue());
+        refundDao.persist(refundEntity2);
+
+        assertThat(refundDao.findMaxId(), Matchers.is(refundEntity.getId()));
     }
 }
