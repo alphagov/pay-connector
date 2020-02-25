@@ -12,6 +12,12 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import javax.inject.Inject;
 import java.time.ZonedDateTime;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
+import static uk.gov.pay.logging.LoggingKeys.PROVIDER_PAYMENT_ID;
+
 public class ChargeNotificationProcessor {
 
     private ChargeService chargeService;
@@ -22,7 +28,7 @@ public class ChargeNotificationProcessor {
         this.chargeService = chargeService;
     }
 
-    public void invoke(String transactionId, Charge charge, ChargeStatus newStatus, ZonedDateTime gatewayEventDate) {
+    public void invoke(String gatewayTransactionId, Charge charge, ChargeStatus newStatus, ZonedDateTime gatewayEventDate) {
         ChargeEntity chargeEntity = chargeService.findChargeByExternalId(charge.getExternalId());
         GatewayAccountEntity gatewayAccount = chargeEntity.getGatewayAccount();
         String oldStatus = chargeEntity.getStatus();
@@ -33,8 +39,12 @@ public class ChargeNotificationProcessor {
             // don't log an error if we're trying to transition to the same state as this can happen if we've already
             // processed the notification
             if (!e.getCurrentState().equals(e.getTargetState())) {
-                logger.error("{} ({}) notification '{}' could not be used to update charge: {}",
-                        gatewayAccount.getGatewayName(), gatewayAccount.getId(), transactionId, e.getMessage());
+                logger.error(String.format("%s (%s) notification '%s' could not be used to update charge: %s",
+                        gatewayAccount.getGatewayName(), gatewayAccount.getId(), gatewayTransactionId, e.getMessage()),
+                        kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()),
+                        kv(PROVIDER_PAYMENT_ID, gatewayTransactionId),
+                        kv(GATEWAY_ACCOUNT_ID, gatewayAccount.getId()),
+                        kv(PROVIDER, gatewayAccount.getGatewayName()));
             }
             return;
         }
@@ -50,7 +60,7 @@ public class ChargeNotificationProcessor {
                 chargeEntity.getExternalId(),
                 oldStatus,
                 newStatus,
-                transactionId,
+                gatewayTransactionId,
                 gatewayAccount.getId(),
                 gatewayAccount.getGatewayName(),
                 gatewayAccount.getType());
