@@ -25,11 +25,11 @@ import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
-import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.Supplemental;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
@@ -40,6 +40,7 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
@@ -50,7 +51,6 @@ import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
-import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
@@ -659,12 +659,11 @@ public class ChargeService {
             if (shouldEmitPaymentStateTransitionEvents) {
                 stateTransitionService.offerPaymentStateTransition(
                         charge.getExternalId(), fromChargeState, targetChargeState, chargeEventEntity,
-                        StatusCorrectedToCapturedToMatchGatewayStatus.class);
+                        eventClass);
             }
             
             return charge;
-            // TODO: throw a better exception
-        }).orElseThrow(() -> new IllegalStateException("Cannot force update to state " + targetChargeState));
+        }).orElseThrow(() -> new InvalidForceStateTransitionException(fromChargeState, targetChargeState));
     }
 
     public Optional<ChargeEntity> findByProviderAndTransactionId(String paymentGatewayName, String transactionId) {
