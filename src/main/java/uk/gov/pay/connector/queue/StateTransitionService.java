@@ -54,24 +54,31 @@ public class StateTransitionService {
         PaymentGatewayStateTransitions.getInstance()
                 .getEventForTransition(fromChargeState, targetChargeState)
                 .ifPresent(eventClass -> {
-                    PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventClass);
-                    stateTransitionQueue.offer(transition);
-
-                    var logMessage = format("Offered payment state transition to emitter queue [from=%s] [to=%s] [chargeEventId=%s] [chargeId=%s]",
-                            fromChargeState, targetChargeState, chargeEventEntity.getId(), externalId);
-                    var structuredArgs = Stream.concat(
-                            chargeEventEntity.getChargeEntity().getStructuredLoggingArgs().stream(),
-                            List.of(kv("from_state", fromChargeState), kv("to_state", targetChargeState)).stream())
-                            .toArray();
-
-                    logger.info(logMessage, structuredArgs);
-
-                    eventService.recordOfferedEvent(ResourceType.PAYMENT,
-                            externalId,
-                            Event.eventTypeForClass(eventClass),
-                            chargeEventEntity.getUpdated()
-                    );
+                    offerPaymentStateTransition(externalId, fromChargeState, targetChargeState, chargeEventEntity, eventClass);
                 });
+    }
+
+    @Transactional
+    public <T extends Event> void offerPaymentStateTransition(
+            String externalId, ChargeStatus fromChargeState, ChargeStatus targetChargeState,
+            ChargeEventEntity chargeEventEntity, Class<T> eventClass) {
+
+        PaymentStateTransition transition = new PaymentStateTransition(chargeEventEntity.getId(), eventClass);
+        stateTransitionQueue.offer(transition);
+
+        var logMessage = format("Offered payment state transition to emitter queue [from=%s] [to=%s] [chargeEventId=%s] [chargeId=%s]",
+                fromChargeState, targetChargeState, chargeEventEntity.getId(), externalId);
+        var structuredArgs = Stream.concat(
+                chargeEventEntity.getChargeEntity().getStructuredLoggingArgs().stream(),
+                List.of(kv("from_state", fromChargeState), kv("to_state", targetChargeState)).stream())
+                .toArray();
+
+        logger.info(logMessage, structuredArgs);
+
+        eventService.recordOfferedEvent(ResourceType.PAYMENT,
+                externalId,
+                Event.eventTypeForClass(eventClass),
+                chargeEventEntity.getUpdated());
     }
 
     @Transactional

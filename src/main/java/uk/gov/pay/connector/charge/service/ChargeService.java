@@ -25,11 +25,11 @@ import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsDetailsEntity;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
-import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.Supplemental;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
@@ -40,13 +40,16 @@ import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
+import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -643,6 +646,24 @@ public class ChargeService {
         return chargeDao.findByExternalId(chargeId).map(chargeEntity ->
                 transitionChargeState(chargeEntity, targetChargeState)
         ).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+    }
+    
+    @Transactional
+    public <T extends Event> ChargeEntity forceTransitionChargeState(ChargeEntity charge, ChargeStatus targetChargeState) {
+        ChargeStatus fromChargeState = ChargeStatus.fromString(charge.getStatus());
+
+        return PaymentGatewayStateTransitions.getEventForForceUpdate(targetChargeState).map(eventClass -> {
+            charge.setStatusIgnoringValidTransitions(targetChargeState);
+            ChargeEventEntity chargeEventEntity = chargeEventDao.persistChargeEventOf(charge);
+
+            if (shouldEmitPaymentStateTransitionEvents) {
+                stateTransitionService.offerPaymentStateTransition(
+                        charge.getExternalId(), fromChargeState, targetChargeState, chargeEventEntity,
+                        eventClass);
+            }
+            
+            return charge;
+        }).orElseThrow(() -> new InvalidForceStateTransitionException(fromChargeState, targetChargeState));
     }
 
     public Optional<ChargeEntity> findByProviderAndTransactionId(String paymentGatewayName, String transactionId) {

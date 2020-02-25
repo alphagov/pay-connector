@@ -2,11 +2,14 @@ package uk.gov.pay.connector.charge.service;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -27,11 +30,13 @@ import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
+import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -69,11 +74,14 @@ import static uk.gov.pay.connector.charge.model.ChargeResponse.ChargeResponseBui
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity.Type.TEST;
 
+@RunWith(JUnitParamsRunner.class)
 public class ChargeServiceTest {
 
     @Rule
@@ -213,6 +221,40 @@ public class ChargeServiceTest {
         telephoneRequestBuilder = null;
     }
 
+    @Test
+    public void forcingChargeToCapturedState_shouldSucceedAndEmitEvent() {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
+
+        ChargeEventEntity chargeEventEntity = aChargeEventEntity().withChargeEntity(charge).withStatus(CAPTURED).build();
+        when(mockedChargeEventDao.persistChargeEventOf(any(ChargeEntity.class))).thenReturn(chargeEventEntity);
+        
+        ChargeEntity updatedCharge = service.forceTransitionChargeState(charge, CAPTURED);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityArgumentCaptor.capture());
+        assertThat(chargeEntityArgumentCaptor.getValue().getStatus(), is(CAPTURED.getValue()));
+        assertThat(updatedCharge.getStatus(), is(CAPTURED.getValue()));
+        
+        verify(mockStateTransitionService).offerPaymentStateTransition(
+                charge.getExternalId(), 
+                AUTHORISATION_SUCCESS, 
+                CAPTURED, 
+                chargeEventEntity, 
+                StatusCorrectedToCapturedToMatchGatewayStatus.class);
+    }
+    
+    @Test(expected = InvalidForceStateTransitionException.class)
+    @Parameters({
+            "AUTHORISATION ERROR",
+            "USER CANCELLED",
+            "USER CANCEL SUBMITTED",
+            "CAPTURE APPROVED RETRY"
+    })
+    public void forcingChargeToInvalidState_shouldThrowException(String status) {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
+        service.forceTransitionChargeState(charge, ChargeStatus.fromString(status));
+    }
+    
     @Test
     public void shouldUpdateEmailToCharge() {
         ChargeEntity createdChargeEntity = ChargeEntityFixture.aValidChargeEntity().build();

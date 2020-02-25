@@ -19,7 +19,7 @@ public class InvalidStateTransitionException extends IllegalStateException {
     }
 
     public InvalidStateTransitionException(String currentState, String targetState, Event event) {
-        super(format("Charge state transition [%s] -> [%s] not allowed [event={}]", currentState, targetState, event));
+        super(format("Charge state transition [%s] -> [%s] not allowed [event={%s}]", currentState, targetState, event));
         this.currentState = currentState;
         this.targetState = targetState;
     }
