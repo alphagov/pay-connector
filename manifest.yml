@@ -85,4 +85,5 @@ applications:
       NOTIFY_EMAIL_ENABLED: 'true'
       RUN_APP: 'true'
       RUN_MIGRATION: 'false'
+      EMIT_PAYMENT_STATE_TRANSITION_EVENTS: 'true'
 
