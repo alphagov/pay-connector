@@ -1,11 +1,13 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.http.HttpStatus;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -22,6 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
@@ -66,6 +69,62 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
         super("worldpay");
     }
 
+    @Test
+    public void should_return_409_if_user_cancels_a_charge_that_is_already_captured() {
+        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        worldpayMockClient.mockAuthorisationQuerySuccess(WorldpayStatus.CAPTURED);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .postFrontendChargeCancellation()
+                .statusCode(HttpStatus.SC_CONFLICT)
+                .body("error_identifier", is("CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_CHARGE_STATE_FORCIBLY_TRANSITIONED"))
+                .body("message", contains("Cannot cancel charge as it is in a terminal state of [CAPTURED] with the " +
+                        "gateway provider. The charge's state was transitioned to [CAPTURED]."));
+    }
+    
+    @Test
+    public void should_return_409_if_system_cancels_a_charge_that_is_already_captured() {
+        String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        worldpayMockClient.mockAuthorisationQuerySuccess(WorldpayStatus.CAPTURED);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .postChargeCancellation()
+                .statusCode(HttpStatus.SC_CONFLICT)
+                .body("error_identifier", is("CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_CHARGE_STATE_FORCIBLY_TRANSITIONED"))
+                .body("message", contains("Cannot cancel charge as it is in a terminal state of [CAPTURED] with the " +
+                        "gateway provider. The charge's state was transitioned to [CAPTURED]."));
+    }
+    
+    @Test
+    public void should_return_409_if_user_cancels_a_charge_that_is_already_refused() {
+        String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        worldpayMockClient.mockAuthorisationQuerySuccess(WorldpayStatus.REFUSED);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .postFrontendChargeCancellation()
+                .statusCode(HttpStatus.SC_CONFLICT)
+                .body("error_identifier", is("CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_INVALID_STATE_TRANSITION"))
+                .body("message", contains("Cannot cancel charge as it is in a terminal state of " +
+                        "[AUTHORISATION REJECTED] with the gateway provider. The charge's state could not be transitioned to [AUTHORISATION REJECTED]."));
+    }
+
+    @Test
+    public void should_return_409_if_system_cancels_a_charge_that_is_already_refused() {
+        String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        worldpayMockClient.mockAuthorisationQuerySuccess(WorldpayStatus.REFUSED);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .postChargeCancellation()
+                .statusCode(HttpStatus.SC_CONFLICT)
+                .body("error_identifier", is("CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_INVALID_STATE_TRANSITION"))
+                .body("message", contains("Cannot cancel charge as it is in a terminal state of " +
+                        "[AUTHORISATION REJECTED] with the gateway provider. The charge's state could not be transitioned to [AUTHORISATION REJECTED]."));
+    }
+    
     @Test
     public void respondWith204WithNoLockingState_whenCancellationBeforeAuth() {
 

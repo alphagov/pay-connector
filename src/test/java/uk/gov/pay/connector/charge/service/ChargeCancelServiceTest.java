@@ -15,6 +15,7 @@ import org.mockito.junit.MockitoRule;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.exception.CancelConflictException;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -40,10 +41,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 @RunWith(JUnitParamsRunner.class)
 public class ChargeCancelServiceTest {
@@ -87,7 +88,11 @@ public class ChargeCancelServiceTest {
         when(mockQueryService.canQueryChargeGatewayStatus(any(PaymentGatewayName.class))).thenReturn(true);
         when(mockQueryService.getMappedGatewayStatus(chargeEntity)).thenReturn(Optional.of(ChargeStatus.CAPTURED));
         
-        chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
+        try {
+            chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
+        } catch (CancelConflictException e) {
+            //expected
+        }
         
         verify(chargeService).forceTransitionChargeState(chargeEntity, ChargeStatus.CAPTURED);
     }

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.rules;
 
 import com.github.tomakehurst.wiremock.http.Fault;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayStatus;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -97,6 +98,13 @@ public class WorldpayMockClient {
         String authSuccessResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISED_INQUIRY_RESPONSE);
         String bodyMatchXpath = "//orderInquiry[@orderCode]";
         bodyMatchingPaymentServiceResponse(bodyMatchXpath, authSuccessResponse);    
+    }    
+    
+    public void mockAuthorisationQuerySuccess(WorldpayStatus worldpayStatus) {
+        String authSuccessResponse = TestTemplateResourceLoader.load(WORLDPAY_AUTHORISED_INQUIRY_RESPONSE);
+        String capturedResponse = authSuccessResponse.replace("AUTHORISED", worldpayStatus.getWorldpayStatus());
+        String bodyMatchXpath = "//orderInquiry[@orderCode]";
+        bodyMatchingPaymentServiceResponse(bodyMatchXpath, capturedResponse);    
     }
 
     public void mockServerFault() {

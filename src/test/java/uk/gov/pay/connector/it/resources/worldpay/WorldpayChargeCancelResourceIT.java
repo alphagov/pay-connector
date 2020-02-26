@@ -22,6 +22,7 @@ public class WorldpayChargeCancelResourceIT extends ChargingITestBase {
         String chargeId = createNewCharge(ChargeStatus.AUTHORISATION_SUCCESS);
 
         worldpayMockClient.mockCancelSuccess();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
         givenSetup()
                 .contentType(ContentType.JSON)
                 .post(cancelChargeUrlFor(accountId, chargeId))
