@@ -28,6 +28,7 @@ import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.DURING_AUTHORISATION;
 import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.POST_AUTHORISATION;
+import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.PRE_AUTHORISATION;
 import static uk.gov.pay.connector.charge.service.StatusFlow.SYSTEM_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.charge.service.StatusFlow.USER_CANCELLATION_FLOW;
 import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
@@ -71,13 +72,9 @@ public class ChargeCancelService {
     }
 
     private void doCancel(ChargeEntity chargeEntity, StatusFlow statusFlow) {
-
         validateChargeStatus(statusFlow, chargeEntity);
-
         ChargeStatus currentChargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
-
-        ExpirableChargeStatus.AuthorisationStage authorisationStage = ExpirableChargeStatus
-                .of(currentChargeStatus).getAuthorisationStage();
+        var authorisationStage = ExpirableChargeStatus.of(currentChargeStatus).getAuthorisationStage();
         
         if ((authorisationStage == DURING_AUTHORISATION || authorisationStage == POST_AUTHORISATION)
                 && queryService.canQueryChargeGatewayStatus(chargeEntity.getPaymentGatewayName())) {
@@ -121,8 +118,8 @@ public class ChargeCancelService {
             var message = format("Cancelling charge aborted as gateway status does not map to any charge status in " +
                     "%s. ", ChargeStatus.class.getCanonicalName());
             logger.info(message, List.of(kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId())));
-            throw new RuntimeException("Cannot cancel charge as it is in some unknown state with the " +
-                    "gateway provider.");
+            throw new CancelConflictException("Cannot cancel charge as it is in some unknown state with the " +
+                    "gateway provider.", CancelConflictException.ConflictResult.CHARGE_NOT_TRANSITIONED);
         }
     }
 
