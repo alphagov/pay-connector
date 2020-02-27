@@ -1,11 +1,13 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.http.HttpStatus;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -68,6 +70,62 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
     }
 
     @Test
+    public void should_return_409_if_user_cancels_a_charge_that_is_already_captured() {
+        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        worldpayMockClient.mockAuthorisationQuerySuccess(WorldpayStatus.CAPTURED);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .postFrontendChargeCancellation()
+                .statusCode(HttpStatus.SC_CONFLICT)
+                .body("error_identifier", is("CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_CHARGE_STATE_FORCIBLY_TRANSITIONED"))
+                .body("message", contains("Cannot cancel charge as it is in a terminal state of [CAPTURED] with the " +
+                        "gateway provider. The charge's state was transitioned to [CAPTURED]."));
+    }
+    
+    @Test
+    public void should_return_409_if_system_cancels_a_charge_that_is_already_captured() {
+        String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        worldpayMockClient.mockAuthorisationQuerySuccess(WorldpayStatus.CAPTURED);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .postChargeCancellation()
+                .statusCode(HttpStatus.SC_CONFLICT)
+                .body("error_identifier", is("CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_CHARGE_STATE_FORCIBLY_TRANSITIONED"))
+                .body("message", contains("Cannot cancel charge as it is in a terminal state of [CAPTURED] with the " +
+                        "gateway provider. The charge's state was transitioned to [CAPTURED]."));
+    }
+    
+    @Test
+    public void should_return_409_if_user_cancels_a_charge_that_is_already_refused() {
+        String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        worldpayMockClient.mockAuthorisationQuerySuccess(WorldpayStatus.REFUSED);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .postFrontendChargeCancellation()
+                .statusCode(HttpStatus.SC_CONFLICT)
+                .body("error_identifier", is("CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_INVALID_STATE_TRANSITION"))
+                .body("message", contains("Cannot cancel charge as it is in a terminal state of " +
+                        "[AUTHORISATION REJECTED] with the gateway provider. The charge's state could not be transitioned to [AUTHORISATION REJECTED]."));
+    }
+
+    @Test
+    public void should_return_409_if_system_cancels_a_charge_that_is_already_refused() {
+        String chargeId = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
+        worldpayMockClient.mockAuthorisationQuerySuccess(WorldpayStatus.REFUSED);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .postChargeCancellation()
+                .statusCode(HttpStatus.SC_CONFLICT)
+                .body("error_identifier", is("CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_INVALID_STATE_TRANSITION"))
+                .body("message", contains("Cannot cancel charge as it is in a terminal state of " +
+                        "[AUTHORISATION REJECTED] with the gateway provider. The charge's state could not be transitioned to [AUTHORISATION REJECTED]."));
+    }
+    
+    @Test
     public void respondWith204WithNoLockingState_whenCancellationBeforeAuth() {
 
         String chargeId = addCharge(ENTERING_CARD_DETAILS, "ref", ZonedDateTime.now().minusHours(1), "irrelvant");
@@ -81,6 +139,7 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
     public void respondWith204WithLockingState_whenCancellationAfterAuth() {
         String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), "transaction-id");
         worldpayMockClient.mockCancelSuccess();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
 
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, NO_CONTENT.getStatusCode());
 
@@ -120,6 +179,7 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
 
         String gatewayTransactionId = "gatewayTransactionId";
         worldpayMockClient.mockCancelError();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
         String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusHours(1), gatewayTransactionId);
 
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCEL_ERROR, 204);
@@ -132,12 +192,13 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
 
     @Test
     public void respondWith204With3DSRequiredState_whenCancellationBeforeAuth() {
-
         String chargeId = addCharge(AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusHours(1), "irrelvant");
+        worldpayMockClient.mockCancelSuccess();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
         List<String> events = databaseTestHelper.getInternalEvents(chargeId);
-        assertThat(events.size(), is(2));
-        assertThat(events, hasItems(AUTHORISATION_3DS_REQUIRED.getValue(), USER_CANCELLED.getValue()));
+        assertThat(events.size(), is(3));
+        assertThat(events, hasItems(AUTHORISATION_3DS_REQUIRED.getValue(), USER_CANCEL_READY.getValue(), USER_CANCELLED.getValue()));
     }
     
     private String userCancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int httpStatusCode) {

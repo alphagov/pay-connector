@@ -58,6 +58,11 @@ public class SandboxPaymentProvider implements PaymentProvider, SandboxGatewayRe
     }
 
     @Override
+    public boolean canQueryPaymentStatus() {
+        return false;
+    }
+
+    @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         return Gateway3DSAuthorisationResponse.of(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED);
     }

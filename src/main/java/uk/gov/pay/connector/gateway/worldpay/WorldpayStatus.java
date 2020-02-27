@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import java.util.Map;
@@ -14,6 +16,8 @@ public enum WorldpayStatus {
     CAPTURED("CAPTURED", ChargeStatus.CAPTURED),
     REFUSED("REFUSED", ChargeStatus.AUTHORISATION_REJECTED);
 
+    private static final Logger logger = LoggerFactory.getLogger(WorldpayStatus.class);
+    
     private final String worldpayStatus;
     private final ChargeStatus payStatus;
     private static Map<String, WorldpayStatus> stringWorldpayStatusMap = Stream.of(values()).collect(toMap(WorldpayStatus::toString, e -> e));

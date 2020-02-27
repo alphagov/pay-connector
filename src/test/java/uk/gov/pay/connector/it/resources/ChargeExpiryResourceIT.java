@@ -331,7 +331,7 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
 
         WireMock.reset();
         worldpayMockClient.mockCancelSuccess();
-        worldpayMockClient.mockAuthorisationQuerySuccess(chargeId);
+        worldpayMockClient.mockAuthorisationQuerySuccess();
 
         connectorRestApiClient
                 .postChargeExpiryTask()

@@ -167,6 +167,11 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     @Override
+    public boolean canQueryPaymentStatus() {
+        return true;
+    }
+
+    @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
         Optional<String> transactionId = Optional.empty();
         String stringifiedResponse;
