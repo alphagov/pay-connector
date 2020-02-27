@@ -1,13 +1,9 @@
 package uk.gov.pay.connector.it.resources;
 
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -17,23 +13,21 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
-import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static io.restassured.http.ContentType.JSON;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
@@ -51,20 +45,25 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldExpireChargesBeforeAndAfterAuthorisationAndShouldHaveTheRightEvents() {
+    public void shouldExpireChargesAndHaveTheCorrectEvents() {
         String extChargeId1 = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-        String extChargeId2 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-
+        String extChargeId2 = addCharge(ENTERING_CARD_DETAILS, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String extChargeId3 = addCharge(AUTHORISATION_READY, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String extChargeId4 = addCharge(AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String extChargeId5 = addCharge(AUTHORISATION_3DS_READY, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        String extChargeId6 = addCharge(AUTHORISATION_SUCCESS, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
+        
         worldpayMockClient.mockCancelSuccess();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
 
         connectorRestApiClient
                 .postChargeExpiryTask()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
-                .body("expiry-success", is(2))
+                .body("expiry-success", is(6))
                 .body("expiry-failed", is(0));
 
-        asList(extChargeId1, extChargeId2).forEach(chargeId ->
+        asList(extChargeId1, extChargeId6).forEach(chargeId ->
                 connectorRestApiClient
                         .withAccountId(accountId)
                         .withChargeId(chargeId)
@@ -76,45 +75,19 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
 
         List<String> events1 = databaseTestHelper.getInternalEvents(extChargeId1);
         List<String> events2 = databaseTestHelper.getInternalEvents(extChargeId2);
-
+        List<String> events3 = databaseTestHelper.getInternalEvents(extChargeId3);
+        List<String> events4 = databaseTestHelper.getInternalEvents(extChargeId4);
+        List<String> events5 = databaseTestHelper.getInternalEvents(extChargeId5);
+        List<String> events6 = databaseTestHelper.getInternalEvents(extChargeId6);
+        
+        // pre-authorisation states won't enter the EXPIRE_CANCEL_READY state
         assertThat(asList(CREATED.getValue(), EXPIRED.getValue()), is(events1));
-        assertThat(asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()), is(events2));
-    }
-
-    @Test
-    public void shouldExpireCharges() {
-
-        List<ChargeStatus> expirableChargeStatuses = ExpirableChargeStatus.getValuesAsStream()
-                .filter(status -> !List.of(ExpirableChargeStatus.AWAITING_CAPTURE_REQUEST, ExpirableChargeStatus.AUTHORISATION_SUCCESS).contains(status)) //awaiting capture request and authorisation success have their own test cases
-                .map(ExpirableChargeStatus::getChargeStatus).collect(Collectors.toList());
-
-        Map<String, ChargeStatus> chargesThatShouldBeExpired = expirableChargeStatuses.stream().collect(Collectors.toMap(
-                chargeStatus -> addCharge(chargeStatus, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId()),
-                chargeStatus -> chargeStatus));
+        assertThat(asList(ENTERING_CARD_DETAILS.getValue(), EXPIRED.getValue()), is(events2));
+        assertThat(asList(AUTHORISATION_READY.getValue(), EXPIRED.getValue()), is(events3));
         
-        worldpayMockClient.mockCancelSuccess();
-
-        connectorRestApiClient
-                .postChargeExpiryTask()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("expiry-success", is(5))
-                .body("expiry-failed", is(0));
-
-        chargesThatShouldBeExpired.forEach((chargeId, chargeStatus) -> {
-            connectorRestApiClient
-                    .withAccountId(accountId)
-                    .withChargeId(chargeId)
-                    .getCharge()
-                    .statusCode(OK.getStatusCode())
-                    .contentType(JSON)
-                    .body(JSON_CHARGE_KEY, is(chargeId))
-                    .body(JSON_STATE_KEY, is(EXPIRED.toExternal().getStatus()));
-
-            List<String> events = databaseTestHelper.getInternalEvents(chargeId);
-            assertThat(events, contains(chargeStatus.getValue(), EXPIRED.getValue()));
-        });
-        
+        assertThat(asList(AUTHORISATION_3DS_REQUIRED.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()), is(events4));
+        assertThat(asList(AUTHORISATION_3DS_READY.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()), is(events5));
+        assertThat(asList(AUTHORISATION_SUCCESS.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()), is(events6));
     }
 
     @Test
@@ -123,6 +96,7 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
         String shouldntExpireCreatedChargeId = addCharge(CREATED, "ref", ZonedDateTime.now().minusMinutes(89), RandomIdGenerator.newId());
         
         worldpayMockClient.mockCancelSuccess();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
 
         connectorRestApiClient
                 .postChargeExpiryTask()
@@ -153,6 +127,7 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
         addCharge(CAPTURE_SUBMITTED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId()); //should not get picked
 
         worldpayMockClient.mockCancelError();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
 
         connectorRestApiClient
                 .postChargeExpiryTask()
@@ -186,6 +161,7 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
 
         worldpayMockClient.mockCancelError();
         worldpayMockClient.mockCancelSuccessOnlyFor(gatewayTransactionId1);
+        worldpayMockClient.mockAuthorisationQuerySuccess();
 
         connectorRestApiClient
                 .postChargeExpiryTask()
@@ -226,6 +202,7 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 
         worldpayMockClient.mockCancelSuccess();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
 
         Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails.isEmpty(), is(false));
@@ -253,6 +230,7 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
         String chargeToBeExpiredAwaitingCaptureRequest = addCharge(AWAITING_CAPTURE_REQUEST, "ref", ZonedDateTime.now().minusHours(120L).plusMinutes(1L), RandomIdGenerator.newId());
 
         worldpayMockClient.mockCancelSuccess();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
 
         connectorRestApiClient
                 .postChargeExpiryTask()
@@ -292,6 +270,7 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
         String chargeToBeExpiredAwaitingCaptureRequest = addCharge(AWAITING_CAPTURE_REQUEST, "ref", ZonedDateTime.now().minusHours(120L).minusMinutes(1L), RandomIdGenerator.newId());
 
         worldpayMockClient.mockCancelSuccess();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
 
         connectorRestApiClient
                 .postChargeExpiryTask()
@@ -323,32 +302,5 @@ public class ChargeExpiryResourceIT extends ChargingITestBase {
 
         assertThat(asList(CREATED.getValue(), EXPIRED.getValue()), is(events1));
         assertThat(asList(AWAITING_CAPTURE_REQUEST.getValue(), EXPIRE_CANCEL_READY.getValue(), EXPIRED.getValue()), is(events2));
-    }
-
-    @Test
-    public void shouldExpireWithGatewayIfExistsInCancellableStateWithGatewayEvenIfChargeIsPreAuthorisation() {
-        String chargeId = addCharge(AUTHORISATION_3DS_REQUIRED, "ref", ZonedDateTime.now().minusMinutes(90), RandomIdGenerator.newId());
-
-        WireMock.reset();
-        worldpayMockClient.mockCancelSuccess();
-        worldpayMockClient.mockAuthorisationQuerySuccess();
-
-        connectorRestApiClient
-                .postChargeExpiryTask()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("expiry-success", is(1))
-                .body("expiry-failed", is(0));
-
-        connectorRestApiClient
-                .withAccountId(accountId)
-                .withChargeId(chargeId)
-                .getCharge()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("charge_id", is(chargeId))
-                .body("state.status", is(EXPIRED.toExternal().getStatus()));
-
-        verify(exactly(2), postRequestedFor(UrlPattern.fromOneOf(null, null, "/jsp/merchant/xml/paymentService.jsp", null)));
     }
 }
