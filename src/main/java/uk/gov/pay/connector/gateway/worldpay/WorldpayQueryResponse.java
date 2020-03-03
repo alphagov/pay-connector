@@ -90,7 +90,7 @@ public class WorldpayQueryResponse implements BaseInquiryResponse {
 
     @Override
     public String toString() {
-        StringJoiner joiner = new StringJoiner(", ", "Worldpay authorisation response (", ")");
+        StringJoiner joiner = new StringJoiner(", ", "Worldpay query response (", ")");
         if (StringUtils.isNotBlank(getTransactionId())) {
             joiner.add("orderCode: " + getTransactionId());
         }
