@@ -20,6 +20,7 @@ import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItems;
@@ -81,6 +82,12 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
                 .body("error_identifier", is("CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_CHARGE_STATE_FORCIBLY_TRANSITIONED"))
                 .body("message", contains("Cannot cancel charge as it is in a terminal state of [CAPTURED] with the " +
                         "gateway provider. The charge's state was transitioned to [CAPTURED]."));
+      
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .statusCode(OK.getStatusCode())
+                .body("status", is(CAPTURED.getValue()));
     }
     
     @Test
@@ -95,6 +102,12 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
                 .body("error_identifier", is("CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_CHARGE_STATE_FORCIBLY_TRANSITIONED"))
                 .body("message", contains("Cannot cancel charge as it is in a terminal state of [CAPTURED] with the " +
                         "gateway provider. The charge's state was transitioned to [CAPTURED]."));
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .statusCode(OK.getStatusCode())
+                .body("status", is(CAPTURED.getValue()));
     }
     
     @Test
@@ -108,7 +121,14 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
                 .statusCode(HttpStatus.SC_CONFLICT)
                 .body("error_identifier", is("CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_INVALID_STATE_TRANSITION"))
                 .body("message", contains("Cannot cancel charge as it is in a terminal state of " +
-                        "[AUTHORISATION REJECTED] with the gateway provider. The charge's state could not be transitioned to [AUTHORISATION REJECTED]."));
+                        "[AUTHORISATION REJECTED] with the gateway provider and it is not possible to transition the " +
+                        "charge into this state. Current state: [AUTHORISATION 3DS READY]."));
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .statusCode(OK.getStatusCode())
+                .body("status", is(AUTHORISATION_3DS_READY.getValue()));
     }
 
     @Test
@@ -122,7 +142,14 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
                 .statusCode(HttpStatus.SC_CONFLICT)
                 .body("error_identifier", is("CANCEL_CHARGE_FAILURE_DUE_TO_CONFLICTING_TERMINAL_STATE_AT_GATEWAY_INVALID_STATE_TRANSITION"))
                 .body("message", contains("Cannot cancel charge as it is in a terminal state of " +
-                        "[AUTHORISATION REJECTED] with the gateway provider. The charge's state could not be transitioned to [AUTHORISATION REJECTED]."));
+                        "[AUTHORISATION REJECTED] with the gateway provider and it is not possible to transition the " +
+                        "charge into this state. Current state: [AUTHORISATION 3DS READY]."));
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .statusCode(OK.getStatusCode())
+                .body("status", is(AUTHORISATION_3DS_READY.getValue()));
     }
     
     @Test
