@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
@@ -112,7 +113,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return worldpayGatewayResponse.getBaseResponse()
                 .map(ChargeQueryResponse::from)
                 .orElseThrow(() ->
-                        new WebApplicationException(String.format(
+                        new WebApplicationException(format(
                                 "Unable to query charge %s - an error occurred: %s",
                                 charge.getExternalId(),
                                 worldpayGatewayResponse
@@ -139,6 +140,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 request.getGatewayAccount(),
                 gatewayOrder,
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
+
         return getWorldpayGatewayResponse(response);
     }
 
@@ -155,8 +157,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     build3dsResponseAuthOrder(request),
                     cookies,
                     getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
-
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getWorldpayGatewayResponse(response);
+
+            logger.info(format("Worldpay 3ds authorisation response for %s : %s", request.getChargeExternalId(), sanitiseMessage(response.getEntity())));
 
             if (gatewayResponse.getBaseResponse().isEmpty()) gatewayResponse.throwGatewayError();
 
@@ -242,5 +245,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 .withTransactionId(request.getTransactionId())
                 .withMerchantCode(request.getGatewayAccount().getCredentials().get(CREDENTIALS_MERCHANT_ID))
                 .build();
+    }
+
+    private String sanitiseMessage(String message) {
+        return message.replaceAll("<cardHolderName>.*</cardHolderName>", "<cardHolderName>REDACTED</cardHolderName>");
     }
 }
