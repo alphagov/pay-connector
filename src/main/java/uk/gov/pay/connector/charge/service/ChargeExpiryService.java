@@ -16,6 +16,7 @@ import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
+import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -36,17 +37,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static com.google.common.collect.Lists.newArrayList;
+import static java.lang.String.format;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
 import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.DURING_AUTHORISATION;
 import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.POST_AUTHORISATION;
-import static uk.gov.pay.connector.charge.model.domain.ExpirableChargeStatus.AuthorisationStage.PRE_AUTHORISATION;
 import static uk.gov.pay.connector.charge.service.StatusFlow.EXPIRE_FLOW;
+import static uk.gov.pay.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.pay.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.pay.logging.LoggingKeys.PROVIDER;
 
 public class ChargeExpiryService {
 
@@ -79,32 +84,37 @@ public class ChargeExpiryService {
         this.queryService = queryService;
     }
 
+    private enum expiryMethod {
+        EXPIRE_WITHOUT_GATEWAY,
+        EXPIRE_WITH_GATEWAY,
+        CHECK_STATUS_WITH_GATEWAY_BEFORE_EXPIRING
+    }
+
     Map<String, Integer> expire(List<ChargeEntity> charges) {
-        Map<AuthorisationStage, List<ChargeEntity>> chargesGroupedByAuthStage = charges
+        Map<expiryMethod, List<ChargeEntity>> chargesGroupedByExpiryMethod = charges
                 .stream()
-                .collect(Collectors.groupingBy(this::getAuthorisationStage));
+                .collect(Collectors.groupingBy(this::getExpiryMethod));
 
-        Map<Boolean, List<ChargeEntity>> chargesPartitionedByNeedForExpiryWithGateway =
-                getNullSafeList(chargesGroupedByAuthStage.get(DURING_AUTHORISATION))
-                        .stream()
-                        .collect(Collectors.partitioningBy(queryService::isTerminableWithGateway));
-
-        List<ChargeEntity> toExpireWithoutGateway = new ImmutableList.Builder<ChargeEntity>()
-                .addAll(getNullSafeList(chargesGroupedByAuthStage.get(PRE_AUTHORISATION)))
-                .addAll(getNullSafeList(chargesPartitionedByNeedForExpiryWithGateway.get(Boolean.FALSE)))
-                .build();
-        int expiredSuccess = expireChargesWithoutGateway(toExpireWithoutGateway);
-
-        List<ChargeEntity> toExpireWithGateway = new ImmutableList.Builder<ChargeEntity>()
-                .addAll(getNullSafeList(chargesGroupedByAuthStage.get(POST_AUTHORISATION)))
-                .addAll(getNullSafeList(chargesPartitionedByNeedForExpiryWithGateway.get(Boolean.TRUE)))
-                .build();
-        Pair<Integer, Integer> expireWithCancellationResult = expireChargesWithGateway(toExpireWithGateway);
+        int expiredWithoutGatewaySuccess = expireChargesWithoutGateway(getNullSafeList(chargesGroupedByExpiryMethod.get(expiryMethod.EXPIRE_WITHOUT_GATEWAY)));
+        Pair<Integer, Integer> expireWithCancellationResult = expireChargesWithGateway(getNullSafeList(chargesGroupedByExpiryMethod.get(expiryMethod.EXPIRE_WITH_GATEWAY)));
+        Pair<Integer, Integer> expireOrForceTransitionResult = expireChargesOrPotentiallyForceTransitionState(getNullSafeList(chargesGroupedByExpiryMethod.get(expiryMethod.CHECK_STATUS_WITH_GATEWAY_BEFORE_EXPIRING)));
 
         return ImmutableMap.of(
-                EXPIRY_SUCCESS, expiredSuccess + expireWithCancellationResult.getLeft(),
-                EXPIRY_FAILED, expireWithCancellationResult.getRight()
+                EXPIRY_SUCCESS, expiredWithoutGatewaySuccess + expireWithCancellationResult.getLeft() + expireOrForceTransitionResult.getLeft(),
+                EXPIRY_FAILED, expireWithCancellationResult.getRight() + expireOrForceTransitionResult.getRight()
         );
+    }
+
+    private expiryMethod getExpiryMethod(ChargeEntity chargeEntity) {
+        var authorisationStage = getAuthorisationStage(chargeEntity);
+        if ((authorisationStage == DURING_AUTHORISATION || authorisationStage == POST_AUTHORISATION)
+                && queryService.canQueryChargeGatewayStatus(chargeEntity.getPaymentGatewayName())) {
+            return expiryMethod.CHECK_STATUS_WITH_GATEWAY_BEFORE_EXPIRING;
+        } else if (authorisationStage == POST_AUTHORISATION) {
+            return expiryMethod.EXPIRE_WITH_GATEWAY;
+        } else {
+            return expiryMethod.EXPIRE_WITHOUT_GATEWAY;
+        }
     }
 
     private List<ChargeEntity> getNullSafeList(List<ChargeEntity> charges) {
@@ -115,7 +125,7 @@ public class ChargeExpiryService {
     private AuthorisationStage getAuthorisationStage(ChargeEntity chargeEntity) {
         return ExpirableChargeStatus.of(ChargeStatus.fromString(chargeEntity.getStatus())).getAuthorisationStage();
     }
-    
+
     public Map<String, Integer> sweepAndExpireChargesAndTokens() {
         List<ChargeEntity> chargesToExpire = new ImmutableList.Builder<ChargeEntity>()
                 .addAll(getChargesToExpireWithRegularExpiryThreshold())
@@ -161,36 +171,92 @@ public class ChargeExpiryService {
 
     private Pair<Integer, Integer> expireChargesWithGateway(List<ChargeEntity> gatewayAuthorizedCharges) {
 
-        final List<ChargeEntity> expireCancelled = newArrayList();
-        final List<ChargeEntity> expireCancelFailed = newArrayList();
+        AtomicInteger expireCancelled = new AtomicInteger();
+        AtomicInteger expireCancelFailed = new AtomicInteger();
 
         gatewayAuthorizedCharges.forEach(chargeEntity -> {
 
-            ChargeEntity processedEntity = prepareForTermination(chargeEntity.getExternalId());
-            ChargeStatus newStatus;
-
-            try {
-                GatewayResponse<BaseCancelResponse> gatewayResponse = doGatewayCancel(processedEntity);
-                newStatus = determineTerminalState(gatewayResponse);
-            } catch (GatewayException e) {
-                newStatus= EXPIRE_FLOW.getFailureTerminalState();
-                logger.error("Gateway error while cancelling the Charge - charge_external_id={}, gateway_error={}",
-                        chargeEntity.getExternalId(), e.getMessage());
-            }
-
-            ChargeEntity expiredCharge = chargeService.transitionChargeState(processedEntity.getExternalId(), newStatus);
+            ChargeEntity expiredCharge = expireChargeWithGatewayCleanup(chargeEntity);
 
             if (EXPIRED.getValue().equals(expiredCharge.getStatus())) {
-                expireCancelled.add(processedEntity);
+                expireCancelled.getAndIncrement();
             } else if (EXPIRE_CANCEL_FAILED.getValue().equals(expiredCharge.getStatus())) {
-                expireCancelFailed.add(expiredCharge);
+                expireCancelFailed.getAndIncrement();
             }
         });
 
         return Pair.of(
-                expireCancelled.size(),
-                expireCancelFailed.size()
+                expireCancelled.intValue(),
+                expireCancelFailed.intValue()
         );
+    }
+
+    private Pair<Integer, Integer> expireChargesOrPotentiallyForceTransitionState(List<ChargeEntity> charges) {
+        AtomicInteger expireCancelled = new AtomicInteger();
+        AtomicInteger expireCancelFailed = new AtomicInteger();
+
+        charges.forEach(chargeEntity -> {
+            Optional<ChargeStatus> gatewayStatus = queryService.getMappedGatewayStatus(chargeEntity);
+            gatewayStatus.ifPresentOrElse(status ->
+                    {
+                        if (status.toExternal().isFinished()) {
+                            logger.info(format("Expiring charge skipped as charge is in a terminal state on the gateway " +
+                                            "provider. Attempting to force state on charge to [%s]", status.getValue()),
+                                    kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()),
+                                    kv(GATEWAY_ACCOUNT_ID, chargeEntity.getGatewayAccount().getId()),
+                                    kv(PROVIDER, chargeEntity.getGatewayAccount().getGatewayName()));
+
+                            try {
+                                chargeService.forceTransitionChargeState(chargeEntity, status);
+                                expireCancelFailed.getAndIncrement();
+                            } catch (InvalidForceStateTransitionException e) {
+                                logger.error(format("Cannot expire charge as it is in a terminal state of [%s] with " +
+                                                "the gateway provider and it is not possible to transition the charge " +
+                                                "into this state. Current state: [%s]", 
+                                        status.getValue(), chargeEntity.getStatus()),
+                                        kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
+                                expireCancelFailed.getAndIncrement();
+                            }
+                        } else {
+                            ChargeEntity expiredCharge = expireChargeWithGatewayCleanup(chargeEntity);
+
+                            if (EXPIRED.getValue().equals(expiredCharge.getStatus())) {
+                                expireCancelled.getAndIncrement();
+                            } else if (EXPIRE_CANCEL_FAILED.getValue().equals(expiredCharge.getStatus())) {
+                                expireCancelFailed.getAndIncrement();
+                            }
+                        }
+                    },
+                    () -> {
+                        logger.error(format("Gateway status does not map to any charge " +
+                                        "status in %s, expiring without cancelling on the gateway.",
+                                ChargeStatus.class.getCanonicalName()),
+                                kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
+                        chargeService.transitionChargeState(chargeEntity.getExternalId(), EXPIRED);
+                        expireCancelled.getAndIncrement();
+                    });
+        });
+
+        return Pair.of(
+                expireCancelled.intValue(),
+                expireCancelFailed.intValue()
+        );
+    }
+
+    private ChargeEntity expireChargeWithGatewayCleanup(ChargeEntity chargeEntity) {
+        ChargeEntity processedEntity = prepareForTermination(chargeEntity.getExternalId());
+        ChargeStatus newStatus;
+
+        try {
+            GatewayResponse<BaseCancelResponse> gatewayResponse = doGatewayCancel(processedEntity);
+            newStatus = determineTerminalState(gatewayResponse);
+        } catch (GatewayException e) {
+            newStatus = EXPIRE_FLOW.getFailureTerminalState();
+            logger.error("Gateway error while cancelling the Charge - charge_external_id={}, gateway_error={}",
+                    chargeEntity.getExternalId(), e.getMessage());
+        }
+
+        return chargeService.transitionChargeState(processedEntity.getExternalId(), newStatus);
     }
 
     private ChargeStatus determineTerminalState(GatewayResponse<BaseCancelResponse> cancelResponse) {
