@@ -141,6 +141,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 gatewayOrder,
                 getGatewayAccountCredentialsAsAuthHeader(request.getGatewayAccount()));
 
+        if (response.getEntity().contains("request3DSecure")) {
+            logger.info(format("Worldpay authorisation response when 3ds required for %s: %s", request.getChargeExternalId(), sanitiseMessage(response.getEntity())));
+        }
         return getWorldpayGatewayResponse(response);
     }
 
